@@ -95,30 +95,53 @@ These are enforced by habit and by review, and violating one means the ticket wa
 
 ## Permissions
 
-`.claude/settings.json` holds a committed allowlist of the commands an agent runs constantly:
-reading and searching files, editing the project's own directories, read-only git, the build
-and test commands, the ticket linter, and the GitHub CLI operations the PR flow needs.
+`.claude/settings.json` is committed, and it is deliberately permissive: **245 allow rules, 68
+deny rules, and `defaultMode: acceptEdits`** so that file edits never prompt at all.
 
 The point is not convenience for its own sake. An agent that stops for approval forty times an
-hour trains the human to approve without reading, which is strictly worse than a considered
-allowlist plus a real review gate. Approval fatigue is a security problem, not an ergonomic one.
+hour trains the human to approve without reading — and a human who has learned to click
+*approve* reflexively is a worse safeguard than no prompt at all. Approval fatigue is a
+security problem, not an ergonomic one. The response is to make the routine path silent and put
+the real gate somewhere it cannot be clicked through.
 
-What the allowlist deliberately does **not** cover:
+**That gate is the pull request.** `main` and `develop` are protected, nothing merges without
+review, and every change is one squashed, revertable commit. That is the control. The
+permission list only decides how much friction there is on the way to it.
 
-- `git push` to `main` or `develop`, force pushes, hard resets, branch deletion, rebases —
-  denied outright. Server-side branch protection is the real control; these denials just stop
-  an agent wasting a turn discovering that.
-- `rm -rf`, `sudo`, piping a download into a shell, deleting the repository — denied.
-- Reading `.env`, key material or `secrets/` — denied.
-- Editing `.claude/settings.json` itself — denied, so an agent cannot widen its own permissions.
+So the allow list covers essentially everything the work needs: git, the GitHub CLI, Gradle,
+npm and the Node toolchain, Python, Docker, and the ordinary shell utilities. What matters more
+is what is refused.
 
-One rule is genuinely broad and is a deliberate choice: `Bash(python3 -)` permits running an
-arbitrary script from stdin, which is how bulk edits across many ticket files get done in one
-pass instead of forty. It is listed here rather than buried, because a permission you have
-forgotten about is one you have not really granted.
+### Denied outright
 
-The real safety net is not the allowlist. It is that `main` and `develop` are protected, every
-change arrives by pull request, and nothing merges unreviewed.
+| | |
+| --- | --- |
+| **History** | force push (including `--force-with-lease`), hard reset, `filter-branch`, `branch -D`, remote branch deletion |
+| **Protected branches** | any push to `main` or `develop` |
+| **Destruction** | `rm` in any form, `dd`, `mkfs`, `chown`, `docker rm`/`rmi`/`prune` |
+| **Privilege** | `sudo`, `su`, `launchctl`, `crontab` |
+| **Process control** | `kill`, `killall`, `pkill` |
+| **Repository** | `gh repo delete`, `gh repo archive`, `gh api -X DELETE` |
+| **Credentials** | `gh secret`, `gh auth token`, reads of `.env`, `secrets/`, `*.pem`, `*.key`, `~/.ssh`, `~/.aws`, `~/.config/gh` |
+| **Self-modification** | editing `.claude/settings.json` |
+| **Remote code** | `curl … \| sh`, `wget … \| bash` |
+| **Publishing** | `npm publish`, `npm login` |
+
+Deny always beats allow, so a broad allow such as `Bash(git push:*)` is still cut off from
+`main` and `develop` by the denials above.
+
+The last row of that list is the load-bearing one: **an agent cannot widen its own
+permissions.** Every other rule is a judgement call that can be revisited; that one is not.
+
+### The deliberate trade
+
+`Bash(rm:*)` is denied, which means an agent cannot clean up its own temporary files without
+asking. That is annoying perhaps once a week, and it is the correct side of the trade — a
+misfired `rm -rf` costs far more than the interruptions it prevents.
+
+Conversely `Bash(curl:*)`, `Bash(npx:*)` and `Bash(python3:*)` are all allowed, and each of
+them can run arbitrary code. They are listed here rather than buried, because a permission you
+have forgotten about is one you have not really granted.
 
 ## Documents as memory
 
