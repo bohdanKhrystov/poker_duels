@@ -28,8 +28,10 @@ process being created. Everything from here follows the rules it sets down.
   register.
 - `tasks/` — conventions, templates, board, and EPIC-01 fully broken down.
 - `.github/` — PR template, ticket linter, and the workflow that runs it.
-- `.claude/settings.json` — a permission allowlist for the read-only and routine commands this
-  project uses constantly, so that ordinary work does not generate a prompt per command.
+- `.claude/settings.json` — a permission allowlist for the commands this project uses
+  constantly, so that ordinary work does not generate a prompt per command, paired with a deny
+  list for the operations no agent should perform unattended. Rationale in
+  [`docs/workflow.md`](../../docs/workflow.md#permissions).
 - `.gitignore` for a Kotlin/Gradle and Node repository.
 
 ## Out of scope

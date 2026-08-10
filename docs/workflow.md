@@ -93,6 +93,33 @@ These are enforced by habit and by review, and violating one means the ticket wa
 | Tasks per PR | 1 |
 | Undocumented architectural decisions | 0 |
 
+## Permissions
+
+`.claude/settings.json` holds a committed allowlist of the commands an agent runs constantly:
+reading and searching files, editing the project's own directories, read-only git, the build
+and test commands, the ticket linter, and the GitHub CLI operations the PR flow needs.
+
+The point is not convenience for its own sake. An agent that stops for approval forty times an
+hour trains the human to approve without reading, which is strictly worse than a considered
+allowlist plus a real review gate. Approval fatigue is a security problem, not an ergonomic one.
+
+What the allowlist deliberately does **not** cover:
+
+- `git push` to `main` or `develop`, force pushes, hard resets, branch deletion, rebases —
+  denied outright. Server-side branch protection is the real control; these denials just stop
+  an agent wasting a turn discovering that.
+- `rm -rf`, `sudo`, piping a download into a shell, deleting the repository — denied.
+- Reading `.env`, key material or `secrets/` — denied.
+- Editing `.claude/settings.json` itself — denied, so an agent cannot widen its own permissions.
+
+One rule is genuinely broad and is a deliberate choice: `Bash(python3 -)` permits running an
+arbitrary script from stdin, which is how bulk edits across many ticket files get done in one
+pass instead of forty. It is listed here rather than buried, because a permission you have
+forgotten about is one you have not really granted.
+
+The real safety net is not the allowlist. It is that `main` and `develop` are protected, every
+change arrives by pull request, and nothing merges unreviewed.
+
 ## Documents as memory
 
 An agent does not remember the project. It re-reads the parts it needs. So the documents have
