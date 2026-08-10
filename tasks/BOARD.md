@@ -2,7 +2,9 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `TASK-000101` — in review. Next startable: `TASK-010101`, Gradle multi-module skeleton.
+**Now:** `TASK-000103` — in review. Then run `/build-epic EPIC-01`.
+
+Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
 ---
 
@@ -32,8 +34,9 @@ them is close to done, because writing them earlier means rewriting them.
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
 | **[STORY-0001](stories/STORY-0001-repository-and-ticket-system.md)** Repository, docs, tickets | | | ready |
-| | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **in-review** |
+| | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **done** |
 | | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | blocked |
+| | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
 
 `TASK-000102` is blocked by GitHub: protection and rulesets both require a paid plan on a
 private repository. Until it clears, the branch model is convention, not enforcement.
@@ -44,10 +47,13 @@ private repository. Until it clears, the branch model is convention, not enforce
 
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
-| **[STORY-0101](stories/STORY-0101-engine-module-scaffold.md)** Module and build scaffold | | | ready |
-| | [TASK-010101](tasks/TASK-010101-gradle-multi-module-skeleton.md) Gradle skeleton and version catalog | S | **ready** |
-| | [TASK-010102](tasks/TASK-010102-quality-gates.md) ktlint, detekt, property-test stack | S | backlog |
-| | [TASK-010103](tasks/TASK-010103-build-ci-workflow.md) Build and test CI workflow | S | backlog |
+| **[STORY-0101](stories/STORY-0101-engine-module-scaffold.md)** Module and build scaffold — *schema 2* | | | ready |
+| | [TASK-010101](tasks/TASK-010101-gradle-wrapper-and-root-build.md) Gradle wrapper, settings, catalog | S | **ready** |
+| | [TASK-010102](tasks/TASK-010102-poker-engine-module.md) poker-engine module + running test | XS | backlog |
+| | [TASK-010103](tasks/TASK-010103-engine-dependency-rule.md) Enforce engine depends on nothing | XS | backlog |
+| | [TASK-010104](tasks/TASK-010104-ktlint-and-detekt.md) ktlint and detekt | S | backlog |
+| | [TASK-010105](tasks/TASK-010105-kotest-property-testing.md) kotest property testing | XS | backlog |
+| | [TASK-010106](tasks/TASK-010106-build-ci-workflow.md) Build and test CI workflow | XS | backlog |
 | **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle | | | ready |
 | | [TASK-010201](tasks/TASK-010201-card-rank-suit.md) Rank, Suit, Card | S | backlog |
 | | [TASK-010202](tasks/TASK-010202-card-notation.md) Poker notation parse and format | S | backlog |
@@ -82,7 +88,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**31 tasks total** (29 here, 2 in EPIC-00). Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
+**35 tasks total.** `STORY-0101` is migrated to schema 2; stories 0102–0108 are still schema 1
+and get split by `/plan-story` just before they are worked. Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
 written against types that do not exist yet, and specifying them any earlier would mean
 rewriting them.
 
@@ -104,10 +111,12 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 0 / 29 | 0 / 31 |
+| Tasks completed | 0 / 32 | 1 / 35 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
 | Tasks re-scoped mid-flight | — | — |
 | Reviews skipped (must stay 0) | 0 | 0 |
+| Tickets promoted haiku → sonnet | — | — |
+| Average coder dispatches per ticket | — | — |
 | Manual human edits | — | — |

@@ -32,11 +32,16 @@ be finished, and no acceptance criterion means anything.
 
 ## Tasks
 
-| ID | Title | Status |
-| --- | --- | --- |
-| [TASK-010101](../tasks/TASK-010101-gradle-multi-module-skeleton.md) | Gradle multi-module skeleton with version catalog | ready |
-| [TASK-010102](../tasks/TASK-010102-quality-gates.md) | Wire ktlint, detekt and the test stack | backlog |
-| [TASK-010103](../tasks/TASK-010103-build-ci-workflow.md) | Build and test CI workflow for pull requests | backlog |
+Split to schema 2 by `/plan-story`. Six micro-tickets replace the original three.
+
+| ID | Title | Est | Tier | Status |
+| --- | --- | --- | --- | --- |
+| [TASK-010101](../tasks/TASK-010101-gradle-wrapper-and-root-build.md) | Gradle wrapper, settings, version catalog | S | haiku | **ready** |
+| [TASK-010102](../tasks/TASK-010102-poker-engine-module.md) | poker-engine module with a running test | XS | haiku | backlog |
+| [TASK-010103](../tasks/TASK-010103-engine-dependency-rule.md) | Enforce the engine depends on nothing | XS | haiku | backlog |
+| [TASK-010104](../tasks/TASK-010104-ktlint-and-detekt.md) | Wire ktlint and detekt into check | S | haiku | backlog |
+| [TASK-010105](../tasks/TASK-010105-kotest-property-testing.md) | Add kotest property testing | XS | haiku | backlog |
+| [TASK-010106](../tasks/TASK-010106-build-ci-workflow.md) | Build and test CI workflow | XS | haiku | backlog |
 
 ## Acceptance criteria
 

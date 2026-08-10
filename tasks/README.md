@@ -119,11 +119,27 @@ A task that is fully specified but still waiting on a dependency stays in `backl
 
 ## Size
 
-| Estimate | Changed lines | Roughly |
-| --- | --- | --- |
-| `S` | ≤ 100 | one type, or one function with its tests |
-| `M` | ≤ 300 | a small component with tests |
-| `L` | — | **not allowed** — split it into `S` and `M` tasks |
+| Estimate | Changed lines | Files touched | Roughly |
+| --- | --- | --- | --- |
+| `XS` | ≤ 40 | 1–2 | one type, or one function with its tests |
+| `S` | ≤ 120 | ≤ 3 | a small component with tests |
+
+`M` and `L` do not exist. If work does not fit in `S`, it is two tickets — the failure mode of
+this project is tickets that grew, never tickets that were too small.
+
+### Schema 2
+
+Tickets an agent workflow consumes carry `schema: 2` and four extra fields:
+
+| Field | Meaning |
+| --- | --- |
+| `tier` | which model runs it — `haiku` (default), `sonnet`, `opus` |
+| `review` | `light`, `standard` or `deep` — effort priced by risk |
+| `files_touched` | 1–3, enforced by the linter |
+| `verify` | shell commands that decide done. **All must exit 0.** |
+
+Legacy `schema: 1` tickets still validate, so stories migrate one at a time via
+`/plan-story`. Run it before starting a story whose tickets lack `schema: 2`.
 
 If a task turns out to be larger than its estimate once started: stop, split it, and keep the
 original ID for the first piece. Growing a change past its ticket is the failure mode this

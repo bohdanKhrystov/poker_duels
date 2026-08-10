@@ -18,7 +18,15 @@ TASKS = Path("tasks")
 SKIP_DIRS = {"templates"}
 
 STATUSES = {"backlog", "ready", "in-progress", "in-review", "blocked", "done"}
-ESTIMATES = {"S", "M"}
+
+# Schema 1 is the original hand-written backlog. Schema 2 is the token-lean format an agent
+# workflow consumes: smaller, tiered by model, and gated by executable verify commands.
+# Both are accepted so that stories can be migrated one at a time rather than all at once.
+LEGACY_ESTIMATES = {"S", "M"}
+ESTIMATES_V2 = {"XS", "S"}
+TIERS = {"haiku", "sonnet", "opus"}
+REVIEW_LEVELS = {"light", "standard", "deep"}
+MAX_FILES_TOUCHED = 3
 
 ID_PATTERNS = {
     "epic": re.compile(r"^EPIC-\d{2}$"),
@@ -51,21 +59,90 @@ def parse_frontmatter(path: Path) -> dict[str, object] | None:
         return None
 
     data: dict[str, object] = {}
+    last_key: str | None = None
     for lineno, line in enumerate(text[4:end].splitlines(), start=2):
         if not line.strip() or line.lstrip().startswith("#"):
             continue
+
+        # Block sequence item belonging to the previous key. Matched before the key/value
+        # split because verify commands are full shell lines and contain colons of their own
+        # (`./gradlew :poker-engine:test`), which a naive partition would tear apart.
+        if line[:1].isspace() and line.lstrip().startswith("- "):
+            if last_key is None:
+                fail(str(path), f"line {lineno}: list item with no key above it")
+                continue
+            data.setdefault(last_key, [])
+            if not isinstance(data[last_key], list):
+                fail(str(path), f"line {lineno}: '{last_key}' has both a value and list items")
+                continue
+            data[last_key].append(line.lstrip()[2:].strip())
+            continue
+
         if ":" not in line:
             fail(str(path), f"line {lineno}: not a key/value pair: {line!r}")
             continue
         key, _, raw = line.partition(":")
         key, raw = key.strip(), raw.strip()
+        last_key = key
         match = LIST_RE.match(raw)
         if match:
             inner = match.group(1).strip()
             data[key] = [v.strip() for v in inner.split(",") if v.strip()] if inner else []
+        elif raw == "":
+            # `verify:` on its own line — items follow as a block sequence.
+            data[key] = []
         else:
             data[key] = raw
     return data
+
+
+def check_task_schema(where: str, data: dict[str, object]) -> None:
+    """Validate a task against schema 1 or schema 2, whichever it declares.
+
+    A story is migrated as a unit, so both schemas coexist in the backlog while EPIC-01 is
+    converted story by story. Schema 2 is the stricter one and is what agents consume.
+    """
+    schema = str(data.get("schema", "1"))
+    estimate = data.get("estimate")
+
+    if schema == "1":
+        if estimate not in LEGACY_ESTIMATES:
+            fail(where, f"estimate must be S or M on a schema-1 task, got {estimate!r}")
+        return
+
+    if schema != "2":
+        fail(where, f"unknown schema {schema!r} — expected 1 or 2")
+        return
+
+    if estimate not in ESTIMATES_V2:
+        fail(where, f"estimate must be XS or S on a schema-2 task (M is gone), got {estimate!r}")
+
+    tier = data.get("tier")
+    if tier not in TIERS:
+        fail(where, f"tier must be one of {sorted(TIERS)}, got {tier!r}")
+
+    review = data.get("review")
+    if review not in REVIEW_LEVELS:
+        fail(where, f"review must be one of {sorted(REVIEW_LEVELS)}, got {review!r}")
+
+    touched = data.get("files_touched")
+    try:
+        touched_n = int(str(touched))
+    except (TypeError, ValueError):
+        fail(where, f"files_touched must be an integer, got {touched!r}")
+    else:
+        if not 1 <= touched_n <= MAX_FILES_TOUCHED:
+            fail(where, f"files_touched must be 1..{MAX_FILES_TOUCHED}, got {touched_n}")
+
+    # The verify block is what makes a cheap model reliable: done is "these commands exit 0",
+    # not "the code looks right". A schema-2 task without one has no objective gate at all.
+    verify = data.get("verify")
+    if not isinstance(verify, list) or not verify:
+        fail(where, "schema-2 task needs a non-empty 'verify:' block of shell commands")
+    else:
+        for command in verify:
+            if not str(command).strip():
+                fail(where, "empty command in 'verify:'")
 
 
 def collect() -> dict[str, dict]:
@@ -106,9 +183,7 @@ def collect() -> dict[str, dict]:
             fail(where, f"status {status!r} is not one of {sorted(STATUSES)}")
 
         if ticket_type == "task":
-            estimate = data.get("estimate")
-            if estimate not in ESTIMATES:
-                fail(where, f"estimate must be S or M (L means split the task), got {estimate!r}")
+            check_task_schema(where, data)
 
         parent = data.get("parent")
         if ticket_type == "epic" and parent:
@@ -160,10 +235,28 @@ def check_links(tickets: dict[str, dict]) -> None:
                 fail(where, f"status is 'ready' but these are not done: {', '.join(unmet)}")
 
 
+def startable(tickets: dict[str, dict]) -> list[dict]:
+    """Tasks an agent can begin right now, in dependency then id order.
+
+    Startability is derived rather than stored: `ready` says the ticket is specified, and
+    depends_on says whether anything is in the way. Keeping them separate means merging one
+    ticket does not require editing every ticket downstream of it.
+    """
+    return [
+        data
+        for _, data in sorted(tickets.items())
+        if data["type"] == "task"
+        and data["status"] == "ready"
+        and all(tickets.get(dep, {}).get("status") == "done" for dep in data.get("depends_on", []))
+    ]
+
+
 def main() -> int:
     if not TASKS.is_dir():
         print("tasks/ not found — run from the repository root", file=sys.stderr)
         return 1
+
+    want_startable = "--startable" in sys.argv[1:]
 
     tickets = collect()
     check_links(tickets)
@@ -174,6 +267,19 @@ def main() -> int:
         for error in errors:
             print(f"  {error}", file=sys.stderr)
         return 1
+
+    if want_startable:
+        ready = startable(tickets)
+        if not ready:
+            print("no startable task — every ready task is blocked by a dependency")
+            return 0
+        for data in ready:
+            print(
+                f"{data['id']}  schema={data.get('schema', '1')}  "
+                f"{data.get('estimate', '?')}  tier={data.get('tier', '-')}  "
+                f"review={data.get('review', '-')}  {data['path']}"
+            )
+        return 0
 
     print(
         f"backlog ok — {counts['epic']} epics, {counts['story']} stories, {counts['task']} tasks"

@@ -80,9 +80,20 @@ existed and the repository would still tell the whole story.
 **Every pull request is reviewed before it merges. No exceptions, including for documentation,
 including for one-line changes, including when the author is certain it is fine.**
 
-Review is run with the `/code-review` command against the PR's diff. It is not a formality
-bolted on at the end — it is the only place where the work is examined by something that did
-not write it.
+Review effort is priced by risk ([`ADR-0007`](adr/ADR-0007-token-lean-agent-workflow.md)):
+
+| `review:` | Mechanism | For |
+| --- | --- | --- |
+| `light` | reviewer subagent (Haiku) | types, parsing, config, wiring — most tickets |
+| `standard` | reviewer subagent (Sonnet) | ordinary logic |
+| `deep` | reviewer subagent + `/code-review low` | hand evaluation, betting rules, pot and showdown, card secrecy, chip conservation |
+
+> **`/code-review high` is never run from a loop.** Measured on one documentation PR: 132 379
+> tokens, 18 agents, session limit exhausted, and an inconclusive result because 14 agents died
+> mid-run. It stays available as a deliberate, human-initiated act.
+
+It is not a formality bolted on at the end — it is the only place where the work is examined by
+something that did not write it.
 
 That distinction is the whole point. The agent that wrote the code is the worst possible
 reviewer of it: it already believes the approach is right, it has forgotten which parts it was
@@ -103,40 +114,89 @@ it gets recorded as one.
 
 ### Who merges
 
-The human merges. An agent may open the PR, run the review, fix what it finds, and push again,
-but the squash-merge button is the one place a person stays in the loop by design. It is the
-cheapest possible checkpoint: one decision per ticket, on a diff that has already been reviewed
-and is already green.
+**Nobody. The PR merges itself** once every objective gate is green — `verify` commands exit 0,
+the reviewer returns `pass`, and CI is green. Superseding
+[`ADR-0006`](adr/ADR-0006-mandatory-review-gate.md); reasoning in
+[`ADR-0007`](adr/ADR-0007-token-lean-agent-workflow.md).
+
+Stated plainly, because it is the riskiest decision in this document: **no human reads the code
+before it reaches `develop`.** A subtly wrong poker rule now merges silently rather than being
+caught by someone reading the diff.
+
+What carries that risk instead:
+
+- the gates are objective, not opinions — an exit code, not a judgement,
+- one squashed commit per ticket, so any merge is one `git revert` away,
+- the tests point at exactly the failures a human skim would miss anyway: chip conservation,
+  determinism, evaluator agreement against a brute-force oracle, and the assertion that folded
+  hole cards appear in no event.
+
+If a wrong rule ever does reach `develop`, the metrics in `tasks/BOARD.md` are what should show
+it, and the correct response is to move correctness-critical tickets back behind a human merge.
 
 ## The roles
 
-Not seven agents running at once — one at a time, each with a narrow brief. Running many
-agents in parallel over a shared codebase costs more and produces merge pain, which is exactly
-the wrong trade for a solo project on a personal subscription.
+Three agents, run **strictly one at a time**. Parallel agents over a shared codebase cost more,
+conflict, and leave half-finished work in flight — the wrong trade entirely for a solo project on
+a personal subscription.
 
-| Role | Input | Output |
-| --- | --- | --- |
-| **Architect** | a problem or a story | an ADR, module boundaries, interfaces |
-| **Planner** | an epic or story | stories and tasks, split until each is small |
-| **Coder** | one task | the implementation and its tests |
-| **Reviewer** | a diff | findings on correctness, design, naming |
-| **Tester** | a module | property-based and edge-case tests |
-| **Poker expert** | engine code | rule correctness: min-raise, split pots, the wheel, all-in caps |
-| **Security** | server code | trust boundaries, information leaks, replay and race conditions |
+| Role | Model | Runs | Sees |
+| --- | --- | --- | --- |
+| **Planner** | Opus, high effort | once per story | the story, its epic, 2–3 linked docs |
+| **Coder** | Haiku (promoted to Sonnet on failure) | once per ticket | one ticket + the ≤5 files it names |
+| **Reviewer** | Haiku, or Sonnet when `review: standard` | once per ticket | the diff + the ticket |
 
-The **poker expert** role is not decoration. Most bugs in a poker engine are not crashes; they
-are rules that are subtly wrong and silently produce plausible results.
+Expensive reasoning happens **once**, in the planner, and is frozen into tickets that cheap
+agents consume. There is deliberately no mid-level planner: it would pay a second cold start to
+re-derive what the first already knows.
+
+The driver is a **scheduler, not a participant**. It reads no source, writes no code, reviews no
+diff, and keeps one line per finished ticket — so its context stays flat across an epic instead
+of growing with it.
+
+Full design and the measurements behind it:
+[`ADR-0007`](adr/ADR-0007-token-lean-agent-workflow.md).
+
+## Commands
+
+| Command | Does |
+| --- | --- |
+| `/build-epic EPIC-01` | Plans each story, then runs its tickets to merged PRs. Stops only for decisions. |
+| `/next-ticket [ID]` | One ticket, end to end. |
+| `/plan-story STORY-0102` | Opus planning pass over one story. Run before its tickets. |
 
 ## Hard limits
 
-These are enforced by habit and by review, and violating one means the ticket was wrong:
-
 | Limit | Value |
 | --- | --- |
-| Changed lines per task | ≤ 300 |
-| Files in context | ≤ 10 |
-| Tasks per PR | 1 |
-| Undocumented architectural decisions | 0 |
+| Changed lines | **XS ≤ 40, S ≤ 120.** There is no `M` |
+| Files touched | **≤ 3** |
+| Files readable | **≤ 5, named in the ticket** |
+| Tickets in flight | **1** |
+| Coder dispatches before a ticket is blocked | 3 |
+| Undocumented decisions | 0 |
+
+## Done is an exit code
+
+Every ticket carries commands that settle whether it is finished:
+
+```yaml
+verify:
+  - ./gradlew :poker-engine:test --tests '*CardTest'
+```
+
+Acceptance criteria map one-to-one onto named tests, and the ticket names those tests so the
+coder writes the thing the gate runs. **A criterion that cannot be a passing test is not a
+criterion** — it is a ticket that needs sharpening or splitting. "Handles edge cases correctly"
+is the exact phrasing that makes a cheap model fail repeatedly and expensively.
+
+## Model promotion
+
+A ticket runs at its declared `tier`. Two `verify` failures → the driver rewrites it to
+`tier: sonnet`, retries, and commits that change with the work. Three → `blocked`.
+
+Guessing low is the cheaper mistake, and the record of which tickets Haiku could not handle is
+real data for the case study rather than speculation.
 
 ## Permissions
 
