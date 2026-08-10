@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010103
 title: Enforce that poker-engine depends on nothing
 type: task
-status: ready
+status: done
 parent: STORY-0101
 module: poker-engine
 estimate: XS

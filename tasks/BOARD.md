@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `TASK-010103` is next.
+**Now:** `EPIC-01` in flight via `/build-epic`. `TASK-010104` is next.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -50,10 +50,11 @@ private repository. Until it clears, the branch model is convention, not enforce
 | **[STORY-0101](stories/STORY-0101-engine-module-scaffold.md)** Module and build scaffold — *schema 2* | | | ready |
 | | [TASK-010101](tasks/TASK-010101-gradle-wrapper-and-root-build.md) Gradle wrapper, settings, catalog | S | **done** |
 | | [TASK-010102](tasks/TASK-010102-poker-engine-module.md) poker-engine module + running test | XS | **done** |
-| | [TASK-010103](tasks/TASK-010103-engine-dependency-rule.md) Enforce engine depends on nothing | XS | **ready** |
+| | [TASK-010103](tasks/TASK-010103-engine-dependency-rule.md) Enforce engine depends on nothing | XS | **done** |
 | | [TASK-010104](tasks/TASK-010104-ktlint-and-detekt.md) ktlint and detekt | S | **ready** |
 | | [TASK-010105](tasks/TASK-010105-kotest-property-testing.md) kotest property testing | XS | **ready** |
 | | [TASK-010106](tasks/TASK-010106-build-ci-workflow.md) Build and test CI workflow | XS | backlog |
+| | [TASK-010107](tasks/TASK-010107-configuration-cache-safe-checks.md) Config-cache-safe checkNoDependencies | XS | **ready** |
 | **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle | | | ready |
 | | [TASK-010201](tasks/TASK-010201-card-rank-suit.md) Rank, Suit, Card | S | backlog |
 | | [TASK-010202](tasks/TASK-010202-card-notation.md) Poker notation parse and format | S | backlog |
@@ -88,7 +89,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**35 tasks total.** `STORY-0101` is migrated to schema 2; stories 0102–0108 are still schema 1
+**36 tasks total.** `STORY-0101` is migrated to schema 2; stories 0102–0108 are still schema 1
 and get split by `/plan-story` just before they are worked. Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
 written against types that do not exist yet, and specifying them any earlier would mean
 rewriting them.
@@ -111,7 +112,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 2 / 32 | 3 / 35 |
+| Tasks completed | 3 / 33 | 4 / 36 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
