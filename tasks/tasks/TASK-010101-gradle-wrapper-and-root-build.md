@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010101
 title: Gradle wrapper, settings and version catalog
 type: task
-status: ready
+status: done
 parent: STORY-0101
 module: build
 estimate: S

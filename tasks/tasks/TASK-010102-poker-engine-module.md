@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010102
 title: poker-engine module with a running test
 type: task
-status: backlog
+status: ready
 parent: STORY-0101
 module: poker-engine
 estimate: XS
