@@ -1,0 +1,8 @@
+build:
+  maxIssues: 0
+
+output-reports:
+  active: true
+
+console-reports:
+  active: true
