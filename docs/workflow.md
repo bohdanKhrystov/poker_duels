@@ -35,33 +35,78 @@ Tickets are hierarchical: **Epic → Story → Task**. Only tasks get implemente
 ## The loop
 
 ```
-   ┌──────────────────────────────────────────────────┐
-   │                                                  │
-   ▼                                                  │
-pick the next `ready` task                            │
-   │                                                  │
-   ├─ read: the task, the 2–3 docs it links, the      │
-   │        files it names.  Nothing else.            │
-   │                                                  │
-   ├─ branch:  feature/TASK-XXXXXX-slug               │
-   │                                                  │
-   ├─ implement + tests, in one pass                  │
-   │                                                  │
-   ├─ run the build and the tests locally             │
-   │                                                  │
-   ├─ open a PR into develop                          │
-   │                                                  │
-   ├─ review pass ─── findings? ──► fix ──┐           │
-   │                                      │           │
-   ├─ squash merge, branch deleted  ◄─────┘           │
-   │                                                  │
-   ├─ ticket → done, BOARD.md updated                 │
-   │                                                  │
-   └─ discard the context entirely ───────────────────┘
+   ┌────────────────────────────────────────────────────────┐
+   │                                                        │
+   ▼                                                        │
+ 1 pick the next startable task        status → in-progress │
+   │                                                        │
+ 2 read: the task, the 2–3 docs it links, the files it      │
+   │  names.  Nothing else.                                 │
+   │                                                        │
+ 3 branch:  <type>/TASK-XXXXXX-slug   from develop          │
+   │                                                        │
+ 4 implement + tests, in one pass                           │
+   │                                                        │
+ 5 run the build and the tests locally — green before       │
+   │  anything leaves the machine                           │
+   │                                                        │
+ 6 update the ticket and BOARD.md in the same commit        │
+   │                                                        │
+ 7 push, open a PR into develop        status → in-review   │
+   │                                                        │
+ 8 /code-review          ◄── mandatory, never skipped       │
+   │      │                                                 │
+   │      └── findings? ──► fix, push, review again ──┐     │
+   │                                                  │     │
+ 9 wait for CI to pass                          ◄─────┘     │
+   │                                                        │
+10 squash merge into develop, head branch deleted           │
+   │                                                        │
+11 ticket → done, BOARD.md updated                          │
+   │                                                        │
+12 discard the context entirely ────────────────────────────┘
 ```
 
-That last step matters as much as the others. A task is finished when the agent could forget
-it existed and the repository would still tell the whole story.
+**A task is not finished when the code is written. It is finished when its pull request is
+reviewed, green, and merged into `develop`.** There is no other definition, and there is no
+state in which a task is "done except for the PR". If the PR is not merged, the task is
+`in-review`, and the next task does not start.
+
+Step 12 matters as much as the rest. A task is complete when the agent could forget it ever
+existed and the repository would still tell the whole story.
+
+## The review gate
+
+**Every pull request is reviewed before it merges. No exceptions, including for documentation,
+including for one-line changes, including when the author is certain it is fine.**
+
+Review is run with the `/code-review` command against the PR's diff. It is not a formality
+bolted on at the end — it is the only place where the work is examined by something that did
+not write it.
+
+That distinction is the whole point. The agent that wrote the code is the worst possible
+reviewer of it: it already believes the approach is right, it has forgotten which parts it was
+unsure about, and it will read what it meant rather than what it wrote. A reviewer starting
+from the diff alone has none of that baggage.
+
+The rule for handling findings:
+
+| Finding | Action |
+| --- | --- |
+| Real defect in this diff | Fix it in this PR, push, review again |
+| Real problem outside this ticket's scope | New ticket in `backlog`. Do **not** fix it here |
+| Disagreement with the finding | Say why, in the PR. Do not silently ignore it |
+
+A review that returns nothing is a normal outcome and does not mean the review was skippable.
+A review that is skipped is a process failure, and — since these numbers feed the case study —
+it gets recorded as one.
+
+### Who merges
+
+The human merges. An agent may open the PR, run the review, fix what it finds, and push again,
+but the squash-merge button is the one place a person stays in the loop by design. It is the
+cheapest possible checkpoint: one decision per ticket, on a diff that has already been reviewed
+and is already green.
 
 ## The roles
 

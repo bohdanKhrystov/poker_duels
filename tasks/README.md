@@ -132,16 +132,25 @@ whole system exists to prevent.
 ## Lifecycle
 
 ```
-write ticket                          status: backlog
-specify it fully                      status: ready
-branch feature/TASK-XXXXXX-slug       status: in-progress
-implement + tests
-open PR into develop                  status: in-review
-squash merge                          status: done  →  update BOARD.md
+write ticket                              status: backlog
+specify it fully, dependencies done       status: ready
+branch <type>/TASK-XXXXXX-slug            status: in-progress
+implement + tests, green locally
+push, open PR into develop                status: in-review
+/code-review  ──► fix findings ──► push ──┐
+                                          │
+CI green  ◄───────────────────────────────┘
+squash merge into develop                 status: done  →  update BOARD.md
 ```
 
 The status change is part of the same PR as the work. A ticket whose status disagrees with
 reality is a broken build in spirit, if not in CI.
+
+**A task reaches `done` only by way of a merged pull request into `develop`, and only after
+`/code-review` has run on it.** There is no path from `in-progress` to `done` that skips
+either. If the PR is open, the ticket is `in-review` — and the next task does not start.
+
+Full reasoning: [`docs/workflow.md`](../docs/workflow.md#the-review-gate).
 
 ## Discovering new work mid-task
 

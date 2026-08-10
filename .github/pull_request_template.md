@@ -26,10 +26,19 @@ The title becomes the permanent squash commit. Make it good.
 <!-- Anything a reviewer should look at hardest, or a decision worth challenging.
      Delete if there is nothing. -->
 
+## Review
+
+<!-- Mandatory. Every PR, no exceptions. Summarise the outcome:
+     "clean", or what was found and how it was handled. -->
+
+`/code-review` result:
+
 ---
 
 - [ ] Every acceptance criterion in the ticket is met
 - [ ] Tests are included and pass locally
+- [ ] **`/code-review` has been run on this diff, and findings are fixed or answered**
+- [ ] CI is green
 - [ ] The ticket's `status` is updated in this PR
 - [ ] `tasks/BOARD.md` is updated
 - [ ] Nothing outside the ticket's scope was changed — anything discovered along the way became

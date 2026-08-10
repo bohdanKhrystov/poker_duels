@@ -23,7 +23,7 @@ small, which is the constraint the whole project is organised around.
 
 ## Scope
 
-- Branch model, protection rules, and the squash-merge policy.
+- Branch model, protection rules, the squash-merge policy and the mandatory review gate.
 - The in-repo ticket system: hierarchy, IDs, templates, statuses, lifecycle.
 - CI that validates the backlog's structure.
 - The founding documents: vision, architecture, duel rules, workflow.
@@ -50,6 +50,7 @@ small, which is the constraint the whole project is organised around.
 - [ ] `main` and `develop` exist and are protected, with squash merge as the only option.
 - [ ] A ticket can be picked up, worked, and merged by following the written process alone.
 - [ ] CI rejects a malformed backlog.
+- [ ] Every task ends in a reviewed, merged pull request, and the rule is documented.
 - [ ] Every founding decision has an ADR.
 
 ## Metrics

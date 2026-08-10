@@ -50,6 +50,7 @@ Each with the reason it was not chosen.
 | [0003](ADR-0003-technology-stack.md) | Technology stack | Accepted |
 | [0004](ADR-0004-branching-and-ticket-workflow.md) | Branching and ticket workflow | Accepted |
 | [0005](ADR-0005-analysis-behind-an-interface.md) | Hand analysis sits behind an interface | Accepted |
+| [0006](ADR-0006-mandatory-review-gate.md) | Every task ends in a reviewed, merged pull request | Accepted |
 
 ## Open decisions
 

@@ -43,6 +43,8 @@ creates it — everything after it can and must.
 - [ ] `tasks/` holds the conventions, templates, the board, and a specified first epic.
 - [ ] The ticket linter runs on every pull request and fails on a malformed backlog.
 - [ ] `CLAUDE.md` alone is enough to orient an agent that has read nothing else.
+- [ ] A task can only reach `done` via a reviewed pull request merged into `develop`, and that
+      rule is written down in every place an agent might look.
 
 ## Out of scope
 

@@ -66,5 +66,6 @@ the one assertion that keeps this architecture from rotting.
 
 ## Definition of done
 
-Standard, per [`tasks/README.md`](../README.md): build green, tests green, status `done`,
-`BOARD.md` updated, squash-merged into `develop` by a PR linking this ticket.
+Standard, per [`tasks/README.md`](../README.md): build green, tests green, `/code-review` run
+with findings fixed or answered, CI green, status `done`, `BOARD.md` updated, and
+**squash-merged into `develop`** by a PR linking this ticket. Not done until the PR is merged.

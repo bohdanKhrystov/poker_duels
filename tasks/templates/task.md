@@ -52,5 +52,6 @@ reading — never "read the architecture docs" in general.
 ## Definition of done
 
 Standard for every task — do not restate it in the ticket:
-build passes, tests pass, ticket status is `done`, `BOARD.md` updated, squash-merged into
-`develop` via a PR that links this ticket.
+build green, tests green, `/code-review` run with findings fixed or answered, CI green, ticket
+status `done`, `BOARD.md` updated, and **squash-merged into `develop`** by a PR linking this
+ticket. A task is not done until its PR is merged.

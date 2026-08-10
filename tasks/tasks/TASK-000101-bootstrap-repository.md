@@ -52,6 +52,11 @@ process being created. Everything from here follows the rules it sets down.
 - [x] Exactly one task is `ready`, and `BOARD.md` names it.
 - [x] Every architectural decision carried over from the design conversation has an ADR.
 - [x] `DEC-001` is registered as an open decision rather than silently answered.
+- [x] The rule that a task ends in a reviewed, merged PR is documented in `CONTRIBUTING.md`,
+      `docs/workflow.md`, `tasks/README.md`, the task template and the PR template, and recorded
+      as `ADR-0006`.
+- [ ] `/code-review` has been run on this PR and its findings fixed or answered.
+- [ ] This PR is squash-merged into `develop`.
 
 ## Tests
 
@@ -61,5 +66,6 @@ were unfinished — which is how those four came to be corrected before this PR 
 
 ## Definition of done
 
-Standard, per [`tasks/README.md`](../README.md): build green, tests green, status `done`,
-`BOARD.md` updated, squash-merged into `develop` by a PR linking this ticket.
+Standard, per [`tasks/README.md`](../README.md): build green, tests green, `/code-review` run
+with findings fixed or answered, CI green, status `done`, `BOARD.md` updated, and
+**squash-merged into `develop`** by a PR linking this ticket. Not done until the PR is merged.

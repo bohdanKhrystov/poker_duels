@@ -94,4 +94,5 @@ recording if they are recorded when unflattering.
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
 | Tasks re-scoped mid-flight | — | — |
+| Reviews skipped (must stay 0) | 0 | 0 |
 | Manual human edits | — | — |

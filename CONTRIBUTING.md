@@ -59,17 +59,49 @@ chore(ci): add ticket frontmatter linter (TASK-000102)
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `build`, `ci`.
 Scopes follow the module: `engine`, `server`, `web`, `cli`, `ai`, `analysis`, `ci`, `tasks`, `docs`.
 
+## Review is mandatory
+
+**Every pull request is reviewed before it merges. No exceptions** — not for documentation, not
+for one-line changes, not when the author is sure it is fine.
+
+Run it with:
+
+```sh
+/code-review
+```
+
+Handling what it finds:
+
+| Finding | Action |
+| --- | --- |
+| Real defect in this diff | Fix it here, push, review again |
+| Real problem outside this ticket | Open a new ticket in `backlog`. Do **not** fix it here |
+| You disagree | Say why in the PR. Never silently ignore it |
+
+A clean review is a normal result. A skipped review is a process failure — and because these
+numbers feed the case study in `docs/workflow.md`, it gets recorded as one.
+
+**The human presses merge.** An agent opens the PR, runs the review, fixes findings and pushes
+again; the squash-merge button stays with a person. One decision per ticket, on a diff that is
+already reviewed and already green.
+
 ## The loop for one ticket
 
 ```
-pick ticket           status: ready → in-progress
+pick ticket                                  status: in-progress
   └─ branch from develop
   └─ implement + tests
-  └─ open PR into develop, link the ticket   status: in-review
-  └─ review (self or reviewing agent)
-  └─ squash merge, branch deleted            status: done
-  └─ update tasks/BOARD.md
+  └─ build and tests green locally
+  └─ update the ticket and BOARD.md in the same commit
+  └─ push, open PR into develop, link the ticket    status: in-review
+  └─ /code-review  ──► findings? ──► fix, push, review again
+  └─ CI green
+  └─ squash merge, branch deleted                   status: done
 ```
+
+**A task is finished when its PR is merged into `develop` — not when the code is written.**
+There is no "done except for the PR". While the PR is open the ticket is `in-review`, and the
+next task does not start.
 
 If you discover work that is out of the ticket's scope: **do not do it**. Write a new ticket in
 `tasks/` and carry on with the one you have. Scope creep is the main way this process fails.
