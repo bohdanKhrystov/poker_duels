@@ -1,0 +1,48 @@
+# Gradle / JVM
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!src/**/build/
+out/
+*.class
+*.jar
+!gradle/wrapper/*.jar
+*.log
+*.hprof
+
+# Kotlin
+.kotlin/
+
+# Node / web client
+node_modules/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+.npm/
+.pnpm-store/
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+local.properties
+*.pem
+*.key
+*.p12
+secrets/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code — settings.local.json holds per-machine overrides and is not shared
+.claude/settings.local.json
