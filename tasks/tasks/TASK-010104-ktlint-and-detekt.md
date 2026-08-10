@@ -3,11 +3,11 @@ schema: 2
 id: TASK-010104
 title: Wire ktlint and detekt into check
 type: task
-status: ready
+status: done
 parent: STORY-0101
 module: build
 estimate: S
-tier: haiku
+tier: sonnet
 review: light
 files_touched: 3
 labels: [build, quality]
