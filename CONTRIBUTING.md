@@ -79,11 +79,10 @@ Scopes follow the module: `engine`, `server`, `web`, `cli`, `ai`, `analysis`, `c
 **Every pull request is reviewed before it merges. No exceptions** — not for documentation, not
 for one-line changes, not when the author is sure it is fine.
 
-Run it with:
-
-```sh
-/code-review
-```
+Review effort is priced by the ticket's `review:` field — `light` and `standard` use a reviewer
+subagent, `deep` adds `/code-review low`. **Never run `/code-review high` from a loop**: measured
+at 132k tokens on a single documentation PR. See
+[`ADR-0007`](docs/adr/ADR-0007-token-lean-agent-workflow.md).
 
 Handling what it finds:
 
@@ -96,9 +95,10 @@ Handling what it finds:
 A clean review is a normal result. A skipped review is a process failure — and because these
 numbers feed the case study in `docs/workflow.md`, it gets recorded as one.
 
-**The human presses merge.** An agent opens the PR, runs the review, fixes findings and pushes
-again; the squash-merge button stays with a person. One decision per ticket, on a diff that is
-already reviewed and already green.
+**The PR merges itself** when `verify` exits 0, the review passes and CI is green. No human reads
+the code before it lands on `develop` — a deliberate trade for autonomy, argued in full in
+[`ADR-0007`](docs/adr/ADR-0007-token-lean-agent-workflow.md). Every ticket is one squashed commit,
+so a bad merge is one `git revert`.
 
 ## The loop for one ticket
 
@@ -109,9 +109,10 @@ pick ticket                                  status: in-progress
   └─ build and tests green locally
   └─ update the ticket and BOARD.md in the same commit
   └─ push, open PR into develop, link the ticket    status: in-review
-  └─ /code-review  ──► findings? ──► fix, push, review again
+  └─ verify commands exit 0
+  └─ review (light / standard / deep) ──► findings? ──► fix, push, re-review
   └─ CI green
-  └─ squash merge, branch deleted                   status: done
+  └─ auto squash merge, branch deleted              status: done
 ```
 
 **A task is finished when its PR is merged into `develop` — not when the code is written.**

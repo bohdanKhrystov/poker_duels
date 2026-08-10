@@ -1,57 +1,69 @@
 ---
+schema: 2
 id: TASK-EESSTT
 title: Imperative one-line description
 type: task
 status: backlog
 parent: STORY-EESS
 module: poker-engine
-estimate: S
+estimate: XS
+tier: haiku
+review: light
+files_touched: 2
 labels: []
 depends_on: []
+verify:
+  - ./gradlew :poker-engine:test --tests '*TheTestClass'
 ---
 
 ## Goal
 
-One sentence. What will be true when this is merged that is not true now.
+One sentence. What is true after this merges that is not true now.
 
-## Context
+## Files
 
-Only what the agent cannot work out from the files. Link the two or three documents worth
-reading — never "read the architecture docs" in general.
+Everything the implementer may open. **Five at most** — this list is the context budget.
 
-- [`docs/...`](../../docs/...) — why it is relevant
+| File | Action |
+| --- | --- |
+| `poker-engine/src/main/kotlin/.../Thing.kt` | create |
+| `poker-engine/src/test/kotlin/.../ThingTest.kt` | create |
 
 ## Scope
 
-- The specific things to build.
-- Concrete enough that "done" is not a judgement call.
+- Two to four bullets. Concrete enough that "done" is not a judgement call.
 
 ## Out of scope
 
 - The neighbouring things that will be tempting.
 - Where they live instead: `TASK-......`, or "not yet ticketed".
 
-## Files
+## Tests
 
-| File | Action |
+Name the class and each test method. The `verify` command runs these, so the names here and the
+names there must match exactly.
+
+`ThingTest`
+
+| Test | Proves |
 | --- | --- |
-| `path/to/File.kt` | create |
-| `path/to/Other.kt` | modify |
+| `doesTheObviousThing` | … |
+| `rejectsTheBadInput` | … |
 
 ## Acceptance criteria
 
-- [ ] Checkable, not a matter of taste.
-- [ ] Each one independently verifiable.
-- [ ] Named edge cases that must behave correctly.
+One line per test above, phrased so a small model can check it by reading a test report rather
+than by forming an opinion.
 
-## Tests
+- [ ] `ThingTest.doesTheObviousThing` passes
+- [ ] `ThingTest.rejectsTheBadInput` passes
+- [ ] Every command in `verify:` exits 0
 
-- `TestClassName` — what it proves.
-- Property: an invariant that must hold across generated input.
+> Never write a criterion like *"handles edge cases correctly"* or *"is well designed"*. If it
+> cannot be a passing test, it cannot be a criterion — sharpen it or split the ticket.
 
 ## Definition of done
 
-Standard for every task — do not restate it in the ticket:
-build green, tests green, `/code-review` run with findings fixed or answered, CI green, ticket
-status `done`, `BOARD.md` updated, and **squash-merged into `develop`** by a PR linking this
-ticket. A task is not done until its PR is merged.
+Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket:
+`verify` green, review passed, CI green, status `done`, `BOARD.md` updated, squash-merged into
+`develop`. Not done until the PR is merged.
