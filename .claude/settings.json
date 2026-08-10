@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote:*)",
+      "Bash(git blame:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git describe:*)",
+      "Bash(git shortlog:*)",
+      "Bash(git stash list:*)",
+      "Bash(git config --get:*)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout -b:*)",
+
+      "Bash(./gradlew:*)",
+      "Bash(gradle --version)",
+
+      "Bash(python3 .github/scripts/lint_tickets.py:*)",
+
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm ci:*)",
+      "Bash(npm install:*)",
+      "Bash(npm ls:*)",
+      "Bash(pnpm:*)",
+      "Bash(yarn:*)",
+
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr status:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh workflow list:*)",
+      "Bash(gh workflow view:*)",
+      "Bash(gh auth status:*)",
+
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(rg:*)",
+      "Bash(fd:*)",
+      "Bash(jq:*)",
+      "Bash(file:*)",
+      "Bash(which:*)",
+      "Bash(java -version)",
+      "Bash(node --version)",
+      "Bash(python3 --version)",
+
+      "WebFetch(domain:kotlinlang.org)",
+      "WebFetch(domain:docs.gradle.org)",
+      "WebFetch(domain:ktor.io)",
+      "WebFetch(domain:react.dev)",
+      "WebFetch(domain:docs.github.com)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fdx:*)",
+      "Bash(rm -rf /:*)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  }
+}

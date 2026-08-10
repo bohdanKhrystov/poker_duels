@@ -1,0 +1,25 @@
+name: tickets
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: tickets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint backlog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate ticket structure
+        run: python3 .github/scripts/lint_tickets.py
