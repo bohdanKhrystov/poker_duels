@@ -18,10 +18,25 @@ feature/TASK-010301-five-card-evaluator
 
 | Branch | Purpose | Protected |
 | --- | --- | --- |
-| `main` | Released code. Only ever receives release PRs from `develop`. | yes |
-| `develop` | Integration branch and the default target for all work. | yes |
+| `main` | Released code. Only ever receives release PRs from `develop`. | not yet — see below |
+| `develop` | Integration branch and the default target for all work. | not yet — see below |
 
-Neither protected branch accepts direct pushes, from anyone, including the repository owner.
+Neither branch accepts direct pushes. **Follow that rule even though nothing currently enforces
+it.**
+
+> ### ⚠ Protection is not enforced yet
+>
+> GitHub refuses branch protection and rulesets on a private repository on the free plan
+> (`403 Upgrade to GitHub Pro or make this repository public`). `poker_duels` is both, so today
+> the branch model is convention rather than enforcement — a direct push to `develop` would
+> succeed.
+>
+> Tracked as [`TASK-000102`](tasks/tasks/TASK-000102-enable-branch-protection.md), blocked on
+> either making the repository public or upgrading to Pro. The rules are written and ready to
+> apply the moment the constraint lifts.
+>
+> What **is** already enforced, because it needs no paid plan: `develop` is the default branch,
+> squash merge is the only permitted merge method, and head branches are deleted on merge.
 
 ### Working branch names
 

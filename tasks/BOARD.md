@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `TASK-010101` — Gradle multi-module skeleton.
+**Now:** `TASK-000101` — in review. Next startable: `TASK-010101`, Gradle multi-module skeleton.
 
 ---
 
@@ -10,6 +10,7 @@ The index. Conventions live in [`README.md`](README.md).
 
 | ID | Title | Status | Milestone |
 | --- | --- | --- | --- |
+| [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **ready** | v0.1 |
 | EPIC-02 | Duel server — rooms, WebSocket protocol, persistence | *not written* | v0.1 |
 | EPIC-03 | Web client — table, lobby, duel flow | *not written* | v0.1 |
@@ -23,6 +24,19 @@ The index. Conventions live in [`README.md`](README.md).
 
 Numbers 02–10 are **reserved**, not planned in detail. Epics are written when the one before
 them is close to done, because writing them earlier means rewriting them.
+
+---
+
+## EPIC-00 — Ways of working
+
+| Story | Task | Est | Status |
+| --- | --- | --- | --- |
+| **[STORY-0001](stories/STORY-0001-repository-and-ticket-system.md)** Repository, docs, tickets | | | ready |
+| | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **in-review** |
+| | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | blocked |
+
+`TASK-000102` is blocked by GitHub: protection and rulesets both require a paid plan on a
+private repository. Until it clears, the branch model is convention, not enforcement.
 
 ---
 
@@ -68,7 +82,7 @@ them is close to done, because writing them earlier means rewriting them.
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**29 tasks.** Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
+**31 tasks total** (29 here, 2 in EPIC-00). Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
 written against types that do not exist yet, and specifying them any earlier would mean
 rewriting them.
 
@@ -79,6 +93,7 @@ rewriting them.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
+| — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
 
 ---
 
@@ -89,7 +104,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 0 / 29 | 0 / 29 |
+| Tasks completed | 0 / 29 | 0 / 31 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |

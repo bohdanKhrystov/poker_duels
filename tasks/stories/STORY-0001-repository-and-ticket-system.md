@@ -35,10 +35,12 @@ creates it — everything after it can and must.
 | ID | Title | Status |
 | --- | --- | --- |
 | [TASK-000101](../tasks/TASK-000101-bootstrap-repository.md) | Bootstrap repository, documents and ticket system | in-review |
+| [TASK-000102](../tasks/TASK-000102-enable-branch-protection.md) | Enable branch protection on main and develop | blocked |
 
 ## Acceptance criteria
 
 - [ ] `main` and `develop` are protected; direct pushes are refused for everyone.
+      *Blocked by the free-plan/private-repo constraint — see TASK-000102.*
 - [ ] Squash merge is the only merge method, and head branches delete on merge.
 - [ ] `tasks/` holds the conventions, templates, the board, and a specified first epic.
 - [ ] The ticket linter runs on every pull request and fails on a malformed backlog.
