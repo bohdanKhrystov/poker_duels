@@ -54,29 +54,44 @@ Every ticket starts with YAML frontmatter. CI rejects anything malformed — see
 
 ```yaml
 ---
+schema: 2
 id: TASK-010302
 title: Evaluate a five-card hand into a comparable rank
 type: task
 status: ready
 parent: STORY-0103
 module: poker-engine
-estimate: M
+estimate: S
+tier: sonnet
+review: deep
+files_touched: 2
 labels: [engine, rules]
 depends_on: [TASK-010301]
+verify:
+  - ./gradlew :poker-engine:test --tests '*ReferenceHandEvaluatorTest'
 ---
 ```
 
 | Field | Epic | Story | Task | Notes |
 | --- | --- | --- | --- | --- |
+| `schema` | — | — | required on new tasks | `2`. Absent means legacy — see below |
 | `id` | required | required | required | must match the filename |
 | `title` | required | required | required | imperative, no trailing period |
 | `type` | required | required | required | `epic` \| `story` \| `task` |
 | `status` | required | required | required | see below |
 | `parent` | forbidden | required | required | must exist and be one level up |
-| `estimate` | — | — | required | `S` ≤ 100 lines, `M` ≤ 300, `L` → split it |
+| `estimate` | — | — | required | **`XS` ≤ 40 lines, `S` ≤ 120.** No `M`, no `L` |
+| `tier` | — | — | required (schema 2) | `haiku` (default), `sonnet`, `opus` |
+| `review` | — | — | required (schema 2) | `light`, `standard`, `deep` |
+| `files_touched` | — | — | required (schema 2) | 1–3, enforced |
+| `verify` | — | — | required (schema 2) | shell commands; **all must exit 0** |
 | `module` | optional | optional | optional | `poker-engine`, `poker-server`, `web-client`, … |
 | `labels` | optional | optional | optional | free-form list |
 | `depends_on` | — | optional | optional | ticket IDs that must be `done` first |
+
+> **Legacy tickets.** Tasks without `schema: 2` are schema 1 and still validate with the old
+> `S`/`M` estimates, so stories migrate one at a time. Everything new is schema 2. Run
+> `/plan-story <STORY-ID>` before working a story whose tickets are still legacy.
 
 ### Statuses
 
