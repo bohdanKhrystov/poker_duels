@@ -4,6 +4,7 @@ import duels.poker.engine.card.Card
 import duels.poker.engine.card.Rank.ACE
 import duels.poker.engine.card.Rank.KING
 import duels.poker.engine.card.Rank.SEVEN
+import duels.poker.engine.card.Rank.SIX
 import duels.poker.engine.card.cards
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -39,6 +40,17 @@ internal class SevenCardEvaluationTest {
         assertEquals(HandCategory.STRAIGHT_FLUSH, best.rank.category)
         assertEquals(listOf(ACE), best.rank.tiebreaks)
         assertTrue(Card.parse("Ah") in best.cards)
+    }
+
+    @Test
+    fun theBestFiveAreNotAlwaysTheFiveHighestCards() {
+        // The five highest-ranked cards here are 6-6-6-5-4 (three of a kind), but the straight
+        // 2-3-4-5-6 outranks it. A shortcut that sorts by rank and takes the top five would miss
+        // it, so this pins the full rank and the exact cards, not just the category.
+        val best = ReferenceHandEvaluator.bestOfSeven(cards("2h 3h 4h 5h 6c 6d 6s"))
+
+        assertEquals(HandRank(HandCategory.STRAIGHT, listOf(SIX)), best.rank)
+        assertEquals(cards("2h 3h 4h 5h 6c"), best.cards)
     }
 
     @Test
