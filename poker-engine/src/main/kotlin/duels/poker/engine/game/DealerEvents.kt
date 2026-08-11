@@ -57,3 +57,42 @@ public data class HandRevealed(
         require(cards.toSet().size == cards.size) { "cards must be distinct, were $cards" }
     }
 }
+
+/**
+ * Chips nobody could cover, going back to the seat that bet them. Always before [PotAwarded].
+ * The [amount] is a delta of chips moving out of the pot, not a street total.
+ */
+public data class UncalledBetReturned(
+    override val sequence: Int,
+    val seat: Int,
+    val amount: Int,
+) : DealerEvent {
+    init {
+        require(sequence >= 0) { "sequence must be non-negative, was $sequence" }
+        require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
+        require(amount > 0) { "amount must be positive, was $amount" }
+    }
+}
+
+/**
+ * Part or all of the pot going to a seat. A split pot emits one of these per seat.
+ * The [amount] is a delta of chips moving out of the pot, not a street total.
+ */
+public data class PotAwarded(
+    override val sequence: Int,
+    val seat: Int,
+    val amount: Int,
+) : DealerEvent {
+    init {
+        require(sequence >= 0) { "sequence must be non-negative, was $sequence" }
+        require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
+        require(amount > 0) { "amount must be positive, was $amount" }
+    }
+}
+
+/** The hand is over. Always the last event of a hand. */
+public data class HandFinished(override val sequence: Int) : DealerEvent {
+    init {
+        require(sequence >= 0) { "sequence must be non-negative, was $sequence" }
+    }
+}
