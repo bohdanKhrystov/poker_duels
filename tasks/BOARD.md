@@ -55,11 +55,17 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010105](tasks/TASK-010105-kotest-property-testing.md) kotest property testing | XS | **done** |
 | | [TASK-010106](tasks/TASK-010106-build-ci-workflow.md) Build and test CI workflow | XS | **ready** |
 | | [TASK-010107](tasks/TASK-010107-configuration-cache-safe-checks.md) Config-cache-safe checkNoDependencies | XS | **done** |
-| **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle | | | ready |
-| | [TASK-010201](tasks/TASK-010201-card-rank-suit.md) Rank, Suit, Card | S | backlog |
-| | [TASK-010202](tasks/TASK-010202-card-notation.md) Poker notation parse and format | S | backlog |
-| | [TASK-010203](tasks/TASK-010203-rng-and-deck.md) Seeded Rng and immutable Deck | M | backlog |
-| | [TASK-010204](tasks/TASK-010204-determinism-tests.md) Determinism and distribution tests | S | backlog |
+| **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle — *schema 2* | | | ready |
+| | [TASK-010201](tasks/TASK-010201-rank-and-suit.md) Rank and Suit enums | S | **ready** |
+| | [TASK-010202](tasks/TASK-010202-card-value-type.md) Card as a value class | S | backlog |
+| | [TASK-010203](tasks/TASK-010203-card-notation.md) Format and parse poker notation | S | backlog |
+| | [TASK-010204](tasks/TASK-010204-cards-test-helper.md) `cards("As Kd")` test helper | S | backlog |
+| | [TASK-010205](tasks/TASK-010205-splitmix64-rng.md) Rng and SplitMix64Rng | S | backlog |
+| | [TASK-010206](tasks/TASK-010206-immutable-deck.md) Immutable Deck | S | backlog |
+| | [TASK-010207](tasks/TASK-010207-fisher-yates-shuffle.md) Fisher–Yates shuffle | S | backlog |
+| | [TASK-010208](tasks/TASK-010208-shuffle-determinism-test.md) Recorded orderings for two seeds | XS | backlog |
+| | [TASK-010209](tasks/TASK-010209-shuffle-distribution-test.md) Shuffle distribution | S | backlog |
+| | [TASK-010210](tasks/TASK-010210-no-ambient-random-test.md) No ambient randomness, asserted | XS | backlog |
 | **[STORY-0103](stories/STORY-0103-hand-evaluator.md)** Hand evaluator | | | ready |
 | | [TASK-010301](tasks/TASK-010301-hand-rank-model.md) HandCategory and HandRank | S | backlog |
 | | [TASK-010302](tasks/TASK-010302-reference-evaluator.md) Reference five-card evaluator | M | backlog |
@@ -89,7 +95,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**36 tasks total.** `STORY-0101` is migrated to schema 2; stories 0102–0108 are still schema 1
+**42 tasks total.** `STORY-0101` and `STORY-0102` are migrated to schema 2; stories 0103–0108 are still schema 1
 and get split by `/plan-story` just before they are worked. Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
 written against types that do not exist yet, and specifying them any earlier would mean
 rewriting them.

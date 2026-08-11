@@ -38,12 +38,26 @@ enforceable.
 
 ## Tasks
 
-| ID | Title | Status |
-| --- | --- | --- |
-| [TASK-010201](../tasks/TASK-010201-card-rank-suit.md) | Rank, Suit and Card value types | ready |
-| [TASK-010202](../tasks/TASK-010202-card-notation.md) | Parse and format cards in poker notation | ready |
-| [TASK-010203](../tasks/TASK-010203-rng-and-deck.md) | Seeded Rng and an immutable Deck | backlog |
-| [TASK-010204](../tasks/TASK-010204-determinism-tests.md) | Determinism and distribution tests | backlog |
+Schema 2. Waves in brackets: tickets in the same wave touch disjoint files and may run
+concurrently.
+
+| ID | Title | Est | Wave | Status |
+| --- | --- | --- | --- | --- |
+| [TASK-010201](../tasks/TASK-010201-rank-and-suit.md) | Rank and Suit enums | S | 1 | ready |
+| [TASK-010202](../tasks/TASK-010202-card-value-type.md) | Card as a value class | S | 2 | backlog |
+| [TASK-010205](../tasks/TASK-010205-splitmix64-rng.md) | Rng and SplitMix64Rng | S | 2 | backlog |
+| [TASK-010203](../tasks/TASK-010203-card-notation.md) | Format and parse poker notation | S | 3 | backlog |
+| [TASK-010206](../tasks/TASK-010206-immutable-deck.md) | Immutable Deck | S | 3 | backlog |
+| [TASK-010210](../tasks/TASK-010210-no-ambient-random-test.md) | No ambient randomness, asserted | XS | 3 | backlog |
+| [TASK-010204](../tasks/TASK-010204-cards-test-helper.md) | `cards("As Kd")` test helper | S | 4 | backlog |
+| [TASK-010207](../tasks/TASK-010207-fisher-yates-shuffle.md) | Fisher–Yates shuffle | S | 4 | backlog |
+| [TASK-010208](../tasks/TASK-010208-shuffle-determinism-test.md) | Recorded orderings for two seeds | XS | 5 | backlog |
+| [TASK-010209](../tasks/TASK-010209-shuffle-distribution-test.md) | Shuffle distribution | S | 5 | backlog |
+
+The PRNG is SplitMix64, written out in the module: 64 bits of state, one addition and two
+multiplies per draw, and a published reference vector that proves the transliteration is right.
+Bounded draws use rejection sampling, because a plain modulo would make low cards fractionally
+more likely — and a deck is dealt from a bounded draw 51 times per hand.
 
 ## Acceptance criteria
 
