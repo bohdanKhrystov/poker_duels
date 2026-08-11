@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010208
 title: Lock two seeds to their recorded deck orderings
 type: task
-status: backlog
+status: ready
 parent: STORY-0102
 module: poker-engine
 estimate: XS
