@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `TASK-010106` closes `STORY-0101`.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101` is done; `STORY-0102` is in progress.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -47,13 +47,13 @@ private repository. Until it clears, the branch model is convention, not enforce
 
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
-| **[STORY-0101](stories/STORY-0101-engine-module-scaffold.md)** Module and build scaffold — *schema 2* | | | ready |
+| **[STORY-0101](stories/STORY-0101-engine-module-scaffold.md)** Module and build scaffold — *schema 2* | | | **done** |
 | | [TASK-010101](tasks/TASK-010101-gradle-wrapper-and-root-build.md) Gradle wrapper, settings, catalog | S | **done** |
 | | [TASK-010102](tasks/TASK-010102-poker-engine-module.md) poker-engine module + running test | XS | **done** |
 | | [TASK-010103](tasks/TASK-010103-engine-dependency-rule.md) Enforce engine depends on nothing | XS | **done** |
 | | [TASK-010104](tasks/TASK-010104-ktlint-and-detekt.md) ktlint and detekt | S | **done** |
 | | [TASK-010105](tasks/TASK-010105-kotest-property-testing.md) kotest property testing | XS | **done** |
-| | [TASK-010106](tasks/TASK-010106-build-ci-workflow.md) Build and test CI workflow | XS | **ready** |
+| | [TASK-010106](tasks/TASK-010106-build-ci-workflow.md) Build and test CI workflow | XS | **done** |
 | | [TASK-010107](tasks/TASK-010107-configuration-cache-safe-checks.md) Config-cache-safe checkNoDependencies | XS | **done** |
 | **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle — *schema 2* | | | ready |
 | | [TASK-010201](tasks/TASK-010201-rank-and-suit.md) Rank and Suit enums | S | **ready** |
@@ -118,7 +118,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 6 / 33 | 7 / 36 |
+| Tasks completed | 7 / 39 | 8 / 42 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
