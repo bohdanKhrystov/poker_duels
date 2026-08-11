@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010202
 title: Card as a value class over a compact integer encoding
 type: task
-status: ready
+status: done
 parent: STORY-0102
 module: poker-engine
 estimate: S

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010206
 title: Immutable Deck that deals without mutating itself
 type: task
-status: backlog
+status: ready
 parent: STORY-0102
 module: poker-engine
 estimate: S

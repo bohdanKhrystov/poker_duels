@@ -57,11 +57,11 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010107](tasks/TASK-010107-configuration-cache-safe-checks.md) Config-cache-safe checkNoDependencies | XS | **done** |
 | **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle — *schema 2* | | | ready |
 | | [TASK-010201](tasks/TASK-010201-rank-and-suit.md) Rank and Suit enums | S | **done** |
-| | [TASK-010202](tasks/TASK-010202-card-value-type.md) Card as a value class | S | **ready** |
-| | [TASK-010203](tasks/TASK-010203-card-notation.md) Format and parse poker notation | S | backlog |
+| | [TASK-010202](tasks/TASK-010202-card-value-type.md) Card as a value class | S | **done** |
+| | [TASK-010203](tasks/TASK-010203-card-notation.md) Format and parse poker notation | S | **ready** |
 | | [TASK-010204](tasks/TASK-010204-cards-test-helper.md) `cards("As Kd")` test helper | S | backlog |
 | | [TASK-010205](tasks/TASK-010205-splitmix64-rng.md) Rng and SplitMix64Rng | S | **done** |
-| | [TASK-010206](tasks/TASK-010206-immutable-deck.md) Immutable Deck | S | backlog |
+| | [TASK-010206](tasks/TASK-010206-immutable-deck.md) Immutable Deck | S | **ready** |
 | | [TASK-010207](tasks/TASK-010207-fisher-yates-shuffle.md) Fisher–Yates shuffle | S | backlog |
 | | [TASK-010208](tasks/TASK-010208-shuffle-determinism-test.md) Recorded orderings for two seeds | XS | backlog |
 | | [TASK-010209](tasks/TASK-010209-shuffle-distribution-test.md) Shuffle distribution | S | backlog |
@@ -118,7 +118,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 9 / 39 | 10 / 42 |
+| Tasks completed | 10 / 39 | 11 / 42 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
