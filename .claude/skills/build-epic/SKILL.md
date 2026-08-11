@@ -163,6 +163,40 @@ can eat an entire session's budget.
 
 Never invoke `/code-review high` or any multi-agent review workflow from inside this loop.
 
+## When the session runs out of tokens
+
+A usage limit is **infrastructure, not a verdict** — the same class of interruption as a dropped
+connection. It does not block the epic and it does not count against the retry policy. The error
+names the reset time (`You've hit your session limit · resets 8:30pm`).
+
+Do not end the run and do not write the final report. Instead:
+
+1. **Land what is already reviewed.** A branch with a passing `verify` and a clean review should
+   reach `develop` before the run pauses, so the interruption costs nothing but wall time.
+2. **Schedule the resume** with `CronCreate`, one-shot, a few minutes *after* the stated reset —
+   limits reset on the server's clock, not yours, and firing early wastes the wakeup:
+
+   ```
+   CronCreate(cron: "34 1 12 8 *", recurring: false, prompt: "Resume /build-epic EPIC-01 …")
+   ```
+
+   Pin the minute, hour, day-of-month and month. Write the prompt so it can restart cold: the
+   epic id, the ticket that was in flight, its branch, and where that ticket had got to
+   (dispatched / reviewed / awaiting merge). The firing session may not be this one.
+3. **Say so in one line**, then stop. `TASK-0104NN paused — session limit, resumes 01:34`.
+
+Two constraints worth knowing before relying on this:
+
+- Cron jobs are **session-only**. Nothing is written to disk, and the job dies with the CLI
+  session. It survives a usage limit, which leaves the process running; it does not survive
+  quitting Claude Code or a reboot. If the session may not be alive, tell the human the resume
+  command instead of scheduling one they will never see fire.
+- Jobs fire only while the REPL is **idle**, so a wakeup that lands mid-turn waits for the
+  current turn to finish. Harmless here, since the point is to resume a paused run.
+
+If the reset time has already passed when you go to schedule it, just carry on — do not schedule
+a job that would next fire a day later.
+
 ## Final report
 
 ```
