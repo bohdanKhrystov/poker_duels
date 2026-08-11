@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010311
 title: Fast and reference evaluators agree on seven cards
 type: task
-status: backlog
+status: ready
 parent: STORY-0103
 module: poker-engine
 estimate: XS
