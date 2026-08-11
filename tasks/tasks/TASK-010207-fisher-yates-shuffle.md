@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010207
 title: Shuffle the deck with Fisher-Yates driven by an injected Rng
 type: task
-status: backlog
+status: ready
 parent: STORY-0102
 module: poker-engine
 estimate: S
