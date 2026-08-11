@@ -96,8 +96,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010419](tasks/TASK-010419-engine-result.md) EngineResult and the rejection invariant | XS | **done** |
 | | [TASK-010420](tasks/TASK-010420-domain-immutability-test.md) Reflective immutability test over the domain types | S | **done** |
 | | [TASK-010421](tasks/TASK-010421-poker-engine-interface.md) PokerEngine interface and a no-op implementation | XS | **done** |
-| | [TASK-010422](tasks/TASK-010422-betting-projection.md) Fold betting events into a state | S | ready |
-| | [TASK-010423](tasks/TASK-010423-dealer-projection.md) Fold dealer events into a state | S | backlog |
+| | [TASK-010422](tasks/TASK-010422-betting-projection.md) Fold betting events into a state | S | **done** |
+| | [TASK-010423](tasks/TASK-010423-dealer-projection.md) Fold dealer events into a state | S | ready |
 | | [TASK-010424](tasks/TASK-010424-settlement-projection-tests.md) Settlement projection tests and chip conservation | S | backlog |
 | | [TASK-010425](tasks/TASK-010425-state-projection.md) StateProjection — the one entry point that folds events into a state | S | backlog |
 | | [TASK-010426](tasks/TASK-010426-engine-contract-suite.md) PokerEngineContract — the reusable engine test suite | S | backlog |
@@ -144,7 +144,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 45 / 64 | 46 / 67 |
+| Tasks completed | 46 / 64 | 47 / 67 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
