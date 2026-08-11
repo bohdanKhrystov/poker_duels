@@ -80,8 +80,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010311](tasks/TASK-010311-fast-evaluator-seven-card-equivalence.md) Fast and reference agree on seven cards | XS | **done** |
 | **[STORY-0104](stories/STORY-0104-core-domain-model.md)** Core domain model — *schema 2* | | | ready |
 | | [TASK-010405](tasks/TASK-010405-street-enum.md) Street enum with board size and successor | XS | **done** |
-| | [TASK-010406](tasks/TASK-010406-board-value-type.md) Board value type that can only hold 0, 3, 4 or 5 cards | XS | ready |
-| | [TASK-010407](tasks/TASK-010407-seat-state.md) Seat state and its construction invariants | S | backlog |
+| | [TASK-010406](tasks/TASK-010406-board-value-type.md) Board value type that can only hold 0, 3, 4 or 5 cards | XS | **done** |
+| | [TASK-010407](tasks/TASK-010407-seat-state.md) Seat state and its construction invariants | S | ready |
 | | [TASK-010408](tasks/TASK-010408-seat-chip-transitions.md) Seat chip transitions — commit, award, collect | S | backlog |
 | | [TASK-010409](tasks/TASK-010409-game-state.md) GameState fields and construction invariants | S | backlog |
 | | [TASK-010410](tasks/TASK-010410-game-state-derived.md) GameState derived properties and seat update | S | backlog |
@@ -144,7 +144,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 29 / 64 | 30 / 67 |
+| Tasks completed | 30 / 64 | 31 / 67 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
