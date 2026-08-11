@@ -60,12 +60,12 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010202](tasks/TASK-010202-card-value-type.md) Card as a value class | S | **ready** |
 | | [TASK-010203](tasks/TASK-010203-card-notation.md) Format and parse poker notation | S | backlog |
 | | [TASK-010204](tasks/TASK-010204-cards-test-helper.md) `cards("As Kd")` test helper | S | backlog |
-| | [TASK-010205](tasks/TASK-010205-splitmix64-rng.md) Rng and SplitMix64Rng | S | **ready** |
+| | [TASK-010205](tasks/TASK-010205-splitmix64-rng.md) Rng and SplitMix64Rng | S | **done** |
 | | [TASK-010206](tasks/TASK-010206-immutable-deck.md) Immutable Deck | S | backlog |
 | | [TASK-010207](tasks/TASK-010207-fisher-yates-shuffle.md) Fisher–Yates shuffle | S | backlog |
 | | [TASK-010208](tasks/TASK-010208-shuffle-determinism-test.md) Recorded orderings for two seeds | XS | backlog |
 | | [TASK-010209](tasks/TASK-010209-shuffle-distribution-test.md) Shuffle distribution | S | backlog |
-| | [TASK-010210](tasks/TASK-010210-no-ambient-random-test.md) No ambient randomness, asserted | XS | backlog |
+| | [TASK-010210](tasks/TASK-010210-no-ambient-random-test.md) No ambient randomness, asserted | XS | **ready** |
 | **[STORY-0103](stories/STORY-0103-hand-evaluator.md)** Hand evaluator | | | ready |
 | | [TASK-010301](tasks/TASK-010301-hand-rank-model.md) HandCategory and HandRank | S | backlog |
 | | [TASK-010302](tasks/TASK-010302-reference-evaluator.md) Reference five-card evaluator | M | backlog |
@@ -118,7 +118,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 8 / 39 | 9 / 42 |
+| Tasks completed | 9 / 39 | 10 / 42 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |

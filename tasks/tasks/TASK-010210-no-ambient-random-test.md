@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010210
 title: Fail the build if engine sources reach for ambient randomness
 type: task
-status: backlog
+status: ready
 parent: STORY-0102
 module: poker-engine
 estimate: XS
