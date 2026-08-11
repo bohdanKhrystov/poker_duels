@@ -54,7 +54,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010104](tasks/TASK-010104-ktlint-and-detekt.md) ktlint and detekt | S | **done** |
 | | [TASK-010105](tasks/TASK-010105-kotest-property-testing.md) kotest property testing | XS | **ready** |
 | | [TASK-010106](tasks/TASK-010106-build-ci-workflow.md) Build and test CI workflow | XS | backlog |
-| | [TASK-010107](tasks/TASK-010107-configuration-cache-safe-checks.md) Config-cache-safe checkNoDependencies | XS | **ready** |
+| | [TASK-010107](tasks/TASK-010107-configuration-cache-safe-checks.md) Config-cache-safe checkNoDependencies | XS | **done** |
 | **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle | | | ready |
 | | [TASK-010201](tasks/TASK-010201-card-rank-suit.md) Rank, Suit, Card | S | backlog |
 | | [TASK-010202](tasks/TASK-010202-card-notation.md) Poker notation parse and format | S | backlog |
@@ -112,7 +112,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 4 / 33 | 5 / 36 |
+| Tasks completed | 5 / 33 | 6 / 36 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
