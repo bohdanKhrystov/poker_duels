@@ -70,8 +70,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | **[STORY-0103](stories/STORY-0103-hand-evaluator.md)** Hand evaluator — *schema 2* | | | ready |
 | | [TASK-010301](tasks/TASK-010301-hand-category.md) HandCategory, ordered low to high | XS | **done** |
 | | [TASK-010302](tasks/TASK-010302-hand-rank.md) HandRank, comparable lexicographically | S | **done** |
-| | [TASK-010303](tasks/TASK-010303-straight-detection.md) Detect a straight, including the wheel | S | ready |
-| | [TASK-010304](tasks/TASK-010304-rank-groups.md) Group ranks by count into tiebreak order | S | backlog |
+| | [TASK-010303](tasks/TASK-010303-straight-detection.md) Detect a straight, including the wheel | S | **done** |
+| | [TASK-010304](tasks/TASK-010304-rank-groups.md) Group ranks by count into tiebreak order | S | ready |
 | | [TASK-010305](tasks/TASK-010305-reference-evaluator.md) Reference five-card evaluator | S | backlog |
 | | [TASK-010306](tasks/TASK-010306-evaluator-rule-tests.md) Pin the wheel, non-wraparound, suit irrelevance | S | backlog |
 | | [TASK-010307](tasks/TASK-010307-exhaustive-five-card-counts.md) Exhaustive five-card category counts | S | backlog |
@@ -126,7 +126,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 19 / 45 | 20 / 48 |
+| Tasks completed | 20 / 45 | 21 / 48 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
