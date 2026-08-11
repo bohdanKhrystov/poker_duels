@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010413
 title: Rejection reasons for an illegal action
 type: task
-status: backlog
+status: ready
 parent: STORY-0104
 module: poker-engine
 estimate: XS

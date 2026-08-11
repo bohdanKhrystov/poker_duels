@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010412
 title: PlayerAction hierarchy and ActionType
 type: task
-status: ready
+status: done
 parent: STORY-0104
 module: poker-engine
 estimate: S
