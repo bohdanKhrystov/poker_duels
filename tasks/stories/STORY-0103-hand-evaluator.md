@@ -39,13 +39,36 @@ brute-force reference.
 
 ## Tasks
 
-| ID | Title | Status |
-| --- | --- | --- |
-| [TASK-010301](../tasks/TASK-010301-hand-rank-model.md) | HandCategory and comparable HandRank | ready |
-| [TASK-010302](../tasks/TASK-010302-reference-evaluator.md) | Reference five-card evaluator | backlog |
-| [TASK-010303](../tasks/TASK-010303-seven-card-evaluator.md) | Seven-card best-of-five evaluation | backlog |
-| [TASK-010304](../tasks/TASK-010304-evaluator-test-suite.md) | Exhaustive and property test suite | backlog |
-| [TASK-010305](../tasks/TASK-010305-evaluator-performance.md) | Fast evaluator and performance budget | backlog |
+Schema 2, and a strict chain: each ticket depends on the one above it, so exactly one is
+startable at any moment.
+
+| ID | Title | Est | Status |
+| --- | --- | --- | --- |
+| [TASK-010301](../tasks/TASK-010301-hand-category.md) | HandCategory, ordered low to high | XS | ready |
+| [TASK-010302](../tasks/TASK-010302-hand-rank.md) | HandRank, comparable lexicographically | S | backlog |
+| [TASK-010303](../tasks/TASK-010303-straight-detection.md) | Detect a straight, including the wheel | S | backlog |
+| [TASK-010304](../tasks/TASK-010304-rank-groups.md) | Group ranks by count into tiebreak order | S | backlog |
+| [TASK-010305](../tasks/TASK-010305-reference-evaluator.md) | Reference five-card evaluator | S | backlog |
+| [TASK-010306](../tasks/TASK-010306-evaluator-rule-tests.md) | Wheel, non-wraparound, suit irrelevance | S | backlog |
+| [TASK-010307](../tasks/TASK-010307-exhaustive-five-card-counts.md) | Exhaustive five-card category counts | S | backlog |
+| [TASK-010308](../tasks/TASK-010308-seven-card-best-of-five.md) | Seven-card best-of-five evaluation | S | backlog |
+| [TASK-010309](../tasks/TASK-010309-seven-card-brute-force-test.md) | Brute-force check of seven-card evaluation | S | backlog |
+| [TASK-010310](../tasks/TASK-010310-fast-evaluator.md) | Bitmask five-card evaluator | S | backlog |
+| [TASK-010311](../tasks/TASK-010311-fast-evaluator-seven-card-equivalence.md) | Fast and reference agree on seven cards | XS | backlog |
+
+The evaluator is built from the bottom: the two subtle predicates — the straight (with the wheel)
+and the rank grouping — are written and tested alone before anything assembles them into a
+category, so a failure names the rule it broke rather than "the evaluator".
+
+> ### ⚠ Open decision — DEC-002
+>
+> This story proves the fast evaluator **correct**, not **fast**: it asserts equivalence with the
+> reference over the whole five-card space and 100 000 dealt seven-card hands, and asserts
+> nothing about throughput. What performance budget the evaluator carries, how it is measured
+> (a benchmark harness such as JMH would be the module's first tooling dependency), and whether
+> `HandRank` gains a packed-integer representation to make evaluation allocation-free are one
+> question, and it is not answered by any ADR. It stays open rather than being guessed at inside
+> a ticket. Due before the simulation harness in STORY-0108 needs it.
 
 ## Acceptance criteria
 

@@ -2,7 +2,8 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101` and `STORY-0102` are done; `STORY-0103` needs `/plan-story`.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101` and `STORY-0102` are done; `STORY-0103` is
+split into schema-2 tickets and being worked.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -66,12 +67,18 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010208](tasks/TASK-010208-shuffle-determinism-test.md) Recorded orderings for two seeds | XS | **done** |
 | | [TASK-010209](tasks/TASK-010209-shuffle-distribution-test.md) Shuffle distribution | S | **done** |
 | | [TASK-010210](tasks/TASK-010210-no-ambient-random-test.md) No ambient randomness, asserted | XS | **done** |
-| **[STORY-0103](stories/STORY-0103-hand-evaluator.md)** Hand evaluator | | | ready |
-| | [TASK-010301](tasks/TASK-010301-hand-rank-model.md) HandCategory and HandRank | S | backlog |
-| | [TASK-010302](tasks/TASK-010302-reference-evaluator.md) Reference five-card evaluator | M | backlog |
-| | [TASK-010303](tasks/TASK-010303-seven-card-evaluator.md) Seven-card best-of-five | S | backlog |
-| | [TASK-010304](tasks/TASK-010304-evaluator-test-suite.md) Exhaustive and property tests | M | backlog |
-| | [TASK-010305](tasks/TASK-010305-evaluator-performance.md) Fast evaluator and budget | M | backlog |
+| **[STORY-0103](stories/STORY-0103-hand-evaluator.md)** Hand evaluator — *schema 2* | | | ready |
+| | [TASK-010301](tasks/TASK-010301-hand-category.md) HandCategory, ordered low to high | XS | ready |
+| | [TASK-010302](tasks/TASK-010302-hand-rank.md) HandRank, comparable lexicographically | S | backlog |
+| | [TASK-010303](tasks/TASK-010303-straight-detection.md) Detect a straight, including the wheel | S | backlog |
+| | [TASK-010304](tasks/TASK-010304-rank-groups.md) Group ranks by count into tiebreak order | S | backlog |
+| | [TASK-010305](tasks/TASK-010305-reference-evaluator.md) Reference five-card evaluator | S | backlog |
+| | [TASK-010306](tasks/TASK-010306-evaluator-rule-tests.md) Pin the wheel, non-wraparound, suit irrelevance | S | backlog |
+| | [TASK-010307](tasks/TASK-010307-exhaustive-five-card-counts.md) Exhaustive five-card category counts | S | backlog |
+| | [TASK-010308](tasks/TASK-010308-seven-card-best-of-five.md) Seven-card best-of-five evaluation | S | backlog |
+| | [TASK-010309](tasks/TASK-010309-seven-card-brute-force-test.md) Brute-force check of seven-card evaluation | S | backlog |
+| | [TASK-010310](tasks/TASK-010310-fast-evaluator.md) Bitmask five-card evaluator | S | backlog |
+| | [TASK-010311](tasks/TASK-010311-fast-evaluator-seven-card-equivalence.md) Fast and reference agree on seven cards | XS | backlog |
 | **[STORY-0104](stories/STORY-0104-core-domain-model.md)** Core domain model | | | ready |
 | | [TASK-010401](tasks/TASK-010401-game-state.md) GameState and sub-models | M | backlog |
 | | [TASK-010402](tasks/TASK-010402-player-actions.md) PlayerAction and legality | S | backlog |
@@ -95,7 +102,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**42 tasks total.** `STORY-0101` and `STORY-0102` are migrated to schema 2; stories 0103–0108 are still schema 1
+**48 tasks total.** `STORY-0101`–`STORY-0103` are migrated to schema 2; stories 0104–0108 are still schema 1
 and get split by `/plan-story` just before they are worked. Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
 written against types that do not exist yet, and specifying them any earlier would mean
 rewriting them.
@@ -107,6 +114,7 @@ rewriting them.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
+| DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before `TASK-010310` |
 | — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
 
 ---
@@ -118,7 +126,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 17 / 39 | 18 / 42 |
+| Tasks completed | 17 / 45 | 18 / 48 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
