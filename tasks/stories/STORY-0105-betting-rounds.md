@@ -38,14 +38,36 @@ The traps, listed so they are impossible to miss:
 
 ## Tasks
 
+Schema 2, one dependency chain: exactly one ticket is startable at a time, because almost every
+ticket extends the file the one before it created. IDs `010501`–`010504` were the schema-1 split
+and are retired, not reused.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-010501](../tasks/TASK-010501-blinds-and-action-order.md) | Blinds, button and heads-up action order | backlog |
-| [TASK-010502](../tasks/TASK-010502-action-legality.md) | Action legality and min-raise arithmetic | backlog |
-| [TASK-010503](../tasks/TASK-010503-street-progression.md) | Betting round completion and street advance | backlog |
-| [TASK-010504](../tasks/TASK-010504-betting-property-tests.md) | Betting invariant and property tests | backlog |
+| [TASK-010505](../tasks/TASK-010505-heads-up-seat-order.md) | Name the heads-up blind and action order once | ready |
+| [TASK-010506](../tasks/TASK-010506-post-the-blinds.md) | Open a hand by posting both blinds | backlog |
+| [TASK-010507](../tasks/TASK-010507-deal-hole-cards.md) | Deal the hole cards and put the action on the button | backlog |
+| [TASK-010508](../tasks/TASK-010508-legal-actions-core.md) | Compute the legal actions at an ordinary decision point | backlog |
+| [TASK-010509](../tasks/TASK-010509-legal-actions-all-in.md) | Restrict the legal actions around an all-in | backlog |
+| [TASK-010510](../tasks/TASK-010510-action-validation.md) | Turn an illegal action into the reason it is illegal | backlog |
+| [TASK-010511](../tasks/TASK-010511-action-to-event.md) | Turn an accepted action into the event that records it | backlog |
+| [TASK-010512](../tasks/TASK-010512-default-engine.md) | Handle one betting action in a real engine | backlog |
+| [TASK-010513](../tasks/TASK-010513-round-completion.md) | Decide whether the betting round has anyone left to act | backlog |
+| [TASK-010514](../tasks/TASK-010514-pass-the-action.md) | Pass the action to the other seat while the round runs | backlog |
+| [TASK-010515](../tasks/TASK-010515-engine-contract-test.md) | Run the engine contract against the real engine | backlog |
+| [TASK-010516](../tasks/TASK-010516-fold-ends-the-hand.md) | End the betting the moment a player folds | backlog |
+| [TASK-010517](../tasks/TASK-010517-street-advance.md) | Close the round and deal the next street | backlog |
+| [TASK-010518](../tasks/TASK-010518-all-in-run-out.md) | Run the board out when nobody can bet again | backlog |
+| [TASK-010519](../tasks/TASK-010519-opening-run-out.md) | Do not stall a hand whose blinds leave nobody able to act | backlog |
+| [TASK-010520](../tasks/TASK-010520-hand-walkthrough-test.md) | Play one scripted hand from blinds to showdown | backlog |
+| [TASK-010521](../tasks/TASK-010521-betting-invariant-property.md) | Assert the betting invariants over a thousand random hands | backlog |
 
-Move to `ready` once STORY-0104 is merged and the domain types exist.
+## Where this story stops
+
+The engine takes a hand as far as it can go without deciding who won: a fold leaves the chips
+swept into the pot with one seat marked folded, and a played-out hand stops at `ShowdownReached`.
+`UncalledBetReturned`, `HandRevealed`, `PotAwarded` and `HandFinished` are STORY-0106. The
+uncalled part of a bet stays recoverable because `committedThisHand` never decreases.
 
 ## Acceptance criteria
 
