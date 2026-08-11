@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010209
 title: Assert the shuffle spreads every card over every position
 type: task
-status: backlog
+status: ready
 parent: STORY-0102
 module: poker-engine
 estimate: S
