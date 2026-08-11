@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010406
 title: Board value type that can only hold 0, 3, 4 or 5 cards
 type: task
-status: backlog
+status: ready
 parent: STORY-0104
 module: poker-engine
 estimate: XS
