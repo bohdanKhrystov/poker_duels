@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010408
 title: Seat chip transitions — commit, award, collect
 type: task
-status: ready
+status: done
 parent: STORY-0104
 module: poker-engine
 estimate: S
@@ -82,7 +82,7 @@ public fun collected(): Seat
 | `awardAddsToTheStackOnly` | `Seat(0, 0, committedThisHand = 500, isAllIn = true).award(1_000)` → stack 1 000, `committedThisHand` still 500, `isAllIn` still true |
 | `awardRejectsANegativeAmount` | `award(-1)` throws |
 | `collectedClearsOnlyTheStreetCommitment` | after `commit(300).collected()` → street 0, hand 300, stack unchanged |
-| `chipsAreConservedByCommitAndAward` | for `Seat(0, 1_000)`, `stack + committedThisStreet` is 1 000 after any sequence of `commit` calls, and `stack + committedThisStreet` is 1 300 after `commit(300).collected().award(300)` |
+| `chipsAreConservedByCommitAndAward` | for `Seat(0, 1_000)`, `stack + committedThisStreet` is 1 000 after any sequence of `commit` calls, and `stack` is back to 1 000 after `commit(300).collected().award(300)` — the 300 went to the pot and came back, so nothing was created or destroyed |
 
 ## Acceptance criteria
 
