@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010427
 title: Prove the contract suite catches a drifting engine
 type: task
-status: ready
+status: done
 parent: STORY-0104
 module: poker-engine
 estimate: XS
