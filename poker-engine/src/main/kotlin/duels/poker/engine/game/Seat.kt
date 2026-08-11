@@ -35,4 +35,40 @@ public data class Seat(
         require(committedThisStreet >= 0) { "Committed this street cannot be negative, was $committedThisStreet" }
         require(committedThisHand >= committedThisStreet) { "Hand commitment cannot be less than street commitment: hand=$committedThisHand, street=$committedThisStreet" }
     }
+
+    /**
+     * Moves [amount] from the stack into this seat's commitment. Going to zero means all-in.
+     *
+     * Does not touch the pot — that lives on `GameState`. Does not clear [isAllIn]; once set
+     * it only ever gets set again, never unset by this function.
+     */
+    public fun commit(amount: Int): Seat {
+        require(amount in 0..stack) { "Cannot commit $amount from a stack of $stack" }
+        return copy(
+            stack = stack - amount,
+            committedThisStreet = committedThisStreet + amount,
+            committedThisHand = committedThisHand + amount,
+            isAllIn = isAllIn || (amount > 0 && amount == stack),
+        )
+    }
+
+    /**
+     * Chips coming back: a won pot, or an uncalled bet returned.
+     *
+     * Only increases [stack]. Does not touch either commitment field, and does not clear
+     * [isAllIn] — a seat that was all-in stays all-in for the rest of the hand even after it
+     * is paid.
+     */
+    public fun award(amount: Int): Seat {
+        require(amount >= 0) { "Cannot award a negative amount, was $amount" }
+        return copy(stack = stack + amount)
+    }
+
+    /**
+     * End of a betting round: this street's commitment has gone to the pot.
+     *
+     * Only resets [committedThisStreet] to zero. Does not touch [stack] or
+     * [committedThisHand] — the hand total is gross and never decreases.
+     */
+    public fun collected(): Seat = copy(committedThisStreet = 0)
 }
