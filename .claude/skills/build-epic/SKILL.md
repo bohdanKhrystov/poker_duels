@@ -163,39 +163,50 @@ can eat an entire session's budget.
 
 Never invoke `/code-review high` or any multi-agent review workflow from inside this loop.
 
-## When the session runs out of tokens
+## Arm the resume before you need it
 
-A usage limit is **infrastructure, not a verdict** — the same class of interruption as a dropped
-connection. It does not block the epic and it does not count against the retry policy. The error
-names the reset time (`You've hit your session limit · resets 8:30pm`).
+**You cannot schedule anything once the tokens are gone.** A usage limit does not politely warn
+you and let you tidy up — it terminates the turn, and every turn after it, until the reset. Any
+plan that begins "when the limit hits, schedule a resume" is a plan that never runs.
 
-Do not end the run and do not write the final report. Instead:
+So arm it at the **start** of the run, while the budget is healthy:
 
-1. **Land what is already reviewed.** A branch with a passing `verify` and a clean review should
-   reach `develop` before the run pauses, so the interruption costs nothing but wall time.
-2. **Schedule the resume** with `CronCreate`, one-shot, a few minutes *after* the stated reset —
-   limits reset on the server's clock, not yours, and firing early wastes the wakeup:
+```
+CronCreate(cron: "23 */2 * * *", recurring: true, prompt: "<guarded resume, see below>")
+```
 
-   ```
-   CronCreate(cron: "34 1 12 8 *", recurring: false, prompt: "Resume /build-epic EPIC-01 …")
-   ```
+Recurring rather than one-shot, because the reset time is not knowable in advance — it is only
+ever stated in the error you will not be alive to read. A periodic check costs one cheap turn
+when the run is healthy and recovers it when it is not.
 
-   Pin the minute, hour, day-of-month and month. Write the prompt so it can restart cold: the
-   epic id, the ticket that was in flight, its branch, and where that ticket had got to
-   (dispatched / reviewed / awaiting merge). The firing session may not be this one.
-3. **Say so in one line**, then stop. `TASK-0104NN paused — session limit, resumes 01:34`.
+The prompt must **guard against firing into a healthy run**, since jobs fire whenever the REPL is
+idle and a working scheduler is idle between every ticket. Make the first thing it does a
+liveness check, and make the do-nothing path cheap and explicit:
 
-Two constraints worth knowing before relying on this:
+- last commit on `develop` under ~25 minutes old → reply `still running`, stop
+- nothing startable and nothing in flight → reply `nothing startable`, stop
+- otherwise → resume the loop
+
+Write the resume half so it can restart cold — epic id, repo path, and the instruction to inspect
+`git status` and the current branch before dispatching anything. A feature branch often already
+holds committed, unreviewed work, and the cheap recovery is to review it, not to re-dispatch a
+coder over the top of it.
+
+**Delete the job when the epic lands** (`CronDelete`), so a finished run stops waking up.
+
+A usage limit is **infrastructure, not a verdict** — the same class as a dropped connection. It
+does not count against the retry policy. If you are still alive when one hits (it interrupted a
+subagent rather than you), land whatever is already reviewed, say so in one line, and stop. Do
+not write the final report: the epic is paused, not finished.
+
+Two constraints bound how much this can be trusted:
 
 - Cron jobs are **session-only**. Nothing is written to disk, and the job dies with the CLI
   session. It survives a usage limit, which leaves the process running; it does not survive
-  quitting Claude Code or a reboot. If the session may not be alive, tell the human the resume
-  command instead of scheduling one they will never see fire.
-- Jobs fire only while the REPL is **idle**, so a wakeup that lands mid-turn waits for the
-  current turn to finish. Harmless here, since the point is to resume a paused run.
-
-If the reset time has already passed when you go to schedule it, just carry on — do not schedule
-a job that would next fire a day later.
+  quitting Claude Code or a reboot. When the session may not outlive the outage, hand the human
+  the resume command instead of scheduling a job they will never see fire.
+- Jobs fire only while the REPL is **idle**, which is why the liveness guard above is mandatory
+  rather than decorative.
 
 ## Final report
 
