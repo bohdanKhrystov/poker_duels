@@ -39,6 +39,10 @@ internal class SevenCardBruteForceTest {
                 best.cards.toSet().size,
                 "Seed $seed: returned cards must be distinct",
             )
+            assertTrue(
+                sevenCards.containsAll(best.cards),
+                "Seed $seed: seven cards $sevenCards, returned cards ${best.cards} are not from the seven",
+            )
 
             val evaluatedRank = ReferenceHandEvaluator.evaluate(best.cards)
             assertEquals(
