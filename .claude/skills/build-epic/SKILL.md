@@ -22,6 +22,10 @@ Your context holds: the board, the current story, and **one line per finished ti
 find yourself reading a `.kt` file, you have already failed — the run will get more expensive
 with every ticket instead of staying flat.
 
+Reading source to settle a suspicious review is occasionally the right call, but treat it as a
+debt: it is what fills the scheduler's context and forces a compaction mid-run. Prefer sending
+the specific question back to the reviewer, which costs a subagent's context instead of yours.
+
 Keep a running ledger, nothing more:
 
 ```
@@ -31,6 +35,13 @@ TASK-010202  merged   haiku    1 attempt   (batch A)
 TASK-010203  merged   sonnet   2 attempts  (promoted)
 TASK-010204  blocked  —        DEC-002
 ```
+
+## Report on landing, not on progress
+
+Narration is the scheduler's largest avoidable cost, because it is paid on every ticket. Speak
+when a ticket **lands**, when one **blocks**, and when the run **ends**. "Dispatched X", "checks
+still pending", "waiting on review" tell the human nothing the ledger will not, and they are
+written dozens of times per epic.
 
 ## The loop
 
@@ -87,6 +98,9 @@ parallel:
 1. Pick a finished, verified, reviewed ticket.
 2. Rebase its branch on the current `develop`.
 3. Re-run its `verify` **after** the rebase — the other tickets moved `develop` underneath it.
+   When the rebase pulled in nothing the ticket's files actually depend on, the PR's own CI run
+   is that gate; do not run it locally as well. Re-run locally when the rebase brought in code
+   this ticket touches or builds on.
 4. `BOARD.md` and ticket-status edits are made by **you**, at landing time, never by the coder.
    Every ticket touches `BOARD.md`, so letting coders edit it guarantees three-way conflicts.
 5. Merge, then move to the next.
@@ -121,6 +135,25 @@ Stop the run entirely only if:
 - a decision blocks the rest of the epic (a foundational type, a module boundary), or
 - three consecutive tickets fail — something systemic is wrong and continuing will burn budget
   producing more of it.
+
+## Model tiers
+
+- **coder** — the ticket's `tier`. Promote only under the retry policy.
+- **reviewer** — `haiku` for `review: light` and `review: standard`; `sonnet` only for
+  `review: deep`. A shallow review is fixed by asking a sharper question — naming the specific
+  defect to hunt for — not by buying a bigger model on every ticket.
+- **planner** — Opus, always. It runs once per story, and how precisely it specifies a ticket
+  decides whether the coder needs one dispatch or three. This is the last place to economise:
+  a well-planned story lands in one dispatch per ticket, a vague one burns dispatches and
+  promotions.
+
+## When a subagent dies
+
+Connection drops, stalls and machine sleeps are infrastructure, not verdicts — they are not
+review failures and do not count against the retry policy. Before re-dispatching, **look at the
+worktree**: the work is frequently committed already, and then it needs only verifying and
+reviewing. If the agent can be resumed, resume it with `SendMessage`; a fresh dispatch pays full
+context re-entry to rediscover what the dead one already knew.
 
 ## Budget awareness
 
