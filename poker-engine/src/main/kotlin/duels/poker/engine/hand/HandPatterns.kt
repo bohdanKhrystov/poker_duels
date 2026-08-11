@@ -4,6 +4,8 @@ import duels.poker.engine.card.Rank
 
 private const val STRAIGHT_SIZE = 5
 
+internal data class RankGroup(val rank: Rank, val size: Int)
+
 /**
  * Classify five ranks as a straight or not, returning the straight's high [Rank].
  *
@@ -36,4 +38,18 @@ internal fun straightHighOrNull(ranks: List<Rank>): Rank? {
     if (isWheel) return Rank.FIVE
 
     return null
+}
+
+/**
+ * Group ranks by count, sorted by size descending and then by rank descending.
+ *
+ * This ordering is exactly the tiebreak order needed for three of a kind, two pair, and one pair:
+ * [groups.map { it.rank }] yields the kicker order unchanged.
+ */
+internal fun rankGroups(ranks: List<Rank>): List<RankGroup> {
+    return ranks
+        .groupingBy { it }
+        .eachCount()
+        .map { (rank, count) -> RankGroup(rank, count) }
+        .sortedWith(compareBy({ -it.size }, { -it.rank.ordinal }))
 }
