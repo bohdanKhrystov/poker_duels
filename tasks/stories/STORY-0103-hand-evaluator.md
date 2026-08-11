@@ -2,7 +2,7 @@
 id: STORY-0103
 title: Hand evaluator
 type: story
-status: ready
+status: done
 parent: EPIC-01
 module: poker-engine
 labels: [engine, rules]
