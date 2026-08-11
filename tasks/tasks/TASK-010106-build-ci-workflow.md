@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010106
 title: Build and test CI workflow for pull requests
 type: task
-status: backlog
+status: ready
 parent: STORY-0101
 module: build
 estimate: XS
