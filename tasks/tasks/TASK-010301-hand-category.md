@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010301
 title: HandCategory, ordered low to high
 type: task
-status: ready
+status: done
 parent: STORY-0103
 module: poker-engine
 estimate: XS
