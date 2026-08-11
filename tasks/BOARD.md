@@ -93,8 +93,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010416](tasks/TASK-010416-betting-events.md) Betting events | S | **done** |
 | | [TASK-010417](tasks/TASK-010417-dealer-events.md) Dealer events for street progress and showdown | S | **done** |
 | | [TASK-010418](tasks/TASK-010418-settlement-events.md) Settlement events — uncalled bet, pot award, hand finished | XS | **done** |
-| | [TASK-010419](tasks/TASK-010419-engine-result.md) EngineResult and the rejection invariant | XS | ready |
-| | [TASK-010420](tasks/TASK-010420-domain-immutability-test.md) Reflective immutability test over the domain types | S | backlog |
+| | [TASK-010419](tasks/TASK-010419-engine-result.md) EngineResult and the rejection invariant | XS | **done** |
+| | [TASK-010420](tasks/TASK-010420-domain-immutability-test.md) Reflective immutability test over the domain types | S | ready |
 | | [TASK-010421](tasks/TASK-010421-poker-engine-interface.md) PokerEngine interface and a no-op implementation | XS | backlog |
 | | [TASK-010422](tasks/TASK-010422-betting-projection.md) Fold betting events into a state | S | backlog |
 | | [TASK-010423](tasks/TASK-010423-dealer-projection.md) Fold dealer events into a state | S | backlog |
@@ -144,7 +144,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 42 / 64 | 43 / 67 |
+| Tasks completed | 43 / 64 | 44 / 67 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010420
 title: Reflective immutability test over the domain types
 type: task
-status: backlog
+status: ready
 parent: STORY-0104
 module: poker-engine
 estimate: S
