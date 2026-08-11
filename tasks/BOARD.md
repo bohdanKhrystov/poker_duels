@@ -100,8 +100,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010423](tasks/TASK-010423-dealer-projection.md) Fold dealer events into a state | S | **done** |
 | | [TASK-010424](tasks/TASK-010424-settlement-projection-tests.md) Settlement projection tests and chip conservation | S | **done** |
 | | [TASK-010425](tasks/TASK-010425-state-projection.md) StateProjection — the one entry point that folds events into a state | S | **done** |
-| | [TASK-010426](tasks/TASK-010426-engine-contract-suite.md) PokerEngineContract — the reusable engine test suite | S | ready |
-| | [TASK-010427](tasks/TASK-010427-contract-detects-drift.md) Prove the contract suite catches a drifting engine | XS | backlog |
+| | [TASK-010426](tasks/TASK-010426-engine-contract-suite.md) PokerEngineContract — the reusable engine test suite | S | **done** |
+| | [TASK-010427](tasks/TASK-010427-contract-detects-drift.md) Prove the contract suite catches a drifting engine | XS | ready |
 | **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds | | | backlog |
 | | [TASK-010501](tasks/TASK-010501-blinds-and-action-order.md) Blinds, button, action order | M | backlog |
 | | [TASK-010502](tasks/TASK-010502-action-legality.md) Legality and min-raise | M | backlog |
@@ -144,7 +144,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 49 / 64 | 50 / 67 |
+| Tasks completed | 50 / 64 | 51 / 67 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
