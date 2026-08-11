@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010419
 title: EngineResult and the rejection invariant
 type: task
-status: backlog
+status: ready
 parent: STORY-0104
 module: poker-engine
 estimate: XS

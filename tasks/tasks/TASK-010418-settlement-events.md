@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010418
 title: Settlement events — uncalled bet, pot award, hand finished
 type: task
-status: ready
+status: done
 parent: STORY-0104
 module: poker-engine
 estimate: XS
