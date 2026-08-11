@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010408
 title: Seat chip transitions — commit, award, collect
 type: task
-status: backlog
+status: ready
 parent: STORY-0104
 module: poker-engine
 estimate: S
