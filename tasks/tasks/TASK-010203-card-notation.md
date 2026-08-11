@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010203
 title: Format and parse cards in standard poker notation
 type: task
-status: backlog
+status: ready
 parent: STORY-0102
 module: poker-engine
 estimate: S
