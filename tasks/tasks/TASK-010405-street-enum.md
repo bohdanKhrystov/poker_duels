@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010405
 title: Street enum with board size and successor
 type: task
-status: ready
+status: done
 parent: STORY-0104
 module: poker-engine
 estimate: XS
