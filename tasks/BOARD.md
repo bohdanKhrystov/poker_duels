@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0102` needs only `TASK-010208` and `TASK-010209`.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101` and `STORY-0102` are done; `STORY-0103` needs `/plan-story`.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -55,7 +55,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010105](tasks/TASK-010105-kotest-property-testing.md) kotest property testing | XS | **done** |
 | | [TASK-010106](tasks/TASK-010106-build-ci-workflow.md) Build and test CI workflow | XS | **done** |
 | | [TASK-010107](tasks/TASK-010107-configuration-cache-safe-checks.md) Config-cache-safe checkNoDependencies | XS | **done** |
-| **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle — *schema 2* | | | ready |
+| **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle — *schema 2* | | | **done** |
 | | [TASK-010201](tasks/TASK-010201-rank-and-suit.md) Rank and Suit enums | S | **done** |
 | | [TASK-010202](tasks/TASK-010202-card-value-type.md) Card as a value class | S | **done** |
 | | [TASK-010203](tasks/TASK-010203-card-notation.md) Format and parse poker notation | S | **done** |
@@ -64,7 +64,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010206](tasks/TASK-010206-immutable-deck.md) Immutable Deck | S | **done** |
 | | [TASK-010207](tasks/TASK-010207-fisher-yates-shuffle.md) Fisher–Yates shuffle | S | **done** |
 | | [TASK-010208](tasks/TASK-010208-shuffle-determinism-test.md) Recorded orderings for two seeds | XS | **done** |
-| | [TASK-010209](tasks/TASK-010209-shuffle-distribution-test.md) Shuffle distribution | S | **ready** |
+| | [TASK-010209](tasks/TASK-010209-shuffle-distribution-test.md) Shuffle distribution | S | **done** |
 | | [TASK-010210](tasks/TASK-010210-no-ambient-random-test.md) No ambient randomness, asserted | XS | **done** |
 | **[STORY-0103](stories/STORY-0103-hand-evaluator.md)** Hand evaluator | | | ready |
 | | [TASK-010301](tasks/TASK-010301-hand-rank-model.md) HandCategory and HandRank | S | backlog |
@@ -118,7 +118,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 16 / 39 | 17 / 42 |
+| Tasks completed | 17 / 39 | 18 / 42 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
