@@ -2,8 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101` and `STORY-0102` are done; `STORY-0103` is
-split into schema-2 tickets and being worked.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0103` are done; `STORY-0104` needs `/plan-story`.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -67,7 +66,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010208](tasks/TASK-010208-shuffle-determinism-test.md) Recorded orderings for two seeds | XS | **done** |
 | | [TASK-010209](tasks/TASK-010209-shuffle-distribution-test.md) Shuffle distribution | S | **done** |
 | | [TASK-010210](tasks/TASK-010210-no-ambient-random-test.md) No ambient randomness, asserted | XS | **done** |
-| **[STORY-0103](stories/STORY-0103-hand-evaluator.md)** Hand evaluator — *schema 2* | | | ready |
+| **[STORY-0103](stories/STORY-0103-hand-evaluator.md)** Hand evaluator — *schema 2* | | | **done** |
 | | [TASK-010301](tasks/TASK-010301-hand-category.md) HandCategory, ordered low to high | XS | **done** |
 | | [TASK-010302](tasks/TASK-010302-hand-rank.md) HandRank, comparable lexicographically | S | **done** |
 | | [TASK-010303](tasks/TASK-010303-straight-detection.md) Detect a straight, including the wheel | S | **done** |
@@ -78,7 +77,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010308](tasks/TASK-010308-seven-card-best-of-five.md) Seven-card best-of-five evaluation | S | **done** |
 | | [TASK-010309](tasks/TASK-010309-seven-card-brute-force-test.md) Brute-force check of seven-card evaluation | S | **done** |
 | | [TASK-010310](tasks/TASK-010310-fast-evaluator.md) Bitmask five-card evaluator | S | **done** |
-| | [TASK-010311](tasks/TASK-010311-fast-evaluator-seven-card-equivalence.md) Fast and reference agree on seven cards | XS | ready |
+| | [TASK-010311](tasks/TASK-010311-fast-evaluator-seven-card-equivalence.md) Fast and reference agree on seven cards | XS | **done** |
 | **[STORY-0104](stories/STORY-0104-core-domain-model.md)** Core domain model | | | ready |
 | | [TASK-010401](tasks/TASK-010401-game-state.md) GameState and sub-models | M | backlog |
 | | [TASK-010402](tasks/TASK-010402-player-actions.md) PlayerAction and legality | S | backlog |
@@ -114,7 +113,7 @@ rewriting them.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
-| DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before `TASK-010310` |
+| DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
 
 ---
@@ -126,7 +125,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 27 / 45 | 28 / 48 |
+| Tasks completed | 28 / 45 | 29 / 48 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
