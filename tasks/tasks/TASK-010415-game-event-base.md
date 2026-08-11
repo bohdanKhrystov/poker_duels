@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010415
 title: GameEvent base and hand lifecycle events
 type: task
-status: ready
+status: done
 parent: STORY-0104
 module: poker-engine
 estimate: S
