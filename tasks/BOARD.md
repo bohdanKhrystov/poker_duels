@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0103` are done; `STORY-0104` is split into schema-2 tickets and being worked.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0104` are done; `STORY-0105` needs `/plan-story`.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -78,7 +78,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010309](tasks/TASK-010309-seven-card-brute-force-test.md) Brute-force check of seven-card evaluation | S | **done** |
 | | [TASK-010310](tasks/TASK-010310-fast-evaluator.md) Bitmask five-card evaluator | S | **done** |
 | | [TASK-010311](tasks/TASK-010311-fast-evaluator-seven-card-equivalence.md) Fast and reference agree on seven cards | XS | **done** |
-| **[STORY-0104](stories/STORY-0104-core-domain-model.md)** Core domain model — *schema 2* | | | ready |
+| **[STORY-0104](stories/STORY-0104-core-domain-model.md)** Core domain model — *schema 2* | | | **done** |
 | | [TASK-010405](tasks/TASK-010405-street-enum.md) Street enum with board size and successor | XS | **done** |
 | | [TASK-010406](tasks/TASK-010406-board-value-type.md) Board value type that can only hold 0, 3, 4 or 5 cards | XS | **done** |
 | | [TASK-010407](tasks/TASK-010407-seat-state.md) Seat state and its construction invariants | S | **done** |
@@ -101,8 +101,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010424](tasks/TASK-010424-settlement-projection-tests.md) Settlement projection tests and chip conservation | S | **done** |
 | | [TASK-010425](tasks/TASK-010425-state-projection.md) StateProjection — the one entry point that folds events into a state | S | **done** |
 | | [TASK-010426](tasks/TASK-010426-engine-contract-suite.md) PokerEngineContract — the reusable engine test suite | S | **done** |
-| | [TASK-010427](tasks/TASK-010427-contract-detects-drift.md) Prove the contract suite catches a drifting engine | XS | ready |
-| **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds | | | backlog |
+| | [TASK-010427](tasks/TASK-010427-contract-detects-drift.md) Prove the contract suite catches a drifting engine | XS | **done** |
+| **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds | | | ready |
 | | [TASK-010501](tasks/TASK-010501-blinds-and-action-order.md) Blinds, button, action order | M | backlog |
 | | [TASK-010502](tasks/TASK-010502-action-legality.md) Legality and min-raise | M | backlog |
 | | [TASK-010503](tasks/TASK-010503-street-progression.md) Round completion, street advance | M | backlog |
@@ -121,9 +121,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
 **67 tasks total.** `STORY-0101`–`STORY-0104` are migrated to schema 2; stories 0105–0108 are still schema 1
-and get split by `/plan-story` just before they are worked. Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
-written against types that do not exist yet, and specifying them any earlier would mean
-rewriting them.
+and get split by `/plan-story` just before they are worked. `STORY-0105` is unblocked now that `STORY-0104` has merged; 0106–0108 stay in `backlog` until it
+lands, because their tasks are written against types that do not exist yet.
 
 ---
 
@@ -144,7 +143,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 50 / 64 | 51 / 67 |
+| Tasks completed | 52 / 64 | 53 / 67 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |

@@ -2,7 +2,7 @@
 id: STORY-0104
 title: Core domain — state, actions, events
 type: story
-status: ready
+status: done
 parent: EPIC-01
 module: poker-engine
 labels: [engine, domain, contract]
