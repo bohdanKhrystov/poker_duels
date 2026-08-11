@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010201
 title: Rank and Suit enums with poker values and notation symbols
 type: task
-status: ready
+status: done
 parent: STORY-0102
 module: poker-engine
 estimate: S

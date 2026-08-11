@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010205
 title: Rng interface and an immutable SplitMix64 implementation
 type: task
-status: backlog
+status: ready
 parent: STORY-0102
 module: poker-engine
 estimate: S
