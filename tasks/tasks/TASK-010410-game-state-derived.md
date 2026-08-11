@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010410
 title: GameState derived properties and seat update
 type: task
-status: ready
+status: done
 parent: STORY-0104
 module: poker-engine
 estimate: S
