@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010505
 title: Name the heads-up blind and action order once
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: XS
