@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010306
 title: Pin the wheel, the non-wraparound and suit irrelevance
 type: task
-status: backlog
+status: ready
 parent: STORY-0103
 module: poker-engine
 estimate: S
