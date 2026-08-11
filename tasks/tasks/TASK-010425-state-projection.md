@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010425
 title: StateProjection — the one entry point that folds events into a state
 type: task
-status: ready
+status: done
 parent: STORY-0104
 module: poker-engine
 estimate: S
