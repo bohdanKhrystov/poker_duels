@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010305
 title: Reference five-card evaluator
 type: task
-status: backlog
+status: ready
 parent: STORY-0103
 module: poker-engine
 estimate: S

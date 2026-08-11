@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010304
 title: Group ranks by count into tiebreak order
 type: task
-status: ready
+status: done
 parent: STORY-0103
 module: poker-engine
 estimate: S
