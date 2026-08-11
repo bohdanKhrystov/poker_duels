@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0104` are done; `STORY-0105` needs `/plan-story`.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0104` are done; `STORY-0105` is split into schema-2 tickets and being worked.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -102,11 +102,24 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010425](tasks/TASK-010425-state-projection.md) StateProjection — the one entry point that folds events into a state | S | **done** |
 | | [TASK-010426](tasks/TASK-010426-engine-contract-suite.md) PokerEngineContract — the reusable engine test suite | S | **done** |
 | | [TASK-010427](tasks/TASK-010427-contract-detects-drift.md) Prove the contract suite catches a drifting engine | XS | **done** |
-| **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds | | | ready |
-| | [TASK-010501](tasks/TASK-010501-blinds-and-action-order.md) Blinds, button, action order | M | backlog |
-| | [TASK-010502](tasks/TASK-010502-action-legality.md) Legality and min-raise | M | backlog |
-| | [TASK-010503](tasks/TASK-010503-street-progression.md) Round completion, street advance | M | backlog |
-| | [TASK-010504](tasks/TASK-010504-betting-property-tests.md) Betting invariant tests | S | backlog |
+| **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds — *schema 2* | | | ready |
+| | [TASK-010505](tasks/TASK-010505-heads-up-seat-order.md) Name the heads-up blind and action order once | XS | ready |
+| | [TASK-010506](tasks/TASK-010506-post-the-blinds.md) Open a hand by posting both blinds | S | backlog |
+| | [TASK-010507](tasks/TASK-010507-deal-hole-cards.md) Deal the hole cards and put the action on the button | S | backlog |
+| | [TASK-010508](tasks/TASK-010508-legal-actions-core.md) Compute the legal actions at an ordinary decision point | S | backlog |
+| | [TASK-010509](tasks/TASK-010509-legal-actions-all-in.md) Restrict the legal actions around an all-in | S | backlog |
+| | [TASK-010510](tasks/TASK-010510-action-validation.md) Turn an illegal action into the reason it is illegal | S | backlog |
+| | [TASK-010511](tasks/TASK-010511-action-to-event.md) Turn an accepted action into the event that records it | S | backlog |
+| | [TASK-010512](tasks/TASK-010512-default-engine.md) Handle one betting action in a real engine | S | backlog |
+| | [TASK-010513](tasks/TASK-010513-round-completion.md) Decide whether the betting round has anyone left to act | S | backlog |
+| | [TASK-010514](tasks/TASK-010514-pass-the-action.md) Pass the action to the other seat while the round runs | S | backlog |
+| | [TASK-010515](tasks/TASK-010515-engine-contract-test.md) Run the engine contract against the real engine | XS | backlog |
+| | [TASK-010516](tasks/TASK-010516-fold-ends-the-hand.md) End the betting the moment a player folds | XS | backlog |
+| | [TASK-010517](tasks/TASK-010517-street-advance.md) Close the round and deal the next street | S | backlog |
+| | [TASK-010518](tasks/TASK-010518-all-in-run-out.md) Run the board out when nobody can bet again | S | backlog |
+| | [TASK-010519](tasks/TASK-010519-opening-run-out.md) Do not stall a hand whose blinds leave nobody able to act | S | backlog |
+| | [TASK-010520](tasks/TASK-010520-hand-walkthrough-test.md) Play one scripted hand from blinds to showdown | S | backlog |
+| | [TASK-010521](tasks/TASK-010521-betting-invariant-property.md) Assert the betting invariants over a thousand random hands | S | backlog |
 | **[STORY-0106](stories/STORY-0106-showdown-and-pots.md)** Showdown and pots | | | backlog |
 | | [TASK-010601](tasks/TASK-010601-pot-accounting.md) Pot accounting and uncalled bets | M | backlog |
 | | [TASK-010602](tasks/TASK-010602-showdown-resolution.md) Showdown, splits, reveal order | M | backlog |
@@ -120,9 +133,9 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**67 tasks total.** `STORY-0101`–`STORY-0104` are migrated to schema 2; stories 0105–0108 are still schema 1
-and get split by `/plan-story` just before they are worked. `STORY-0105` is unblocked now that `STORY-0104` has merged; 0106–0108 stay in `backlog` until it
-lands, because their tasks are written against types that do not exist yet.
+**80 tasks total.** `STORY-0101`–`STORY-0105` are migrated to schema 2; stories 0106–0108 are still schema 1
+and get split by `/plan-story` just before they are worked. Stories 0106–0108 stay in `backlog` until `STORY-0105` lands, because their tasks are written
+against types that do not exist yet.
 
 ---
 
@@ -143,7 +156,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 52 / 64 | 53 / 67 |
+| Tasks completed | 52 / 77 | 53 / 80 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
