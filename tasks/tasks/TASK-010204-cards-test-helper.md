@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010204
 title: cards("As Kd 7h") test helper for readable card lists
 type: task
-status: ready
+status: done
 parent: STORY-0102
 module: poker-engine
 estimate: S

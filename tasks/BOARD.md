@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101` is done; `STORY-0102` is in progress.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0102` needs only `TASK-010208` and `TASK-010209`.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -59,7 +59,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010201](tasks/TASK-010201-rank-and-suit.md) Rank and Suit enums | S | **done** |
 | | [TASK-010202](tasks/TASK-010202-card-value-type.md) Card as a value class | S | **done** |
 | | [TASK-010203](tasks/TASK-010203-card-notation.md) Format and parse poker notation | S | **done** |
-| | [TASK-010204](tasks/TASK-010204-cards-test-helper.md) `cards("As Kd")` test helper | S | **ready** |
+| | [TASK-010204](tasks/TASK-010204-cards-test-helper.md) `cards("As Kd")` test helper | S | **done** |
 | | [TASK-010205](tasks/TASK-010205-splitmix64-rng.md) Rng and SplitMix64Rng | S | **done** |
 | | [TASK-010206](tasks/TASK-010206-immutable-deck.md) Immutable Deck | S | **done** |
 | | [TASK-010207](tasks/TASK-010207-fisher-yates-shuffle.md) Fisher–Yates shuffle | S | **done** |
@@ -118,7 +118,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 14 / 39 | 15 / 42 |
+| Tasks completed | 15 / 39 | 16 / 42 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
