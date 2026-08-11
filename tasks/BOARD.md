@@ -58,8 +58,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | **[STORY-0102](stories/STORY-0102-cards-deck-shuffle.md)** Cards, deck, shuffle — *schema 2* | | | ready |
 | | [TASK-010201](tasks/TASK-010201-rank-and-suit.md) Rank and Suit enums | S | **done** |
 | | [TASK-010202](tasks/TASK-010202-card-value-type.md) Card as a value class | S | **done** |
-| | [TASK-010203](tasks/TASK-010203-card-notation.md) Format and parse poker notation | S | **ready** |
-| | [TASK-010204](tasks/TASK-010204-cards-test-helper.md) `cards("As Kd")` test helper | S | backlog |
+| | [TASK-010203](tasks/TASK-010203-card-notation.md) Format and parse poker notation | S | **done** |
+| | [TASK-010204](tasks/TASK-010204-cards-test-helper.md) `cards("As Kd")` test helper | S | **ready** |
 | | [TASK-010205](tasks/TASK-010205-splitmix64-rng.md) Rng and SplitMix64Rng | S | **done** |
 | | [TASK-010206](tasks/TASK-010206-immutable-deck.md) Immutable Deck | S | **done** |
 | | [TASK-010207](tasks/TASK-010207-fisher-yates-shuffle.md) Fisher–Yates shuffle | S | **ready** |
@@ -118,7 +118,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 11 / 39 | 12 / 42 |
+| Tasks completed | 12 / 39 | 13 / 42 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
