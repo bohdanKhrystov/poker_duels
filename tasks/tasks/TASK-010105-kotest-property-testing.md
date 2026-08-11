@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010105
 title: Add kotest property testing to the engine
 type: task
-status: ready
+status: done
 parent: STORY-0101
 module: poker-engine
 estimate: XS
