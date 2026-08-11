@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010411
 title: handState test fixture for game states
 type: task
-status: backlog
+status: ready
 parent: STORY-0104
 module: poker-engine
 estimate: XS

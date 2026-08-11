@@ -72,4 +72,37 @@ public data class GameState(
             "Board size ${board.size} does not match $street, which expects ${street.boardCards}"
         }
     }
+
+    /** The pot plus everything still in front of the seats on this street. */
+    public val potTotal: Int get() = pot + seats.sumOf { it.committedThisStreet }
+
+    /**
+     * Every chip in the hand. Constant from the first blind to the last award — the
+     * conservation invariant the rules document requires.
+     */
+    public val chipsInPlay: Int get() = potTotal + seats.sumOf { it.stack }
+
+    /** True once the hand can accept no further action. */
+    public val isHandOver: Boolean get() = street == Street.COMPLETE
+
+    /** The seat at [index]; `seats` is ordered by index so this is `seats[index]`. */
+    public fun seat(index: Int): Seat {
+        require(index in SEAT_INDICES) { "seat index must be 0 or 1, was $index" }
+        return seats[index]
+    }
+
+    /**
+     * Chips [index] must put in to match [betToMatch], capped at its stack: a seat can always
+     * call all-in for less than the full amount.
+     */
+    public fun toCall(index: Int): Int {
+        val seat = seat(index)
+        return (betToMatch - seat.committedThisStreet).coerceIn(0, seat.stack)
+    }
+
+    /** This state with [index] replaced by `transform(seat(index))`. */
+    public fun withSeat(index: Int, transform: (Seat) -> Seat): GameState {
+        val updated = transform(seat(index))
+        return copy(seats = seats.mapIndexed { i, seat -> if (i == index) updated else seat })
+    }
 }
