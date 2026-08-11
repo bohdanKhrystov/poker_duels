@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0103` are done; `STORY-0104` needs `/plan-story`.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0103` are done; `STORY-0104` is split into schema-2 tickets and being worked.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -78,11 +78,30 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010309](tasks/TASK-010309-seven-card-brute-force-test.md) Brute-force check of seven-card evaluation | S | **done** |
 | | [TASK-010310](tasks/TASK-010310-fast-evaluator.md) Bitmask five-card evaluator | S | **done** |
 | | [TASK-010311](tasks/TASK-010311-fast-evaluator-seven-card-equivalence.md) Fast and reference agree on seven cards | XS | **done** |
-| **[STORY-0104](stories/STORY-0104-core-domain-model.md)** Core domain model | | | ready |
-| | [TASK-010401](tasks/TASK-010401-game-state.md) GameState and sub-models | M | backlog |
-| | [TASK-010402](tasks/TASK-010402-player-actions.md) PlayerAction and legality | S | backlog |
-| | [TASK-010403](tasks/TASK-010403-game-events.md) GameEvent and EngineResult | M | backlog |
-| | [TASK-010404](tasks/TASK-010404-engine-contract-tests.md) PokerEngine and contract suite | M | backlog |
+| **[STORY-0104](stories/STORY-0104-core-domain-model.md)** Core domain model — *schema 2* | | | ready |
+| | [TASK-010405](tasks/TASK-010405-street-enum.md) Street enum with board size and successor | XS | ready |
+| | [TASK-010406](tasks/TASK-010406-board-value-type.md) Board value type that can only hold 0, 3, 4 or 5 cards | XS | backlog |
+| | [TASK-010407](tasks/TASK-010407-seat-state.md) Seat state and its construction invariants | S | backlog |
+| | [TASK-010408](tasks/TASK-010408-seat-chip-transitions.md) Seat chip transitions — commit, award, collect | S | backlog |
+| | [TASK-010409](tasks/TASK-010409-game-state.md) GameState fields and construction invariants | S | backlog |
+| | [TASK-010410](tasks/TASK-010410-game-state-derived.md) GameState derived properties and seat update | S | backlog |
+| | [TASK-010411](tasks/TASK-010411-game-state-test-fixture.md) handState test fixture for game states | XS | backlog |
+| | [TASK-010412](tasks/TASK-010412-player-actions.md) PlayerAction hierarchy and ActionType | S | backlog |
+| | [TASK-010413](tasks/TASK-010413-rejection-reasons.md) Rejection reasons for an illegal action | XS | backlog |
+| | [TASK-010414](tasks/TASK-010414-legal-actions.md) LegalActions descriptor | S | backlog |
+| | [TASK-010415](tasks/TASK-010415-game-event-base.md) GameEvent base and hand lifecycle events | S | backlog |
+| | [TASK-010416](tasks/TASK-010416-betting-events.md) Betting events | S | backlog |
+| | [TASK-010417](tasks/TASK-010417-dealer-events.md) Dealer events for street progress and showdown | S | backlog |
+| | [TASK-010418](tasks/TASK-010418-settlement-events.md) Settlement events — uncalled bet, pot award, hand finished | XS | backlog |
+| | [TASK-010419](tasks/TASK-010419-engine-result.md) EngineResult and the rejection invariant | XS | backlog |
+| | [TASK-010420](tasks/TASK-010420-domain-immutability-test.md) Reflective immutability test over the domain types | S | backlog |
+| | [TASK-010421](tasks/TASK-010421-poker-engine-interface.md) PokerEngine interface and a no-op implementation | XS | backlog |
+| | [TASK-010422](tasks/TASK-010422-betting-projection.md) Fold betting events into a state | S | backlog |
+| | [TASK-010423](tasks/TASK-010423-dealer-projection.md) Fold dealer events into a state | S | backlog |
+| | [TASK-010424](tasks/TASK-010424-settlement-projection-tests.md) Settlement projection tests and chip conservation | S | backlog |
+| | [TASK-010425](tasks/TASK-010425-state-projection.md) StateProjection — the one entry point that folds events into a state | S | backlog |
+| | [TASK-010426](tasks/TASK-010426-engine-contract-suite.md) PokerEngineContract — the reusable engine test suite | S | backlog |
+| | [TASK-010427](tasks/TASK-010427-contract-detects-drift.md) Prove the contract suite catches a drifting engine | XS | backlog |
 | **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds | | | backlog |
 | | [TASK-010501](tasks/TASK-010501-blinds-and-action-order.md) Blinds, button, action order | M | backlog |
 | | [TASK-010502](tasks/TASK-010502-action-legality.md) Legality and min-raise | M | backlog |
@@ -101,7 +120,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**48 tasks total.** `STORY-0101`–`STORY-0103` are migrated to schema 2; stories 0104–0108 are still schema 1
+**67 tasks total.** `STORY-0101`–`STORY-0104` are migrated to schema 2; stories 0105–0108 are still schema 1
 and get split by `/plan-story` just before they are worked. Stories 0105–0108 stay in `backlog` until `STORY-0104` merges — their tasks are
 written against types that do not exist yet, and specifying them any earlier would mean
 rewriting them.
@@ -125,7 +144,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 28 / 45 | 29 / 48 |
+| Tasks completed | 28 / 64 | 29 / 67 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
