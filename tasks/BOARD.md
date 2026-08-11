@@ -83,8 +83,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010406](tasks/TASK-010406-board-value-type.md) Board value type that can only hold 0, 3, 4 or 5 cards | XS | **done** |
 | | [TASK-010407](tasks/TASK-010407-seat-state.md) Seat state and its construction invariants | S | **done** |
 | | [TASK-010408](tasks/TASK-010408-seat-chip-transitions.md) Seat chip transitions — commit, award, collect | S | **done** |
-| | [TASK-010409](tasks/TASK-010409-game-state.md) GameState fields and construction invariants | S | ready |
-| | [TASK-010410](tasks/TASK-010410-game-state-derived.md) GameState derived properties and seat update | S | backlog |
+| | [TASK-010409](tasks/TASK-010409-game-state.md) GameState fields and construction invariants | S | **done** |
+| | [TASK-010410](tasks/TASK-010410-game-state-derived.md) GameState derived properties and seat update | S | ready |
 | | [TASK-010411](tasks/TASK-010411-game-state-test-fixture.md) handState test fixture for game states | XS | backlog |
 | | [TASK-010412](tasks/TASK-010412-player-actions.md) PlayerAction hierarchy and ActionType | S | backlog |
 | | [TASK-010413](tasks/TASK-010413-rejection-reasons.md) Rejection reasons for an illegal action | XS | backlog |
@@ -144,7 +144,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 32 / 64 | 33 / 67 |
+| Tasks completed | 33 / 64 | 34 / 67 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
