@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010302
 title: HandRank, comparable lexicographically
 type: task
-status: ready
+status: done
 parent: STORY-0103
 module: poker-engine
 estimate: S

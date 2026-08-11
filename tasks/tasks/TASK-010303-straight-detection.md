@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010303
 title: Detect a straight, including the wheel
 type: task
-status: backlog
+status: ready
 parent: STORY-0103
 module: poker-engine
 estimate: S
