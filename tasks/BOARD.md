@@ -89,8 +89,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010412](tasks/TASK-010412-player-actions.md) PlayerAction hierarchy and ActionType | S | **done** |
 | | [TASK-010413](tasks/TASK-010413-rejection-reasons.md) Rejection reasons for an illegal action | XS | **done** |
 | | [TASK-010414](tasks/TASK-010414-legal-actions.md) LegalActions descriptor | S | **done** |
-| | [TASK-010415](tasks/TASK-010415-game-event-base.md) GameEvent base and hand lifecycle events | S | ready |
-| | [TASK-010416](tasks/TASK-010416-betting-events.md) Betting events | S | backlog |
+| | [TASK-010415](tasks/TASK-010415-game-event-base.md) GameEvent base and hand lifecycle events | S | **done** |
+| | [TASK-010416](tasks/TASK-010416-betting-events.md) Betting events | S | ready |
 | | [TASK-010417](tasks/TASK-010417-dealer-events.md) Dealer events for street progress and showdown | S | backlog |
 | | [TASK-010418](tasks/TASK-010418-settlement-events.md) Settlement events — uncalled bet, pot award, hand finished | XS | backlog |
 | | [TASK-010419](tasks/TASK-010419-engine-result.md) EngineResult and the rejection invariant | XS | backlog |
@@ -144,7 +144,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 38 / 64 | 39 / 67 |
+| Tasks completed | 39 / 64 | 40 / 67 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
