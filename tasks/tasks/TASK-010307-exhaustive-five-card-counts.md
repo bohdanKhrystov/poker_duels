@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010307
 title: Exhaustive five-card category counts
 type: task
-status: ready
+status: done
 parent: STORY-0103
 module: poker-engine
 estimate: S
