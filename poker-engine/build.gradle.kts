@@ -4,6 +4,8 @@ plugins {
 
 dependencies {
     testImplementation(libs.bundles.junit)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.kotlinx.coroutines.core)
 }
 
 tasks.withType<Test>().configureEach {
