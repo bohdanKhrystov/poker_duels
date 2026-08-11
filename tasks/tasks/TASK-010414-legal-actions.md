@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010414
 title: LegalActions descriptor
 type: task
-status: backlog
+status: ready
 parent: STORY-0104
 module: poker-engine
 estimate: S
