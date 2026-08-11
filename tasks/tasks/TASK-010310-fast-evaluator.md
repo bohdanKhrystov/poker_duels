@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010310
 title: Bitmask five-card evaluator
 type: task
-status: backlog
+status: ready
 parent: STORY-0103
 module: poker-engine
 estimate: S
