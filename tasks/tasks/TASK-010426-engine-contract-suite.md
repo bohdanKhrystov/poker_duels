@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010426
 title: PokerEngineContract — the reusable engine test suite
 type: task
-status: backlog
+status: ready
 parent: STORY-0104
 module: poker-engine
 estimate: S
