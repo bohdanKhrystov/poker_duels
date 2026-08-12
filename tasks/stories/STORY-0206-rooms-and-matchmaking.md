@@ -2,7 +2,7 @@
 id: STORY-0206
 title: Rooms, join links and rematch
 type: story
-status: backlog
+status: ready
 parent: EPIC-02
 module: poker-server
 labels: [server, rooms, matchmaking]
@@ -53,11 +53,47 @@ without a server running.
   time. If that abstraction does not exist yet, this story declares it; `STORY-0208` is its bigger
   consumer.
 
+## Open decisions
+
+**DEC-012 — is holding the code enough to take the seat?** A room code is an invite: whoever
+presents it sits down. The mechanism this story ships is 40 bits of `SecureRandom` in eight
+Crockford-base32 characters, which makes guessing a *particular* room hopeless, but nothing here
+rate-limits a client that tries codes in a loop, and nothing asks the host to confirm the face that
+turns up. Registered in [`docs/adr/README.md`](../../docs/adr/README.md). Nothing is blocked on it:
+the entropy is a constant in `RoomCode`, and rate limiting or host confirmation would be additive,
+landing in `STORY-0207` or later.
+
+**DEC-013 — per-room mutex, or a channel-fed actor?** The design notes above call for an actor with
+a mailbox. What `TASK-020609` builds is a `ConcurrentHashMap<RoomCode, Holder>` where each holder
+carries its own `Mutex`, and every mutation is read-decide-write inside that lock. That gives the
+same property the actor was wanted for — no two callers ever mutate one room concurrently, proved
+by `TASK-020610`'s hundred racing joiners — with suspending methods, so `STORY-0207` can run
+engine work and I/O inside the same critical section without changing a signature. What it does
+*not* give is a queue with an order: if `STORY-0207` needs frames for one room processed in arrival
+order, or a single place to fan events out from, the holder becomes an actor. Registered in
+[`docs/adr/README.md`](../../docs/adr/README.md); nothing in this story is blocked on it, because
+the mutex is a strict subset of what an actor would offer behind the same API.
+
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets are produced by `/plan-story STORY-0206`.* | — |
+| [TASK-020601](../tasks/TASK-020601-server-clock.md) | Declare the injectable ServerClock and a test clock that never sleeps | ready |
+| [TASK-020602](../tasks/TASK-020602-room-code-type.md) | A RoomCode value type that only accepts a human-typable code | backlog |
+| [TASK-020603](../tasks/TASK-020603-room-code-source.md) | Mint room codes from an injected secure source, never from the engine Rng | backlog |
+| [TASK-020604](../tasks/TASK-020604-room-state.md) | The Room value and its four states, with the seating invariants in the type | backlog |
+| [TASK-020605](../tasks/TASK-020605-room-join.md) | Seat the second player, and refuse the third | backlog |
+| [TASK-020606](../tasks/TASK-020606-room-finish-and-abandon.md) | Finish, abandon and touch a room | backlog |
+| [TASK-020607](../tasks/TASK-020607-room-rematch.md) | Both seats must offer before a rematch starts, and the button changes sides | backlog |
+| [TASK-020608](../tasks/TASK-020608-room-timeouts.md) | RoomTimeouts, the two idle limits a room is reaped against | backlog |
+| [TASK-020609](../tasks/TASK-020609-room-registry-create.md) | A RoomRegistry that creates a room under a code nobody else holds | backlog |
+| [TASK-020610](../tasks/TASK-020610-room-registry-join.md) | Join by code under the room's lock, so a hundred racing joiners seat exactly one | backlog |
+| [TASK-020611](../tasks/TASK-020611-room-registry-lifecycle.md) | Finish, abandon and offer a rematch through the registry | backlog |
+| [TASK-020612](../tasks/TASK-020612-reap-idle-rooms.md) | Reap idle rooms on the injected clock, and never a room that is playing | backlog |
+| [TASK-020613](../tasks/TASK-020613-room-timeouts-in-server-config.md) | Read the room idle limits from ServerConfig instead of a literal | backlog |
+
+Nothing in this story touches `DuelSocket.kt`, `Application.kt` or the protocol package: the
+registry is reached only from its own tests until `STORY-0207` wires it.
 
 ## Acceptance criteria
 
