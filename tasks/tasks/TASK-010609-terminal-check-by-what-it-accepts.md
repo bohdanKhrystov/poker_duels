@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010609
 title: Pin the random hand's ending by what it accepts, not by its street
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: XS
