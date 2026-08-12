@@ -1,6 +1,7 @@
 package duels.poker.engine.game
 
 import duels.poker.engine.card.Card
+import kotlinx.serialization.Serializable
 
 private val LEGAL_SIZES = setOf(0, 3, 4, 5)
 
@@ -9,6 +10,7 @@ private val LEGAL_SIZES = setOf(0, 3, 4, 5)
  * duplicates. Hole cards live on [Seat]; this type represents only the shared cards dealt to
  * the center of the table.
  */
+@Serializable
 public data class Board(val cards: List<Card>) {
     init {
         require(cards.size in LEGAL_SIZES) { "A board holds 0, 3, 4 or 5 cards, not ${cards.size}" }
