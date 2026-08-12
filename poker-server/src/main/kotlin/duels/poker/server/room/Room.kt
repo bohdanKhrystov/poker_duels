@@ -87,6 +87,43 @@ public data class Room(
         else -> null
     }
 
+    /**
+     * Seat [guest] into this room, starting the duel if there is a seat for them.
+     *
+     * Checked strictly in this order: a dead room refuses as [RoomRefusal.UNKNOWN_ROOM] before
+     * anything else, so it is indistinguishable from a room that never existed; a player already
+     * seated is refused as [RoomRefusal.ALREADY_SEATED] before fullness is even considered, so a
+     * returning player never mistakes their own room for a full one; only then does a genuinely
+     * full room refuse as [RoomRefusal.ROOM_FULL].
+     *
+     * Pure and total: never throws, never mutates. A [JoinResult.Refused] carries no room —
+     * the caller already holds the unchanged one.
+     *
+     * @param guest the player attempting to join.
+     * @param now the current time in milliseconds; `Room` reads no clock of its own.
+     * @return [JoinResult.Seated] with the duel started, or [JoinResult.Refused] with the reason.
+     */
+    public fun join(guest: PlayerId, now: Long): JoinResult = when (state) {
+        RoomState.FINISHED, RoomState.ABANDONED -> JoinResult.Refused(RoomRefusal.UNKNOWN_ROOM)
+        RoomState.PLAYING -> if (seatOf(guest) != null) {
+            JoinResult.Refused(RoomRefusal.ALREADY_SEATED)
+        } else {
+            JoinResult.Refused(RoomRefusal.ROOM_FULL)
+        }
+        RoomState.WAITING -> if (seatOf(guest) != null) {
+            JoinResult.Refused(RoomRefusal.ALREADY_SEATED)
+        } else {
+            JoinResult.Seated(
+                copy(
+                    guest = guest,
+                    state = RoomState.PLAYING,
+                    match = MatchState.start(format, openingButtonSeat),
+                    lastActivityAt = now,
+                ),
+            )
+        }
+    }
+
     public companion object {
         /**
          * Open a fresh room: a host waiting for a guest, no match yet, the host holding the
