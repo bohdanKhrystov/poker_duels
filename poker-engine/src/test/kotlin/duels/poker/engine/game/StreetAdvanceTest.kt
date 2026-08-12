@@ -123,16 +123,21 @@ class StreetAdvanceTest {
         val afterCheck1 = DefaultPokerEngine.handle(riverState(), PlayerAction.Check(1))
         val result = DefaultPokerEngine.handle(afterCheck1.newState, PlayerAction.Check(0))
 
-        assertEquals(5, result.events.size)
+        assertEquals(6, result.events.size)
         assertTrue(result.events[0] is PlayerChecked)
         assertTrue(result.events[1] is BettingRoundEnded)
         assertTrue(result.events[2] is ShowdownReached)
-        val awarded = result.events[3]
+        val revealed = result.events[3]
+        assertTrue(revealed is HandRevealed)
+        assertEquals(0, (revealed as HandRevealed).seat)
+        assertEquals(cards("Qh Jc"), revealed.cards)
+        val awarded = result.events[4]
         assertTrue(awarded is PotAwarded)
         assertEquals(0, (awarded as PotAwarded).seat)
         assertEquals(600, awarded.amount)
-        assertTrue(result.events[4] is HandFinished)
+        assertTrue(result.events[5] is HandFinished)
         assertTrue(result.events.none { it is StreetDealt })
+        assertTrue(result.events.none { it is HandRevealed && it.cards == cards("Td 8c") })
 
         assertEquals(Street.COMPLETE, result.newState.street)
         assertNull(result.newState.seatToAct)

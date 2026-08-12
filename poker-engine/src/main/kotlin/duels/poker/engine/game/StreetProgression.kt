@@ -115,15 +115,27 @@ private fun runOutBoard(afterEnd: GameState, endedEvent: BettingRoundEnded): Eng
 
 /**
  * Reaches showdown from [state] and settles the hand in the same step: [ShowdownReached] first,
- * then whatever [settleHand] returns for [showdownWinners] of the post-showdown state. Shared by
+ * then one [HandRevealed] per seat named by [revealOrder] — a mucked hand appears in no event,
+ * per [ADR-0008](../../docs/adr/ADR-0008-loser-mucks-at-showdown.md) — then whatever
+ * [settleHand] returns for [showdownWinners] of the post-showdown state. Shared by
  * [endBettingRound]'s river branch and [runOutBoard], the two places a betting round can end with
  * both seats still in the hand.
  */
 private fun reachShowdownAndSettle(state: GameState): EngineResult {
     val showdownEvent = ShowdownReached(state.eventCount)
-    val afterShowdown = StateProjection.apply(state, showdownEvent)
-    val settled = settleHand(afterShowdown, showdownWinners(afterShowdown))
-    return EngineResult.accepted(settled.newState, listOf(showdownEvent) + settled.events)
+    var current = StateProjection.apply(state, showdownEvent)
+    val events = mutableListOf<GameEvent>(showdownEvent)
+
+    val winners = showdownWinners(current)
+    for (seat in revealOrder(current, winners)) {
+        val revealEvent = HandRevealed(current.eventCount, seat, current.seat(seat).holeCards)
+        current = StateProjection.apply(current, revealEvent)
+        events += revealEvent
+    }
+
+    val settled = settleHand(current, winners)
+    events += settled.events
+    return EngineResult.accepted(settled.newState, events)
 }
 
 /**
