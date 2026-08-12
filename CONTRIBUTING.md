@@ -138,3 +138,24 @@ git checkout develop
 
 Toolchain requirements arrive with `TASK-010101`; until then the repository is documentation
 and tickets only.
+
+### The development database
+
+Start a PostgreSQL container with `docker compose up -d`, and stop it with `docker compose down -v`. The image matches the one the test suite uses, and the credentials need no configuration:
+
+```sh
+# Start
+docker compose up -d
+# Stop
+docker compose down -v
+```
+
+The database is at `localhost:5432`, username `poker`, password `poker`.
+
+The test suite does **not** use this container — Testcontainers starts its own fresh database for each run. To run tests, you need Docker installed, not a running compose stack. The command `./gradlew check` will start the container automatically and clean it up afterward.
+
+If Docker is not available:
+- `./gradlew check` *skips* database tests with a message and stays green, so work on the engine
+  and the protocol is not blocked.
+- `./gradlew check -PrequireDocker=true` *fails* instead. This is what CI runs, because a test
+  suite that skips silently in CI is a test suite that has stopped testing.

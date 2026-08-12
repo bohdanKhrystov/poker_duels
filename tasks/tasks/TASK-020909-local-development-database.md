@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020909
 title: Give a fresh clone a local database with docker compose
 type: task
-status: backlog
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: S
