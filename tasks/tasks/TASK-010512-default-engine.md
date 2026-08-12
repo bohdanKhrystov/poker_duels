@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010512
 title: Handle one betting action in a real engine
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
