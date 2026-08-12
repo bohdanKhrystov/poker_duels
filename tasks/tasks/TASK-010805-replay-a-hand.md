@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010805
 title: Replay a hand from its log
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
