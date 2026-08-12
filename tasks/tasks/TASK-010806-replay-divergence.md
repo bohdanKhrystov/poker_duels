@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010806
 title: Replay rejects a log that does not match the engine
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
