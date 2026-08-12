@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020204
 title: ClientMessage — a hierarchy that can only express an intent
 type: task
-status: backlog
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
