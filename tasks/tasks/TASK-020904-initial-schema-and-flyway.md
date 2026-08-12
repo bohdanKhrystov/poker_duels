@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020904
 title: Create the initial schema and apply it with Flyway
 type: task
-status: blocked
+status: backlog
 parent: STORY-0209
 module: poker-server
 estimate: S
