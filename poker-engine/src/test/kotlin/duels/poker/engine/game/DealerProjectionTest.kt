@@ -85,4 +85,32 @@ internal class DealerProjectionTest {
         assertEquals(cards("As Kd"), result.seat(1).holeCards)
         assertTrue(result.seat(0).holeCards.isEmpty())
     }
+
+    @Test
+    fun dealingANewStreetClearsTheLastAggressor() {
+        val state = handState().copy(lastAggressor = 0)
+
+        val result = applyDealer(state, StreetDealt(6, Street.FLOP, cards("As Kd 7c")))
+
+        assertNull(result.lastAggressor)
+    }
+
+    @Test
+    fun endingABettingRoundKeepsTheLastAggressor() {
+        val state = handState().copy(lastAggressor = 1)
+
+        val result = applyDealer(state, BettingRoundEnded(1, Street.RIVER))
+
+        assertEquals(1, result.lastAggressor)
+    }
+
+    @Test
+    fun reachingShowdownKeepsTheLastAggressor() {
+        val riverState = handState()
+            .copy(street = Street.RIVER, board = Board(cards("2c 3c 4c 5c 6c")), seatToAct = 0, lastAggressor = 1)
+
+        val result = applyDealer(riverState, ShowdownReached(15))
+
+        assertEquals(1, result.lastAggressor)
+    }
 }

@@ -14,8 +14,10 @@ package duels.poker.engine.game
  */
 public fun applyDealer(state: GameState, event: DealerEvent): GameState {
     val folded = when (event) {
+        // Do not clear lastAggressor here: a showdown is reached *after* the river's betting round
+        // has ended, and the showdown is about to read lastAggressor to determine reveal order.
         is BettingRoundEnded -> endRound(state)
-        is StreetDealt -> state.copy(street = event.street, board = state.board.dealt(event.cards))
+        is StreetDealt -> state.copy(street = event.street, board = state.board.dealt(event.cards), lastAggressor = null)
         is ShowdownReached -> state.copy(street = Street.SHOWDOWN, seatToAct = null)
         is HandRevealed -> state.withSeat(event.seat) { it.copy(holeCards = event.cards) }
         is UncalledBetReturned -> award(state, event.seat, event.amount)
