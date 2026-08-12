@@ -6,10 +6,7 @@ package duels.poker.engine.game
  * `handle` composes four pieces that already exist, holding no rules of its own:
  * [rejectionFor] to check legality, [eventFor] to turn a legal action into its event,
  * [StateProjection.apply] to fold that event into the state, and [EngineResult.accepted] to
- * carry both back.
- *
- * TODO(TASK-010514): `applyBetting` clears `seatToAct` and nothing here names the next actor,
- * so the hand stops after every single action for now. Delete this note when that ticket lands.
+ * carry both back. [continueHand] then names the next actor, if the round still has one.
  */
 public object DefaultPokerEngine : PokerEngine {
     override fun handle(state: GameState, action: PlayerAction): EngineResult {
@@ -20,6 +17,7 @@ public object DefaultPokerEngine : PokerEngine {
 
         val event = eventFor(state, action)
         val newState = StateProjection.apply(state, event)
-        return EngineResult.accepted(newState, listOf(event))
+        val continued = continueHand(newState, action)
+        return EngineResult.accepted(continued.newState, listOf(event) + continued.events)
     }
 }

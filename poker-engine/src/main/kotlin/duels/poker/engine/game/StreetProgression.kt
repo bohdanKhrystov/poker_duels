@@ -1,6 +1,21 @@
 package duels.poker.engine.game
 
 /**
+ * The events that follow [lastAction]'s own event. [state] is the state after that event has
+ * been applied, so `seatToAct` is already null.
+ *
+ * The round-is-over branch is still empty: closing the round on a fold is `TASK-010516`,
+ * advancing the street is `TASK-010517`, and running out the board is `TASK-010518`.
+ */
+public fun continueHand(state: GameState, lastAction: PlayerAction): EngineResult {
+    if (!roundContinues(state, lastAction)) {
+        return EngineResult.accepted(state, emptyList())
+    }
+    val event = ActionOn(state.eventCount, otherSeat(lastAction.seat))
+    return EngineResult.accepted(StateProjection.apply(state, event), listOf(event))
+}
+
+/**
  * Whether the opponent of [lastAction]'s seat still has a decision on this street.
  *
  * [state] is the state *after* [lastAction]'s event has been applied.
