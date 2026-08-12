@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010520
 title: Play one scripted hand from blinds to showdown
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: S
