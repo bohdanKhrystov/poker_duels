@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020602
 title: A RoomCode value type that only accepts a human-typable code
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
