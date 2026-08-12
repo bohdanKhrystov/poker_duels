@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020201
 title: Give poker-server the serialization plugin, PROTOCOL_VERSION and one shared Json
 type: task
-status: ready
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
