@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010725
 title: MatchEvent, its own hierarchy, and MatchFinished
 type: task
-status: ready
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
