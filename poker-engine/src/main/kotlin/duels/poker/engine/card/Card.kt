@@ -1,5 +1,7 @@
 package duels.poker.engine.card
 
+import kotlinx.serialization.Serializable
+
 private const val SUIT_COUNT = 4
 
 /**
@@ -9,6 +11,7 @@ private const val SUIT_COUNT = 4
  * inspect them. The order of [all] is contractual: recorded shuffles and the integer encoding
  * both depend on it.
  */
+@Serializable(with = CardSerializer::class)
 @JvmInline
 public value class Card private constructor(private val code: Int) {
     public val rank: Rank get() = Rank.entries[code / SUIT_COUNT]
