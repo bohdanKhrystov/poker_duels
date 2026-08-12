@@ -58,7 +58,10 @@ class AllInRunOutTest {
         val (_, result) = bothAllInPreflop()
 
         assertEquals(5, result.newState.board.size)
-        assertEquals(Street.SHOWDOWN, result.newState.street)
+        assertEquals(Street.COMPLETE, result.newState.street)
+        assertTrue(result.events.any { it is ShowdownReached })
+        assertEquals(0, result.newState.pot)
+        assertEquals(20_000, result.newState.seat(0).stack + result.newState.seat(1).stack)
     }
 
     @Test
@@ -66,7 +69,7 @@ class AllInRunOutTest {
         val (_, result) = bothAllInPreflop()
 
         val dealerEvents = result.events.filterIsInstance<DealerEvent>()
-        assertEquals(5, dealerEvents.size)
+        assertEquals(7, dealerEvents.size)
 
         assertTrue(dealerEvents[0] is BettingRoundEnded)
 
@@ -86,6 +89,10 @@ class AllInRunOutTest {
         assertEquals(1, river.cards.size)
 
         assertTrue(dealerEvents[4] is ShowdownReached)
+
+        val betweenShowdownAndFinish = dealerEvents.subList(5, dealerEvents.size - 1)
+        assertTrue(betweenShowdownAndFinish.all { it is PotAwarded })
+        assertTrue(dealerEvents.last() is HandFinished)
     }
 
     @Test
@@ -104,7 +111,9 @@ class AllInRunOutTest {
 
         assertTrue(result.newState.seat(1).stack > 0)
         assertEquals(5, result.newState.board.size)
-        assertEquals(Street.SHOWDOWN, result.newState.street)
+        assertEquals(Street.COMPLETE, result.newState.street)
+        assertEquals(0, result.newState.pot)
+        assertEquals(14_000, result.newState.seat(0).stack + result.newState.seat(1).stack)
     }
 
     @Test
@@ -116,9 +125,21 @@ class AllInRunOutTest {
         assertEquals(Street.RIVER, streetsDealt[0].street)
         assertEquals(1, streetsDealt[0].cards.size)
 
-        assertTrue(result.events.last() is ShowdownReached)
+        assertTrue(result.events.any { it is ShowdownReached })
+        assertTrue(result.events.last() is HandFinished)
+
+        val returned = result.events.filterIsInstance<UncalledBetReturned>().single()
+        assertEquals(1, returned.seat)
+        assertEquals(9_000, returned.amount)
+
+        val awarded = result.events.filterIsInstance<PotAwarded>().single()
+        assertEquals(1, awarded.seat)
+        assertEquals(2_000, awarded.amount)
+
+        assertEquals(9_000, result.newState.seat(0).stack)
+        assertEquals(11_000, result.newState.seat(1).stack)
         assertEquals(5, result.newState.board.size)
-        assertEquals(Street.SHOWDOWN, result.newState.street)
+        assertEquals(Street.COMPLETE, result.newState.street)
     }
 
     @Test
