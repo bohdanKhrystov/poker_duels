@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0105` are done; `STORY-0106` is done bar its showdown-reveal tail; `STORY-0107` and `STORY-0108` run concurrently.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0105` are done; `STORY-0106` and `STORY-0107` are done; `STORY-0108` is the last story of the epic.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -156,7 +156,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010714](tasks/TASK-010714-duel-invariants.md) Button, blinds and chips across a whole duel | S | **done** |
 | | [TASK-010715](tasks/TASK-010715-duel-termination-property.md) Every default duel terminates | S | **done** |
 | | [TASK-010716](tasks/TASK-010716-fixed-length-duel.md) A fixed-length duel is decided on chips | S | **done** |
-| | [TASK-010717](tasks/TASK-010717-match-finished-event.md) The end of a match as a durable event | S | blocked |
+| | [TASK-010725](tasks/TASK-010725-match-event-hierarchy.md) MatchEvent, its own hierarchy, and MatchFinished | S | ready |
 | **[STORY-0108](stories/STORY-0108-event-log-replay-simulation.md)** Log, replay, simulation — *schema 2* | | | ready |
 | | [TASK-010804](tasks/TASK-010804-hand-log.md) HandLog, the replayable record of one hand | S | **done** |
 | | [TASK-010805](tasks/TASK-010805-replay-a-hand.md) Replay a hand from its log | S | **done** |
@@ -164,11 +164,26 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010807](tasks/TASK-010807-replay-identity-property.md) Record and replay is an identity over 200 hands | S | **done** |
 | | [TASK-010808](tasks/TASK-010808-poker-ai-module.md) The poker-ai module, where bots and the harness live | XS | **done** |
 | | [TASK-010809](tasks/TASK-010809-random-bot.md) Bot, and a RandomBot picking among legal actions | S | **done** |
-| | [TASK-010810](tasks/TASK-010810-hand-log-serialization.md) Serialise a hand log and read it back | S | blocked |
-| | [TASK-010811](tasks/TASK-010811-match-log-and-replay.md) The log of a whole duel, and replaying it | S | blocked |
-| | [TASK-010812](tasks/TASK-010812-simulation-harness.md) Headless simulation harness and invariant fuzzing | S | blocked |
+| | [TASK-010813](tasks/TASK-010813-serialization-dependency.md) Take the kotlinx.serialization dependency behind a narrowed guard | S | ready |
+| | [TASK-010827](tasks/TASK-010827-simulation-invariants.md) The invariants a simulated hand must never break | S | ready |
+| | [TASK-010814](tasks/TASK-010814-card-serializer.md) A card serialises as its own notation | S | backlog |
+| | [TASK-010815](tasks/TASK-010815-player-action-serializable.md) PlayerAction is serializable under a short type name | S | backlog |
+| | [TASK-010816](tasks/TASK-010816-concrete-events-serializable.md) Every betting and dealer event is serializable | S | backlog |
+| | [TASK-010817](tasks/TASK-010817-game-event-hierarchy-serializable.md) The whole GameEvent hierarchy serialises polymorphically | S | backlog |
+| | [TASK-010818](tasks/TASK-010818-hand-log-serializable.md) A hand log round-trips through JSON | S | backlog |
+| | [TASK-010819](tasks/TASK-010819-hand-log-codec-and-version.md) Read and write a hand log, refusing an unknown version | S | backlog |
+| | [TASK-010823](tasks/TASK-010823-blind-types-serializable.md) The blind types are serializable | XS | backlog |
+| | [TASK-010824](tasks/TASK-010824-duel-format-serializable.md) DuelFormat and its end condition are serializable | S | backlog |
+| | [TASK-010825](tasks/TASK-010825-match-event-serializable.md) DuelOutcome and MatchFinished are serializable | S | backlog |
+| | [TASK-010820](tasks/TASK-010820-match-log.md) MatchLog, the record of a whole duel | S | backlog |
+| | [TASK-010821](tasks/TASK-010821-logged-duel-player.md) Play a whole duel and keep its log | S | backlog |
+| | [TASK-010822](tasks/TASK-010822-replay-a-match.md) Replay a whole duel from its log | S | backlog |
+| | [TASK-010826](tasks/TASK-010826-match-log-codec.md) Read and write a match log, version guard included | S | backlog |
+| | [TASK-010828](tasks/TASK-010828-duel-simulator.md) Simulate one duel between two bots, checking after every action | S | backlog |
+| | [TASK-010829](tasks/TASK-010829-simulation-runner.md) Run a thousand duels and report on them | S | backlog |
+| | [TASK-010830](tasks/TASK-010830-soak-run.md) A hundred thousand duels, off the default test task | S | backlog |
 
-**115 tasks total.** All stories are migrated to schema 2. `STORY-0107` and `STORY-0108` run concurrently: `STORY-0108`'s
+**130 tasks total.** All stories are migrated to schema 2. `STORY-0107` and `STORY-0108` run concurrently: `STORY-0108`'s
 hand-level tickets need only the engine as it stands, while its match-level tail waits on `STORY-0107`.
 
 ---
@@ -179,8 +194,12 @@ hand-level tickets need only the engine as it stands, while its match-level tail
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-005 | Does `MatchFinished` belong to the hand-scoped `GameEvent` log, to a `MatchEvent` hierarchy of its own, or nowhere? | [`STORY-0107`](stories/STORY-0107-duel-format-and-match.md) | blocks `TASK-010717`, before STORY-0108 |
-| DEC-006 | Where does event-log serialisation live, and in what format, given `poker-engine` takes no dependencies? | [`STORY-0108`](stories/STORY-0108-event-log-replay-simulation.md) | blocks `TASK-010810` |
+
+**Answered.** `DEC-004` → [`ADR-0008`](../docs/adr/ADR-0008-loser-mucks-at-showdown.md) (the loser
+mucks). `DEC-005` → [`ADR-0009`](../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md)
+(match events are their own hierarchy). `DEC-006` →
+[`ADR-0010`](../docs/adr/ADR-0010-engine-takes-a-serialization-dependency.md) (the engine may
+depend on `kotlinx.serialization`; `checkNoDependencies` is narrowed, not deleted).
 | — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
 
 ---

@@ -25,10 +25,10 @@ Replay is a hard prerequisite for the analysis work in EPIC-08 and for training 
 
 ## Design notes
 
-- Serialization must not pull a dependency into `poker-engine`. Either the format is
-  hand-written in the engine, or the serializer lives in a sibling module that depends on the
-  engine rather than the other way round. This is `DEC-006` below, not a ticket-level choice, and
-  it ends in an ADR either way.
+- Serialization is kotlinx.serialization, inside `poker-engine`, on the domain types themselves:
+  [`ADR-0010`](../../docs/adr/ADR-0010-engine-takes-a-serialization-dependency.md) answered
+  `DEC-006`. `checkNoDependencies` is narrowed to an allowlist of `kotlin-stdlib` and
+  `kotlinx-serialization` and still fails on anything else; every other purity clause stands.
 - The log is append-only and versioned. Reading a log written by an older schema version must
   either work or fail loudly — never silently misinterpret.
 - Replay determinism means the seed is part of the log. Given `(seed, ordered actions)` the
@@ -38,23 +38,15 @@ Replay is a hard prerequisite for the analysis work in EPIC-08 and for training 
   states a sensible player would never reach. It lives in `poker-ai`, which
   [`docs/architecture.md`](../../docs/architecture.md) already names as the home of "bots and the
   simulation harness".
-- **The story splits in two along the hand/match line.** A hand log, replay of one hand and the
-  replay identity property need only the `GameEvent` types that exist today, and start now. A
-  match log, match replay and a harness that plays *duels* need the match types
-  [`STORY-0107`](STORY-0107-duel-format-and-match.md) introduces, and wait for it — those tickets
-  carry the dependency in prose rather than in `depends_on`, because that story is split
-  separately and its task ids are not this story's to name.
-
-> ### ⚠ Open decision — DEC-006
->
-> *Where* serialisation lives, and in what format, is not settled. `poker-engine` may take no
-> dependency, so either the format is hand-written inside the engine, or a new module that
-> depends on the engine owns it and is free to use kotlinx.serialization — a module the
-> architecture's module list does not currently contain — or the format waits for `EPIC-02` to
-> decide how a match is stored. The answer binds `EPIC-02` and `EPIC-03`, so it is not a
-> ticket-level choice. Everything else in this story ships regardless: the log is a value, and
-> replaying it does not require having written it to disk. `TASK-010810` alone is blocked until
-> this is decided, and is re-split afterwards.
+- The wire format is the domain types' own: short `@SerialName` discriminators (`"PlayerBet"`,
+  `"MatchFinished"`), cards as their notation (`"As"`), and each log carrying its own version
+  member, checked before the value is decoded. A rename must not silently change the format.
+- Match-level events are their own hierarchy
+  ([`ADR-0009`](../../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md)), so a match log
+  holds `HandLog`s plus its own `MatchEvent`s and never a loose `GameEvent`.
+- **The story runs as three independent chains** — serialization, the match log and its replay,
+  and the simulation harness in `poker-ai` — that only meet at `TASK-010826`. Three tickets are
+  startable the moment the story opens.
 
 ## Tasks
 
@@ -66,18 +58,37 @@ Replay is a hard prerequisite for the analysis work in EPIC-08 and for training 
 | [TASK-010807](../tasks/TASK-010807-replay-identity-property.md) | Record and replay is an identity over two hundred random hands | backlog |
 | [TASK-010808](../tasks/TASK-010808-poker-ai-module.md) | The poker-ai module, where bots and the harness live | backlog |
 | [TASK-010809](../tasks/TASK-010809-random-bot.md) | Bot, and a RandomBot that picks uniformly among legal actions | backlog |
-| [TASK-010810](../tasks/TASK-010810-hand-log-serialization.md) | Serialise a hand log and read it back | blocked (DEC-006) |
-| [TASK-010811](../tasks/TASK-010811-match-log-and-replay.md) | The log of a whole duel, and replaying it | blocked (STORY-0107) |
-| [TASK-010812](../tasks/TASK-010812-simulation-harness.md) | Headless simulation harness and invariant fuzzing | blocked (STORY-0107) |
+| [TASK-010813](../tasks/TASK-010813-serialization-dependency.md) | Take the kotlinx.serialization dependency behind a narrowed guard | ready |
+| [TASK-010814](../tasks/TASK-010814-card-serializer.md) | A card serialises as its own notation | backlog |
+| [TASK-010815](../tasks/TASK-010815-player-action-serializable.md) | PlayerAction is serializable under a short type name | backlog |
+| [TASK-010816](../tasks/TASK-010816-concrete-events-serializable.md) | Every betting and dealer event is serializable | backlog |
+| [TASK-010817](../tasks/TASK-010817-game-event-hierarchy-serializable.md) | The whole GameEvent hierarchy serialises polymorphically | backlog |
+| [TASK-010818](../tasks/TASK-010818-hand-log-serializable.md) | A hand log round-trips through JSON | backlog |
+| [TASK-010819](../tasks/TASK-010819-hand-log-codec-and-version.md) | Read and write a hand log, and refuse a version this build does not know | backlog |
+| [TASK-010820](../tasks/TASK-010820-match-log.md) | MatchLog, the record of a whole duel | backlog |
+| [TASK-010821](../tasks/TASK-010821-logged-duel-player.md) | Play a whole duel and keep its log | backlog |
+| [TASK-010822](../tasks/TASK-010822-replay-a-match.md) | Replay a whole duel from its log | backlog |
+| [TASK-010823](../tasks/TASK-010823-blind-types-serializable.md) | The blind types are serializable | backlog |
+| [TASK-010824](../tasks/TASK-010824-duel-format-serializable.md) | DuelFormat and its end condition are serializable | backlog |
+| [TASK-010825](../tasks/TASK-010825-match-event-serializable.md) | DuelOutcome and MatchFinished are serializable | backlog |
+| [TASK-010826](../tasks/TASK-010826-match-log-codec.md) | Read and write a match log, version guard included | backlog |
+| [TASK-010827](../tasks/TASK-010827-simulation-invariants.md) | The invariants a simulated hand must never break | ready |
+| [TASK-010828](../tasks/TASK-010828-duel-simulator.md) | Simulate one duel between two bots, checking after every action | backlog |
+| [TASK-010829](../tasks/TASK-010829-simulation-runner.md) | Run a thousand duels and report on them | backlog |
+| [TASK-010830](../tasks/TASK-010830-soak-run.md) | A hundred thousand duels, off the default test task | backlog |
+
+**Retired:** `TASK-010810` (blocked on `DEC-006`), `TASK-010811` and `TASK-010812` (both blocked
+on `STORY-0107`) were re-split into `TASK-010813`–`TASK-010830` once `ADR-0009`, `ADR-0010` and
+the match layer landed. Those three ids are retired, not reused.
 
 ## Acceptance criteria
 
 - [ ] Replaying `(seed, actions)` reproduces every state and every event of a **hand** exactly,
       deck and rng included, asserted over two hundred generated hands.
 - [ ] A log whose events do not match what the engine regenerates fails, naming the event index.
-- [ ] A match log round-trips through serialization unchanged. *(waits on `DEC-006`)*
+- [ ] A match log round-trips through serialization unchanged (`TASK-010826`).
 - [ ] Replaying `(seed, actions)` reproduces every state and every event of a **match** exactly,
-      asserted over generated matches. *(waits on `STORY-0107`)*
+      asserted over generated matches (`TASK-010822`).
 - [ ] A log written under an older schema version is either read correctly or rejected with a
       clear error — never misread.
 - [ ] The harness plays 100 000 duels between random bots with no rule violation and no crash.

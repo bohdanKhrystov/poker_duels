@@ -34,15 +34,13 @@ run indefinitely.
   the format, the hand number, the blind level, stacks between hands and the button.
 - Blind levels advance on hand boundaries, never mid-hand.
 
-> ### ⚠ Open decision — DEC-005
+> ### ✔ DEC-005 — answered by ADR-0009
 >
-> *Where* a match-level event lives is not settled. `GameEvent.sequence` is a position within a
-> hand and `StateProjection` is exhaustive over `GameEvent` with no `else`, so a `MatchFinished`
-> either rides on the final hand's log as a no-op for the projection, or starts a `MatchEvent`
-> hierarchy of its own, or does not exist and the match layer returns `DuelOutcome` alone. The
-> answer binds `STORY-0108` and `EPIC-02`, so it is not a ticket-level choice. Every other ticket
-> in this story ships regardless — the duel plays, terminates and declares a winner as a value —
-> and `TASK-010717` alone is blocked until this is decided, and is re-split afterwards.
+> Match-level events live in their own sealed `MatchEvent` hierarchy with their own sequence
+> space: [`ADR-0009`](../../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md).
+> `GameEvent` stays hand-scoped, `sequence` keeps meaning "position within a hand", and
+> `StateProjection`'s exhaustive `when` is not touched. `TASK-010717` was re-split into
+> `TASK-010725` under that answer.
 
 ## Tasks
 
@@ -61,7 +59,11 @@ run indefinitely.
 | [TASK-010714](../tasks/TASK-010714-duel-invariants.md) | Button, blinds and chips across a whole duel | backlog |
 | [TASK-010715](../tasks/TASK-010715-duel-termination-property.md) | Every default duel terminates, well inside an asserted ceiling | backlog |
 | [TASK-010716](../tasks/TASK-010716-fixed-length-duel.md) | A fixed-length duel plays and is decided on chips | backlog |
-| [TASK-010717](../tasks/TASK-010717-match-finished-event.md) | The end of a match as a durable event | blocked (DEC-005) |
+| [TASK-010725](../tasks/TASK-010725-match-event-hierarchy.md) | MatchEvent, its own hierarchy, and MatchFinished | ready |
+
+**Retired:** `TASK-010717` (blocked on `DEC-005`) was re-split into `TASK-010725` once
+[`ADR-0009`](../../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md) answered it. The id
+is retired, not reused.
 
 ## Acceptance criteria
 
@@ -71,8 +73,8 @@ run indefinitely.
       are covered by tests.
 - [ ] Every duel under the default format terminates — asserted over a large number of
       simulated matches with a hand-count ceiling that must never be reached.
-- [ ] The winner, the hand count and the final stacks are one value — `DuelOutcome`. Whether that
-      value is also an event waits on `DEC-005` (`TASK-010717`).
+- [ ] The winner, the hand count and the final stacks are one value — `DuelOutcome` — and also a
+      `MatchFinished` event in the `MatchEvent` hierarchy (`TASK-010725`, per `ADR-0009`).
 - [ ] Total chips in the match are constant from the first deal to the last.
 
 ## Out of scope
