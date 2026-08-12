@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010518
 title: Run the board out when nobody can bet again
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
