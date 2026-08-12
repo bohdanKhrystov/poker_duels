@@ -26,6 +26,7 @@ Protocol version: **1**
 - `UNKNOWN_ROOM`: The client requested a room that does not exist.
 - `ROOM_FULL`: The client requested to join a room that is at capacity.
 - `NOT_IN_DUEL`: The client sent an action but is not participating in an active duel.
+- `FRAME_LIMIT_EXCEEDED`: The frame was longer, or nested more deeply, than the server accepts, and was refused before parsing.
 
 ## Notes
 

@@ -31,4 +31,12 @@ public enum class ProtocolError {
 
     /** The client sent an action but is not participating in an active duel. */
     NOT_IN_DUEL,
+
+    /**
+     * A frame refused before it was parsed, either because it was longer than
+     * [duels.poker.server.config.ServerConfig.DEFAULT_MAX_FRAME_LENGTH] allows or because its
+     * bracket nesting was deeper than
+     * [duels.poker.server.config.ServerConfig.DEFAULT_MAX_FRAME_NESTING_DEPTH] allows.
+     */
+    FRAME_LIMIT_EXCEEDED,
 }
