@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020401
 title: Make `Board` serializable
 type: task
-status: ready
+status: done
 parent: STORY-0204
 module: poker-engine
 estimate: XS
