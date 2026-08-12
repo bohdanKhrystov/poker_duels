@@ -3,6 +3,7 @@ package duels.poker.engine.log
 import duels.poker.engine.game.GameEvent
 import duels.poker.engine.game.HandStarted
 import duels.poker.engine.game.PlayerAction
+import kotlinx.serialization.Serializable
 
 /** The current schema version for [HandLog]. Bumping it is a log migration. */
 public const val HAND_LOG_VERSION: Int = 1
@@ -14,6 +15,7 @@ public const val HAND_LOG_VERSION: Int = 1
  *
  * A log of an unfinished hand is legal: the server appends to the log as the hand plays.
  */
+@Serializable
 public data class HandLog(
     val seed: Long,
     val handNumber: Int,
