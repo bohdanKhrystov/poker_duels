@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010808
 title: The poker-ai module, where bots and the harness live
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-ai
 estimate: XS
