@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020208
 title: ProtocolCodec — encode, and a decode that returns a typed failure
 type: task
-status: backlog
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
