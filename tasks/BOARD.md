@@ -147,7 +147,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010706](tasks/TASK-010706-end-condition.md) The two duel end conditions as a sealed type | XS | **done** |
 | | [TASK-010711](tasks/TASK-010711-duel-outcome.md) DuelOutcome, the result of a finished duel | XS | **done** |
 | | [TASK-010705](tasks/TASK-010705-blind-schedule.md) Which blinds a hand number plays | S | **done** |
-| | [TASK-010707](tasks/TASK-010707-duel-format.md) DuelFormat and the default freezeout | S | backlog |
+| | [TASK-010707](tasks/TASK-010707-duel-format.md) DuelFormat and the default freezeout | S | **done** |
 | | [TASK-010708](tasks/TASK-010708-match-state.md) MatchState, what survives between two hands | S | backlog |
 | | [TASK-010709](tasks/TASK-010709-start-next-hand.md) Deal the match's next hand at its blinds | S | backlog |
 | | [TASK-010710](tasks/TASK-010710-record-hand.md) Fold a finished hand back into the match | S | backlog |
