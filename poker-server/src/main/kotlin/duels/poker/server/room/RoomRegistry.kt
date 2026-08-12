@@ -4,6 +4,7 @@ import duels.poker.engine.duel.DuelFormat
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.ServerClock
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -66,6 +67,36 @@ public class RoomRegistry(
      * @return The room, or `null` if no room with this code is registered.
      */
     public fun get(code: RoomCode): Room? = rooms[code]?.room
+
+    /**
+     * Seat [player] into the room at [code], applying [Room.join] under that room's mutex.
+     *
+     * The lookup, the call to [Room.join] and the write-back of a [JoinResult.Seated] room all
+     * happen inside the one critical section: reading [Holder.room] outside the lock would let two
+     * simultaneous joins both decide against the same stale room and seat two guests in one seat.
+     * The holder is re-checked against the map once the lock is held, so a room reaped between the
+     * lookup and the lock refuses with [RoomRefusal.UNKNOWN_ROOM] instead of seating a player into
+     * a room nobody can find.
+     *
+     * @param code The room to join.
+     * @param player The player attempting to join.
+     * @return The result of [Room.join]; a [JoinResult.Refused] room is left exactly as it was.
+     */
+    public suspend fun join(code: RoomCode, player: PlayerId): JoinResult {
+        val holder = rooms[code] ?: return JoinResult.Refused(RoomRefusal.UNKNOWN_ROOM)
+        return holder.mutex.withLock {
+            if (rooms[code] !== holder) {
+                return@withLock JoinResult.Refused(RoomRefusal.UNKNOWN_ROOM)
+            }
+            when (val result = holder.room.join(player, clock.nowMillis())) {
+                is JoinResult.Seated -> {
+                    holder.room = result.room
+                    result
+                }
+                is JoinResult.Refused -> result
+            }
+        }
+    }
 
     /** The number of currently registered rooms. */
     public val size: Int
