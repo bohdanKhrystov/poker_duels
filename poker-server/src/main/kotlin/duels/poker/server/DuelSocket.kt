@@ -76,7 +76,7 @@ private suspend fun DefaultWebSocketServerSession.serve(
     writer: ConnectionWriter,
     pump: Job,
 ) {
-    val hello = readHello(writer, pump) ?: return
+    val hello = readHello(writer, pump, deps.maxFrameLength, deps.maxFrameNestingDepth) ?: return
     val deviceId = hello.deviceId?.let(::DeviceId) ?: deps.deviceIds.newDeviceId()
     when (val message = handshake(hello, deviceId.value)) {
         is ServerMessage.Welcome -> {
@@ -85,7 +85,9 @@ private suspend fun DefaultWebSocketServerSession.serve(
             deps.sessions.register(session)
             try {
                 writer.send(ProtocolCodec.encode(message))
-                incoming.consumeEach { frame -> writer.replyTo(frame) }
+                incoming.consumeEach { frame ->
+                    writer.replyTo(frame, deps.maxFrameLength, deps.maxFrameNestingDepth)
+                }
             } finally {
                 deps.sessions.remove(session.id)
             }
@@ -115,11 +117,17 @@ private suspend fun DefaultWebSocketServerSession.serve(
  * other than [Hello]. A socket that has sent anything else has not shown it speaks this protocol
  * at all, so it never reaches duel logic.
  *
+ * The frame is decoded with [maxFrameLength] and [maxFrameNestingDepth] rather than the codec's
+ * own defaults — an unauthenticated client is exactly who the operator's configured limits exist
+ * to protect against, so this pre-handshake frame gets no less scrutiny than any other.
+ *
  * @return The client's [Hello], or `null` if the connection was refused and closed.
  */
 private suspend fun DefaultWebSocketServerSession.readHello(
     writer: ConnectionWriter,
     pump: Job,
+    maxFrameLength: Int,
+    maxFrameNestingDepth: Int,
 ): Hello? {
     val frame = incoming.receiveCatching().getOrNull()
     if (frame !is Frame.Text) {
@@ -127,7 +135,7 @@ private suspend fun DefaultWebSocketServerSession.readHello(
         // Failure body — only a client that at least sent JSON earns an explanation.
         return refuseHandshake(writer, pump, null)
     }
-    return when (val decoded = ProtocolCodec.decodeClient(frame.readText())) {
+    return when (val decoded = ProtocolCodec.decodeClient(frame.readText(), maxFrameLength, maxFrameNestingDepth)) {
         is Decoded.Refused -> refuseHandshake(writer, pump, decoded.error)
         is Decoded.Message ->
             (decoded.message as? Hello) ?: refuseHandshake(writer, pump, ProtocolError.MALFORMED_MESSAGE)
@@ -168,13 +176,16 @@ private suspend fun DefaultWebSocketServerSession.refuseHandshake(
  * saying so is the whole answer. The `when` over [duels.poker.server.protocol.ClientMessage] has
  * no `else`, so a new message type stops this function compiling instead of silently falling
  * through it.
+ *
+ * [maxFrameLength] and [maxFrameNestingDepth] are the operator's configured limits, not the
+ * codec's own defaults — see [SocketDependencies].
  */
-private suspend fun ConnectionWriter.replyTo(frame: Frame) {
+private suspend fun ConnectionWriter.replyTo(frame: Frame, maxFrameLength: Int, maxFrameNestingDepth: Int) {
     val text = (frame as? Frame.Text)?.readText() ?: run {
         send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)))
         return
     }
-    val failure = when (val decoded = ProtocolCodec.decodeClient(text)) {
+    val failure = when (val decoded = ProtocolCodec.decodeClient(text, maxFrameLength, maxFrameNestingDepth)) {
         is Decoded.Refused -> ServerMessage.Failure(decoded.error)
         is Decoded.Message -> when (decoded.message) {
             is Hello -> ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)

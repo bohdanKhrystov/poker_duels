@@ -2,6 +2,7 @@ package duels.poker.server
 
 import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.ProtocolCodec
+import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.session.InMemoryPlayerDirectory
@@ -116,6 +117,107 @@ class DuelSocketHostileFrameTest {
             // The second connection should not receive anything within 200ms
             assertNull(withTimeoutOrNull(200.milliseconds) { second.incoming.receive() })
             assertEquals(2, sessions.size)
+        }
+    }
+
+    @Test
+    fun theSocketRefusesAtTheConfiguredLength() = testApplication {
+        val directory = InMemoryPlayerDirectory()
+        val sessions = SessionRegistry()
+        val deps = testDeps(directory = directory, sessions = sessions, maxFrameLength = 100)
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(10.seconds) {
+            val session = client.webSocketSession("/ws")
+            session.completeHandshake("d1")
+
+            // Under the codec's own default (1 MiB), but over the 100-character limit configured
+            // above — proving the configured value, not the codec's default, is what is enforced.
+            val overConfiguredLimit = "\"" + "a".repeat(200) + "\""
+            session.send(Frame.Text(overConfiguredLimit))
+            val reply = session.nextServerMessage() as ServerMessage.Failure
+
+            assertEquals(ProtocolError.FRAME_LIMIT_EXCEEDED, reply.error)
+        }
+    }
+
+    @Test
+    fun theSocketRefusesAtTheConfiguredDepth() = testApplication {
+        val directory = InMemoryPlayerDirectory()
+        val sessions = SessionRegistry()
+        val deps = testDeps(directory = directory, sessions = sessions, maxFrameNestingDepth = 2)
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(10.seconds) {
+            val session = client.webSocketSession("/ws")
+            session.completeHandshake("d1")
+
+            // Nested three deep, under the codec's own default depth of 64 but over the
+            // configured limit of 2.
+            session.send(Frame.Text("[[[]]]"))
+            val reply = session.nextServerMessage() as ServerMessage.Failure
+
+            assertEquals(ProtocolError.FRAME_LIMIT_EXCEEDED, reply.error)
+        }
+    }
+
+    @Test
+    fun aGenerousConfigurationAcceptsAFrameTheDefaultWouldRefuse() = testApplication {
+        val directory = InMemoryPlayerDirectory()
+        val sessions = SessionRegistry()
+        val deps = testDeps(directory = directory, sessions = sessions, maxFrameLength = 3_000_000)
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(10.seconds) {
+            val session = client.webSocketSession("/ws")
+            session.completeHandshake("d1")
+
+            // Same 2,000,000-character frame that anOversizedFrameIsAnsweredAndTheSocketSurvives
+            // refuses under the codec's 1 MiB default. Here the configured limit is generous
+            // enough to let it past the length check, so the refusal — if any — is for a
+            // different reason: proof the limit moves in both directions, not just the strict one.
+            val oversizedByDefault = "\"" + "a".repeat(2_000_000) + "\""
+            session.send(Frame.Text(oversizedByDefault))
+            val reply = session.nextServerMessage() as ServerMessage.Failure
+
+            assertEquals(ProtocolError.MALFORMED_MESSAGE, reply.error)
+        }
+    }
+
+    @Test
+    fun theHandshakeFrameIsLimitedToo() = testApplication {
+        val directory = InMemoryPlayerDirectory()
+        val sessions = SessionRegistry()
+        val deps = testDeps(directory = directory, sessions = sessions, maxFrameLength = 100)
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(10.seconds) {
+            val session = client.webSocketSession("/ws")
+
+            // The very first frame — no handshake has completed yet — so this proves readHello's
+            // pre-handshake decode uses the configured limit too, not only the post-handshake loop.
+            val oversizedHello = ProtocolCodec.encode(Hello(deviceId = "d".repeat(200)))
+            session.send(Frame.Text(oversizedHello))
+            val reply = session.nextServerMessage() as ServerMessage.Failure
+
+            assertEquals(ProtocolError.FRAME_LIMIT_EXCEEDED, reply.error)
+            assertEquals(0, sessions.size)
         }
     }
 }
