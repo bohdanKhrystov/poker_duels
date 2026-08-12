@@ -32,14 +32,14 @@ up with them. This story closes the hand and is the last piece before a match ca
 - Reveal order at showdown: the last river aggressor shows first; with no river bet, the player
   out of position shows first. The loser may muck, and a mucked hand is not disclosed.
 
-> ### ⚠ Open decision — DEC-004
+> ### DEC-004 — answered by ADR-0008
 >
-> *Who* shows at a showdown is not settled. "The loser may muck" is a permission belonging to a
-> player, and the engine has no way to ask for it: either the loser mucks by default, or both
-> hands are always shown, or showing becomes a `PlayerAction` — which adds a member to the
-> engine's public action set and a decision point after `ShowdownReached`. Awarding the pot does
-> not depend on the answer, so everything except the reveals ships first; `TASK-010615` is
-> blocked until this is decided, and is re-split afterwards.
+> [`ADR-0008`](../../docs/adr/ADR-0008-loser-mucks-at-showdown.md): **the loser mucks.** The
+> engine emits `HandRevealed` only for hands actually shown, a mucked hand appears in no event
+> exactly as a folded one does, the last aggressor on the final betting street shows first — the
+> seat out of position when that street was checked through — and a player who wins on a fold
+> shows nothing. `TASK-010615` was the placeholder held back by this decision; it is retired, and
+> the work is `TASK-010617` through `TASK-010624`.
 
 ## Tasks
 
@@ -56,7 +56,16 @@ up with them. This story closes the hand and is the last piece before a match ca
 | [TASK-010612](../tasks/TASK-010612-run-out-settles.md) | A run-out settles the showdown it reaches | backlog |
 | [TASK-010613](../tasks/TASK-010613-settlement-invariants-property.md) | Settlement invariants over a thousand random hands | backlog |
 | [TASK-010614](../tasks/TASK-010614-folded-cards-in-no-event.md) | A folded hand appears in no event | backlog |
-| [TASK-010615](../tasks/TASK-010615-showdown-reveals-and-muck.md) | Showdown reveals, reveal order and the muck | blocked (DEC-004) |
+| TASK-010615 | *(retired — re-split into TASK-010617…TASK-010624 once DEC-004 was answered)* | — |
+| [TASK-010616](../tasks/TASK-010616-split-with-uncalled-bet.md) | Pin a split pot that also returns an uncalled bet | done |
+| [TASK-010617](../tasks/TASK-010617-mucked-cards-in-no-event.md) | Extend the secrecy suite from the fold to the muck | ready |
+| [TASK-010618](../tasks/TASK-010618-last-aggressor-field.md) | Carry the last aggressor on `GameState` | ready |
+| [TASK-010619](../tasks/TASK-010619-betting-records-the-aggressor.md) | A bet, a raise or a full all-in records its seat as the last aggressor | backlog |
+| [TASK-010620](../tasks/TASK-010620-new-street-clears-the-aggressor.md) | A dealt street clears the last aggressor, a closed round does not | backlog |
+| [TASK-010621](../tasks/TASK-010621-new-hand-clears-the-aggressor.md) | A new hand starts with no last aggressor | backlog |
+| [TASK-010622](../tasks/TASK-010622-reveal-order.md) | Decide who shows at a showdown, and in what order | backlog |
+| [TASK-010623](../tasks/TASK-010623-showdown-emits-the-reveals.md) | A showdown emits `HandRevealed` for the hands that are shown | backlog |
+| [TASK-010624](../tasks/TASK-010624-tie-reveals-both-hands.md) | A tied showdown reveals both hands, the river aggressor first | backlog |
 
 ## Acceptance criteria
 
