@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010711
 title: DuelOutcome, the result of a finished duel
 type: task
-status: ready
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: XS
