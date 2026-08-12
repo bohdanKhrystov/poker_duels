@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020104
 title: Ship application.conf and load ServerConfig from it
 type: task
-status: backlog
+status: done
 parent: STORY-0201
 module: poker-server
 estimate: S
