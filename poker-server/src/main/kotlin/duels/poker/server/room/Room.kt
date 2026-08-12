@@ -167,6 +167,48 @@ public data class Room(
     }
 
     /**
+     * Offer a rematch on this finished room.
+     *
+     * Checked strictly in this order: a room that is not [RoomState.FINISHED] refuses as
+     * [RematchRefusal.NOT_FINISHED]; a player who is not seated refuses as
+     * [RematchRefusal.NOT_A_PLAYER]; a player who already offered refuses as
+     * [RematchRefusal.ALREADY_OFFERED] and the recorded offers are left untouched. Otherwise the
+     * offer is recorded: if both seated players have now offered, the room agrees a rematch;
+     * if only one has, the offer alone changes nothing else.
+     *
+     * Agreement alternates the button against [openingButtonSeat] — the seat that opened the
+     * duel just finished — not against [MatchState.buttonSeat], which has already alternated
+     * hand by hand over the course of that duel and by the end says nothing about who opened it.
+     *
+     * Pure and total: never throws, never mutates.
+     *
+     * @param player the player offering the rematch.
+     * @param now the current time in milliseconds; `Room` reads no clock of its own.
+     * @return [RematchResult.Offered], [RematchResult.Agreed], or [RematchResult.Refused].
+     */
+    public fun offerRematch(player: PlayerId, now: Long): RematchResult {
+        if (state != RoomState.FINISHED) return RematchResult.Refused(RematchRefusal.NOT_FINISHED)
+        if (seatOf(player) == null) return RematchResult.Refused(RematchRefusal.NOT_A_PLAYER)
+        if (player in rematchOffers) return RematchResult.Refused(RematchRefusal.ALREADY_OFFERED)
+
+        val offers = rematchOffers + player
+        return if (offers.containsAll(players)) {
+            val nextButtonSeat = 1 - openingButtonSeat
+            RematchResult.Agreed(
+                copy(
+                    state = RoomState.PLAYING,
+                    openingButtonSeat = nextButtonSeat,
+                    match = MatchState.start(format, nextButtonSeat),
+                    rematchOffers = emptySet(),
+                    lastActivityAt = now,
+                ),
+            )
+        } else {
+            RematchResult.Offered(copy(rematchOffers = offers))
+        }
+    }
+
+    /**
      * Touch this room to advance its idle clock.
      *
      * Updates [lastActivityAt] to the given timestamp without changing any other state.
