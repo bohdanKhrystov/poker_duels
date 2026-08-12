@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010606
 title: Split a pot between two winners, odd chip out of position
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
