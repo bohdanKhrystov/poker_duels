@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020203
 title: Make LegalActions serializable, with its defaults on the wire
 type: task
-status: ready
+status: done
 parent: STORY-0202
 module: poker-engine
 estimate: S
