@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010826
 title: Read and write a match log, version guard included
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
