@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010819
 title: Read and write a hand log, and refuse a version this build does not know
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
