@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020610
 title: Join by code under the room's lock, so a hundred racing joiners seat exactly one
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
