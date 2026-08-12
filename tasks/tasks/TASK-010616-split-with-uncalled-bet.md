@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010616
 title: Pin a split pot that also returns an uncalled bet
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: XS
@@ -40,24 +40,31 @@ a test proves it wrong — in which case say so in the PR rather than quietly ch
 
 Add tests to `SplitPotTest.kt`. Add no production code.
 
-Construct a state where the two seats' `committedThisHand` differ *and* the pot left after the
-return is odd. Worked example:
+Construct a state where the two seats' `committedThisHand` differ, so that a return fires before
+the split.
 
-- seat 0 committed 400, seat 1 committed 301, pot 701, button on seat 0
-- the uncalled portion is 99 to seat 0, leaving 602 — even, so pick different numbers if you want
-  the odd case; e.g. seat 0 committed 400, seat 1 committed 300, pot 700, uncalled 100 to seat 0,
-  leaving 600 — also even
+**This ticket originally asked for an odd pot after the return. That state is unreachable**, and
+the correction is worth recording rather than quietly dropping:
 
-Both seats' commitments summing to an odd pot is what you are after. Derive the numbers rather
-than copying these; the point of the test is the arithmetic, so getting there by hand is the work.
+```
+pot       = c0 + c1
+uncalled  = |c0 - c1|
+remaining = (c0 + c1) - |c0 - c1| = 2 * min(c0, c1)
+```
+
+The pot left after an uncalled return is twice the smaller commitment — always even. In heads-up,
+an odd chip can therefore never arise on the same hand as an uncalled return. The two features of
+`settleHand` are mutually exclusive by arithmetic, not by accident.
+
+That leaves the ordering as the thing genuinely worth pinning.
 
 ## Tests
 
 | Name | Asserts |
 | --- | --- |
-| `theUncalledBetIsReturnedBeforeTheSplit` | `UncalledBetReturned` precedes both `PotAwarded` events, and the split is computed on the pot *after* the return |
+| `theUncalledBetIsReturnedBeforeTheSplit` | `UncalledBetReturned` precedes both `PotAwarded` events, and the split is computed on the pot *after* the return — must fail if `settleHand` splits first |
 | `anOddSplitAfterAnUncalledReturnStillConservesEveryChip` | stacks + pot before == stacks + pot after |
-| `theOddChipAfterAnUncalledReturnGoesOutOfPosition` | the extra chip lands on `bigBlindSeat(state.buttonSeat)`, not on the seat that got the return |
+| `anUncalledReturnAlwaysLeavesAnEvenPot` | the split is exactly equal, with no odd chip, and a comment records the `2 * min(committedThisHand)` identity that makes it so |
 
 ## Done
 
