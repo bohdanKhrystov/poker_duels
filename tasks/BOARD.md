@@ -245,6 +245,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020509](tasks/TASK-020509-frame-loop-survives-junk.md) A bad frame mid-session earns a Failure and never closes the socket | S | **done** |
 | | [TASK-020510](tasks/TASK-020510-hostile-frame-does-not-kill-the-socket.md) A nesting bomb or an oversized frame is answered, not fatal, at the socket | XS | **done** |
 | | [TASK-020511](tasks/TASK-020511-second-socket-policy.md) Decide and enforce what a second socket for one device id does | S | blocked |
+| | [TASK-020512](tasks/TASK-020512-socket-uses-configured-limits.md) The socket enforces the operator's frame limits | S | backlog |
 | [STORY-0206](stories/STORY-0206-rooms-and-matchmaking.md) | Rooms, join links and rematch | backlog |
 | [STORY-0207](stories/STORY-0207-duel-runner.md) | The duel runner — the engine behind the socket | backlog |
 | [STORY-0208](stories/STORY-0208-disconnect-grace-period.md) | Disconnect, grace period and reconnect | backlog |
