@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020506
 title: Bundle the socket's collaborators into SocketDependencies with a test fixture
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: XS
