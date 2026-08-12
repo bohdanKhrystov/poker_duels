@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010706
 title: The two duel end conditions as a sealed type
 type: task
-status: ready
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: XS
