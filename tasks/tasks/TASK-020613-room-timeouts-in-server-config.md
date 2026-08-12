@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020613
 title: Read the room idle limits from ServerConfig instead of a literal
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
