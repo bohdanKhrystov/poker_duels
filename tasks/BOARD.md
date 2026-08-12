@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0105` are done; `STORY-0106` needs `/plan-story`.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0105` are done; `STORY-0106` is split into schema-2 tickets and being worked.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -121,10 +121,19 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010519](tasks/TASK-010519-opening-run-out.md) Do not stall a hand whose blinds leave nobody able to act | S | **done** |
 | | [TASK-010520](tasks/TASK-010520-hand-walkthrough-test.md) Play one scripted hand from blinds to showdown | S | **done** |
 | | [TASK-010521](tasks/TASK-010521-betting-invariant-property.md) Assert the betting invariants over a thousand random hands | S | **done** |
-| **[STORY-0106](stories/STORY-0106-showdown-and-pots.md)** Showdown and pots | | | ready |
-| | [TASK-010601](tasks/TASK-010601-pot-accounting.md) Pot accounting and uncalled bets | M | backlog |
-| | [TASK-010602](tasks/TASK-010602-showdown-resolution.md) Showdown, splits, reveal order | M | backlog |
-| | [TASK-010603](tasks/TASK-010603-hand-completion.md) Hand completion and history | S | backlog |
+| **[STORY-0106](stories/STORY-0106-showdown-and-pots.md)** Showdown and pots — *schema 2* | | | ready |
+| | [TASK-010604](tasks/TASK-010604-uncalled-bet-arithmetic.md) Compute the uncalled part of a bet | S | ready |
+| | [TASK-010605](tasks/TASK-010605-settle-to-one-winner.md) Settle a swept hand to a single winner | S | backlog |
+| | [TASK-010606](tasks/TASK-010606-split-pot-odd-chip.md) Split a pot between two winners, odd chip out of position | S | backlog |
+| | [TASK-010607](tasks/TASK-010607-fold-awards-the-pot.md) A fold awards the pot and ends the hand | S | backlog |
+| | [TASK-010608](tasks/TASK-010608-showdown-fixtures-hole-cards.md) Give the synthetic showdown fixtures hole cards | XS | backlog |
+| | [TASK-010609](tasks/TASK-010609-terminal-check-by-what-it-accepts.md) Pin the random hand's ending by what it accepts, not by its street | XS | backlog |
+| | [TASK-010610](tasks/TASK-010610-showdown-winners.md) Decide who wins a showdown | S | backlog |
+| | [TASK-010611](tasks/TASK-010611-river-close-settles.md) A closed river settles the showdown | S | backlog |
+| | [TASK-010612](tasks/TASK-010612-run-out-settles.md) A run-out settles the showdown it reaches | S | backlog |
+| | [TASK-010613](tasks/TASK-010613-settlement-invariants-property.md) Settlement invariants over a thousand random hands | S | backlog |
+| | [TASK-010614](tasks/TASK-010614-folded-cards-in-no-event.md) A folded hand appears in no event, over a thousand hands | S | backlog |
+| | [TASK-010615](tasks/TASK-010615-showdown-reveals-and-muck.md) Showdown reveals, reveal order and the muck | S | blocked |
 | **[STORY-0107](stories/STORY-0107-duel-format-and-match.md)** Duel format and match | | | backlog |
 | | [TASK-010701](tasks/TASK-010701-duel-format.md) DuelFormat and blind schedule | S | backlog |
 | | [TASK-010702](tasks/TASK-010702-match-progression.md) Match progression | M | backlog |
@@ -134,9 +143,9 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**81 tasks total.** `STORY-0101`–`STORY-0105` are migrated to schema 2; stories 0106–0108 are still schema 1
-and get split by `/plan-story` just before they are worked. `STORY-0106` is unblocked now that `STORY-0105` has merged; 0107–0108 stay in `backlog` until it
-lands, because their tasks are written against types that do not exist yet.
+**90 tasks total.** `STORY-0101`–`STORY-0106` are migrated to schema 2; stories 0107–0108 are still schema 1
+and get split by `/plan-story` just before they are worked. Stories 0107–0108 stay in `backlog` until `STORY-0106` lands, because their tasks are written
+against types that do not exist yet.
 
 ---
 
@@ -146,6 +155,7 @@ lands, because their tasks are written against types that do not exist yet.
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
+| DEC-004 | At a showdown, who shows — loser mucks by default, both hands always shown, or showing is a `PlayerAction`? | [`STORY-0106`](stories/STORY-0106-showdown-and-pots.md) | blocks `TASK-010615`, before EPIC-03 |
 | — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
 
 ---
@@ -157,7 +167,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 71 / 78 | 72 / 81 |
+| Tasks completed | 71 / 87 | 72 / 90 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |

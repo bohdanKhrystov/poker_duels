@@ -32,13 +32,31 @@ up with them. This story closes the hand and is the last piece before a match ca
 - Reveal order at showdown: the last river aggressor shows first; with no river bet, the player
   out of position shows first. The loser may muck, and a mucked hand is not disclosed.
 
+> ### ⚠ Open decision — DEC-004
+>
+> *Who* shows at a showdown is not settled. "The loser may muck" is a permission belonging to a
+> player, and the engine has no way to ask for it: either the loser mucks by default, or both
+> hands are always shown, or showing becomes a `PlayerAction` — which adds a member to the
+> engine's public action set and a decision point after `ShowdownReached`. Awarding the pot does
+> not depend on the answer, so everything except the reveals ships first; `TASK-010615` is
+> blocked until this is decided, and is re-split afterwards.
+
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-010601](../tasks/TASK-010601-pot-accounting.md) | Pot accounting, all-in caps and uncalled bets | backlog |
-| [TASK-010602](../tasks/TASK-010602-showdown-resolution.md) | Showdown resolution, splits and reveal order | backlog |
-| [TASK-010603](../tasks/TASK-010603-hand-completion.md) | Hand completion events and hand history record | backlog |
+| [TASK-010604](../tasks/TASK-010604-uncalled-bet-arithmetic.md) | Compute the uncalled part of a bet | ready |
+| [TASK-010605](../tasks/TASK-010605-settle-to-one-winner.md) | Settle a swept hand to a single winner | backlog |
+| [TASK-010606](../tasks/TASK-010606-split-pot-odd-chip.md) | Split a pot between two winners, odd chip out of position | backlog |
+| [TASK-010607](../tasks/TASK-010607-fold-awards-the-pot.md) | A fold awards the pot and ends the hand | backlog |
+| [TASK-010608](../tasks/TASK-010608-showdown-fixtures-hole-cards.md) | Give the synthetic showdown fixtures hole cards | backlog |
+| [TASK-010609](../tasks/TASK-010609-terminal-check-by-what-it-accepts.md) | Pin the random hand's ending by what it accepts | backlog |
+| [TASK-010610](../tasks/TASK-010610-showdown-winners.md) | Decide who wins a showdown | backlog |
+| [TASK-010611](../tasks/TASK-010611-river-close-settles.md) | A closed river settles the showdown | backlog |
+| [TASK-010612](../tasks/TASK-010612-run-out-settles.md) | A run-out settles the showdown it reaches | backlog |
+| [TASK-010613](../tasks/TASK-010613-settlement-invariants-property.md) | Settlement invariants over a thousand random hands | backlog |
+| [TASK-010614](../tasks/TASK-010614-folded-cards-in-no-event.md) | A folded hand appears in no event | backlog |
+| [TASK-010615](../tasks/TASK-010615-showdown-reveals-and-muck.md) | Showdown reveals, reveal order and the muck | blocked (DEC-004) |
 
 ## Acceptance criteria
 
