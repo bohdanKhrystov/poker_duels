@@ -1,5 +1,9 @@
 package duels.poker.engine.duel
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+
 /**
  * The schema version of [MatchEvent]. Incremented when the structure of any [MatchEvent]
  * subtype changes in a way that invalidates prior serializations. Events with version
@@ -14,6 +18,7 @@ public const val MATCH_EVENT_SCHEMA_VERSION: Int = 1
  * at 0 and dense and gap-free, never a position within a hand. This hierarchy remains distinct
  * from [GameEvent], which stays hand-scoped, per `ADR-0009`.
  */
+@Serializable
 public sealed interface MatchEvent {
     /**
      * Position within the match, starting at 0, dense and gap-free — never a position in a hand.
@@ -24,7 +29,10 @@ public sealed interface MatchEvent {
      * The schema version of this event. Defaults to [MATCH_EVENT_SCHEMA_VERSION], so it never
      * participates in equality: this way, old and new serializations can round-trip without
      * changing what equality means.
+     *
+     * Marked [Transient] so computed properties are never serialized to the wire.
      */
+    @Transient
     public val version: Int get() = MATCH_EVENT_SCHEMA_VERSION
 }
 
@@ -36,6 +44,8 @@ public sealed interface MatchEvent {
  * @param sequence the position of this event within the match (starting at 0).
  * @param outcome the result of the finished duel.
  */
+@Serializable
+@SerialName("MatchFinished")
 public data class MatchFinished(
     override val sequence: Int,
     val outcome: DuelOutcome,
