@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0105` are done; `STORY-0106` is split into schema-2 tickets and being worked.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0105` are done; `STORY-0106` is done bar its showdown-reveal tail; `STORY-0107` and `STORY-0108` run concurrently.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -133,7 +133,14 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010612](tasks/TASK-010612-run-out-settles.md) A run-out settles the showdown it reaches | S | **done** |
 | | [TASK-010613](tasks/TASK-010613-settlement-invariants-property.md) Settlement invariants over a thousand random hands | S | **done** |
 | | [TASK-010614](tasks/TASK-010614-folded-cards-in-no-event.md) A folded hand appears in no event, over a thousand hands | S | **done** |
-| | [TASK-010615](tasks/TASK-010615-showdown-reveals-and-muck.md) Showdown reveals, reveal order and the muck | S | blocked |
+| | [TASK-010617](tasks/TASK-010617-mucked-cards-in-no-event.md) Extend the secrecy suite from the fold to the muck | S | ready |
+| | [TASK-010618](tasks/TASK-010618-last-aggressor-field.md) Carry the last aggressor on GameState | XS | ready |
+| | [TASK-010619](tasks/TASK-010619-betting-records-the-aggressor.md) A bet, raise or full all-in records its seat as the last aggressor | S | backlog |
+| | [TASK-010620](tasks/TASK-010620-new-street-clears-the-aggressor.md) A dealt street clears the last aggressor, a closed round does not | XS | backlog |
+| | [TASK-010621](tasks/TASK-010621-new-hand-clears-the-aggressor.md) A new hand starts with no last aggressor | XS | backlog |
+| | [TASK-010622](tasks/TASK-010622-reveal-order.md) Decide who shows at a showdown, and in what order | S | backlog |
+| | [TASK-010623](tasks/TASK-010623-showdown-emits-the-reveals.md) A showdown emits HandRevealed for the hands that are shown | S | backlog |
+| | [TASK-010624](tasks/TASK-010624-tie-reveals-both-hands.md) A tied showdown reveals both hands, the river aggressor first | S | backlog |
 | | [TASK-010616](tasks/TASK-010616-split-with-uncalled-bet.md) Pin a split pot that also returns an uncalled bet | XS | **done** |
 | **[STORY-0107](stories/STORY-0107-duel-format-and-match.md)** Duel format and match — *schema 2* | | | ready |
 | | [TASK-010704](tasks/TASK-010704-blind-level.md) A blind level that can double | S | **done** |
@@ -161,7 +168,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010811](tasks/TASK-010811-match-log-and-replay.md) The log of a whole duel, and replaying it | S | blocked |
 | | [TASK-010812](tasks/TASK-010812-simulation-harness.md) Headless simulation harness and invariant fuzzing | S | blocked |
 
-**108 tasks total.** All stories are migrated to schema 2. `STORY-0107` and `STORY-0108` run concurrently: `STORY-0108`'s
+**115 tasks total.** All stories are migrated to schema 2. `STORY-0107` and `STORY-0108` run concurrently: `STORY-0108`'s
 hand-level tickets need only the engine as it stands, while its match-level tail waits on `STORY-0107`.
 
 ---
