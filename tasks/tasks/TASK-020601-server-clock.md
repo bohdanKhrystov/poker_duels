@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020601
 title: Declare the injectable ServerClock and a test clock that never sleeps
 type: task
-status: ready
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: XS
