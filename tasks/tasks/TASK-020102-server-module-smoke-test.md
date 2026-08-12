@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020102
 title: Assert the engine and Ktor are on the server module's classpath
 type: task
-status: backlog
+status: done
 parent: STORY-0201
 module: poker-server
 estimate: XS
