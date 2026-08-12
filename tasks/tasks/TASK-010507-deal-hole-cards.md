@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010507
 title: Deal the hole cards and put the action on the button
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
