@@ -56,6 +56,20 @@ internal class BettingRulesAllInTest {
     }
 
     @Test
+    fun aStackThatReachesExactlyTheBarCannotRaise() {
+        val state = handState(seats = listOf(seats(stack0 = 900)[0], seats()[1]))
+            .copy(betToMatch = 900, minRaiseTo = 1_800)
+
+        val legal = legalActions(state)
+
+        assertEquals(setOf(ActionType.FOLD, ActionType.CALL, ActionType.ALL_IN), legal.allowed)
+        assertEquals(900, legal.callTo)
+        assertEquals(100, legal.minBetTo)
+        assertEquals(900, legal.minRaiseTo)
+        assertEquals(900, legal.allInTo)
+    }
+
+    @Test
     fun aShortStackMayBetLessThanABigBlind() {
         val state = handState(seats = listOf(seats(stack0 = 60)[0], seats()[1]))
 
