@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010809
 title: Bot, and a RandomBot that picks uniformly among legal actions
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-ai
 estimate: S

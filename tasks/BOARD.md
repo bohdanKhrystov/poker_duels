@@ -163,7 +163,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010806](tasks/TASK-010806-replay-divergence.md) Replay rejects a log that does not match the engine | S | **done** |
 | | [TASK-010807](tasks/TASK-010807-replay-identity-property.md) Record and replay is an identity over 200 hands | S | **done** |
 | | [TASK-010808](tasks/TASK-010808-poker-ai-module.md) The poker-ai module, where bots and the harness live | XS | **done** |
-| | [TASK-010809](tasks/TASK-010809-random-bot.md) Bot, and a RandomBot picking among legal actions | S | backlog |
+| | [TASK-010809](tasks/TASK-010809-random-bot.md) Bot, and a RandomBot picking among legal actions | S | **done** |
 | | [TASK-010810](tasks/TASK-010810-hand-log-serialization.md) Serialise a hand log and read it back | S | blocked |
 | | [TASK-010811](tasks/TASK-010811-match-log-and-replay.md) The log of a whole duel, and replaying it | S | blocked |
 | | [TASK-010812](tasks/TASK-010812-simulation-harness.md) Headless simulation harness and invariant fuzzing | S | blocked |
