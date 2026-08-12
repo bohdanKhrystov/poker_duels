@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020910
 title: The test JVM speaks a Docker API version modern daemons still accept
 type: task
-status: ready
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: XS

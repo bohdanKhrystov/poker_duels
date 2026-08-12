@@ -23,4 +23,10 @@ tasks.withType<Test>().configureEach {
     // -PrequireDocker=true turns a missing Docker daemon from a skipped test into a
     // failing build. TASK-020903 reads it; CI passes it.
     systemProperty("poker.requireDocker", providers.gradleProperty("requireDocker").getOrElse("false"))
+    // Docker Engine 29+ rejects client API versions below 1.40. Requesting 1.41 is the
+    // lowest compatible version that works with both modern and older daemons. Omitting
+    // this causes Testcontainers to report "could not find a valid Docker environment",
+    // which is actively misleading: the daemon was found and answered, only the version
+    // was wrong. The absence of this property makes that failure unrecognisable.
+    systemProperty("api.version", "1.41")
 }
