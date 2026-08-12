@@ -134,7 +134,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010613](tasks/TASK-010613-settlement-invariants-property.md) Settlement invariants over a thousand random hands | S | backlog |
 | | [TASK-010614](tasks/TASK-010614-folded-cards-in-no-event.md) A folded hand appears in no event, over a thousand hands | S | backlog |
 | | [TASK-010615](tasks/TASK-010615-showdown-reveals-and-muck.md) Showdown reveals, reveal order and the muck | S | blocked |
-| | [TASK-010616](tasks/TASK-010616-split-with-uncalled-bet.md) Pin a split pot that also returns an uncalled bet | XS | backlog |
+| | [TASK-010616](tasks/TASK-010616-split-with-uncalled-bet.md) Pin a split pot that also returns an uncalled bet | XS | **done** |
 | **[STORY-0107](stories/STORY-0107-duel-format-and-match.md)** Duel format and match | | | backlog |
 | | [TASK-010701](tasks/TASK-010701-duel-format.md) DuelFormat and blind schedule | S | backlog |
 | | [TASK-010702](tasks/TASK-010702-match-progression.md) Match progression | M | backlog |
