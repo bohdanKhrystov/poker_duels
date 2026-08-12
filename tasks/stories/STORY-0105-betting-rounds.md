@@ -2,7 +2,7 @@
 id: STORY-0105
 title: Betting rounds
 type: story
-status: backlog
+status: done
 parent: EPIC-01
 module: poker-engine
 labels: [engine, rules]

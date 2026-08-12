@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0104` are done; `STORY-0105` is split into schema-2 tickets and being worked.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0105` are done; `STORY-0106` needs `/plan-story`.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -102,7 +102,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010425](tasks/TASK-010425-state-projection.md) StateProjection — the one entry point that folds events into a state | S | **done** |
 | | [TASK-010426](tasks/TASK-010426-engine-contract-suite.md) PokerEngineContract — the reusable engine test suite | S | **done** |
 | | [TASK-010427](tasks/TASK-010427-contract-detects-drift.md) Prove the contract suite catches a drifting engine | XS | **done** |
-| **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds — *schema 2* | | | ready |
+| **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds — *schema 2* | | | **done** |
 | | [TASK-010505](tasks/TASK-010505-heads-up-seat-order.md) Name the heads-up blind and action order once | XS | **done** |
 | | [TASK-010506](tasks/TASK-010506-post-the-blinds.md) Open a hand by posting both blinds | S | **done** |
 | | [TASK-010507](tasks/TASK-010507-deal-hole-cards.md) Deal the hole cards and put the action on the button | S | **done** |
@@ -120,8 +120,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010518](tasks/TASK-010518-all-in-run-out.md) Run the board out when nobody can bet again | S | **done** |
 | | [TASK-010519](tasks/TASK-010519-opening-run-out.md) Do not stall a hand whose blinds leave nobody able to act | S | **done** |
 | | [TASK-010520](tasks/TASK-010520-hand-walkthrough-test.md) Play one scripted hand from blinds to showdown | S | **done** |
-| | [TASK-010521](tasks/TASK-010521-betting-invariant-property.md) Assert the betting invariants over a thousand random hands | S | ready |
-| **[STORY-0106](stories/STORY-0106-showdown-and-pots.md)** Showdown and pots | | | backlog |
+| | [TASK-010521](tasks/TASK-010521-betting-invariant-property.md) Assert the betting invariants over a thousand random hands | S | **done** |
+| **[STORY-0106](stories/STORY-0106-showdown-and-pots.md)** Showdown and pots | | | ready |
 | | [TASK-010601](tasks/TASK-010601-pot-accounting.md) Pot accounting and uncalled bets | M | backlog |
 | | [TASK-010602](tasks/TASK-010602-showdown-resolution.md) Showdown, splits, reveal order | M | backlog |
 | | [TASK-010603](tasks/TASK-010603-hand-completion.md) Hand completion and history | S | backlog |
@@ -135,8 +135,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
 **81 tasks total.** `STORY-0101`–`STORY-0105` are migrated to schema 2; stories 0106–0108 are still schema 1
-and get split by `/plan-story` just before they are worked. Stories 0106–0108 stay in `backlog` until `STORY-0105` lands, because their tasks are written
-against types that do not exist yet.
+and get split by `/plan-story` just before they are worked. `STORY-0106` is unblocked now that `STORY-0105` has merged; 0107–0108 stay in `backlog` until it
+lands, because their tasks are written against types that do not exist yet.
 
 ---
 
@@ -157,7 +157,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 69 / 78 | 70 / 81 |
+| Tasks completed | 71 / 78 | 72 / 81 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
