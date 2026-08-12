@@ -8,6 +8,16 @@ import org.testcontainers.utility.DockerImageName
 import javax.sql.DataSource
 
 /**
+ * The coordinates needed to connect to the shared test container: URL, user, and password.
+ * Opaque enough that a test can open its own pool without casting test harness types.
+ */
+public data class DatabaseCoordinates(
+    val url: String,
+    val user: String,
+    val password: String,
+)
+
+/**
  * One PostgreSQL container for the whole test suite, gated by whether Docker is available and
  * whether it is required.
  *
@@ -78,5 +88,29 @@ public object PostgresTestSupport {
             connection.createStatement().use { it.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public") }
         }
         return source
+    }
+
+    /**
+     * The connection coordinates to the shared container — URL, user, password — with an empty
+     * `public` schema. Useful for a test that needs to open its own pool rather than use the
+     * harness's [freshDatabase]. Schema reset is the same as [freshDatabase], so both paths get
+     * the same empty-database guarantee.
+     */
+    public fun containerCoordinates(): DatabaseCoordinates {
+        requireDocker()
+        val source =
+            PGSimpleDataSource().apply {
+                setUrl(container.jdbcUrl)
+                user = container.username
+                password = container.password
+            }
+        source.connection.use { connection ->
+            connection.createStatement().use { it.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public") }
+        }
+        return DatabaseCoordinates(
+            url = requireNotNull(source.getUrl()),
+            user = requireNotNull(source.getUser()),
+            password = requireNotNull(source.getPassword()),
+        )
     }
 }
