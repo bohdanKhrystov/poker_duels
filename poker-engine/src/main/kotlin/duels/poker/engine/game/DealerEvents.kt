@@ -1,11 +1,16 @@
 package duels.poker.engine.game
 
 import duels.poker.engine.card.Card
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /** Something the house did: no seat chose it. The projection dispatches on this sub-interface. */
+@Serializable
 public sealed interface DealerEvent : GameEvent
 
 /** The betting on [street] is closed; every commitment goes to the pot. */
+@Serializable
+@SerialName("BettingRoundEnded")
 public data class BettingRoundEnded(override val sequence: Int, val street: Street) : DealerEvent {
     init {
         require(sequence >= 0) { "sequence must be non-negative, was $sequence" }
@@ -14,6 +19,8 @@ public data class BettingRoundEnded(override val sequence: Int, val street: Stre
 }
 
 /** [cards] join the board and the hand moves to [street]: three for the flop, one otherwise. */
+@Serializable
+@SerialName("StreetDealt")
 public data class StreetDealt(
     override val sequence: Int,
     val street: Street,
@@ -35,6 +42,8 @@ public data class StreetDealt(
     }
 }
 
+@Serializable
+@SerialName("ShowdownReached")
 public data class ShowdownReached(override val sequence: Int) : DealerEvent {
     init {
         require(sequence >= 0) { "sequence must be non-negative, was $sequence" }
@@ -45,6 +54,8 @@ public data class ShowdownReached(override val sequence: Int) : DealerEvent {
  * A seat that showed its hand. Never emitted for a fold or a muck: a folded or mucked hand
  * appears in no event, anywhere, so the engine emits this only for a hand actually shown.
  */
+@Serializable
+@SerialName("HandRevealed")
 public data class HandRevealed(
     override val sequence: Int,
     val seat: Int,
@@ -62,6 +73,8 @@ public data class HandRevealed(
  * Chips nobody could cover, going back to the seat that bet them. Always before [PotAwarded].
  * The [amount] is a delta of chips moving out of the pot, not a street total.
  */
+@Serializable
+@SerialName("UncalledBetReturned")
 public data class UncalledBetReturned(
     override val sequence: Int,
     val seat: Int,
@@ -78,6 +91,8 @@ public data class UncalledBetReturned(
  * Part or all of the pot going to a seat. A split pot emits one of these per seat.
  * The [amount] is a delta of chips moving out of the pot, not a street total.
  */
+@Serializable
+@SerialName("PotAwarded")
 public data class PotAwarded(
     override val sequence: Int,
     val seat: Int,
@@ -91,6 +106,8 @@ public data class PotAwarded(
 }
 
 /** The hand is over. Always the last event of a hand. */
+@Serializable
+@SerialName("HandFinished")
 public data class HandFinished(override val sequence: Int) : DealerEvent {
     init {
         require(sequence >= 0) { "sequence must be non-negative, was $sequence" }
