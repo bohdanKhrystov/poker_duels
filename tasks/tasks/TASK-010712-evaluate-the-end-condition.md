@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010712
 title: Decide whether a match is over, and who won it
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
