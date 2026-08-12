@@ -53,7 +53,12 @@ scattered through the code and are never collected up again.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets are produced by `/plan-story STORY-0201`.* | — |
+| `TASK-020101` | Add the `:poker-server` module and its Ktor dependencies to the build | ready |
+| `TASK-020102` | Assert the engine and Ktor are on the server module's classpath | backlog |
+| `TASK-020103` | Read every tunable from one typed `ServerConfig` | backlog |
+| `TASK-020104` | Ship `application.conf` and load `ServerConfig` from it | backlog |
+| `TASK-020105` | Boot Ktor on Netty and answer `GET /health` | backlog |
+| `TASK-020106` | Install `ContentNegotiation` and `WebSockets` in the application module | backlog |
 
 ## Acceptance criteria
 

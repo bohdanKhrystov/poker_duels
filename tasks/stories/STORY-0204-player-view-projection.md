@@ -63,7 +63,27 @@ It is the only story in `EPIC-02` that touches `poker-engine`, and it touches no
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets are produced by `/plan-story STORY-0204`.* | — |
+| [TASK-020401](../tasks/TASK-020401-board-serializable.md) | Make `Board` serializable | ready |
+| [TASK-020402](../tasks/TASK-020402-seat-view.md) | A seat as a recipient may see it | ready |
+| [TASK-020403](../tasks/TASK-020403-player-view-type.md) | The `PlayerView` type | backlog |
+| [TASK-020404](../tasks/TASK-020404-player-view-of.md) | Project a state into one seat's view | backlog |
+| [TASK-020405](../tasks/TASK-020405-player-view-reveal.md) | Show a hand the engine has already revealed | backlog |
+| [TASK-020406](../tasks/TASK-020406-event-filter-per-seat.md) | Filter an event for one recipient | ready |
+| [TASK-020407](../tasks/TASK-020407-revealed-seats.md) | Name the seats a hand has already revealed | backlog |
+| [TASK-020408](../tasks/TASK-020408-player-view-carries-no-secret.md) | Assert structurally that a view carries no deck, rng or seed | backlog |
+| [TASK-020409](../tasks/TASK-020409-observed-duel-harness.md) | A duel harness that records every state and every event | ready |
+| [TASK-020410](../tasks/TASK-020410-view-leak-property.md) | No view shows a card its viewer may not see, over a thousand duels | backlog |
+| [TASK-020411](../tasks/TASK-020411-event-stream-leak-property.md) | No filtered event stream carries a card its recipient may not see, over a thousand duels | backlog |
+
+Four are startable at once and touch disjoint files: `TASK-020401`, `TASK-020402`, `TASK-020406`
+and `TASK-020409`.
+
+`GameState` carries both seats' hole cards from the deal until the hand ends — the muck clears
+nothing — so a state alone cannot say what has been *shown*. Only the log records that, which is
+why `PlayerView.of` takes a `revealed: Set<Int>` that defaults to empty, and why the engine
+computes it with `revealedSeats(events)` rather than leaving the server to recognise a
+`HandRevealed` for itself. Forgetting the argument hides a shown hand, which is a visible bug;
+no argument can cause a silent leak.
 
 ## Acceptance criteria
 
@@ -88,3 +108,10 @@ It is the only story in `EPIC-02` that touches `poker-engine`, and it touches no
 - `StatsProjection` and `ReplayProjection` from `architecture.md`'s table — `EPIC-08`.
 - Publishing the seed after a match ends. `ADR-0002` permits it; nobody has asked for it, and it
   is an addition rather than a change when they do.
+- **A spectator view — `DEC-009`.** Nothing in `docs/` says whether a duel can be watched, and a
+  view for someone holding no seat is a different question from redacting for a player: it needs
+  its own entitlement rule (both hands hidden until showdown? a delay?), a room role and a
+  protocol message. `PlayerView.of` therefore requires a seat index of 0 or 1 and this story
+  ships no observer projection. Nothing here forecloses one: a spectator view would be a new
+  factory beside `of`, not a change to it. Registered in
+  [`docs/adr/README.md`](../../docs/adr/README.md); no ticket in this story is blocked on it.
