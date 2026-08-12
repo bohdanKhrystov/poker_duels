@@ -53,6 +53,8 @@ Each with the reason it was not chosen.
 | [0006](ADR-0006-mandatory-review-gate.md) | Every task ends in a reviewed, merged pull request | Amended by 0007 |
 | [0007](ADR-0007-token-lean-agent-workflow.md) | Token-lean agent workflow | Accepted |
 | [0008](ADR-0008-loser-mucks-at-showdown.md) | The loser mucks at showdown | Accepted |
+| [0009](ADR-0009-match-events-are-their-own-hierarchy.md) | Match events are their own hierarchy | Accepted |
+| [0010](ADR-0010-engine-takes-a-serialization-dependency.md) | The engine may depend on kotlinx.serialization | Accepted |
 
 ## Open decisions
 
@@ -62,6 +64,11 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | `../duel-rules.md` | before v0.2 |
 | DEC-002 | What performance budget does the hand evaluator carry, how is it measured, and does `HandRank` become a packed integer? | `../../tasks/stories/STORY-0103-hand-evaluator.md` | before STORY-0108 |
-| DEC-005 | Does a match-level event (`MatchFinished`) belong to the hand-scoped `GameEvent` log, to a `MatchEvent` hierarchy of its own, or nowhere — the match layer returning `DuelOutcome` as a value only? | `../../tasks/stories/STORY-0107-duel-format-and-match.md` | before STORY-0108 |
-| DEC-006 | Where does event-log serialisation live, and in what format? Hand-written text inside `poker-engine`, which may take no dependency; a new `poker-serialization` module free to use kotlinx.serialization, which the architecture's module list does not contain; or nothing until `EPIC-02` chooses a storage format. | `../../tasks/stories/STORY-0108-event-log-replay-simulation.md` | before EPIC-02 |
+
+## Answered decisions
+
+| ID | Question | Answered by |
+| --- | --- | --- |
+| DEC-005 | Where does a match-level event live? | [ADR-0009](ADR-0009-match-events-are-their-own-hierarchy.md) — its own `MatchEvent` hierarchy |
+| DEC-006 | Where does event-log serialisation live, and in what format? | [ADR-0010](ADR-0010-engine-takes-a-serialization-dependency.md) — kotlinx.serialization, inside the engine, behind a narrowed guard |
 
