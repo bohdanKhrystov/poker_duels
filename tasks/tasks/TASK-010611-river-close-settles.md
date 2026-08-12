@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010611
 title: A closed river settles the showdown
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
