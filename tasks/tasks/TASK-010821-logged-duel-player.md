@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010821
 title: Play a whole duel and keep its log
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
