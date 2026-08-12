@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010612
 title: A run-out settles the showdown it reaches
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
