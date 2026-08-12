@@ -34,6 +34,10 @@ private val SEAT_INDICES = 0..1
  *   engine that kept a counter of its own would be hidden state, which ADR-0001 forecloses.
  * @property deck The deck as it stands, undealt cards only.
  * @property rng The random generator as it stands, ready for the next draw.
+ * @property lastAggressor The seat that last bet or raised on the current street, or `null`
+ *   when the street has seen no aggression. Used to order reveals at showdown per
+ *   [ADR-0008](../../docs/adr/ADR-0008-loser-mucks-at-showdown.md). This ticket only declares
+ *   it; `TASK-010619` sets it, `TASK-010620` clears it on a new street.
  */
 public data class GameState(
     val handNumber: Int,
@@ -50,6 +54,7 @@ public data class GameState(
     val eventCount: Int,
     val deck: Deck,
     val rng: Rng,
+    val lastAggressor: Int? = null,
 ) {
     init {
         require(seats.size == 2) { "GameState requires exactly two seats, was ${seats.size}" }
@@ -59,6 +64,9 @@ public data class GameState(
         require(buttonSeat in SEAT_INDICES) { "buttonSeat must be 0 or 1, was $buttonSeat" }
         require(seatToAct == null || seatToAct in SEAT_INDICES) {
             "seatToAct must be null, 0 or 1, was $seatToAct"
+        }
+        require(lastAggressor == null || lastAggressor in SEAT_INDICES) {
+            "lastAggressor must be null, 0 or 1, was $lastAggressor"
         }
         require(handNumber >= 1) { "handNumber must be at least 1, was $handNumber" }
         require(pot >= 0) { "pot cannot be negative, was $pot" }

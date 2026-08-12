@@ -146,4 +146,18 @@ class GameStateTest {
         assertEquals(Street.COMPLETE, state.street)
         assertEquals(Board.EMPTY, state.board)
     }
+
+    @Test
+    fun lastAggressorDefaultsToNull() {
+        val state = preflopState()
+
+        assertEquals(null, state.lastAggressor)
+    }
+
+    @Test
+    fun rejectsALastAggressorThatIsNotASeat() {
+        assertThrows(IllegalArgumentException::class.java) {
+            preflopState().copy(lastAggressor = 2)
+        }
+    }
 }
