@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020411
 title: No filtered event stream carries a card its recipient may not see, over a thousand duels
 type: task
-status: backlog
+status: done
 parent: STORY-0204
 module: poker-ai
 estimate: S
