@@ -4,10 +4,19 @@ package duels.poker.engine.game
  * The events that follow [lastAction]'s own event. [state] is the state after that event has
  * been applied, so `seatToAct` is already null.
  *
- * The round-is-over branch is still empty: closing the round on a fold is `TASK-010516`,
- * advancing the street is `TASK-010517`, and running out the board is `TASK-010518`.
+ * Closes on a fold with [BettingRoundEnded] (`TASK-010516`); advancing the street is
+ * `TASK-010517`, and running out the board is `TASK-010518`.
  */
 public fun continueHand(state: GameState, lastAction: PlayerAction): EngineResult {
+    // A fold ends the hand immediately: sweep commitments to pot, mark seatToAct null.
+    // Awarding the pot is STORY-0106. The uncalled part of the last bet stays recoverable because
+    // Seat.committedThisHand is gross and never decreases — the difference between seats'
+    // committedThisHand is the amount to return.
+    if (state.seat(0).hasFolded || state.seat(1).hasFolded) {
+        val event = BettingRoundEnded(state.eventCount, state.street)
+        return EngineResult.accepted(StateProjection.apply(state, event), listOf(event))
+    }
+
     if (!roundContinues(state, lastAction)) {
         return EngineResult.accepted(state, emptyList())
     }

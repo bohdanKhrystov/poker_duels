@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010517
 title: Close the round and deal the next street
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
