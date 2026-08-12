@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010807
 title: Record and replay is an identity over two hundred random hands
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
