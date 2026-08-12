@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020207
 title: The handshake refuses a mismatched protocol version
 type: task
-status: backlog
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
