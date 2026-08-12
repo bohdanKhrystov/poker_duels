@@ -25,13 +25,14 @@ internal class DefaultPokerEngineContractTest : PokerEngineContract() {
 
         val baseAllInState = handState()
         val allInDeal = baseAllInState.deck.deal(3)
+        val holeDeal = allInDeal.deck.deal(4)
         val allInPosition = baseAllInState.copy(
             street = Street.FLOP,
             board = Board(allInDeal.cards),
-            deck = allInDeal.deck,
+            deck = holeDeal.deck,
             seats = listOf(
-                baseAllInState.seat(0),
-                baseAllInState.seat(1).copy(isAllIn = true),
+                baseAllInState.seat(0).copy(holeCards = listOf(holeDeal.cards[0], holeDeal.cards[1])),
+                baseAllInState.seat(1).copy(holeCards = listOf(holeDeal.cards[2], holeDeal.cards[3]), isAllIn = true),
             ),
             betToMatch = 450,
             seatToAct = 0,

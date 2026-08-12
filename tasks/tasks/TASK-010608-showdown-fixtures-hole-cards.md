@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010608
 title: Give the synthetic showdown fixtures hole cards
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: XS
