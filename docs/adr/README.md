@@ -55,6 +55,10 @@ Each with the reason it was not chosen.
 | [0008](ADR-0008-loser-mucks-at-showdown.md) | The loser mucks at showdown | Accepted |
 | [0009](ADR-0009-match-events-are-their-own-hierarchy.md) | Match events are their own hierarchy | Accepted |
 | [0010](ADR-0010-engine-takes-a-serialization-dependency.md) | The engine may depend on kotlinx.serialization | Accepted |
+| [0011](ADR-0011-postgres-in-v01.md) | PostgreSQL lands in v0.1 | Accepted — amends 0003 |
+| [0012](ADR-0012-device-bound-anonymous-profiles.md) | Anonymous profiles, bound to a device | Accepted |
+| [0013](ADR-0013-disconnect-grace-period.md) | A dropped connection gets a grace period, then folds | Accepted |
+| [0014](ADR-0014-duel-coin-economy.md) | The winner takes a coin, the loser gives one, a draw pays nothing | Accepted |
 
 ## Open decisions
 
@@ -64,6 +68,8 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | `../duel-rules.md` | before v0.2 |
 | DEC-002 | What performance budget does the hand evaluator carry, how is it measured, and does `HandRank` become a packed integer? | `../../tasks/stories/STORY-0103-hand-evaluator.md` | before STORY-0108 |
+| DEC-007 | How are the TypeScript protocol types generated from the Kotlin definitions, and what stops the checked-in output drifting? | `../../tasks/stories/STORY-0203-generated-typescript-protocol.md` | before EPIC-03 |
+| DEC-008 | Is the full `MatchLog` persisted in v0.1, and where — a column, a table per hand, or object storage? | `../../tasks/stories/STORY-0209-postgres-schema-and-migrations.md` | before EPIC-08 |
 
 ## Answered decisions
 

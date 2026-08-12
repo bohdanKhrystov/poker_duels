@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` is **done** — all eight stories, all 131 tickets. `EPIC-02` (duel server) is next and needs writing.
+**Now:** `EPIC-01` is **done** — all eight stories, all 131 tickets. `EPIC-02` (duel server) is written and being worked.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -14,7 +14,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | --- | --- | --- | --- |
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
-| EPIC-02 | Duel server — rooms, WebSocket protocol, persistence | *not written* | v0.1 |
+| [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **ready** | v0.1 |
 | EPIC-03 | Web client — table, lobby, duel flow | *not written* | v0.1 |
 | EPIC-04 | Identity and profiles | *not written* | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
@@ -186,6 +186,33 @@ private repository. Until it clears, the branch model is convention, not enforce
 
 **131 tasks total.** All stories are migrated to schema 2. `STORY-0107` and `STORY-0108` run concurrently: `STORY-0108`'s
 hand-level tickets need only the engine as it stands, while its match-level tail waits on `STORY-0107`.
+
+---
+
+## EPIC-02 — Duel server
+
+Two roots are startable at once: `STORY-0201` (`:poker-server`) and `STORY-0204` (`poker-engine`) —
+different modules, no shared file. Off the scaffold, `STORY-0202`, `STORY-0206` and `STORY-0209`
+are three independent branches.
+
+Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
+
+| Story | Title | Status |
+| --- | --- | --- |
+| [STORY-0201](stories/STORY-0201-server-module-scaffold.md) | Server module and build scaffold | ready |
+| [STORY-0204](stories/STORY-0204-player-view-projection.md) | `PlayerView` — per-recipient projection | ready |
+| [STORY-0202](stories/STORY-0202-wire-protocol.md) | The wire protocol, defined once in Kotlin | backlog |
+| [STORY-0203](stories/STORY-0203-generated-typescript-protocol.md) | Generated TypeScript protocol types | blocked |
+| [STORY-0205](stories/STORY-0205-sessions-and-socket-lifecycle.md) | Sessions and the socket lifecycle | backlog |
+| [STORY-0206](stories/STORY-0206-rooms-and-matchmaking.md) | Rooms, join links and rematch | backlog |
+| [STORY-0207](stories/STORY-0207-duel-runner.md) | The duel runner — the engine behind the socket | backlog |
+| [STORY-0208](stories/STORY-0208-disconnect-grace-period.md) | Disconnect, grace period and reconnect | backlog |
+| [STORY-0209](stories/STORY-0209-postgres-schema-and-migrations.md) | PostgreSQL — schema, migrations, pool | backlog |
+| [STORY-0210](stories/STORY-0210-profiles-results-and-coins.md) | Profiles, duel results and duel coins | backlog |
+| [STORY-0211](stories/STORY-0211-read-path-coins-and-recent-duels.md) | The read path — my coins and my recent duels | backlog |
+| [STORY-0212](stories/STORY-0212-end-to-end-duel-over-a-socket.md) | A real duel over a real socket, end to end | backlog |
+
+Stories are written; tickets come from `/plan-story` as each is reached.
 
 ---
 
