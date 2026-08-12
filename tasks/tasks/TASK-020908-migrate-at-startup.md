@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020908
 title: Open the pool and migrate at startup, and make a second startup a no-op
 type: task
-status: blocked
+status: backlog
 parent: STORY-0209
 module: poker-server
 estimate: S
