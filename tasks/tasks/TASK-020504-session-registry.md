@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020504
 title: A SessionRegistry that maps a connection to a session and drops it exactly once
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
