@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010814
 title: A card serialises as its own notation
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
