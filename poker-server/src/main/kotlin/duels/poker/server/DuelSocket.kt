@@ -8,6 +8,8 @@ import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.handshake
 import duels.poker.server.session.ConnectionWriter
 import duels.poker.server.session.DeviceId
+import duels.poker.server.session.Session
+import duels.poker.server.session.SessionRegistry
 import duels.poker.server.session.SocketDependencies
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
@@ -77,8 +79,15 @@ private suspend fun DefaultWebSocketServerSession.serve(
     val deviceId = hello.deviceId?.let(::DeviceId) ?: deps.deviceIds.newDeviceId()
     when (val message = handshake(hello, deviceId.value)) {
         is ServerMessage.Welcome -> {
-            writer.send(ProtocolCodec.encode(message))
-            incoming.consumeEach { }
+            val player = deps.directory.resolve(deviceId)
+            val session = Session(SessionRegistry.newSessionId(), player)
+            deps.sessions.register(session)
+            try {
+                writer.send(ProtocolCodec.encode(message))
+                incoming.consumeEach { }
+            } finally {
+                deps.sessions.remove(session.id)
+            }
         }
 
         is ServerMessage.Failure -> {
