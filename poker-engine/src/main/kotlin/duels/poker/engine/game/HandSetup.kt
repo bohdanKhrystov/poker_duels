@@ -10,6 +10,15 @@ import duels.poker.engine.random.Rng
  * button. Action then opens on the button, which acts first preflop heads-up. A seat too short
  * for its blind posts all-in for its whole stack.
  *
+ * A seat that posts its blind all-in can leave the seat named by [firstToActOn] with no [ActionOn]
+ * it could answer: folded, all-in, or out of chips, none of which happen this early to the acting
+ * seat except by going all-in on its own blind. Only the seat on turn is checked — an opponent
+ * that is itself all-in for less does not deadlock anything, because the seat on turn still has a
+ * real, if restricted, decision (`TASK-010509`), and taking that decision away by running out
+ * would be a worse bug than the one this guards against. When the seat on turn cannot act, no
+ * [ActionOn] is emitted; instead [endBettingRound] sweeps the blinds and runs the board out to
+ * [ShowdownReached], exactly as it would if the round had ended mid-hand.
+ *
  * @param handNumber the 1-based index of this hand within the match
  * @param buttonSeat the seat holding the button this hand: 0 or 1
  * @param stacks both seats' starting stacks, indexed by seat; every seat needs at least one chip
@@ -36,7 +45,7 @@ public fun startHand(
     val smallBlindIndex = smallBlindSeat(buttonSeat)
     val bigBlindIndex = bigBlindSeat(buttonSeat)
 
-    val events = listOf(
+    val dealingEvents = listOf(
         HandStarted(
             sequence = 0,
             handNumber = handNumber,
@@ -67,10 +76,6 @@ public fun startHand(
             seat = smallBlindIndex,
             cards = listOf(dealt[1], dealt[3]),
         ),
-        ActionOn(
-            sequence = 5,
-            seat = firstToActOn(Street.PREFLOP, buttonSeat),
-        ),
     )
 
     val opening = GameState(
@@ -90,8 +95,21 @@ public fun startHand(
         rng = shuffle.rng,
     )
 
-    val folded = StateProjection.fold(opening, events)
-    val newState = folded.copy(deck = deal.deck, rng = shuffle.rng)
+    val afterDealing = StateProjection.fold(opening, dealingEvents).copy(deck = deal.deck, rng = shuffle.rng)
+
+    // Only the seat about to receive ActionOn matters: an opponent that is itself all-in for
+    // less still leaves the seat on turn a real decision, so checking both seats here would take
+    // a genuine turn away from a player with chips — see the KDoc above.
+    val seatOnTurn = firstToActOn(Street.PREFLOP, buttonSeat)
+    val seatOnTurnCanAct = afterDealing.seat(seatOnTurn).let { !it.hasFolded && !it.isAllIn && it.stack > 0 }
+
+    val (events, newState) = if (seatOnTurnCanAct) {
+        val actionEvent = ActionOn(sequence = afterDealing.eventCount, seat = seatOnTurn)
+        (dealingEvents + actionEvent) to StateProjection.apply(afterDealing, actionEvent)
+    } else {
+        val runOut = endBettingRound(afterDealing)
+        (dealingEvents + runOut.events) to runOut.newState
+    }
 
     return EngineResult.accepted(newState, events)
 }

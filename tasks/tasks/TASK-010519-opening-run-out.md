@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010519
 title: Do not stall a hand whose blinds leave nobody able to act
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: S
@@ -44,9 +44,17 @@ Read `HeadsUpOrder.kt` and `DealerEvents.kt`. Modify neither.
 
   `continueHand` then calls it. Behaviour is unchanged; this is a pure extraction so a second
   caller exists.
-- `startHand` emits `ActionOn` only when both seats can act (`!hasFolded && !isAllIn &&
-  stack > 0`). Otherwise it emits no `ActionOn` and appends `endBettingRound`'s events instead,
-  which sweeps the blinds and runs the board out to `ShowdownReached`.
+- `startHand` emits `ActionOn` only when **the seat that would receive it** can act — the seat
+  `firstToActOn(PREFLOP, buttonSeat)` names, tested with `!hasFolded && !isAllIn && stack > 0`.
+  Otherwise it emits no `ActionOn` and appends `endBettingRound`'s events instead, which sweeps
+  the blinds and runs the board out to `ShowdownReached`.
+- **Test the seat on turn, not both seats.** An opponent who is all-in does not deadlock the
+  hand: the seat on turn still has a live decision — fold, or call for what the all-in covers —
+  and `TASK-010509` already restricts its options. Running the board out there would take a real
+  decision away from a player who has chips, which is a worse bug than the one this ticket fixes.
+  `HandSetupTest.aShortStackPostsItsBlindAllIn` pins that case: seat 1 is all-in for 60 while the
+  button still holds 9 950 and owes 10, and it must stay on `PREFLOP` with the action on the
+  button.
 - This is reachable whenever a stack is at most its own blind — a freezeout produces it
   (STORY-0107). Without it the hand deadlocks: the seat on turn has no chips, so
   `legalActions` is empty and every action is rejected.

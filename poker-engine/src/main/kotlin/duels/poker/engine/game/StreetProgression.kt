@@ -18,22 +18,26 @@ public fun continueHand(state: GameState, lastAction: PlayerAction): EngineResul
     }
 
     if (!roundContinues(state, lastAction)) {
-        return closeRound(state)
+        return endBettingRound(state)
     }
     val event = ActionOn(state.eventCount, otherSeat(lastAction.seat))
     return EngineResult.accepted(StateProjection.apply(state, event), listOf(event))
 }
 
 /**
- * The round on [state.street] is complete and nobody folded: sweep the commitments, then either
- * deal the next street and put its first-to-act seat on turn, run the whole board out because
- * nobody can bet again, or — closing the river — reach showdown.
+ * Closes the current betting round and takes the hand as far as it can go without a player:
+ * sweep the commitments, then either deal the next street and put its first-to-act seat on turn,
+ * run the whole board out because nobody can bet again, or — closing the river — reach showdown.
  *
  * Dealing draws from [GameState.deck] directly, because [StateProjection.apply] deliberately
  * never advances it (see its KDoc): the deck dealt from here has to be carried forward by hand
  * onto the state that keeps accumulating events, or the next hand redeals a card already out.
+ *
+ * A second caller besides [continueHand] is [startHand]: a seat whose blind already puts it
+ * all-in never gets an [ActionOn] to answer, so `startHand` closes the (blind-only) round itself
+ * instead of leaving the hand stuck on a turn nobody can take.
  */
-private fun closeRound(state: GameState): EngineResult {
+public fun endBettingRound(state: GameState): EngineResult {
     val endedEvent = BettingRoundEnded(state.eventCount, state.street)
     val afterEnd = StateProjection.apply(state, endedEvent)
 
