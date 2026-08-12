@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020211
 title: Structurally, no seed goes out and no card comes in
 type: task
-status: backlog
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
