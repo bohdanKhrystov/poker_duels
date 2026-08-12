@@ -1,5 +1,7 @@
 package duels.poker.engine.duel
 
+import kotlinx.serialization.Serializable
+
 /**
  * The complete configuration of a duel: starting stack, blind schedule, and end condition.
  *
@@ -13,6 +15,7 @@ package duels.poker.engine.duel
  * @property endCondition the rule by which the duel terminates: [EndCondition.Freezeout] or
  *   [EndCondition.FixedHands].
  */
+@Serializable
 public data class DuelFormat(
     val startingStack: Int,
     val blinds: BlindSchedule,

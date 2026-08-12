@@ -1,5 +1,8 @@
 package duels.poker.engine.duel
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * The two end conditions for a duel: [Freezeout] and [FixedHands].
  *
@@ -10,8 +13,11 @@ package duels.poker.engine.duel
  * Neither is chosen here because `DEC-001` is open. This sealed interface is what makes the
  * answer cheap: a later decision becomes a configuration change, not an engine change.
  */
+@Serializable
 public sealed interface EndCondition {
     /** Play until one seat holds every chip. */
+    @Serializable
+    @SerialName("Freezeout")
     public data object Freezeout : EndCondition
 
     /**
@@ -19,6 +25,8 @@ public sealed interface EndCondition {
      *
      * @property hands the number of hands to play before comparing stacks; must be at least 1.
      */
+    @Serializable
+    @SerialName("FixedHands")
     public data class FixedHands(val hands: Int) : EndCondition {
         init {
             require(hands >= 1) { "hands must be at least 1, was $hands" }
