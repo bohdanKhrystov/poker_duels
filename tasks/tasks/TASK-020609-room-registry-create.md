@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020609
 title: A RoomRegistry that creates a room under a code nobody else holds
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
