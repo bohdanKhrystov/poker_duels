@@ -10,11 +10,18 @@ import io.ktor.server.config.ConfigLoader
  * This is the *only* place the server reads its environment. Future fields from `ADR-0013`'s
  * grace period and `ADR-0011`'s database URL will land here as further `val`s with their own
  * key, env name and default.
+ *
+ * The database credentials are development defaults for a container listening on localhost;
+ * production secrets arrive by environment variable.
  */
 public data class ServerConfig(
     val port: Int,
     val maxFrameLength: Int,
     val maxFrameNestingDepth: Int,
+    val databaseUrl: String,
+    val databaseUser: String,
+    val databasePassword: String,
+    val databasePoolSize: Int,
 ) {
     public companion object {
         public const val DEFAULT_PORT: Int = 8080
@@ -40,6 +47,22 @@ public data class ServerConfig(
         public const val MAX_FRAME_NESTING_DEPTH_KEY: String = "server.maxFrameNestingDepth"
         public const val MAX_FRAME_NESTING_DEPTH_ENV: String = "MAX_FRAME_NESTING_DEPTH"
 
+        public const val DEFAULT_DATABASE_URL: String = "jdbc:postgresql://localhost:5432/poker_duels"
+        public const val DATABASE_URL_KEY: String = "database.url"
+        public const val DATABASE_URL_ENV: String = "DATABASE_URL"
+
+        public const val DEFAULT_DATABASE_USER: String = "poker"
+        public const val DATABASE_USER_KEY: String = "database.user"
+        public const val DATABASE_USER_ENV: String = "DATABASE_USER"
+
+        public const val DEFAULT_DATABASE_PASSWORD: String = "poker"
+        public const val DATABASE_PASSWORD_KEY: String = "database.password"
+        public const val DATABASE_PASSWORD_ENV: String = "DATABASE_PASSWORD"
+
+        public const val DEFAULT_DATABASE_POOL_SIZE: Int = 8
+        public const val DATABASE_POOL_SIZE_KEY: String = "database.poolSize"
+        public const val DATABASE_POOL_SIZE_ENV: String = "DATABASE_POOL_SIZE"
+
         /**
          * Build a [ServerConfig] from a Ktor [ApplicationConfig] with environment variable
          * overrides.
@@ -57,38 +80,66 @@ public data class ServerConfig(
             config: ApplicationConfig,
             env: (String) -> String? = { name -> System.getenv(name) },
         ): ServerConfig {
-            val portEnv = env(PORT_ENV)
-            val portConfig = config.propertyOrNull(PORT_KEY)?.getString()
-
-            val portString = portEnv ?: portConfig ?: DEFAULT_PORT.toString()
+            val portString = resolve(config, env, PORT_ENV, PORT_KEY, DEFAULT_PORT.toString())
             val port = requireNotNull(portString.toIntOrNull()) {
                 "server port must be an integer, got: $portString"
             }
 
-            val maxFrameLengthEnv = env(MAX_FRAME_LENGTH_ENV)
-            val maxFrameLengthConfig = config.propertyOrNull(MAX_FRAME_LENGTH_KEY)?.getString()
-            val maxFrameLengthString =
-                maxFrameLengthEnv ?: maxFrameLengthConfig ?: DEFAULT_MAX_FRAME_LENGTH.toString()
+            val maxFrameLengthString = resolve(
+                config,
+                env,
+                MAX_FRAME_LENGTH_ENV,
+                MAX_FRAME_LENGTH_KEY,
+                DEFAULT_MAX_FRAME_LENGTH.toString(),
+            )
             val maxFrameLength = requireNotNull(maxFrameLengthString.toIntOrNull()) {
                 "server max frame length must be an integer, got: $maxFrameLengthString"
             }
 
-            val maxFrameNestingDepthEnv = env(MAX_FRAME_NESTING_DEPTH_ENV)
-            val maxFrameNestingDepthConfig =
-                config.propertyOrNull(MAX_FRAME_NESTING_DEPTH_KEY)?.getString()
-            val maxFrameNestingDepthString =
-                maxFrameNestingDepthEnv ?: maxFrameNestingDepthConfig
-                    ?: DEFAULT_MAX_FRAME_NESTING_DEPTH.toString()
+            val maxFrameNestingDepthString = resolve(
+                config,
+                env,
+                MAX_FRAME_NESTING_DEPTH_ENV,
+                MAX_FRAME_NESTING_DEPTH_KEY,
+                DEFAULT_MAX_FRAME_NESTING_DEPTH.toString(),
+            )
             val maxFrameNestingDepth = requireNotNull(maxFrameNestingDepthString.toIntOrNull()) {
                 "server max frame nesting depth must be an integer, got: $maxFrameNestingDepthString"
+            }
+
+            val databaseUrl = resolve(config, env, DATABASE_URL_ENV, DATABASE_URL_KEY, DEFAULT_DATABASE_URL)
+            val databaseUser = resolve(config, env, DATABASE_USER_ENV, DATABASE_USER_KEY, DEFAULT_DATABASE_USER)
+            val databasePassword = resolve(config, env, DATABASE_PASSWORD_ENV, DATABASE_PASSWORD_KEY, DEFAULT_DATABASE_PASSWORD)
+
+            val databasePoolSizeString = resolve(
+                config,
+                env,
+                DATABASE_POOL_SIZE_ENV,
+                DATABASE_POOL_SIZE_KEY,
+                DEFAULT_DATABASE_POOL_SIZE.toString(),
+            )
+            val databasePoolSize = requireNotNull(databasePoolSizeString.toIntOrNull()) {
+                "database pool size must be an integer, got: $databasePoolSizeString"
             }
 
             return ServerConfig(
                 port = port,
                 maxFrameLength = maxFrameLength,
                 maxFrameNestingDepth = maxFrameNestingDepth,
+                databaseUrl = databaseUrl,
+                databaseUser = databaseUser,
+                databasePassword = databasePassword,
+                databasePoolSize = databasePoolSize,
             )
         }
+
+        private fun resolve(
+            config: ApplicationConfig,
+            env: (String) -> String?,
+            envName: String,
+            key: String,
+            default: String,
+        ): String = env(envName) ?: config.propertyOrNull(key)?.getString() ?: default
 
         /**
          * Load the server configuration from the shipped `application.conf` resource, with environment
