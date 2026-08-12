@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020901
 title: Put the database dependencies in the version catalog and the server build
 type: task
-status: ready
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: XS
