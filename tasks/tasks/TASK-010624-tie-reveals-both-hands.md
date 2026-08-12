@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010624
 title: A tied showdown reveals both hands, the river aggressor first
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
