@@ -59,6 +59,16 @@ class StateProjectionTest {
     }
 
     @Test
+    fun handStartedClearsTheLastAggressor() {
+        val state = handState().copy(lastAggressor = 1)
+        val event = HandStarted(0, 7, 1, 50, 100, listOf(9_000, 11_000))
+
+        val result = StateProjection.apply(state, event)
+
+        assertEquals(null, result.lastAggressor)
+    }
+
+    @Test
     fun blindsLeaveTheBarAtTheBigBlind() {
         val state = handState()
         val chipsBefore = state.chipsInPlay
