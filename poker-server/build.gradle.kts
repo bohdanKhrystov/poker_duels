@@ -7,12 +7,14 @@ dependencies {
     implementation(project(":poker-engine"))
     implementation(libs.bundles.ktor.server)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.postgresql)
     implementation(libs.hikaricp)
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
     testImplementation(libs.bundles.junit)
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.websockets)
     testImplementation(libs.testcontainers.postgresql)
 }
 

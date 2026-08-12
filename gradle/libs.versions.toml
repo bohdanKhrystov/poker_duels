@@ -27,6 +27,7 @@ ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-conte
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
+ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 hikaricp = { group = "com.zaxxer", name = "HikariCP", version.ref = "hikari" }
 flyway-core = { group = "org.flywaydb", name = "flyway-core", version.ref = "flyway" }
