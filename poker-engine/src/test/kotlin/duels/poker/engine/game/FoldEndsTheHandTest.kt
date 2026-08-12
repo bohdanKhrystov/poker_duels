@@ -16,9 +16,10 @@ class FoldEndsTheHandTest {
         val result = DefaultPokerEngine.handle(state, action)
 
         assertFalse(result.isRejected)
-        assertEquals(2, result.events.size)
+        assertEquals(3, result.events.size)
         assertEquals(PlayerFolded(sequence = 0, seat = 0), result.events[0])
         assertEquals(BettingRoundEnded(sequence = 1, street = Street.PREFLOP), result.events[1])
+        assertEquals(HandFinished(sequence = 2), result.events[2])
     }
 
     @Test
@@ -39,9 +40,16 @@ class FoldEndsTheHandTest {
         val result = DefaultPokerEngine.handle(state, action)
 
         assertFalse(result.isRejected)
-        assertEquals(400, result.newState.pot)
+        assertEquals(0, result.newState.pot)
         assertEquals(0, result.newState.seat(0).committedThisStreet)
         assertEquals(0, result.newState.seat(1).committedThisStreet)
+        val returned = result.events.filterIsInstance<UncalledBetReturned>().single()
+        val awarded = result.events.filterIsInstance<PotAwarded>().single()
+        assertEquals(1, returned.seat)
+        assertEquals(200, returned.amount)
+        assertEquals(1, awarded.seat)
+        assertEquals(200, awarded.amount)
+        assertEquals(10_100, result.newState.seat(1).stack)
     }
 
     @Test
@@ -89,7 +97,7 @@ class FoldEndsTheHandTest {
     }
 
     @Test
-    fun theUncalledBetIsStillRecoverable() {
+    fun theUncalledBetComesBack() {
         val committedSeats = listOf(
             Seat(index = 0, stack = 9_700, committedThisStreet = 0, committedThisHand = 300),
             Seat(index = 1, stack = 9_600, committedThisStreet = 200, committedThisHand = 500),
@@ -105,7 +113,15 @@ class FoldEndsTheHandTest {
 
         val result = DefaultPokerEngine.handle(state, action)
 
-        assertEquals(200, result.newState.seat(1).committedThisHand - result.newState.seat(0).committedThisHand)
+        assertEquals(
+            UncalledBetReturned(sequence = 2, seat = 1, amount = 200),
+            result.events.filterIsInstance<UncalledBetReturned>().single(),
+        )
+        assertEquals(
+            PotAwarded(sequence = 3, seat = 1, amount = 400),
+            result.events.filterIsInstance<PotAwarded>().single(),
+        )
+        assertEquals(10_200, result.newState.seat(1).stack)
     }
 
     @Test
@@ -122,6 +138,7 @@ class FoldEndsTheHandTest {
         val result = DefaultPokerEngine.handle(afterFold, checkAction)
 
         assertTrue(result.isRejected)
-        assertEquals(Rejection.NotYourTurn(null), result.rejection)
+        assertEquals(Rejection.HandComplete, rejectionFor(afterFold, checkAction))
+        assertEquals(Rejection.HandComplete, result.rejection)
     }
 }
