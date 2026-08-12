@@ -150,7 +150,9 @@ private fun stacksFor(seed: Long): List<Int> {
  * comes from a uniform draw over [LegalActions.allowed] sorted for determinism, and a `BET` or
  * `RAISE` amount is a further uniform draw between the minimum legal total and going all-in.
  */
-private fun pickAction(seat: Int, legal: LegalActions, rng: Rng): Pair<PlayerAction, Rng> {
+// internal, not private: the duel harness (RandomDuelPlayer.kt) reuses this so both harnesses
+// make decisions the same way.
+internal fun pickAction(seat: Int, legal: LegalActions, rng: Rng): Pair<PlayerAction, Rng> {
     val sortedTypes = legal.allowed.sorted()
     val typeDraw = rng.nextInt(sortedTypes.size)
     var nextRng = typeDraw.next

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010713
 title: Play a whole duel from one seed, and prove it produces a winner
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
