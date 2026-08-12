@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010705
 title: A blind schedule that answers which blinds a hand number plays
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S

@@ -139,7 +139,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010704](tasks/TASK-010704-blind-level.md) A blind level that can double | S | **done** |
 | | [TASK-010706](tasks/TASK-010706-end-condition.md) The two duel end conditions as a sealed type | XS | **done** |
 | | [TASK-010711](tasks/TASK-010711-duel-outcome.md) DuelOutcome, the result of a finished duel | XS | **done** |
-| | [TASK-010705](tasks/TASK-010705-blind-schedule.md) Which blinds a hand number plays | S | backlog |
+| | [TASK-010705](tasks/TASK-010705-blind-schedule.md) Which blinds a hand number plays | S | **done** |
 | | [TASK-010707](tasks/TASK-010707-duel-format.md) DuelFormat and the default freezeout | S | backlog |
 | | [TASK-010708](tasks/TASK-010708-match-state.md) MatchState, what survives between two hands | S | backlog |
 | | [TASK-010709](tasks/TASK-010709-start-next-hand.md) Deal the match's next hand at its blinds | S | backlog |
@@ -150,14 +150,19 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010715](tasks/TASK-010715-duel-termination-property.md) Every default duel terminates | S | backlog |
 | | [TASK-010716](tasks/TASK-010716-fixed-length-duel.md) A fixed-length duel is decided on chips | S | backlog |
 | | [TASK-010717](tasks/TASK-010717-match-finished-event.md) The end of a match as a durable event | S | blocked |
-| **[STORY-0108](stories/STORY-0108-event-log-replay-simulation.md)** Log, replay, simulation | | | backlog |
-| | [TASK-010801](tasks/TASK-010801-event-log-format.md) Versioned event log format | M | backlog |
-| | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
-| | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
+| **[STORY-0108](stories/STORY-0108-event-log-replay-simulation.md)** Log, replay, simulation — *schema 2* | | | ready |
+| | [TASK-010804](tasks/TASK-010804-hand-log.md) HandLog, the replayable record of one hand | S | ready |
+| | [TASK-010805](tasks/TASK-010805-replay-a-hand.md) Replay a hand from its log | S | backlog |
+| | [TASK-010806](tasks/TASK-010806-replay-divergence.md) Replay rejects a log that does not match the engine | S | backlog |
+| | [TASK-010807](tasks/TASK-010807-replay-identity-property.md) Record and replay is an identity over 200 hands | S | backlog |
+| | [TASK-010808](tasks/TASK-010808-poker-ai-module.md) The poker-ai module, where bots and the harness live | XS | backlog |
+| | [TASK-010809](tasks/TASK-010809-random-bot.md) Bot, and a RandomBot picking among legal actions | S | backlog |
+| | [TASK-010810](tasks/TASK-010810-hand-log-serialization.md) Serialise a hand log and read it back | S | blocked |
+| | [TASK-010811](tasks/TASK-010811-match-log-and-replay.md) The log of a whole duel, and replaying it | S | blocked |
+| | [TASK-010812](tasks/TASK-010812-simulation-harness.md) Headless simulation harness and invariant fuzzing | S | blocked |
 
-**102 tasks total.** `STORY-0101`–`STORY-0106` are migrated to schema 2; stories 0107–0108 are still schema 1
-and get split by `/plan-story` just before they are worked. Stories 0107–0108 stay in `backlog` until `STORY-0106` lands, because their tasks are written
-against types that do not exist yet.
+**108 tasks total.** All stories are migrated to schema 2. `STORY-0107` and `STORY-0108` run concurrently: `STORY-0108`'s
+hand-level tickets need only the engine as it stands, while its match-level tail waits on `STORY-0107`.
 
 ---
 
@@ -168,6 +173,7 @@ against types that do not exist yet.
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-005 | Does `MatchFinished` belong to the hand-scoped `GameEvent` log, to a `MatchEvent` hierarchy of its own, or nowhere? | [`STORY-0107`](stories/STORY-0107-duel-format-and-match.md) | blocks `TASK-010717`, before STORY-0108 |
+| DEC-006 | Where does event-log serialisation live, and in what format, given `poker-engine` takes no dependencies? | [`STORY-0108`](stories/STORY-0108-event-log-replay-simulation.md) | blocks `TASK-010810` |
 | — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
 
 ---
