@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020510
 title: A nesting bomb or an oversized frame is answered, not fatal, at the socket
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: XS
