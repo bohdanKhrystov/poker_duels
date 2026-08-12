@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020903
 title: Start one PostgreSQL container for the suite, and decide what a missing Docker means
 type: task
-status: backlog
+status: blocked
 parent: STORY-0209
 module: poker-server
 estimate: S
@@ -16,6 +16,18 @@ verify:
   - ./gradlew :poker-server:test --tests '*PostgresTestSupportTest' -PrequireDocker=true
   - ./gradlew :poker-server:check -PrequireDocker=true
 ---
+
+
+> **Blocked: no Docker on the build machine (2026-08-13).** This ticket's `verify:` block carries
+> `-PrequireDocker=true`, which is deliberate — it means a machine without Docker cannot honestly
+> close a database ticket. Docker is not installed here (`docker` binary absent, no
+> `/var/run/docker.sock`), so the block cannot exit 0 and the ticket is not done. The implementation
+> may be complete; the verification is not. Unblock by installing Docker, or by running this ticket
+> on CI.
+>
+> An implementation already exists on branch `task/TASK-020903-postgres-test-harness`,
+> unmerged. Its skip path was verified green and its fail path verified to fail correctly; only the
+> `-PrequireDocker=true` run is unverifiable here. Review that branch before re-dispatching a coder.
 
 ## Goal
 
