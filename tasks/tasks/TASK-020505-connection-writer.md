@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020505
 title: One writer per connection, fed by a channel
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
