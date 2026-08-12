@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020603
 title: Mint room codes from an injected secure source, never from the engine Rng
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
