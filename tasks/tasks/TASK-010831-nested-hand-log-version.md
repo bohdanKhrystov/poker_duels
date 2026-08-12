@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010831
 title: A hand log with an unknown version is refused inside a match log too
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
