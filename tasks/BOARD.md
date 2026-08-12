@@ -119,8 +119,8 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010517](tasks/TASK-010517-street-advance.md) Close the round and deal the next street | S | **done** |
 | | [TASK-010518](tasks/TASK-010518-all-in-run-out.md) Run the board out when nobody can bet again | S | **done** |
 | | [TASK-010519](tasks/TASK-010519-opening-run-out.md) Do not stall a hand whose blinds leave nobody able to act | S | **done** |
-| | [TASK-010520](tasks/TASK-010520-hand-walkthrough-test.md) Play one scripted hand from blinds to showdown | S | ready |
-| | [TASK-010521](tasks/TASK-010521-betting-invariant-property.md) Assert the betting invariants over a thousand random hands | S | backlog |
+| | [TASK-010520](tasks/TASK-010520-hand-walkthrough-test.md) Play one scripted hand from blinds to showdown | S | **done** |
+| | [TASK-010521](tasks/TASK-010521-betting-invariant-property.md) Assert the betting invariants over a thousand random hands | S | ready |
 | **[STORY-0106](stories/STORY-0106-showdown-and-pots.md)** Showdown and pots | | | backlog |
 | | [TASK-010601](tasks/TASK-010601-pot-accounting.md) Pot accounting and uncalled bets | M | backlog |
 | | [TASK-010602](tasks/TASK-010602-showdown-resolution.md) Showdown, splits, reveal order | M | backlog |
@@ -157,7 +157,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 68 / 78 | 69 / 81 |
+| Tasks completed | 69 / 78 | 70 / 81 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |

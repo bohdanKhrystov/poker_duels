@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010521
 title: Assert the betting invariants over a thousand random hands
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
