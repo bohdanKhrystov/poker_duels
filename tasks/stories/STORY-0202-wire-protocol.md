@@ -59,11 +59,49 @@ with it.
 - `docs/protocol.md`: one table of messages, direction, payload and when it is sent. It is what
   `EPIC-03` reads instead of the Kotlin.
 
+## ⚠ Open — `DEC-010`, and what the tickets do meanwhile
+
+> **Do the room and lobby messages — create a room, join by code, offer a rematch, leave — belong
+> to this protocol, or does `STORY-0207` add them to these two sealed hierarchies once
+> `RoomRegistry` exists?**
+>
+> Their payloads are the shape of a component nobody has built: `STORY-0206` owns the room code, the
+> lifecycle and the rematch agreement, and `STORY-0207` owns the wiring. Declaring `JoinRoom(code)`
+> here would be guessing at that shape, and `STORY-0203` would then generate TypeScript for a
+> message the server cannot answer.
+>
+> **Nothing is blocked.** The tickets ship the handshake and the duel messages, which are the ones
+> `STORY-0205` needs; `ProtocolError` already reserves `UNKNOWN_ROOM`, `ROOM_FULL` and
+> `NOT_IN_DUEL`; and a sealed hierarchy takes new members additively, so answering this later costs
+> new subtypes and no change to existing ones.
+
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets are produced by `/plan-story STORY-0202`.* | — |
+| [TASK-020201](../tasks/TASK-020201-protocol-json-and-version.md) | Give `poker-server` the serialization plugin, `PROTOCOL_VERSION` and one shared `Json` | ready |
+| [TASK-020202](../tasks/TASK-020202-rejection-serializable.md) | Make `Rejection` serializable with explicit discriminators | ready |
+| [TASK-020203](../tasks/TASK-020203-legal-actions-serializable.md) | Make `LegalActions` serializable, with its defaults on the wire | ready |
+| [TASK-020204](../tasks/TASK-020204-client-message.md) | `ClientMessage` — a hierarchy that can only express an intent | backlog |
+| [TASK-020205](../tasks/TASK-020205-server-message-handshake.md) | `ProtocolError` and the two handshake `ServerMessage`s | backlog |
+| [TASK-020206](../tasks/TASK-020206-server-message-duel.md) | The four duel `ServerMessage`s — a view, events, the turn, a rejection | backlog |
+| [TASK-020207](../tasks/TASK-020207-handshake.md) | The handshake refuses a mismatched protocol version | backlog |
+| [TASK-020208](../tasks/TASK-020208-protocol-codec.md) | `ProtocolCodec` — encode, and a decode that returns a typed failure | backlog |
+| [TASK-020209](../tasks/TASK-020209-codec-refuses-junk.md) | One bad frame is a value, not an exception | backlog |
+| [TASK-020210](../tasks/TASK-020210-explicit-discriminators.md) | Every message's discriminator is an explicit `@SerialName` | backlog |
+| [TASK-020211](../tasks/TASK-020211-no-forbidden-payload.md) | Structurally, no seed goes out and no card comes in | backlog |
+| [TASK-020212](../tasks/TASK-020212-protocol-doc.md) | `docs/protocol.md`, and the test that keeps it honest | backlog |
+
+Three are startable at once and touch disjoint files in two modules: `TASK-020201`
+(`poker-server`), `TASK-020202` and `TASK-020203` (`poker-engine`). The widest the story ever gets
+is four, once the codec and the descriptor helper have merged: `TASK-020207`, `TASK-020209`,
+`TASK-020211` and `TASK-020212` are then independent and share no file.
+
+`ServerMessage` is built in two passes over one file — the handshake pair first
+(`TASK-020205`), the four duel messages second (`TASK-020206`) — because the second needs
+`Rejection` and `LegalActions` to be serializable and the first does not. `TASK-020205` is
+forbidden from pinning the member count for exactly that reason; `TASK-020210` owns that
+assertion, once the hierarchy is complete.
 
 ## Acceptance criteria
 

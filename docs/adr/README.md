@@ -71,6 +71,7 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-007 | How are the TypeScript protocol types generated from the Kotlin definitions, and what stops the checked-in output drifting? | `../../tasks/stories/STORY-0203-generated-typescript-protocol.md` | before EPIC-03 |
 | DEC-008 | Is the full `MatchLog` persisted in v0.1, and where — a column, a table per hand, or object storage? | `../../tasks/stories/STORY-0209-postgres-schema-and-migrations.md` | before EPIC-08 |
 | DEC-009 | Can a duel be watched, and if so what may a spectator see and when? | `../../tasks/stories/STORY-0204-player-view-projection.md` | before v0.2 |
+| DEC-010 | Do the room and lobby messages belong to `STORY-0202`'s protocol, or does `STORY-0207` extend the two sealed hierarchies once `RoomRegistry` exists? | `../../tasks/stories/STORY-0202-wire-protocol.md` | before STORY-0207 |
 
 ## Answered decisions
 
