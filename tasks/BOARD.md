@@ -180,7 +180,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010822](tasks/TASK-010822-replay-a-match.md) Replay a whole duel from its log | S | backlog |
 | | [TASK-010826](tasks/TASK-010826-match-log-codec.md) Read and write a match log, version guard included | S | backlog |
 | | [TASK-010828](tasks/TASK-010828-duel-simulator.md) Simulate one duel between two bots, checking after every action | S | **done** |
-| | [TASK-010829](tasks/TASK-010829-simulation-runner.md) Run a thousand duels and report on them | S | backlog |
+| | [TASK-010829](tasks/TASK-010829-simulation-runner.md) Run a thousand duels and report on them | S | **done** |
 | | [TASK-010830](tasks/TASK-010830-soak-run.md) A hundred thousand duels, off the default test task | S | backlog |
 
 **130 tasks total.** All stories are migrated to schema 2. `STORY-0107` and `STORY-0108` run concurrently: `STORY-0108`'s
