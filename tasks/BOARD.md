@@ -128,7 +128,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010607](tasks/TASK-010607-fold-awards-the-pot.md) A fold awards the pot and ends the hand | S | **done** |
 | | [TASK-010608](tasks/TASK-010608-showdown-fixtures-hole-cards.md) Give the synthetic showdown fixtures hole cards | XS | **done** |
 | | [TASK-010609](tasks/TASK-010609-terminal-check-by-what-it-accepts.md) Pin the random hand's ending by what it accepts, not by its street | XS | **done** |
-| | [TASK-010610](tasks/TASK-010610-showdown-winners.md) Decide who wins a showdown | S | backlog |
+| | [TASK-010610](tasks/TASK-010610-showdown-winners.md) Decide who wins a showdown | S | **done** |
 | | [TASK-010611](tasks/TASK-010611-river-close-settles.md) A closed river settles the showdown | S | backlog |
 | | [TASK-010612](tasks/TASK-010612-run-out-settles.md) A run-out settles the showdown it reaches | S | backlog |
 | | [TASK-010613](tasks/TASK-010613-settlement-invariants-property.md) Settlement invariants over a thousand random hands | S | backlog |
