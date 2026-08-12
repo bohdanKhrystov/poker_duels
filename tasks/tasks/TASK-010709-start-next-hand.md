@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010709
 title: Deal the match's next hand at its scheduled blinds
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
