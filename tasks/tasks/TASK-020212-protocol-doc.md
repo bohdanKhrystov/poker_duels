@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020212
 title: docs/protocol.md, and the test that keeps it honest
 type: task
-status: backlog
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
