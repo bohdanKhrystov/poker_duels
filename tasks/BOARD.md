@@ -151,7 +151,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010708](tasks/TASK-010708-match-state.md) MatchState, what survives between two hands | S | **done** |
 | | [TASK-010709](tasks/TASK-010709-start-next-hand.md) Deal the match's next hand at its blinds | S | backlog |
 | | [TASK-010710](tasks/TASK-010710-record-hand.md) Fold a finished hand back into the match | S | backlog |
-| | [TASK-010712](tasks/TASK-010712-evaluate-the-end-condition.md) Decide whether a match is over, and who won | S | backlog |
+| | [TASK-010712](tasks/TASK-010712-evaluate-the-end-condition.md) Decide whether a match is over, and who won | S | **done** |
 | | [TASK-010713](tasks/TASK-010713-random-duel-harness.md) Play a whole duel from one seed | S | backlog |
 | | [TASK-010714](tasks/TASK-010714-duel-invariants.md) Button, blinds and chips across a whole duel | S | backlog |
 | | [TASK-010715](tasks/TASK-010715-duel-termination-property.md) Every default duel terminates | S | backlog |
