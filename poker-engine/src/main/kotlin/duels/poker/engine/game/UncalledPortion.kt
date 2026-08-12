@@ -45,3 +45,49 @@ public fun uncalledPortion(state: GameState): UncalledPortion? {
         else -> null
     }
 }
+
+/**
+ * Closes a swept hand: the uncalled bet comes back, the pot goes to its winner, and the hand
+ * is over.
+ *
+ * [state] must already be swept — `committedThisStreet` is zero on every seat — because [pot]
+ * is only the whole of what is at stake once `BettingRoundEnded` has run.
+ *
+ * This ticket handles one winner only; a split pot is `TASK-010606`.
+ *
+ * @param state The swept state to settle.
+ * @param winners The seat that won the hand. Must have exactly one entry.
+ * @return The accepted result: `UncalledBetReturned` (if any), `PotAwarded` (if the remaining
+ *   pot is positive), then `HandFinished`.
+ */
+public fun settleHand(state: GameState, winners: List<Int>): EngineResult {
+    require(state.seats.all { it.committedThisStreet == 0 }) {
+        "state must be swept: every seat's committedThisStreet must be zero, was ${state.seats}"
+    }
+    require(winners.size == 1) { "settleHand handles exactly one winner, got ${winners.size}" }
+
+    val events = mutableListOf<GameEvent>()
+    var current = state
+
+    val uncalled = uncalledPortion(state)
+    if (uncalled != null) {
+        require(uncalled.amount <= current.pot) {
+            "uncalled amount ${uncalled.amount} exceeds pot ${current.pot}"
+        }
+        val returned = UncalledBetReturned(current.eventCount, uncalled.seat, uncalled.amount)
+        events += returned
+        current = StateProjection.apply(current, returned)
+    }
+
+    if (current.pot > 0) {
+        val awarded = PotAwarded(current.eventCount, winners.single(), current.pot)
+        events += awarded
+        current = StateProjection.apply(current, awarded)
+    }
+
+    val finished = HandFinished(current.eventCount)
+    events += finished
+    current = StateProjection.apply(current, finished)
+
+    return EngineResult.accepted(current, events)
+}
