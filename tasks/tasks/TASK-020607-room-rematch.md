@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020607
 title: Both seats must offer before a rematch starts, and the button changes sides
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
