@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020502
 title: Declare the PlayerDirectory port and an in-memory implementation for tests
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
