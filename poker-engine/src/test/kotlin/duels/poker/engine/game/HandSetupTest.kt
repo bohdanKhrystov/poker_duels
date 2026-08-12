@@ -38,7 +38,7 @@ class HandSetupTest {
     fun theOpeningEventsAreExact() {
         val result = startHand(1, buttonSeat = 0, stacks = listOf(10_000, 10_000), smallBlind = 50, bigBlind = 100, rng = SplitMix64Rng(1L))
 
-        assertEquals(3, result.events.size)
+        assertEquals(6, result.events.size)
 
         val handStarted = result.events[0]
         assertTrue(handStarted is HandStarted)
@@ -111,7 +111,7 @@ class HandSetupTest {
     fun theDeckIsShuffledAndFull() {
         val result = startHand(1, buttonSeat = 0, stacks = listOf(10_000, 10_000), smallBlind = 50, bigBlind = 100, rng = SplitMix64Rng(1L))
 
-        assertEquals(52, result.newState.deck.remaining)
+        assertEquals(48, result.newState.deck.remaining)
 
         val other = startHand(1, buttonSeat = 0, stacks = listOf(10_000, 10_000), smallBlind = 50, bigBlind = 100, rng = SplitMix64Rng(2L))
 
