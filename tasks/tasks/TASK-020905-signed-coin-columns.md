@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020905
 title: Prove a negative coin balance and a negative delta round-trip through PostgreSQL
 type: task
-status: backlog
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: S
