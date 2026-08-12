@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020407
 title: Name the seats a hand has already revealed
 type: task
-status: backlog
+status: done
 parent: STORY-0204
 module: poker-engine
 estimate: XS

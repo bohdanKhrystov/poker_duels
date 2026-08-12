@@ -48,3 +48,15 @@ public fun visibleTo(event: GameEvent, seat: Int): GameEvent? {
  */
 public fun visibleTo(events: List<GameEvent>, seat: Int): List<GameEvent> =
     events.mapNotNull { visibleTo(it, seat) }
+
+/**
+ * The seats a hand has already revealed, for the `revealed` parameter of [PlayerView.of].
+ *
+ * [events] must be **one hand's** events — [GameEvent] is hand-scoped, and feeding this
+ * function a longer stream would carry a previous hand's reveals into this one.
+ *
+ * [GameState] holds both seats' hole cards from the deal onward, so only the event log records
+ * what was actually shown. The state cannot answer this question.
+ */
+public fun revealedSeats(events: List<GameEvent>): Set<Int> =
+    events.filterIsInstance<HandRevealed>().map { it.seat }.toSet()
