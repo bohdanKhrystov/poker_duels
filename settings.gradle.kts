@@ -15,3 +15,4 @@ rootProject.name = "poker-duels"
 
 include(":poker-engine")
 include(":poker-ai")
+include(":poker-server")
