@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010714
 title: Button, blinds and chips across a whole duel
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
