@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0105` are done; `STORY-0106` and `STORY-0107` are done; `STORY-0108` is the last story of the epic.
+**Now:** `EPIC-01` is **done** — all eight stories, all 131 tickets. `EPIC-02` (duel server) is next and needs writing.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -13,7 +13,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | ID | Title | Status | Milestone |
 | --- | --- | --- | --- |
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
-| [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **ready** | v0.1 |
+| [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | EPIC-02 | Duel server — rooms, WebSocket protocol, persistence | *not written* | v0.1 |
 | EPIC-03 | Web client — table, lobby, duel flow | *not written* | v0.1 |
 | EPIC-04 | Identity and profiles | *not written* | v0.2 |
@@ -212,7 +212,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 71 / 87 | 72 / 90 |
+| Tasks completed | 131 / 131 | 132 / 134 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |
