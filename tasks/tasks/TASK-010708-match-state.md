@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010708
 title: MatchState, what survives between two hands
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
