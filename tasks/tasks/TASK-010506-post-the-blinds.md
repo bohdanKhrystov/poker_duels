@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010506
 title: Open a hand by posting both blinds
 type: task
-status: blocked
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
@@ -83,7 +83,7 @@ SplitMix64Rng(1L))` unless the test says otherwise.
 | `theBlindsFollowTheButtonToTheOtherSeat` | with `buttonSeat = 1`: seat 1 posts 50, seat 0 posts 100 |
 | `theOpeningEventsAreExact` | the three events, their types and `sequence` 0, 1, 2, in order |
 | `theBigBlindIsTheBarAndSetsTheMinimumRaise` | `betToMatch == 100`, `minRaiseTo == 200` |
-| `aShortStackPostsItsBlindAllIn` | stacks `listOf(10_000, 60)`, `buttonSeat = 0`: seat 1 commits 60, stack 0, `isAllIn`, `betToMatch == 100` |
+| `aShortStackPostsItsBlindAllIn` | stacks `listOf(10_000, 60)`, `buttonSeat = 0`: seat 1 commits 60, stack 0, `isAllIn`, `betToMatch == 60` — per `DEC-003` the bar is the amount actually posted, not the nominal blind, so the small blind owes 10 more to call rather than 50 |
 | `chipsAreConserved` | `chipsInPlay == 20_000`, and `potTotal == 150` |
 | `theEventsDescribeTheState` | `StateProjection.fold(opening, events)` equals `newState` except `deck` and `rng` |
 | `theDeckIsShuffledAndFull` | `newState.deck.remaining == 52` and two different seeds give different first-dealt cards |

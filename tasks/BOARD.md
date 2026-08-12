@@ -2,8 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0104` are done. `STORY-0105` is split and started, but `TASK-010506` is
-**blocked on `DEC-003`** — and the chain is linear, so the rest of the story waits on it.
+**Now:** `EPIC-01` in flight via `/build-epic`. `STORY-0101`–`STORY-0104` are done; `STORY-0105` is split into schema-2 tickets and being worked.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -105,7 +104,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010427](tasks/TASK-010427-contract-detects-drift.md) Prove the contract suite catches a drifting engine | XS | **done** |
 | **[STORY-0105](stories/STORY-0105-betting-rounds.md)** Betting rounds — *schema 2* | | | ready |
 | | [TASK-010505](tasks/TASK-010505-heads-up-seat-order.md) Name the heads-up blind and action order once | XS | **done** |
-| | [TASK-010506](tasks/TASK-010506-post-the-blinds.md) Open a hand by posting both blinds | S | blocked |
+| | [TASK-010506](tasks/TASK-010506-post-the-blinds.md) Open a hand by posting both blinds | S | ready |
 | | [TASK-010507](tasks/TASK-010507-deal-hole-cards.md) Deal the hole cards and put the action on the button | S | backlog |
 | | [TASK-010508](tasks/TASK-010508-legal-actions-core.md) Compute the legal actions at an ordinary decision point | S | backlog |
 | | [TASK-010509](tasks/TASK-010509-legal-actions-all-in.md) Restrict the legal actions around an all-in | S | backlog |
@@ -146,7 +145,6 @@ against types that do not exist yet.
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-003 | When the big blind cannot cover its own blind, is the bar the nominal big blind or the amount posted? | [`docs/duel-rules.md`](../docs/duel-rules.md) | blocks `TASK-010506` and the rest of `STORY-0105` |
 | — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
 
 ---
