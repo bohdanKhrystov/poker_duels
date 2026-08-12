@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010509
 title: Restrict the legal actions around an all-in
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: S
