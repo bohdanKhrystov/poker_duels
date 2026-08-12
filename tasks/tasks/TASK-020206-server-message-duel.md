@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020206
 title: The four duel ServerMessages — a view, events, the turn, a rejection
 type: task
-status: backlog
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
