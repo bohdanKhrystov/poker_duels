@@ -124,6 +124,60 @@ public data class Room(
         }
     }
 
+    /**
+     * Finish this room when the duel concludes.
+     *
+     * Transitions a [RoomState.PLAYING] room to [RoomState.FINISHED], keeping the guest,
+     * format, match, and opening button seat so that a rematch can be scheduled. Calling this
+     * on any room that is not [RoomState.PLAYING] is a server bug and throws
+     * [IllegalStateException].
+     *
+     * @param now the current time in milliseconds; updates [lastActivityAt].
+     * @return this room in state [RoomState.FINISHED].
+     * @throws IllegalStateException if [state] is not [RoomState.PLAYING].
+     */
+    public fun finish(now: Long): Room {
+        check(state == RoomState.PLAYING) { "can only finish a PLAYING room, not $state" }
+        return copy(
+            state = RoomState.FINISHED,
+            lastActivityAt = now,
+        )
+    }
+
+    /**
+     * Abandon this room when its players are gone or have given up.
+     *
+     * Transitions a room from [RoomState.WAITING], [RoomState.PLAYING], or [RoomState.FINISHED]
+     * to [RoomState.ABANDONED], clearing any rematch offers. Calling [abandon] on an already
+     * [RoomState.ABANDONED] room returns this room unchanged, including its [lastActivityAt] —
+     * both players leaving must not reset the reaping clock on a dead room.
+     *
+     * @param now the current time in milliseconds; updates [lastActivityAt] unless already abandoned.
+     * @return this room in state [RoomState.ABANDONED].
+     */
+    public fun abandon(now: Long): Room {
+        return when (state) {
+            RoomState.ABANDONED -> this
+            RoomState.WAITING, RoomState.PLAYING, RoomState.FINISHED -> copy(
+                state = RoomState.ABANDONED,
+                rematchOffers = emptySet(),
+                lastActivityAt = now,
+            )
+        }
+    }
+
+    /**
+     * Touch this room to advance its idle clock.
+     *
+     * Updates [lastActivityAt] to the given timestamp without changing any other state.
+     * This is called on every action inside a live room, making it possible to reap
+     * abandoned rooms without reaping a live duel.
+     *
+     * @param now the current time in milliseconds; updates [lastActivityAt].
+     * @return this room with [lastActivityAt] set to [now].
+     */
+    public fun touch(now: Long): Room = copy(lastActivityAt = now)
+
     public companion object {
         /**
          * Open a fresh room: a host waiting for a guest, no match yet, the host holding the
