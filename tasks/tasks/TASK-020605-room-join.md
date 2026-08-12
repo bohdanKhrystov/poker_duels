@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020605
 title: Seat the second player, and refuse the third
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
