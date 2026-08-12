@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010510
 title: Turn an illegal action into the reason it is illegal
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: S
