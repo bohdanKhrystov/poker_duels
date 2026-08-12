@@ -73,6 +73,8 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-009 | Can a duel be watched, and if so what may a spectator see and when? | `../../tasks/stories/STORY-0204-player-view-projection.md` | before v0.2 |
 | DEC-010 | Do the room and lobby messages belong to `STORY-0202`'s protocol, or does `STORY-0207` extend the two sealed hierarchies once `RoomRegistry` exists? | `../../tasks/stories/STORY-0202-wire-protocol.md` | before STORY-0207 |
 | DEC-011 | A device id already holds a live session and the same device opens a second socket — does the server refuse the new one, close the old one and adopt the new, or let both live? | `../../tasks/stories/STORY-0205-sessions-and-socket-lifecycle.md` | before STORY-0208 |
+| DEC-012 | Is holding a room code sufficient authorisation to take the second seat — or does joining need rate limiting, or the host's confirmation of the guest? | `../../tasks/stories/STORY-0206-rooms-and-matchmaking.md` | before the first public link |
+| DEC-013 | Is a per-room `Mutex` enough to serialise a room, or does the room become a channel-fed actor once a duel runs inside it? | `../../tasks/stories/STORY-0206-rooms-and-matchmaking.md` | before STORY-0207 |
 
 ## Answered decisions
 
