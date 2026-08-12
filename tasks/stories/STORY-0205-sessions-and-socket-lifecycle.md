@@ -2,7 +2,7 @@
 id: STORY-0205
 title: Sessions and the socket lifecycle
 type: story
-status: backlog
+status: ready
 parent: EPIC-02
 module: poker-server
 labels: [server, websocket, session]
@@ -52,11 +52,35 @@ route, which is why they wait on this one rather than running beside it.
   the session exactly once. `STORY-0208` layers the grace period on top of this; here, close means
   gone.
 
+## Open decision
+
+**DEC-011 — what does a second socket for one device id do?** Nothing in `ADR-0012` or `ADR-0013`
+decides whether the server refuses the new socket, closes the old one and adopts the new, or lets
+both live, and each answer costs something real: a lockout after a crashed tab, an eviction
+primitive handed to an unauthenticated id, or two connections behind one seat. Registered in
+[`docs/adr/README.md`](../../docs/adr/README.md); `TASK-020511` is `blocked` on it and nothing
+else in the story is. The registry therefore *reports* how many sessions a player holds and
+enforces nothing.
+
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets are produced by `/plan-story STORY-0205`.* | — |
+| [TASK-020501](../tasks/TASK-020501-websocket-test-client.md) | Put the WebSocket test client and coroutines on the poker-server classpath | ready |
+| [TASK-020502](../tasks/TASK-020502-player-directory-port.md) | Declare the `PlayerDirectory` port and an in-memory implementation for tests | backlog |
+| [TASK-020503](../tasks/TASK-020503-device-id-source.md) | Mint opaque device ids from an injected secure random source | backlog |
+| [TASK-020504](../tasks/TASK-020504-session-registry.md) | A `SessionRegistry` that maps a connection to a session and drops it exactly once | backlog |
+| [TASK-020505](../tasks/TASK-020505-connection-writer.md) | One writer per connection, fed by a channel | backlog |
+| [TASK-020506](../tasks/TASK-020506-socket-dependencies-and-fixtures.md) | Bundle the socket's collaborators into `SocketDependencies` with a test fixture | backlog |
+| [TASK-020507](../tasks/TASK-020507-ws-route-handshake-gate.md) | Open `/ws` behind a mandatory handshake and one writing coroutine | backlog |
+| [TASK-020508](../tasks/TASK-020508-session-lifecycle.md) | Resolve the profile on `Welcome` and drop the session on every close path | backlog |
+| [TASK-020509](../tasks/TASK-020509-frame-loop-survives-junk.md) | A bad frame mid-session earns a `Failure` and never closes the socket | backlog |
+| [TASK-020510](../tasks/TASK-020510-hostile-frame-does-not-kill-the-socket.md) | A nesting bomb or an oversized frame is answered, not fatal, at the socket | backlog |
+| [TASK-020511](../tasks/TASK-020511-second-socket-policy.md) | Decide and enforce what a second socket for one device id does | blocked (DEC-011) |
+
+[`TASK-020213`](../tasks/TASK-020213-frame-limits.md) — frame length and nesting-depth limits —
+was filed against `STORY-0202` but is enforced for this story's sake; `TASK-020510` depends on it
+and asserts it end-to-end on a live socket.
 
 ## Acceptance criteria
 
