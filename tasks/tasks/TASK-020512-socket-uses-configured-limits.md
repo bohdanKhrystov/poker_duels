@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020512
 title: The socket enforces the operator's frame limits, not the codec's defaults
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
