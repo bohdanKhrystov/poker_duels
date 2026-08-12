@@ -3,7 +3,6 @@ package duels.poker.engine.game
 import duels.poker.engine.random.SplitMix64Rng
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -54,7 +53,9 @@ class DefaultPokerEngineTest {
         val result = DefaultPokerEngine.handle(state, action)
 
         assertFalse(result.isRejected)
-        assertEquals(300, result.newState.seat(0).committedThisStreet)
+        // The call also closes the round: BettingRoundEnded sweeps the street commitment into
+        // the pot, so the bar the call reached shows up as 0 here, not 300.
+        assertEquals(0, result.newState.seat(0).committedThisStreet)
     }
 
     @Test
@@ -123,18 +124,20 @@ class DefaultPokerEngineTest {
 
         assertEquals(1, afterCall.newState.seatToAct)
         assertEquals(0, afterRaise.newState.seatToAct)
-        assertNull(afterFinalCall.newState.seatToAct)
+        // The final call also closes the round: the flop is dealt and the non-button, seat 1,
+        // is named to act on it — the round leaves no seat un-named.
+        assertEquals(1, afterFinalCall.newState.seatToAct)
     }
 
     @Test
-    fun aCompletedRoundNamesNoNewActor() {
+    fun aCompletedRoundNamesTheNextStreetsActor() {
         val state = openedHand()
         val afterCall = DefaultPokerEngine.handle(state, PlayerAction.Call(0)).newState
 
         val result = DefaultPokerEngine.handle(afterCall, PlayerAction.Check(1))
 
-        assertTrue(result.events.none { it is ActionOn })
-        assertNull(result.newState.seatToAct)
+        assertEquals(1, result.events.count { it is ActionOn })
+        assertEquals(1, result.newState.seatToAct)
     }
 
     @Test

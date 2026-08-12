@@ -18,10 +18,40 @@ public fun continueHand(state: GameState, lastAction: PlayerAction): EngineResul
     }
 
     if (!roundContinues(state, lastAction)) {
-        return EngineResult.accepted(state, emptyList())
+        return closeRound(state)
     }
     val event = ActionOn(state.eventCount, otherSeat(lastAction.seat))
     return EngineResult.accepted(StateProjection.apply(state, event), listOf(event))
+}
+
+/**
+ * The round on [state.street] is complete and nobody folded: sweep the commitments, then either
+ * deal the next street and put its first-to-act seat on turn, or — closing the river — reach
+ * showdown.
+ *
+ * Dealing draws from [GameState.deck] directly, because [StateProjection.apply] deliberately
+ * never advances it (see its KDoc): the deck dealt from here has to be carried forward by hand
+ * onto the state that keeps accumulating events, or the next hand redeals a card already out.
+ */
+private fun closeRound(state: GameState): EngineResult {
+    val endedEvent = BettingRoundEnded(state.eventCount, state.street)
+    val afterEnd = StateProjection.apply(state, endedEvent)
+
+    if (state.street == Street.RIVER) {
+        val showdownEvent = ShowdownReached(afterEnd.eventCount)
+        val afterShowdown = StateProjection.apply(afterEnd, showdownEvent)
+        return EngineResult.accepted(afterShowdown, listOf(endedEvent, showdownEvent))
+    }
+
+    val next = requireNotNull(state.street.next) { "No street follows ${state.street}" }
+    val deal = afterEnd.deck.deal(next.boardCards - afterEnd.board.size)
+    val dealtEvent = StreetDealt(afterEnd.eventCount, next, deal.cards)
+    val afterDeal = StateProjection.apply(afterEnd, dealtEvent).copy(deck = deal.deck)
+
+    val actionEvent = ActionOn(afterDeal.eventCount, firstToActOn(next, state.buttonSeat))
+    val afterAction = StateProjection.apply(afterDeal, actionEvent)
+
+    return EngineResult.accepted(afterAction, listOf(endedEvent, dealtEvent, actionEvent))
 }
 
 /**
