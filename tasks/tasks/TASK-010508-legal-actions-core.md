@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010508
 title: Compute the legal actions at an ordinary decision point
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
