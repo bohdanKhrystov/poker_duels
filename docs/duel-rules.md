@@ -54,6 +54,10 @@ Rules:
 - A player may always go all-in for their remaining stack.
 - A bet larger than the opponent's remaining stack is capped: the excess is never at risk and
   is **returned as an uncalled bet** when the hand resolves.
+- A **short blind sets the bar at what it actually posts**, not at its nominal size. A big blind
+  all-in for 60 at 50/100 leaves the amount to match at 60, so the small blind owes 10 more to
+  call rather than 50. Most cardrooms hold the bar at the full blind instead; we do not, because
+  the bar a player faces should be a number that is genuinely at stake. Decided as `DEC-003`.
 
 ### Showdown
 
