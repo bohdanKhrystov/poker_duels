@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020608
 title: RoomTimeouts, the two idle limits a room is reaped against
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: XS
