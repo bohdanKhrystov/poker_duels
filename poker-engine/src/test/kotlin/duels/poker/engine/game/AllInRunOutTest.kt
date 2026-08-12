@@ -40,10 +40,11 @@ class AllInRunOutTest {
             minRaiseTo = 100,
             seatToAct = 0,
             seats = listOf(
-                Seat(index = 0, stack = 9_000, committedThisStreet = 0, committedThisHand = 1_000),
+                Seat(index = 0, stack = 9_000, holeCards = cards("Qs Jh"), committedThisStreet = 0, committedThisHand = 1_000),
                 Seat(
                     index = 1,
                     stack = 0,
+                    holeCards = cards("9d 9c"),
                     committedThisStreet = 0,
                     committedThisHand = 10_000,
                     isAllIn = true,

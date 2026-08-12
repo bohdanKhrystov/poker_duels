@@ -40,8 +40,8 @@ class StreetAdvanceTest {
             minRaiseTo = 100,
             seatToAct = 1,
             seats = listOf(
-                Seat(index = 0, stack = 9_700, committedThisStreet = 0, committedThisHand = 300),
-                Seat(index = 1, stack = 9_700, committedThisStreet = 0, committedThisHand = 300),
+                Seat(index = 0, stack = 9_700, holeCards = cards("Qh Jc"), committedThisStreet = 0, committedThisHand = 300),
+                Seat(index = 1, stack = 9_700, holeCards = cards("Td 8c"), committedThisStreet = 0, committedThisHand = 300),
             ),
         )
     }
