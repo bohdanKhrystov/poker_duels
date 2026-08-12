@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010514
 title: Pass the action to the other seat while the round runs
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
