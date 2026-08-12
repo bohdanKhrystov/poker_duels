@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020907
 title: Open a HikariCP connection pool from ServerConfig
 type: task
-status: backlog
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: S
