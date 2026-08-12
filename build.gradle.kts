@@ -1,6 +1,7 @@
 plugins {
     java
     kotlin("jvm") version libs.versions.kotlin apply false
+    kotlin("plugin.serialization") version libs.versions.kotlin apply false
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.detekt) apply false
 }
