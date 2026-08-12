@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010827
 title: The invariants a simulated hand must never break
 type: task
-status: ready
+status: done
 parent: STORY-0108
 module: poker-ai
 estimate: S
