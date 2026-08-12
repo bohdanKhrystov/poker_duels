@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020106
 title: Install ContentNegotiation and WebSockets in the application module
 type: task
-status: backlog
+status: done
 parent: STORY-0201
 module: poker-server
 estimate: S
