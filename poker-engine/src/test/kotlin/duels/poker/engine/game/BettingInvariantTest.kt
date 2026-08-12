@@ -25,11 +25,33 @@ class BettingInvariantTest {
 
     @Test
     @Timeout(30)
-    fun everyRandomHandEndsAtShowdownOrWithAFold() {
+    fun everyRandomHandEndsWhereNoActionIsLeft() {
         for (seed in 1L..1000L) {
             val played = playRandomHand(seed)
-            val ended = played.finalState.street == Street.SHOWDOWN || played.finalState.seats.any { it.hasFolded }
-            assertTrue(ended, "seed $seed: hand ended at ${played.finalState.street} with no fold")
+            val finalState = played.finalState
+
+            // Assert no seat is to act
+            assertEquals(null, finalState.seatToAct, "seed $seed: expected seatToAct to be null")
+
+            // Assert no legal actions remain
+            val legal = legalActions(finalState)
+            assertTrue(legal.allowed.isEmpty(), "seed $seed: expected no legal actions, got ${legal.allowed}")
+
+            // Assert every action is rejected by the engine
+            val allActions = listOf(
+                PlayerAction.Fold(0),
+                PlayerAction.Fold(1),
+                PlayerAction.Check(0),
+                PlayerAction.Check(1),
+                PlayerAction.Call(0),
+                PlayerAction.Call(1),
+                PlayerAction.AllIn(0),
+                PlayerAction.AllIn(1),
+            )
+            for (action in allActions) {
+                val result = DefaultPokerEngine.handle(finalState, action)
+                assertTrue(result.isRejected, "seed $seed: expected $action to be rejected")
+            }
         }
     }
 
