@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020408
 title: Assert structurally that a view carries no deck, rng or seed
 type: task
-status: backlog
+status: done
 parent: STORY-0204
 module: poker-engine
 estimate: S
