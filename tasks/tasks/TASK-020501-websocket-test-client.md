@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020501
 title: Put the WebSocket test client and coroutines on the poker-server classpath
 type: task
-status: ready
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
