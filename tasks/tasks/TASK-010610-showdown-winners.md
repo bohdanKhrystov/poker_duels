@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010610
 title: Decide who wins a showdown
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
