@@ -34,4 +34,16 @@ class ServerConfigTest {
             ServerConfig.from(config) { null }
         }
     }
+
+    @Test
+    fun loadsThePortFromTheShippedApplicationConf() {
+        val serverConfig = ServerConfig.load { null }
+        assertEquals(8080, serverConfig.port)
+    }
+
+    @Test
+    fun theEnvironmentVariableOverridesTheShippedFile() {
+        val serverConfig = ServerConfig.load { "9001" }
+        assertEquals(9001, serverConfig.port)
+    }
 }
