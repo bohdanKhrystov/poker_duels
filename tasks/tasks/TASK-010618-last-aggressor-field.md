@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010618
 title: Carry the last aggressor on GameState
 type: task
-status: ready
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: XS
