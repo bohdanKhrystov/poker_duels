@@ -208,7 +208,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020106](tasks/TASK-020106-content-negotiation-and-websockets.md) Install `ContentNegotiation` and `WebSockets` | S | backlog |
 | **[STORY-0204](stories/STORY-0204-player-view-projection.md)** `PlayerView` — per-recipient projection — *schema 2* | | ready |
 | | [TASK-020401](tasks/TASK-020401-board-serializable.md) Make `Board` serializable | XS | ready |
-| | [TASK-020402](tasks/TASK-020402-seat-view.md) A seat as a recipient may see it | S | ready |
+| | [TASK-020402](tasks/TASK-020402-seat-view.md) A seat as a recipient may see it | S | **done** |
 | | [TASK-020406](tasks/TASK-020406-event-filter-per-seat.md) Filter an event for one recipient | S | **done** |
 | | [TASK-020409](tasks/TASK-020409-observed-duel-harness.md) A duel harness recording every state and event | S | **done** |
 | | [TASK-020403](tasks/TASK-020403-player-view-type.md) The `PlayerView` type | S | backlog |

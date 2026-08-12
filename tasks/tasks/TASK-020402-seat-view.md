@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020402
 title: A seat as a recipient may see it
 type: task
-status: ready
+status: done
 parent: STORY-0204
 module: poker-engine
 estimate: S
