@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010818
 title: A hand log round-trips through JSON
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
