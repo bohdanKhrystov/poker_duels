@@ -179,7 +179,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010821](tasks/TASK-010821-logged-duel-player.md) Play a whole duel and keep its log | S | backlog |
 | | [TASK-010822](tasks/TASK-010822-replay-a-match.md) Replay a whole duel from its log | S | backlog |
 | | [TASK-010826](tasks/TASK-010826-match-log-codec.md) Read and write a match log, version guard included | S | backlog |
-| | [TASK-010828](tasks/TASK-010828-duel-simulator.md) Simulate one duel between two bots, checking after every action | S | backlog |
+| | [TASK-010828](tasks/TASK-010828-duel-simulator.md) Simulate one duel between two bots, checking after every action | S | **done** |
 | | [TASK-010829](tasks/TASK-010829-simulation-runner.md) Run a thousand duels and report on them | S | backlog |
 | | [TASK-010830](tasks/TASK-010830-soak-run.md) A hundred thousand duels, off the default test task | S | backlog |
 
