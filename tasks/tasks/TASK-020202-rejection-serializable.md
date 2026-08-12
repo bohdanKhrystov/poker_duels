@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020202
 title: Make Rejection serializable with explicit discriminators
 type: task
-status: ready
+status: done
 parent: STORY-0202
 module: poker-engine
 estimate: S
