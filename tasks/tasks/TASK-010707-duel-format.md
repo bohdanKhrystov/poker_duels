@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010707
 title: DuelFormat and the default freezeout from the rules document
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
