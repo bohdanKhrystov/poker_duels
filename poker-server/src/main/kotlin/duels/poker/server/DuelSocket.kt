@@ -1,5 +1,6 @@
 package duels.poker.server
 
+import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.Decoded
 import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.ProtocolCodec
@@ -84,7 +85,7 @@ private suspend fun DefaultWebSocketServerSession.serve(
             deps.sessions.register(session)
             try {
                 writer.send(ProtocolCodec.encode(message))
-                incoming.consumeEach { }
+                incoming.consumeEach { frame -> writer.replyTo(frame) }
             } finally {
                 deps.sessions.remove(session.id)
             }
@@ -156,4 +157,29 @@ private suspend fun DefaultWebSocketServerSession.refuseHandshake(
     pump.join()
     close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, HANDSHAKE_REQUIRED))
     return null
+}
+
+/**
+ * Answers one post-handshake [frame] with a [ServerMessage.Failure] — this socket has nothing
+ * else to say yet, since `STORY-0207` is the story that puts a duel behind it.
+ *
+ * A second [Hello] is [ProtocolError.MALFORMED_MESSAGE]: the handshake happened once and is not
+ * repeatable. An [Act] is [ProtocolError.NOT_IN_DUEL] — this socket's session is in no duel, and
+ * saying so is the whole answer. The `when` over [duels.poker.server.protocol.ClientMessage] has
+ * no `else`, so a new message type stops this function compiling instead of silently falling
+ * through it.
+ */
+private suspend fun ConnectionWriter.replyTo(frame: Frame) {
+    val text = (frame as? Frame.Text)?.readText() ?: run {
+        send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)))
+        return
+    }
+    val failure = when (val decoded = ProtocolCodec.decodeClient(text)) {
+        is Decoded.Refused -> ServerMessage.Failure(decoded.error)
+        is Decoded.Message -> when (decoded.message) {
+            is Hello -> ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)
+            is Act -> ServerMessage.Failure(ProtocolError.NOT_IN_DUEL)
+        }
+    }
+    send(ProtocolCodec.encode(failure))
 }

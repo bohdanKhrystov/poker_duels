@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020509
 title: A bad frame mid-session earns a Failure and never closes the socket
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
