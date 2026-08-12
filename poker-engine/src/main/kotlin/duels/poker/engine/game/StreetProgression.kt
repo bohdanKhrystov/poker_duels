@@ -5,7 +5,7 @@ package duels.poker.engine.game
  * been applied, so `seatToAct` is already null.
  *
  * Closes on a fold with [BettingRoundEnded] (`TASK-010516`); advancing the street is
- * `TASK-010517`, and running out the board is `TASK-010518`.
+ * `TASK-010517`, and running the board out when nobody can bet again is `TASK-010518`.
  */
 public fun continueHand(state: GameState, lastAction: PlayerAction): EngineResult {
     // A fold ends the hand immediately: sweep commitments to pot, mark seatToAct null.
@@ -26,8 +26,8 @@ public fun continueHand(state: GameState, lastAction: PlayerAction): EngineResul
 
 /**
  * The round on [state.street] is complete and nobody folded: sweep the commitments, then either
- * deal the next street and put its first-to-act seat on turn, or — closing the river — reach
- * showdown.
+ * deal the next street and put its first-to-act seat on turn, run the whole board out because
+ * nobody can bet again, or — closing the river — reach showdown.
  *
  * Dealing draws from [GameState.deck] directly, because [StateProjection.apply] deliberately
  * never advances it (see its KDoc): the deck dealt from here has to be carried forward by hand
@@ -36,6 +36,10 @@ public fun continueHand(state: GameState, lastAction: PlayerAction): EngineResul
 private fun closeRound(state: GameState): EngineResult {
     val endedEvent = BettingRoundEnded(state.eventCount, state.street)
     val afterEnd = StateProjection.apply(state, endedEvent)
+
+    if (seatsAbleToAct(afterEnd) < 2) {
+        return runOutBoard(afterEnd, endedEvent)
+    }
 
     if (state.street == Street.RIVER) {
         val showdownEvent = ShowdownReached(afterEnd.eventCount)
@@ -52,6 +56,52 @@ private fun closeRound(state: GameState): EngineResult {
     val afterAction = StateProjection.apply(afterDeal, actionEvent)
 
     return EngineResult.accepted(afterAction, listOf(endedEvent, dealtEvent, actionEvent))
+}
+
+/**
+ * Whether [seat] could still make a betting decision if the hand kept going: not folded, not
+ * all-in, and holding chips. A seat with a zero stack that was never flagged all-in (an
+ * unreachable shape today, but not one this function should assume away) is just as unable to
+ * act as one that is.
+ */
+private fun canStillAct(seat: Seat): Boolean = !seat.hasFolded && !seat.isAllIn && seat.stack > 0
+
+/**
+ * How many seats on [state] could still make a betting decision. Betting needs two live seats
+ * to mean anything: with one seat all-in and the other free, or both all-in, there is nobody
+ * left to bet into, and it makes no difference which of those two shapes it is — both send the
+ * hand straight to showdown.
+ */
+private fun seatsAbleToAct(state: GameState): Int = state.seats.count(::canStillAct)
+
+/**
+ * Deals every street still missing from the board, in order, from [state.street.next] through
+ * [Street.RIVER], then reaches showdown — no [ActionOn] anywhere, because nobody able to act is
+ * why this runs. Already on the river, the loop deals nothing and only [ShowdownReached] follows.
+ *
+ * Each [StreetDealt] draws `street.boardCards - board.size` cards from the running deck — three
+ * for the flop, one apiece for the turn and the river — carrying [GameState.deck] forward by hand
+ * exactly as [closeRound]'s single-street path does, so the log reads like the deal it was
+ * instead of one card dump.
+ */
+private fun runOutBoard(afterEnd: GameState, endedEvent: BettingRoundEnded): EngineResult {
+    val events = mutableListOf<GameEvent>(endedEvent)
+    var current = afterEnd
+
+    var next = current.street.next
+    while (next != null && next.isBetting) {
+        val deal = current.deck.deal(next.boardCards - current.board.size)
+        val dealtEvent = StreetDealt(current.eventCount, next, deal.cards)
+        current = StateProjection.apply(current, dealtEvent).copy(deck = deal.deck)
+        events += dealtEvent
+        next = current.street.next
+    }
+
+    val showdownEvent = ShowdownReached(current.eventCount)
+    current = StateProjection.apply(current, showdownEvent)
+    events += showdownEvent
+
+    return EngineResult.accepted(current, events)
 }
 
 /**
