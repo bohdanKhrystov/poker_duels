@@ -130,13 +130,13 @@ internal fun playRandomHand(
 }
 
 /**
- * The story stops at showdown with no pot awarded (`STORY-0106`), so [Street.COMPLETE] never
- * arrives on this path — a fold ends the hand in place, leaving `street` wherever betting was
- * when the fold happened. A hand is over the moment either seat has folded or the board has
- * been run to showdown.
+ * Every path out of a hand now settles — a fold, a closed river, or a run-out all end in
+ * [Street.COMPLETE] with `HandFinished` on the log (`STORY-0106`). A hand that stops anywhere
+ * else is a bug the harness should surface, not a shape it should accept, so this narrows to
+ * `state.isHandOver` alone: a hand that never settles runs to `maxActions` and throws naming the
+ * seed instead of quietly declaring itself over.
  */
-private fun isHandEnded(state: GameState): Boolean =
-    state.street == Street.SHOWDOWN || state.isHandOver || state.seats.any { it.hasFolded }
+private fun isHandEnded(state: GameState): Boolean = state.isHandOver
 
 /** Both seats' starting stacks, spread over `60..10_000` so short-stack all-ins occur. */
 private fun stacksFor(seed: Long): List<Int> {
