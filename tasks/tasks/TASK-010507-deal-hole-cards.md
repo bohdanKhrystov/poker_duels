@@ -3,13 +3,13 @@ schema: 2
 id: TASK-010507
 title: Deal the hole cards and put the action on the button
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 2
+files_touched: 3
 labels: [engine, rules, cards]
 depends_on: [TASK-010506]
 verify:
@@ -28,6 +28,7 @@ button — the small blind — is on turn.
 | --- | --- |
 | `poker-engine/src/main/kotlin/duels/poker/engine/game/HandSetup.kt` | modify |
 | `poker-engine/src/test/kotlin/duels/poker/engine/game/HandDealTest.kt` | create |
+| `poker-engine/src/test/kotlin/duels/poker/engine/game/HandSetupTest.kt` | modify |
 
 Read `HeadsUpOrder.kt`, `Deck.kt`, `GameEvent.kt`. Modify none of them.
 
@@ -80,7 +81,10 @@ SplitMix64Rng(1L))` unless the test says otherwise.
 - [ ] `HandDealTest.theOpeningSequenceRunsToFive` passes
 - [ ] `HandDealTest.theSameSeedDealsTheSameCards` passes
 - [ ] `HandDealTest.theEventsDescribeTheState` passes
-- [ ] `HandSetupTest` still passes unchanged
+- [ ] `HandSetupTest` passes with exactly two assertions updated to the new opening:
+      `theOpeningEventsAreExact` expects **6** events, and `theDeckIsShuffledAndFull` expects
+      **48** cards remaining. Every other assertion in that file is unchanged — this ticket
+      extends `startHand`, so those two numbers move by construction.
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
