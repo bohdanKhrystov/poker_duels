@@ -56,9 +56,37 @@ written dozens of times per epic.
         → land them ONE AT A TIME (see "Landing")
         → append one line per ticket to the ledger
         → if blocked: record it, continue to the next startable ticket
-5. story done → next story → back to 2
+5. story done → **hand the run back for a fresh context** (see below) → back to 2
 6. no stories left → final report
 ```
+
+## Stop at the story boundary, and only there
+
+A story's worth of tickets leaves the scheduler carrying a great deal it no longer needs: dead
+ledgers, resolved conflicts, review arguments that have already landed. None of it helps with the
+next story, and all of it is paid for on every remaining turn.
+
+So when a story's last ticket merges, **stop and hand the run back**:
+
+```
+STORY-0104 done — 23 tickets merged.
+Next: /clear, then /build-epic EPIC-01
+```
+
+Nothing else. No final report — the epic is not finished. Then stop, and let the human paste
+those two commands.
+
+`/clear` cannot be invoked from inside the run; it is a client-side command that only the human
+can type. Do not try to work around that by summarising your own context or by "starting fresh"
+in place — neither reclaims anything.
+
+**This is the only stop that is not a blocker.** It is deliberate, it is cheap, and the board is
+what carries the state across it: `BOARD.md` records what is done, `lint_tickets.py --startable`
+names what is next, and the ticket files hold everything a fresh session needs. A run that cannot
+survive `/clear` at a story boundary has been keeping state in the wrong place.
+
+If the run is unattended and nobody will paste anything, carry on into the next story rather than
+stalling — a stalled run is worse than an expensive one.
 
 ## Batching tickets
 
