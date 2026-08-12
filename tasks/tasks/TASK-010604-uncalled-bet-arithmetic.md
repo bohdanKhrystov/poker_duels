@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010604
 title: Compute the uncalled part of a bet
 type: task
-status: ready
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S

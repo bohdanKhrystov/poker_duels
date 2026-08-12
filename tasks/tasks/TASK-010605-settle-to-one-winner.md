@@ -26,7 +26,7 @@ the pot goes to its winner, and the hand is over.
 
 | File | Action |
 | --- | --- |
-| `poker-engine/src/main/kotlin/duels/poker/engine/game/Settlement.kt` | modify |
+| `poker-engine/src/main/kotlin/duels/poker/engine/game/UncalledPortion.kt` | modify |
 | `poker-engine/src/test/kotlin/duels/poker/engine/game/SettleHandTest.kt` | create |
 
 Read `DealerEvents.kt`, `DealerProjection.kt`, `StateProjection.kt`, `EngineResult.kt` and
@@ -34,7 +34,13 @@ Read `DealerEvents.kt`, `DealerProjection.kt`, `StateProjection.kt`, `EngineResu
 
 ## Scope
 
-- Add to `Settlement.kt`:
+> The plan called this file `Settlement.kt`. `TASK-010604` had to name it `UncalledPortion.kt`:
+> ktlint's `standard:filename` rule rejects a file holding a single class under any other name,
+> and the file holds only `UncalledPortion`. Add `settleHand` to that file. Renaming it to
+> `Settlement.kt` becomes legal only once the file holds a second class — do it in the ticket
+> that introduces one, not here.
+
+- Add to `UncalledPortion.kt`:
 
   ```kotlin
   public fun settleHand(state: GameState, winners: List<Int>): EngineResult
