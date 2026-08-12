@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020604
 title: The Room value and its four states, with the seating invariants in the type
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
