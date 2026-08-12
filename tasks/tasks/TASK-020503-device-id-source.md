@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020503
 title: Mint opaque device ids from an injected secure random source
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
