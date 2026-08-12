@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010614
 title: A folded hand appears in no event, over a thousand hands
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
