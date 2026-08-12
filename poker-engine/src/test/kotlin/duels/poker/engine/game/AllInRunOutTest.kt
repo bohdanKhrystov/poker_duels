@@ -69,7 +69,7 @@ class AllInRunOutTest {
         val (_, result) = bothAllInPreflop()
 
         val dealerEvents = result.events.filterIsInstance<DealerEvent>()
-        assertEquals(7, dealerEvents.size)
+        assertEquals(8, dealerEvents.size)
 
         assertTrue(dealerEvents[0] is BettingRoundEnded)
 
@@ -90,8 +90,11 @@ class AllInRunOutTest {
 
         assertTrue(dealerEvents[4] is ShowdownReached)
 
-        val betweenShowdownAndFinish = dealerEvents.subList(5, dealerEvents.size - 1)
-        assertTrue(betweenShowdownAndFinish.all { it is PotAwarded })
+        val revealed = dealerEvents[5]
+        assertTrue(revealed is HandRevealed)
+        val awarded = dealerEvents.subList(6, dealerEvents.size - 1)
+        assertTrue(awarded.all { it is PotAwarded })
+        assertEquals((revealed as HandRevealed).seat, (awarded.single() as PotAwarded).seat)
         assertTrue(dealerEvents.last() is HandFinished)
     }
 
