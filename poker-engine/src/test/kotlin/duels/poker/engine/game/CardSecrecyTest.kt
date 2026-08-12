@@ -7,8 +7,9 @@ import org.junit.jupiter.api.Timeout
 
 /**
  * The project's non-negotiable — a folded or mucked hand appears in no event, anywhere — asserted
- * over a thousand generated hands rather than assumed. Mucked hands are out of scope here: reveals
- * are not emitted at all yet (`DEC-004`, `TASK-010615`).
+ * over a thousand generated hands rather than assumed. `ADR-0008` settles the muck rule: at
+ * showdown the loser's hand is never revealed, so it appears in no event, exactly as a folded
+ * hand does.
  */
 class CardSecrecyTest {
 
@@ -63,12 +64,45 @@ class CardSecrecyTest {
 
     @Test
     @Timeout(30)
-    fun noHandIsRevealedAnywhereYet() {
+    fun noEventCarriesAMuckedHandsCards() {
+        for (seed in showdownHandSeeds()) {
+            val played = playRandomHand(seed)
+            val finalState = played.finalState
+
+            // The shown seats are the ones ADR-0008 names, not `showdownWinners`: this test must
+            // not restate the logic it guards, only the log's own record of who was paid.
+            val shownSeats = played.events.filterIsInstance<PotAwarded>().map { it.seat }.toSet()
+            val muckedSeats = finalState.seats.map { it.index }.filterNot { it in shownSeats }
+
+            for (seat in muckedSeats) {
+                val holeCards = finalState.seats[seat].holeCards
+                val ownDeal = played.events
+                    .filterIsInstance<HoleCardsDealt>()
+                    .single { it.seat == seat }
+
+                for (event in played.events) {
+                    if (event === ownDeal) continue
+
+                    val leaked = cardsIn(event).intersect(holeCards.toSet())
+                    assertTrue(
+                        leaked.isEmpty(),
+                        "seed $seed: event $event leaks mucked seat $seat's cards $leaked",
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    @Timeout(30)
+    fun aHandWonOnAFoldRevealsNothing() {
         for (seed in 1L..1000L) {
             val played = playRandomHand(seed)
+            if (played.events.any { it is ShowdownReached }) continue
+
             assertTrue(
                 played.events.none { it is HandRevealed },
-                "seed $seed: HandRevealed appeared though reveals are not emitted yet",
+                "seed $seed: HandRevealed appeared though the hand was won on a fold",
             )
         }
     }
@@ -83,8 +117,21 @@ class CardSecrecyTest {
         )
     }
 
+    @Test
+    @Timeout(30)
+    fun theSampleContainsShowdowns() {
+        val showdownHandCount = showdownHandSeeds().count()
+        assertTrue(
+            showdownHandCount > 100,
+            "expected more than 100 of 1000 hands to reach a showdown, got $showdownHandCount",
+        )
+    }
+
     private fun foldedHandSeeds(): List<Long> =
         (1L..1000L).filter { seed -> playRandomHand(seed).finalState.seats.any { it.hasFolded } }
+
+    private fun showdownHandSeeds(): List<Long> =
+        (1L..1000L).filter { seed -> playRandomHand(seed).events.any { it is ShowdownReached } }
 }
 
 /**

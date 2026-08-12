@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010617
 title: Extend the secrecy suite from the fold to the muck
 type: task
-status: ready
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
