@@ -61,3 +61,4 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | `../duel-rules.md` | before v0.2 |
 | DEC-002 | What performance budget does the hand evaluator carry, how is it measured, and does `HandRank` become a packed integer? | `../../tasks/stories/STORY-0103-hand-evaluator.md` | before STORY-0108 |
+| DEC-003 | When the big blind cannot cover its own blind, does the bar for the round stand at the **nominal** big blind or at the **amount actually posted**? | `../duel-rules.md` | blocks `TASK-010506`, and with it the rest of `STORY-0105` |
