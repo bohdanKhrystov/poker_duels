@@ -38,3 +38,41 @@ public data class DuelOutcome(
     public val isDraw: Boolean
         get() = winner == null
 }
+
+/**
+ * Decides whether [match] has ended and, if so, who won.
+ *
+ * The broke-seat check runs *before* the [EndCondition] check, for every condition: a seat with
+ * zero chips cannot be dealt another hand — `startNextHand` already refuses it — so a match in
+ * that state is over regardless of what its end condition says. Checking the end condition first
+ * would let a fixed-length duel with a broke seat report `null` (still running) right up to its
+ * final hand, promising a hand that can never be dealt.
+ *
+ * @param match the match to evaluate.
+ * @return `null` if the duel is still running, otherwise the [DuelOutcome].
+ */
+public fun outcomeOf(match: MatchState): DuelOutcome? {
+    val brokeSeat = match.stacks.indexOfFirst { it == 0 }
+    if (brokeSeat != -1) {
+        val winner = 1 - brokeSeat
+        return DuelOutcome(winner, match.handsPlayed, match.stacks)
+    }
+
+    val endCondition = match.format.endCondition
+    return when (endCondition) {
+        is EndCondition.Freezeout -> null
+        is EndCondition.FixedHands -> {
+            if (match.handsPlayed < endCondition.hands) {
+                null
+            } else {
+                val (first, second) = match.stacks
+                val winner = when {
+                    first > second -> 0
+                    second > first -> 1
+                    else -> null
+                }
+                DuelOutcome(winner, match.handsPlayed, match.stacks)
+            }
+        }
+    }
+}
