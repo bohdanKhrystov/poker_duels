@@ -8,13 +8,20 @@ package duels.poker.engine.game
  * `TASK-010517`, and running the board out when nobody can bet again is `TASK-010518`.
  */
 public fun continueHand(state: GameState, lastAction: PlayerAction): EngineResult {
-    // A fold ends the hand immediately: sweep commitments to pot, mark seatToAct null.
-    // Awarding the pot is STORY-0106. The uncalled part of the last bet stays recoverable because
+    // A fold ends the hand immediately: sweep commitments to pot, then settle to the seat that
+    // did not fold. The uncalled part of the last bet stays recoverable because
     // Seat.committedThisHand is gross and never decreases — the difference between seats'
     // committedThisHand is the amount to return.
-    if (state.seat(0).hasFolded || state.seat(1).hasFolded) {
-        val event = BettingRoundEnded(state.eventCount, state.street)
-        return EngineResult.accepted(StateProjection.apply(state, event), listOf(event))
+    val foldedSeat = when {
+        state.seat(0).hasFolded -> 0
+        state.seat(1).hasFolded -> 1
+        else -> null
+    }
+    if (foldedSeat != null) {
+        val endedEvent = BettingRoundEnded(state.eventCount, state.street)
+        val afterEnd = StateProjection.apply(state, endedEvent)
+        val settled = settleHand(afterEnd, listOf(otherSeat(foldedSeat)))
+        return EngineResult.accepted(settled.newState, listOf(endedEvent) + settled.events)
     }
 
     if (!roundContinues(state, lastAction)) {
