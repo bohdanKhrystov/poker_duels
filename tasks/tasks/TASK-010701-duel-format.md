@@ -7,7 +7,7 @@ parent: STORY-0107
 module: poker-engine
 estimate: S
 labels: [engine, duel]
-depends_on: [TASK-010603]
+depends_on: [TASK-010614]
 ---
 
 ## Goal
