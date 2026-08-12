@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020404
 title: Project a state into one seat's view
 type: task
-status: backlog
+status: done
 parent: STORY-0204
 module: poker-engine
 estimate: S
