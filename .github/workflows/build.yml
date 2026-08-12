@@ -23,7 +23,7 @@ jobs:
       - uses: gradle/gradle-build-action@v3
 
       - name: Run ./gradlew check
-        run: ./gradlew check
+        run: ./gradlew check -PrequireDocker=true
 
       - name: Upload test report
         if: failure()

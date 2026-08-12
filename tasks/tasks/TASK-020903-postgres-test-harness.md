@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020903
 title: Start one PostgreSQL container for the suite, and decide what a missing Docker means
 type: task
-status: backlog
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: S
