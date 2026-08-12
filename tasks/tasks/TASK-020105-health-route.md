@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020105
 title: Boot Ktor on Netty and answer GET /health
 type: task
-status: backlog
+status: done
 parent: STORY-0201
 module: poker-server
 estimate: S
