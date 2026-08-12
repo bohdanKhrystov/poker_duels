@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020911
 title: The test harness hands out database coordinates without a cast
 type: task
-status: backlog
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: XS
