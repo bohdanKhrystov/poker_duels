@@ -217,7 +217,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020407](tasks/TASK-020407-revealed-seats.md) Name the seats a hand has already revealed | XS | **done** |
 | | [TASK-020408](tasks/TASK-020408-player-view-carries-no-secret.md) Assert a view carries no deck, rng or seed | S | backlog |
 | | [TASK-020410](tasks/TASK-020410-view-leak-property.md) No view shows a card its viewer may not see, over 1000 duels | S | backlog |
-| | [TASK-020411](tasks/TASK-020411-event-stream-leak-property.md) No filtered event stream leaks a card, over 1000 duels | S | backlog |
+| | [TASK-020411](tasks/TASK-020411-event-stream-leak-property.md) No filtered event stream leaks a card, over 1000 duels | S | **done** |
 | [STORY-0202](stories/STORY-0202-wire-protocol.md) | The wire protocol, defined once in Kotlin | backlog |
 | [STORY-0203](stories/STORY-0203-generated-typescript-protocol.md) | Generated TypeScript protocol types | blocked |
 | [STORY-0205](stories/STORY-0205-sessions-and-socket-lifecycle.md) | Sessions and the socket lifecycle | backlog |
