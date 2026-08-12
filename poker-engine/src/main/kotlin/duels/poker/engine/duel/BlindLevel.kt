@@ -1,5 +1,7 @@
 package duels.poker.engine.duel
 
+import kotlinx.serialization.Serializable
+
 /**
  * A validated pair of small and big blinds, guaranteeing `0 < smallBlind < bigBlind`.
  *
@@ -8,6 +10,7 @@ package duels.poker.engine.duel
  * @property smallBlind The small blind amount; must be positive and less than the big blind.
  * @property bigBlind The big blind amount; must be strictly greater than the small blind.
  */
+@Serializable
 public data class BlindLevel(val smallBlind: Int, val bigBlind: Int) {
     init {
         require(smallBlind > 0) { "smallBlind must be positive, was $smallBlind" }

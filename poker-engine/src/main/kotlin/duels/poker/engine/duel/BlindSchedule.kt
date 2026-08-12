@@ -1,5 +1,7 @@
 package duels.poker.engine.duel
 
+import kotlinx.serialization.Serializable
+
 /**
  * The ladder of [BlindLevel]s a duel climbs, and the mechanism `docs/duel-rules.md` credits with
  * guaranteeing a duel terminates: blinds only ever escalate, so a heads-up match cannot run
@@ -9,6 +11,7 @@ package duels.poker.engine.duel
  * @property handsPerLevel The number of hands each level holds before the schedule advances;
  *   must be at least 1.
  */
+@Serializable
 public data class BlindSchedule(val levels: List<BlindLevel>, val handsPerLevel: Int) {
     init {
         require(levels.isNotEmpty()) { "levels must not be empty, was $levels" }
