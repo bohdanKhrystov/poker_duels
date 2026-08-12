@@ -69,7 +69,15 @@ and leaves room for a log to be attached to a duel row later. Nothing in this ep
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets are produced by `/plan-story STORY-0209`.* | — |
+| [TASK-020901](../tasks/TASK-020901-database-dependencies.md) | Put the database dependencies in the version catalog and the server build | ready |
+| [TASK-020902](../tasks/TASK-020902-database-settings-in-server-config.md) | Read the database URL, credentials and pool size from `ServerConfig` | backlog |
+| [TASK-020903](../tasks/TASK-020903-postgres-test-harness.md) | Start one PostgreSQL container for the suite, and decide what a missing Docker means | backlog |
+| [TASK-020904](../tasks/TASK-020904-initial-schema-and-flyway.md) | Create the initial schema and apply it with Flyway | backlog |
+| [TASK-020905](../tasks/TASK-020905-signed-coin-columns.md) | Prove a negative coin balance and a negative delta round-trip through PostgreSQL | backlog |
+| [TASK-020906](../tasks/TASK-020906-schema-constraints.md) | Prove the schema refuses a duplicate device id and a duplicate result row | backlog |
+| [TASK-020907](../tasks/TASK-020907-hikari-connection-pool.md) | Open a HikariCP connection pool from `ServerConfig` | backlog |
+| [TASK-020908](../tasks/TASK-020908-migrate-at-startup.md) | Open the pool and migrate at startup, and make a second startup a no-op | backlog |
+| [TASK-020909](../tasks/TASK-020909-local-development-database.md) | Give a fresh clone a local database with `docker compose` | backlog |
 
 ## Acceptance criteria
 
