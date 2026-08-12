@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020614
 title: Two concurrent creators never receive the same room code
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
