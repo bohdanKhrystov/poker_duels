@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020410
 title: No view shows a card its viewer may not see, over a thousand duels
 type: task
-status: backlog
+status: done
 parent: STORY-0204
 module: poker-ai
 estimate: S
