@@ -70,6 +70,7 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-002 | What performance budget does the hand evaluator carry, how is it measured, and does `HandRank` become a packed integer? | `../../tasks/stories/STORY-0103-hand-evaluator.md` | before STORY-0108 |
 | DEC-007 | How are the TypeScript protocol types generated from the Kotlin definitions, and what stops the checked-in output drifting? | `../../tasks/stories/STORY-0203-generated-typescript-protocol.md` | before EPIC-03 |
 | DEC-008 | Is the full `MatchLog` persisted in v0.1, and where — a column, a table per hand, or object storage? | `../../tasks/stories/STORY-0209-postgres-schema-and-migrations.md` | before EPIC-08 |
+| DEC-009 | Can a duel be watched, and if so what may a spectator see and when? | `../../tasks/stories/STORY-0204-player-view-projection.md` | before v0.2 |
 
 ## Answered decisions
 

@@ -197,10 +197,27 @@ are three independent branches.
 
 Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 
-| Story | Title | Status |
-| --- | --- | --- |
-| [STORY-0201](stories/STORY-0201-server-module-scaffold.md) | Server module and build scaffold | ready |
-| [STORY-0204](stories/STORY-0204-player-view-projection.md) | `PlayerView` — per-recipient projection | ready |
+| Story | Task | Est | Status |
+| --- | --- | --- | --- |
+| **[STORY-0201](stories/STORY-0201-server-module-scaffold.md)** Server module and build scaffold — *schema 2* | | ready |
+| | [TASK-020101](tasks/TASK-020101-poker-server-module.md) Add the `:poker-server` module and its Ktor dependencies | S | ready |
+| | [TASK-020102](tasks/TASK-020102-server-module-smoke-test.md) Assert the engine and Ktor are on the classpath | XS | backlog |
+| | [TASK-020103](tasks/TASK-020103-server-config.md) Read every tunable from one typed `ServerConfig` | S | backlog |
+| | [TASK-020104](tasks/TASK-020104-application-conf.md) Ship `application.conf` and load `ServerConfig` from it | S | backlog |
+| | [TASK-020105](tasks/TASK-020105-health-route.md) Boot Ktor on Netty and answer `GET /health` | S | backlog |
+| | [TASK-020106](tasks/TASK-020106-content-negotiation-and-websockets.md) Install `ContentNegotiation` and `WebSockets` | S | backlog |
+| **[STORY-0204](stories/STORY-0204-player-view-projection.md)** `PlayerView` — per-recipient projection — *schema 2* | | ready |
+| | [TASK-020401](tasks/TASK-020401-board-serializable.md) Make `Board` serializable | XS | ready |
+| | [TASK-020402](tasks/TASK-020402-seat-view.md) A seat as a recipient may see it | S | ready |
+| | [TASK-020406](tasks/TASK-020406-event-filter-per-seat.md) Filter an event for one recipient | S | ready |
+| | [TASK-020409](tasks/TASK-020409-observed-duel-harness.md) A duel harness recording every state and event | S | ready |
+| | [TASK-020403](tasks/TASK-020403-player-view-type.md) The `PlayerView` type | S | backlog |
+| | [TASK-020404](tasks/TASK-020404-player-view-of.md) Project a state into one seat's view | S | backlog |
+| | [TASK-020405](tasks/TASK-020405-player-view-reveal.md) Show a hand the engine has already revealed | S | backlog |
+| | [TASK-020407](tasks/TASK-020407-revealed-seats.md) Name the seats a hand has already revealed | XS | backlog |
+| | [TASK-020408](tasks/TASK-020408-player-view-carries-no-secret.md) Assert a view carries no deck, rng or seed | S | backlog |
+| | [TASK-020410](tasks/TASK-020410-view-leak-property.md) No view shows a card its viewer may not see, over 1000 duels | S | backlog |
+| | [TASK-020411](tasks/TASK-020411-event-stream-leak-property.md) No filtered event stream leaks a card, over 1000 duels | S | backlog |
 | [STORY-0202](stories/STORY-0202-wire-protocol.md) | The wire protocol, defined once in Kotlin | backlog |
 | [STORY-0203](stories/STORY-0203-generated-typescript-protocol.md) | Generated TypeScript protocol types | blocked |
 | [STORY-0205](stories/STORY-0205-sessions-and-socket-lifecycle.md) | Sessions and the socket lifecycle | backlog |
