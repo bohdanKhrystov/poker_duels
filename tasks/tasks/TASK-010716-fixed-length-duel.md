@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010716
 title: A fixed-length duel plays and is decided on chips
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
