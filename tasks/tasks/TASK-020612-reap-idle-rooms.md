@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020612
 title: Reap idle rooms on the injected clock, and never a room that is playing
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
