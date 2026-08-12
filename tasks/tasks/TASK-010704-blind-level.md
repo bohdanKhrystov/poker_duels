@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010704
 title: A blind level that carries a small and big blind and can double
 type: task
-status: ready
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S

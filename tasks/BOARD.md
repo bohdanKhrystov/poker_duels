@@ -136,7 +136,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010615](tasks/TASK-010615-showdown-reveals-and-muck.md) Showdown reveals, reveal order and the muck | S | blocked |
 | | [TASK-010616](tasks/TASK-010616-split-with-uncalled-bet.md) Pin a split pot that also returns an uncalled bet | XS | **done** |
 | **[STORY-0107](stories/STORY-0107-duel-format-and-match.md)** Duel format and match — *schema 2* | | | ready |
-| | [TASK-010704](tasks/TASK-010704-blind-level.md) A blind level that can double | S | ready |
+| | [TASK-010704](tasks/TASK-010704-blind-level.md) A blind level that can double | S | **done** |
 | | [TASK-010706](tasks/TASK-010706-end-condition.md) The two duel end conditions as a sealed type | XS | ready |
 | | [TASK-010711](tasks/TASK-010711-duel-outcome.md) DuelOutcome, the result of a finished duel | XS | ready |
 | | [TASK-010705](tasks/TASK-010705-blind-schedule.md) Which blinds a hand number plays | S | backlog |
