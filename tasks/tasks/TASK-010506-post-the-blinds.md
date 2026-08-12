@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010506
 title: Open a hand by posting both blinds
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: S
