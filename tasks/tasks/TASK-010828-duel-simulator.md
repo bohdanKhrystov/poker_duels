@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010828
 title: Simulate one duel between two bots, checking after every action
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-ai
 estimate: S
