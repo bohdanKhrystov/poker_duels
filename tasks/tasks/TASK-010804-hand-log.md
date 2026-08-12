@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010804
 title: HandLog, the replayable record of one hand
 type: task
-status: ready
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
