@@ -119,18 +119,28 @@ class StreetAdvanceTest {
     }
 
     @Test
-    fun theRiverEndsInShowdownReached() {
+    fun theRiverShowdownPaysTheBetterHand() {
         val afterCheck1 = DefaultPokerEngine.handle(riverState(), PlayerAction.Check(1))
         val result = DefaultPokerEngine.handle(afterCheck1.newState, PlayerAction.Check(0))
 
-        assertEquals(3, result.events.size)
+        assertEquals(5, result.events.size)
         assertTrue(result.events[0] is PlayerChecked)
         assertTrue(result.events[1] is BettingRoundEnded)
         assertTrue(result.events[2] is ShowdownReached)
+        val awarded = result.events[3]
+        assertTrue(awarded is PotAwarded)
+        assertEquals(0, (awarded as PotAwarded).seat)
+        assertEquals(600, awarded.amount)
+        assertTrue(result.events[4] is HandFinished)
         assertTrue(result.events.none { it is StreetDealt })
 
-        assertEquals(Street.SHOWDOWN, result.newState.street)
+        assertEquals(Street.COMPLETE, result.newState.street)
         assertNull(result.newState.seatToAct)
+
+        // seat 0 holds Qh Jc for A K Q J 9 against seat 1's A K T 9 8 on the As Kd 7c 2h 9s board
+        assertEquals(10_300, result.newState.seat(0).stack)
+        assertEquals(9_700, result.newState.seat(1).stack)
+        assertEquals(0, result.newState.pot)
     }
 
     @Test

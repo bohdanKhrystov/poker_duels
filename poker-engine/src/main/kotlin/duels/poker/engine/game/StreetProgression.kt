@@ -55,7 +55,11 @@ public fun endBettingRound(state: GameState): EngineResult {
     if (state.street == Street.RIVER) {
         val showdownEvent = ShowdownReached(afterEnd.eventCount)
         val afterShowdown = StateProjection.apply(afterEnd, showdownEvent)
-        return EngineResult.accepted(afterShowdown, listOf(endedEvent, showdownEvent))
+        val settled = settleHand(afterShowdown, showdownWinners(afterShowdown))
+        return EngineResult.accepted(
+            settled.newState,
+            listOf(endedEvent, showdownEvent) + settled.events,
+        )
     }
 
     val next = requireNotNull(state.street.next) { "No street follows ${state.street}" }

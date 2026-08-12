@@ -4,6 +4,7 @@ import duels.poker.engine.random.SplitMix64Rng
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -75,18 +76,23 @@ internal class HandWalkthroughTest {
 
     @Test
     fun theHandReachesShowdownWithAFullBoard() {
-        val final = playScriptedHand().finalState
-        assertEquals(Street.SHOWDOWN, final.street)
+        val walkthrough = playScriptedHand()
+        val final = walkthrough.finalState
+        assertEquals(Street.COMPLETE, final.street)
         assertEquals(5, final.board.size)
         assertNull(final.seatToAct)
+        assertTrue(walkthrough.allEvents.any { it is ShowdownReached })
+        assertTrue(walkthrough.allEvents.last() is HandFinished)
     }
 
     @Test
     fun theChipsEndWhereTheArithmeticSaysTheyDo() {
         val final = playScriptedHand().finalState
-        assertEquals(2_200, final.pot)
+        assertEquals(0, final.pot)
+        // seat 1's hand beats seat 0's on this board, so seat 1 takes the whole pot.
         assertEquals(8_900, final.seat(0).stack)
-        assertEquals(8_900, final.seat(1).stack)
+        assertEquals(11_100, final.seat(1).stack)
+        assertEquals(20_000, final.seat(0).stack + final.seat(1).stack)
         assertEquals(1_100, final.seat(0).committedThisHand)
         assertEquals(1_100, final.seat(1).committedThisHand)
     }
