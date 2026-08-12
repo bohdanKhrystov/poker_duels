@@ -17,7 +17,8 @@ class OpeningRunOutTest {
     fun aButtonAllInOnItsBlindStillReachesShowdown() {
         val result = startHand(1, 0, listOf(50, 10_000), 50, 100, SplitMix64Rng(1L))
 
-        assertEquals(Street.SHOWDOWN, result.newState.street)
+        assertEquals(Street.COMPLETE, result.newState.street)
+        assertTrue(result.events.any { it is ShowdownReached })
         assertEquals(5, result.newState.board.size)
         assertNull(result.newState.seatToAct)
     }
@@ -26,7 +27,7 @@ class OpeningRunOutTest {
     fun bothBlindsAllInReachShowdown() {
         val result = startHand(1, 0, listOf(50, 80), 50, 100, SplitMix64Rng(1L))
 
-        assertEquals(Street.SHOWDOWN, result.newState.street)
+        assertEquals(Street.COMPLETE, result.newState.street)
         assertTrue(result.newState.seat(0).isAllIn)
         assertTrue(result.newState.seat(1).isAllIn)
     }
@@ -51,7 +52,14 @@ class OpeningRunOutTest {
         val result = startHand(1, 0, listOf(50, 10_000), 50, 100, SplitMix64Rng(1L))
 
         assertEquals(10_050, result.newState.chipsInPlay)
-        assertEquals(150, result.newState.potTotal)
+        assertEquals(0, result.newState.potTotal)
+
+        val returned = result.events.filterIsInstance<UncalledBetReturned>().single()
+        assertEquals(1, returned.seat)
+        assertEquals(50, returned.amount)
+
+        assertEquals(0, result.newState.seat(0).stack)
+        assertEquals(10_050, result.newState.seat(1).stack)
     }
 
     @Test

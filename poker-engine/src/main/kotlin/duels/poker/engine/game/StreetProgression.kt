@@ -53,13 +53,8 @@ public fun endBettingRound(state: GameState): EngineResult {
     }
 
     if (state.street == Street.RIVER) {
-        val showdownEvent = ShowdownReached(afterEnd.eventCount)
-        val afterShowdown = StateProjection.apply(afterEnd, showdownEvent)
-        val settled = settleHand(afterShowdown, showdownWinners(afterShowdown))
-        return EngineResult.accepted(
-            settled.newState,
-            listOf(endedEvent, showdownEvent) + settled.events,
-        )
+        val showdown = reachShowdownAndSettle(afterEnd)
+        return EngineResult.accepted(showdown.newState, listOf(endedEvent) + showdown.events)
     }
 
     val next = requireNotNull(state.street.next) { "No street follows ${state.street}" }
@@ -112,11 +107,23 @@ private fun runOutBoard(afterEnd: GameState, endedEvent: BettingRoundEnded): Eng
         next = current.street.next
     }
 
-    val showdownEvent = ShowdownReached(current.eventCount)
-    current = StateProjection.apply(current, showdownEvent)
-    events += showdownEvent
+    val showdown = reachShowdownAndSettle(current)
+    events += showdown.events
 
-    return EngineResult.accepted(current, events)
+    return EngineResult.accepted(showdown.newState, events)
+}
+
+/**
+ * Reaches showdown from [state] and settles the hand in the same step: [ShowdownReached] first,
+ * then whatever [settleHand] returns for [showdownWinners] of the post-showdown state. Shared by
+ * [endBettingRound]'s river branch and [runOutBoard], the two places a betting round can end with
+ * both seats still in the hand.
+ */
+private fun reachShowdownAndSettle(state: GameState): EngineResult {
+    val showdownEvent = ShowdownReached(state.eventCount)
+    val afterShowdown = StateProjection.apply(state, showdownEvent)
+    val settled = settleHand(afterShowdown, showdownWinners(afterShowdown))
+    return EngineResult.accepted(settled.newState, listOf(showdownEvent) + settled.events)
 }
 
 /**
