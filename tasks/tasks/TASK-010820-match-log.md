@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010820
 title: MatchLog, the record of a whole duel
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
