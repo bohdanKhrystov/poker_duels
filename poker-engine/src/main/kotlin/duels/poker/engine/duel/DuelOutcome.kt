@@ -1,5 +1,7 @@
 package duels.poker.engine.duel
 
+import kotlinx.serialization.Serializable
+
 /**
  * The result of a finished duel.
  *
@@ -12,6 +14,7 @@ package duels.poker.engine.duel
  * Rather than arbitrarily naming a seat as the winner, the engine reports a draw to preserve
  * the integrity of ranked play.
  */
+@Serializable
 public data class DuelOutcome(
     val winner: Int?,
     val handsPlayed: Int,
