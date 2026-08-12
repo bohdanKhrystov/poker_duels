@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010515
 title: Run the engine contract against the real engine
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: XS

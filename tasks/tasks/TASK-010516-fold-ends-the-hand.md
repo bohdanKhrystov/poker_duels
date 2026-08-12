@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010516
 title: End the betting the moment a player folds
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: XS
