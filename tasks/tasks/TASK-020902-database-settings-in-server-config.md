@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020902
 title: Read the database URL, credentials and pool size from ServerConfig
 type: task
-status: backlog
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: S

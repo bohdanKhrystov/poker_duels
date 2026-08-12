@@ -16,7 +16,7 @@ class ServerConfigTest {
     @Test
     fun theEnvironmentVariableOverridesTheConfig() {
         val config = MapApplicationConfig("server.port" to "7000")
-        val serverConfig = ServerConfig.from(config) { "9001" }
+        val serverConfig = ServerConfig.from(config) { name -> if (name == ServerConfig.PORT_ENV) "9001" else null }
         assertEquals(9001, serverConfig.port)
     }
 
@@ -43,7 +43,50 @@ class ServerConfigTest {
 
     @Test
     fun theEnvironmentVariableOverridesTheShippedFile() {
-        val serverConfig = ServerConfig.load { "9001" }
+        val serverConfig = ServerConfig.load { name -> if (name == ServerConfig.PORT_ENV) "9001" else null }
         assertEquals(9001, serverConfig.port)
+    }
+
+    @Test
+    fun readsTheDatabaseUrlFromTheConfig() {
+        val config = MapApplicationConfig("database.url" to "jdbc:postgresql://db:5432/x")
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals("jdbc:postgresql://db:5432/x", serverConfig.databaseUrl)
+    }
+
+    @Test
+    fun theEnvironmentVariableOverridesTheDatabaseUrl() {
+        val config = MapApplicationConfig("database.url" to "jdbc:postgresql://db:5432/x")
+        val serverConfig = ServerConfig.from(config) { name ->
+            if (name == ServerConfig.DATABASE_URL_ENV) "jdbc:postgresql://env:5432/y" else null
+        }
+        assertEquals("jdbc:postgresql://env:5432/y", serverConfig.databaseUrl)
+    }
+
+    @Test
+    fun fallsBackToTheDefaultDatabaseSettings() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(ServerConfig.DEFAULT_DATABASE_URL, serverConfig.databaseUrl)
+        assertEquals(ServerConfig.DEFAULT_DATABASE_USER, serverConfig.databaseUser)
+        assertEquals(ServerConfig.DEFAULT_DATABASE_PASSWORD, serverConfig.databasePassword)
+        assertEquals(ServerConfig.DEFAULT_DATABASE_POOL_SIZE, serverConfig.databasePoolSize)
+    }
+
+    @Test
+    fun rejectsAPoolSizeThatIsNotANumber() {
+        val config = MapApplicationConfig("database.poolSize" to "many")
+        assertThrows<IllegalArgumentException> {
+            ServerConfig.from(config) { null }
+        }
+    }
+
+    @Test
+    fun loadsTheDatabaseSettingsFromTheShippedApplicationConf() {
+        val serverConfig = ServerConfig.load { null }
+        assertEquals(ServerConfig.DEFAULT_DATABASE_URL, serverConfig.databaseUrl)
+        assertEquals(ServerConfig.DEFAULT_DATABASE_USER, serverConfig.databaseUser)
+        assertEquals(ServerConfig.DEFAULT_DATABASE_PASSWORD, serverConfig.databasePassword)
+        assertEquals(ServerConfig.DEFAULT_DATABASE_POOL_SIZE, serverConfig.databasePoolSize)
     }
 }
