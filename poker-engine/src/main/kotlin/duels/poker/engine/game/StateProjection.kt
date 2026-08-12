@@ -36,6 +36,7 @@ public object StateProjection {
             seatToAct = null,
             smallBlind = event.smallBlind,
             bigBlind = event.bigBlind,
+            lastAggressor = null,
         )
         is BlindPosted -> {
             val committed = state.withSeat(event.seat) { it.commit(event.to - it.committedThisStreet) }

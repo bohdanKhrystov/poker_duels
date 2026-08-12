@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010621
 title: A new hand starts with no last aggressor
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: XS
