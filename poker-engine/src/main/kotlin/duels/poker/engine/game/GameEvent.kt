@@ -1,6 +1,8 @@
 package duels.poker.engine.game
 
 import duels.poker.engine.card.Card
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /** Payload version of every event in this module. Bumping it is a log migration. */
 public const val EVENT_SCHEMA_VERSION: Int = 1
@@ -15,6 +17,7 @@ public const val EVENT_SCHEMA_VERSION: Int = 1
  * 3. [version] is a property with a default, not a constructor parameter, so it never takes
  *    part in equality but is always available to a serializer (`TASK-010801`).
  */
+@Serializable
 public sealed interface GameEvent {
     /**
      * Position within the hand, starting at 0, dense and gap-free: the next event a hand
@@ -26,6 +29,8 @@ public sealed interface GameEvent {
 }
 
 /** Opens a hand: the button, the blind sizes, and every seat's starting stack. */
+@Serializable
+@SerialName("HandStarted")
 public data class HandStarted(
     override val sequence: Int,
     val handNumber: Int,
@@ -42,6 +47,8 @@ public data class HandStarted(
 }
 
 /** [to] is the seat's street total after posting; a short stack posts all-in for less. */
+@Serializable
+@SerialName("BlindPosted")
 public data class BlindPosted(
     override val sequence: Int,
     val seat: Int,
@@ -56,6 +63,8 @@ public data class BlindPosted(
 }
 
 /** Addressed to one seat, so a broadcast filters by recipient rather than by field. */
+@Serializable
+@SerialName("HoleCardsDealt")
 public data class HoleCardsDealt(
     override val sequence: Int,
     val seat: Int,
@@ -69,6 +78,8 @@ public data class HoleCardsDealt(
     }
 }
 
+@Serializable
+@SerialName("ActionOn")
 public data class ActionOn(override val sequence: Int, val seat: Int) : GameEvent {
     init {
         require(sequence >= 0) { "sequence must be non-negative, was $sequence" }
