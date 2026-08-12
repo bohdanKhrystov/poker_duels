@@ -68,13 +68,22 @@ public data class PlayerView(
     public companion object {
         /**
          * Projects [state] into what [seat] is entitled to see: its own hole cards, the
-         * opponent's hidden, and every other fact of the hand unchanged.
+         * opponent's hidden unless [revealed], and every other fact of the hand unchanged.
+         *
+         * [revealed] names the seats a `HandRevealed` event has already been emitted for **in
+         * this hand**, as `revealedSeats(events)` (`TASK-020407`) computes it. [GameState] keeps
+         * both seats' hole cards from the deal to the last event, so the state alone cannot say
+         * what has been shown — the event log is the only record of that, which is why this is a
+         * parameter rather than something derived from [state]. It defaults to `emptySet()`:
+         * under-revealing is a visible bug, over-revealing is a silent leak that only an explicit
+         * argument can cause.
          *
          * Never reads [GameState.deck] or [GameState.rng] — neither belongs in a client-facing
          * view.
          */
-        public fun of(state: GameState, seat: Int): PlayerView {
+        public fun of(state: GameState, seat: Int, revealed: Set<Int> = emptySet()): PlayerView {
             require(seat in SEAT_INDICES) { "seat must be 0 or 1, was $seat" }
+            require(revealed.all { it in SEAT_INDICES }) { "revealed must contain only 0 or 1, was $revealed" }
             return PlayerView(
                 viewerSeat = seat,
                 handNumber = state.handNumber,
@@ -87,7 +96,7 @@ public data class PlayerView(
                 seatToAct = state.seatToAct,
                 smallBlind = state.smallBlind,
                 bigBlind = state.bigBlind,
-                seats = state.seats.map { seatView(it, showCards = it.index == seat) },
+                seats = state.seats.map { seatView(it, showCards = it.index == seat || it.index in revealed) },
             )
         }
 

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020405
 title: Show a hand the engine has already revealed
 type: task
-status: backlog
+status: done
 parent: STORY-0204
 module: poker-engine
 estimate: S
