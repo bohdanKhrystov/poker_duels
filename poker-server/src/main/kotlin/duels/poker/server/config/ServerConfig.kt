@@ -1,6 +1,7 @@
 package duels.poker.server.config
 
 import io.ktor.server.config.ApplicationConfig
+import io.ktor.server.config.ConfigLoader
 
 /**
  * The server's configuration, built from a Ktor [ApplicationConfig] with each value overridable
@@ -43,5 +44,20 @@ public data class ServerConfig(val port: Int) {
 
             return ServerConfig(port = port)
         }
+
+        /**
+         * Load the server configuration from the shipped `application.conf` resource, with environment
+         * variable overrides.
+         *
+         * This function is called once during startup from `main`, and the resulting [ServerConfig]
+         * is passed to dependent services rather than being re-read. Each field's precedence is:
+         * environment variable, then file, then default.
+         *
+         * @param env A function to look up environment variables; defaults to [System.getenv]
+         * @return A configured [ServerConfig]
+         * @throws IllegalArgumentException if a port value is present but not a valid integer
+         */
+        public fun load(env: (String) -> String? = { name -> System.getenv(name) }): ServerConfig =
+            from(ConfigLoader.load("application.conf"), env)
     }
 }
