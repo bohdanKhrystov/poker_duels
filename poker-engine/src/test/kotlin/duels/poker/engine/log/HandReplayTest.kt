@@ -1,5 +1,7 @@
 package duels.poker.engine.log
 
+import duels.poker.engine.game.BlindPosted
+import duels.poker.engine.game.HandFinished
 import duels.poker.engine.game.PlayedHand
 import duels.poker.engine.game.PlayerAction
 import duels.poker.engine.game.playRandomHand
@@ -91,5 +93,43 @@ class HandReplayTest {
         val exception = assertThrows<IllegalStateException> { replayHand(log) }
 
         Assertions.assertTrue(exception.message!!.contains("action at index 0"))
+    }
+
+    @Test
+    fun divergingEventIsReportedWithItsIndex() {
+        val played = playRandomHand(7L)
+        val log = logOf(7L, played)
+        val blind = log.events[1] as BlindPosted
+        val tamperedEvents = log.events.toMutableList().apply { this[1] = blind.copy(to = blind.to + 1) }
+        val tamperedLog = log.copy(events = tamperedEvents)
+
+        val exception = assertThrows<IllegalStateException> { replayHand(tamperedLog) }
+
+        Assertions.assertTrue(exception.message!!.contains("event index 1"))
+    }
+
+    @Test
+    fun aTruncatedLogIsRejected() {
+        val played = playRandomHand(7L)
+        val log = logOf(7L, played)
+        val truncatedLog = log.copy(events = log.events.dropLast(1))
+
+        val exception = assertThrows<IllegalStateException> { replayHand(truncatedLog) }
+
+        Assertions.assertTrue(exception.message!!.contains(truncatedLog.events.size.toString()))
+        Assertions.assertTrue(exception.message!!.contains(log.events.size.toString()))
+    }
+
+    @Test
+    fun anExtraEventAtTheEndIsRejected() {
+        val played = playRandomHand(7L)
+        val log = logOf(7L, played)
+        val extendedEvents = log.events + HandFinished(sequence = log.events.size)
+        val extendedLog = log.copy(events = extendedEvents)
+
+        val exception = assertThrows<IllegalStateException> { replayHand(extendedLog) }
+
+        Assertions.assertTrue(exception.message!!.contains(extendedLog.events.size.toString()))
+        Assertions.assertTrue(exception.message!!.contains(log.events.size.toString()))
     }
 }
