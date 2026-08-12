@@ -83,18 +83,117 @@ public class RoomRegistry(
      * @return The result of [Room.join]; a [JoinResult.Refused] room is left exactly as it was.
      */
     public suspend fun join(code: RoomCode, player: PlayerId): JoinResult {
-        val holder = rooms[code] ?: return JoinResult.Refused(RoomRefusal.UNKNOWN_ROOM)
+        return mutate(
+            code,
+            absent = { JoinResult.Refused(RoomRefusal.UNKNOWN_ROOM) },
+            block = { room ->
+                when (val result = room.join(player, clock.nowMillis())) {
+                    is JoinResult.Seated -> Pair(result.room, result)
+                    is JoinResult.Refused -> Pair(null, result)
+                }
+            },
+        )
+    }
+
+    /**
+     * Finish a [RoomState.PLAYING] room when the duel concludes.
+     *
+     * Applies [Room.finish] under that room's mutex, storing the resulting [RoomState.FINISHED]
+     * room. The finish operation and the write-back happen inside the one critical section so that
+     * a concurrent finish request on the same room always finds the authoritative state.
+     *
+     * @param code The room to finish.
+     * @return The room after the transition, or `null` for a code with no live room.
+     * @throws IllegalStateException if the room is not [RoomState.PLAYING].
+     */
+    public suspend fun finish(code: RoomCode): Room? {
+        return mutate(
+            code,
+            absent = { null },
+            block = { room ->
+                val finished = room.finish(clock.nowMillis())
+                Pair(finished, finished)
+            },
+        )
+    }
+
+    /**
+     * Abandon this room when its players are gone or have given up.
+     *
+     * Applies [Room.abandon] under that room's mutex, storing the resulting [RoomState.ABANDONED]
+     * room. The abandon operation and the write-back happen inside the one critical section so that
+     * a concurrent abandon request on the same room always finds the authoritative state.
+     *
+     * @param code The room to abandon.
+     * @return The room after the transition, or `null` for a code with no live room.
+     */
+    public suspend fun abandon(code: RoomCode): Room? {
+        return mutate(
+            code,
+            absent = { null },
+            block = { room ->
+                val abandoned = room.abandon(clock.nowMillis())
+                Pair(abandoned, abandoned)
+            },
+        )
+    }
+
+    /**
+     * Offer a rematch on this finished room.
+     *
+     * Applies [Room.offerRematch] under that room's mutex. The offer, decision and any write-back
+     * happen inside the one critical section so that two concurrent offers on the same room are
+     * serialized and both see a consistent view of what has been offered.
+     *
+     * @param code The room to offer a rematch on.
+     * @param player The player offering the rematch.
+     * @return The result of [Room.offerRematch]; a [RematchResult.Offered] or [RematchResult.Agreed]
+     *   room is written back, but a [RematchResult.Refused] room is left exactly as it was.
+     */
+    public suspend fun offerRematch(code: RoomCode, player: PlayerId): RematchResult {
+        return mutate(
+            code,
+            absent = { RematchResult.Refused(RematchRefusal.UNKNOWN_ROOM) },
+            block = { room ->
+                when (val result = room.offerRematch(player, clock.nowMillis())) {
+                    is RematchResult.Offered -> Pair(result.room, result)
+                    is RematchResult.Agreed -> Pair(result.room, result)
+                    is RematchResult.Refused -> Pair(null, result)
+                }
+            },
+        )
+    }
+
+    /**
+     * Look up, lock, mutate and store a room under a single critical section.
+     *
+     * This enforces the single-writer rule: a read-modify-write against a room always happens
+     * entirely inside the room's mutex, never taking a stale copy outside. The holder is
+     * re-checked by reference after taking the lock, so a room reaped between the lookup and
+     * the lock returns the absent result instead of mutating a room nobody can find.
+     *
+     * @param code The room code to look up.
+     * @param absent A block to call and return if no live room holds this code, or the holder
+     *   identity changed while waiting for the lock.
+     * @param block A block to call with the current room; it returns a [Pair] of the new room
+     *   (or null to leave it untouched) and a value to return.
+     * @return The value from [block], or the result of [absent] if the room was not found.
+     */
+    private suspend fun <T> mutate(
+        code: RoomCode,
+        absent: () -> T,
+        block: (Room) -> Pair<Room?, T>,
+    ): T {
+        val holder = rooms[code] ?: return absent()
         return holder.mutex.withLock {
             if (rooms[code] !== holder) {
-                return@withLock JoinResult.Refused(RoomRefusal.UNKNOWN_ROOM)
+                return@withLock absent()
             }
-            when (val result = holder.room.join(player, clock.nowMillis())) {
-                is JoinResult.Seated -> {
-                    holder.room = result.room
-                    result
-                }
-                is JoinResult.Refused -> result
+            val (updatedRoom, result) = block(holder.room)
+            if (updatedRoom != null) {
+                holder.room = updatedRoom
             }
+            result
         }
     }
 
