@@ -121,4 +121,51 @@ internal class BettingProjectionTest {
             applyBetting(state, PlayerBet(1, 0, 20_000))
         }
     }
+
+    @Test
+    fun aBetRecordsTheBettorAsTheLastAggressor() {
+        val state = handState()
+
+        val result = applyBetting(state, PlayerBet(1, 0, 300))
+
+        assertEquals(0, result.lastAggressor)
+    }
+
+    @Test
+    fun aRaiseRecordsTheRaiserAsTheLastAggressor() {
+        val state = handState().copy(betToMatch = 300, minRaiseTo = 600)
+
+        val result = applyBetting(state, PlayerRaised(1, 1, 900))
+
+        assertEquals(1, result.lastAggressor)
+    }
+
+    @Test
+    fun aFullAllInRecordsTheAggressor() {
+        val state = handState().copy(betToMatch = 300, minRaiseTo = 600)
+
+        val result = applyBetting(state, PlayerAllIn(1, 1, 900))
+
+        assertEquals(1, result.lastAggressor)
+    }
+
+    @Test
+    fun aShortAllInIsNotAggression() {
+        val state = handState(seats(stack0 = 150)).copy(betToMatch = 300, lastAggressor = 1)
+
+        val result = applyBetting(state, PlayerAllIn(1, 0, 150))
+
+        assertEquals(1, result.lastAggressor)
+    }
+
+    @Test
+    fun callingAndCheckingAreNotAggression() {
+        val state = handState().copy(betToMatch = 300, lastAggressor = 1)
+
+        val calledResult = applyBetting(state, PlayerCalled(1, 0, 300))
+        assertEquals(1, calledResult.lastAggressor)
+
+        val checkedResult = applyBetting(state.copy(betToMatch = 0), PlayerChecked(1, 0))
+        assertEquals(1, checkedResult.lastAggressor)
+    }
 }

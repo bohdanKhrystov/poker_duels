@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010619
 title: A bet, a raise or a full all-in records its seat as the last aggressor
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
