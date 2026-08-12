@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010513
 title: Decide whether the betting round has anyone left to act
 type: task
-status: backlog
+status: ready
 parent: STORY-0105
 module: poker-engine
 estimate: S
