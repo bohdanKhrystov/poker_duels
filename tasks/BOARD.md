@@ -177,7 +177,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010825](tasks/TASK-010825-match-event-serializable.md) DuelOutcome and MatchFinished are serializable | S | **done** |
 | | [TASK-010820](tasks/TASK-010820-match-log.md) MatchLog, the record of a whole duel | S | **done** |
 | | [TASK-010821](tasks/TASK-010821-logged-duel-player.md) Play a whole duel and keep its log | S | **done** |
-| | [TASK-010822](tasks/TASK-010822-replay-a-match.md) Replay a whole duel from its log | S | backlog |
+| | [TASK-010822](tasks/TASK-010822-replay-a-match.md) Replay a whole duel from its log | S | **done** |
 | | [TASK-010826](tasks/TASK-010826-match-log-codec.md) Read and write a match log, version guard included | S | backlog |
 | | [TASK-010828](tasks/TASK-010828-duel-simulator.md) Simulate one duel between two bots, checking after every action | S | **done** |
 | | [TASK-010829](tasks/TASK-010829-simulation-runner.md) Run a thousand duels and report on them | S | **done** |

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010822
 title: Replay a whole duel from its log
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
