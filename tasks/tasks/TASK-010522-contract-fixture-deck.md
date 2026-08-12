@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010522
 title: Give the contract fixtures a deck consistent with their board
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: XS

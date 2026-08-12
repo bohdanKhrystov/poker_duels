@@ -115,6 +115,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010514](tasks/TASK-010514-pass-the-action.md) Pass the action to the other seat while the round runs | S | **done** |
 | | [TASK-010515](tasks/TASK-010515-engine-contract-test.md) Run the engine contract against the real engine | XS | **done** |
 | | [TASK-010516](tasks/TASK-010516-fold-ends-the-hand.md) End the betting the moment a player folds | XS | **done** |
+| | [TASK-010522](tasks/TASK-010522-contract-fixture-deck.md) Give the contract fixtures a deck consistent with their board | XS | **done** |
 | | [TASK-010517](tasks/TASK-010517-street-advance.md) Close the round and deal the next street | S | ready |
 | | [TASK-010518](tasks/TASK-010518-all-in-run-out.md) Run the board out when nobody can bet again | S | backlog |
 | | [TASK-010519](tasks/TASK-010519-opening-run-out.md) Do not stall a hand whose blinds leave nobody able to act | S | backlog |
@@ -133,7 +134,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**80 tasks total.** `STORY-0101`–`STORY-0105` are migrated to schema 2; stories 0106–0108 are still schema 1
+**81 tasks total.** `STORY-0101`–`STORY-0105` are migrated to schema 2; stories 0106–0108 are still schema 1
 and get split by `/plan-story` just before they are worked. Stories 0106–0108 stay in `backlog` until `STORY-0105` lands, because their tasks are written
 against types that do not exist yet.
 
@@ -156,7 +157,7 @@ recording if they are recorded when unflattering.
 
 | | EPIC-01 | Total |
 | --- | --- | --- |
-| Tasks completed | 64 / 77 | 65 / 80 |
+| Tasks completed | 65 / 78 | 66 / 81 |
 | Accepted on first review | — | — |
 | Average review iterations | — | — |
 | Test lines / production lines | — | — |

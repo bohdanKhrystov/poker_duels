@@ -9,9 +9,9 @@ module: poker-engine
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 2
+files_touched: 3
 labels: [engine, rules, chips]
-depends_on: [TASK-010516]
+depends_on: [TASK-010522]
 verify:
   - ./gradlew :poker-engine:test --tests '*StreetAdvanceTest'
   - ./gradlew :poker-engine:check
@@ -28,6 +28,7 @@ turn — or, on the river, reaches the showdown.
 | --- | --- |
 | `poker-engine/src/main/kotlin/duels/poker/engine/game/StreetProgression.kt` | modify |
 | `poker-engine/src/test/kotlin/duels/poker/engine/game/StreetAdvanceTest.kt` | create |
+| `poker-engine/src/test/kotlin/duels/poker/engine/game/DefaultPokerEngineTest.kt` | modify |
 
 Read `DealerEvents.kt`, `DealerProjection.kt`, `Deck.kt`, `HeadsUpOrder.kt`. Modify none of them.
 
