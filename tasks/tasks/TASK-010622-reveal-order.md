@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010622
 title: Decide who shows at a showdown, and in what order
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
