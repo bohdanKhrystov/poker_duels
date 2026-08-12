@@ -1,8 +1,10 @@
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 dependencies {
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.bundles.junit)
     testImplementation(libs.kotest.property)
     testImplementation(libs.kotlinx.coroutines.core)
@@ -15,13 +17,16 @@ tasks.withType<Test>().configureEach {
 tasks.register("checkNoDependencies") {
     val configNames = listOf("implementation", "api", "compileOnly", "runtimeOnly")
 
+    // ADR-0010: the allowlist is narrowed, never removed. Adding to it needs a new ADR.
+    val allowedDependencies = listOf("kotlin-stdlib", "kotlinx-serialization")
+
     // Capture dependency information during configuration phase
     val configsWithUnwantedDeps = mutableMapOf<String, List<String>>()
 
     for (configName in configNames) {
         val config = configurations.findByName(configName) ?: continue
         val unwantedDeps = config.dependencies
-            .filter { !it.toString().contains("kotlin-stdlib") }
+            .filter { dep -> allowedDependencies.none { dep.toString().contains(it) } }
             .map { it.toString() }
 
         if (unwantedDeps.isNotEmpty()) {
