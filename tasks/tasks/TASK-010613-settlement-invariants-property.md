@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010613
 title: Settlement invariants over a thousand random hands
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
