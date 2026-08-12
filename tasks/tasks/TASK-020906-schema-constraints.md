@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020906
 title: Prove the schema refuses a duplicate device id and a duplicate result row
 type: task
-status: backlog
+status: done
 parent: STORY-0209
 module: poker-server
 estimate: S
