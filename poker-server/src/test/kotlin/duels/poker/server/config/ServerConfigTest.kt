@@ -1,5 +1,6 @@
 package duels.poker.server.config
 
+import duels.poker.server.room.RoomTimeouts
 import io.ktor.server.config.MapApplicationConfig
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -88,5 +89,56 @@ class ServerConfigTest {
         assertEquals(ServerConfig.DEFAULT_DATABASE_USER, serverConfig.databaseUser)
         assertEquals(ServerConfig.DEFAULT_DATABASE_PASSWORD, serverConfig.databasePassword)
         assertEquals(ServerConfig.DEFAULT_DATABASE_POOL_SIZE, serverConfig.databasePoolSize)
+    }
+
+    @Test
+    fun readsTheRoomWaitingTimeoutFromTheConfig() {
+        val config = MapApplicationConfig("room.waitingTimeoutMillis" to "1234")
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(1234L, serverConfig.roomWaitingTimeoutMillis)
+    }
+
+    @Test
+    fun theEnvironmentVariableOverridesTheRoomFinishedTimeout() {
+        val config = MapApplicationConfig("room.finishedTimeoutMillis" to "1234")
+        val serverConfig = ServerConfig.from(config) { name ->
+            if (name == ServerConfig.ROOM_FINISHED_TIMEOUT_MILLIS_ENV) "5678" else null
+        }
+        assertEquals(5678L, serverConfig.roomFinishedTimeoutMillis)
+    }
+
+    @Test
+    fun fallsBackToTheRoomTimeoutDefaults() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(RoomTimeouts.DEFAULT_WAITING_MILLIS, serverConfig.roomWaitingTimeoutMillis)
+        assertEquals(RoomTimeouts.DEFAULT_FINISHED_MILLIS, serverConfig.roomFinishedTimeoutMillis)
+    }
+
+    @Test
+    fun rejectsARoomTimeoutThatIsNotANumber() {
+        val config = MapApplicationConfig("room.waitingTimeoutMillis" to "ten minutes")
+        assertThrows<IllegalArgumentException> {
+            ServerConfig.from(config) { null }
+        }
+    }
+
+    @Test
+    fun rejectsANonPositiveRoomTimeout() {
+        val config = MapApplicationConfig("room.finishedTimeoutMillis" to "0")
+        val serverConfig = ServerConfig.from(config) { null }
+        assertThrows<IllegalArgumentException> {
+            serverConfig.roomTimeouts()
+        }
+    }
+
+    @Test
+    fun roomTimeoutsBundlesBothValues() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(
+            RoomTimeouts(serverConfig.roomWaitingTimeoutMillis, serverConfig.roomFinishedTimeoutMillis),
+            serverConfig.roomTimeouts(),
+        )
     }
 }

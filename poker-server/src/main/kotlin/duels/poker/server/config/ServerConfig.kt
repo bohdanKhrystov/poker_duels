@@ -1,5 +1,6 @@
 package duels.poker.server.config
 
+import duels.poker.server.room.RoomTimeouts
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.ConfigLoader
 
@@ -22,7 +23,12 @@ public data class ServerConfig(
     val databaseUser: String,
     val databasePassword: String,
     val databasePoolSize: Int,
+    val roomWaitingTimeoutMillis: Long,
+    val roomFinishedTimeoutMillis: Long,
 ) {
+    /** Bundles the two room idle limits so callers do not reassemble them. */
+    public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(roomWaitingTimeoutMillis, roomFinishedTimeoutMillis)
+
     public companion object {
         public const val DEFAULT_PORT: Int = 8080
         public const val PORT_KEY: String = "server.port"
@@ -62,6 +68,14 @@ public data class ServerConfig(
         public const val DEFAULT_DATABASE_POOL_SIZE: Int = 8
         public const val DATABASE_POOL_SIZE_KEY: String = "database.poolSize"
         public const val DATABASE_POOL_SIZE_ENV: String = "DATABASE_POOL_SIZE"
+
+        public const val DEFAULT_ROOM_WAITING_TIMEOUT_MILLIS: Long = RoomTimeouts.DEFAULT_WAITING_MILLIS
+        public const val ROOM_WAITING_TIMEOUT_MILLIS_KEY: String = "room.waitingTimeoutMillis"
+        public const val ROOM_WAITING_TIMEOUT_MILLIS_ENV: String = "ROOM_WAITING_TIMEOUT_MILLIS"
+
+        public const val DEFAULT_ROOM_FINISHED_TIMEOUT_MILLIS: Long = RoomTimeouts.DEFAULT_FINISHED_MILLIS
+        public const val ROOM_FINISHED_TIMEOUT_MILLIS_KEY: String = "room.finishedTimeoutMillis"
+        public const val ROOM_FINISHED_TIMEOUT_MILLIS_ENV: String = "ROOM_FINISHED_TIMEOUT_MILLIS"
 
         /**
          * Build a [ServerConfig] from a Ktor [ApplicationConfig] with environment variable
@@ -122,6 +136,28 @@ public data class ServerConfig(
                 "database pool size must be an integer, got: $databasePoolSizeString"
             }
 
+            val roomWaitingTimeoutMillisString = resolve(
+                config,
+                env,
+                ROOM_WAITING_TIMEOUT_MILLIS_ENV,
+                ROOM_WAITING_TIMEOUT_MILLIS_KEY,
+                DEFAULT_ROOM_WAITING_TIMEOUT_MILLIS.toString(),
+            )
+            val roomWaitingTimeoutMillis = requireNotNull(roomWaitingTimeoutMillisString.toLongOrNull()) {
+                "room waiting timeout must be an integer, got: $roomWaitingTimeoutMillisString"
+            }
+
+            val roomFinishedTimeoutMillisString = resolve(
+                config,
+                env,
+                ROOM_FINISHED_TIMEOUT_MILLIS_ENV,
+                ROOM_FINISHED_TIMEOUT_MILLIS_KEY,
+                DEFAULT_ROOM_FINISHED_TIMEOUT_MILLIS.toString(),
+            )
+            val roomFinishedTimeoutMillis = requireNotNull(roomFinishedTimeoutMillisString.toLongOrNull()) {
+                "room finished timeout must be an integer, got: $roomFinishedTimeoutMillisString"
+            }
+
             return ServerConfig(
                 port = port,
                 maxFrameLength = maxFrameLength,
@@ -130,6 +166,8 @@ public data class ServerConfig(
                 databaseUser = databaseUser,
                 databasePassword = databasePassword,
                 databasePoolSize = databasePoolSize,
+                roomWaitingTimeoutMillis = roomWaitingTimeoutMillis,
+                roomFinishedTimeoutMillis = roomFinishedTimeoutMillis,
             )
         }
 
