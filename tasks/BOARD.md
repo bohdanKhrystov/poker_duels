@@ -124,7 +124,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | **[STORY-0106](stories/STORY-0106-showdown-and-pots.md)** Showdown and pots — *schema 2* | | | ready |
 | | [TASK-010604](tasks/TASK-010604-uncalled-bet-arithmetic.md) Compute the uncalled part of a bet | S | **done** |
 | | [TASK-010605](tasks/TASK-010605-settle-to-one-winner.md) Settle a swept hand to a single winner | S | **done** |
-| | [TASK-010606](tasks/TASK-010606-split-pot-odd-chip.md) Split a pot between two winners, odd chip out of position | S | backlog |
+| | [TASK-010606](tasks/TASK-010606-split-pot-odd-chip.md) Split a pot between two winners, odd chip out of position | S | **done** |
 | | [TASK-010607](tasks/TASK-010607-fold-awards-the-pot.md) A fold awards the pot and ends the hand | S | backlog |
 | | [TASK-010608](tasks/TASK-010608-showdown-fixtures-hole-cards.md) Give the synthetic showdown fixtures hole cards | XS | backlog |
 | | [TASK-010609](tasks/TASK-010609-terminal-check-by-what-it-accepts.md) Pin the random hand's ending by what it accepts, not by its street | XS | backlog |
@@ -134,6 +134,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010613](tasks/TASK-010613-settlement-invariants-property.md) Settlement invariants over a thousand random hands | S | backlog |
 | | [TASK-010614](tasks/TASK-010614-folded-cards-in-no-event.md) A folded hand appears in no event, over a thousand hands | S | backlog |
 | | [TASK-010615](tasks/TASK-010615-showdown-reveals-and-muck.md) Showdown reveals, reveal order and the muck | S | blocked |
+| | [TASK-010616](tasks/TASK-010616-split-with-uncalled-bet.md) Pin a split pot that also returns an uncalled bet | XS | backlog |
 | **[STORY-0107](stories/STORY-0107-duel-format-and-match.md)** Duel format and match | | | backlog |
 | | [TASK-010701](tasks/TASK-010701-duel-format.md) DuelFormat and blind schedule | S | backlog |
 | | [TASK-010702](tasks/TASK-010702-match-progression.md) Match progression | M | backlog |
@@ -143,7 +144,7 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**90 tasks total.** `STORY-0101`–`STORY-0106` are migrated to schema 2; stories 0107–0108 are still schema 1
+**91 tasks total.** `STORY-0101`–`STORY-0106` are migrated to schema 2; stories 0107–0108 are still schema 1
 and get split by `/plan-story` just before they are worked. Stories 0107–0108 stay in `backlog` until `STORY-0106` lands, because their tasks are written
 against types that do not exist yet.
 

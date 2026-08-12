@@ -47,24 +47,30 @@ public fun uncalledPortion(state: GameState): UncalledPortion? {
 }
 
 /**
- * Closes a swept hand: the uncalled bet comes back, the pot goes to its winner, and the hand
+ * Closes a swept hand: the uncalled bet comes back, the pot goes to its winner(s), and the hand
  * is over.
  *
  * [state] must already be swept — `committedThisStreet` is zero on every seat — because [pot]
  * is only the whole of what is at stake once `BettingRoundEnded` has run.
  *
- * This ticket handles one winner only; a split pot is `TASK-010606`.
+ * With two winners the pot splits evenly; the chip that cannot be halved goes to
+ * `bigBlindSeat(state.buttonSeat)`, the player out of position, per `docs/duel-rules.md`.
+ * Awards are emitted in ascending seat order, and a zero-sized award is skipped rather than
+ * emitted — a pot of 1 chip pays one seat only.
  *
  * @param state The swept state to settle.
- * @param winners The seat that won the hand. Must have exactly one entry.
- * @return The accepted result: `UncalledBetReturned` (if any), `PotAwarded` (if the remaining
- *   pot is positive), then `HandFinished`.
+ * @param winners The seat(s) that won the hand, one or two, each seat distinct.
+ * @return The accepted result: `UncalledBetReturned` (if any), one `PotAwarded` per winner in
+ *   ascending seat order, then `HandFinished`.
  */
 public fun settleHand(state: GameState, winners: List<Int>): EngineResult {
     require(state.seats.all { it.committedThisStreet == 0 }) {
         "state must be swept: every seat's committedThisStreet must be zero, was ${state.seats}"
     }
-    require(winners.size == 1) { "settleHand handles exactly one winner, got ${winners.size}" }
+    require(winners.size in 1..2) { "settleHand handles one or two winners, got ${winners.size}" }
+    require(winners.distinct().size == winners.size) {
+        "the same seat cannot win twice, got $winners"
+    }
 
     val events = mutableListOf<GameEvent>()
     var current = state
@@ -79,8 +85,18 @@ public fun settleHand(state: GameState, winners: List<Int>): EngineResult {
         current = StateProjection.apply(current, returned)
     }
 
-    if (current.pot > 0) {
-        val awarded = PotAwarded(current.eventCount, winners.single(), current.pot)
+    val awards = if (winners.size == 1) {
+        mapOf(winners.single() to current.pot).filterValues { it > 0 }
+    } else {
+        val share = current.pot / 2
+        val oddChip = current.pot % 2
+        val oddChipSeat = bigBlindSeat(current.buttonSeat)
+        winners.associateWith { seat -> share + if (seat == oddChipSeat) oddChip else 0 }
+            .filterValues { it > 0 }
+    }
+
+    awards.toSortedMap().forEach { (seat, amount) ->
+        val awarded = PotAwarded(current.eventCount, seat, amount)
         events += awarded
         current = StateProjection.apply(current, awarded)
     }
