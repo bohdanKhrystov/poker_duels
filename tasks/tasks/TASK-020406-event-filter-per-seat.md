@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020406
 title: Filter an event for one recipient
 type: task
-status: ready
+status: done
 parent: STORY-0204
 module: poker-engine
 estimate: S
