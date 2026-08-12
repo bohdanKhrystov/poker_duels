@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020101
 title: Add the :poker-server module and its Ktor dependencies to the build
 type: task
-status: ready
+status: done
 parent: STORY-0201
 module: poker-server
 estimate: S
