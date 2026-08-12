@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020409
 title: A duel harness that records every state and every event
 type: task
-status: ready
+status: done
 parent: STORY-0204
 module: poker-ai
 estimate: S
