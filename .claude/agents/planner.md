@@ -40,6 +40,24 @@ There is no `M`. If a unit of work does not fit in `S`, it is two tickets. Split
 essentially always right — the failure mode of this project is tickets that grew, never tickets
 that were too small.
 
+### A ticket owns the tests its change invalidates
+
+When a ticket changes behaviour that an **earlier ticket's tests already pin**, those tests are
+part of its blast radius. Put that test file in the `Files` table as `modify`, count it in
+`files_touched`, and name in the acceptance criteria exactly which assertions move and why —
+plus that nothing else in the file changes and no assertion is weakened.
+
+Never write "`SomeEarlierTest` still passes unchanged" for a ticket that changes what that test
+observes. It reads like rigour and is a contradiction: the coder cannot both implement the scope
+and leave the assertion standing. What follows is a stalled dispatch while it reports the
+conflict — or worse, a coder that quietly edits a file outside its budget.
+
+Before writing a ticket that modifies an existing function, ask: **which merged tests assert the
+current behaviour of this function?** Every one whose answer changes belongs in the budget.
+
+If that pushes the ticket past three files, it is two tickets — and the split is usually obvious,
+because the pre-existing test is often wrong for a reason of its own that deserves its own diff.
+
 ### The `verify` block is the whole point
 
 Every ticket carries shell commands that decide, objectively, whether it is done:
