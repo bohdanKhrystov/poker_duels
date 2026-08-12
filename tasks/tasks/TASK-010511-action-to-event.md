@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010511
 title: Turn an accepted action into the event that records it
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: S
