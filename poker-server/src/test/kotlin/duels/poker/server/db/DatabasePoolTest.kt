@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.postgresql.ds.PGSimpleDataSource
 
 /**
  * Proves [Database.connectionPool] serves real connections against the shared container and
@@ -55,20 +54,20 @@ internal class DatabasePoolTest {
     }
 
     /**
-     * A [ServerConfig] pointed at the shared container, via the coordinates of a real connection
-     * from [PostgresTestSupport.freshDatabase] — the container itself is private to
+     * A [ServerConfig] pointed at the shared container, via the coordinates from
+     * [PostgresTestSupport.containerCoordinates] — the container itself is private to
      * [PostgresTestSupport], so this is its only public route out. Only a schema reset is
      * incurred; no migration runs, and none is needed to serve `SELECT 1`.
      */
     private fun containerConfig(databasePoolSize: Int = 2): ServerConfig {
-        val source = PostgresTestSupport.freshDatabase() as PGSimpleDataSource
+        val coordinates = PostgresTestSupport.containerCoordinates()
         return ServerConfig(
             port = ServerConfig.DEFAULT_PORT,
             maxFrameLength = ServerConfig.DEFAULT_MAX_FRAME_LENGTH,
             maxFrameNestingDepth = ServerConfig.DEFAULT_MAX_FRAME_NESTING_DEPTH,
-            databaseUrl = requireNotNull(source.getUrl()),
-            databaseUser = requireNotNull(source.getUser()),
-            databasePassword = requireNotNull(source.getPassword()),
+            databaseUrl = coordinates.url,
+            databaseUser = coordinates.user,
+            databasePassword = coordinates.password,
             databasePoolSize = databasePoolSize,
             roomWaitingTimeoutMillis = ServerConfig.DEFAULT_ROOM_WAITING_TIMEOUT_MILLIS,
             roomFinishedTimeoutMillis = ServerConfig.DEFAULT_ROOM_FINISHED_TIMEOUT_MILLIS,
