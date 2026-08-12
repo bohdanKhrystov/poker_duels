@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010623
 title: A showdown emits HandRevealed for the hands that are shown
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: S
