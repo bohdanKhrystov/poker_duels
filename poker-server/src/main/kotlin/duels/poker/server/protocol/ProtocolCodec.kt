@@ -1,5 +1,6 @@
 package duels.poker.server.protocol
 
+import duels.poker.server.config.ServerConfig
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -45,9 +46,36 @@ public object ProtocolCodec {
      *
      * Never throws: a frame that is not JSON, has no `type`, names an unknown `type`, or fails
      * to decode — including a decode that fails inside a data class's own `init` guard — comes
-     * back as [Decoded.Refused], not as a thrown exception.
+     * back as [Decoded.Refused], not as a thrown exception. So does a frame longer than
+     * [maxFrameLength] or nested deeper than [maxNestingDepth]: both are refused before parsing,
+     * because a recursive-descent parser given deeply nested input can exhaust the stack with a
+     * [StackOverflowError] — an `Error`, not an `IllegalArgumentException`, and not something the
+     * narrow catch below is entitled to swallow.
+     *
+     * @param maxFrameLength The longest frame, in UTF-16 code units, this call will parse.
+     * @param maxNestingDepth The deepest object/array nesting this call will parse.
      */
-    public fun decodeClient(text: String): Decoded {
+    public fun decodeClient(
+        text: String,
+        maxFrameLength: Int = ServerConfig.DEFAULT_MAX_FRAME_LENGTH,
+        maxNestingDepth: Int = ServerConfig.DEFAULT_MAX_FRAME_NESTING_DEPTH,
+    ): Decoded {
+        // Length is the cheapest possible check — no scan, no allocation beyond what the caller
+        // already paid for the string — and it rejects the overwhelming majority of hostile
+        // frames outright. It runs first for exactly that reason.
+        if (text.length > maxFrameLength) {
+            return Decoded.Refused(ProtocolError.FRAME_LIMIT_EXCEEDED)
+        }
+
+        // Depth must be checked before the frame reaches the parser, not found out from it: the
+        // parser recurses one stack frame per nesting level, so asking it to parse first to see
+        // whether the input is too deep is the exact bug this check exists to avoid. Scanning the
+        // raw text is safe because it is iterative — it cannot itself recurse — no matter how
+        // deep the (unparsed) brackets go.
+        if (exceedsNestingDepth(text, maxNestingDepth)) {
+            return Decoded.Refused(ProtocolError.FRAME_LIMIT_EXCEEDED)
+        }
+
         val element = try {
             protocolJson.parseToJsonElement(text)
         } catch (_: IllegalArgumentException) {
@@ -73,4 +101,38 @@ public object ProtocolCodec {
             Decoded.Refused(ProtocolError.MALFORMED_MESSAGE)
         }
     }
+}
+
+/**
+ * True if [text] contains a `{`/`[` nesting deeper than [maxDepth], counting brackets outside
+ * string literals only. Deliberately a single forward pass with no recursion of its own, so it
+ * can be run on input that has not yet been judged safe to hand to a real parser — that is the
+ * whole point of checking depth this way instead of by parsing and seeing what happens.
+ */
+private fun exceedsNestingDepth(text: String, maxDepth: Int): Boolean {
+    var depth = 0
+    var inString = false
+    var escaped = false
+
+    for (char in text) {
+        if (inString) {
+            when {
+                escaped -> escaped = false
+                char == '\\' -> escaped = true
+                char == '"' -> inString = false
+            }
+            continue
+        }
+
+        when (char) {
+            '"' -> inString = true
+            '{', '[' -> {
+                depth++
+                if (depth > maxDepth) return true
+            }
+            '}', ']' -> depth--
+        }
+    }
+
+    return false
 }

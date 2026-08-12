@@ -231,7 +231,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020210](tasks/TASK-020210-explicit-discriminators.md) Every discriminator is an explicit @SerialName | S | **done** |
 | | [TASK-020211](tasks/TASK-020211-no-forbidden-payload.md) No seed goes out, no card comes in | S | **done** |
 | | [TASK-020212](tasks/TASK-020212-protocol-doc.md) docs/protocol.md and the test that keeps it honest | S | **done** |
-| | [TASK-020213](tasks/TASK-020213-frame-limits.md) A frame too large or too deeply nested is refused before parsing | S | backlog |
+| | [TASK-020213](tasks/TASK-020213-frame-limits.md) A frame too large or too deeply nested is refused before parsing | S | **done** |
 | [STORY-0203](stories/STORY-0203-generated-typescript-protocol.md) | Generated TypeScript protocol types | blocked |
 | [STORY-0205](stories/STORY-0205-sessions-and-socket-lifecycle.md) | Sessions and the socket lifecycle | backlog |
 | [STORY-0206](stories/STORY-0206-rooms-and-matchmaking.md) | Rooms, join links and rematch | backlog |
