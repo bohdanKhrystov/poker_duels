@@ -1,5 +1,7 @@
 package duels.poker.engine.game
 
+import kotlinx.serialization.Serializable
+
 /**
  * Everything a client needs to draw the right buttons and sliders for the current decision point.
  *
@@ -35,7 +37,17 @@ package duels.poker.engine.game
  *
  * There is no raise because no amount of additional chips would make a raise legal — the
  * opponent has nothing left. Calling is the only active option besides folding.
+ *
+ * ## Serialization: default amounts on the wire
+ *
+ * All four amount fields (`callTo`, `minBetTo`, `minRaiseTo`, `allInTo`) default to 0.
+ * A `Json` instance without `encodeDefaults = true` will omit these fields during encoding.
+ * A client decoding such a message would then receive the default 0 instead of the real
+ * (possibly nonzero) value — silently offering a player an action the server never allowed.
+ * The protocol's `Json` instance sets `encodeDefaults = true` (TASK-020201) to prevent this;
+ * this note is why that setting must remain in place.
  */
+@Serializable
 public data class LegalActions(
     val seat: Int,
     val allowed: Set<ActionType>,
