@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010815
 title: PlayerAction is serializable under a short type name
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
