@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010830
 title: A hundred thousand duels, off the default test task
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-ai
 estimate: S
