@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020507
 title: Open /ws behind a mandatory handshake and one writing coroutine
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
