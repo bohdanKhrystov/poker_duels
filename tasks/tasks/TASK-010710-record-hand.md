@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010710
 title: Fold a finished hand back into the match and pass the button
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
