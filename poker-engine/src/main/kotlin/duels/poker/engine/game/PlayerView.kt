@@ -64,4 +64,44 @@ public data class PlayerView(
 
     /** The opponent's seat: `seats[1 - viewerSeat]`. */
     public val opponent: SeatView get() = seats[1 - viewerSeat]
+
+    public companion object {
+        /**
+         * Projects [state] into what [seat] is entitled to see: its own hole cards, the
+         * opponent's hidden, and every other fact of the hand unchanged.
+         *
+         * Never reads [GameState.deck] or [GameState.rng] — neither belongs in a client-facing
+         * view.
+         */
+        public fun of(state: GameState, seat: Int): PlayerView {
+            require(seat in SEAT_INDICES) { "seat must be 0 or 1, was $seat" }
+            return PlayerView(
+                viewerSeat = seat,
+                handNumber = state.handNumber,
+                buttonSeat = state.buttonSeat,
+                street = state.street,
+                board = state.board,
+                pot = state.pot,
+                betToMatch = state.betToMatch,
+                minRaiseTo = state.minRaiseTo,
+                seatToAct = state.seatToAct,
+                smallBlind = state.smallBlind,
+                bigBlind = state.bigBlind,
+                seats = state.seats.map { seatView(it, showCards = it.index == seat) },
+            )
+        }
+
+        /** Builds one [SeatView] from [seat], revealing its hole cards only when [showCards]. */
+        private fun seatView(seat: Seat, showCards: Boolean): SeatView {
+            return SeatView(
+                index = seat.index,
+                stack = seat.stack,
+                committedThisStreet = seat.committedThisStreet,
+                committedThisHand = seat.committedThisHand,
+                hasFolded = seat.hasFolded,
+                isAllIn = seat.isAllIn,
+                holeCards = if (showCards) seat.holeCards else emptyList(),
+            )
+        }
+    }
 }
