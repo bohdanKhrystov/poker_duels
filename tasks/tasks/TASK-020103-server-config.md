@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020103
 title: Read every tunable from one typed ServerConfig
 type: task
-status: backlog
+status: done
 parent: STORY-0201
 module: poker-server
 estimate: S
