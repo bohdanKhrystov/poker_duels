@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020213
 title: A frame that is too large or too deeply nested is refused before it is parsed
 type: task
-status: backlog
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
