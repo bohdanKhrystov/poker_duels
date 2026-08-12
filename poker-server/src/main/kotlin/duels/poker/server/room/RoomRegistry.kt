@@ -165,6 +165,51 @@ public class RoomRegistry(
     }
 
     /**
+     * Remove every room that has been idle past its state's configured limit.
+     *
+     * `now` is read once from [clock], so every room in this pass is judged against the same
+     * instant. A room is reaped when:
+     * - [RoomState.WAITING]: `now - lastActivityAt >= timeouts.waitingMillis`;
+     * - [RoomState.FINISHED] or [RoomState.ABANDONED]: `now - lastActivityAt >= timeouts.finishedMillis`;
+     * - [RoomState.PLAYING]: never, however idle. A silent live duel is `ADR-0013`'s grace period,
+     *   which ends by calling [abandon] — that is what makes the room reapable by the rule above,
+     *   rather than this method carrying a second timer for the same room.
+     *
+     * A candidate is found by an unlocked scan, then re-checked against [Holder.room] after taking
+     * that room's mutex, so a room touched between the scan and the lock — joined, finished,
+     * abandoned, offered a rematch — survives on its fresh timestamp instead of being removed on a
+     * stale one. This is the other half of the `rooms[code] === holder` re-check [mutate] makes.
+     *
+     * This does not go through [mutate]: [mutate] always writes a room back, and reaping has no
+     * room to write back — it removes the entry outright with `ConcurrentHashMap.remove(key,
+     * value)`, which only succeeds while the map still holds the exact [Holder] this call locked.
+     * Folding that removal into [mutate]'s contract would mean teaching one shared critical section
+     * two different shapes of "done"; a second, narrowly-scoped lock here is safer than that.
+     *
+     * @return The codes of every room removed by this pass, in no particular order.
+     */
+    public suspend fun reap(): List<RoomCode> {
+        val now = clock.nowMillis()
+        val removed = mutableListOf<RoomCode>()
+        for ((code, holder) in rooms) {
+            if (!isReapable(holder.room, now)) continue
+            holder.mutex.withLock {
+                if (isReapable(holder.room, now) && rooms.remove(code, holder)) {
+                    removed.add(code)
+                }
+            }
+        }
+        return removed
+    }
+
+    /** Whether [room] has been idle past its state's configured limit, as of [now]. */
+    private fun isReapable(room: Room, now: Long): Boolean = when (room.state) {
+        RoomState.WAITING -> now - room.lastActivityAt >= timeouts.waitingMillis
+        RoomState.FINISHED, RoomState.ABANDONED -> now - room.lastActivityAt >= timeouts.finishedMillis
+        RoomState.PLAYING -> false
+    }
+
+    /**
      * Look up, lock, mutate and store a room under a single critical section.
      *
      * This enforces the single-writer rule: a read-modify-write against a room always happens
