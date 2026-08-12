@@ -56,37 +56,31 @@ written dozens of times per epic.
         → land them ONE AT A TIME (see "Landing")
         → append one line per ticket to the ledger
         → if blocked: record it, continue to the next startable ticket
-5. story done → **hand the run back for a fresh context** (see below) → back to 2
+5. story done → report it in one line → back to 2
 6. no stories left → final report
 ```
 
-## Stop at the story boundary, and only there
+## At a story boundary, report and continue
 
-A story's worth of tickets leaves the scheduler carrying a great deal it no longer needs: dead
-ledgers, resolved conflicts, review arguments that have already landed. None of it helps with the
-next story, and all of it is paid for on every remaining turn.
-
-So when a story's last ticket merges, **stop and hand the run back**:
+When a story's last ticket merges, say so in one line and go straight on to the next story:
 
 ```
-STORY-0104 done — 23 tickets merged.
-Next: /clear, then /build-epic EPIC-01
+STORY-0104 done — 23 tickets merged. Planning STORY-0105.
 ```
 
-Nothing else. No final report — the epic is not finished. Then stop, and let the human paste
-those two commands.
+**Do not stop.** Not for approval, not for a context reset, not to summarise. The run continues
+while there are startable tickets and budget to work them; the only stops are the blockers listed
+under "Batching decisions".
 
-`/clear` cannot be invoked from inside the run; it is a client-side command that only the human
-can type. Do not try to work around that by summarising your own context or by "starting fresh"
-in place — neither reclaims anything.
+A story does leave the scheduler carrying a lot it no longer needs — dead ledgers, resolved
+conflicts, review arguments that already landed — and a `/clear` between stories would reclaim
+all of it. But `/clear` is a client-side command that cannot be invoked from inside the run, so
+waiting for one means stalling until a human appears. **A stalled run is worse than an expensive
+one.** If the human is present and wants the reset, they can `/clear` and re-issue
+`/build-epic <EPIC-ID>` at any point; the board is what carries the state, so nothing is lost.
 
-**This is the only stop that is not a blocker.** It is deliberate, it is cheap, and the board is
-what carries the state across it: `BOARD.md` records what is done, `lint_tickets.py --startable`
-names what is next, and the ticket files hold everything a fresh session needs. A run that cannot
-survive `/clear` at a story boundary has been keeping state in the wrong place.
-
-If the run is unattended and nobody will paste anything, carry on into the next story rather than
-stalling — a stalled run is worse than an expensive one.
+Do not simulate the reset either — summarising your own context or "starting fresh" in place
+reclaims nothing and costs a turn.
 
 ## Batching tickets
 
