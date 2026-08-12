@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020205
 title: ProtocolError and the two handshake ServerMessages
 type: task
-status: backlog
+status: done
 parent: STORY-0202
 module: poker-server
 estimate: S
