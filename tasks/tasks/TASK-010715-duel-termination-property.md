@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010715
 title: Every default duel terminates, well inside an asserted ceiling
 type: task
-status: backlog
+status: done
 parent: STORY-0107
 module: poker-engine
 estimate: S
