@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020611
 title: Finish, abandon and offer a rematch through the registry
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
