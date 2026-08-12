@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010825
 title: DuelOutcome and MatchFinished are serializable
 type: task
-status: backlog
+status: done
 parent: STORY-0108
 module: poker-engine
 estimate: S
