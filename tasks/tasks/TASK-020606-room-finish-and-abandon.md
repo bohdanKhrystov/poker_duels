@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020606
 title: Finish, abandon and touch a room
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: S
