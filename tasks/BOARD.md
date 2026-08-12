@@ -135,16 +135,27 @@ private repository. Until it clears, the branch model is convention, not enforce
 | | [TASK-010614](tasks/TASK-010614-folded-cards-in-no-event.md) A folded hand appears in no event, over a thousand hands | S | **done** |
 | | [TASK-010615](tasks/TASK-010615-showdown-reveals-and-muck.md) Showdown reveals, reveal order and the muck | S | blocked |
 | | [TASK-010616](tasks/TASK-010616-split-with-uncalled-bet.md) Pin a split pot that also returns an uncalled bet | XS | **done** |
-| **[STORY-0107](stories/STORY-0107-duel-format-and-match.md)** Duel format and match | | | backlog |
-| | [TASK-010701](tasks/TASK-010701-duel-format.md) DuelFormat and blind schedule | S | backlog |
-| | [TASK-010702](tasks/TASK-010702-match-progression.md) Match progression | M | backlog |
-| | [TASK-010703](tasks/TASK-010703-match-conclusion.md) Match conclusion and result | S | backlog |
+| **[STORY-0107](stories/STORY-0107-duel-format-and-match.md)** Duel format and match — *schema 2* | | | ready |
+| | [TASK-010704](tasks/TASK-010704-blind-level.md) A blind level that can double | S | ready |
+| | [TASK-010706](tasks/TASK-010706-end-condition.md) The two duel end conditions as a sealed type | XS | ready |
+| | [TASK-010711](tasks/TASK-010711-duel-outcome.md) DuelOutcome, the result of a finished duel | XS | ready |
+| | [TASK-010705](tasks/TASK-010705-blind-schedule.md) Which blinds a hand number plays | S | backlog |
+| | [TASK-010707](tasks/TASK-010707-duel-format.md) DuelFormat and the default freezeout | S | backlog |
+| | [TASK-010708](tasks/TASK-010708-match-state.md) MatchState, what survives between two hands | S | backlog |
+| | [TASK-010709](tasks/TASK-010709-start-next-hand.md) Deal the match's next hand at its blinds | S | backlog |
+| | [TASK-010710](tasks/TASK-010710-record-hand.md) Fold a finished hand back into the match | S | backlog |
+| | [TASK-010712](tasks/TASK-010712-evaluate-the-end-condition.md) Decide whether a match is over, and who won | S | backlog |
+| | [TASK-010713](tasks/TASK-010713-random-duel-harness.md) Play a whole duel from one seed | S | backlog |
+| | [TASK-010714](tasks/TASK-010714-duel-invariants.md) Button, blinds and chips across a whole duel | S | backlog |
+| | [TASK-010715](tasks/TASK-010715-duel-termination-property.md) Every default duel terminates | S | backlog |
+| | [TASK-010716](tasks/TASK-010716-fixed-length-duel.md) A fixed-length duel is decided on chips | S | backlog |
+| | [TASK-010717](tasks/TASK-010717-match-finished-event.md) The end of a match as a durable event | S | blocked |
 | **[STORY-0108](stories/STORY-0108-event-log-replay-simulation.md)** Log, replay, simulation | | | backlog |
 | | [TASK-010801](tasks/TASK-010801-event-log-format.md) Versioned event log format | M | backlog |
 | | [TASK-010802](tasks/TASK-010802-replay.md) Replay a match from its log | S | backlog |
 | | [TASK-010803](tasks/TASK-010803-simulation-harness.md) Simulation harness and fuzzing | M | backlog |
 
-**91 tasks total.** `STORY-0101`–`STORY-0106` are migrated to schema 2; stories 0107–0108 are still schema 1
+**102 tasks total.** `STORY-0101`–`STORY-0106` are migrated to schema 2; stories 0107–0108 are still schema 1
 and get split by `/plan-story` just before they are worked. Stories 0107–0108 stay in `backlog` until `STORY-0106` lands, because their tasks are written
 against types that do not exist yet.
 
@@ -156,7 +167,7 @@ against types that do not exist yet.
 | --- | --- | --- | --- |
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-004 | At a showdown, who shows — loser mucks by default, both hands always shown, or showing is a `PlayerAction`? | [`STORY-0106`](stories/STORY-0106-showdown-and-pots.md) | blocks `TASK-010615`, before EPIC-03 |
+| DEC-005 | Does `MatchFinished` belong to the hand-scoped `GameEvent` log, to a `MatchEvent` hierarchy of its own, or nowhere? | [`STORY-0107`](stories/STORY-0107-duel-format-and-match.md) | blocks `TASK-010717`, before STORY-0108 |
 | — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
 
 ---
