@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020508
 title: Resolve the profile on Welcome and drop the session on every close path
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: S
