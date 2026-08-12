@@ -11,7 +11,11 @@ package duels.poker.engine.game
  * next `ActionOn` event, never inferred here.
  *
  * `PlayerAllIn`'s effect on `minRaiseTo` follows `docs/duel-rules.md`: a full all-in raises the
- * bar exactly as an ordinary raise would, but a short all-in call does not raise it. Whether a
+ * bar exactly as an ordinary raise would, but a short all-in call does not raise it. The same
+ * split governs `lastAggressor`: a full all-in is aggression and is recorded, but a short all-in
+ * call for less than the bar is a forced call, not a challenge, and leaves `lastAggressor`
+ * untouched. `lastAggressor` is what a showdown reads to decide who shows first — see
+ * [`ADR-0008`](../../../../../../../../docs/adr/ADR-0008-loser-mucks-at-showdown.md). Whether a
  * seat that faced a short all-in is then allowed to raise at all is `TASK-010502`'s decision,
  * not this function's — this only replays what the log says happened.
  *
@@ -23,8 +27,8 @@ public fun applyBetting(state: GameState, event: BettingEvent): GameState {
         is PlayerFolded -> state.withSeat(event.seat) { it.copy(hasFolded = true) }
         is PlayerChecked -> state
         is PlayerCalled -> commitTo(state, event.seat, event.to)
-        is PlayerBet -> raiseTo(state, event.seat, event.to)
-        is PlayerRaised -> raiseTo(state, event.seat, event.to)
+        is PlayerBet -> raiseTo(state, event.seat, event.to).copy(lastAggressor = event.seat)
+        is PlayerRaised -> raiseTo(state, event.seat, event.to).copy(lastAggressor = event.seat)
         is PlayerAllIn -> allInTo(state, event.seat, event.to)
     }
     return folded.copy(seatToAct = null, eventCount = event.sequence + 1)
@@ -43,7 +47,10 @@ private fun raiseTo(state: GameState, seat: Int, to: Int): GameState {
 
 /**
  * An all-in: commit up to [to] and force `isAllIn`, then, only if it moves the bar past where
- * it stood, raise `minRaiseTo` by the same increment a normal raise would.
+ * it stood, raise `minRaiseTo` by the same increment a normal raise would and record [seat] as
+ * the last aggressor. A short all-in — one that does not clear the existing bar — is a forced
+ * call, not aggression: it does not challenge the opponent to act, so it leaves `lastAggressor`
+ * exactly as it found it.
  */
 private fun allInTo(state: GameState, seat: Int, to: Int): GameState {
     val committed = commitTo(state, seat, to).withSeat(seat) { it.copy(isAllIn = true) }
@@ -51,5 +58,5 @@ private fun allInTo(state: GameState, seat: Int, to: Int): GameState {
 
     val increment = to - state.betToMatch
     val minRaiseTo = if (to >= state.minRaiseTo) to + increment else state.minRaiseTo
-    return committed.copy(betToMatch = to, minRaiseTo = minRaiseTo)
+    return committed.copy(betToMatch = to, minRaiseTo = minRaiseTo, lastAggressor = seat)
 }
