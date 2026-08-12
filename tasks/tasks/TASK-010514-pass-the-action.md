@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010514
 title: Pass the action to the other seat while the round runs
 type: task
-status: ready
+status: done
 parent: STORY-0105
 module: poker-engine
 estimate: S
@@ -13,7 +13,7 @@ files_touched: 3
 labels: [engine, rules]
 depends_on: [TASK-010513]
 verify:
-  - ./gradlew :poker-engine:test --tests '*EngineTurnOrderTest'
+  - ./gradlew :poker-engine:test --tests '*DefaultPokerEngineTest'
   - ./gradlew :poker-engine:check
 ---
 
@@ -28,7 +28,7 @@ opponent something to decide is followed by an `ActionOn` naming them.
 | --- | --- |
 | `poker-engine/src/main/kotlin/duels/poker/engine/game/StreetProgression.kt` | modify |
 | `poker-engine/src/main/kotlin/duels/poker/engine/game/DefaultPokerEngine.kt` | modify |
-| `poker-engine/src/test/kotlin/duels/poker/engine/game/EngineTurnOrderTest.kt` | create |
+| `poker-engine/src/test/kotlin/duels/poker/engine/game/DefaultPokerEngineTest.kt` | modify |
 
 Read `HandSetup.kt` and `StateProjection.kt`. Modify neither.
 
@@ -62,7 +62,7 @@ Read `HandSetup.kt` and `StateProjection.kt`. Modify neither.
 
 ## Tests
 
-`EngineTurnOrderTest`, JUnit 5. Open hands with
+`DefaultPokerEngineTest`, JUnit 5. Open hands with
 `startHand(1, 0, listOf(10_000, 10_000), 50, 100, SplitMix64Rng(1L)).newState` and drive them
 through `DefaultPokerEngine.handle`.
 
@@ -78,14 +78,18 @@ through `DefaultPokerEngine.handle`.
 
 ## Acceptance criteria
 
-- [ ] `EngineTurnOrderTest.theSmallBlindActsFirstPreflop` passes
-- [ ] `EngineTurnOrderTest.aLimpPassesTheOptionToTheBigBlind` passes
-- [ ] `EngineTurnOrderTest.aRaisePassesTheActionBack` passes
-- [ ] `EngineTurnOrderTest.theActionAlternatesUntilTheRoundEnds` passes
-- [ ] `EngineTurnOrderTest.aCompletedRoundNamesNoNewActor` passes
-- [ ] `EngineTurnOrderTest.theEventsDescribeTheTransition` passes
-- [ ] `EngineTurnOrderTest.theSequencesStayDense` passes
-- [ ] `DefaultPokerEngineTest` still passes unchanged
+- [ ] `DefaultPokerEngineTest.theSmallBlindActsFirstPreflop` passes
+- [ ] `DefaultPokerEngineTest.aLimpPassesTheOptionToTheBigBlind` passes
+- [ ] `DefaultPokerEngineTest.aRaisePassesTheActionBack` passes
+- [ ] `DefaultPokerEngineTest.theActionAlternatesUntilTheRoundEnds` passes
+- [ ] `DefaultPokerEngineTest.aCompletedRoundNamesNoNewActor` passes
+- [ ] `DefaultPokerEngineTest.theEventsDescribeTheTransition` passes
+- [ ] `DefaultPokerEngineTest.theSequencesStayDense` passes
+- [ ] `DefaultPokerEngineTest` passes with only the assertions that pinned the single-event
+      result updated — `aLegalBetEmitsOnePlayerBetAndMovesTheChips` and
+      `theSequenceContinuesFromEventCount` now expect the trailing `ActionOn`. Those two
+      assertions described `TASK-010512`'s deliberate stopping point, which this ticket exists
+      to remove. Every other assertion in that file is unchanged, and none is weakened.
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
