@@ -3,7 +3,7 @@ schema: 2
 id: TASK-010620
 title: A dealt street clears the last aggressor, a closed round does not
 type: task
-status: backlog
+status: done
 parent: STORY-0106
 module: poker-engine
 estimate: XS
