@@ -1,5 +1,9 @@
 package duels.poker.server.protocol
 
+import duels.poker.engine.game.GameEvent
+import duels.poker.engine.game.LegalActions
+import duels.poker.engine.game.PlayerView
+import duels.poker.engine.game.Rejection
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -38,4 +42,59 @@ public sealed interface ServerMessage {
     @Serializable
     @SerialName("Failure")
     public data class Failure(val error: ProtocolError) : ServerMessage
+
+    /**
+     * The current state of the hand the recipient is entitled to see.
+     *
+     * The only state-carrying message; its only field is a `PlayerView`. Redaction lives in
+     * the engine's projection layer, so transport has nothing left to filter and no way to
+     * widen what is sent.
+     *
+     * @property view The hand state from the recipient's perspective.
+     */
+    @Serializable
+    @SerialName("Snapshot")
+    public data class Snapshot(val view: PlayerView) : ServerMessage
+
+    /**
+     * Facts that just happened in the duel.
+     *
+     * Carries whatever `visibleTo(events, seat)` returned for that recipient — this type
+     * does no filtering of its own and its caller must ensure the result is already filtered.
+     *
+     * @property events The events the recipient is entitled to see.
+     */
+    @Serializable
+    @SerialName("Events")
+    public data class Events(val events: List<GameEvent>) : ServerMessage
+
+    /**
+     * The recipient's turn to act and the legal actions they may take.
+     *
+     * Repeats `handNumber` and `actionSequence` because they are exactly what a
+     * `ClientMessage.Act` must echo back.
+     *
+     * @property handNumber The 1-based hand index this action pertains to.
+     * @property actionSequence The event sequence number of the decision point.
+     * @property legalActions The actions this seat may take.
+     */
+    @Serializable
+    @SerialName("YourTurn")
+    public data class YourTurn(
+        val handNumber: Int,
+        val actionSequence: Int,
+        val legalActions: LegalActions,
+    ) : ServerMessage
+
+    /**
+     * An action the recipient attempted was illegal.
+     *
+     * Wraps the engine's own `Rejection`. The protocol invents no second vocabulary for
+     * "that action was illegal".
+     *
+     * @property rejection Why the attempted action failed.
+     */
+    @Serializable
+    @SerialName("Rejected")
+    public data class Rejected(val rejection: Rejection) : ServerMessage
 }
