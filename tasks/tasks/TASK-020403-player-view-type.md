@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020403
 title: The `PlayerView` type
 type: task
-status: backlog
+status: done
 parent: STORY-0204
 module: poker-engine
 estimate: S
