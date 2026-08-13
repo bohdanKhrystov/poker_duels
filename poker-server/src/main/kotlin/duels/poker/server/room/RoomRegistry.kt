@@ -186,6 +186,41 @@ public class RoomRegistry(
     }
 
     /**
+     * Record that [player]'s connection to this room is gone, starting their seat's disconnect
+     * grace window (`ADR-0013`).
+     *
+     * Applies [Room.disconnect] under that room's mutex, storing and returning the resulting
+     * room. The deadline is computed here, and nowhere else: `clock.nowMillis() +
+     * timeouts.disconnectGraceMillis` is the one call site that turns the configured window into
+     * an absolute instant — `Room` reads no clock of its own (`TASK-020805`), and the caller
+     * reporting the drop knows nothing of the configured window, so neither of them could compute
+     * it instead.
+     *
+     * [Room.seatOf] decides which seat [player] holds; a player this room has not seated leaves
+     * the room untouched and this returns `null`, the same idiom [offerRematch] uses for a
+     * refusal that carries no new room. A [RoomState.WAITING] room may take a disconnect too —
+     * seat 0 is always seated, so the call is legal even before a guest has joined; nothing acts
+     * on it yet, and the existing `WAITING` idle timeout still reaps such a room.
+     *
+     * @param code The room [player] disconnected from.
+     * @param player The player whose connection is gone.
+     * @return The room after the transition, with [player]'s seat counting down in
+     *   [Room.gracePeriods]; or `null` for a code with no live room, or for a player this room
+     *   has not seated.
+     */
+    public suspend fun disconnect(code: RoomCode, player: PlayerId): Room? {
+        return mutate(
+            code,
+            absent = { null },
+            block = { room ->
+                val seat = room.seatOf(player) ?: return@mutate Pair(null, null)
+                val disconnected = room.disconnect(seat, clock.nowMillis() + timeouts.disconnectGraceMillis)
+                Pair(disconnected, disconnected)
+            },
+        )
+    }
+
+    /**
      * Offer a rematch on this finished room.
      *
      * Applies [Room.offerRematch] under that room's mutex. The offer, decision and any write-back

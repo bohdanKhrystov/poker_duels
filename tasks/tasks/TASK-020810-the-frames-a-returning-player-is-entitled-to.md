@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020810
 title: The frames a returning player is entitled to, rebuilt through the projection layer
 type: task
-status: backlog
+status: ready
 parent: STORY-0208
 module: poker-server
 estimate: S
