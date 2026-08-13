@@ -1,16 +1,36 @@
 package duels.poker.server.e2e
 
+import duels.poker.engine.duel.DuelOutcome
+import duels.poker.engine.game.ActionType
+import duels.poker.engine.game.PlayerAction
+import duels.poker.engine.random.Rng
+import duels.poker.engine.random.SplitMix64Rng
+import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.CreateRoom
 import duels.poker.server.protocol.JoinRoom
 import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ServerMessage
+import duels.poker.server.protocol.protocolJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
+import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.decodeFromString
+import kotlin.time.Duration.Companion.seconds
 
 internal const val HOST_DEVICE: String = "e2e-host"
 internal const val GUEST_DEVICE: String = "e2e-guest"
+
+/**
+ * Seeds the single action policy [playToFinish] threads through the whole duel by default.
+ *
+ * `0x0B07_000000000001L` reaches `DuelFinished` in 21 `Act` frames against [HAND_SEED] and the
+ * shipped default duel format — comfortably under [playToFinish]'s default `maxActions` of 20,000.
+ */
+internal const val POLICY_SEED: Long = 0x0B07_000000000001L
 
 /**
  * A WebSocket client connected to the server.
@@ -89,4 +109,124 @@ internal suspend fun HttpClient.openSocketDuel(handSeed: Long = HAND_SEED): Sock
     guestClient.received.add(guestRoomJoined)
 
     return SocketDuel(roomCode, handSeed, listOf(hostClient, guestClient))
+}
+
+/** A [ServerMessage] read off one of a duel's two sockets, paired with the client it came from. */
+private data class ReceivedFrame(val client: SocketClient, val message: ServerMessage)
+
+/** Decodes this text frame as the [ServerMessage] it carries. */
+private fun Frame.decodeServerMessage(): ServerMessage {
+    val text = (this as Frame.Text).readText()
+    return protocolJson.decodeFromString(text)
+}
+
+/**
+ * Waits for the next frame from whichever of [clients]' sockets produces one first, decodes it,
+ * appends it to that client's [SocketClient.received], and returns both.
+ *
+ * Backed by [select] racing every socket's `incoming` channel, so the call suspends until the
+ * server actually sends something: no polling delay, no fixed drain window.
+ */
+private suspend fun nextFrame(clients: List<SocketClient>): ReceivedFrame {
+    val next =
+        select<ReceivedFrame> {
+            for (client in clients) {
+                client.session.incoming.onReceive { frame -> ReceivedFrame(client, frame.decodeServerMessage()) }
+            }
+        }
+    next.client.received += next.message
+    return next
+}
+
+/**
+ * Plays this duel to completion, seeing only what a client would see: it answers every
+ * `ServerMessage.YourTurn` addressed to a client on that same client's socket, and stops once
+ * both clients have received a `ServerMessage.DuelFinished`.
+ *
+ * The policy is uniform over `turn.legalActions`, mirroring `playDuel` (`TASK-020710`) line for
+ * line: one draw over the sorted legal action types, then, for `BET`/`RAISE`, a second draw over
+ * 2 choosing `minBetTo`/`minRaiseTo` on 0 and `allInTo` on 1. `poker-ai`'s `RandomBot` plays the
+ * same policy but cannot be called from here — its `choose` takes a `GameState`, which is exactly
+ * what a client must not hold — so this mirrors it rather than importing it, as `TASK-020710`
+ * already decided for the runner-level harness.
+ *
+ * A single [SplitMix64Rng] seeded with [policySeed] is threaded through the whole duel, and is
+ * drawn from only at the moment an `Act` is built and sent — never when the `YourTurn` that
+ * prompted it merely arrives — so that a decision point delivered twice still consumes exactly
+ * one draw.
+ *
+ * @param policySeed seeds the one action policy shared by both clients. Defaults to [POLICY_SEED].
+ * @param maxActions the ceiling on `Act` frames sent, guarding against a duel that never ends.
+ * @return the outcome both clients' `DuelFinished` frames agreed on.
+ * @throws AssertionError naming [SocketDuel.handSeed], [policySeed], a seat and a frame, if either
+ *   client is ever sent a `Rejected` or a `Failure`, if [maxActions] is exceeded, or if the two
+ *   clients' `DuelFinished` outcomes disagree.
+ */
+internal suspend fun SocketDuel.playToFinish(policySeed: Long = POLICY_SEED, maxActions: Int = 20_000): DuelOutcome {
+    fun reproducibleFailure(client: SocketClient, frame: ServerMessage, detail: String): AssertionError =
+        AssertionError("handSeed=$handSeed policySeed=$policySeed seat=${client.seat}: $detail, frame=$frame")
+
+    return withTimeout(60.seconds) {
+        var policyRng: Rng = SplitMix64Rng(policySeed)
+        var actions = 0
+        val outcomes = mutableMapOf<SocketClient, DuelOutcome>()
+
+        while (outcomes.size < clients.size) {
+            val (client, message) = nextFrame(clients)
+            when (message) {
+                is ServerMessage.YourTurn -> {
+                    if (actions >= maxActions) {
+                        throw reproducibleFailure(client, message, "exceeded maxActions ($maxActions)")
+                    }
+
+                    val turn = message
+                    val legal = turn.legalActions
+                    val types = legal.allowed.sorted()
+                    val typeDraw = policyRng.nextInt(types.size)
+                    policyRng = typeDraw.next
+                    val type = types[typeDraw.value]
+
+                    val action: PlayerAction =
+                        when (type) {
+                            ActionType.FOLD -> PlayerAction.Fold(legal.seat)
+                            ActionType.CHECK -> PlayerAction.Check(legal.seat)
+                            ActionType.CALL -> PlayerAction.Call(legal.seat)
+                            ActionType.ALL_IN -> PlayerAction.AllIn(legal.seat)
+                            ActionType.BET -> {
+                                val amountDraw = policyRng.nextInt(2)
+                                policyRng = amountDraw.next
+                                val to = if (amountDraw.value == 0) legal.minBetTo else legal.allInTo
+                                PlayerAction.Bet(legal.seat, to)
+                            }
+                            ActionType.RAISE -> {
+                                val amountDraw = policyRng.nextInt(2)
+                                policyRng = amountDraw.next
+                                val to = if (amountDraw.value == 0) legal.minRaiseTo else legal.allInTo
+                                PlayerAction.Raise(legal.seat, to)
+                            }
+                        }
+
+                    client.session.send(
+                        Frame.Text(ProtocolCodec.encode(Act(turn.handNumber, turn.actionSequence, action))),
+                    )
+                    actions++
+                }
+
+                is ServerMessage.Rejected -> throw reproducibleFailure(client, message, "action rejected")
+                is ServerMessage.Failure -> throw reproducibleFailure(client, message, "connection refused")
+                is ServerMessage.DuelFinished -> outcomes[client] = message.outcome
+                is ServerMessage.Welcome,
+                is ServerMessage.Snapshot,
+                is ServerMessage.RoomJoined,
+                is ServerMessage.Events,
+                -> Unit
+            }
+        }
+
+        val outcomeValues = outcomes.values.toSet()
+        check(outcomeValues.size == 1) {
+            "handSeed=$handSeed policySeed=$policySeed: clients disagree on the outcome: $outcomeValues"
+        }
+        outcomeValues.single()
+    }
 }
