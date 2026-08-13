@@ -58,7 +58,7 @@ Each duel summary in the array contains:
 | opponentPlayerId | string | The player ID of the opponent (not the device ID — see `DEC-016` for the question of displaying opponent names) |
 | outcome | string | Outcome from the requesting player's perspective: `"WON"`, `"LOST"`, or `"DREW"`. A drawn duel appears in the list with `coinDelta` 0 and outcome `DREW` per `ADR-0015`. |
 | coinDelta | number | The change in coins from this duel. A signed integer: the winner gains one, the loser loses one, a draw changes nothing. |
-| handsPlayed | number or null | The number of hands played in the duel. Currently always `null` — `DEC-014` is open and the duel table has no such column. This nullable field allows the answer to `DEC-014` to be additive either way. |
+| handsPlayed | number | The number of hands played in the duel. |
 | finishedAt | string | ISO-8601 instant when the duel finished, as text in UTC (produced by `Instant.toString()`) |
 
 ## Protocol Errors
