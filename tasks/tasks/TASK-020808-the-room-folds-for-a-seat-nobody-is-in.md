@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020808
 title: The room folds for a seat nobody is sitting in, so the duel never stalls
 type: task
-status: backlog
+status: ready
 parent: STORY-0208
 module: poker-server
 estimate: S

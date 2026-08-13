@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020807
 title: A paused room refuses an action and moves nothing
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: S
