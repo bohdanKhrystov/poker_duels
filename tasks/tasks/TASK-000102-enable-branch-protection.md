@@ -2,7 +2,7 @@
 id: TASK-000102
 title: Enable branch protection on main and develop
 type: task
-status: dropped
+status: done
 parent: STORY-0001
 estimate: S
 labels: [process, meta, ci]
@@ -102,7 +102,7 @@ with findings fixed or answered, CI green, status `done`, `BOARD.md` updated, an
 
 ---
 
-## Dropped — the owner's call, 2026-08-13
+## Dropped, then done — both on 2026-08-13
 
 Branch protection needs a paid plan on a private repository, or a public one. Asked which; the
 answer was **neither — leave it as convention and close the ticket**.
@@ -113,3 +113,27 @@ commits to `develop` directly. Nothing stops a careless push. That is now a know
 rather than an open ticket pretending otherwise.
 
 Reopen this if the repository goes public, or if a push to `develop` ever actually happens.
+
+## Reopened and closed the same day
+
+The ticket said what would reopen it: *"the repository going public."* Asked whether Actions would
+be free there, the owner's answer was to make it public. It is, so protection came free with it.
+
+Before flipping, the whole history was scanned for secret-shaped strings — tokens, private keys,
+non-placeholder passwords — and found clean. The only credentials in the tree are `poker`/`poker`
+against `localhost` in `docker-compose.yml` and `application.conf`: local development defaults, not
+secrets. `.gitignore` already covered `.env`, `local.properties`, `secrets/` and
+`.claude/settings.local.json`.
+
+`develop` is now protected:
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Required checks | `check`, `lint backlog` | the two CI jobs; a red build cannot land |
+| `strict` | `false` | a PR need not be rebased onto the newest `develop` first — true would force a rebase and a full CI re-run on every PR in a sequential chain, doubling wall-clock for no safety gained |
+| Pull request required | yes | no direct commits to `develop` |
+| Required approvals | **0** | 1 would deadlock the agent run: an agent cannot approve its own PR and there is no second reviewer |
+| `enforce_admins` | `false` | the owner can still bypass in an emergency |
+| Force pushes, deletions | denied | `develop`'s history is now append-only |
+
+The branch model stopped being a convention and became a rule.
