@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020731
 title: CreateRoom and JoinRoom reach the registry, and the opening hand reaches both seats
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S

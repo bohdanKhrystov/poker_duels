@@ -9,6 +9,9 @@ import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.handshake
+import duels.poker.server.room.JoinResult
+import duels.poker.server.room.RoomCode
+import duels.poker.server.room.RoomRefusal
 import duels.poker.server.session.ConnectionWriter
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
@@ -106,11 +109,21 @@ private suspend fun DefaultWebSocketServerSession.serve(
         is ServerMessage.Welcome -> {
             val player = deps.directory.resolve(deviceId)
             val session = Session(SessionRegistry.newSessionId(), player)
+            val room = RoomMembership()
             val eviction = seats.adopt(deps.sessions, session)
             deps.connections.register(player.id, writer)
             try {
                 writer.send(ProtocolCodec.encode(message))
-                serveUntilEvictedOrClosed(writer, pump, eviction, deps.maxFrameLength, deps.maxFrameNestingDepth)
+                serveUntilEvictedOrClosed(
+                    deps,
+                    session,
+                    room,
+                    writer,
+                    pump,
+                    eviction,
+                    deps.maxFrameLength,
+                    deps.maxFrameNestingDepth,
+                )
             } finally {
                 deps.sessions.remove(session.id)
                 seats.forget(session.id)
@@ -145,8 +158,15 @@ private suspend fun DefaultWebSocketServerSession.serve(
  * eviction the connection closes itself with [SEAT_ADOPTED], in the same
  * close-writer-then-join-then-close-frame order as [refuseHandshake], so the buffered close is
  * not raced by the socket tearing down first.
+ *
+ * [deps], [session] and [room] are passed through unchanged into every [ConnectionWriter.replyTo]
+ * call this loop makes — [room] is this connection's own mutable record of which room, if any, it
+ * has entered, updated there as the connection acts on it.
  */
 private suspend fun DefaultWebSocketServerSession.serveUntilEvictedOrClosed(
+    deps: SocketDependencies,
+    session: Session,
+    room: RoomMembership,
     writer: ConnectionWriter,
     pump: Job,
     eviction: Deferred<Unit>,
@@ -168,7 +188,7 @@ private suspend fun DefaultWebSocketServerSession.serveUntilEvictedOrClosed(
                     result.exceptionOrNull()?.let { throw it }
                     return
                 }
-                writer.replyTo(result.getOrThrow(), maxFrameLength, maxFrameNestingDepth)
+                writer.replyTo(result.getOrThrow(), maxFrameLength, maxFrameNestingDepth, deps, session, room)
             }
 
             LoopEvent.Evicted -> {
@@ -308,31 +328,114 @@ private suspend fun DefaultWebSocketServerSession.refuseHandshake(
 }
 
 /**
- * Answers one post-handshake [frame] with a [ServerMessage.Failure] — this socket has nothing
- * else to say yet, since `STORY-0207` is the story that puts a duel behind it.
+ * The room, if any, this connection currently occupies.
+ *
+ * One instance per connection: created in [serve] and threaded through
+ * [serveUntilEvictedOrClosed] into [ConnectionWriter.replyTo]. [code] is a plain `var`, not
+ * behind a lock, because every read and write of it happens inside the single coroutine
+ * [serveUntilEvictedOrClosed] runs in — one connection's frames are already processed one at a
+ * time, never concurrently — unlike [SeatOwnership], which is shared by every connection an
+ * [Application] accepts and needs its own locking for exactly that reason.
+ */
+private class RoomMembership {
+    /** The code of the room this connection has entered, or `null` before it has entered one. */
+    var code: RoomCode? = null
+}
+
+/**
+ * Answers one post-handshake [frame].
  *
  * A second [Hello] is [ProtocolError.MALFORMED_MESSAGE]: the handshake happened once and is not
- * repeatable. An [Act] is [ProtocolError.NOT_IN_DUEL] — this socket's session is in no duel, and
- * saying so is the whole answer. The `when` over [duels.poker.server.protocol.ClientMessage] has
- * no `else`, so a new message type stops this function compiling instead of silently falling
- * through it.
+ * repeatable. An [Act] is [ProtocolError.NOT_IN_DUEL] — routing it into a live duel is
+ * `TASK-020715`. [CreateRoom] and [JoinRoom] open and enter a room through
+ * [SocketDependencies.rooms] — see [replyToCreateRoom] and [replyToJoinRoom]. The `when` over
+ * [duels.poker.server.protocol.ClientMessage] has no `else`, so a new message type stops this
+ * function compiling instead of silently falling through it.
  *
  * [maxFrameLength] and [maxFrameNestingDepth] are the operator's configured limits, not the
- * codec's own defaults — see [SocketDependencies].
+ * codec's own defaults — see [SocketDependencies]. [session] identifies this connection's player;
+ * [room] is this connection's own record of which room, if any, it has entered.
  */
-private suspend fun ConnectionWriter.replyTo(frame: Frame, maxFrameLength: Int, maxFrameNestingDepth: Int) {
+private suspend fun ConnectionWriter.replyTo(
+    frame: Frame,
+    maxFrameLength: Int,
+    maxFrameNestingDepth: Int,
+    deps: SocketDependencies,
+    session: Session,
+    room: RoomMembership,
+) {
     val text = (frame as? Frame.Text)?.readText() ?: run {
         send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)))
         return
     }
-    val failure = when (val decoded = ProtocolCodec.decodeClient(text, maxFrameLength, maxFrameNestingDepth)) {
-        is Decoded.Refused -> ServerMessage.Failure(decoded.error)
-        is Decoded.Message -> when (decoded.message) {
-            is Hello -> ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)
-            is Act -> ServerMessage.Failure(ProtocolError.NOT_IN_DUEL)
-            is CreateRoom -> ServerMessage.Failure(ProtocolError.NOT_IN_DUEL) // Provisional: no RoomRegistry yet — TASK-020731 replaces this
-            is JoinRoom -> ServerMessage.Failure(ProtocolError.NOT_IN_DUEL) // Provisional: no RoomRegistry yet — TASK-020731 replaces this
+    when (val decoded = ProtocolCodec.decodeClient(text, maxFrameLength, maxFrameNestingDepth)) {
+        is Decoded.Refused -> send(ProtocolCodec.encode(ServerMessage.Failure(decoded.error)))
+        is Decoded.Message -> when (val message = decoded.message) {
+            is Hello -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)))
+            is Act -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.NOT_IN_DUEL)))
+            is CreateRoom -> replyToCreateRoom(deps, session, room)
+            is JoinRoom -> replyToJoinRoom(message.code, deps, session, room)
         }
     }
-    send(ProtocolCodec.encode(failure))
+}
+
+/**
+ * Opens a fresh room for [session]'s player and answers with the seat the host always holds.
+ *
+ * [Room.open] always seats the host in seat 0 — see [duels.poker.server.room.Room] — so this
+ * never needs to ask the freshly created room what seat it assigned.
+ */
+private suspend fun ConnectionWriter.replyToCreateRoom(
+    deps: SocketDependencies,
+    session: Session,
+    room: RoomMembership,
+) {
+    val created = deps.rooms.create(session.player.id)
+    room.code = created.code
+    send(ProtocolCodec.encode(ServerMessage.RoomJoined(created.code.value, 0)))
+}
+
+/**
+ * Enters, for [session]'s player, the room named by [code].
+ *
+ * A [code] that fails to parse is refused exactly as a well-shaped one naming no live room:
+ * [RoomCode.parse] returning `null` and [RoomRefusal.UNKNOWN_ROOM] answer identically, or the
+ * difference would hand an attacker a code-shape oracle.
+ *
+ * A player already seated in the room they asked to join is not an error:
+ * [RoomRefusal.ALREADY_SEATED] answers exactly as a fresh seating would, with the seat they
+ * already hold, so a socket that reconnects or that opened the room out of band still learns
+ * where it sits. [duels.poker.server.room.JoinResult.Refused] carries no room, so that seat is
+ * derived fresh from [SocketDependencies.rooms] rather than assumed — never a stale claim about a
+ * room the registry has since reaped.
+ */
+private suspend fun ConnectionWriter.replyToJoinRoom(
+    code: String,
+    deps: SocketDependencies,
+    session: Session,
+    room: RoomMembership,
+) {
+    val parsed = RoomCode.parse(code) ?: run {
+        send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+        return
+    }
+    when (val result = deps.rooms.join(parsed, session.player.id)) {
+        is JoinResult.Seated -> {
+            room.code = parsed
+            val seat = result.room.seatOf(session.player.id)!!
+            send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, seat)))
+            deliver(result.outbound, result.room, deps.connections)
+        }
+
+        is JoinResult.Refused -> when (result.reason) {
+            RoomRefusal.ALREADY_SEATED -> {
+                room.code = parsed
+                val seat = deps.rooms.get(parsed)?.seatOf(session.player.id)!!
+                send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, seat)))
+            }
+
+            RoomRefusal.UNKNOWN_ROOM -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+            RoomRefusal.ROOM_FULL -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.ROOM_FULL)))
+        }
+    }
 }
