@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021112
 title: Document both read endpoints in docs/protocol.md
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
