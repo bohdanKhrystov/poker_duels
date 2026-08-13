@@ -159,6 +159,129 @@ internal class RoomDuelTest {
     }
 
     @Test
+    fun afailingSinkLeavesTheDuelRecordableAgain() = runBlocking {
+        val recorded = CopyOnWriteArrayList<DuelResult>()
+        var attempts = 0
+        val sink = DuelResultSink {
+            attempts++
+            if (attempts == 1) throw RuntimeException("store unavailable")
+            recorded.add(it)
+        }
+        val registry = scriptedRegistry(sink = sink)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val oneHand = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
+        val room = registry.create(host, oneHand)
+        val seated = (registry.join(room.code, guest) as JoinResult.Seated).room
+        val duelIdAtStart = seated.duelId
+        val hand = seated.runner!!.hand!!
+        val toActSeat = hand.state.seatToAct!!
+        val fold = Act(
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            action = PlayerAction.Fold(toActSeat),
+        )
+
+        var threw = false
+        try {
+            registry.act(room.code) { r -> r.act(toActSeat, fold, fixedSeeds) }
+        } catch (expected: RuntimeException) {
+            threw = true
+        }
+
+        // A sink failure must not strand the room: it stays PLAYING, with nothing recorded yet,
+        // so the very same finishing frame can be replayed.
+        assertTrue(threw)
+        assertEquals(0, recorded.size)
+        assertEquals(RoomState.PLAYING, registry.get(room.code)!!.state)
+        assertEquals(duelIdAtStart, registry.get(room.code)!!.duelId)
+
+        val retryStep = registry.act(room.code) { r -> r.act(toActSeat, fold, fixedSeeds) }
+
+        assertNotNull(retryStep)
+        assertEquals(1, recorded.size)
+        assertEquals(RoomState.FINISHED, registry.get(room.code)!!.state)
+        assertEquals(duelIdAtStart, registry.get(room.code)!!.duelId)
+    }
+
+    @Test
+    fun aretriedFinishRecordsUnderTheSameDuelId() = runBlocking {
+        var code: RoomCode? = null
+        lateinit var registry: RoomRegistry
+        val seenDuelIds = CopyOnWriteArrayList<UUID>()
+        var attempts = 0
+        val sink = DuelResultSink {
+            attempts++
+            seenDuelIds.add(checkNotNull(registry.get(checkNotNull(code))?.duelId) { "duelId must be set while recording" })
+            if (attempts == 1) throw RuntimeException("store unavailable")
+        }
+        registry = scriptedRegistry(sink = sink)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val oneHand = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
+        val room = registry.create(host, oneHand)
+        code = room.code
+        val seated = (registry.join(room.code, guest) as JoinResult.Seated).room
+        val hand = seated.runner!!.hand!!
+        val toActSeat = hand.state.seatToAct!!
+        val fold = Act(
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            action = PlayerAction.Fold(toActSeat),
+        )
+
+        var threw = false
+        try {
+            registry.act(room.code) { r -> r.act(toActSeat, fold, fixedSeeds) }
+        } catch (expected: RuntimeException) {
+            threw = true
+        }
+        assertTrue(threw)
+
+        registry.act(room.code) { r -> r.act(toActSeat, fold, fixedSeeds) }
+
+        assertEquals(2, seenDuelIds.size)
+        assertEquals(seenDuelIds[0], seenDuelIds[1])
+    }
+
+    @Test
+    @Timeout(60)
+    fun concurrentFinishingFramesRecordExactlyOnce() = runBlocking(Dispatchers.Default) {
+        val recorded = CopyOnWriteArrayList<DuelResult>()
+        val registry = scriptedRegistry(sink = DuelResultSink { recorded.add(it) })
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val oneHand = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
+        val room = registry.create(host, oneHand)
+        val seated = (registry.join(room.code, guest) as JoinResult.Seated).room
+        val hand = seated.runner!!.hand!!
+        val toActSeat = hand.state.seatToAct!!
+        val fold = Act(
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            action = PlayerAction.Fold(toActSeat),
+        )
+        val gate = CompletableDeferred<Unit>()
+        val callers = 50
+
+        // The existing `concurrentActsOnOneRoomNeverInterleave` test races a mid-hand action and
+        // only retries the finish sequentially; this races the finishing frame itself on real
+        // threads, which is the case the mutex's exactly-once guarantee has never been checked
+        // against.
+        val jobs = (0 until callers).map {
+            async {
+                gate.await()
+                registry.act(room.code) { r -> r.act(toActSeat, fold, fixedSeeds) }
+            }
+        }
+        gate.complete(Unit)
+        jobs.awaitAll()
+
+        assertEquals(1, recorded.size)
+        assertEquals(RoomState.FINISHED, registry.get(room.code)!!.state)
+    }
+
+    @Test
     fun aRematchStartsAFreshDuel() = runBlocking {
         val registry = scriptedRegistry()
         val host = newPlayerId()

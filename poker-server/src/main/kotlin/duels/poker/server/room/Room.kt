@@ -7,6 +7,7 @@ import duels.poker.server.duel.DuelStep
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.protocol.Act
 import duels.poker.server.session.PlayerId
+import java.util.UUID
 import duels.poker.server.duel.act as advanceDuel
 
 /**
@@ -51,6 +52,12 @@ public enum class RoomState {
  *   half of it. It duplicates what [match] already says about the format and the opening
  *   button — a known cost of keeping the duel in one lock and one type rather than a second
  *   structure (`ADR-0016`).
+ * @property duelId the stable identity of the duel this room currently hosts or last hosted, or
+ *   `null` before one has started. Minted exactly once, alongside [runner], by the same
+ *   `RoomRegistry` critical section that draws the opening hand seed — never re-minted on a
+ *   retry — so that every attempt to record the same duel, including a retried finishing frame,
+ *   carries the same id. That is what lets a persistence layer keyed on this id treat a repeat
+ *   attempt as a no-op instead of a second row (`TASK-021009`).
  */
 public data class Room(
     val code: RoomCode,
@@ -63,6 +70,7 @@ public data class Room(
     val rematchOffers: Set<PlayerId>,
     val lastActivityAt: Long,
     val runner: DuelRunner? = null,
+    val duelId: UUID? = null,
 ) {
     init {
         require(guest == null || guest != host) { "the guest must not be the host" }
@@ -81,6 +89,9 @@ public data class Room(
         }
         require(openingButtonSeat in 0..1) { "openingButtonSeat must be 0 or 1, was $openingButtonSeat" }
         require(lastActivityAt >= 0) { "lastActivityAt must not be negative, was $lastActivityAt" }
+        require((runner == null) == (duelId == null)) {
+            "duelId must be present exactly when runner is present"
+        }
     }
 
     /** The host, plus the guest if seated. */
@@ -155,6 +166,26 @@ public data class Room(
             state = RoomState.FINISHED,
             lastActivityAt = now,
         )
+    }
+
+    /**
+     * Undo [finish] when recording its result failed.
+     *
+     * Transitions a [RoomState.FINISHED] room back to [RoomState.PLAYING], leaving [runner],
+     * [duelId] and every other field untouched — including a [runner] that already carries an
+     * outcome. That is deliberate: a room reverted this way still refuses a genuinely new frame
+     * the same way a live one would not, but it accepts a replay of the very frame that finished
+     * the duel, which is the whole point — a lost result is unrecoverable, so an unrecorded
+     * finish must stay replayable rather than stick as [RoomState.FINISHED] forever. Calling this
+     * on any room that is not [RoomState.FINISHED] is a server bug and throws
+     * [IllegalStateException].
+     *
+     * @return this room in state [RoomState.PLAYING].
+     * @throws IllegalStateException if [state] is not [RoomState.FINISHED].
+     */
+    public fun unfinish(): Room {
+        check(state == RoomState.FINISHED) { "can only unfinish a FINISHED room, not $state" }
+        return copy(state = RoomState.PLAYING)
     }
 
     /**

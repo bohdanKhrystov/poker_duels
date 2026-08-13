@@ -11,6 +11,7 @@ import duels.poker.server.session.PlayerId
 import duels.poker.server.time.ServerClock
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -201,11 +202,21 @@ public class RoomRegistry(
      * supplies the lock and the write-back.
      *
      * When [step] returns a step whose runner has finished, the room is moved to
-     * [RoomState.FINISHED] and [DuelResultSink.record] is called exactly once — after this
-     * method's lock is released, so a slow store never holds up another action on this room
-     * (`ADR-0016`). Exactly once, because the write-back inside the lock is what moves the room
-     * past [RoomState.PLAYING]: the next call, from a retry or a rematch, finds a room [Room.act]
-     * itself refuses to move, and [step] never runs again for this duel.
+     * [RoomState.FINISHED] inside this call's lock — that write-back is what makes concurrent
+     * finishing frames exactly-once: it is the same claim [Room.act] itself already refuses to
+     * hand out twice, so a second racer's frame finds a room that is no longer [RoomState.PLAYING]
+     * and never reaches [step] a second time for this duel. [DuelResultSink.record] is then called
+     * once, outside this method's lock so a slow store never holds up another action on this room
+     * (`ADR-0016`).
+     *
+     * A claim that can never be given back is today's bug: if [DuelResultSink.record] throws, the
+     * write-back above already happened, so nothing else would ever call it again for this duel.
+     * This method undoes that claim — moving the room from [RoomState.FINISHED] back to
+     * [RoomState.PLAYING] via [Room.unfinish] — before letting the exception propagate, so the
+     * very frame that finished the duel is accepted again by a later call. A duplicate recording
+     * attempt that follows is absorbed by [Room.duelId], which does not change across the retry;
+     * a lost result is unrecoverable. Only one of those two mistakes is one this method can undo,
+     * which is why it is the one the ordering favors.
      *
      * @param code The room to act in.
      * @param step Computes the next duel step from the room's current state; typically a call to
@@ -231,25 +242,54 @@ public class RoomRegistry(
 
         val seats = finishedSeats
         if (result != null && seats != null) {
-            sink.record(DuelResult(checkNotNull(result.runner.outcome), seats, result.runner.log))
+            try {
+                sink.record(DuelResult(checkNotNull(result.runner.outcome), seats, result.runner.log))
+            } catch (failure: Throwable) {
+                unclaim(code)
+                throw failure
+            }
         }
         return result
     }
 
     /**
-     * Start a fresh duel for [room] and attach it, drawing the opening hand's seed from [seeds].
+     * Give back the finishing claim [act] took when [DuelResultSink.record] failed to honor it.
+     *
+     * Moves the room at [code] from [RoomState.FINISHED] back to [RoomState.PLAYING] via
+     * [Room.unfinish], under the same [mutate] critical section every other write-back in this
+     * class uses. A no-op if the room is no longer [RoomState.FINISHED] — reaped, abandoned, or
+     * already recovered by another call — since there is then nothing left to give back.
+     *
+     * @param code The room whose claim to give back.
+     */
+    private suspend fun unclaim(code: RoomCode) {
+        mutate(
+            code,
+            absent = {},
+            block = { room ->
+                if (room.state == RoomState.FINISHED) Pair(room.unfinish(), Unit) else Pair(null, Unit)
+            },
+        )
+    }
+
+    /**
+     * Start a fresh duel for [room] and attach it, drawing the opening hand's seed from [seeds]
+     * and minting the duel's stable id.
      *
      * Shared by [join] and [offerRematch]: both seat a room into [RoomState.PLAYING] with a fresh
      * [duels.poker.server.duel.MatchState] and both need the runner that plays it, drawn under
-     * the same lock as the seating so the two never disagree about which duel is live.
+     * the same lock as the seating so the two never disagree about which duel is live. [Room.duelId]
+     * is minted here, once, for the same reason: every later attempt to record this duel — including
+     * a retried finishing frame — reads it back off the room rather than inventing a fresh one, so a
+     * retry and its original attempt agree on the id a persistence layer keys idempotency on.
      *
      * @param room The room whose match was just (re)started; its [Room.format] and
      *   [Room.openingButtonSeat] configure the new duel.
-     * @return [room] with a freshly started [Room.runner] attached.
+     * @return [room] with a freshly started [Room.runner] and a freshly minted [Room.duelId] attached.
      */
     private fun withFreshRunner(room: Room): Room {
         val started = startDuel(room.format, room.openingButtonSeat, seeds.newHandSeed())
-        return room.copy(runner = started.runner)
+        return room.copy(runner = started.runner, duelId = UUID.randomUUID())
     }
 
     /**
