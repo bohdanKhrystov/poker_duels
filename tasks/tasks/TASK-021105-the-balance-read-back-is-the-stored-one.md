@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021105
 title: Prove the balance read back is the one the duels wrote, minus one included
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: XS
