@@ -41,7 +41,7 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | --- | --- | --- |
 | [TASK-060101](../tasks/TASK-060101-design-token-sheet.md) | The canonical design token sheet | done |
 | [TASK-060102](../tasks/TASK-060102-colors-preview-card.md) | The Colors preview card | done |
-| [TASK-060103](../tasks/TASK-060103-type-preview-card.md) | The Type preview card | ready |
+| [TASK-060103](../tasks/TASK-060103-type-preview-card.md) | The Type preview card | done |
 | [TASK-060104](../tasks/TASK-060104-spacing-preview-card.md) | The Spacing preview card | ready |
 | [TASK-060105](../tasks/TASK-060105-design-directory-readme.md) | The design directory README and sync procedure | done |
 

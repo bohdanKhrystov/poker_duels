@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060103
 title: The Type preview card
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
@@ -15,7 +15,7 @@ depends_on: [TASK-060101]
 verify:
   - 'head -1 design/tokens/type.html | grep -q "<!-- @dsCard group=\"Type\" -->"'
   - grep -q '<title>' design/tokens/type.html
-  - grep -q -- '--pd-fs-' design/tokens/type.html
+  - for t in fs-micro fs-small fs-body fs-large fs-title fs-display fs-hero font-ui font-mono weight-regular weight-medium weight-bold lh-tight lh-body track-caps; do grep -q -- "--pd-$t" design/tokens/type.html || exit 1; done
   - grep -q 'tabular-nums' design/tokens/type.html
   - '! grep -q "http" design/tokens/type.html'
 ---

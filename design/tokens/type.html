@@ -1,0 +1,118 @@
+<!-- @dsCard group="Type" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Type — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent: #4d8bc9; --pd-warn: #c99a4a;
+    --pd-card-face: #f3f0e9; --pd-suit-red: #bf3b30; --pd-suit-black: #26231f;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem; --pd-fs-large: 1.125rem;
+    --pd-fs-title: 1.375rem; --pd-fs-display: 1.875rem; --pd-fs-hero: 2.5rem;
+    --pd-weight-regular: 400; --pd-weight-medium: 500; --pd-weight-bold: 700;
+    --pd-lh-tight: 1.15; --pd-lh-body: 1.5; --pd-track-caps: 0.08em;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: var(--pd-fs-body); line-height: var(--pd-lh-body); padding: 32px;
+    -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: var(--pd-fs-micro); font-weight: var(--pd-weight-medium); letter-spacing: var(--pd-track-caps);
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: 8px; }
+  h1 { font-size: var(--pd-fs-display); line-height: var(--pd-lh-tight); font-weight: var(--pd-weight-bold); }
+  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  h2 { font-size: var(--pd-fs-micro); letter-spacing: var(--pd-track-caps);
+    text-transform: uppercase; color: var(--pd-text-muted); font-weight: 500; margin: 40px 0 4px; }
+
+  .ladder { border-top: 1px solid var(--pd-hairline); }
+  .step { display: grid; grid-template-columns: minmax(120px, 220px) minmax(0, 1fr); gap: 16px; align-items: baseline;
+    padding: 16px 0; border-bottom: 1px solid var(--pd-hairline); }
+  .tok { font-family: var(--pd-font-mono); font-size: 12px; color: var(--pd-text-muted); }
+  .tok small { display: block; color: var(--pd-text-faint); font-size: 11px; margin-top: 2px; }
+  .sample { line-height: var(--pd-lh-tight); }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px; margin-top: 12px; }
+  .panel { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: 8px; padding: 16px; }
+  .panel h3 { font-size: var(--pd-fs-small); font-weight: var(--pd-weight-medium); color: var(--pd-text-muted);
+    margin-bottom: 10px; }
+  .num { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  .numcol { display: grid; grid-template-columns: max-content max-content; gap: 4px 18px;
+    justify-content: start; }
+  .numcol .v { text-align: right; }
+  .numcol .l { color: var(--pd-text-faint); font-size: var(--pd-fs-small); }
+  .ranks { background: var(--pd-card-face); color: var(--pd-suit-black); border-radius: 6px;
+    padding: 14px 18px; display: inline-flex; gap: 18px; font-size: 26px; font-weight: var(--pd-weight-bold); }
+  .ranks .red { color: var(--pd-suit-red); }
+  .foot { margin-top: 40px; font-size: var(--pd-fs-small); color: var(--pd-text-faint);
+    max-width: 60ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Foundations</p>
+  <h1>Type</h1>
+  <p class="lede">The native system stack — instant, quiet, at home on every platform, sized in rem so the browser preference scales it. One
+  sans for the interface, one mono for every number that moves. No webfont, ever.</p>
+
+  <h2>The ladder</h2>
+  <div class="ladder">
+    <div class="step"><div class="tok">--pd-fs-hero<small>2.5rem (40px) · 700 · tight</small></div>
+      <div class="sample" style="font-size:var(--pd-fs-hero);font-weight:var(--pd-weight-bold)">Victory</div></div>
+    <div class="step"><div class="tok">--pd-fs-display<small>1.875rem (30px) · 700 · tight</small></div>
+      <div class="sample" style="font-size:var(--pd-fs-display);font-weight:var(--pd-weight-bold)">Rematch?</div></div>
+    <div class="step"><div class="tok">--pd-fs-title<small>1.375rem (22px) · 700</small></div>
+      <div class="sample" style="font-size:var(--pd-fs-title);font-weight:var(--pd-weight-bold)">ImKate challenges you</div></div>
+    <div class="step"><div class="tok">--pd-fs-large<small>1.125rem (18px) · 500</small></div>
+      <div class="sample" style="font-size:var(--pd-fs-large);font-weight:var(--pd-weight-medium)">First to hold the whole stack wins the duel</div></div>
+    <div class="step"><div class="tok">--pd-fs-body<small>0.9375rem (15px) · 400 · 1.5</small></div>
+      <div class="sample" style="line-height:var(--pd-lh-body)">A duel is a match, not a hand. Luck decides a
+      hand; skill decides whether you come back tomorrow.</div></div>
+    <div class="step"><div class="tok">--pd-fs-small<small>0.8125rem (13px) · 400</small></div>
+      <div class="sample" style="font-size:var(--pd-fs-small);color:var(--pd-text-muted)">Hand 14 · Blinds 75/150 · Season 1</div></div>
+    <div class="step"><div class="tok">--pd-fs-micro<small>0.6875rem (11px) · 500 · caps, tracked</small></div>
+      <div class="sample" style="font-size:var(--pd-fs-micro);font-weight:500;letter-spacing:var(--pd-track-caps);text-transform:uppercase;color:var(--pd-accent)">Your turn</div></div>
+  </div>
+
+  <h2>Weights</h2>
+  <div class="ladder">
+    <div class="step"><div class="tok">--pd-weight-regular<small>400 — running text</small></div>
+      <div class="sample">Check, and see the turn for free.</div></div>
+    <div class="step"><div class="tok">--pd-weight-medium<small>500 — controls, labels</small></div>
+      <div class="sample" style="font-weight:var(--pd-weight-medium)">Offer a rematch</div></div>
+    <div class="step"><div class="tok">--pd-weight-bold<small>700 — headings, ranks</small></div>
+      <div class="sample" style="font-weight:var(--pd-weight-bold)">Two pair, aces and sevens</div></div>
+  </div>
+
+  <h2>Numbers &amp; ranks</h2>
+  <div class="cols">
+    <div class="panel">
+      <h3>Chips, pots and the clock — mono, <span class="num">tabular-nums</span>, aligned</h3>
+      <div class="numcol">
+        <span class="v num">75</span><span class="l">small blind</span>
+        <span class="v num">2,450</span><span class="l">the pot</span>
+        <span class="v num">10,000</span><span class="l">the starting stack</span>
+        <span class="v num" style="color:var(--pd-warn)">0:08</span><span class="l">clock running down</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Ranks — the UI face at 700, suits in their two colors</h3>
+      <span class="ranks"><span>A♠</span><span class="red">K♥</span><span class="red">Q♦</span><span>J♣</span></span>
+    </div>
+  </div>
+
+  <p class="foot">Why the system stack: it renders in zero milliseconds, it is the one face
+  the player's OS already tuned, and this product's voice is the quiet of Lichess — nothing
+  about it should feel typeset for a poster. If a wordmark ever wants its own face, that is a
+  graphic (STORY-0603), not a font.</p>
+</div>
+</body>
+</html>
