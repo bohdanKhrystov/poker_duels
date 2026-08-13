@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021102
 title: Read won, lost or drew off a stored coin delta
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: XS
