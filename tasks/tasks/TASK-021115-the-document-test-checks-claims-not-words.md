@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021115
 title: The protocol document says handsPlayed is null, and its test cannot tell
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
