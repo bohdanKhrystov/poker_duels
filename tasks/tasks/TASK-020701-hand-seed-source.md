@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020701
 title: Draw each hand's seed from an injected secure source, never from the engine Rng
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: XS
