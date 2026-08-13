@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020303
 title: Emit a TypeScript union for an enum and for a sealed hierarchy
 type: task
-status: backlog
+status: ready
 parent: STORY-0203
 module: poker-server
 estimate: S
