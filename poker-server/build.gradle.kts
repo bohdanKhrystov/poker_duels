@@ -38,3 +38,31 @@ tasks.register<JavaExec>("generateProtocolTypes") {
     mainClass.set("duels.poker.server.protocol.typescript.GenerateProtocolTypesKt")
     args(rootProject.file("web-client/src/protocol/protocol.gen.ts").absolutePath)
 }
+
+tasks.register<JavaExec>("verifyProtocolTypes") {
+    group = "protocol"
+    description = "Fails the build if web-client/src/protocol/protocol.gen.ts drifts from the protocol serial descriptors (ADR-0020)."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("duels.poker.server.protocol.typescript.GenerateProtocolTypesKt")
+
+    // Plain File locals, resolved at configuration time, so the doLast action below
+    // reaches back into neither Project nor this task — required for the configuration
+    // cache, and so this task regenerates into the build directory rather than touching
+    // the committed file it is comparing against.
+    val generatedFile = layout.buildDirectory.file("protocol/protocol.gen.ts").get().asFile
+    val committedFile = rootProject.file("web-client/src/protocol/protocol.gen.ts")
+    args(generatedFile.absolutePath)
+
+    doLast {
+        if (!generatedFile.readBytes().contentEquals(committedFile.readBytes())) {
+            throw GradleException(
+                "web-client/src/protocol/protocol.gen.ts is out of date. " +
+                    "Run ./gradlew :poker-server:generateProtocolTypes and commit the result.",
+            )
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn("verifyProtocolTypes")
+}

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020308
 title: verifyProtocolTypes byte-compares on every check
 type: task
-status: ready
+status: done
 parent: STORY-0203
 module: poker-server
 estimate: S
