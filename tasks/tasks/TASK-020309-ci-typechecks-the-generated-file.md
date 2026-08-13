@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020309
 title: CI typechecks the generated file under strict
 type: task
-status: backlog
+status: ready
 parent: STORY-0203
 module: poker-server
 estimate: XS
