@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021106
 title: Read a player's recent duels with their opponent in one query
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
