@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020734
 title: The rejoin path cannot assume the room survived its own refusal
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: XS
