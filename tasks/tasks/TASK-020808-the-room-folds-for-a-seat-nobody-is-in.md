@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020808
 title: The room folds for a seat nobody is sitting in, so the duel never stalls
 type: task
-status: blocked
+status: ready
 parent: STORY-0208
 module: poker-server
 estimate: S
@@ -105,7 +105,7 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 
 ---
 
-## Blocked on `TASK-020816` / `DEC-020`
+## Was blocked on `TASK-020816` / `DEC-020` — both landed
 
 The named trap — `isPaused` swallowing the absent-seat fold — **is solved**, and pinned by
 `foldAbsentSeatsIsNotSwallowedByARoomPausedForAnotherSeat`, which passes: `foldAbsentSeats` never
