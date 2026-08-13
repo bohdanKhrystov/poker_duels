@@ -42,7 +42,7 @@ class ServerMessageHandshakeTest {
     }
 
     @Test
-    fun theErrorSetIsTheDeclaredEight() {
+    fun theErrorSetIsExactlyWhatIsDeclared() {
         val expectedNames = listOf(
             "UNKNOWN_MESSAGE",
             "MALFORMED_MESSAGE",
@@ -51,6 +51,7 @@ class ServerMessageHandshakeTest {
             "UNKNOWN_ROOM",
             "ROOM_FULL",
             "NOT_IN_DUEL",
+            "DUEL_PAUSED",
             "FRAME_LIMIT_EXCEEDED",
         )
         val actualNames = ProtocolError.entries.map { it.name }
