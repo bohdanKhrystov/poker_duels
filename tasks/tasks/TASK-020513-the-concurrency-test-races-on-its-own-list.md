@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020513
 title: The concurrency test races on its own result list
 type: task
-status: backlog
+status: done
 parent: STORY-0205
 module: poker-server
 estimate: XS
