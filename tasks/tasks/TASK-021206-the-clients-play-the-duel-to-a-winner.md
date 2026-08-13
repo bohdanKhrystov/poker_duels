@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021206
 title: The two clients play a whole duel over the socket to a declared winner
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021207
 title: Neither client ever received the other's hole cards before the reveal
 type: task
-status: backlog
+status: ready
 parent: STORY-0212
 module: poker-server
 estimate: S
