@@ -35,11 +35,13 @@ them is close to done, because writing them earlier means rewriting them.
 | --- | --- | --- | --- |
 | **[STORY-0001](stories/STORY-0001-repository-and-ticket-system.md)** Repository, docs, tickets | | | ready |
 | | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **done** |
-| | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | blocked |
+| | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | ~~dropped~~ |
 | | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
 
-`TASK-000102` is blocked by GitHub: protection and rulesets both require a paid plan on a
-private repository. Until it clears, the branch model is convention, not enforcement.
+`TASK-000102` is **dropped**, by the owner's call on 2026-08-13. Protection and rulesets need a
+paid plan on a private repository, or a public one; neither is worth it yet. The branch model stays
+a convention the agents follow, not a rule GitHub enforces — an accepted risk rather than an open
+ticket pretending otherwise.
 
 ---
 
@@ -232,7 +234,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020211](tasks/TASK-020211-no-forbidden-payload.md) No seed goes out, no card comes in | S | **done** |
 | | [TASK-020212](tasks/TASK-020212-protocol-doc.md) docs/protocol.md and the test that keeps it honest | S | **done** |
 | | [TASK-020213](tasks/TASK-020213-frame-limits.md) A frame too large or too deeply nested is refused before parsing | S | **done** |
-| [STORY-0203](stories/STORY-0203-generated-typescript-protocol.md) | Generated TypeScript protocol types | blocked |
+| [STORY-0203](stories/STORY-0203-generated-typescript-protocol.md) | Generated TypeScript protocol types | ready |
 | **[STORY-0205](stories/STORY-0205-sessions-and-socket-lifecycle.md)** Sessions and the socket lifecycle — *schema 2* | | ready |
 | | [TASK-020501](tasks/TASK-020501-websocket-test-client.md) Put the WebSocket test client and coroutines on the poker-server classpath | S | **done** |
 | | [TASK-020502](tasks/TASK-020502-player-directory-port.md) Declare the PlayerDirectory port and an in-memory implementation for tests | S | **done** |
@@ -359,8 +361,13 @@ Stories are written; tickets come from `/plan-story` as each is reached.
 mucks). `DEC-005` → [`ADR-0009`](../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md)
 (match events are their own hierarchy). `DEC-006` →
 [`ADR-0010`](../docs/adr/ADR-0010-engine-takes-a-serialization-dependency.md) (the engine may
-depend on `kotlinx.serialization`; `checkNoDependencies` is narrowed, not deleted).
-| — | Public repo or GitHub Pro, to enable branch protection? | [`TASK-000102`](tasks/TASK-000102-enable-branch-protection.md) | before v0.1 |
+depend on `kotlinx.serialization`; `checkNoDependencies` is narrowed, not deleted). `DEC-007` →
+[`ADR-0020`](../docs/adr/ADR-0020-typescript-protocol-from-serial-descriptors.md) (an emitter we
+own over the serial descriptors), which unblocks `STORY-0203`.
+
+**Closed without an answer.** Branch protection: neither a public repo nor a paid plan; the branch
+model stays a convention. `TASK-000102` is dropped.
+
 
 ---
 
