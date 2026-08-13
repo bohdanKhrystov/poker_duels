@@ -10,11 +10,13 @@ import java.util.UUID
 import javax.sql.DataSource
 
 /**
- * Records a finished duel as one duel row and two duel_result rows, inside a single transaction.
+ * Records a finished duel as one duel row and two duel_result rows, and moves both coin
+ * balances, inside a single transaction.
  *
  * This class enforces the repository boundary (ADR-0011): all SQL runs here, nothing outside
  * `duels.poker.server.db` sees the database. A duel row without its result rows is an
- * inconsistency this shape exists to prevent — the whole of [record] is one transaction.
+ * inconsistency this shape exists to prevent — the whole of [record] is one transaction. The
+ * two result rows and the two balance moves either all commit or all roll back.
  */
 public class PostgresDuelResultStore(private val dataSource: DataSource) {
     /**
@@ -41,7 +43,10 @@ public class PostgresDuelResultStore(private val dataSource: DataSource) {
             connection.autoCommit = false
             try {
                 insertDuel(connection, duel)
-                moves.forEach { (player, delta) -> insertResult(connection, duel.id, player, delta) }
+                moves.forEach { (player, delta) ->
+                    insertResult(connection, duel.id, player, delta)
+                    addToBalance(connection, player, delta)
+                }
                 connection.commit()
             } catch (failure: SQLException) {
                 connection.rollback()
@@ -80,5 +85,14 @@ public class PostgresDuelResultStore(private val dataSource: DataSource) {
             statement.setInt(3, delta)
             statement.executeUpdate()
         }
+    }
+
+    private fun addToBalance(connection: java.sql.Connection, player: duels.poker.server.session.PlayerId, delta: Int) {
+        connection.prepareStatement("UPDATE player SET coin_balance = coin_balance + ? WHERE id = ?")
+            .use { statement ->
+                statement.setInt(1, delta)
+                statement.setObject(2, UUID.fromString(player.value))
+                statement.executeUpdate()
+            }
     }
 }
