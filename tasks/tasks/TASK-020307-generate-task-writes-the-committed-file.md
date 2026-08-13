@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020307
 title: generateProtocolTypes writes the committed TypeScript file
 type: task
-status: ready
+status: done
 parent: STORY-0203
 module: poker-server
 estimate: S

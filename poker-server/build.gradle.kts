@@ -30,3 +30,11 @@ tasks.withType<Test>().configureEach {
     // was wrong. The absence of this property makes that failure unrecognisable.
     systemProperty("api.version", "1.41")
 }
+
+tasks.register<JavaExec>("generateProtocolTypes") {
+    group = "protocol"
+    description = "Emits web-client/src/protocol/protocol.gen.ts from the protocol serial descriptors (ADR-0020)."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("duels.poker.server.protocol.typescript.GenerateProtocolTypesKt")
+    args(rootProject.file("web-client/src/protocol/protocol.gen.ts").absolutePath)
+}
