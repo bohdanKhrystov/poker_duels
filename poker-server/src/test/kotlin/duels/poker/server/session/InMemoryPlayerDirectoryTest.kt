@@ -1,7 +1,8 @@
 package duels.poker.server.session
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -60,16 +61,13 @@ class InMemoryPlayerDirectoryTest {
     fun concurrentResolvesOfOneDeviceCreateOneProfile(): Unit = runBlocking {
         val directory = InMemoryPlayerDirectory()
         val deviceId = DeviceId("d1")
-        val results = mutableListOf<PlayerId>()
 
-        val jobs = (0 until 100).map {
-            launch(Dispatchers.Default) {
+        val results = (0 until 100).map {
+            async(Dispatchers.Default) {
                 val player = directory.resolve(deviceId)
-                results.add(player.id)
+                player.id
             }
-        }
-
-        jobs.forEach { it.join() }
+        }.awaitAll()
 
         assertEquals(1, directory.profileCount)
         val firstPlayerId = results[0]
