@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020706
 title: A replayed frame is dropped and a frame acting for the opponent is refused, before the engine sees either
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
