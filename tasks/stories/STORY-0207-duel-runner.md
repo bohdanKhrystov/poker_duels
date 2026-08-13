@@ -50,18 +50,23 @@ it is (`ADR-0002`), and the *engine* decides what each player may see (`ADR-0002
   consumer is what keeps this story free of the database.
 - Rematch: `STORY-0206` owns the agreement; this story starts the new duel when the room says so.
 
-## Open decisions
+## Decisions, once open, now answered
 
-**DEC-015 — how does the end of a duel reach a client?** `ServerMessage.Events` carries
-`List<GameEvent>`, and `MatchFinished` is a `MatchEvent` — a separate hierarchy with its own
-sequence space by `ADR-0009`. No `ServerMessage` can therefore carry the fact that a duel is over.
-`TASK-020707` records `MatchFinished` in the `MatchLog` and broadcasts nothing, which is correct but
-incomplete: a client is left to infer the ending from two stacks, and inferring it is a rule of
-poker `ADR-0002` says the client does not hold. Registered in
-[`docs/adr/README.md`](../../docs/adr/README.md); `TASK-020715` is blocked on it, along with
-`DEC-010` (a socket has no way to name its room) and `DEC-013` (where the live runner lives, which
-also blocks `TASK-020714`). Everything from `TASK-020701` to `TASK-020713` is unblocked: the runner
-is a pure value, and every acceptance criterion above is asserted against it directly.
+**DEC-015** (how the end of a duel reaches a client) and **DEC-010** (whether room messages extend
+the sealed hierarchies) are both answered by
+[`ADR-0017`](../../docs/adr/ADR-0017-the-server-says-when-a-duel-ends.md): the server states the
+ending with a `ServerMessage.DuelFinished` projection, and later stories extend the existing
+`ServerMessage`/`ClientMessage` hierarchies rather than introducing a parallel protocol.
+**DEC-013** (where the live runner lives) is answered by
+[`ADR-0016`](../../docs/adr/ADR-0016-a-room-is-serialised-by-its-own-mutex.md).
+
+Answering `DEC-010` surfaced a gap nobody had ticketed: **no session-to-room association existed at
+all.** `RoomRegistry` had no caller outside its own tests, `SocketDependencies` did not carry it, a
+connection's `ConnectionWriter` was reachable only from its own coroutine, and no message in either
+hierarchy could name a room. `TASK-020718` through `TASK-020731` close that gap in one linear chain
+— the protocol version, the two new server messages, the two new client messages, the connection
+directory, per-seat delivery and the room association — and `TASK-020715` is the last link, which is
+where the story's own goal finally holds.
 
 ## Tasks
 
@@ -80,8 +85,24 @@ is a pure value, and every acceptance criterion above is asserted against it dir
 | [TASK-020711](../tasks/TASK-020711-chips-conserved-from-the-clients-side.md) | Chips are conserved in what the client sees, not just in what the engine knows | backlog |
 | [TASK-020712](../tasks/TASK-020712-nothing-secret-leaves-the-runner.md) | No opponent's card and no hand seed ever leaves the runner, and transport filters nothing itself | backlog |
 | [TASK-020713](../tasks/TASK-020713-the-log-replays-the-duel-the-server-played.md) | The MatchLog the runner wrote replays into the duel the server actually played | backlog |
-| [TASK-020714](../tasks/TASK-020714-host-the-live-runner-in-a-room.md) | Give the live DuelRunner a home in the room, and publish the duel when it ends | blocked |
-| [TASK-020715](../tasks/TASK-020715-an-act-frame-reaches-the-duel.md) | An Act arriving on a socket reaches the duel, and the duel's frames reach both sockets | blocked |
+| [TASK-020714](../tasks/TASK-020714-host-the-live-runner-in-a-room.md) | Give the live DuelRunner a home in the room, and publish the duel when it ends | done |
+| [TASK-020716](../tasks/TASK-020716-distinctive-seeds-close-the-seed-check.md) | Distinctive seeds close the hand-one hole in the seed-leak check | done |
+| [TASK-020717](../tasks/TASK-020717-a-finished-duel-is-recorded-at-least-once.md) | A finished duel is recorded at least once, not at most once | done |
+| [TASK-020718](../tasks/TASK-020718-the-document-pins-the-wire-vocabulary.md) | The wire vocabulary is pinned in one place — the protocol document | ready |
+| [TASK-020719](../tasks/TASK-020719-protocol-version-two.md) | The wire protocol moves to version 2 | backlog |
+| [TASK-020720](../tasks/TASK-020720-duel-finished-message.md) | ServerMessage.DuelFinished carries the duel's outcome | backlog |
+| [TASK-020721](../tasks/TASK-020721-finished-duel-frames.md) | The projection layer builds the finished-duel frames, and only it may | backlog |
+| [TASK-020722](../tasks/TASK-020722-a-finished-duel-tells-both-seats.md) | A duel that ends says so, in the same step that ends it | backlog |
+| [TASK-020723](../tasks/TASK-020723-connection-directory.md) | A directory of live connection writers, keyed by the player behind them | backlog |
+| [TASK-020724](../tasks/TASK-020724-the-registry-names-its-seed-source.md) | A room registry says which seed source its duels draw from | backlog |
+| [TASK-020725](../tasks/TASK-020725-seating-yields-the-opening-frames.md) | Seating the second player hands back the opening hand's frames | backlog |
+| [TASK-020726](../tasks/TASK-020726-socket-dependencies-carry-rooms-and-writers.md) | The socket's dependencies carry the rooms and the connection directory | backlog |
+| [TASK-020727](../tasks/TASK-020727-room-joined-message.md) | ServerMessage.RoomJoined names the room and the seat the server gave you | backlog |
+| [TASK-020728](../tasks/TASK-020728-client-messages-name-a-room.md) | ClientMessage learns to open a room and to join one by code | backlog |
+| [TASK-020729](../tasks/TASK-020729-a-writer-findable-by-its-player.md) | A live connection's writer is findable by the player behind it | backlog |
+| [TASK-020730](../tasks/TASK-020730-deliver-an-addressed-to-its-seat.md) | Each Addressed is encoded once and written to that seat's writer only | backlog |
+| [TASK-020731](../tasks/TASK-020731-room-messages-reach-the-registry.md) | CreateRoom and JoinRoom reach the registry, and the opening hand reaches both seats | backlog |
+| [TASK-020715](../tasks/TASK-020715-an-act-frame-reaches-the-duel.md) | An Act arriving on a socket reaches the duel, and the duel's frames reach both sockets | backlog |
 
 ## Acceptance criteria
 

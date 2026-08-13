@@ -91,6 +91,7 @@ the mutex is a strict subset of what an actor would offer behind the same API.
 | [TASK-020611](../tasks/TASK-020611-room-registry-lifecycle.md) | Finish, abandon and offer a rematch through the registry | backlog |
 | [TASK-020612](../tasks/TASK-020612-reap-idle-rooms.md) | Reap idle rooms on the injected clock, and never a room that is playing | backlog |
 | [TASK-020613](../tasks/TASK-020613-room-timeouts-in-server-config.md) | Read the room idle limits from ServerConfig instead of a literal | backlog |
+| [TASK-020615](../tasks/TASK-020615-room-registry-finish-is-called-by-nobody.md) | RoomRegistry.finish is called by no production code — remove it or say why it stays | backlog |
 
 Nothing in this story touches `DuelSocket.kt`, `Application.kt` or the protocol package: the
 registry is reached only from its own tests until `STORY-0207` wires it.
