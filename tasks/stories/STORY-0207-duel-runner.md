@@ -50,11 +50,38 @@ it is (`ADR-0002`), and the *engine* decides what each player may see (`ADR-0002
   consumer is what keeps this story free of the database.
 - Rematch: `STORY-0206` owns the agreement; this story starts the new duel when the room says so.
 
+## Open decisions
+
+**DEC-015 — how does the end of a duel reach a client?** `ServerMessage.Events` carries
+`List<GameEvent>`, and `MatchFinished` is a `MatchEvent` — a separate hierarchy with its own
+sequence space by `ADR-0009`. No `ServerMessage` can therefore carry the fact that a duel is over.
+`TASK-020707` records `MatchFinished` in the `MatchLog` and broadcasts nothing, which is correct but
+incomplete: a client is left to infer the ending from two stacks, and inferring it is a rule of
+poker `ADR-0002` says the client does not hold. Registered in
+[`docs/adr/README.md`](../../docs/adr/README.md); `TASK-020715` is blocked on it, along with
+`DEC-010` (a socket has no way to name its room) and `DEC-013` (where the live runner lives, which
+also blocks `TASK-020714`). Everything from `TASK-020701` to `TASK-020713` is unblocked: the runner
+is a pure value, and every acceptance criterion above is asserted against it directly.
+
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets are produced by `/plan-story STORY-0207`.* | — |
+| [TASK-020701](../tasks/TASK-020701-hand-seed-source.md) | Draw each hand's seed from an injected secure source, never from the engine Rng | ready |
+| [TASK-020702](../tasks/TASK-020702-per-seat-broadcast.md) | Every outbound frame is addressed to one seat and built by the engine's projection layer | backlog |
+| [TASK-020703](../tasks/TASK-020703-your-turn-frame.md) | The seat on turn gets YourTurn with the engine's legal actions, and the other seat gets nothing | backlog |
+| [TASK-020704](../tasks/TASK-020704-duel-runner-value.md) | The DuelRunner value — a live hand, its match, its logs, and the invariants tying them together | backlog |
+| [TASK-020705](../tasks/TASK-020705-open-a-hand-and-a-duel.md) | Open a hand from a seed, and open the duel's first one | backlog |
+| [TASK-020706](../tasks/TASK-020706-guard-inbound-actions.md) | A replayed frame is dropped and a frame acting for the opponent is refused, before the engine sees either | backlog |
+| [TASK-020707](../tasks/TASK-020707-hand-boundary-and-duel-end.md) | Fold a finished hand back into the duel, deal the next one, or end the duel | backlog |
+| [TASK-020708](../tasks/TASK-020708-apply-an-inbound-action.md) | An inbound Act reaches the engine, and its result reaches exactly the seats entitled to it | backlog |
+| [TASK-020709](../tasks/TASK-020709-duel-result-sink-port.md) | Declare the DuelResultSink port at its consumer, so this story stays free of the database | backlog |
+| [TASK-020710](../tasks/TASK-020710-play-a-duel-through-the-runner.md) | A harness that plays a whole duel through the runner, seeing only what a client would see | backlog |
+| [TASK-020711](../tasks/TASK-020711-chips-conserved-from-the-clients-side.md) | Chips are conserved in what the client sees, not just in what the engine knows | backlog |
+| [TASK-020712](../tasks/TASK-020712-nothing-secret-leaves-the-runner.md) | No opponent's card and no hand seed ever leaves the runner, and transport filters nothing itself | backlog |
+| [TASK-020713](../tasks/TASK-020713-the-log-replays-the-duel-the-server-played.md) | The MatchLog the runner wrote replays into the duel the server actually played | backlog |
+| [TASK-020714](../tasks/TASK-020714-host-the-live-runner-in-a-room.md) | Give the live DuelRunner a home in the room, and publish the duel when it ends | blocked |
+| [TASK-020715](../tasks/TASK-020715-an-act-frame-reaches-the-duel.md) | An Act arriving on a socket reaches the duel, and the duel's frames reach both sockets | blocked |
 
 ## Acceptance criteria
 
