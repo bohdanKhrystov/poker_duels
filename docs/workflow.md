@@ -274,6 +274,26 @@ they are the most interesting artefact this project will produce.
 Open questions that are **not yet decided** are marked in-place with a `DEC-NNN` marker (see
 `duel-rules.md`) so they are impossible to miss and impossible to accidentally answer in code.
 
+### Who answers a DEC
+
+Decisions are routed by kind, not by difficulty.
+
+| Kind | Answered by | Examples |
+| --- | --- | --- |
+| **Technical** | the `architect` agent, which writes the ADR | where a type lives, which of two designs, schema shape, wire format, concurrency and failure semantics |
+| **Product** | the human, and nothing else | what a player sees, what a duel *is*, what a coin is worth, which risks are acceptable to ship with |
+
+The test for "technical": **would two competent engineers with the same requirements land in the
+same place?** If yes, it is the architect's. If the answer depends on what this product is trying
+to be, no amount of technical reasoning will produce it, and asking a model to supply it produces
+something worse than an open question — a confident answer nobody will revisit.
+
+A question with both halves is two `DEC-NNN`s. Split it and route each half.
+
+This exists because open decisions were stalling runs. `DEC-001`, `DEC-002` and `DEC-007` through
+`DEC-009` sat open across four epics while the tickets they blocked waited for a human who was not
+at the keyboard — and most of them were never product questions at all.
+
 ## Metrics
 
 Part of Product B is being honest about how well this works. Tracked in `tasks/BOARD.md` and

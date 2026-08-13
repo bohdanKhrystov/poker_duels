@@ -112,8 +112,20 @@ merge.
 If splitting the story surfaces a question no ADR answers — where a component lives, which of
 two designs to use, anything with consequences past this story — **do not decide it in a
 ticket.** Register it as a `DEC-NNN` in `docs/adr/README.md`, mark the affected tickets
-`blocked`, and note it in your report. Decisions belong to the human; your job is to make sure
-they are asked precisely and only once.
+`blocked`, and note it in your report. Your job is to make sure it is asked precisely and only
+once.
+
+Say in your report **who each decision is for**, because they are routed differently:
+
+- **Technical** — where a type lives, which of two designs, schema shape, wire format,
+  concurrency and failure semantics. These go to the `architect` agent, which answers them by
+  writing the ADR. Two competent engineers with the same requirements would land in the same
+  place; that is the test.
+- **Product** — what a player sees, what a duel *is*, what a coin is worth, which risks are
+  acceptable to ship with. These go to the human, and nothing else can answer them.
+
+If a question has both halves, split it into two `DEC-NNN`s. A product decision answered by
+technical reasoning reads as settled and never gets revisited.
 
 ## Report
 

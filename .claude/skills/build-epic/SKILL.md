@@ -145,16 +145,28 @@ wins — three half-finished branches cost far more than they save.
 ## Batching decisions
 
 When a ticket blocks on a decision, **do not stop the run.** Register the `DEC-NNN`, mark the
-ticket `blocked`, and carry on with the next startable ticket. Collect the decisions and present
-them together at the end.
+ticket `blocked`, and carry on with the next startable ticket.
 
-The whole design goal is: one command in, one batch of questions out. Interrupting per decision
-defeats it.
+Then route it by kind — this is the difference between a run that stalls and one that does not:
+
+- **Technical** — where a type lives, which of two designs, schema shape, wire format,
+  concurrency and failure semantics. Dispatch the **`architect`** agent (Fable) to answer it and
+  write the ADR. Do this *while* the run continues; it is not a reason to wait. The test is
+  whether two competent engineers with the same requirements would land in the same place.
+- **Product** — what a player sees, what a duel *is*, what a coin is worth, which risks are
+  acceptable to ship with. Collect these and present them together at the end. Only the human can
+  answer them, and no amount of technical reasoning substitutes.
+
+A question with both halves is two `DEC-NNN`s. Split it and route each half. Never ask the human
+a technical question because it is hard, and never let the architect answer a product one because
+it is blocking — the second failure is far more expensive, because it reads as settled.
+
+The design goal is: one command in, **one batch of product questions out**.
 
 Stop the run entirely only if:
 
-- **every** remaining ticket is blocked, or
-- a decision blocks the rest of the epic (a foundational type, a module boundary), or
+- **every** remaining ticket is blocked on a *product* decision, or
+- a product decision blocks the rest of the epic (what the thing fundamentally is), or
 - three consecutive tickets fail — something systemic is wrong and continuing will burn budget
   producing more of it.
 
@@ -164,6 +176,8 @@ Stop the run entirely only if:
 - **reviewer** — `haiku` for `review: light` and `review: standard`; `sonnet` only for
   `review: deep`. A shallow review is fixed by asking a sharper question — naming the specific
   defect to hunt for — not by buying a bigger model on every ticket.
+- **architect** — Fable, always. Runs on demand, when a technical `DEC-NNN` blocks something. It
+  answers the decision and writes the ADR; the planner then writes tickets from that ADR.
 - **planner** — Opus, always. It runs once per story, and how precisely it specifies a ticket
   decides whether the coder needs one dispatch or three. This is the last place to economise:
   a well-planned story lands in one dispatch per ticket, a vague one burns dispatches and
