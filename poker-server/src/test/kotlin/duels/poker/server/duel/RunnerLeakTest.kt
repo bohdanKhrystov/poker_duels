@@ -24,7 +24,10 @@ import java.io.File
  * conserves secrets, which is the more consequential of the two.
  */
 internal class RunnerLeakTest {
-    private val seeds = 1L..20L
+    // Use seeds whose decimal text cannot collide with sequence numbers, seats, hand numbers, chip
+    // amounts or stacks. The distinctive 0x5EED prefix ensures the seed value is unambiguous in
+    // the serialized output; collision avoidance is why they appear unusual rather than as 1L..20L.
+    private val seeds = (0..19).map { 0x5EED_000000000001L + it }
 
     /**
      * Walks one seat's frames in hand order, tracking which seats have been revealed **in the
@@ -127,30 +130,83 @@ internal class RunnerLeakTest {
         }
     }
 
+    /**
+     * Searches encoded frame strings for any hand seed's decimal text.
+     *
+     * @param encodedFrames Pre-encoded frame strings to search.
+     * @param handSeeds All hand seeds from the duel (including hand 1).
+     * @return true if any encoded frame contains any hand seed's decimal text.
+     */
+    private fun frameContainsAnySeed(
+        encodedFrames: List<String>,
+        handSeeds: List<Long>,
+    ): Boolean {
+        encodedFrames.forEach { encoded ->
+            handSeeds.forEach { handSeed ->
+                if (encoded.contains(handSeed.toString())) {
+                    return true // Found a leak
+                }
+            }
+        }
+        return false // No leaks found
+    }
+
     @Test
     @Timeout(120)
     fun noEncodedFrameContainsAHandSeed() {
         for (seed in seeds) {
             val played = playDuel(seed)
-            // The opening hand's seed is, by playDuel's own construction (startDuel receives
-            // `seed` directly, per DuelStart.kt's `openHand`), exactly the outer test parameter
-            // above — already public within this run, printed in every failure message here, and
-            // never independently drawn. It is excluded from the check for that reason, not
-            // because it is unimportant: with seeds 1L..20L, it is small enough to coincide with
-            // an ordinary field (a `sequence`, `seat` or `handNumber` value) purely by numeric
-            // accident, which is not evidence of a leak. Every other hand's seed comes from the
-            // harness's own independent SplitMix64Rng-backed HandSeedSource and is checked in full.
-            val handSeeds = played.runner.log.hands.map { it.seed }.filter { it != seed }
-            played.outbound.forEachIndexed { index, addressed ->
+            val handSeeds = played.runner.log.hands.map { it.seed }
+
+            // Defensive assertions: ensure the collections are not empty, else this test proves nothing
+            assertTrue(
+                played.outbound.isNotEmpty(),
+                "seed $seed: outbound frames collection is empty, cannot verify no seeds leak",
+            )
+            assertTrue(
+                handSeeds.isNotEmpty(),
+                "seed $seed: hand seeds collection is empty, including hand 1's seed",
+            )
+
+            val encodedFrames = played.outbound.map { ProtocolCodec.encode(it.message) }
+            assertFalse(
+                frameContainsAnySeed(encodedFrames, handSeeds),
+                "seed $seed: encoded frames contain a hand seed's decimal text",
+            )
+        }
+    }
+
+    @Test
+    @Timeout(120)
+    fun theLeakCheckDetectsASeedWhenOneIsPresent() {
+        // Positive control: proves the leak detection logic actually works by verifying it catches
+        // a deliberately leaked seed. Production code cannot easily be made to leak a seed due to
+        // architectural constraints (test encodes only ServerMessage, PlayerView fields are 32-bit
+        // Int, seed values are 64-bit Long). This test keeps the negative assertion honest.
+        for (seed in seeds) {
+            val played = playDuel(seed)
+            val handSeeds = played.runner.log.hands.map { it.seed }
+
+            // Ensure we have seeds to leak (especially hand 1's seed, which was previously excluded)
+            assertTrue(
+                handSeeds.isNotEmpty(),
+                "seed $seed: no hand seeds available to test detection",
+            )
+
+            // Create a list of encoded frames with one hand seed deliberately appended to the first
+            val leakedSeed = handSeeds.first() // Use the first seed (could be hand 1's)
+            val encodedFrames = played.outbound.mapIndexed { index, addressed ->
                 val encoded = ProtocolCodec.encode(addressed.message)
-                handSeeds.forEach { handSeed ->
-                    assertFalse(
-                        encoded.contains(handSeed.toString()),
-                        "seed $seed: encoded frame $index to seat ${addressed.seat} contains the " +
-                            "decimal text of hand seed $handSeed: $encoded",
-                    )
-                }
+                if (index == 0) encoded + leakedSeed.toString() else encoded
             }
+
+            // Use the same detection helper as the real test — if it has a bug, this control will
+            // catch it by failing. Verify the helper finds the deliberately leaked seed.
+            assertTrue(
+                frameContainsAnySeed(encodedFrames, handSeeds),
+                "seed $seed: leak detector failed to find deliberately leaked hand seed $leakedSeed " +
+                    "using frameContainsAnySeed() — the control is not exercising the real helper",
+            )
         }
     }
 
