@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021101
 title: Declare the profile and duel-summary response types
 type: task
-status: ready
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
