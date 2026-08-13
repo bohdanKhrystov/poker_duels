@@ -460,6 +460,15 @@ private suspend fun ConnectionWriter.replyToCreateRoom(
  * [RoomCode.parse] returning `null` and [RoomRefusal.UNKNOWN_ROOM] answer identically, or the
  * difference would hand an attacker a code-shape oracle.
  *
+ * A player who already holds a seat in a duel this code names is resumption, not a fresh join:
+ * [SocketDependencies.rooms]' `resume` answers only for a room this player is already seated in
+ * that carries a duel, so it never intercepts a first-time joiner, a stranger, or a host rejoining
+ * a still-`WAITING` room — those fall straight through to the ordinary
+ * [join][duels.poker.server.room.RoomRegistry.join] below. The seat comes from [session]'s player
+ * id, which came from the handshake's device id — never from [code] — so a different device
+ * resolves to a different player, `resume` answers `null`, and the ordinary join below refuses a
+ * full `PLAYING` room with [RoomRefusal.ROOM_FULL], leaving the held seat held.
+ *
  * A player already seated in the room they asked to join is not an error:
  * [RoomRefusal.ALREADY_SEATED] answers exactly as a fresh seating would, with the seat they
  * already hold, so a socket that reconnects or that opened the room out of band still learns
@@ -475,6 +484,13 @@ private suspend fun ConnectionWriter.replyToJoinRoom(
 ) {
     val parsed = RoomCode.parse(code) ?: run {
         send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+        return
+    }
+    val resumed = deps.rooms.resume(parsed, session.player.id)
+    if (resumed != null) {
+        room.code = parsed
+        send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, resumed.seat)))
+        deliver(resumed.outbound, resumed.room, deps.connections)
         return
     }
     when (val result = deps.rooms.join(parsed, session.player.id)) {
