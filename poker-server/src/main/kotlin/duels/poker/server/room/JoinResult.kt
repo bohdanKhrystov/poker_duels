@@ -1,5 +1,7 @@
 package duels.poker.server.room
 
+import duels.poker.server.duel.Addressed
+
 /**
  * The outcome of [Room.join]: either the guest is seated, or the join is refused with a reason.
  */
@@ -9,8 +11,10 @@ public sealed interface JoinResult {
      *
      * @property room the room after seating, [RoomState.PLAYING] with the duel's [MatchState][
      *   duels.poker.engine.duel.MatchState] running.
+     * @property outbound the frames the duel's opening hand produced, empty when this result
+     *   came from the pure [Room.join], which deals no hand.
      */
-    public data class Seated(val room: Room) : JoinResult
+    public data class Seated(val room: Room, val outbound: List<Addressed> = emptyList()) : JoinResult
 
     /**
      * The join was refused; the caller's existing, unchanged room is still valid.

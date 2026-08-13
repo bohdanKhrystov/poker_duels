@@ -1,6 +1,7 @@
 package duels.poker.server.room
 
 import duels.poker.engine.duel.DuelFormat
+import duels.poker.server.duel.Addressed
 import duels.poker.server.duel.DuelResult
 import duels.poker.server.duel.DuelResultSink
 import duels.poker.server.duel.DuelStep
@@ -110,7 +111,9 @@ public class RoomRegistry(
      * A seated room also starts the duel: [startDuel] draws its opening hand's seed from [seeds]
      * and the resulting runner is attached before the room is written back, so a room a caller can
      * observe as [RoomState.PLAYING] always already carries its runner — inside the same critical
-     * section as the seating itself, for the same reason seating is.
+     * section as the seating itself, for the same reason seating is. The frames that opening hand
+     * produced are read off the same [startDuel] call, inside that same critical section, and
+     * travel out on the [JoinResult.Seated] this method returns, in [JoinResult.Seated.outbound].
      *
      * @param code The room to join.
      * @param player The player attempting to join.
@@ -123,8 +126,8 @@ public class RoomRegistry(
             block = { room ->
                 when (val result = room.join(player, clock.nowMillis())) {
                     is JoinResult.Seated -> {
-                        val seated = withFreshRunner(result.room)
-                        Pair(seated, JoinResult.Seated(seated))
+                        val (seated, outbound) = withFreshRunner(result.room)
+                        Pair(seated, JoinResult.Seated(seated, outbound))
                     }
                     is JoinResult.Refused -> Pair(null, result)
                 }
@@ -218,7 +221,12 @@ public class RoomRegistry(
                 when (val result = room.offerRematch(player, clock.nowMillis())) {
                     is RematchResult.Offered -> Pair(result.room, result)
                     is RematchResult.Agreed -> {
-                        val agreed = withFreshRunner(result.room)
+                        // Known gap, not an oversight: `RematchResult.Agreed` carries no frames
+                        // yet, so a rematch's opening hand reaches nobody. Fixing that is a
+                        // separate, not-yet-ticketed change — widening it here would drag
+                        // `RematchResult`, `RoomRematchTest` and this method's rematch race guard
+                        // into this diff.
+                        val (agreed, _) = withFreshRunner(result.room)
                         Pair(agreed, RematchResult.Agreed(agreed))
                     }
                     is RematchResult.Refused -> Pair(null, result)
@@ -339,11 +347,13 @@ public class RoomRegistry(
      *
      * @param room The room whose match was just (re)started; its [Room.format] and
      *   [Room.openingButtonSeat] configure the new duel.
-     * @return [room] with a freshly started [Room.runner] and a freshly minted [Room.duelId] attached.
+     * @return [room] with a freshly started [Room.runner] and a freshly minted [Room.duelId]
+     *   attached, paired with the same opening hand frames [startDuel] produced. [join] hands
+     *   them back to its caller; [offerRematch] still has nowhere to send them.
      */
-    private fun withFreshRunner(room: Room): Room {
+    private fun withFreshRunner(room: Room): Pair<Room, List<Addressed>> {
         val started = startDuel(room.format, room.openingButtonSeat, seeds.newHandSeed())
-        return room.copy(runner = started.runner, duelId = UUID.randomUUID())
+        return Pair(room.copy(runner = started.runner, duelId = UUID.randomUUID()), started.outbound)
     }
 
     /**

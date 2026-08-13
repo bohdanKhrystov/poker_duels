@@ -7,7 +7,9 @@ import duels.poker.server.duel.DuelResult
 import duels.poker.server.duel.DuelResultSink
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.decisionPointOf
+import duels.poker.server.duel.startDuel
 import duels.poker.server.protocol.Act
+import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.MutableClock
 import kotlinx.coroutines.CompletableDeferred
@@ -379,5 +381,60 @@ internal class RoomDuelTest {
         assertNull(freshRunner.outcome)
         assertTrue(freshRunner != finishedRunner)
         assertEquals(freshRunner, registry.get(room.code)!!.runner)
+    }
+
+    @Test
+    fun seatingTheGuestHandsBackTheOpeningFrames() = runBlocking {
+        val registry = scriptedRegistry()
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+
+        val result = registry.join(room.code, guest) as JoinResult.Seated
+
+        assertTrue(result.outbound.isNotEmpty())
+        assertTrue(result.outbound.any { it.seat == 0 && it.message is ServerMessage.Snapshot })
+        assertTrue(result.outbound.any { it.seat == 1 && it.message is ServerMessage.Snapshot })
+    }
+
+    @Test
+    fun theOpeningFramesAreTheOnesTheRunnerProduced() = runBlocking {
+        val registry = scriptedRegistry()
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+
+        val result = registry.join(room.code, guest) as JoinResult.Seated
+
+        val expected = startDuel(room.format, room.openingButtonSeat, fixedSeeds.newHandSeed())
+        assertEquals(expected.outbound, result.outbound)
+    }
+
+    @Test
+    fun exactlyOneSeatIsToldItIsItsTurn() = runBlocking {
+        val registry = scriptedRegistry()
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+
+        val result = registry.join(room.code, guest) as JoinResult.Seated
+
+        val toActSeat = result.room.runner!!.hand!!.state.seatToAct!!
+        val yourTurnFrames = result.outbound.filter { it.message is ServerMessage.YourTurn }
+
+        assertEquals(1, yourTurnFrames.size)
+        assertEquals(toActSeat, yourTurnFrames.single().seat)
+    }
+
+    @Test
+    fun apureRoomJoinYieldsNoFrames() {
+        val registry = scriptedRegistry()
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+
+        val result = room.join(guest, 0L) as JoinResult.Seated
+
+        assertTrue(result.outbound.isEmpty())
     }
 }
