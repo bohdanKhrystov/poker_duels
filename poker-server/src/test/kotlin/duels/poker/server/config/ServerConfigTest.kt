@@ -165,4 +165,35 @@ class ServerConfigTest {
             ServerConfig.from(config) { null }
         }
     }
+
+    @Test
+    fun readsTheSweepPeriodFromTheConfig() {
+        val config = MapApplicationConfig("server.sweepPeriodMillis" to "2500")
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(2_500L, serverConfig.sweepPeriodMillis)
+    }
+
+    @Test
+    fun theEnvironmentVariableOverridesTheSweepPeriod() {
+        val config = MapApplicationConfig("server.sweepPeriodMillis" to "2500")
+        val serverConfig = ServerConfig.from(config) { name ->
+            if (name == ServerConfig.SWEEP_PERIOD_MILLIS_ENV) "5000" else null
+        }
+        assertEquals(5_000L, serverConfig.sweepPeriodMillis)
+    }
+
+    @Test
+    fun rejectsANonNumericSweepPeriod() {
+        val config = MapApplicationConfig("server.sweepPeriodMillis" to "not a number")
+        assertThrows<IllegalArgumentException> {
+            ServerConfig.from(config) { null }
+        }
+    }
+
+    @Test
+    fun theDefaultSweepPeriodIsOneThousand() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(1_000L, serverConfig.sweepPeriodMillis)
+    }
 }

@@ -30,6 +30,9 @@ public data class ServerConfig(
     // Testcontainers at a database without opining on a duel's grace window. If this field
     // required explicit construction, this ticket would touch four files instead of two.
     val disconnectGraceMillis: Long = RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS,
+    // This field has a default for the same reason as disconnectGraceMillis, allowing existing
+    // construction sites to compile without specifying the sweep period.
+    val sweepPeriodMillis: Long = 1_000L,
 ) {
     /** Bundles the three room timeouts so callers do not reassemble them. */
     public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(roomWaitingTimeoutMillis, roomFinishedTimeoutMillis, disconnectGraceMillis)
@@ -85,6 +88,10 @@ public data class ServerConfig(
         public const val DEFAULT_DISCONNECT_GRACE_MILLIS: Long = RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS
         public const val DISCONNECT_GRACE_MILLIS_KEY: String = "duel.disconnectGraceMillis"
         public const val DISCONNECT_GRACE_MILLIS_ENV: String = "DISCONNECT_GRACE_MILLIS"
+
+        public const val DEFAULT_SWEEP_PERIOD_MILLIS: Long = 1_000L
+        public const val SWEEP_PERIOD_MILLIS_KEY: String = "server.sweepPeriodMillis"
+        public const val SWEEP_PERIOD_MILLIS_ENV: String = "SWEEP_PERIOD_MILLIS"
 
         /**
          * Build a [ServerConfig] from a Ktor [ApplicationConfig] with environment variable
@@ -178,6 +185,17 @@ public data class ServerConfig(
                 "disconnect grace window must be an integer, got: $disconnectGraceMillisString"
             }
 
+            val sweepPeriodMillisString = resolve(
+                config,
+                env,
+                SWEEP_PERIOD_MILLIS_ENV,
+                SWEEP_PERIOD_MILLIS_KEY,
+                DEFAULT_SWEEP_PERIOD_MILLIS.toString(),
+            )
+            val sweepPeriodMillis = requireNotNull(sweepPeriodMillisString.toLongOrNull()) {
+                "sweep period must be an integer, got: $sweepPeriodMillisString"
+            }
+
             return ServerConfig(
                 port = port,
                 maxFrameLength = maxFrameLength,
@@ -189,6 +207,7 @@ public data class ServerConfig(
                 roomWaitingTimeoutMillis = roomWaitingTimeoutMillis,
                 roomFinishedTimeoutMillis = roomFinishedTimeoutMillis,
                 disconnectGraceMillis = disconnectGraceMillis,
+                sweepPeriodMillis = sweepPeriodMillis,
             )
         }
 
