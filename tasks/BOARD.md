@@ -35,13 +35,13 @@ them is close to done, because writing them earlier means rewriting them.
 | --- | --- | --- | --- |
 | **[STORY-0001](stories/STORY-0001-repository-and-ticket-system.md)** Repository, docs, tickets | | | ready |
 | | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **done** |
-| | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | ~~dropped~~ |
+| | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | **done** |
 | | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
 
-`TASK-000102` is **dropped**, by the owner's call on 2026-08-13. Protection and rulesets need a
-paid plan on a private repository, or a public one; neither is worth it yet. The branch model stays
-a convention the agents follow, not a rule GitHub enforces — an accepted risk rather than an open
-ticket pretending otherwise.
+`TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
+Actions minutes free at once, and `develop` is now protected: a pull request and two green checks
+to land, no force pushes, no deletions. Required approvals are deliberately **0** — one would
+deadlock the agent run, since an agent cannot approve its own PR.
 
 ---
 
@@ -300,7 +300,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020715](tasks/TASK-020715-an-act-frame-reaches-the-duel.md) An Act arriving on a socket reaches the duel, and the duel's frames reach both sockets | S | backlog |
 | | [TASK-020733](tasks/TASK-020733-a-rematch-hands-back-its-opening-frames.md) A rematch hands back its opening frames, the way seating does | S | backlog |
 | [STORY-0208](stories/STORY-0208-disconnect-grace-period.md) | Disconnect, grace period and reconnect | backlog |
-| **[STORY-0209](stories/STORY-0209-postgres-schema-and-migrations.md)** PostgreSQL — schema, migrations, pool — *schema 2* | | **blocked: no Docker** |
+| **[STORY-0209](stories/STORY-0209-postgres-schema-and-migrations.md)** PostgreSQL — schema, migrations, pool — *schema 2* | | **done** |
 | | [TASK-020901](tasks/TASK-020901-database-dependencies.md) Database dependencies in the catalog and server build | XS | **done** |
 | | [TASK-020902](tasks/TASK-020902-database-settings-in-server-config.md) Database URL, credentials and pool size from ServerConfig | S | **done** |
 | | [TASK-020903](tasks/TASK-020903-postgres-test-harness.md) One PostgreSQL container, and what a missing Docker means | S | **done** |
@@ -365,8 +365,8 @@ depend on `kotlinx.serialization`; `checkNoDependencies` is narrowed, not delete
 [`ADR-0020`](../docs/adr/ADR-0020-typescript-protocol-from-serial-descriptors.md) (an emitter we
 own over the serial descriptors), which unblocks `STORY-0203`.
 
-**Closed without an answer.** Branch protection: neither a public repo nor a paid plan; the branch
-model stays a convention. `TASK-000102` is dropped.
+**Answered by making the repository public** on 2026-08-13: branch protection and unlimited
+Actions minutes both come free there, so `TASK-000102` is done rather than dropped.
 
 
 ---
