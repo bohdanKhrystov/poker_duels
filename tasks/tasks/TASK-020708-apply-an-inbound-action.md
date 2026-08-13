@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020708
 title: An inbound Act reaches the engine, and its result reaches exactly the seats entitled to it
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
