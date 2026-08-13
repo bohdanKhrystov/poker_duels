@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060103
 title: The Type preview card
 type: task
-status: backlog
+status: ready
 parent: STORY-0601
 module: design
 estimate: S

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060102
 title: The Colors preview card
 type: task
-status: backlog
+status: ready
 parent: STORY-0601
 module: design
 estimate: S

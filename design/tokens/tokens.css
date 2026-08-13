@@ -1,0 +1,92 @@
+/* Poker Duels — design tokens. The one place a design value is born (ADR-0024).
+ *
+ * Dark values only: the product is dark-first (docs/vision.md — Lichess, not casino).
+ * Preview cards inline copies of these values because the render surface requires
+ * self-contained files; their verify greps pin the names below against silent drift.
+ */
+
+:root {
+  /* Surfaces — a quiet, slightly warm dark so the paper-white cards read as the
+   * brightest objects on any screen. The duel table is the page, not a green oval. */
+  --pd-bg: #131211;
+  --pd-surface: #1c1a18;
+  --pd-surface-raised: #262421;
+  --pd-hairline: #363330;
+  --pd-overlay: rgba(19, 18, 17, 0.8);
+
+  /* Text — warm off-whites, three steps. Anything quieter than faint is decoration. */
+  --pd-text: #ece9e3;
+  --pd-text-muted: #a6a099;
+  --pd-text-faint: #6f6a64;
+  --pd-text-inverse: #131211;
+
+  /* Accent — one steel blue, for the duel's actions and nothing else.
+   * `accent` is for text, links and rings on dark ground; `accent-fill` is darker so
+   * white on it stays readable on solid controls. */
+  --pd-accent: #4d8bc9;
+  --pd-accent-fill: #3372b5;
+  --pd-accent-fill-hover: #3f80c4;
+  --pd-on-accent: #ffffff;
+  --pd-accent-subtle: rgba(77, 139, 201, 0.14);
+
+  /* Semantic — outcomes and urgency, all desaturated: results are stated, not lit up.
+   * Amber exists only for the turn clock running down. */
+  --pd-win: #79a862;
+  --pd-loss: #c4655c;
+  --pd-warn: #c99a4a;
+
+  /* Cards & coin — the cards carry the only true white and the classic suit pair.
+   * The coin is steel, per the vision: it counts duels, it does not glitter. */
+  --pd-card-face: #f3f0e9;
+  --pd-suit-red: #bf3b30;
+  --pd-suit-black: #26231f;
+  --pd-card-back: #35567e;
+  --pd-coin: #9fb2c4;
+  --pd-coin-deep: #64788c;
+
+  /* Type — the system stack: instant, quiet, native everywhere. Numbers that move
+   * (pot, stacks, clock) are mono with tabular figures so nothing jitters. */
+  --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+    monospace;
+
+  --pd-fs-micro: 11px;
+  --pd-fs-small: 13px;
+  --pd-fs-body: 15px;
+  --pd-fs-large: 18px;
+  --pd-fs-title: 22px;
+  --pd-fs-display: 30px;
+  --pd-fs-hero: 40px;
+
+  --pd-weight-regular: 400;
+  --pd-weight-medium: 500;
+  --pd-weight-bold: 700;
+
+  --pd-lh-tight: 1.15;
+  --pd-lh-body: 1.5;
+  --pd-track-caps: 0.08em;
+
+  /* Spacing — one ladder, named by step so the scale can be retuned in one move. */
+  --pd-space-1: 2px;
+  --pd-space-2: 4px;
+  --pd-space-3: 8px;
+  --pd-space-4: 12px;
+  --pd-space-5: 16px;
+  --pd-space-6: 24px;
+  --pd-space-7: 32px;
+  --pd-space-8: 48px;
+  --pd-space-9: 64px;
+
+  /* Radii — small for inputs, medium for panels and buttons, card for the playing
+   * card at its 96px reference width (scale it with the card), pill for badges. */
+  --pd-radius-small: 4px;
+  --pd-radius-medium: 8px;
+  --pd-radius-card: 6px;
+  --pd-radius-pill: 999px;
+
+  /* Focus & elevation — one visible ring for every focusable thing; one shadow,
+   * reserved for what floats (menus, dialogs). Everything else is hairlines. */
+  --pd-focus: 0 0 0 2px var(--pd-bg), 0 0 0 4px var(--pd-accent);
+  --pd-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
+}

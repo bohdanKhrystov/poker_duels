@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060101
 title: The canonical design token sheet
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
