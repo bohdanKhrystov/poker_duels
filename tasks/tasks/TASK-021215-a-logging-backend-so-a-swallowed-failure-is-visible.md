@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021215
 title: A logging backend, so a swallowed sweep failure is visible
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S
