@@ -21,6 +21,20 @@ Protocol version: **2**
 | `Rejected` | server → client | `rejection` | Server rejects an illegal action |
 | `DuelFinished` | server → client | `outcome` (DuelOutcome) | The duel has ended |
 
+## Generated TypeScript
+
+The TypeScript type definitions for this protocol are generated from the Kotlin schema. The committed output file is `web-client/src/protocol/protocol.gen.ts`.
+
+To regenerate after protocol changes, run:
+
+```
+./gradlew :poker-server:generateProtocolTypes
+```
+
+The `./gradlew :poker-server:verifyProtocolTypes` task runs as part of `./gradlew check`, so forgetting to regenerate the file will fail the build.
+
+The generated file contains types only. If you encounter a merge conflict in `protocol.gen.ts`, resolve it by regenerating the file rather than hand-merging — see `ADR-0020` for the rationale.
+
 ## HTTP endpoints
 
 These endpoints are **plain HTTP** — they carry no `type` discriminator and are not `ServerMessage`s. The lobby reads them before any socket exists.
