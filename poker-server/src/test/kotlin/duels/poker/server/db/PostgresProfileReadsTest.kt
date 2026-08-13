@@ -4,6 +4,7 @@ import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
+import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
 import kotlinx.coroutines.runBlocking
@@ -15,6 +16,7 @@ import javax.sql.DataSource
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class PostgresProfileReadsTest {
     private lateinit var dataSource: DataSource
@@ -99,6 +101,64 @@ class PostgresProfileReadsTest {
 
         val profile = profileReads.profileOf(DeviceId("bob"))
         assertEquals(-1, profile?.coinBalance)
+    }
+
+    @Test
+    fun aRecordedDuelComesBackWithItsOpponentOutcomeAndDelta() = runBlocking {
+        val duelId = UUID.randomUUID()
+        duelResultStore.record(finishedDuel(winner = 0, id = duelId))
+
+        val duels = profileReads.recentDuelsOf(alice.id, 10)
+
+        assertEquals(1, duels.size)
+        val entry = duels.single()
+        assertEquals(duelId.toString(), entry.duelId)
+        assertEquals(bob.id.value, entry.opponentPlayerId)
+        assertEquals(DuelOutcomeLabel.WON, entry.outcome)
+        assertEquals(1, entry.coinDelta)
+    }
+
+    @Test
+    fun theLoserSeesTheSameDuelAsALoss() = runBlocking {
+        val duelId = UUID.randomUUID()
+        duelResultStore.record(finishedDuel(winner = 0, id = duelId))
+
+        val duels = profileReads.recentDuelsOf(bob.id, 10)
+
+        assertEquals(1, duels.size)
+        val entry = duels.single()
+        assertEquals(duelId.toString(), entry.duelId)
+        assertEquals(alice.id.value, entry.opponentPlayerId)
+        assertEquals(DuelOutcomeLabel.LOST, entry.outcome)
+        assertEquals(-1, entry.coinDelta)
+    }
+
+    @Test
+    fun theFinishTimeComesBackAsTheStoredInstant() = runBlocking {
+        val finishedAt = Instant.parse("2026-08-13T11:30:00Z")
+        duelResultStore.record(finishedDuel(winner = 0, finishedAt = finishedAt))
+
+        val entry = profileReads.recentDuelsOf(alice.id, 10).single()
+
+        assertEquals(finishedAt.toString(), entry.finishedAt)
+    }
+
+    @Test
+    fun aPlayerWithNoDuelsGetsAnEmptyList() = runBlocking {
+        val carol = playerDirectory.resolve(DeviceId("carol"))
+
+        val duels = profileReads.recentDuelsOf(carol.id, 10)
+
+        assertTrue(duels.isEmpty())
+    }
+
+    @Test
+    fun handsPlayedIsNullWhileTheColumnDoesNotExist() = runBlocking {
+        duelResultStore.record(finishedDuel(winner = 0))
+
+        val entry = profileReads.recentDuelsOf(alice.id, 10).single()
+
+        assertNull(entry.handsPlayed)
     }
 
     private fun finishedDuel(
