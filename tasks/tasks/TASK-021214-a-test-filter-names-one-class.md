@@ -9,13 +9,13 @@ module: poker-server
 estimate: XS
 tier: haiku
 review: standard
-files_touched: 2
+files_touched: 1
 labels: [process, tests]
 depends_on: [TASK-021206]
 verify:
   - python3 .github/scripts/lint_tickets.py
-  - grep -c "\-\-tests '\*SocketDuelTest'" tasks/tasks/TASK-021211-a-dropped-socket-rejoins.md | grep -qx 0
   - grep -q 'names exactly one class' tasks/README.md
+  - grep -q 'DuelSocketDuelTest' tasks/README.md
 ---
 
 ## Goal
@@ -57,13 +57,14 @@ unstarted and still carries an ambiguous filter.
 
 | File | Action |
 | --- | --- |
-| `tasks/tasks/TASK-021211-a-dropped-socket-rejoins.md` | modify |
 | `tasks/README.md` | modify |
 
 ## Scope
 
-- In `TASK-021211`'s `verify:` block, replace `--tests '*SocketDuelTest'` with the fully qualified
-  `--tests 'duels.poker.server.e2e.SocketDuelTest'`. Change nothing else in that ticket.
+- Name the four colliding pairs in the rule, so a planner can see which suffixes are already unsafe
+  rather than rediscovering them: `SocketDuelTest`/`DuelSocketDuelTest`,
+  `SocketReconnectTest`/`DuelSocketReconnectTest`, `RoomTest`/`DuelSocketRoomTest`, and
+  `HandshakeTest`/`DuelSocketHandshakeTest`/`ServerMessageHandshakeTest`.
 - In `tasks/README.md`, where the `verify:` block is described, add the rule: **a `--tests` filter
   names exactly one class.** Prefer the fully qualified name; a `*Suffix` wildcard is only safe when
   no other class ends the same way, and nothing stops one being added later. State the failure it
@@ -92,3 +93,17 @@ No new test. The evidence is the two `grep` commands in `verify:` and a green ba
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket:
 `verify` green, review passed, CI green, status `done`, `BOARD.md` updated, squash-merged into
 `develop`. Not done until the PR is merged.
+
+---
+
+## Amended by the driver: the ticket to fix has landed
+
+This was written to fix `TASK-021211`'s ambiguous `--tests '*SocketDuelTest'`, the only unstarted
+ticket carrying one. `TASK-021211` has since merged, so that half is moot — and by this ticket's own
+reasoning, editing a landed ticket's commands changes the record without changing anything real.
+
+What remains is the durable half: the rule, in the place planners read. It is now worth more than
+when it was written, because `TASK-021211`'s coder **independently rediscovered the same hazard**
+from scratch — it noticed `*SocketReconnectTest` and `*SocketDuelTest` each matched two classes and
+read the JUnit XML per class to confirm the intended suites ran. A hazard that costs every future
+coder that detour is worth one line in `README.md`.
