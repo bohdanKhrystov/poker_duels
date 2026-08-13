@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020719
 title: The wire protocol moves to version 2
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: XS

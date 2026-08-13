@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020718
 title: The wire vocabulary is pinned in one place — the protocol document
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: XS

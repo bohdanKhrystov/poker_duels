@@ -13,25 +13,11 @@ import org.junit.jupiter.api.Test
  * `.`, or as a name that is suspiciously long and starts with `duels.`. A subtype added to either
  * hierarchy tomorrow without an explicit `@SerialName` fails
  * [noDiscriminatorIsAFullyQualifiedClassName] before it ever reaches the wire.
+ *
+ * The exact set of messages on the wire is pinned by [ProtocolDocumentationTest.everyServerMessageHasARowSayingServerToClient]
+ * and [ProtocolDocumentationTest.theDocumentNamesNoMessageThatDoesNotExist] against `docs/protocol.md`.
  */
 class ProtocolDiscriminatorTest {
-    @Test
-    fun theClientHierarchyIsExactlyTheDeclaredMessages() {
-        val names = subtypeNames(ClientMessage.serializer().descriptor).toSet()
-
-        assertEquals(setOf("Hello", "Act"), names)
-    }
-
-    @Test
-    fun theServerHierarchyIsExactlyTheDeclaredMessages() {
-        val names = subtypeNames(ServerMessage.serializer().descriptor).toSet()
-
-        assertEquals(
-            setOf("Welcome", "Failure", "Snapshot", "Events", "YourTurn", "Rejected"),
-            names,
-        )
-    }
-
     @Test
     fun noDiscriminatorIsAFullyQualifiedClassName() {
         val names = subtypeNames(ClientMessage.serializer().descriptor) +
