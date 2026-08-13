@@ -35,6 +35,13 @@ the cost is data that no longer exists.
 | `poker-server/src/main/resources/db/migration/V2__duel_hands_played.sql` | create |
 | `poker-server/src/main/kotlin/duels/poker/server/db/PostgresDuelResultStore.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/db/PostgresDuelResultStoreTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/db/CoinBalanceIsSignedTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/db/SchemaConstraintsTest.kt` | modify |
+
+> **Files table corrected during implementation.** The last two were missing. Both contain fixtures
+> that `INSERT INTO duel` directly, so the new `NOT NULL` column breaks them — a ticket owns the
+> tests its change invalidates, and `files_touched` should have been 5. The fixes are one column and
+> one literal each.
 
 Read `V1__initial_schema.sql` and `FinishedDuel.kt`. **`V1` is never edited** — migrations are
 immutable, which is why `ADR-0015` had to correct a wrong comment in an ADR rather than in the file.

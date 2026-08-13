@@ -70,7 +70,7 @@ class CoinBalanceIsSignedTest {
         val duelId = UUID.randomUUID()
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO duel (id, format, started_at, finished_at) VALUES (?, 'FREEZEOUT', now(), now())",
+                "INSERT INTO duel (id, format, started_at, finished_at, hands_played) VALUES (?, 'FREEZEOUT', now(), now(), 1)",
             ).use { statement ->
                 statement.setObject(1, duelId)
                 statement.executeUpdate()
