@@ -325,6 +325,83 @@ public data class Room(
      */
     public fun touch(now: Long): Room = copy(lastActivityAt = now)
 
+    /**
+     * Start [seat]'s disconnect grace window (`ADR-0013`), or restart it if one was already
+     * running.
+     *
+     * The timer restarts on every disconnect: a second call for the same seat overwrites the
+     * earlier deadline in [gracePeriods] rather than keeping it — the most recent drop is the
+     * one that matters. Also clears [seat] from [absentSeats], so a seat whose window had
+     * already run out gets a fresh window rather than staying absent.
+     *
+     * Pure and total for a seat this room holds. Calling it for a seat this room has not
+     * seated is a server bug, not a network event — [init] would reject the resulting room
+     * anyway, so this throws directly to name the mistake.
+     *
+     * @param seat the seat that disconnected; must be seated in this room.
+     * @param deadline the instant, on the caller's clock, at which [seat]'s grace window runs
+     *   out.
+     * @return this room with [seat] counting down in [gracePeriods] from [deadline] and absent
+     *   from [absentSeats].
+     * @throws IllegalArgumentException if [seat] is not seated in this room.
+     */
+    public fun disconnect(seat: Int, deadline: Long): Room {
+        require(seat == 0 || (seat == 1 && guest != null)) {
+            "seat $seat is not seated in this room"
+        }
+        return copy(
+            gracePeriods = gracePeriods + (seat to deadline),
+            absentSeats = absentSeats - seat,
+        )
+    }
+
+    /**
+     * Clear [seat]'s disconnect grace window (`ADR-0013`), whether it is still counting down or
+     * has already run out.
+     *
+     * Removes [seat] from both [gracePeriods] and [absentSeats]. Pure and total: a reconnect
+     * from a seat nobody was waiting for — the room never noticed it was gone, or had already
+     * forgotten — is an ordinary event, not an error, so this returns the room unchanged rather
+     * than throwing.
+     *
+     * @param seat the seat that reconnected.
+     * @return this room with [seat] present in neither [gracePeriods] nor [absentSeats]; this
+     *   room unchanged if [seat] was in neither already.
+     */
+    public fun reconnect(seat: Int): Room {
+        if (seat !in gracePeriods && seat !in absentSeats) return this
+        return copy(
+            gracePeriods = gracePeriods - seat,
+            absentSeats = absentSeats - seat,
+        )
+    }
+
+    /**
+     * Move every seat whose disconnect grace window (`ADR-0013`) has run out by [now] from
+     * [gracePeriods] into [absentSeats], leaving every seat still counting down alone.
+     *
+     * The comparison is `<=`, not `<`: a window whose deadline is exactly [now] has already run
+     * out, not one instant left to go. `TASK-020815` asserts this exact boundary instant, so the
+     * two must agree.
+     *
+     * Pure and total, and idempotent for a fixed [now]: once every seat that has run out has
+     * moved, a further call finds nothing left to move. Returns this room unchanged (`this`, so
+     * a caller can compare by identity or equality) when no seat has run out.
+     *
+     * @param now the instant, on the caller's clock, to compare every deadline in
+     *   [gracePeriods] against.
+     * @return this room with every seat whose deadline is `<= now` moved from [gracePeriods]
+     *   into [absentSeats].
+     */
+    public fun expireGrace(now: Long): Room {
+        val expiredSeats = gracePeriods.filterValues { it <= now }.keys
+        if (expiredSeats.isEmpty()) return this
+        return copy(
+            gracePeriods = gracePeriods - expiredSeats,
+            absentSeats = absentSeats + expiredSeats,
+        )
+    }
+
     public companion object {
         /**
          * Open a fresh room: a host waiting for a guest, no match yet, the host holding the
