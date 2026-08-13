@@ -1,0 +1,196 @@
+<!-- @dsCard group="Colors" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colors — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-surface-raised: #262421;
+    --pd-hairline: #363330; --pd-overlay: rgba(19,18,17,0.8);
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-text-inverse: #131211;
+    --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
+    --pd-on-accent: #ffffff; --pd-accent-subtle: rgba(77,139,201,0.14);
+    --pd-win: #79a862; --pd-loss: #c4655c; --pd-warn: #c99a4a;
+    --pd-card-face: #f3f0e9; --pd-suit-red: #bf3b30; --pd-suit-black: #26231f;
+    --pd-card-back: #35567e; --pd-coin: #9fb2c4; --pd-coin-deep: #64788c;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    background: var(--pd-bg); color: var(--pd-text);
+    font-family: var(--pd-font-ui); font-size: 15px; line-height: 1.5;
+    padding: 32px; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-faint); margin-bottom: 8px; }
+  h1 { font-size: 30px; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  h2 { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; margin: 40px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .sw { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: 8px; overflow: hidden; }
+  .chip { height: var(--chip-h, 64px); display: flex; align-items: center; justify-content: center; }
+  .meta { padding: 10px 12px; border-top: 1px solid var(--pd-hairline); }
+  .name { font-family: var(--pd-font-mono); font-size: 12px; }
+  .hex  { font-family: var(--pd-font-mono); font-size: 11px; color: var(--pd-text-faint); margin-top: 2px; }
+  .use  { font-size: 12px; color: var(--pd-text-muted); margin-top: 6px; }
+  .aa { font-size: 22px; font-weight: 500; }
+
+  /* Miniature playing cards — the proof that the face is the brightest thing here. */
+  .pcard { background: var(--pd-card-face); border-radius: 6px; width: 56px; height: 78px;
+    padding: 6px 7px; display: inline-flex; flex-direction: column; color: var(--pd-suit-black);
+    font-weight: 700; line-height: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .pcard .r { font-size: 17px; } .pcard .s { font-size: 15px; margin-top: 1px; }
+  .pcard .pip { margin: auto auto 0 auto; font-size: 24px; }
+  .pcard.red { color: var(--pd-suit-red); }
+  .pback { background: var(--pd-card-back); border-radius: 6px; width: 56px; height: 78px;
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4);
+    background-image: repeating-linear-gradient(45deg,
+      rgba(255,255,255,0.07) 0 2px, transparent 2px 7px); }
+  .coin { width: 34px; height: 34px; border-radius: 999px;
+    background: radial-gradient(circle at 34% 30%, var(--pd-coin), var(--pd-coin-deep) 78%);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.22); display: inline-block; }
+
+  /* The demo strip — one glance at the whole hierarchy. */
+  .demo { margin-top: 16px; background: var(--pd-bg); border: 1px solid var(--pd-hairline);
+    border-radius: 8px; padding: 28px 24px; display: flex; flex-direction: column;
+    align-items: center; gap: 18px; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .who { font-size: 13px; color: var(--pd-text-muted); margin-right: 6px; }
+  .num { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 13px; color: var(--pd-text-muted); }
+  .btn { font: 500 15px var(--pd-font-ui); padding: 10px 18px; border-radius: 8px;
+    border: 1px solid transparent; cursor: pointer; }
+  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
+  .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
+  .btn.fill:hover { background: var(--pd-accent-fill-hover); }
+  .cap { font-size: 12px; color: var(--pd-text-faint); text-align: center; max-width: 52ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Foundations</p>
+  <h1>Colors</h1>
+  <p class="lede">Lichess, not casino. The table is dark, warm and quiet; the cards carry the
+  only true white; one steel-blue accent does the acting. Outcomes are stated, never lit up.</p>
+
+  <h2>Surfaces</h2>
+  <div class="grid">
+    <div class="sw"><div class="chip" style="background:var(--pd-bg)"></div>
+      <div class="meta"><div class="name">--pd-bg</div><div class="hex">#131211</div>
+      <div class="use">The page, and the table itself</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--pd-surface)"></div>
+      <div class="meta"><div class="name">--pd-surface</div><div class="hex">#1c1a18</div>
+      <div class="use">Panels, seat plates, list rows</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--pd-surface-raised)"></div>
+      <div class="meta"><div class="name">--pd-surface-raised</div><div class="hex">#262421</div>
+      <div class="use">Hover, menus, dialogs</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--pd-hairline)"></div>
+      <div class="meta"><div class="name">--pd-hairline</div><div class="hex">#363330</div>
+      <div class="use">Every 1px border</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--pd-card-face)">
+        <div style="width:100%;height:100%;background:var(--pd-overlay)"></div></div>
+      <div class="meta"><div class="name">--pd-overlay</div><div class="hex">rgba(19,18,17,.8)</div>
+      <div class="use">Scrim behind a dialog</div></div></div>
+  </div>
+
+  <h2>Text</h2>
+  <div class="grid">
+    <div class="sw"><div class="chip"><span class="aa" style="color:var(--pd-text)">Aa</span></div>
+      <div class="meta"><div class="name">--pd-text</div><div class="hex">#ece9e3</div>
+      <div class="use">Primary. Warm, never pure white</div></div></div>
+    <div class="sw"><div class="chip"><span class="aa" style="color:var(--pd-text-muted)">Aa</span></div>
+      <div class="meta"><div class="name">--pd-text-muted</div><div class="hex">#a6a099</div>
+      <div class="use">Secondary — labels, stacks, names</div></div></div>
+    <div class="sw"><div class="chip"><span class="aa" style="color:var(--pd-text-faint)">Aa</span></div>
+      <div class="meta"><div class="name">--pd-text-faint</div><div class="hex">#888279</div>
+      <div class="use">Timestamps, disabled, fine print</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--pd-card-face)">
+        <span class="aa" style="color:var(--pd-text-inverse)">Aa</span></div>
+      <div class="meta"><div class="name">--pd-text-inverse</div><div class="hex">#131211</div>
+      <div class="use">Text on a light surface</div></div></div>
+  </div>
+
+  <h2>Accent — the duel's one blue</h2>
+  <div class="grid">
+    <div class="sw"><div class="chip"><span class="aa" style="color:var(--pd-accent)">Rematch</span></div>
+      <div class="meta"><div class="name">--pd-accent</div><div class="hex">#4d8bc9</div>
+      <div class="use">Links, live turn marker, focus ring</div></div></div>
+    <div class="sw"><div class="chip"><button class="btn fill">Bet 250</button></div>
+      <div class="meta"><div class="name">--pd-accent-fill / --pd-accent-fill-hover</div><div class="hex">#3372b5 · hover #2e67a4</div>
+      <div class="use">Solid controls — hover the button above</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--pd-accent-subtle)">
+        <span style="color:var(--pd-accent);font-size:13px">selected</span></div>
+      <div class="meta"><div class="name">--pd-accent-subtle</div><div class="hex">rgba(77,139,201,.14)</div>
+      <div class="use">Selected rows, quiet emphasis</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--pd-accent-fill)">
+        <span class="aa" style="color:var(--pd-on-accent)">Aa</span></div>
+      <div class="meta"><div class="name">--pd-on-accent</div><div class="hex">#ffffff</div>
+      <div class="use">Text on accent-fill only</div></div></div>
+  </div>
+
+  <h2>Semantic — outcomes and urgency</h2>
+  <div class="grid">
+    <div class="sw"><div class="chip"><span class="aa" style="color:var(--pd-win)">+1</span></div>
+      <div class="meta"><div class="name">--pd-win</div><div class="hex">#79a862</div>
+      <div class="use">A duel won, a coin gained</div></div></div>
+    <div class="sw"><div class="chip"><span class="aa" style="color:var(--pd-loss)">−1</span></div>
+      <div class="meta"><div class="name">--pd-loss</div><div class="hex">#c4655c</div>
+      <div class="use">A duel lost; destructive actions</div></div></div>
+    <div class="sw"><div class="chip"><span class="aa"
+        style="color:var(--pd-warn);font-family:var(--pd-font-mono)">0:08</span></div>
+      <div class="meta"><div class="name">--pd-warn</div><div class="hex">#c99a4a</div>
+      <div class="use">The turn clock running down — nothing else</div></div></div>
+  </div>
+
+  <h2>Cards &amp; coin</h2>
+  <div class="grid" style="--chip-h: 96px">
+    <div class="sw"><div class="chip"><span class="pcard"><span class="r">A</span><span class="s">♠</span><span class="pip">♠</span></span></div>
+      <div class="meta"><div class="name">--pd-card-face</div><div class="hex">#f3f0e9</div>
+      <div class="use">Paper white — the brightest surface anywhere</div></div></div>
+    <div class="sw"><div class="chip"><span class="pcard red"><span class="r">Q</span><span class="s">♥</span><span class="pip">♥</span></span></div>
+      <div class="meta"><div class="name">--pd-suit-red</div><div class="hex">#bf3b30</div>
+      <div class="use">Hearts and diamonds</div></div></div>
+    <div class="sw"><div class="chip"><span class="pcard"><span class="r">7</span><span class="s">♣</span><span class="pip">♣</span></span></div>
+      <div class="meta"><div class="name">--pd-suit-black</div><div class="hex">#26231f</div>
+      <div class="use">Spades and clubs, and card ink</div></div></div>
+    <div class="sw"><div class="chip"><span class="pback"></span></div>
+      <div class="meta"><div class="name">--pd-card-back</div><div class="hex">#35567e</div>
+      <div class="use">A hidden hand</div></div></div>
+    <div class="sw"><div class="chip"><span class="coin"></span></div>
+      <div class="meta"><div class="name">--pd-coin / --pd-coin-deep</div><div class="hex">#9fb2c4 / #64788c</div>
+      <div class="use">The duel coin — steel, never glitter</div></div></div>
+  </div>
+
+  <h2>The hierarchy, proved</h2>
+  <div class="demo">
+    <div class="row"><span class="who">ImKate</span><span class="pback" style="width:40px;height:56px"></span>
+      <span class="pback" style="width:40px;height:56px"></span><span class="num">4,550</span></div>
+    <div class="row">
+      <span class="pcard" style="width:48px;height:67px"><span class="r">A</span><span class="s">♠</span></span>
+      <span class="pcard red" style="width:48px;height:67px"><span class="r">7</span><span class="s">♦</span></span>
+      <span class="pcard" style="width:48px;height:67px"><span class="r">2</span><span class="s">♣</span></span>
+      <span class="num" style="margin-left:10px">Pot&nbsp;2,450</span>
+    </div>
+    <div class="row">
+      <span class="pcard red"><span class="r">A</span><span class="s">♥</span><span class="pip">♥</span></span>
+      <span class="pcard"><span class="r">K</span><span class="s">♠</span><span class="pip">♠</span></span>
+    </div>
+    <div class="row">
+      <button class="btn ghost">Fold</button>
+      <button class="btn ghost">Check</button>
+      <button class="btn fill">Bet 250</button>
+    </div>
+    <p class="cap">Dark, quiet table. The cards are the only white on screen; one steel-blue
+    action carries the turn. Nothing glows, nothing is golden.</p>
+  </div>
+</div>
+</body>
+</html>
