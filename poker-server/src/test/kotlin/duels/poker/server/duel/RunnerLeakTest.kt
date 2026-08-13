@@ -238,7 +238,7 @@ internal class RunnerLeakTest {
         val files = serverSourceFiles()
         val allowed = "duel${File.separatorChar}Addressed.kt"
 
-        val needles = listOf("PlayerView.of(", "ServerMessage.Snapshot(", "ServerMessage.Events(")
+        val needles = listOf("PlayerView.of(", "ServerMessage.Snapshot(", "ServerMessage.Events(", "ServerMessage.DuelFinished(")
         needles.forEach { needle ->
             val containing = files.filter { it.readText().contains(needle) }
             val offending = containing.filterNot { it.path.endsWith(allowed) }

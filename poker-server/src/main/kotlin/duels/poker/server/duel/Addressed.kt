@@ -1,5 +1,6 @@
 package duels.poker.server.duel
 
+import duels.poker.engine.duel.DuelOutcome
 import duels.poker.engine.game.GameEvent
 import duels.poker.engine.game.GameState
 import duels.poker.engine.game.PlayerView
@@ -64,3 +65,22 @@ public fun broadcast(
 
     return result
 }
+
+/**
+ * Builds the finished-duel frames for each seat.
+ *
+ * Both seats receive the same [outcome]. A `DuelOutcome` is a projection of facts both seats
+ * are entitled to know: the winning seat (or null for a draw), the hand count, and the final stacks.
+ * The final stacks are already in the last `Snapshot` each seat received, so there is nothing here
+ * to redact. This file is where that judgement is allowed to be made (ADR-0017): the finished-duel
+ * frame is a projection, filtered like everything else through `Addressed.kt`.
+ *
+ * @param outcome The duel's outcome.
+ * @return Two frames, addressed to seats 0 and 1, each carrying [ServerMessage.DuelFinished] with
+ *         the same outcome.
+ */
+public fun finishedFrames(outcome: DuelOutcome): List<Addressed> =
+    listOf(
+        Addressed(0, ServerMessage.DuelFinished(outcome)),
+        Addressed(1, ServerMessage.DuelFinished(outcome)),
+    )

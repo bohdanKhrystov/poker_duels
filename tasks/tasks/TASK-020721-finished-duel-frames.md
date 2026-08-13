@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020721
 title: The projection layer builds the finished-duel frames, and only it may
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
