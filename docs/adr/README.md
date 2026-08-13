@@ -57,7 +57,7 @@ Each with the reason it was not chosen.
 | [0010](ADR-0010-engine-takes-a-serialization-dependency.md) | The engine may depend on kotlinx.serialization | Accepted |
 | [0011](ADR-0011-postgres-in-v01.md) | PostgreSQL lands in v0.1 | Accepted — amends 0003 |
 | [0012](ADR-0012-device-bound-anonymous-profiles.md) | Anonymous profiles, bound to a device | Accepted |
-| [0013](ADR-0013-disconnect-grace-period.md) | A dropped connection gets a grace period, then folds | Accepted |
+| [0013](ADR-0013-disconnect-grace-period.md) | A dropped connection gets a grace period, then folds | Amended by 0023 |
 | [0014](ADR-0014-duel-coin-economy.md) | The winner takes a coin, the loser gives one, a draw pays nothing | Accepted |
 | [0015](ADR-0015-a-draw-writes-two-result-rows.md) | A draw writes two result rows of zero, not no rows | Accepted |
 | [0016](ADR-0016-a-room-is-serialised-by-its-own-mutex.md) | A room is serialised by its own mutex, not by an actor | Accepted |
@@ -67,6 +67,7 @@ Each with the reason it was not chosen.
 | [0020](ADR-0020-typescript-protocol-from-serial-descriptors.md) | TypeScript protocol types are emitted from the serial descriptors | Accepted |
 | [0021](ADR-0021-a-profile-gains-a-display-name.md) | A profile gains a player-chosen display name | Accepted |
 | [0022](ADR-0022-the-room-code-is-the-invite.md) | The room code is the invite, and failed joins are budgeted | Accepted |
+| [0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) | An absent seat checks when nothing is owed, folds when facing a bet | Accepted — amends 0013 |
 
 ## Open decisions
 
@@ -96,4 +97,5 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-015 | How does the end of a duel reach a client? | [ADR-0017](ADR-0017-the-server-says-when-a-duel-ends.md) — a new `ServerMessage.DuelFinished` |
 | DEC-012 | Is holding a room code sufficient authorisation to take the second seat, or does joining need rate limiting or host confirmation? | [ADR-0022](ADR-0022-the-room-code-is-the-invite.md) — the code is the invite (the human's call); `RoomRegistry.join` budgets failed attempts at 10 per player per minute |
 | DEC-016 | What names the opponent in a result line? | [ADR-0021](ADR-0021-a-profile-gains-a-display-name.md) — a profile gains a player-chosen display name (the human's call); nullable `player.display_name`, joined into the read path; product rules split to `DEC-017` |
+| DEC-020 | What does an absent seat do at a decision point where `Fold` is illegal? | [ADR-0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) — it checks; fold only when facing a bet, the action read from the engine's `legalActions`; `poker-engine` unchanged; amends ADR-0013 |
 
