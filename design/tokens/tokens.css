@@ -3,6 +3,8 @@
  * Dark values only: the product is dark-first (docs/vision.md — Lichess, not casino).
  * Preview cards inline copies of these values because the render surface requires
  * self-contained files; their verify greps pin the names below against silent drift.
+ * A token derived from another says so in a comment — retuning the source means
+ * retuning the derivation with it.
  */
 
 :root {
@@ -12,22 +14,25 @@
   --pd-surface: #1c1a18;
   --pd-surface-raised: #262421;
   --pd-hairline: #363330;
-  --pd-overlay: rgba(19, 18, 17, 0.8);
+  --pd-overlay: rgba(19, 18, 17, 0.8); /* = --pd-bg at 80% */
 
-  /* Text — warm off-whites, three steps. Anything quieter than faint is decoration. */
+  /* Text — warm off-whites, three steps, all AA on --pd-bg and --pd-surface.
+   * Faint measures 4.07:1 on --pd-surface-raised, so inside menus and dialogs
+   * anything smaller than large text steps up to muted. */
   --pd-text: #ece9e3;
   --pd-text-muted: #a6a099;
-  --pd-text-faint: #6f6a64;
-  --pd-text-inverse: #131211;
+  --pd-text-faint: #888279;
+  --pd-text-inverse: #131211; /* = --pd-bg, for text on a light surface */
 
   /* Accent — one steel blue, for the duel's actions and nothing else.
-   * `accent` is for text, links and rings on dark ground; `accent-fill` is darker so
-   * white on it stays readable on solid controls. */
+   * `accent` is for text, links and rings on dark ground; `accent-fill` is darker
+   * so white on it stays readable, and its hover darkens further — the white
+   * guarantee holds at every state (4.98:1 rest, 5.85:1 hover). */
   --pd-accent: #4d8bc9;
   --pd-accent-fill: #3372b5;
-  --pd-accent-fill-hover: #3f80c4;
+  --pd-accent-fill-hover: #2e67a4;
   --pd-on-accent: #ffffff;
-  --pd-accent-subtle: rgba(77, 139, 201, 0.14);
+  --pd-accent-subtle: rgba(77, 139, 201, 0.14); /* = --pd-accent at 14% */
 
   /* Semantic — outcomes and urgency, all desaturated: results are stated, not lit up.
    * Amber exists only for the turn clock running down. */
@@ -44,20 +49,22 @@
   --pd-coin: #9fb2c4;
   --pd-coin-deep: #64788c;
 
-  /* Type — the system stack: instant, quiet, native everywhere. Numbers that move
-   * (pot, stacks, clock) are mono with tabular figures so nothing jitters. */
+  /* Type — the system stack: instant, quiet, native everywhere. Sizes are rem so
+   * the player's browser preference scales every screen; the px the design was
+   * drawn at rides alongside. Numbers that move (pot, stacks, clock) are mono
+   * with tabular figures so nothing jitters. */
   --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
     monospace;
 
-  --pd-fs-micro: 11px;
-  --pd-fs-small: 13px;
-  --pd-fs-body: 15px;
-  --pd-fs-large: 18px;
-  --pd-fs-title: 22px;
-  --pd-fs-display: 30px;
-  --pd-fs-hero: 40px;
+  --pd-fs-micro: 0.6875rem; /* 11px */
+  --pd-fs-small: 0.8125rem; /* 13px */
+  --pd-fs-body: 0.9375rem; /* 15px */
+  --pd-fs-large: 1.125rem; /* 18px */
+  --pd-fs-title: 1.375rem; /* 22px */
+  --pd-fs-display: 1.875rem; /* 30px */
+  --pd-fs-hero: 2.5rem; /* 40px */
 
   --pd-weight-regular: 400;
   --pd-weight-medium: 500;
@@ -67,7 +74,8 @@
   --pd-lh-body: 1.5;
   --pd-track-caps: 0.08em;
 
-  /* Spacing — one ladder, named by step so the scale can be retuned in one move. */
+  /* Spacing — one ladder, named by step so the scale can be retuned in one move.
+   * Layout geometry stays px on purpose: it spaces surfaces, not text. */
   --pd-space-1: 2px;
   --pd-space-2: 4px;
   --pd-space-3: 8px;
@@ -85,8 +93,12 @@
   --pd-radius-card: 6px;
   --pd-radius-pill: 999px;
 
-  /* Focus & elevation — one visible ring for every focusable thing; one shadow,
-   * reserved for what floats (menus, dialogs). Everything else is hairlines. */
-  --pd-focus: 0 0 0 2px var(--pd-bg), 0 0 0 4px var(--pd-accent);
+  /* Focus & elevation — one visible ring for every focusable thing, drawn as an
+   * outline (`outline: var(--pd-focus); outline-offset: var(--pd-focus-offset)`):
+   * the offset gap stays transparent on every surface, and outlines survive
+   * forced-colors mode where box-shadow rings vanish. One shadow, reserved for
+   * what floats (menus, dialogs); everything else is hairlines. */
+  --pd-focus: 2px solid var(--pd-accent);
+  --pd-focus-offset: 2px;
   --pd-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
 }

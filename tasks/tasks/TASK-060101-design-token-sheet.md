@@ -53,7 +53,10 @@ casino vocabulary anywhere in the sheet).
 ## Acceptance criteria
 
 - [ ] Every command in `verify:` exits 0.
-- [ ] The human accepts the palette after seeing the Colors card built from it.
+
+The human's acceptance of the palette is a **story-level** criterion (`STORY-0601`), judged
+on the rendered cards — it is deliberately not restated here, so this task's `done` claims
+only what is true at its merge.
 
 ## Definition of done
 
