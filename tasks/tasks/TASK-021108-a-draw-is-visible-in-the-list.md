@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021108
 title: Prove a drawn duel is visible in both players' lists
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: XS
