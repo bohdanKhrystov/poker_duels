@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020719
 title: The wire protocol moves to version 2
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: XS
@@ -69,6 +69,12 @@ Every other test that touches the version — `HandshakeTest`'s four cases, `Due
 `PROTOCOL_VERSION` symbolically and must pass **unchanged**. They are in `verify:`, not in the
 budget. If any of them needs editing, stop: that is a hard-coded `1` this ticket has not found, and
 it belongs in this ticket's diff with a note.
+
+**Three were found**, and they did not fit: carrying them would have made this a six-file ticket,
+and `lint_tickets.py` caps a micro-ticket at three. They came out ahead of the bump as
+`TASK-020732`, which is now a dependency. All three asserted the literal inside an encoded JSON
+string, so no grep for `PROTOCOL_VERSION` had found them, and `ClientMessageTest` was listed above
+as symbolic when it was not. It is symbolic now.
 
 ## Acceptance criteria
 
