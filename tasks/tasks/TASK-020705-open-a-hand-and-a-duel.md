@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020705
 title: Open a hand from a seed, and open the duel's first one
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
