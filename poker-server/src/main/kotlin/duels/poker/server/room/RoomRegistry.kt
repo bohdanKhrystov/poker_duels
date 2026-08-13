@@ -11,8 +11,10 @@ import duels.poker.server.duel.resumeFrames
 import duels.poker.server.duel.startDuel
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.ServerClock
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -46,6 +48,15 @@ public class RoomRegistry(
     private val sink: DuelResultSink = DuelResultSink { },
 ) {
     private val rooms = ConcurrentHashMap<RoomCode, Holder>()
+
+    /**
+     * Reports a single room's failure inside a sweep so it can be logged without ending the
+     * batch. Not a `WebSocketSession` or a `ProtocolError`: this is a plain diagnostic, the one
+     * exception this class makes to knowing nothing outside the engine and the room model, and it
+     * exists only because [expireGracePeriods] must not let one room's exception silence every
+     * other room already committed to in the same pass.
+     */
+    private val logger = LoggerFactory.getLogger(RoomRegistry::class.java)
 
     /**
      * The duel id [act] is currently trying to hand to [sink], keyed by room, for exactly as long
@@ -439,6 +450,88 @@ public class RoomRegistry(
     }
 
     /**
+     * End every disconnect grace window (`ADR-0013`) that has run out, as of one instant read
+     * from [clock].
+     *
+     * `now` is read once, exactly as [reap] reads its own `now` once, so every room in this pass
+     * is judged against the same instant.
+     *
+     * Two passes, in order:
+     * 1. A room is a candidate only once its unlocked [Room.gracePeriods] is non-empty — the same
+     *    cheap-before-the-lock idiom [reap] uses for [isReapable], re-decided here again once the
+     *    room's own lock is held, since a room touched between the scan and the lock —
+     *    reconnected, resumed, joined — may have nothing left to expire by the time this reaches
+     *    it. A candidate has [Room.expireGrace] applied inside [mutate]; if nothing ran out,
+     *    nothing is written back. If something did, and the room still has a guest with both
+     *    seats now in [Room.absentSeats], the expired room is abandoned instead of written back
+     *    as-is — both players are gone, so there is no duel left to fold, and abandoning is what
+     *    makes the room reapable under [RoomTimeouts.finishedMillis] rather than this method
+     *    growing a second timer for it.
+     * 2. Every room the first pass changed has [Room.foldAbsentSeats] applied through [act],
+     *    never written back directly: [act] is what claims a duel that finishes this way in
+     *    [recording], hands it to [DuelResultSink] outside the lock, and unclaims it again if
+     *    that throws. A fold that ends a duel must reach the sink exactly as a played one does, so
+     *    it has to go through the one place that already does that correctly rather than a second
+     *    copy of it here.
+     *
+     * The second pass isolates every room's [act] call: by the time it runs, the first pass has
+     * already cleared [Room.gracePeriods] for every room in this batch, so an exception this
+     * method let propagate would not just fail the room it came from — it would abort the loop
+     * before every later room's [act] call is even attempted, and none of those rooms would ever
+     * be retried, because the *next* sweep's unlocked pre-check finds their [Room.gracePeriods]
+     * already empty and skips them too. `ADR-0025`'s "log and retry next tick" guards between
+     * this method and [reap]; it cannot rescue a room that this method itself never got to. A
+     * room whose [act] call throws is logged and skipped instead: every other room already
+     * committed to by the first pass still gets its own, independent attempt this same call.
+     *
+     * No new lock: both passes write exclusively through [mutate] and [act], the same two call
+     * sites every other mutation in this class already uses.
+     *
+     * @return One [GraceExpiry] per room the first pass changed whose second-pass [act] call
+     *   completed, carrying that room as it stands after both passes, and the frames its fold
+     *   produced — empty for a room that was abandoned instead, since abandoning produces no
+     *   frames to hand back. A room whose [act] call threw is omitted, not retried by a later call
+     *   to this method.
+     */
+    public suspend fun expireGracePeriods(): List<GraceExpiry> {
+        val now = clock.nowMillis()
+        val touched = mutableListOf<RoomCode>()
+        for ((code, holder) in rooms) {
+            if (holder.room.gracePeriods.isEmpty()) continue
+            val changed = mutate(
+                code,
+                absent = { false },
+                block = { room ->
+                    if (room.gracePeriods.isEmpty()) return@mutate Pair(null, false)
+                    val expired = room.expireGrace(now)
+                    if (expired === room) return@mutate Pair(null, false)
+                    val bothGone = expired.guest != null && expired.absentSeats == setOf(0, 1)
+                    Pair(if (bothGone) expired.abandon(now) else expired, true)
+                },
+            )
+            if (changed) touched.add(code)
+        }
+
+        val expiries = mutableListOf<GraceExpiry>()
+        for (code in touched) {
+            val step = try {
+                act(code) { it.foldAbsentSeats(handSeeds) }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (failure: Throwable) {
+                // One room's failure — a sink outage while this fold finished its duel is the
+                // obvious cause — must not cost every later room in `touched` its own, unrelated
+                // fold: see the KDoc above for why a later sweep cannot pick this room back up.
+                logger.error("expireGracePeriods: folding absent seats failed for room {}", code, failure)
+                continue
+            }
+            val room = checkNotNull(get(code)) { "a room this pass just wrote back must still be registered" }
+            expiries.add(GraceExpiry(room, step?.outbound ?: emptyList()))
+        }
+        return expiries
+    }
+
+    /**
      * Remove every room that has been idle past its state's configured limit.
      *
      * `now` is read once from [clock], so every room in this pass is judged against the same
@@ -446,8 +539,10 @@ public class RoomRegistry(
      * - [RoomState.WAITING]: `now - lastActivityAt >= timeouts.waitingMillis`;
      * - [RoomState.FINISHED] or [RoomState.ABANDONED]: `now - lastActivityAt >= timeouts.finishedMillis`;
      * - [RoomState.PLAYING]: never, however idle. A silent live duel is `ADR-0013`'s grace period,
-     *   which ends by calling [abandon] — that is what makes the room reapable by the rule above,
-     *   rather than this method carrying a second timer for the same room.
+     *   which [expireGracePeriods] ends: a seat whose window runs out has its hand folded as an
+     *   ordinary action, and the room only becomes [RoomState.ABANDONED] — which is what makes it
+     *   reapable by the rule above — once both seats are gone, rather than this method carrying a
+     *   second timer for the same room.
      *
      * A candidate is found by an unlocked scan, then re-checked against [Holder.room] after taking
      * that room's mutex, so a room touched between the scan and the lock — joined, finished,
