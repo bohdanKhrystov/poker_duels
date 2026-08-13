@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020704
 title: The DuelRunner value — a live hand, its match, its logs, and the invariants tying them together
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
