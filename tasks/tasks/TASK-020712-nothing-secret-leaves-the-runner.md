@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020712
 title: No opponent's card and no hand seed ever leaves the runner, and transport filters nothing itself
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
