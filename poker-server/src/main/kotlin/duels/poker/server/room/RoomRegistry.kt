@@ -1,6 +1,12 @@
 package duels.poker.server.room
 
 import duels.poker.engine.duel.DuelFormat
+import duels.poker.server.duel.DuelResult
+import duels.poker.server.duel.DuelResultSink
+import duels.poker.server.duel.DuelStep
+import duels.poker.server.duel.HandSeedSource
+import duels.poker.server.duel.SecureHandSeedSource
+import duels.poker.server.duel.startDuel
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.ServerClock
 import kotlinx.coroutines.sync.Mutex
@@ -12,23 +18,29 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * Each room lives behind its own [kotlinx.coroutines.sync.Mutex]: this is the single-writer rule
  * of `STORY-0206`, so that a later frame taking one room's mutex around a read-modify-write never
- * races another frame mutating the same room. `DEC-013` asks whether `STORY-0207` needs to
- * promote this to a channel-fed actor; a per-room mutex is what that decision is measured
- * against, and it changes no signature here.
+ * races another frame mutating the same room. `ADR-0016` answers `DEC-013`: the mutex stays, and
+ * a room with a live duel is serialised exactly as a room without one — no channel-fed actor.
  *
  * The registry knows no JSON, no `WebSocketSession`, no `ProtocolError` — nothing here reaches
- * outside the engine and the room model.
+ * outside the engine and the room model. It equally knows nothing of the wire protocol carrying
+ * a duel action in: [act] takes a function computing the next step from a [Room], leaving the
+ * inbound frame's type to the caller.
  *
  * @param codes The source of new, unique-among-live-rooms codes.
  * @param clock The clock used to stamp a newly opened room's activity.
  * @param timeouts The idle limits a later ticket reaps rooms against. Declared now so that a
  *   constructor growing a parameter later does not break every test that already built a
  *   registry.
+ * @param seeds The source a newly started or rematched duel draws its opening hand's seed from.
+ * @param sink Where a finished duel is recorded. Called outside every room's lock (`ADR-0016`):
+ *   nothing under the lock does I/O, so a slow store never stalls another action in this room.
  */
 public class RoomRegistry(
     private val codes: RoomCodeSource,
     private val clock: ServerClock,
     private val timeouts: RoomTimeouts = RoomTimeouts.DEFAULT,
+    private val seeds: HandSeedSource = SecureHandSeedSource(),
+    private val sink: DuelResultSink = DuelResultSink { },
 ) {
     private val rooms = ConcurrentHashMap<RoomCode, Holder>()
 
@@ -78,6 +90,11 @@ public class RoomRegistry(
      * lookup and the lock refuses with [RoomRefusal.UNKNOWN_ROOM] instead of seating a player into
      * a room nobody can find.
      *
+     * A seated room also starts the duel: [startDuel] draws its opening hand's seed from [seeds]
+     * and the resulting runner is attached before the room is written back, so a room a caller can
+     * observe as [RoomState.PLAYING] always already carries its runner — inside the same critical
+     * section as the seating itself, for the same reason seating is.
+     *
      * @param code The room to join.
      * @param player The player attempting to join.
      * @return The result of [Room.join]; a [JoinResult.Refused] room is left exactly as it was.
@@ -88,7 +105,10 @@ public class RoomRegistry(
             absent = { JoinResult.Refused(RoomRefusal.UNKNOWN_ROOM) },
             block = { room ->
                 when (val result = room.join(player, clock.nowMillis())) {
-                    is JoinResult.Seated -> Pair(result.room, result)
+                    is JoinResult.Seated -> {
+                        val seated = withFreshRunner(result.room)
+                        Pair(seated, JoinResult.Seated(seated))
+                    }
                     is JoinResult.Refused -> Pair(null, result)
                 }
             },
@@ -145,6 +165,10 @@ public class RoomRegistry(
      * happen inside the one critical section so that two concurrent offers on the same room are
      * serialized and both see a consistent view of what has been offered.
      *
+     * An agreed rematch starts a fresh duel exactly as [join] does: a new runner, seeded from
+     * [seeds], replaces whatever runner the just-finished duel left behind, attached before the
+     * room is written back.
+     *
      * @param code The room to offer a rematch on.
      * @param player The player offering the rematch.
      * @return The result of [Room.offerRematch]; a [RematchResult.Offered] or [RematchResult.Agreed]
@@ -157,11 +181,75 @@ public class RoomRegistry(
             block = { room ->
                 when (val result = room.offerRematch(player, clock.nowMillis())) {
                     is RematchResult.Offered -> Pair(result.room, result)
-                    is RematchResult.Agreed -> Pair(result.room, result)
+                    is RematchResult.Agreed -> {
+                        val agreed = withFreshRunner(result.room)
+                        Pair(agreed, RematchResult.Agreed(agreed))
+                    }
                     is RematchResult.Refused -> Pair(null, result)
                 }
             },
         )
+    }
+
+    /**
+     * Apply an inbound duel action to the room at [code], through [step]'s call into
+     * [Room.act], entirely inside that room's mutex — no two callers can move one duel at once,
+     * for the same reason no two callers can move one room's seating at once.
+     *
+     * [step] takes the current [Room] rather than a message, so this registry needs no knowledge
+     * of the inbound frame's type; the caller supplies the pure computation, this method only
+     * supplies the lock and the write-back.
+     *
+     * When [step] returns a step whose runner has finished, the room is moved to
+     * [RoomState.FINISHED] and [DuelResultSink.record] is called exactly once — after this
+     * method's lock is released, so a slow store never holds up another action on this room
+     * (`ADR-0016`). Exactly once, because the write-back inside the lock is what moves the room
+     * past [RoomState.PLAYING]: the next call, from a retry or a rematch, finds a room [Room.act]
+     * itself refuses to move, and [step] never runs again for this duel.
+     *
+     * @param code The room to act in.
+     * @param step Computes the next duel step from the room's current state; typically a call to
+     *   [Room.act] closing over the inbound frame.
+     * @return The resulting step, or `null` if the room does not exist or has nothing to move.
+     */
+    public suspend fun act(code: RoomCode, step: (Room) -> DuelStep?): DuelStep? {
+        var finishedSeats: List<PlayerId>? = null
+        val result = mutate(
+            code,
+            absent = { null },
+            block = { room ->
+                val duelStep = step(room) ?: return@mutate Pair(null, null)
+                val newRoom = if (duelStep.runner.outcome != null) {
+                    finishedSeats = listOf(room.host, checkNotNull(room.guest) { "a PLAYING room always has a guest" })
+                    room.finish(clock.nowMillis()).copy(runner = duelStep.runner)
+                } else {
+                    room.copy(runner = duelStep.runner, lastActivityAt = clock.nowMillis())
+                }
+                Pair(newRoom, duelStep)
+            },
+        )
+
+        val seats = finishedSeats
+        if (result != null && seats != null) {
+            sink.record(DuelResult(checkNotNull(result.runner.outcome), seats, result.runner.log))
+        }
+        return result
+    }
+
+    /**
+     * Start a fresh duel for [room] and attach it, drawing the opening hand's seed from [seeds].
+     *
+     * Shared by [join] and [offerRematch]: both seat a room into [RoomState.PLAYING] with a fresh
+     * [duels.poker.server.duel.MatchState] and both need the runner that plays it, drawn under
+     * the same lock as the seating so the two never disagree about which duel is live.
+     *
+     * @param room The room whose match was just (re)started; its [Room.format] and
+     *   [Room.openingButtonSeat] configure the new duel.
+     * @return [room] with a freshly started [Room.runner] attached.
+     */
+    private fun withFreshRunner(room: Room): Room {
+        val started = startDuel(room.format, room.openingButtonSeat, seeds.newHandSeed())
+        return room.copy(runner = started.runner)
     }
 
     /**

@@ -2,7 +2,12 @@ package duels.poker.server.room
 
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.MatchState
+import duels.poker.server.duel.DuelRunner
+import duels.poker.server.duel.DuelStep
+import duels.poker.server.duel.HandSeedSource
+import duels.poker.server.protocol.Act
 import duels.poker.server.session.PlayerId
+import duels.poker.server.duel.act as advanceDuel
 
 /**
  * The lifecycle a room moves through, host to finish, and the invariants each state carries.
@@ -39,6 +44,13 @@ public enum class RoomState {
  * @property rematchOffers the players who have offered a rematch; only meaningful once
  *   [state] is [RoomState.FINISHED].
  * @property lastActivityAt the timestamp, in milliseconds, of the room's most recent activity.
+ * @property runner the live or finished duel this room hosts, or `null` before one has started.
+ *   `RoomRegistry` attaches it once it draws a hand seed to open the duel [join] or
+ *   [offerRematch] just agreed to, which is why neither of those pure methods sets it: this is
+ *   the same read-modify-write [RoomRegistry.mutate] already performs, and [act] is the read
+ *   half of it. It duplicates what [match] already says about the format and the opening
+ *   button — a known cost of keeping the duel in one lock and one type rather than a second
+ *   structure (`ADR-0016`).
  */
 public data class Room(
     val code: RoomCode,
@@ -50,6 +62,7 @@ public data class Room(
     val openingButtonSeat: Int,
     val rematchOffers: Set<PlayerId>,
     val lastActivityAt: Long,
+    val runner: DuelRunner? = null,
 ) {
     init {
         require(guest == null || guest != host) { "the guest must not be the host" }
@@ -206,6 +219,28 @@ public data class Room(
         } else {
             RematchResult.Offered(copy(rematchOffers = offers))
         }
+    }
+
+    /**
+     * Apply an inbound duel action to this room's live duel.
+     *
+     * Delegates entirely to `duels.poker.server.duel.act`: legality, turn order and hand
+     * advancement are all decided there, never re-decided here — this is a thin, pure adapter
+     * from a room to the runner it hosts. Refuses with `null`, never an exception, when there
+     * is nothing to move: a room that never started a duel, or one that already finished, looks
+     * the same to a caller as one holding a stale frame for a live one — the engine's own
+     * `guard` inside `act` is what tells those apart while a duel is running.
+     *
+     * @param seat the seat the inbound frame arrived on.
+     * @param message the inbound attempt to act.
+     * @param seeds the source a hand-ending action draws its next seed from.
+     * @return the duel after this frame and the frames each seat is entitled to see, or `null`
+     *   if this room is not [RoomState.PLAYING] or carries no [runner].
+     */
+    public fun act(seat: Int, message: Act, seeds: HandSeedSource): DuelStep? {
+        if (state != RoomState.PLAYING) return null
+        val liveRunner = runner ?: return null
+        return advanceDuel(liveRunner, seat, message, seeds)
     }
 
     /**
