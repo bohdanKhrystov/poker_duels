@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021209
 title: The winner's coin is one higher and the loser's one lower, read back over HTTP
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S
