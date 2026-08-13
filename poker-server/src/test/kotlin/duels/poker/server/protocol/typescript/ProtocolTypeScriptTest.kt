@@ -1,8 +1,19 @@
 package duels.poker.server.protocol.typescript
 
+import duels.poker.engine.game.GameEvent
+import duels.poker.engine.game.PlayerAction
+import duels.poker.engine.game.Rejection
+import duels.poker.server.protocol.ClientMessage
+import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.PROTOCOL_VERSION
+import duels.poker.server.protocol.ServerMessage
+import duels.poker.server.protocol.protocolJson
+import duels.poker.server.protocol.subtypeNames
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.serializer
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -125,5 +136,70 @@ class ProtocolTypeScriptTest {
                 "output must contain the declaration text for ${declaration.name}",
             )
         }
+    }
+
+    @Test
+    fun everyMessageVariantDeclaresItsSerialNameAsItsDiscriminator() {
+        val clientMessageNames = subtypeNames(ClientMessage.serializer().descriptor)
+        val serverMessageNames = subtypeNames(ServerMessage.serializer().descriptor)
+        val names = clientMessageNames + serverMessageNames
+        val output = protocolTypeScript()
+
+        assertTrue(names.isNotEmpty(), "there must be message variants to check")
+        // CreateRoom is a `data object`: its whole declaration is a discriminator line, so an
+        // emitter that only wrote discriminators for classes with fields would still pass without it.
+        assertTrue(names.contains("CreateRoom"), "the variant names must include CreateRoom")
+
+        names.forEach { name ->
+            assertTrue(
+                output.contains("  type: \"$name\";"),
+                "output must declare \"$name\" as its discriminator literal",
+            )
+        }
+    }
+
+    @Test
+    fun everySealedUnionListsExactlyItsSubtypes() {
+        val sealedDescriptors = listOf(
+            ClientMessage.serializer().descriptor,
+            ServerMessage.serializer().descriptor,
+            serializer<PlayerAction>().descriptor,
+            serializer<Rejection>().descriptor,
+            serializer<GameEvent>().descriptor,
+        )
+        val output = protocolTypeScript()
+
+        // Count actual loop executions, not list size, so a walk that quietly lost a hierarchy
+        // before this point cannot pass by iterating an empty set.
+        var iterations = 0
+        sealedDescriptors.forEach { descriptor ->
+            iterations += 1
+            val typeName = typeNameOf(descriptor)
+            val union = subtypeNames(descriptor).joinToString(" | ")
+            assertTrue(
+                output.contains("export type $typeName = $union;"),
+                "output must union $typeName over exactly its subtypes",
+            )
+        }
+        assertEquals(5, iterations, "the loop must walk all five sealed hierarchies reachable in the protocol")
+    }
+
+    @Test
+    fun theDiscriminatorKeyIsTheOneOnTheWire() {
+        val encoded = protocolJson.encodeToString(
+            ClientMessage.serializer(),
+            Hello(deviceId = "d", protocolVersion = PROTOCOL_VERSION),
+        )
+        // Derive the key from the actual bytes rather than assuming "type": that way this test
+        // fails if protocolJson's classDiscriminator and the emitted property name ever disagree.
+        val key = protocolJson.parseToJsonElement(encoded).jsonObject.entries
+            .single { it.value.jsonPrimitive.content == "Hello" }
+            .key
+        val output = protocolTypeScript()
+
+        assertTrue(
+            output.contains("$key: \"Hello\";"),
+            "output must key the Hello discriminator as \"$key\", the key protocolJson writes on the wire",
+        )
     }
 }
