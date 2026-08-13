@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020710
 title: A harness that plays a whole duel through the runner, seeing only what a client would see
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
