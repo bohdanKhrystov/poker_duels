@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020716
 title: Distinctive seeds close the hand-one hole in the seed-leak check
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: XS
