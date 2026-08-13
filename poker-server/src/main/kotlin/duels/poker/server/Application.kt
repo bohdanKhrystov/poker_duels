@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.db.Database
 import duels.poker.server.db.Migrations
+import duels.poker.server.http.profileRoutes
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -30,7 +31,8 @@ public fun startDatabase(config: ServerConfig): HikariDataSource {
 public fun main() {
     val config = ServerConfig.load()
     val pool = startDatabase(config)
-    embeddedServer(Netty, port = config.port) { module() }.start(wait = true)
+    val components = serverComponents(config, pool)
+    embeddedServer(Netty, port = config.port) { duelServer(components) }.start(wait = true)
     pool.close()
 }
 
@@ -45,4 +47,18 @@ public fun Application.module() {
             call.respondText("OK")
         }
     }
+}
+
+/**
+ * Composes the complete duel server by installing the socket, HTTP profile routes, and plugins.
+ *
+ * The module is invoked first to install plugins and the health route, then the socket and
+ * profile routes are installed to share the same application and database connection pool.
+ *
+ * @param components The server components built from configuration and data source.
+ */
+public fun Application.duelServer(components: ServerComponents) {
+    module()
+    duelSocket(components.socket)
+    profileRoutes(components.reads)
 }

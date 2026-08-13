@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021202
 title: One composition root installs the socket and both HTTP routes, and main calls it
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S
