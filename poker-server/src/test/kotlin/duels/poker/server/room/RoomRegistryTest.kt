@@ -1,11 +1,13 @@
 package duels.poker.server.room
 
+import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.MutableClock
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -19,6 +21,11 @@ private class ScriptedCodes(vararg codes: String) : RoomCodeSource {
         val value = if (queue.size > 1) queue.removeAt(0) else queue.first()
         return RoomCode(value)
     }
+}
+
+/** A test [HandSeedSource] that always returns zero. */
+private class TestHandSeedSource : HandSeedSource {
+    override fun newHandSeed(): Long = 0L
 }
 
 private fun newPlayerId(): PlayerId = PlayerId(UUID.randomUUID().toString())
@@ -89,5 +96,13 @@ internal class RoomRegistryTest {
 
         assertFalse(source.contains("import io.ktor"))
         assertFalse(source.contains("import duels.poker.server.protocol"))
+    }
+
+    @Test
+    fun theRegistryNamesTheSeedSourceItsDuelsDrawFrom() {
+        val seedSource = TestHandSeedSource()
+        val registry = RoomRegistry(ScriptedCodes("2B7KMNPQ"), MutableClock(), seeds = seedSource)
+
+        assertSame(seedSource, registry.handSeeds)
     }
 }
