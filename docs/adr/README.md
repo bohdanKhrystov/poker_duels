@@ -65,6 +65,8 @@ Each with the reason it was not chosen.
 | [0018](ADR-0018-a-second-socket-adopts-the-seat.md) | A second socket adopts the seat, and the first is closed | Accepted |
 | [0019](ADR-0019-the-duel-table-records-hands-played.md) | The duel table records how many hands were played | Accepted |
 | [0020](ADR-0020-typescript-protocol-from-serial-descriptors.md) | TypeScript protocol types are emitted from the serial descriptors | Accepted |
+| [0021](ADR-0021-a-profile-gains-a-display-name.md) | A profile gains a player-chosen display name | Accepted |
+| [0022](ADR-0022-the-room-code-is-the-invite.md) | The room code is the invite, and failed joins are budgeted | Accepted |
 
 ## Open decisions
 
@@ -76,8 +78,7 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-002 | What performance budget does the hand evaluator carry, how is it measured, and does `HandRank` become a packed integer? | `../../tasks/stories/STORY-0103-hand-evaluator.md` | before STORY-0108 |
 | DEC-008 | Is the full `MatchLog` persisted in v0.1, and where — a column, a table per hand, or object storage? | `../../tasks/stories/STORY-0209-postgres-schema-and-migrations.md` | before EPIC-08 |
 | DEC-009 | Can a duel be watched, and if so what may a spectator see and when? | `../../tasks/stories/STORY-0204-player-view-projection.md` | before v0.2 |
-| DEC-012 | Is holding a room code sufficient authorisation to take the second seat — or does joining need rate limiting, or the host's confirmation of the guest? | `../../tasks/stories/STORY-0206-rooms-and-matchmaking.md` | before the first public link |
-| DEC-016 | What names the opponent in a result line? `player` holds no display name, and `device_id` is the sole authentication token so it can never be shown — does a profile gain a display name, does the opponent's player id stand as the label, or does the client render a nickname derived from it? | `../../tasks/stories/STORY-0211-read-path-coins-and-recent-duels.md` | before EPIC-03's results list |
+| DEC-017 | **The human's, not an architect's** — the display-name product rules `ADR-0021` deliberately leaves open: must a name be unique across players; can it be changed, and how often; what does a result line show for an opponent who never set one; is anything filtered or moderated on set? | [ADR-0021](ADR-0021-a-profile-gains-a-display-name.md) | before EPIC-03 renders names |
 
 ## Answered decisions
 
@@ -91,4 +92,6 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-013 | Is a per-room `Mutex` enough once a duel runs inside the room? | [ADR-0016](ADR-0016-a-room-is-serialised-by-its-own-mutex.md) — the mutex stays; no actor |
 | DEC-014 | Does the `duel` table gain a `hands_played` column? | [ADR-0019](ADR-0019-the-duel-table-records-hands-played.md) — yes, now, via V2 while the table is empty |
 | DEC-015 | How does the end of a duel reach a client? | [ADR-0017](ADR-0017-the-server-says-when-a-duel-ends.md) — a new `ServerMessage.DuelFinished` |
+| DEC-012 | Is holding a room code sufficient authorisation to take the second seat, or does joining need rate limiting or host confirmation? | [ADR-0022](ADR-0022-the-room-code-is-the-invite.md) — the code is the invite (the human's call); `RoomRegistry.join` budgets failed attempts at 10 per player per minute |
+| DEC-016 | What names the opponent in a result line? | [ADR-0021](ADR-0021-a-profile-gains-a-display-name.md) — a profile gains a player-chosen display name (the human's call); nullable `player.display_name`, joined into the read path; product rules split to `DEC-017` |
 
