@@ -2,7 +2,7 @@
 
 This document is the contract for EPIC-03 (the game server's protocol). The Kotlin definitions in `duels.poker.server.protocol` are the source of truth for the wire protocol; the TypeScript client is generated from this schema (see `ADR-0003` and `STORY-0203`).
 
-Protocol version: **1**
+Protocol version: **2**
 
 ## Messages
 
