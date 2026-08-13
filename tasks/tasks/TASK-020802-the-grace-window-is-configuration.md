@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020802
 title: The grace window is configuration, read once in ServerConfig
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: XS

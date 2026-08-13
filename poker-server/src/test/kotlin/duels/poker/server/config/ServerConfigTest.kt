@@ -133,12 +133,36 @@ class ServerConfigTest {
     }
 
     @Test
-    fun roomTimeoutsBundlesBothValues() {
+    fun roomTimeoutsBundlesAllThreeValues() {
         val config = MapApplicationConfig()
         val serverConfig = ServerConfig.from(config) { null }
         assertEquals(
-            RoomTimeouts(serverConfig.roomWaitingTimeoutMillis, serverConfig.roomFinishedTimeoutMillis),
+            RoomTimeouts(serverConfig.roomWaitingTimeoutMillis, serverConfig.roomFinishedTimeoutMillis, serverConfig.disconnectGraceMillis),
             serverConfig.roomTimeouts(),
         )
+    }
+
+    @Test
+    fun readsTheGraceWindowFromTheConfig() {
+        val config = MapApplicationConfig("duel.disconnectGraceMillis" to "45000")
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(45_000L, serverConfig.disconnectGraceMillis)
+    }
+
+    @Test
+    fun theEnvironmentVariableOverridesTheGraceWindow() {
+        val config = MapApplicationConfig("duel.disconnectGraceMillis" to "45000")
+        val serverConfig = ServerConfig.from(config) { name ->
+            if (name == ServerConfig.DISCONNECT_GRACE_MILLIS_ENV) "90000" else null
+        }
+        assertEquals(90_000L, serverConfig.disconnectGraceMillis)
+    }
+
+    @Test
+    fun rejectsAGraceWindowThatIsNotANumber() {
+        val config = MapApplicationConfig("duel.disconnectGraceMillis" to "a minute")
+        assertThrows<IllegalArgumentException> {
+            ServerConfig.from(config) { null }
+        }
     }
 }
