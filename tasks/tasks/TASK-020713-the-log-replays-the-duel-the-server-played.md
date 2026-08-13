@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020713
 title: The MatchLog the runner wrote replays into the duel the server actually played
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
