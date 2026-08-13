@@ -194,7 +194,9 @@ public class RoomRegistry(
      *
      * An agreed rematch starts a fresh duel exactly as [join] does: a new runner, seeded from
      * [seeds], replaces whatever runner the just-finished duel left behind, attached before the
-     * room is written back.
+     * room is written back. The frames that opening hand produced are read off the same
+     * [startDuel] call, inside that same critical section, and travel out on the
+     * [RematchResult.Agreed] this method returns, in [RematchResult.Agreed.outbound].
      *
      * Before any of that, this checks [recording]: if the room's current [Room.duelId] is the one
      * [act] is still trying to hand to [sink], the room is treated exactly as [Room.offerRematch]
@@ -221,13 +223,8 @@ public class RoomRegistry(
                 when (val result = room.offerRematch(player, clock.nowMillis())) {
                     is RematchResult.Offered -> Pair(result.room, result)
                     is RematchResult.Agreed -> {
-                        // Known gap, not an oversight: `RematchResult.Agreed` carries no frames
-                        // yet, so a rematch's opening hand reaches nobody. Fixing that is a
-                        // separate, not-yet-ticketed change — widening it here would drag
-                        // `RematchResult`, `RoomRematchTest` and this method's rematch race guard
-                        // into this diff.
-                        val (agreed, _) = withFreshRunner(result.room)
-                        Pair(agreed, RematchResult.Agreed(agreed))
+                        val (agreed, outbound) = withFreshRunner(result.room)
+                        Pair(agreed, RematchResult.Agreed(agreed, outbound))
                     }
                     is RematchResult.Refused -> Pair(null, result)
                 }
@@ -348,8 +345,9 @@ public class RoomRegistry(
      * @param room The room whose match was just (re)started; its [Room.format] and
      *   [Room.openingButtonSeat] configure the new duel.
      * @return [room] with a freshly started [Room.runner] and a freshly minted [Room.duelId]
-     *   attached, paired with the same opening hand frames [startDuel] produced. [join] hands
-     *   them back to its caller; [offerRematch] still has nowhere to send them.
+     *   attached, paired with the same opening hand frames [startDuel] produced. Both [join] and
+     *   [offerRematch] hand them back to their own callers, on [JoinResult.Seated.outbound] and
+     *   [RematchResult.Agreed.outbound] respectively.
      */
     private fun withFreshRunner(room: Room): Pair<Room, List<Addressed>> {
         val started = startDuel(room.format, room.openingButtonSeat, seeds.newHandSeed())

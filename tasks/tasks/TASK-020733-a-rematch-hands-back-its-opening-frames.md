@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020733
 title: A rematch hands back its opening frames, the way seating does
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
