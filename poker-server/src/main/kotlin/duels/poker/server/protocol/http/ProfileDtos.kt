@@ -34,9 +34,7 @@ public enum class DuelOutcomeLabel {
  * @property outcome The outcome of the duel from the requesting player's perspective.
  * @property coinDelta The change in coins from this duel. A signed integer, never clamped: the
  *   winner gains one, the loser loses one, a draw changes nothing.
- * @property handsPlayed The number of hands played in the duel. Nullable and null until `DEC-014`
- *   is answered — the `duel` table has no `hands_played` column, `DEC-014` decides whether it gains
- *   one, and a nullable field is the shape that lets the answer be additive either way.
+ * @property handsPlayed The number of hands played in the duel.
  * @property finishedAt The ISO-8601 instant when the duel finished, as text in UTC. Produced by
  *   `Instant.toString()`.
  */
@@ -46,7 +44,7 @@ public data class DuelSummaryResponse(
     val opponentPlayerId: String,
     val outcome: DuelOutcomeLabel,
     val coinDelta: Int,
-    val handsPlayed: Int?,
+    val handsPlayed: Int,
     val finishedAt: String,
 )
 

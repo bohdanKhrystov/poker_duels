@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021114
 title: Hands played reaches the client instead of null
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
@@ -33,6 +33,12 @@ test pinning that. `DEC-014` is answered, so both the null and the test that gua
 | `poker-server/src/main/kotlin/duels/poker/server/db/PostgresProfileReads.kt` | modify |
 | `poker-server/src/main/kotlin/duels/poker/server/protocol/http/ProfileDtos.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/db/PostgresProfileReadsTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/http/ProfileDtosTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/http/ProfileRouteTest.kt` | modify |
+
+> **Files table corrected during implementation.** The last two were missing. Both construct
+> `DuelSummaryResponse` and stop compiling once `handsPlayed` is non-null, so `files_touched`
+> should have been 5. Each change supplies a hand count where one is now required.
 
 ## Scope
 

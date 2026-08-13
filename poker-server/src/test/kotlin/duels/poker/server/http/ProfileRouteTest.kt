@@ -103,7 +103,7 @@ class ProfileRouteTest {
             opponentPlayerId = "p-bob",
             outcome = DuelOutcomeLabel.WON,
             coinDelta = 1,
-            handsPlayed = null,
+            handsPlayed = 10,
             finishedAt = "2026-08-12T10:00:00Z",
         )
         val duel2 = DuelSummaryResponse(
@@ -111,7 +111,7 @@ class ProfileRouteTest {
             opponentPlayerId = "p-charlie",
             outcome = DuelOutcomeLabel.LOST,
             coinDelta = -1,
-            handsPlayed = null,
+            handsPlayed = 5,
             finishedAt = "2026-08-12T09:00:00Z",
         )
         val reads = FakeProfileReads(

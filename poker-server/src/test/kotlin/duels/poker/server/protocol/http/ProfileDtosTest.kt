@@ -38,26 +38,12 @@ class ProfileDtosTest {
             opponentPlayerId = "p-2",
             outcome = DuelOutcomeLabel.WON,
             coinDelta = 1,
-            handsPlayed = null,
+            handsPlayed = 5,
             finishedAt = "2026-08-13T10:00:00Z",
         )
         val encoded = protocolJson.encodeToString(DuelSummaryResponse.serializer(), summary)
         val decoded = protocolJson.decodeFromString(DuelSummaryResponse.serializer(), encoded)
         assertEquals(summary, decoded)
-    }
-
-    @Test
-    fun aNullHandsPlayedIsWrittenAsNull() {
-        val summary = DuelSummaryResponse(
-            duelId = "d-1",
-            opponentPlayerId = "p-2",
-            outcome = DuelOutcomeLabel.WON,
-            coinDelta = 1,
-            handsPlayed = null,
-            finishedAt = "2026-08-13T10:00:00Z",
-        )
-        val encoded = protocolJson.encodeToString(DuelSummaryResponse.serializer(), summary)
-        assertTrue(encoded.contains(""""handsPlayed":null"""))
     }
 
     @Test
@@ -67,7 +53,7 @@ class ProfileDtosTest {
             opponentPlayerId = "p-3",
             outcome = DuelOutcomeLabel.DREW,
             coinDelta = 0,
-            handsPlayed = null,
+            handsPlayed = 10,
             finishedAt = "2026-08-13T11:00:00Z",
         )
         val encoded = protocolJson.encodeToString(DuelSummaryResponse.serializer(), summary)
@@ -84,11 +70,29 @@ class ProfileDtosTest {
             opponentPlayerId = "p-4",
             outcome = DuelOutcomeLabel.DREW,
             coinDelta = 0,
-            handsPlayed = null,
+            handsPlayed = 3,
             finishedAt = "2026-08-13T12:00:00Z",
         )
         val encoded = protocolJson.encodeToString(DuelSummaryResponse.serializer(), summary)
         assertTrue(encoded.contains(""""coinDelta":0"""))
+    }
+
+    @Test
+    fun theHandCountSurvivesEncoding() {
+        val summary = DuelSummaryResponse(
+            duelId = "d-4",
+            opponentPlayerId = "p-5",
+            outcome = DuelOutcomeLabel.WON,
+            coinDelta = 1,
+            handsPlayed = 0,
+            finishedAt = "2026-08-13T13:00:00Z",
+        )
+        val encoded = protocolJson.encodeToString(DuelSummaryResponse.serializer(), summary)
+        assertTrue(encoded.contains(""""handsPlayed":0"""))
+
+        val decoded = protocolJson.decodeFromString(DuelSummaryResponse.serializer(), encoded)
+        assertEquals(0, decoded.handsPlayed)
+        assertEquals(summary, decoded)
     }
 
     @Test

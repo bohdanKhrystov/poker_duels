@@ -48,10 +48,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                                     opponentPlayerId = rows.getObject("opponent_id", UUID::class.java).toString(),
                                     outcome = outcomeOf(coinDelta),
                                     coinDelta = coinDelta,
-                                    // The `duel` table has no `hands_played` column; `DEC-014` decides
-                                    // whether it gains one. No number is invented here, and no other
-                                    // column stands in for it.
-                                    handsPlayed = null,
+                                    handsPlayed = rows.getInt("hands_played"),
                                     finishedAt = rows.getObject("finished_at", OffsetDateTime::class.java)
                                         .toInstant()
                                         .toString(),
@@ -73,7 +70,8 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
             SELECT d.id AS duel_id,
                    o.player_id AS opponent_id,
                    r.coin_delta AS coin_delta,
-                   d.finished_at AS finished_at
+                   d.finished_at AS finished_at,
+                   d.hands_played AS hands_played
             FROM duel_result r
             JOIN duel d ON d.id = r.duel_id
             JOIN duel_result o ON o.duel_id = r.duel_id AND o.player_id <> r.player_id
