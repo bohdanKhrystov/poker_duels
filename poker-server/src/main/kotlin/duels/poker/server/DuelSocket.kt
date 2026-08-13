@@ -30,11 +30,13 @@ import io.ktor.websocket.readText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -127,7 +129,18 @@ private suspend fun DefaultWebSocketServerSession.serve(
             } finally {
                 deps.sessions.remove(session.id)
                 seats.forget(session.id)
-                deps.connections.forget(player.id, writer)
+                if (deps.connections.forget(player.id, writer)) {
+                    room.code?.let { code ->
+                        // RoomRegistry.disconnect takes the room's mutex, so unlike every other
+                        // statement in this finally block it must suspend. A finally reached by
+                        // cancellation sees a plain suspending call throw CancellationException
+                        // before it does anything, so without NonCancellable the seat's grace
+                        // window would silently never start on the most common close path there
+                        // is. The forget guard above is what keeps this from firing at all for a
+                        // socket a newer connection for the same device has already adopted.
+                        withContext(NonCancellable) { deps.rooms.disconnect(code, player.id) }
+                    }
+                }
             }
         }
 

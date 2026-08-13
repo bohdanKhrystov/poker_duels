@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020813
 title: A closing socket tells the room its seat is gone, unless a newer socket took it
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: S
