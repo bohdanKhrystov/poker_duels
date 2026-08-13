@@ -27,7 +27,7 @@ turn or for the opponent, or a frame the engine may see.
 
 | File | Action |
 | --- | --- |
-| `poker-server/src/main/kotlin/duels/poker/server/duel/DuelGuard.kt` | create |
+| `poker-server/src/main/kotlin/duels/poker/server/duel/ActRefusal.kt` | create |
 | `poker-server/src/test/kotlin/duels/poker/server/duel/DuelGuardTest.kt` | create |
 
 Read, do not modify:
@@ -105,7 +105,7 @@ concatenated events.
 - [ ] `DuelGuardTest.alaterActionSequenceIsAStaleFrame` passes
 - [ ] `DuelGuardTest.areplayedFrameIsStaleRatherThanOutOfTurn` passes
 - [ ] `DuelGuardTest.aseatOutsideTheTableIsRejected` passes
-- [ ] `DuelGuard.kt` names no `Rejection` subtype and no chip amount — it answers only *which* of
+- [ ] `ActRefusal.kt` names no `Rejection` subtype and no chip amount — it answers only *which* of
       the two refusals applies
 - [ ] Every command in `verify:` exits 0
 
