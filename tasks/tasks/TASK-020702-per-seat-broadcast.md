@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020702
 title: Every outbound frame is addressed to one seat and built by the engine's projection layer
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
