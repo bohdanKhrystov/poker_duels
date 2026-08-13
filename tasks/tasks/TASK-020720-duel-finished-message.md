@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020720
 title: ServerMessage.DuelFinished carries the duel's outcome
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: XS

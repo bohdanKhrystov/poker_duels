@@ -16,6 +16,7 @@ Protocol version: **2**
 | `Events` | server → client | `events` (List of GameEvent) | Server broadcasts game events |
 | `YourTurn` | server → client | `handNumber`, `actionSequence`, `legalActions` | Server requests an action from client |
 | `Rejected` | server → client | `rejection` | Server rejects an illegal action |
+| `DuelFinished` | server → client | `outcome` (DuelOutcome) | The duel has ended |
 
 ## HTTP endpoints
 
