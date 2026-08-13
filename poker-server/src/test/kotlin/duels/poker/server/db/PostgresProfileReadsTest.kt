@@ -1,9 +1,16 @@
 package duels.poker.server.db
 
+import duels.poker.engine.duel.DuelFormat
+import duels.poker.engine.duel.DuelOutcome
+import duels.poker.server.duel.FinishedDuel
+import duels.poker.server.duel.formatLabel
 import duels.poker.server.session.DeviceId
+import duels.poker.server.session.Player
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Instant
+import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -13,6 +20,9 @@ class PostgresProfileReadsTest {
     private lateinit var dataSource: DataSource
     private lateinit var playerDirectory: PostgresPlayerDirectory
     private lateinit var profileReads: PostgresProfileReads
+    private lateinit var duelResultStore: PostgresDuelResultStore
+    private lateinit var alice: Player
+    private lateinit var bob: Player
 
     @BeforeEach
     fun setupDatabase() {
@@ -20,6 +30,12 @@ class PostgresProfileReadsTest {
         Migrations.migrate(dataSource)
         playerDirectory = PostgresPlayerDirectory(dataSource)
         profileReads = PostgresProfileReads(dataSource)
+        duelResultStore = PostgresDuelResultStore(dataSource)
+
+        runBlocking {
+            alice = playerDirectory.resolve(DeviceId("alice"))
+            bob = playerDirectory.resolve(DeviceId("bob"))
+        }
     }
 
     @Test
@@ -63,6 +79,47 @@ class PostgresProfileReadsTest {
         assertEquals(alice.id.value, aliceProfile?.playerId)
         assertEquals(bob.id.value, bobProfile?.playerId)
         assertNotEquals(aliceProfile?.playerId, bobProfile?.playerId)
+    }
+
+    @Test
+    fun theWinnersBalanceReadsBackAsOne() = runBlocking {
+        val duel = finishedDuel(winner = 0)
+
+        duelResultStore.record(duel)
+
+        val profile = profileReads.profileOf(DeviceId("alice"))
+        assertEquals(1, profile?.coinBalance)
+    }
+
+    @Test
+    fun aPlayerWhoseOnlyDuelWasALossReadsBackMinusOne() = runBlocking {
+        val duel = finishedDuel(winner = 0)
+
+        duelResultStore.record(duel)
+
+        val profile = profileReads.profileOf(DeviceId("bob"))
+        assertEquals(-1, profile?.coinBalance)
+    }
+
+    private fun finishedDuel(
+        winner: Int?,
+        id: UUID = UUID.randomUUID(),
+        finishedAt: Instant = Instant.parse("2026-08-13T10:05:00Z"),
+    ): FinishedDuel {
+        val outcome = when (winner) {
+            0 -> DuelOutcome(winner = 0, handsPlayed = 1, finalStacks = listOf(11_000, 9_000))
+            1 -> DuelOutcome(winner = 1, handsPlayed = 1, finalStacks = listOf(9_000, 11_000))
+            null -> DuelOutcome(winner = null, handsPlayed = 1, finalStacks = listOf(10_000, 10_000))
+            else -> throw IllegalArgumentException("winner must be 0, 1, or null, got $winner")
+        }
+        return FinishedDuel(
+            id = id,
+            format = formatLabel(DuelFormat.DEFAULT),
+            startedAt = Instant.parse("2026-08-13T10:00:00Z"),
+            finishedAt = finishedAt,
+            seats = listOf(alice.id, bob.id),
+            outcome = outcome,
+        )
     }
 
     private fun playerRowCount(): Int {
