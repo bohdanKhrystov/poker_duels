@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020816
 title: An absent seat gives up with an action the engine will accept
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: S

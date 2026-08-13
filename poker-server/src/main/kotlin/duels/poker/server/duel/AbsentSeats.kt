@@ -1,25 +1,32 @@
 package duels.poker.server.duel
 
+import duels.poker.engine.game.ActionType
 import duels.poker.engine.game.PlayerAction
+import duels.poker.engine.game.legalActions
 import duels.poker.server.protocol.Act
 
 /**
- * Folds for every seat nobody is sitting in, each time the turn reaches it.
+ * Gives up the turn for every seat nobody is sitting in, each time the turn reaches it: folds
+ * when a bet is faced, checks when nothing is owed. The action is never guessed from the spot's
+ * shape — it is read from the engine's own [legalActions] at that decision point, per `ADR-0023`:
+ * `Fold` when `FOLD` is in the legal set, `Check` otherwise, and never a call, bet, raise or
+ * all-in.
  *
- * The fold is not a special case: for each absent seat on turn, this builds the same [Act] frame
- * that seat's own client would have had to send, and hands it to [act] exactly as an inbound
- * frame would be handled. That means the same [guard], the same engine call that decides legality,
- * the same [advance] at the hand boundary, and the same frames to both seats — a hand folded for
- * absence is, in the log and on the wire, indistinguishable from one a player folded themselves.
- * Nothing here constructs a game state, an event, or a frame of its own; it only returns what
- * [act] gave it.
+ * The give-up action is not a special case: for each absent seat on turn, this builds the same
+ * [Act] frame that seat's own client would have had to send, and hands it to [act] exactly as an
+ * inbound frame would be handled. That means the same [guard], the same engine call that decides
+ * legality, the same [advance] at the hand boundary, and the same frames to both seats — a turn
+ * given up for absence is, in the log and on the wire, indistinguishable from one a player acted
+ * on themselves. Nothing here constructs a game state, an event, or a frame of its own; it only
+ * returns what [act] gave it.
  *
  * Termination is guaranteed two ways:
- *  - in heads-up, a fold always ends the hand, so [advance] either deals the next hand — moving
+ *  - the action is always the cheapest one [legalActions] allows for the seat this function acts
+ *    on behalf of — never a call, bet, raise or all-in — so a hand this loop drives by itself
+ *    passes through a bounded number of decisions per street and always either folds or runs
+ *    every street down to showdown; either way, [advance] then deals the next hand — moving
  *    `seatToAct` to the seat that is present, once the other absent seat is not also on turn — or
- *    ends the duel outright; either way, the folding seat's stack strictly decreases by the blind
- *    it posted that hand, so even a freezeout with an absent seat runs down and ends rather than
- *    looping forever;
+ *    ends the duel outright;
  *  - if a call to [act] ever returns a runner identical to the one it was given — a refusal, which
  *    would leave the seat on turn unchanged — the loop returns immediately instead of retrying an
  *    action that visibly made no progress.
@@ -37,10 +44,19 @@ public fun foldAbsent(step: DuelStep, absent: Set<Int>, seeds: HandSeedSource): 
         val seat = hand.state.seatToAct ?: return current
         if (seat !in absent) return current
 
+        val legal = legalActions(hand.state)
+        val giveUp = when {
+            legal.allows(ActionType.FOLD) -> PlayerAction.Fold(seat)
+            legal.allows(ActionType.CHECK) -> PlayerAction.Check(seat)
+            // The engine does not produce an on-turn seat with neither action legal; stop rather
+            // than send anything if it ever does.
+            else -> return current
+        }
+
         val frame = Act(
             handNumber = hand.state.handNumber,
             actionSequence = decisionPointOf(hand.log.events)?.sequence ?: return current,
-            action = PlayerAction.Fold(seat),
+            action = giveUp,
         )
 
         val before = current.runner
