@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020717
 title: A finished duel is recorded at least once, not at most once
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
