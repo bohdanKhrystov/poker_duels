@@ -2,6 +2,7 @@ package duels.poker.server.db
 
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
+import duels.poker.engine.duel.EndCondition
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import duels.poker.server.session.DeviceId
@@ -116,6 +117,40 @@ class PostgresDuelResultStoreTest {
         // The critical assertion: prove rollback() was explicitly invoked, not just
         // relying on connection closure to clean up the transaction server-side.
         assertTrue(trackingDataSource.wasRollbackCalled)
+    }
+
+    @Test
+    fun aDrawnDuelWritesOneDuelRowAndTwoResultRowsOfZero() = runBlocking {
+        // Freezeout cannot draw, so a drawn duel that claimed to be a freezeout
+        // would be a fixture asserting something the engine cannot produce.
+        // FixedHands is the only format that can end level.
+        val duel = finishedDuel(winner = null).copy(
+            format = formatLabel(DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(20))),
+        )
+
+        store.record(duel)
+
+        assertEquals(1, duelRowCount())
+        assertEquals(2, duelResultRowCount())
+        assertEquals(0, resultDeltaOf(duel.id, alice.id))
+        assertEquals(0, resultDeltaOf(duel.id, bob.id))
+    }
+
+    @Test
+    fun aDrawnDuelMovesNeitherBalance() = runBlocking {
+        // Record a decided duel first to move balances, then the drawn duel.
+        // This ensures "neither balance moved" is asserted against balances that
+        // are demonstrably movable rather than against two zeroes.
+        val decidedDuel = finishedDuel(winner = 0)
+        store.record(decidedDuel)
+
+        val drawnDuel = finishedDuel(winner = null).copy(
+            format = formatLabel(DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(20))),
+        )
+        store.record(drawnDuel)
+
+        assertEquals(1, coinBalanceOf(alice.id))
+        assertEquals(-1, coinBalanceOf(bob.id))
     }
 
     private fun duelRowCount(): Int {

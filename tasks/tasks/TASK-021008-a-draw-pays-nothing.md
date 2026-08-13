@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021008
 title: Prove a drawn duel is recorded and pays nobody
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: XS
