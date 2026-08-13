@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021104
 title: Read a device's profile and balance behind a ProfileReads port
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
