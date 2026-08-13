@@ -3,13 +3,13 @@ schema: 2
 id: TASK-020803
 title: A paused duel has its own protocol error, and the document lists it
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: XS
 tier: haiku
 review: light
-files_touched: 2
+files_touched: 3
 labels: [server, protocol, docs]
 depends_on: [TASK-020802]
 verify:
@@ -30,6 +30,7 @@ duel is paused because the other seat dropped, so this action was not applied.
 | --- | --- |
 | `poker-server/src/main/kotlin/duels/poker/server/protocol/ProtocolError.kt` | modify |
 | `docs/protocol.md` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/ServerMessageHandshakeTest.kt` | modify |
 
 ## Scope
 
@@ -85,3 +86,20 @@ because they read the enum and the document rather than a fixture:
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket:
 `verify` green, review passed, CI green, status `done`, `BOARD.md` updated, squash-merged into
 `develop`. Not done until the PR is merged.
+
+---
+
+## Widened by one file, found in CI
+
+`ServerMessageHandshakeTest.theErrorSetIsTheDeclaredEight` hard-codes the whole list of
+`ProtocolError` names and asserts it equals `ProtocolError.entries`. Adding a ninth value turns it
+red. The ticket's own `verify:` block never ran it, so only CI's full `check` caught it — the same
+shape of miss as `TASK-020719`, where three tests pinned a value the survey's grep could not see.
+
+It is **not** deleted. `ProtocolDocumentationTest.theDocumentListsEveryProtocolError` proves only
+that every declared error is documented; nothing proves the reverse for errors, so this test is the
+only thing pinning the exact set and its order. For an enum that goes on the wire, that pin is worth
+keeping: it catches an accidental addition and an accidental reordering, both of which are silent.
+
+What comes out is the **count in the name**. `theErrorSetIsTheDeclaredEight` becomes
+`theErrorSetIsExactlyWhatIsDeclared`, so the tenth error costs a list entry rather than a rename.

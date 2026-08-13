@@ -32,6 +32,9 @@ public enum class ProtocolError {
     /** The client sent an action but is not participating in an active duel. */
     NOT_IN_DUEL,
 
+    /** The duel is paused while the other seat is inside `ADR-0013`'s grace period. */
+    DUEL_PAUSED,
+
     /**
      * A frame refused before it was parsed, either because it was longer than
      * [duels.poker.server.config.ServerConfig.DEFAULT_MAX_FRAME_LENGTH] allows or because its
