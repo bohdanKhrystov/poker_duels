@@ -61,7 +61,7 @@ claude.ai/design pane, by the human.
 | ID | Title | Status |
 | --- | --- | --- |
 | [STORY-0601](../stories/STORY-0601-design-foundations.md) | Design foundations — tokens and preview cards | ready |
-| STORY-0602 | The duel table screen | *not written* |
+| [STORY-0602](../stories/STORY-0602-duel-table-screen.md) | Design the duel table — components and the screen | ready |
 | STORY-0603 | Graphics — card faces, duel coin, wordmark | *not written* |
 | STORY-0604 | Lobby and duel-flow screens | *not written* |
 
