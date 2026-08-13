@@ -63,3 +63,27 @@ public data class Act(
         require(actionSequence >= 0) { "actionSequence must be non-negative, was $actionSequence" }
     }
 }
+
+/**
+ * An attempt to open a new room.
+ *
+ * This does not name a format, seat, stack, or any other game configuration — the server owns
+ * all such decisions and will open the room with `DuelFormat.DEFAULT` (an open decision under
+ * `DEC-001`). A client that chose a format would be asserting a rule of the game, which
+ * `ADR-0002` forbids.
+ */
+@Serializable
+@SerialName("CreateRoom")
+public data object CreateRoom : ClientMessage
+
+/**
+ * An attempt to join an existing room by its code.
+ *
+ * This names a room by code; it does not claim a seat in it or attempt to reserve capacity.
+ * The server will verify the code names a real room that has capacity and is not in-game, then
+ * seat the client. A code that does not parse is refused by the server's room registry, not by
+ * this constructor — `RoomCode.parse` is the single place a code's shape is decided.
+ */
+@Serializable
+@SerialName("JoinRoom")
+public data class JoinRoom(val code: String) : ClientMessage

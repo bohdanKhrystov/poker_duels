@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020729
 title: A live connection's writer is findable by the player behind it
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: S
