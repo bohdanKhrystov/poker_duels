@@ -2,6 +2,7 @@ package duels.poker.server.db
 
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
+import duels.poker.engine.duel.EndCondition
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import duels.poker.server.protocol.http.DuelOutcomeLabel
@@ -18,6 +19,16 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+/**
+ * Tests for reading a player's profile and recent duels list.
+ *
+ * A drawn duel writes two `duel_result` rows with `coin_delta = 0` (ADR-0015), ensuring
+ * every participant has a result row in the read path. If a draw ever wrote no rows, both
+ * players' lists would come back empty and these tests would fail loudly — that is what they
+ * exist to catch. The tests `aDrawnDuelAppearsInBothPlayersLists` and
+ * `aDrawnDuelReadsBackAsDrewWithAZeroDeltaAndAnOpponent` guard this invariant by asserting
+ * that a drawn duel is visible to both players with the correct outcome and delta.
+ */
 class PostgresProfileReadsTest {
     private lateinit var dataSource: DataSource
     private lateinit var playerDirectory: PostgresPlayerDirectory
@@ -239,6 +250,50 @@ class PostgresProfileReadsTest {
         val carolDuels = profileReads.recentDuelsOf(carol.id, 10)
         assertEquals(1, carolDuels.size)
         assertEquals(carolDaveDuelId.toString(), carolDuels.single().duelId)
+    }
+
+    @Test
+    fun aDrawnDuelAppearsInBothPlayersLists() = runBlocking {
+        // A FixedHands duel can end level. A Freezeout cannot, so we must test with a format
+        // that the engine can actually produce a draw for.
+        val drawnDuelId = UUID.randomUUID()
+        val drawnDuel = finishedDuel(winner = null, id = drawnDuelId)
+            .copy(format = formatLabel(DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(20))))
+
+        duelResultStore.record(drawnDuel)
+
+        val aliceDuels = profileReads.recentDuelsOf(alice.id, 10)
+        val bobDuels = profileReads.recentDuelsOf(bob.id, 10)
+
+        assertEquals(1, aliceDuels.size)
+        assertEquals(1, bobDuels.size)
+        assertEquals(drawnDuelId.toString(), aliceDuels.single().duelId)
+        assertEquals(drawnDuelId.toString(), bobDuels.single().duelId)
+    }
+
+    @Test
+    fun aDrawnDuelReadsBackAsDrewWithAZeroDeltaAndAnOpponent() = runBlocking {
+        // A FixedHands duel can end level. A Freezeout cannot, so we must test with a format
+        // that the engine can actually produce a draw for.
+        val drawnDuelId = UUID.randomUUID()
+        val drawnDuel = finishedDuel(winner = null, id = drawnDuelId)
+            .copy(format = formatLabel(DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(20))))
+
+        duelResultStore.record(drawnDuel)
+
+        val aliceDuels = profileReads.recentDuelsOf(alice.id, 10)
+        val bobDuels = profileReads.recentDuelsOf(bob.id, 10)
+
+        val aliceEntry = aliceDuels.single()
+        val bobEntry = bobDuels.single()
+
+        assertEquals(DuelOutcomeLabel.DREW, aliceEntry.outcome)
+        assertEquals(0, aliceEntry.coinDelta)
+        assertEquals(bob.id.value, aliceEntry.opponentPlayerId)
+
+        assertEquals(DuelOutcomeLabel.DREW, bobEntry.outcome)
+        assertEquals(0, bobEntry.coinDelta)
+        assertEquals(alice.id.value, bobEntry.opponentPlayerId)
     }
 
     private fun finishedDuel(
