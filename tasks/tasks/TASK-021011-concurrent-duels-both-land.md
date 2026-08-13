@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021011
 title: Prove two duels finishing at once for one player both land
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
