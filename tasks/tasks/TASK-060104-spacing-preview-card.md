@@ -3,20 +3,19 @@ schema: 2
 id: TASK-060104
 title: The Spacing preview card
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
 tier: opus
 review: light
-files_touched: 1
+files_touched: 2
 labels: [design]
 depends_on: [TASK-060101]
 verify:
   - 'head -1 design/tokens/spacing.html | grep -q "<!-- @dsCard group=\"Spacing\" -->"'
   - grep -q '<title>' design/tokens/spacing.html
-  - grep -q -- '--pd-space-' design/tokens/spacing.html
-  - grep -q -- '--pd-radius-' design/tokens/spacing.html
+  - for t in space-1 space-2 space-3 space-4 space-5 space-6 space-7 space-8 space-9 radius-small radius-medium radius-card radius-pill focus focus-offset shadow-pop bg surface surface-raised hairline text text-muted text-faint accent accent-fill on-accent card-face suit-black font-ui font-mono; do grep -q -- "--pd-$t:" design/tokens/spacing.html || exit 1; done
   - '! grep -q "http" design/tokens/spacing.html'
 ---
 
@@ -30,6 +29,7 @@ focus ring — the structural half of the foundations.
 | File | Action |
 | --- | --- |
 | `design/tokens/spacing.html` | create |
+| `design/README.md` | edit — retire the "in flight" layout note this merge falsifies |
 
 ## Scope
 

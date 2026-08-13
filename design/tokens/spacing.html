@@ -1,0 +1,131 @@
+<!-- @dsCard group="Spacing" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spacing — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-surface-raised: #262421;
+    --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-on-accent: #ffffff;
+    --pd-card-face: #f3f0e9; --pd-suit-black: #26231f;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-space-1: 2px; --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px;
+    --pd-space-5: 16px; --pd-space-6: 24px; --pd-space-7: 32px; --pd-space-8: 48px;
+    --pd-space-9: 64px;
+    --pd-radius-small: 4px; --pd-radius-medium: 8px; --pd-radius-card: 6px;
+    --pd-radius-pill: 999px;
+    --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
+    --pd-shadow-pop: 0 8px 24px rgba(0,0,0,0.45);
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: 15px; line-height: 1.5; padding: 32px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-faint); margin-bottom: 8px; }
+  h1 { font-size: 30px; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  h2 { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; margin: 40px 0 12px; }
+
+  .ladder { display: grid; gap: 8px; }
+  .rung { display: grid; grid-template-columns: 150px 44px 1fr; align-items: center; gap: 12px; }
+  .tok { font-family: var(--pd-font-mono); font-size: 12px; color: var(--pd-text-muted); }
+  .px { font-family: var(--pd-font-mono); font-size: 11px; color: var(--pd-text-faint);
+    text-align: right; }
+  .bar { height: 18px; background: var(--pd-accent); border-radius: 2px; opacity: 0.9; }
+
+  .tiles { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .tile { background: var(--pd-surface); border: 1px solid var(--pd-hairline); padding: 16px;
+    border-radius: 8px; text-align: center; }
+  .tile .demo { margin: 0 auto 10px; }
+  .tile .tok { display: block; }
+  .sq { width: 72px; height: 44px; background: var(--pd-surface-raised);
+    border: 1px solid var(--pd-hairline); }
+  .mini { width: 96px; height: 134px; background: var(--pd-card-face);
+    border-radius: var(--pd-radius-card); color: var(--pd-suit-black); font-weight: 700;
+    display: flex; align-items: flex-start; padding: 6px 7px; }
+  .pill { display: inline-block; background: var(--pd-surface-raised);
+    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill);
+    padding: 4px 12px; font-size: 12px; color: var(--pd-text-muted); }
+
+  .elev { background: var(--pd-bg); border: 1px solid var(--pd-hairline); border-radius: 8px;
+    padding: 24px; }
+  .elev .l { font-size: 11px; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
+    margin-bottom: 8px; }
+  .p1 { background: var(--pd-surface); border: 1px solid var(--pd-hairline); border-radius: 8px;
+    padding: 16px; }
+  .p2 { background: var(--pd-surface-raised); border: 1px solid var(--pd-hairline);
+    border-radius: 8px; padding: 16px; box-shadow: var(--pd-shadow-pop); max-width: 260px; }
+  .cap { font-size: 12px; color: var(--pd-text-faint); margin-top: 12px; max-width: 56ch; }
+
+  .btn { font: 500 15px var(--pd-font-ui); padding: 10px 18px; border-radius: 8px;
+    border: 1px solid transparent; cursor: pointer; }
+  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
+  .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
+  .focused { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Foundations</p>
+  <h1>Spacing</h1>
+  <p class="lede">One ladder from 2 to 64. Related things sit at 8–12, sections at 24–32,
+  screens breathe at 48–64. Depth is drawn with hairlines, not shadows — one shadow exists,
+  for the things that float.</p>
+
+  <h2>The ladder</h2>
+  <div class="ladder">
+    <div class="rung"><span class="tok">--pd-space-1</span><span class="px">2</span><span class="bar" style="width:var(--pd-space-1)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-2</span><span class="px">4</span><span class="bar" style="width:var(--pd-space-2)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-3</span><span class="px">8</span><span class="bar" style="width:var(--pd-space-3)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-4</span><span class="px">12</span><span class="bar" style="width:var(--pd-space-4)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-5</span><span class="px">16</span><span class="bar" style="width:var(--pd-space-5)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-6</span><span class="px">24</span><span class="bar" style="width:var(--pd-space-6)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-7</span><span class="px">32</span><span class="bar" style="width:var(--pd-space-7)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-8</span><span class="px">48</span><span class="bar" style="width:var(--pd-space-8)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-9</span><span class="px">64</span><span class="bar" style="width:var(--pd-space-9)"></span></div>
+  </div>
+
+  <h2>Radii</h2>
+  <div class="tiles">
+    <div class="tile"><div class="demo sq" style="border-radius:var(--pd-radius-small)"></div>
+      <span class="tok">--pd-radius-small</span><span class="px">4 — inputs, tags</span></div>
+    <div class="tile"><div class="demo sq" style="border-radius:var(--pd-radius-medium)"></div>
+      <span class="tok">--pd-radius-medium</span><span class="px">8 — panels, buttons</span></div>
+    <div class="tile"><div class="demo mini">A♠</div>
+      <span class="tok">--pd-radius-card</span><span class="px">6 — shown at the 96px reference; scale with the card</span></div>
+    <div class="tile"><div class="demo"><span class="pill">streak · 3</span></div>
+      <span class="tok">--pd-radius-pill</span><span class="px">badges, counters</span></div>
+  </div>
+
+  <h2>Elevation — hairlines, then one shadow</h2>
+  <div class="elev">
+    <div class="l">--pd-bg</div>
+    <div class="p1">
+      <div class="l">--pd-surface + --pd-hairline</div>
+      <div class="p2">
+        <div class="l">--pd-surface-raised + --pd-shadow-pop</div>
+        <span style="font-size:13px;color:var(--pd-text-muted)">Only menus and dialogs float.</span>
+      </div>
+    </div>
+  </div>
+  <p class="cap">Flat surfaces never carry a shadow: a seat plate, a list row and the table
+  all sit on their hairline. The one shadow marks the one thing temporarily above the game.</p>
+
+  <h2>Focus</h2>
+  <p style="display:flex;gap:12px;flex-wrap:wrap">
+    <button class="btn ghost focused">Check</button>
+    <button class="btn fill focused">Bet 250</button>
+  </p>
+  <p class="cap">--pd-focus — a 2px gap, then 2px of accent — on every focusable thing,
+  keyboard first. The ring is the accent's job; it is never decoration.</p>
+</div>
+</body>
+</html>

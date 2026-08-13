@@ -404,7 +404,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060101](tasks/TASK-060101-design-token-sheet.md) The canonical design token sheet | S | **done** |
 | | [TASK-060102](tasks/TASK-060102-colors-preview-card.md) The Colors preview card | S | **done** |
 | | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | **done** |
-| | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | ready |
+| | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | **done** |
 | | [TASK-060105](tasks/TASK-060105-design-directory-readme.md) The design directory README and sync procedure | XS | **done** |
 | **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |
 | | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | ready |
