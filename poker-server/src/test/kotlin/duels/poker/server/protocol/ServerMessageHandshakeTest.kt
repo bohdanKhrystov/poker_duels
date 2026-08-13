@@ -19,7 +19,7 @@ class ServerMessageHandshakeTest {
     fun welcomeCarriesItsVersionEvenWhenDefaulted() {
         val message = ServerMessage.Welcome("device-1")
         val encoded = protocolJson.encodeToString(ServerMessage.serializer(), message)
-        assertTrue(encoded.contains("\"protocolVersion\":1"), "Encoded message should contain protocolVersion: $encoded")
+        assertTrue(encoded.contains("\"protocolVersion\":$PROTOCOL_VERSION"), "Encoded message should contain protocolVersion: $encoded")
     }
 
     @Test
