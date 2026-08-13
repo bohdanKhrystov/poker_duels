@@ -164,12 +164,14 @@ class PostgresProfileReadsTest {
     }
 
     @Test
-    fun handsPlayedIsNullWhileTheColumnDoesNotExist() = runBlocking {
-        duelResultStore.record(finishedDuel(winner = 0))
+    fun aResultLineCarriesTheHandCount() = runBlocking {
+        val duelId = UUID.randomUUID()
+        val handCount = 42
+        duelResultStore.record(finishedDuel(winner = 0, id = duelId, handsPlayed = handCount))
 
         val entry = profileReads.recentDuelsOf(alice.id, 10).single()
 
-        assertNull(entry.handsPlayed)
+        assertEquals(handCount, entry.handsPlayed)
     }
 
     @Test
@@ -300,11 +302,12 @@ class PostgresProfileReadsTest {
         winner: Int?,
         id: UUID = UUID.randomUUID(),
         finishedAt: Instant = Instant.parse("2026-08-13T10:05:00Z"),
+        handsPlayed: Int = 1,
     ): FinishedDuel {
         val outcome = when (winner) {
-            0 -> DuelOutcome(winner = 0, handsPlayed = 1, finalStacks = listOf(11_000, 9_000))
-            1 -> DuelOutcome(winner = 1, handsPlayed = 1, finalStacks = listOf(9_000, 11_000))
-            null -> DuelOutcome(winner = null, handsPlayed = 1, finalStacks = listOf(10_000, 10_000))
+            0 -> DuelOutcome(winner = 0, handsPlayed = handsPlayed, finalStacks = listOf(11_000, 9_000))
+            1 -> DuelOutcome(winner = 1, handsPlayed = handsPlayed, finalStacks = listOf(9_000, 11_000))
+            null -> DuelOutcome(winner = null, handsPlayed = handsPlayed, finalStacks = listOf(10_000, 10_000))
             else -> throw IllegalArgumentException("winner must be 0, 1, or null, got $winner")
         }
         return FinishedDuel(
