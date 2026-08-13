@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.lang.reflect.Field
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -86,6 +87,15 @@ private suspend fun HttpClient.joinRoom(
     session.completeHandshake(deviceId)
     session.send(Frame.Text(ProtocolCodec.encode(JoinRoom(code))))
     return session to session.nextServerMessage()
+}
+
+/** Removes a room from the registry using reflection to access its internal state. */
+private fun RoomRegistry.removeRoom(code: RoomCode) {
+    val roomsField: Field = RoomRegistry::class.java.getDeclaredField("rooms")
+    roomsField.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    val roomsMap = roomsField.get(this) as? java.util.concurrent.ConcurrentHashMap<RoomCode, *>
+    roomsMap?.remove(code)
 }
 
 /**
@@ -244,6 +254,66 @@ class DuelSocketRoomTest {
 
             assertTrue(guestView.opponent.holeCards.isEmpty())
             assertEquals(2, guestView.viewer.holeCards.size)
+        }
+    }
+
+    @Test
+    fun aRejoinWhoseRoomVanishedIsRefusedNotFatal(): Unit = testApplication {
+        val rooms = testRoomRegistry()
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val (host, created) = client.openRoomAsHost("host")
+            val roomCode = RoomCode(created.code)
+
+            // Verify the room exists in the registry
+            assertNotNull(rooms.get(roomCode))
+
+            // Remove the room from the registry to simulate it vanishing
+            rooms.removeRoom(roomCode)
+
+            // Attempt to rejoin the same room whose code still exists but room was removed
+            host.send(Frame.Text(ProtocolCodec.encode(JoinRoom(created.code))))
+            val response = host.nextServerMessage()
+
+            // Should receive Failure(UNKNOWN_ROOM), not an exception that closes the socket
+            val failure = response as ServerMessage.Failure
+            assertEquals(ProtocolError.UNKNOWN_ROOM, failure.error)
+
+            // Socket should still be open; send another frame to verify
+            host.send(Frame.Text(ProtocolCodec.encode(JoinRoom(created.code))))
+            val secondResponse = host.nextServerMessage()
+            assertEquals(ProtocolError.UNKNOWN_ROOM, (secondResponse as ServerMessage.Failure).error)
+        }
+    }
+
+    @Test
+    fun aRejoinToAnExistingRoomStillAnswersRoomJoined(): Unit = testApplication {
+        val rooms = testRoomRegistry()
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val (host, created) = client.openRoomAsHost("host")
+            val roomCode = RoomCode(created.code)
+
+            // Verify the room still exists in the registry
+            assertNotNull(rooms.get(roomCode))
+
+            // Rejoin the same room without removing it
+            host.send(Frame.Text(ProtocolCodec.encode(JoinRoom(created.code))))
+            val response = host.nextServerMessage() as ServerMessage.RoomJoined
+
+            // Should get RoomJoined with the same code and seat
+            assertEquals(created.code, response.code)
+            assertEquals(0, response.seat)
         }
     }
 }

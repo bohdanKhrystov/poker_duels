@@ -467,7 +467,10 @@ private suspend fun ConnectionWriter.replyToJoinRoom(
     when (val result = deps.rooms.join(parsed, session.player.id)) {
         is JoinResult.Seated -> {
             room.code = parsed
-            val seat = result.room.seatOf(session.player.id)!!
+            val seat = result.room.seatOf(session.player.id) ?: run {
+                send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+                return
+            }
             send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, seat)))
             deliver(result.outbound, result.room, deps.connections)
         }
@@ -475,7 +478,10 @@ private suspend fun ConnectionWriter.replyToJoinRoom(
         is JoinResult.Refused -> when (result.reason) {
             RoomRefusal.ALREADY_SEATED -> {
                 room.code = parsed
-                val seat = deps.rooms.get(parsed)?.seatOf(session.player.id)!!
+                val seat = deps.rooms.get(parsed)?.seatOf(session.player.id) ?: run {
+                    send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+                    return
+                }
                 send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, seat)))
             }
 
