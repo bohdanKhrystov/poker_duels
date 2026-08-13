@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021001
 title: Map a DuelOutcome to two signed coin deltas, in one function
 type: task
-status: ready
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
