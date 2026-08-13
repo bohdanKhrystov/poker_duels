@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021109
 title: Answer GET /api/me for a known device, refuse anything else
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
