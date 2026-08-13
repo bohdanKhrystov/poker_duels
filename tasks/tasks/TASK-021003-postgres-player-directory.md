@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021003
 title: Resolve a device id to a durable profile, creating it at most once
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S

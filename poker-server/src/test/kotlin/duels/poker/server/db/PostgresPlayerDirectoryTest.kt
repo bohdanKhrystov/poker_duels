@@ -1,0 +1,112 @@
+package duels.poker.server.db
+
+import duels.poker.server.session.DeviceId
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import java.util.UUID
+import javax.sql.DataSource
+import kotlin.test.assertEquals
+
+class PostgresPlayerDirectoryTest {
+    private lateinit var dataSource: DataSource
+    private lateinit var directory: PostgresPlayerDirectory
+
+    @BeforeEach
+    fun setupDatabase() {
+        dataSource = PostgresTestSupport.freshDatabase()
+        Migrations.migrate(dataSource)
+        directory = PostgresPlayerDirectory(dataSource)
+    }
+
+    @Test
+    fun resolvingANewDeviceCreatesExactlyOneRowWithThatId() = runBlocking {
+        val deviceId = DeviceId("d1")
+
+        val player = directory.resolve(deviceId)
+
+        assertEquals(1, playerRowCount())
+        assertEquals("d1", deviceRowDeviceId(UUID.fromString(player.id.value)))
+        assertEquals(UUID.fromString(player.id.value), deviceRowUuid("d1"))
+    }
+
+    @Test
+    fun resolvingTheSameDeviceTwiceReturnsTheSamePlayerId() = runBlocking {
+        val deviceId = DeviceId("d1")
+
+        val player1 = directory.resolve(deviceId)
+        val player2 = directory.resolve(deviceId)
+
+        assertEquals(player1.id, player2.id)
+        assertEquals(1, playerRowCount())
+    }
+
+    @Test
+    fun differentDevicesGetDifferentProfiles() = runBlocking {
+        val deviceId1 = DeviceId("d1")
+        val deviceId2 = DeviceId("d2")
+
+        val player1 = directory.resolve(deviceId1)
+        val player2 = directory.resolve(deviceId2)
+
+        assertEquals(2, playerRowCount())
+        assert(player1.id != player2.id)
+    }
+
+    @Test
+    fun aNewProfileStartsAtAZeroBalance() = runBlocking {
+        val deviceId = DeviceId("d1")
+
+        val player = directory.resolve(deviceId)
+
+        val balance = coinBalanceOf(UUID.fromString(player.id.value))
+        assertEquals(0, balance)
+    }
+
+    private fun playerRowCount(): Int {
+        return dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT COUNT(*) FROM player").use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    resultSet.getInt(1)
+                }
+            }
+        }
+    }
+
+    private fun deviceRowDeviceId(playerId: UUID): String {
+        return dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT device_id FROM player WHERE id = ?").use { statement ->
+                statement.setObject(1, playerId)
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    resultSet.getString(1)
+                }
+            }
+        }
+    }
+
+    private fun deviceRowUuid(deviceId: String): UUID {
+        return dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT id FROM player WHERE device_id = ?").use { statement ->
+                statement.setString(1, deviceId)
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    resultSet.getObject(1, UUID::class.java)
+                }
+            }
+        }
+    }
+
+    private fun coinBalanceOf(playerId: UUID): Int {
+        return dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT coin_balance FROM player WHERE id = ?").use { statement ->
+                statement.setObject(1, playerId)
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    resultSet.getInt(1)
+                }
+            }
+        }
+    }
+}

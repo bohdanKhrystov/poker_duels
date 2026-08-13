@@ -41,9 +41,9 @@ public const val PROTOCOL_VERSION_MISMATCH: String = "protocol version mismatch"
  * [ConnectionWriter], fed by exactly one writing coroutine ([pump]), so no two coroutines ever
  * write to the socket concurrently.
  *
- * `duelSocket` is installed by the caller rather than from `Application.module()`, because no
- * shipping [duels.poker.server.session.PlayerDirectory] exists until `STORY-0210`; until then the
- * only caller is a test.
+ * A shipping `duels.poker.server.db.PostgresPlayerDirectory` now exists, but installing the
+ * route from `Application.module()` also means handing `module()` a `DataSource`, which
+ * `STORY-0212` owns — so the only caller is still a test.
  *
  * @param deps The collaborators this socket needs.
  */
