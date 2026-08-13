@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021005
 title: Record a finished duel as one duel row and two result rows, in one transaction
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
