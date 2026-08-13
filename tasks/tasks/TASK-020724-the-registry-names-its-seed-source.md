@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020724
 title: A room registry says which seed source its duels draw from
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: XS
