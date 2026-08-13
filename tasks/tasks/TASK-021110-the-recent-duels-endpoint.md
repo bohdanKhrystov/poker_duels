@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021110
 title: Answer GET /api/me/duels with a bounded, ordered list
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
