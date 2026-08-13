@@ -11,7 +11,7 @@ tier: sonnet
 review: deep
 files_touched: 3
 labels: [server, duel, websocket, protocol, blocked]
-depends_on: [TASK-020714]
+depends_on: [TASK-020714, TASK-020717]
 verify:
   - ./gradlew :poker-server:test --tests '*DuelSocketDuelTest'
   - ./gradlew :poker-server:test --tests '*DuelSocketFrameLoopTest'
