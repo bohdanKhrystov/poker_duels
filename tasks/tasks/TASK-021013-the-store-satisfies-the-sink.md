@@ -62,9 +62,18 @@ needs, and each has to come from somewhere honest:
 - **A duel id.** `DuelResult` carries none. Generate it in the adapter from an **injected** source,
   the way `RoomCodeSource` and `HandSeedSource` are injected, so a test can make it deterministic.
   Do not call `UUID.randomUUID()` inline.
-- **Timestamps.** `startedAt` and `finishedAt` must come from the injected `ServerClock`, never
-  `System.currentTimeMillis()` or `Instant.now()` — `ADR-0013` keeps the clock in the server and
-  injected, and a test that cannot control time cannot assert what was stored.
+- **Timestamps.** `startedAt` and `finishedAt` must come from an injected **wall clock** —
+  `java.time.Clock`, defaulting to `Clock.systemUTC()` — read as `Instant.now(clock)`. Never
+  `Instant.now()` or `System.currentTimeMillis()` inline: a test that cannot control time cannot
+  assert what was stored, and `Clock.fixed` makes it pinnable.
+
+  **Not `ServerClock`.** That one is `System.nanoTime() / 1_000_000` — elapsed time from an
+  arbitrary epoch — and its own KDoc says *"Never use this clock to stamp a database row with a
+  date."* It is right for timeouts and grace periods, where a wall clock stepping backwards would
+  stretch or collapse a duration, and wrong for a date. This ticket originally required
+  `ServerClock` here; the coder implemented it as written, flagged the contradiction, and it was
+  corrected before landing. Using it would have stamped every duel a few days after 1970 — and
+  the recent-duels list the owner asked for is exactly where that would show.
 - **The format label.** Take it from the `MatchLog` if it carries one; if it does not, the adapter
   takes it as a constructor argument rather than inventing a string. Say in a comment which, and
   why.
