@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021004
 title: Prove concurrent first contact from one device creates one profile
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: XS
