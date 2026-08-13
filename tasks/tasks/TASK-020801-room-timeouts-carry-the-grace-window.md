@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020801
 title: RoomTimeouts carries the disconnect grace window
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: XS
