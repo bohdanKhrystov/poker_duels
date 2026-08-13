@@ -31,9 +31,9 @@ public const val DEVICE_ID_HEADER: String = "X-Device-Id"
  *
  * This route holds a `ProfileReads` and nothing else — no `PlayerDirectory`, no `DataSource`, no
  * `resolve`. Profile creation happens on the socket handshake only (`ADR-0012`), so a crawler
- * hitting this endpoint mints no rows. It is installed by the caller rather than from
- * `Application.module()` because installing it there means handing `module()` a `DataSource`,
- * which `STORY-0212` owns — so the only caller is still a test.
+ * hitting this endpoint mints no rows. The route is installed in production by
+ * `Application.duelServer` against a shared set of `ServerComponents` that backs all routes; a
+ * test may still install it directly with its own collaborators.
  *
  * @param reads The port for reading player profiles and balances.
  */

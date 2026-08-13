@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021203
 title: Both route KDocs name their production installer instead of a story that has landed
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: XS
