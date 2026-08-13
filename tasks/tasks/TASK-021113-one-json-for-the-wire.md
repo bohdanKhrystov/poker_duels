@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021113
 title: The HTTP routes encode with the same Json the tests assert against
 type: task
-status: backlog
+status: dropped
 parent: STORY-0211
 module: poker-server
 estimate: XS
@@ -16,6 +16,39 @@ verify:
   - ./gradlew :poker-server:test --tests '*ProfileDtosTest'
   - ./gradlew :poker-server:test --tests '*ServerPluginsTest'
   - ./gradlew :poker-server:check
+---
+
+## Dropped — the premise was false
+
+**Ktor's no-argument `json()` does not produce a plain kotlinx `Json`.** It installs Ktor's own
+`DefaultJson`, which sets `encodeDefaults = true`. Verified directly against the dependency on the
+test classpath:
+
+```
+Ktor DefaultJson.encodeDefaults = true
+```
+
+So the HTTP path and `protocolJson` already agreed, and the failure this ticket described — a new
+player's zero balance silently dropped from a response — could not happen.
+
+Confirmed empirically before that: with the ticket's fix reverted to bare `json()`, the new
+`theHttpPathEncodesDefaults` test still **passed**, because the default field was written either
+way. That result is what prompted checking the premise rather than the test.
+
+The claim entered the backlog from a review of `TASK-021101` which stated that `json()` yields
+"a default `kotlinx.serialization.json.Json` whose `encodeDefaults` is `false` (the library
+default)". True of kotlinx's own default; not true of Ktor's helper. The scheduler repeated it into
+this ticket without checking, and `TASK-021101`'s merge commit message carries the same error.
+
+Nothing is wrong in `develop`, so nothing is changed. The `TASK-021101` DTOs still declare no
+default values, which remains good design — it makes the encoding safe irrespective of which `Json`
+serialises them, and that argument never depended on this ticket being real.
+
+**What stands from the episode:** `TASK-021101`'s two tests asserting a zero balance and a zero
+delta survive encoding are worth keeping on their own merits, and the `encodeDefaults` trap is
+still real in kotlinx generally — it has bitten this project three times. It simply is not present
+on this transport.
+
 ---
 
 ## Goal
