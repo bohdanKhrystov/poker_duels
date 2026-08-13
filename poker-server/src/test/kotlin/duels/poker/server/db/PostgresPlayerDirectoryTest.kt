@@ -1,6 +1,9 @@
 package duels.poker.server.db
 
 import duels.poker.server.session.DeviceId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -61,6 +64,25 @@ class PostgresPlayerDirectoryTest {
 
         val balance = coinBalanceOf(UUID.fromString(player.id.value))
         assertEquals(0, balance)
+    }
+
+    @Test
+    fun concurrentFirstContactFromManyConnectionsCreatesOneProfile() = runBlocking {
+        // ADR-0012 puts one-profile-per-device in UNIQUE (device_id), so 16 simultaneous
+        // inserts produce 15 conflicts that the ON CONFLICT clause resolves to the surviving row.
+        // A directory that checked-then-inserted would create a second profile here.
+        val deviceId = DeviceId("shared-device")
+        val players = (1..16).map {
+            async(Dispatchers.IO) {
+                directory.resolve(deviceId)
+            }
+        }.awaitAll()
+
+        assertEquals(1, playerRowCount())
+        val firstPlayerId = players.first().id
+        players.forEach { player ->
+            assertEquals(firstPlayerId, player.id)
+        }
     }
 
     private fun playerRowCount(): Int {
