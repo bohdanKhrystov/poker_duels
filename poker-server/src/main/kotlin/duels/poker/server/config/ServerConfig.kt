@@ -8,9 +8,9 @@ import io.ktor.server.config.ConfigLoader
  * The server's configuration, built from a Ktor [ApplicationConfig] with each value overridable
  * by an environment variable.
  *
- * This is the *only* place the server reads its environment. Future fields from `ADR-0013`'s
- * grace period and `ADR-0011`'s database URL will land here as further `val`s with their own
- * key, env name and default.
+ * This is the *only* place the server reads its environment. Fields from `ADR-0013`'s grace
+ * period and `ADR-0011`'s database URL now land here as `val`s with their own key, env name
+ * and default.
  *
  * The database credentials are development defaults for a container listening on localhost;
  * production secrets arrive by environment variable.
@@ -25,9 +25,14 @@ public data class ServerConfig(
     val databasePoolSize: Int,
     val roomWaitingTimeoutMillis: Long,
     val roomFinishedTimeoutMillis: Long,
+    // This field has a default so that three test files — DatabasePoolTest, DatabaseStartupTest,
+    // PersistenceSurvivesRestartTest — can construct ServerConfig(...) field by field to point
+    // Testcontainers at a database without opining on a duel's grace window. If this field
+    // required explicit construction, this ticket would touch four files instead of two.
+    val disconnectGraceMillis: Long = RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS,
 ) {
-    /** Bundles the two room idle limits so callers do not reassemble them. */
-    public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(roomWaitingTimeoutMillis, roomFinishedTimeoutMillis)
+    /** Bundles the three room timeouts so callers do not reassemble them. */
+    public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(roomWaitingTimeoutMillis, roomFinishedTimeoutMillis, disconnectGraceMillis)
 
     public companion object {
         public const val DEFAULT_PORT: Int = 8080
@@ -76,6 +81,10 @@ public data class ServerConfig(
         public const val DEFAULT_ROOM_FINISHED_TIMEOUT_MILLIS: Long = RoomTimeouts.DEFAULT_FINISHED_MILLIS
         public const val ROOM_FINISHED_TIMEOUT_MILLIS_KEY: String = "room.finishedTimeoutMillis"
         public const val ROOM_FINISHED_TIMEOUT_MILLIS_ENV: String = "ROOM_FINISHED_TIMEOUT_MILLIS"
+
+        public const val DEFAULT_DISCONNECT_GRACE_MILLIS: Long = RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS
+        public const val DISCONNECT_GRACE_MILLIS_KEY: String = "duel.disconnectGraceMillis"
+        public const val DISCONNECT_GRACE_MILLIS_ENV: String = "DISCONNECT_GRACE_MILLIS"
 
         /**
          * Build a [ServerConfig] from a Ktor [ApplicationConfig] with environment variable
@@ -158,6 +167,17 @@ public data class ServerConfig(
                 "room finished timeout must be an integer, got: $roomFinishedTimeoutMillisString"
             }
 
+            val disconnectGraceMillisString = resolve(
+                config,
+                env,
+                DISCONNECT_GRACE_MILLIS_ENV,
+                DISCONNECT_GRACE_MILLIS_KEY,
+                DEFAULT_DISCONNECT_GRACE_MILLIS.toString(),
+            )
+            val disconnectGraceMillis = requireNotNull(disconnectGraceMillisString.toLongOrNull()) {
+                "disconnect grace window must be an integer, got: $disconnectGraceMillisString"
+            }
+
             return ServerConfig(
                 port = port,
                 maxFrameLength = maxFrameLength,
@@ -168,6 +188,7 @@ public data class ServerConfig(
                 databasePoolSize = databasePoolSize,
                 roomWaitingTimeoutMillis = roomWaitingTimeoutMillis,
                 roomFinishedTimeoutMillis = roomFinishedTimeoutMillis,
+                disconnectGraceMillis = disconnectGraceMillis,
             )
         }
 

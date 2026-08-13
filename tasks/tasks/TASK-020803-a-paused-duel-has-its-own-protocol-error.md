@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020803
 title: A paused duel has its own protocol error, and the document lists it
 type: task
-status: backlog
+status: ready
 parent: STORY-0208
 module: poker-server
 estimate: XS
