@@ -11,7 +11,7 @@ tier: haiku
 review: light
 files_touched: 3
 labels: [server, protocol]
-depends_on: [TASK-020718]
+depends_on: [TASK-020718, TASK-020732]
 verify:
   - ./gradlew :poker-server:test --tests '*ProtocolJsonTest'
   - ./gradlew :poker-server:test --tests '*ProtocolDocumentationTest'
