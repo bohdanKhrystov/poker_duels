@@ -136,19 +136,30 @@ it, and the correct response is to move correctness-critical tickets back behind
 
 ## The roles
 
-Three agents, run **strictly one at a time**. Parallel agents over a shared codebase cost more,
-conflict, and leave half-finished work in flight — the wrong trade entirely for a solo project on
-a personal subscription.
+Four agents, each seeing as little as its job allows.
 
 | Role | Model | Runs | Sees |
 | --- | --- | --- | --- |
+| **Architect** | Fable | when a technical `DEC-NNN` blocks something | the decision, the tickets it blocks, the ADRs it touches |
 | **Planner** | Opus, high effort | once per story | the story, its epic, 2–3 linked docs |
 | **Coder** | Haiku (promoted to Sonnet on failure) | once per ticket | one ticket + the ≤5 files it names |
-| **Reviewer** | Haiku, or Sonnet when `review: standard` | once per ticket | the diff + the ticket |
+| **Reviewer** | Haiku, or Sonnet when `review: deep` | once per ticket | the diff + the ticket |
 
-Expensive reasoning happens **once**, in the planner, and is frozen into tickets that cheap
-agents consume. There is deliberately no mid-level planner: it would pay a second cold start to
-re-derive what the first already knows.
+Expensive reasoning happens **once** — in the architect for a decision, in the planner for a
+story — and is frozen into tickets that cheap agents consume. There is deliberately no mid-level
+planner: it would pay a second cold start to re-derive what the first already knows.
+
+The architect exists because open decisions were the largest source of stalled runs, and most of
+them were never questions only a human could answer. It decides **how**; the human decides
+**what**. See [Who answers a DEC](#who-answers-a-dec).
+
+Coders originally ran **strictly one at a time**, on the reasoning that parallel agents over a
+shared codebase cost more, conflict, and leave half-finished work in flight. That held until
+coders were given **isolated git worktrees**, which removes the shared tree the argument rested
+on; up to three now run at once when their tickets touch disjoint files. Merging stayed
+sequential, and every conflict that has shown up since came from a shared working tree, not from
+concurrency itself — twice from `git add -A` sweeping another agent's in-progress files into an
+unrelated PR.
 
 The driver is a **scheduler, not a participant**. It reads no source, writes no code, reviews no
 diff, and keeps one line per finished ticket — so its context stays flat across an epic instead
