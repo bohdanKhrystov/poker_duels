@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021002
 title: Describe a finished duel as the write path's input
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
