@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021013
 title: The Postgres store satisfies the DuelResultSink port
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S

@@ -1,0 +1,83 @@
+package duels.poker.server.db
+
+import duels.poker.server.duel.DuelResult
+import duels.poker.server.duel.DuelResultSink
+import duels.poker.server.duel.FinishedDuel
+import duels.poker.server.duel.formatLabel
+import java.time.Clock
+import java.time.Instant
+import java.util.UUID
+
+/**
+ * A port for minting the primary key of a new duel row.
+ *
+ * `DuelResult` carries no id — the duel runner never invented one, so the write path has to.
+ * Injected the way `RoomCodeSource` and `HandSeedSource` are, so a test can pin the id a
+ * duel is recorded under instead of asserting against whatever `UUID.randomUUID()` produced.
+ */
+public fun interface DuelIdSource {
+    /**
+     * Mint the id for a duel about to be recorded.
+     *
+     * @return a fresh [UUID] to use as the `duel` row's primary key.
+     */
+    public fun newDuelId(): UUID
+}
+
+/**
+ * The production [DuelIdSource]: a fresh random [UUID] per call.
+ */
+public class RandomDuelIdSource : DuelIdSource {
+    override fun newDuelId(): UUID = UUID.randomUUID()
+}
+
+/**
+ * Adapts [PostgresDuelResultStore] to the [DuelResultSink] port so the duel runner can be handed
+ * a store it never has to know is Postgres.
+ *
+ * The adapter is deliberately thin: it does not open a connection, run SQL, or compute a coin
+ * delta. All of that is [PostgresDuelResultStore]'s transaction (`TASK-021006`) and
+ * `duels.poker.server.duel.coinDeltas` (`ADR-0014`); this class only builds the [FinishedDuel]
+ * that store expects from the [DuelResult] the port receives, filling in the three things
+ * `DuelResult` does not carry:
+ *
+ * - the duel id, from the injected [duelIdSource], never `UUID.randomUUID()` inline;
+ * - `startedAt` / `finishedAt`, from the injected [clock], never `Instant.now()` directly, so a
+ *   test can pin the wall-clock value stamped on a row. This is [java.time.Clock], not
+ *   `duels.poker.server.time.ServerClock`: `ServerClock` measures elapsed time from an arbitrary
+ *   epoch (`System.nanoTime()`) for timeouts and grace periods, and its own KDoc says never to
+ *   use it to stamp a database row with a date — a `java.time.Clock` is the instrument that
+ *   actually reports a wall-clock date, and it is fixable in tests via `Clock.fixed`.
+ * - the format label, read from the result's own [duels.poker.engine.log.MatchLog.format] via
+ *   [formatLabel] — the log already carries the format, so there is nothing to invent here.
+ *
+ * `seats` and `outcome` map straight across unchanged.
+ *
+ * @param store the store this sink delegates every write to.
+ * @param duelIdSource mints the id for each duel row.
+ * @param clock the source of the wall-clock timestamps stamped on each duel row. Defaults to
+ *   [Clock.systemUTC].
+ */
+public class PostgresDuelResultSink(
+    private val store: PostgresDuelResultStore,
+    private val duelIdSource: DuelIdSource,
+    private val clock: Clock = Clock.systemUTC(),
+) : DuelResultSink {
+    override suspend fun record(result: DuelResult) {
+        // DuelResult carries no notion of when the duel began — only that it is now finished —
+        // so both timestamps are the one instant the sink actually knows: the moment it was
+        // asked to record. A future ticket that threads a real start time through DuelResult
+        // can split these; inventing one here would be exactly the kind of fabricated value
+        // this adapter exists to avoid.
+        val recordedAt = Instant.now(clock)
+        val duel = FinishedDuel(
+            id = duelIdSource.newDuelId(),
+            format = formatLabel(result.log.format),
+            startedAt = recordedAt,
+            finishedAt = recordedAt,
+            seats = result.seats,
+            outcome = result.outcome,
+        )
+        store.record(duel)
+    }
+}
