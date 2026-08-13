@@ -55,9 +55,33 @@ Alongside what `ADR-0020` settles, these hold:
 
 ## Tasks
 
+Ten micro-tickets, in a strictly linear chain: the emitter is built bottom-up (a type reference, a
+declaration, the walk, the file), then proven, then wired to Gradle and CI, then documented. Only
+`TASK-020301` is startable.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets come from `/plan-story STORY-0203`, now that `ADR-0020` has answered `DEC-007`.* | — |
+| `TASK-020301` | Map a serial descriptor to a TypeScript type reference | ready |
+| `TASK-020302` | Emit a TypeScript interface for a class or object descriptor | backlog |
+| `TASK-020303` | Emit a TypeScript union for an enum and for a sealed hierarchy | backlog |
+| `TASK-020304` | Walk both message roots into an ordered list of declarations | backlog |
+| `TASK-020305` | Assemble the file with its header and the protocol version alias | backlog |
+| `TASK-020306` | Every variant's TypeScript discriminator is its `SerialName` | backlog |
+| `TASK-020307` | `generateProtocolTypes` writes the committed TypeScript file | backlog |
+| `TASK-020308` | `verifyProtocolTypes` byte-compares on every `check` | backlog |
+| `TASK-020309` | CI typechecks the generated file under `strict` | backlog |
+| `TASK-020310` | The protocol document names the generated file and its command | backlog |
+
+Two structural facts about the descriptors, found by walking them while splitting this story, are
+written into the tickets that need them because either one silently produces a wrong file:
+
+- **A sealed descriptor's element 1 is a `CONTEXTUAL` `value` slot**, not a type. Its element names
+  are the `@SerialName`s and its element descriptors are the subtypes; the walk navigates through
+  it and never emits it.
+- **Every `List` and `Set` shares a serial name** — `kotlin.collections.ArrayList`,
+  `kotlin.collections.LinkedHashSet` — whatever the element type. A seen-set that includes list
+  descriptors drops `GameEvent`, all seventeen event types and `SeatView`, because
+  `DuelOutcome.finalStacks` is walked first.
 
 ## Acceptance criteria
 
