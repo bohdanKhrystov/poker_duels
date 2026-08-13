@@ -1,7 +1,12 @@
 package duels.poker.server.room
 
 import duels.poker.engine.duel.DuelFormat
+import duels.poker.server.duel.HandSeedSource
+import duels.poker.server.duel.startDuel
+import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
+import duels.poker.server.time.MutableClock
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -10,11 +15,31 @@ class RoomRematchTest {
     private val host = PlayerId("host")
     private val guest = PlayerId("guest")
     private val code = RoomCode("ABCDEFGH")
+    private val fixedSeeds = HandSeedSource { 7L }
 
     private fun finishedRoom(): Room {
         val waitingRoom = Room.open(code, host, DuelFormat.DEFAULT, now = 1_000L)
         val seated = (waitingRoom.join(guest, 1_000L) as JoinResult.Seated).room
         return seated.finish(2_000L)
+    }
+
+    /** A registry that always mints [code], seeded so every opening hand it deals is reproducible. */
+    private fun scriptedRegistry(): RoomRegistry {
+        val codes = object : RoomCodeSource {
+            override fun newRoomCode(): RoomCode = code
+        }
+        return RoomRegistry(codes, MutableClock(), seeds = fixedSeeds)
+    }
+
+    /**
+     * Seats [guest] into a fresh room in [registry] and finishes it via [RoomRegistry.finish]'s
+     * test-only affordance, without playing a hand to its end — the rematch tests below only care
+     * about the room this leaves behind, at [code], not about how it came to be finished.
+     */
+    private suspend fun finishedRoomIn(registry: RoomRegistry) {
+        registry.create(host)
+        registry.join(code, guest)
+        registry.finish(code)
     }
 
     @Test
@@ -107,5 +132,45 @@ class RoomRematchTest {
             RematchResult.Refused(RematchRefusal.NOT_FINISHED),
             waitingRoom.offerRematch(host, now = 2_000L),
         )
+    }
+
+    @Test
+    fun theRematchOpeningFramesReachBothSeats() = runBlocking {
+        val registry = scriptedRegistry()
+        finishedRoomIn(registry)
+
+        registry.offerRematch(code, host)
+        val agreed = registry.offerRematch(code, guest) as RematchResult.Agreed
+
+        assertTrue(agreed.outbound.any { it.seat == 0 && it.message is ServerMessage.Snapshot })
+        assertTrue(agreed.outbound.any { it.seat == 1 && it.message is ServerMessage.Snapshot })
+    }
+
+    @Test
+    fun exactlyOneSeatIsToldItIsItsTurn() = runBlocking {
+        val registry = scriptedRegistry()
+        finishedRoomIn(registry)
+
+        registry.offerRematch(code, host)
+        val agreed = registry.offerRematch(code, guest) as RematchResult.Agreed
+
+        assertEquals(1, agreed.outbound.count { it.message is ServerMessage.YourTurn })
+    }
+
+    @Test
+    fun theFramesAreTheOnesTheRunnerProduced() = runBlocking {
+        val registry = scriptedRegistry()
+        finishedRoomIn(registry)
+
+        registry.offerRematch(code, host)
+        val agreed = registry.offerRematch(code, guest) as RematchResult.Agreed
+
+        // Independently rebuilding the opening hand from the same inputs `withFreshRunner` used —
+        // the agreed room's format and its now-flipped button seat, plus the fixed seed every hand
+        // in this registry draws — must equal `agreed.outbound` exactly, byte for byte, or the
+        // registry reordered, rebuilt or invented frames instead of just handing back the runner's.
+        val expected = startDuel(agreed.room.format, agreed.room.openingButtonSeat, seed = 7L)
+
+        assertEquals(expected.outbound, agreed.outbound)
     }
 }
