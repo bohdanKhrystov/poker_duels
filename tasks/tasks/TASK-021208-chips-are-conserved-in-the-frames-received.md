@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021208
 title: Chips are conserved in the frames the two clients actually received
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S
