@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020725
 title: Seating the second player hands back the opening hand's frames
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: S

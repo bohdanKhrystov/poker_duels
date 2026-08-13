@@ -457,6 +457,14 @@ public class RoomRegistry(
         }
     }
 
+    /**
+     * The seed source that every hand of a duel this registry hosts draws from.
+     *
+     * A caller moving a duel forward via [act] must use this source rather than one of its own,
+     * to ensure every hand of a duel shares the same seed source — the one that opened it.
+     */
+    public val handSeeds: HandSeedSource get() = seeds
+
     /** The number of currently registered rooms. */
     public val size: Int
         get() = rooms.size
