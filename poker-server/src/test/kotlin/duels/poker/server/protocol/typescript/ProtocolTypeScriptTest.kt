@@ -1,5 +1,6 @@
 package duels.poker.server.protocol.typescript
 
+import duels.poker.server.protocol.PROTOCOL_VERSION
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import org.junit.jupiter.api.Test
@@ -77,5 +78,52 @@ class ProtocolTypeScriptTest {
 
         assertTrue(exception.message?.contains("a.Thing") == true, "message must name a.Thing")
         assertTrue(exception.message?.contains("b.Thing") == true, "message must name b.Thing")
+    }
+
+    @Test
+    fun theHeaderNamesTheRegenerationCommand() {
+        val output = protocolTypeScript()
+
+        assertTrue(
+            output.lines().first().contains("./gradlew :poker-server:generateProtocolTypes"),
+            "first line must contain the regeneration command",
+        )
+        assertTrue(
+            output.lines().first().contains("Generated"),
+            "first line must contain the word 'Generated'",
+        )
+    }
+
+    @Test
+    fun theProtocolVersionIsATypeAlias() {
+        val output = protocolTypeScript()
+
+        assertTrue(
+            output.contains("export type ProtocolVersion = $PROTOCOL_VERSION;"),
+            "output must contain the version alias built from PROTOCOL_VERSION",
+        )
+    }
+
+    @Test
+    fun theFileUsesLfAndEndsWithASingleNewline() {
+        val output = protocolTypeScript()
+
+        assertFalse(output.contains("\r"), "output must not contain carriage returns")
+        assertTrue(output.endsWith("\n"), "output must end with a newline")
+        assertFalse(output.endsWith("\n\n"), "output must not end with double newlines")
+    }
+
+    @Test
+    fun everyDeclarationReachesTheFile() {
+        val output = protocolTypeScript()
+        val declarations = protocolDeclarations()
+
+        assertTrue(declarations.isNotEmpty(), "there must be declarations to test")
+        declarations.forEach { declaration ->
+            assertTrue(
+                output.contains(declaration.text),
+                "output must contain the declaration text for ${declaration.name}",
+            )
+        }
     }
 }

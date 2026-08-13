@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020306
 title: Every variant's TypeScript discriminator is its SerialName
 type: task
-status: backlog
+status: ready
 parent: STORY-0203
 module: poker-server
 estimate: S
