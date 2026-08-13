@@ -386,6 +386,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021210](tasks/TASK-021210-the-duel-in-both-recent-duel-lists.md) The duel appears in both players' recent duels with opposite deltas | S | backlog |
 | | [TASK-021211](tasks/TASK-021211-a-dropped-socket-rejoins-and-the-duel-ends-the-same.md) A dropped socket rejoins inside the window and the duel ends the same way | S | backlog |
 | | [TASK-021212](tasks/TASK-021212-something-drives-the-periodic-sweeps.md) Something drives the periodic sweeps in the server that ships | S | blocked |
+| | [TASK-021213](tasks/TASK-021213-the-sweep-period-is-configuration.md) The sweep period is configuration, read once in ServerConfig | XS | backlog |
 
 Stories are written; tickets come from `/plan-story` as each is reached.
 
@@ -418,7 +419,6 @@ parallel with `EPIC-02`; no shared file.
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-018 | **Product.** Does anyone see the pause? `STORY-0208` ships silence — a timeout fold is indistinguishable on the wire from a chosen one | [`STORY-0208`](stories/STORY-0208-disconnect-grace-period.md) | before v0.2 |
-| DEC-019 | **Technical.** What drives the periodic sweeps in production — `reap()` and `expireGracePeriods()` — with what period, scope and failure behaviour | [`STORY-0208`](stories/STORY-0208-disconnect-grace-period.md) | before `STORY-0212` wires `module()` |
 
 **Answered.** `DEC-021` → [`ADR-0024`](../docs/adr/ADR-0024-design-follows-the-code-workflow.md)
 (design follows the code workflow, in the repository, mirrored to claude.ai/design).
@@ -426,7 +426,9 @@ parallel with `EPIC-02`; no shared file.
 mucks). `DEC-005` → [`ADR-0009`](../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md)
 (match events are their own hierarchy). `DEC-006` →
 [`ADR-0010`](../docs/adr/ADR-0010-engine-takes-a-serialization-dependency.md) (the engine may
-`DEC-020` →
+`DEC-019` →
+[`ADR-0025`](../docs/adr/ADR-0025-one-ticker-coroutine-drives-both-sweeps.md) (one ticker
+coroutine on the application scope drives both sweeps, on a configured fixed delay). `DEC-020` →
 [`ADR-0023`](../docs/adr/ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) (an absent seat
 checks when nothing is owed, folds when facing a bet; `ADR-0013` narrowed, `poker-engine`
 unchanged). depend on `kotlinx.serialization`; `checkNoDependencies` is narrowed, not deleted). `DEC-007` →

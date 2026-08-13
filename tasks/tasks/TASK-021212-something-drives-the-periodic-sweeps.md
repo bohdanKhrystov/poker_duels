@@ -11,7 +11,7 @@ tier: sonnet
 review: standard
 files_touched: 2
 labels: [server, wiring, blocked]
-depends_on: [TASK-021202]
+depends_on: [TASK-021202, TASK-021213, TASK-020812]
 verify:
   - ./gradlew :poker-server:test --tests '*SweepScheduleTest' -PrequireDocker=true
   - ./gradlew :poker-server:check -PrequireDocker=true
@@ -86,3 +86,24 @@ enough that the test runs in seconds, and the test never calls `reap()` or `expi
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket:
 `verify` green, review passed, CI green, status `done`, `BOARD.md` updated, squash-merged into
 `develop`. Not done until the PR is merged.
+
+---
+
+## Re-scoped after `ADR-0025`, by the driver
+
+`DEC-019` is answered, and its answer changed this ticket's shape twice over — both flagged by the
+architect that wrote it, not discovered later:
+
+**The period is configuration.** `ADR-0025` runs the ticker on a fixed delay of
+`sweepPeriodMillis`, an operator's tunable, which belongs in `ServerConfig`. That would have made
+this a four-file ticket, over the linter's cap. It is split out as `TASK-021213`, mirroring
+`TASK-020801`/`TASK-020802`. This ticket keeps its two files and now depends on it.
+
+**`expireGracePeriods()` does not exist yet.** `ADR-0025` has the loop drive *both* sweeps, but the
+grace half is specced by `TASK-020812`, still in `STORY-0208`'s backlog. Added to `depends_on`, so
+this ticket cannot start against a method that isn't there — which would otherwise have surfaced as
+a compile error blamed on the ADR.
+
+The failure this ticket prevents is worth restating: every unit test can pass while a shipped server
+never reaps an idle room and never expires a grace window, so a disconnected player's duel stalls
+forever in production. Nothing green catches that; only this ticket does.
