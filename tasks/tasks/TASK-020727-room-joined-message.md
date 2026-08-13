@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020727
 title: ServerMessage.RoomJoined names the room and the seat the server gave you
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: XS

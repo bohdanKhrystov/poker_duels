@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020726
 title: The socket's dependencies carry the rooms and the connection directory
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: XS
