@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021205
 title: Two real sockets create and join one room by code
 type: task
-status: backlog
+status: ready
 parent: STORY-0212
 module: poker-server
 estimate: S
