@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020302
 title: Emit a TypeScript interface for a class or object descriptor
 type: task
-status: ready
+status: done
 parent: STORY-0203
 module: poker-server
 estimate: S
