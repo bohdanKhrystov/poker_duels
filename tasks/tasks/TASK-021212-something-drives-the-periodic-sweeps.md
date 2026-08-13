@@ -11,7 +11,7 @@ tier: sonnet
 review: standard
 files_touched: 2
 labels: [server, wiring, blocked]
-depends_on: [TASK-021202, TASK-021213, TASK-020812]
+depends_on: [TASK-021202, TASK-021213, TASK-020812, TASK-021215]
 verify:
   - ./gradlew :poker-server:test --tests '*SweepScheduleTest' -PrequireDocker=true
   - ./gradlew :poker-server:check -PrequireDocker=true
