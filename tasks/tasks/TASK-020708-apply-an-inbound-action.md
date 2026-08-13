@@ -30,7 +30,7 @@ append to the hand's log, broadcast per recipient, and roll into the next hand w
 | `poker-server/src/test/kotlin/duels/poker/server/duel/DuelActionTest.kt` | create |
 
 Read, do not modify:
-`poker-server/src/main/kotlin/duels/poker/server/duel/DuelGuard.kt`,
+`poker-server/src/main/kotlin/duels/poker/server/duel/ActRefusal.kt`,
 `poker-server/src/main/kotlin/duels/poker/server/duel/DuelProgress.kt` (`advance`),
 `poker-server/src/main/kotlin/duels/poker/server/duel/DuelTurn.kt` (`framesFor`),
 `poker-engine/src/main/kotlin/duels/poker/engine/game/DefaultPokerEngine.kt`,
