@@ -346,11 +346,11 @@ private class RoomMembership {
  * Answers one post-handshake [frame].
  *
  * A second [Hello] is [ProtocolError.MALFORMED_MESSAGE]: the handshake happened once and is not
- * repeatable. An [Act] is [ProtocolError.NOT_IN_DUEL] — routing it into a live duel is
- * `TASK-020715`. [CreateRoom] and [JoinRoom] open and enter a room through
- * [SocketDependencies.rooms] — see [replyToCreateRoom] and [replyToJoinRoom]. The `when` over
- * [duels.poker.server.protocol.ClientMessage] has no `else`, so a new message type stops this
- * function compiling instead of silently falling through it.
+ * repeatable. An [Act] reaches the duel running in the room [room] names, or is refused as
+ * [ProtocolError.NOT_IN_DUEL] if there is none — see [replyToAct]. [CreateRoom] and [JoinRoom]
+ * open and enter a room through [SocketDependencies.rooms] — see [replyToCreateRoom] and
+ * [replyToJoinRoom]. The `when` over [duels.poker.server.protocol.ClientMessage] has no `else`,
+ * so a new message type stops this function compiling instead of silently falling through it.
  *
  * [maxFrameLength] and [maxFrameNestingDepth] are the operator's configured limits, not the
  * codec's own defaults — see [SocketDependencies]. [session] identifies this connection's player;
@@ -372,11 +372,56 @@ private suspend fun ConnectionWriter.replyTo(
         is Decoded.Refused -> send(ProtocolCodec.encode(ServerMessage.Failure(decoded.error)))
         is Decoded.Message -> when (val message = decoded.message) {
             is Hello -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)))
-            is Act -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.NOT_IN_DUEL)))
+            is Act -> replyToAct(message, deps, session, room)
             is CreateRoom -> replyToCreateRoom(deps, session, room)
             is JoinRoom -> replyToJoinRoom(message.code, deps, session, room)
         }
     }
+}
+
+/**
+ * Applies [message] to the duel running in the room [room] names, and delivers every frame it
+ * produces to that duel's own seats via [deliver] (`TASK-020730`).
+ *
+ * Three things must hold before a frame reaches the duel — [room] remembers a code,
+ * [SocketDependencies.rooms] still holds a room under it, and [session]'s player still holds a
+ * seat in that room — and all three collapse to the same [ProtocolError.NOT_IN_DUEL] refusal, so
+ * a socket that never entered a room learns nothing about which one failed. The seat is
+ * [duels.poker.server.room.Room.seatOf], read fresh from the room this call just fetched from
+ * [SocketDependencies.rooms] rather than cached anywhere: `TASK-020731`'s rule is that a seat
+ * index that outlived a re-seat addresses a frame to the wrong player. That freshly derived
+ * seat — never [message]'s own [duels.poker.engine.game.PlayerAction.seat] — is what
+ * `TASK-020706`'s guard inside [duels.poker.server.duel.act] judges, so a frame naming the
+ * opponent's seat is judged as this sender's own attempt, refused as `NOT_YOUR_TURN`, and never
+ * mistaken for a move the opponent made.
+ *
+ * A `null` [duels.poker.server.duel.DuelStep] means the room had no move to make — it is not
+ * [duels.poker.server.room.RoomState.PLAYING], or carries no runner — so nothing is sent and
+ * nothing is answered: the client has already been told everything true about it.
+ *
+ * @param message The inbound attempt to act.
+ * @param deps The collaborators this socket needs; [SocketDependencies.rooms] both applies
+ *   [message] and is the sole source of the [duels.poker.server.duel.HandSeedSource] it draws
+ *   from, so every hand of one duel draws from the source that opened it.
+ * @param session Identifies this connection's player; never trusted for its seat.
+ * @param room This connection's own record of which room, if any, it has entered.
+ */
+private suspend fun ConnectionWriter.replyToAct(
+    message: Act,
+    deps: SocketDependencies,
+    session: Session,
+    room: RoomMembership,
+) {
+    val code = room.code ?: return notInDuel()
+    val liveRoom = deps.rooms.get(code) ?: return notInDuel()
+    val seat = liveRoom.seatOf(session.player.id) ?: return notInDuel()
+    val step = deps.rooms.act(code) { it.act(seat, message, deps.rooms.handSeeds) } ?: return
+    deliver(step.outbound, liveRoom, deps.connections)
+}
+
+/** Answers with [ProtocolError.NOT_IN_DUEL] — see the three checks in [replyToAct]. */
+private suspend fun ConnectionWriter.notInDuel() {
+    send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.NOT_IN_DUEL)))
 }
 
 /**
