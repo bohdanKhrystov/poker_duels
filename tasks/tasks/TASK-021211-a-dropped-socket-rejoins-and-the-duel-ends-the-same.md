@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021211
 title: A dropped socket rejoins inside the window and the duel ends the same way
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S

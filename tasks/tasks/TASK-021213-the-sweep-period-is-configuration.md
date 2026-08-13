@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021213
 title: The sweep period is configuration, read once in ServerConfig
 type: task
-status: backlog
+status: ready
 parent: STORY-0212
 module: poker-server
 estimate: XS
