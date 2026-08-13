@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060104
 title: The Spacing preview card
 type: task
-status: backlog
+status: ready
 parent: STORY-0601
 module: design
 estimate: S

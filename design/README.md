@@ -10,9 +10,9 @@ is a render surface, never a store.
 
 ```
 design/
-├── tokens/     tokens.css (canonical) + the foundation preview cards
-├── screens/    screen designs (duel table, lobby, flow)      — STORY-0602/0604
-└── graphics/   SVG art (card faces, duel coin, wordmark)     — STORY-0603
+├── tokens/     tokens.css (canonical) + the foundation preview cards (in flight: TASK-060102–04)
+├── screens/    (planned) screen designs — STORY-0602/0604
+└── graphics/   (planned) SVG art — STORY-0603
 ```
 
 ## Preview-card conventions

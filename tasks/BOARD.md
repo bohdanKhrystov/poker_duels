@@ -374,7 +374,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021114](tasks/TASK-021114-hands-played-reaches-the-client.md) Hands played reaches the client instead of null | S | **done** |
 | | [TASK-021115](tasks/TASK-021115-the-document-test-checks-claims-not-words.md) The protocol document says handsPlayed is null, and its test cannot tell | S | **done** |
 | **[STORY-0212](stories/STORY-0212-end-to-end-duel-over-a-socket.md)** A real duel over a real socket, end to end — *schema 2* | | ready |
-| | [TASK-021201](tasks/TASK-021201-the-servers-real-collaborators.md) Build the server's real collaborators from config and a DataSource | S | ready |
+| | [TASK-021201](tasks/TASK-021201-the-servers-real-collaborators.md) Build the server's real collaborators from config and a DataSource | S | **done** |
 | | [TASK-021202](tasks/TASK-021202-the-composition-root-installs-every-route.md) One composition root installs the socket and both HTTP routes, and main calls it | S | backlog |
 | | [TASK-021203](tasks/TASK-021203-the-route-kdocs-name-their-production-installer.md) Both route KDocs name their production installer instead of a story that has landed | XS | backlog |
 | | [TASK-021204](tasks/TASK-021204-a-test-server-on-a-real-database.md) A test server on a real database, with the hand seeds the test chooses | S | backlog |
@@ -400,10 +400,10 @@ parallel with `EPIC-02`; no shared file.
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
 | **[STORY-0601](stories/STORY-0601-design-foundations.md)** Design foundations — tokens and preview cards — *schema 2* | | | ready |
-| | [TASK-060101](tasks/TASK-060101-design-token-sheet.md) The canonical design token sheet | S | ready |
-| | [TASK-060102](tasks/TASK-060102-colors-preview-card.md) The Colors preview card | S | backlog |
-| | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | backlog |
-| | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | backlog |
+| | [TASK-060101](tasks/TASK-060101-design-token-sheet.md) The canonical design token sheet | S | **done** |
+| | [TASK-060102](tasks/TASK-060102-colors-preview-card.md) The Colors preview card | S | ready |
+| | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | ready |
+| | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | ready |
 | | [TASK-060105](tasks/TASK-060105-design-directory-readme.md) The design directory README and sync procedure | XS | **done** |
 | STORY-0602 | The duel table screen | *not written* |
 | STORY-0603 | Graphics — card faces, duel coin, wordmark | *not written* |
