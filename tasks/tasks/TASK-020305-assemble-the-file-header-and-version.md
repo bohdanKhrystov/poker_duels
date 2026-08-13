@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020305
 title: Assemble the file with its header and the protocol version alias
 type: task
-status: backlog
+status: ready
 parent: STORY-0203
 module: poker-server
 estimate: XS
