@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020723
 title: A directory of live connection writers, keyed by the player behind them
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: S

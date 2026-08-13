@@ -176,6 +176,56 @@ class DuelProgressTest {
     }
 
     @Test
+    fun afinishedDuelTellsBothSeats() {
+        val folded = foldedFirstHand(oneHand)
+        val step = advance(folded, seeds(5L))
+
+        val finishedFrames = step.outbound.filter { it.message is ServerMessage.DuelFinished }
+        assertEquals(1, finishedFrames.count { it.seat == 0 })
+        assertEquals(1, finishedFrames.count { it.seat == 1 })
+        assertEquals(2, finishedFrames.size)
+    }
+
+    @Test
+    fun thefinishedFrameCarriesTheEnginesOwnOutcome() {
+        val folded = foldedFirstHand(oneHand)
+        val step = advance(folded, seeds(5L))
+
+        assertEquals(outcomeOf(step.runner.match), step.runner.outcome)
+
+        val finishedOutcomes = step.outbound
+            .map { it.message }
+            .filterIsInstance<ServerMessage.DuelFinished>()
+            .map { it.outcome }
+
+        assertEquals(2, finishedOutcomes.size)
+        assertTrue(finishedOutcomes.all { it == step.runner.outcome })
+    }
+
+    @Test
+    fun thefinishedFrameComesAfterTheLastSnapshot() {
+        val folded = dealtOutSecondHandFixture()
+        val step = advance(folded, seeds(5L))
+
+        for (seat in 0..1) {
+            val seatFrames = step.outbound.filter { it.seat == seat }
+            val lastSnapshotIndex = seatFrames.indexOfLast { it.message is ServerMessage.Snapshot }
+            val finishedIndex = seatFrames.indexOfFirst { it.message is ServerMessage.DuelFinished }
+
+            assertTrue(lastSnapshotIndex >= 0)
+            assertTrue(finishedIndex > lastSnapshotIndex)
+        }
+    }
+
+    @Test
+    fun aduelThatContinuesTellsNobodyItFinished() {
+        val folded = foldedFirstHand()
+        val step = advance(folded, seeds(42L))
+
+        assertTrue(step.outbound.none { it.message is ServerMessage.DuelFinished })
+    }
+
+    @Test
     fun advancingALiveHandFailsLoudly() {
         val started = startDuel(flat, buttonSeat = 0, seed = 1L)
 
