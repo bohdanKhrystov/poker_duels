@@ -27,7 +27,7 @@ raw material the three properties after it need.
 
 | File | Action |
 | --- | --- |
-| `poker-server/src/test/kotlin/duels/poker/server/duel/RunnerDuel.kt` | create |
+| `poker-server/src/test/kotlin/duels/poker/server/duel/PlayedDuel.kt` | create |
 | `poker-server/src/test/kotlin/duels/poker/server/duel/RunnerDuelTest.kt` | create |
 
 Read, do not modify:
@@ -109,7 +109,7 @@ tests. The seed range is `1L..20L` unless a test says otherwise.
 - [ ] `RunnerDuelTest.theMatchLogRecordsExactlyOneEnding` passes
 - [ ] `RunnerDuelTest.aClientThatObeysYourTurnIsNeverRejected` passes
 - [ ] `RunnerDuelTest.theSampleContainsBothShowdownsAndFolds` passes
-- [ ] `RunnerDuel.kt` does not import `duels.poker.engine.game.GameState`, does not call
+- [ ] `PlayedDuel.kt` does not import `duels.poker.engine.game.GameState`, does not call
       `legalActions(`, and does not read `step.runner.hand` other than in the closing `check`
 - [ ] Neither file imports `kotlin.random.Random`
 - [ ] Nothing under `poker-server/src/main/` or `poker-engine/` is modified

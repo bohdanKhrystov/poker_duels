@@ -29,7 +29,7 @@ a round trip through JSON — which is what makes the seed recorded in each `Han
 | `poker-server/src/test/kotlin/duels/poker/server/duel/RunnerReplayTest.kt` | create |
 
 Read, do not modify:
-`poker-server/src/test/kotlin/duels/poker/server/duel/RunnerDuel.kt` (`playDuel`),
+`poker-server/src/test/kotlin/duels/poker/server/duel/PlayedDuel.kt` (`playDuel`),
 `poker-engine/src/main/kotlin/duels/poker/engine/log/MatchReplay.kt` (`replayMatch` re-runs each
 hand from its own seed and compares every event, and rejects a log whose recorded ending is not the
 one the engine reaches), `poker-engine/src/main/kotlin/duels/poker/engine/log/MatchLogJson.kt`
