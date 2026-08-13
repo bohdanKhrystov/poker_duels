@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021006
 title: Move both coin balances inside the same transaction, by SQL increment
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
