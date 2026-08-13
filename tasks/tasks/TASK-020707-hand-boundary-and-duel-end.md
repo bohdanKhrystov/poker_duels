@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020707
 title: Fold a finished hand back into the duel, deal the next one, or end the duel
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
@@ -103,8 +103,15 @@ Fixtures. `flat` is `DuelFormat(startingStack = 10_000, blinds = BlindSchedule(l
 For `ahandThatDealsItselfOutIsRecordedToo`, start from
 `MatchState(flat, handsPlayed = 0, stacks = listOf(120, 300), buttonSeat = 1)` — `MatchState`
 constrains stacks only to be non-negative — open hand 1 with `openHand`, and play
-`PlayerAction.Call(1)` then `PlayerAction.Fold(0)`. Seat 0 is left with 20 chips and takes the
+`PlayerAction.AllIn(1)` then `PlayerAction.Fold(0)`. Seat 0 is left with 20 chips and takes the
 button for hand 2, so hand 2's small blind puts it all-in and the hand deals itself out.
+
+> **Corrected during implementation.** This fixture originally said `Call(1)` then `Fold(0)`,
+> which the engine rejects: `BettingRules.legalActions` offers `FOLD` only when facing a bet
+> (`if (callTo == committed) add(CHECK) else { add(FOLD); add(CALL) }`), so after a limp the big
+> blind's options are check, raise or all-in — never fold. `AllIn(1)` leaves seat 0 uncovered with
+> `toCall = 20`, which makes the fold legal and reaches the identical chip state. Do not copy the
+> original sequence into another fixture.
 
 | Test | Proves |
 | --- | --- |
