@@ -404,7 +404,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060102](tasks/TASK-060102-colors-preview-card.md) The Colors preview card | S | backlog |
 | | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | backlog |
 | | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | backlog |
-| | [TASK-060105](tasks/TASK-060105-design-directory-readme.md) The design directory README and sync procedure | XS | ready |
+| | [TASK-060105](tasks/TASK-060105-design-directory-readme.md) The design directory README and sync procedure | XS | **done** |
 | STORY-0602 | The duel table screen | *not written* |
 | STORY-0603 | Graphics — card faces, duel coin, wordmark | *not written* |
 | STORY-0604 | Lobby and duel-flow screens | *not written* |
