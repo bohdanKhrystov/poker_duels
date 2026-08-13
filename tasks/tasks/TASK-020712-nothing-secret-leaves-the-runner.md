@@ -50,9 +50,9 @@ follow: frames only, seed named in every failure message).
   module directory as the working directory, as `DevDatabaseComposeTest` already relies on — walks
   every `.kt` file under it, and asserts:
   - none contains the string `holeCards`;
-  - the only file containing `PlayerView.of(` is `duel/DuelBroadcast.kt`;
+  - the only file containing `PlayerView.of(` is `duel/Addressed.kt`;
   - the only file containing `ServerMessage.Snapshot(` or `ServerMessage.Events(` is
-    `duel/DuelBroadcast.kt`.
+    `duel/Addressed.kt`.
   The failure message lists the offending paths. This is the executable form of "hole cards are
   filtered in the engine's projection layer, never ad hoc in transport".
 
@@ -74,7 +74,7 @@ follow: frames only, seed named in every failure message).
 | `noEventFrameCarriesTheOpponentsHoleCardsDealt` | no `Events` frame addressed to `s` contains a `HoleCardsDealt` naming `1 - s` |
 | `noEncodedFrameContainsAHandSeed` | no encoded frame contains the decimal text of any hand's seed |
 | `noServerSourceFileTouchesHoleCards` | no `.kt` file under `src/main/kotlin/duels/poker/server` contains `holeCards` |
-| `onlyTheBroadcastFileBuildsAStateCarryingFrame` | `PlayerView.of(`, `ServerMessage.Snapshot(` and `ServerMessage.Events(` appear in `duel/DuelBroadcast.kt` and nowhere else under `src/main/kotlin/duels/poker/server` |
+| `onlyTheBroadcastFileBuildsAStateCarryingFrame` | `PlayerView.of(`, `ServerMessage.Snapshot(` and `ServerMessage.Events(` appear in `duel/Addressed.kt` and nowhere else under `src/main/kotlin/duels/poker/server` |
 
 ## Acceptance criteria
 
