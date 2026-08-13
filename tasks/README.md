@@ -161,6 +161,16 @@ If a task turns out to be larger than its estimate once started: stop, split it,
 original ID for the first piece. Growing a change past its ticket is the failure mode this
 whole system exists to prevent.
 
+### Test filters must name exactly one class
+
+A task's `verify:` block may contain Gradle test filters like `--tests '*SomeTest'`. **A `--tests` filter names exactly one class**, using its fully qualified name rather than a wildcard. `duels.poker.server.e2e.SocketDuelTest` is safe; `*SocketDuelTest` is not. A wildcard matching multiple classes can silently report success while the intended suite never ran — Gradle fails a filter matching nothing, but not one matching a sibling class.
+
+These suffixes already collide with other existing classes and are unsafe to use as wildcards:
+- `SocketDuelTest` (also matches `DuelSocketDuelTest`)
+- `SocketReconnectTest` (also matches `DuelSocketReconnectTest`)
+- `RoomTest` (also matches `DuelSocketRoomTest`)
+- `HandshakeTest` (also matches `DuelSocketHandshakeTest`, `ServerMessageHandshakeTest`)
+
 ## Lifecycle
 
 ```
