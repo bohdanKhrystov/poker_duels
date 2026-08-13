@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021015
 title: The migration tests live with the migrations
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: XS
