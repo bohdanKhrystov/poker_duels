@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021210
 title: The duel appears in both players' recent duels with opposite deltas
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S
