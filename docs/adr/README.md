@@ -75,6 +75,7 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-011 | A device id already holds a live session and the same device opens a second socket — does the server refuse the new one, close the old one and adopt the new, or let both live? | `../../tasks/stories/STORY-0205-sessions-and-socket-lifecycle.md` | before STORY-0208 |
 | DEC-012 | Is holding a room code sufficient authorisation to take the second seat — or does joining need rate limiting, or the host's confirmation of the guest? | `../../tasks/stories/STORY-0206-rooms-and-matchmaking.md` | before the first public link |
 | DEC-013 | Is a per-room `Mutex` enough to serialise a room, or does the room become a channel-fed actor once a duel runs inside it? | `../../tasks/stories/STORY-0206-rooms-and-matchmaking.md` | before STORY-0207 |
+| DEC-014 | Does the `duel` table gain a `hands_played` column — `STORY-0211`'s result line wants it, and a column added after the first real duel cannot be backfilled — or does the read path do without it? | `../../tasks/stories/STORY-0210-profiles-results-and-coins.md` | before STORY-0211 |
 
 ## Answered decisions
 
