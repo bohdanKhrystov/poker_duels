@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020728
 title: ClientMessage learns to open a room and to join one by code
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: XS
