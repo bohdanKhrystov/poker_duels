@@ -11,6 +11,7 @@ import duels.poker.server.session.PlayerId
 import duels.poker.server.time.ServerClock
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -43,6 +44,22 @@ public class RoomRegistry(
     private val sink: DuelResultSink = DuelResultSink { },
 ) {
     private val rooms = ConcurrentHashMap<RoomCode, Holder>()
+
+    /**
+     * The duel id [act] is currently trying to hand to [sink], keyed by room, for exactly as long
+     * as that attempt is outstanding.
+     *
+     * An entry is written inside the same [mutate] critical section that writes a room's
+     * [RoomState.FINISHED] back — so the claim and the write-back are never observably out of
+     * step — and removed once [DuelResultSink.record] has returned, either normally or by
+     * throwing. [offerRematch] reads this, still under the room's own mutex, to refuse a rematch
+     * while the previous duel's result is still in flight: without it, a rematch agreed in that
+     * window would call [withFreshRunner] and overwrite [Room.runner] and [Room.duelId] out from
+     * under a [sink] call that might still fail and need the very frame that finished the duel
+     * replayed. Keyed by duel id rather than presence alone so that a stale entry left behind by
+     * one duel can never suppress a rematch for a later, unrelated one hosted by the same room.
+     */
+    private val recording = ConcurrentHashMap<RoomCode, UUID>()
 
     /**
      * Open a fresh, [RoomState.WAITING] room for [host], under a code no other live room holds.
@@ -169,6 +186,14 @@ public class RoomRegistry(
      * [seeds], replaces whatever runner the just-finished duel left behind, attached before the
      * room is written back.
      *
+     * Before any of that, this checks [recording]: if the room's current [Room.duelId] is the one
+     * [act] is still trying to hand to [sink], the room is treated exactly as [Room.offerRematch]
+     * would treat one that is not yet [RoomState.FINISHED] — refused as
+     * [RematchRefusal.NOT_FINISHED] — rather than letting [Room.offerRematch] itself decide from
+     * a [state][Room.state] that says `FINISHED` but is not yet settled. [Room] stays pure: it has
+     * no way to know a recording attempt is outstanding, so this registry decides for it, in the
+     * same critical section that decision has to be safe in.
+     *
      * @param code The room to offer a rematch on.
      * @param player The player offering the rematch.
      * @return The result of [Room.offerRematch]; a [RematchResult.Offered] or [RematchResult.Agreed]
@@ -179,6 +204,10 @@ public class RoomRegistry(
             code,
             absent = { RematchResult.Refused(RematchRefusal.UNKNOWN_ROOM) },
             block = { room ->
+                val outstanding = recording[code]
+                if (outstanding != null && outstanding == room.duelId) {
+                    return@mutate Pair(null, RematchResult.Refused(RematchRefusal.NOT_FINISHED))
+                }
                 when (val result = room.offerRematch(player, clock.nowMillis())) {
                     is RematchResult.Offered -> Pair(result.room, result)
                     is RematchResult.Agreed -> {
@@ -201,11 +230,30 @@ public class RoomRegistry(
      * supplies the lock and the write-back.
      *
      * When [step] returns a step whose runner has finished, the room is moved to
-     * [RoomState.FINISHED] and [DuelResultSink.record] is called exactly once — after this
-     * method's lock is released, so a slow store never holds up another action on this room
-     * (`ADR-0016`). Exactly once, because the write-back inside the lock is what moves the room
-     * past [RoomState.PLAYING]: the next call, from a retry or a rematch, finds a room [Room.act]
-     * itself refuses to move, and [step] never runs again for this duel.
+     * [RoomState.FINISHED] inside this call's lock — that write-back is what makes concurrent
+     * finishing frames exactly-once: it is the same claim [Room.act] itself already refuses to
+     * hand out twice, so a second racer's frame finds a room that is no longer [RoomState.PLAYING]
+     * and never reaches [step] a second time for this duel. [DuelResultSink.record] is then called
+     * once, outside this method's lock so a slow store never holds up another action on this room
+     * (`ADR-0016`).
+     *
+     * A claim that can never be given back is today's bug: if [DuelResultSink.record] throws, the
+     * write-back above already happened, so nothing else would ever call it again for this duel.
+     * This method undoes that claim — moving the room from [RoomState.FINISHED] back to
+     * [RoomState.PLAYING] via [Room.unfinish] — before letting the exception propagate, so the
+     * very frame that finished the duel is accepted again by a later call. A duplicate recording
+     * attempt that follows is absorbed by [Room.duelId], which does not change across the retry;
+     * a lost result is unrecoverable. Only one of those two mistakes is one this method can undo,
+     * which is why it is the one the ordering favors.
+     *
+     * The same write-back also records the duel's id in [recording], inside the very critical
+     * section that flips the room to [RoomState.FINISHED], and this method removes it again once
+     * [DuelResultSink.record] has returned — successfully or not. [offerRematch] refuses while
+     * that entry stands, which is the fix for a race [unclaim] alone cannot close: a rematch
+     * agreed between the write-back above and [DuelResultSink.record] actually returning would
+     * otherwise call [withFreshRunner] and overwrite [Room.runner] and [Room.duelId] out from
+     * under a recording attempt that might still need the very frame that finished the duel
+     * replayed. Claim, then record, then unclaim on failure: never a rematch in between.
      *
      * @param code The room to act in.
      * @param step Computes the next duel step from the room's current state; typically a call to
@@ -214,13 +262,20 @@ public class RoomRegistry(
      */
     public suspend fun act(code: RoomCode, step: (Room) -> DuelStep?): DuelStep? {
         var finishedSeats: List<PlayerId>? = null
+        var finishedDuelId: UUID? = null
         val result = mutate(
             code,
             absent = { null },
             block = { room ->
                 val duelStep = step(room) ?: return@mutate Pair(null, null)
                 val newRoom = if (duelStep.runner.outcome != null) {
+                    val duelId = checkNotNull(room.duelId) { "a PLAYING room always carries its duel id" }
                     finishedSeats = listOf(room.host, checkNotNull(room.guest) { "a PLAYING room always has a guest" })
+                    finishedDuelId = duelId
+                    // Claimed here, under this room's own mutex, in the same critical section as
+                    // the write-back to FINISHED below it — so no caller of `offerRematch` can
+                    // ever observe a FINISHED room whose recording claim is not yet visible.
+                    recording[code] = duelId
                     room.finish(clock.nowMillis()).copy(runner = duelStep.runner)
                 } else {
                     room.copy(runner = duelStep.runner, lastActivityAt = clock.nowMillis())
@@ -230,26 +285,58 @@ public class RoomRegistry(
         )
 
         val seats = finishedSeats
-        if (result != null && seats != null) {
-            sink.record(DuelResult(checkNotNull(result.runner.outcome), seats, result.runner.log))
+        val duelId = finishedDuelId
+        if (result != null && seats != null && duelId != null) {
+            try {
+                sink.record(DuelResult(duelId, checkNotNull(result.runner.outcome), seats, result.runner.log))
+            } catch (failure: Throwable) {
+                unclaim(code)
+                throw failure
+            } finally {
+                recording.remove(code, duelId)
+            }
         }
         return result
     }
 
     /**
-     * Start a fresh duel for [room] and attach it, drawing the opening hand's seed from [seeds].
+     * Give back the finishing claim [act] took when [DuelResultSink.record] failed to honor it.
+     *
+     * Moves the room at [code] from [RoomState.FINISHED] back to [RoomState.PLAYING] via
+     * [Room.unfinish], under the same [mutate] critical section every other write-back in this
+     * class uses. A no-op if the room is no longer [RoomState.FINISHED] — reaped, abandoned, or
+     * already recovered by another call — since there is then nothing left to give back.
+     *
+     * @param code The room whose claim to give back.
+     */
+    private suspend fun unclaim(code: RoomCode) {
+        mutate(
+            code,
+            absent = {},
+            block = { room ->
+                if (room.state == RoomState.FINISHED) Pair(room.unfinish(), Unit) else Pair(null, Unit)
+            },
+        )
+    }
+
+    /**
+     * Start a fresh duel for [room] and attach it, drawing the opening hand's seed from [seeds]
+     * and minting the duel's stable id.
      *
      * Shared by [join] and [offerRematch]: both seat a room into [RoomState.PLAYING] with a fresh
      * [duels.poker.server.duel.MatchState] and both need the runner that plays it, drawn under
-     * the same lock as the seating so the two never disagree about which duel is live.
+     * the same lock as the seating so the two never disagree about which duel is live. [Room.duelId]
+     * is minted here, once, for the same reason: every later attempt to record this duel — including
+     * a retried finishing frame — reads it back off the room rather than inventing a fresh one, so a
+     * retry and its original attempt agree on the id a persistence layer keys idempotency on.
      *
      * @param room The room whose match was just (re)started; its [Room.format] and
      *   [Room.openingButtonSeat] configure the new duel.
-     * @return [room] with a freshly started [Room.runner] attached.
+     * @return [room] with a freshly started [Room.runner] and a freshly minted [Room.duelId] attached.
      */
     private fun withFreshRunner(room: Room): Room {
         val started = startDuel(room.format, room.openingButtonSeat, seeds.newHandSeed())
-        return room.copy(runner = started.runner)
+        return room.copy(runner = started.runner, duelId = UUID.randomUUID())
     }
 
     /**
@@ -280,9 +367,9 @@ public class RoomRegistry(
         val now = clock.nowMillis()
         val removed = mutableListOf<RoomCode>()
         for ((code, holder) in rooms) {
-            if (!isReapable(holder.room, now)) continue
+            if (!isReapable(code, holder.room, now)) continue
             holder.mutex.withLock {
-                if (isReapable(holder.room, now) && rooms.remove(code, holder)) {
+                if (isReapable(code, holder.room, now) && rooms.remove(code, holder)) {
                     removed.add(code)
                 }
             }
@@ -290,11 +377,44 @@ public class RoomRegistry(
         return removed
     }
 
-    /** Whether [room] has been idle past its state's configured limit, as of [now]. */
-    private fun isReapable(room: Room, now: Long): Boolean = when (room.state) {
-        RoomState.WAITING -> now - room.lastActivityAt >= timeouts.waitingMillis
-        RoomState.FINISHED, RoomState.ABANDONED -> now - room.lastActivityAt >= timeouts.finishedMillis
-        RoomState.PLAYING -> false
+    /**
+     * Whether [room] has been idle past its state's configured limit, as of [now].
+     *
+     * A room whose [recording] entry still names its current [Room.duelId] is never reapable,
+     * regardless of state or how long past [RoomTimeouts.finishedMillis] its [Room.lastActivityAt]
+     * sits: [act]'s call into [DuelResultSink.record] for that duel is still outstanding, so the
+     * room is not idle — it is mid-transaction, on a clock this method cannot see by looking at
+     * [Room.lastActivityAt] alone. "Finished and idle for five minutes" reads as obviously
+     * collectable, but if this pass removed the room anyway, [act]'s eventual `catch` would call
+     * [unclaim] against a room [rooms] no longer holds, [mutate]'s `absent` branch would fire as a
+     * silent no-op, and the duel's result and both coin awards would be gone for good — the exact
+     * loss this ticket exists to prevent, reintroduced through the reaper instead of through the
+     * sink. [Room.abandon] can be called on a [RoomState.FINISHED] room directly, so the same guard
+     * covers [RoomState.ABANDONED] too: [Room.duelId] survives that transition unchanged.
+     *
+     * This check reads [recording] while this room's own mutex is held ([reap]'s second call,
+     * inside `holder.mutex.withLock`), the same mutex [act] holds while writing that entry
+     * alongside the [RoomState.FINISHED] write-back — so that call sees a value consistent with
+     * the room state it is judging, not a stale one read before the lock was taken. [reap]'s first
+     * call, before the lock, is only ever a cheap early-continue: every room it lets through gets
+     * re-checked here, under the lock, before anything is actually removed.
+     *
+     * If [DuelResultSink.record] never returns — neither success nor failure — this entry never
+     * clears and the room never becomes reapable again: a permanent leak. That trade is deliberate,
+     * not an oversight: a leaked in-memory room is recoverable (it costs memory, and a restart
+     * clears it); a lost duel result is not. This method does not add a timeout on top of
+     * [recording] to reclaim that leak — that is a different ticket's decision to make.
+     *
+     * @param code The room's code, used to look up any outstanding [recording] entry.
+     */
+    private fun isReapable(code: RoomCode, room: Room, now: Long): Boolean {
+        val outstanding = recording[code]
+        if (outstanding != null && outstanding == room.duelId) return false
+        return when (room.state) {
+            RoomState.WAITING -> now - room.lastActivityAt >= timeouts.waitingMillis
+            RoomState.FINISHED, RoomState.ABANDONED -> now - room.lastActivityAt >= timeouts.finishedMillis
+            RoomState.PLAYING -> false
+        }
     }
 
     /**

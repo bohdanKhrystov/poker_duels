@@ -11,6 +11,7 @@ import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -18,6 +19,7 @@ class DuelResultSinkTest {
     private val player1 = PlayerId("player1")
     private val player2 = PlayerId("player2")
     private val seats = listOf(player1, player2)
+    private val duelId = UUID.randomUUID()
 
     private fun emptyMatchLog(outcome: DuelOutcome): MatchLog {
         // Create a log with a single MatchFinished event and no hands
@@ -41,7 +43,7 @@ class DuelResultSinkTest {
     fun theWinnerIsThePlayerInTheWinningSeat() {
         val outcome = DuelOutcome(winner = 1, handsPlayed = 5, finalStacks = listOf(1500, 2500))
         val log = emptyMatchLog(outcome)
-        val result = DuelResult(outcome = outcome, seats = seats, log = log)
+        val result = DuelResult(duelId = duelId, outcome = outcome, seats = seats, log = log)
 
         assertEquals(player2, result.winner)
     }
@@ -50,7 +52,7 @@ class DuelResultSinkTest {
     fun adrawHasNoWinningPlayer() {
         val outcome = DuelOutcome(winner = null, handsPlayed = 10, finalStacks = listOf(2000, 2000))
         val log = emptyMatchLog(outcome)
-        val result = DuelResult(outcome = outcome, seats = seats, log = log)
+        val result = DuelResult(duelId = duelId, outcome = outcome, seats = seats, log = log)
 
         assertNull(result.winner)
     }
@@ -61,7 +63,7 @@ class DuelResultSinkTest {
         val log = emptyMatchLog(outcome)
 
         assertThrows<IllegalArgumentException> {
-            DuelResult(outcome = outcome, seats = listOf(player1), log = log)
+            DuelResult(duelId = duelId, outcome = outcome, seats = listOf(player1), log = log)
         }
     }
 
@@ -71,7 +73,7 @@ class DuelResultSinkTest {
         val log = emptyMatchLog(outcome)
 
         assertThrows<IllegalArgumentException> {
-            DuelResult(outcome = outcome, seats = listOf(player1, player1), log = log)
+            DuelResult(duelId = duelId, outcome = outcome, seats = listOf(player1, player1), log = log)
         }
     }
 
@@ -82,7 +84,7 @@ class DuelResultSinkTest {
         val log = emptyMatchLog(outcome2)
 
         assertThrows<IllegalArgumentException> {
-            DuelResult(outcome = outcome1, seats = seats, log = log)
+            DuelResult(duelId = duelId, outcome = outcome1, seats = seats, log = log)
         }
     }
 
@@ -93,7 +95,7 @@ class DuelResultSinkTest {
 
         val outcome = DuelOutcome(winner = 0, handsPlayed = 5, finalStacks = listOf(2500, 1500))
         val log = emptyMatchLog(outcome)
-        val result = DuelResult(outcome = outcome, seats = seats, log = log)
+        val result = DuelResult(duelId = duelId, outcome = outcome, seats = seats, log = log)
 
         runBlocking {
             sink.record(result)

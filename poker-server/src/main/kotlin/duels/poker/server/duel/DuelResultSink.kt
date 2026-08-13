@@ -4,6 +4,7 @@ import duels.poker.engine.duel.DuelOutcome
 import duels.poker.engine.duel.MatchFinished
 import duels.poker.engine.log.MatchLog
 import duels.poker.server.session.PlayerId
+import java.util.UUID
 
 /**
  * The result of a finished duel, ready to be persisted.
@@ -12,11 +13,19 @@ import duels.poker.server.session.PlayerId
  * [MatchLog.buttonSeat] and [DuelOutcome.winner]. Off-by-one errors here award the coin to the
  * loser, so seat indexing is load-bearing.
  *
+ * @param duelId the stable identity of the duel this result belongs to, minted once by the room
+ *   that hosted it (`Room.duelId`) and carried unchanged across any retried [DuelResultSink.record]
+ *   call for the same duel. Deliberately undefaulted: a caller that forgets to supply it must not
+ *   compile, because a fresh id per call is exactly the bug (`TASK-020717`) that let a retry
+ *   insert a second row and double-award the coin — the persistence layer's `ON CONFLICT (id)`
+ *   idempotency (`TASK-021009`) only engages when every attempt to record the same duel carries
+ *   the same [duelId].
  * @param outcome the end condition of the duel (who won, hand count, final stacks).
  * @param seats the players occupying seats 0 and 1, indexed by seat number.
  * @param log the replayable record of the whole duel.
  */
 public data class DuelResult(
+    val duelId: UUID,
     val outcome: DuelOutcome,
     val seats: List<PlayerId>,
     val log: MatchLog,
