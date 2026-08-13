@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021204
 title: A test server on a real database, with the hand seeds the test chooses
 type: task
-status: backlog
+status: ready
 parent: STORY-0212
 module: poker-server
 estimate: S

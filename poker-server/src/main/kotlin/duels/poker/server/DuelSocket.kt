@@ -66,9 +66,9 @@ public const val SEAT_ADOPTED: String = "seat adopted by a newer connection"
  * `Application` accepts — that sharing is what lets one connection's [SeatOwnership.adopt] evict
  * another connection's session.
  *
- * A shipping `duels.poker.server.db.PostgresPlayerDirectory` now exists, but installing the
- * route from `Application.module()` also means handing `module()` a `DataSource`, which
- * `STORY-0212` owns — so the only caller is still a test.
+ * The route is installed in production by `Application.duelServer` against a shared set of
+ * `ServerComponents` that backs all routes; a test may still install it directly with its own
+ * collaborators.
  *
  * @param deps The collaborators this socket needs.
  */
