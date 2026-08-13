@@ -58,6 +58,22 @@ public sealed interface ServerMessage {
     public data class Snapshot(val view: PlayerView) : ServerMessage
 
     /**
+     * The room code and seat the server assigned to you.
+     *
+     * This is the only place a client learns which seat it occupies; the server remembers the seat
+     * from this message and does not trust any later assertion by the client about it (see
+     * `ADR-0002`).
+     *
+     * @property code The room's code.
+     * @property seat The seat the server assigned (0 or 1).
+     */
+    @Serializable
+    @SerialName("RoomJoined")
+    public data class RoomJoined(val code: String, val seat: Int) : ServerMessage {
+        init { require(seat in 0..1) { "seat must be 0 or 1, was $seat" } }
+    }
+
+    /**
      * Facts that just happened in the duel.
      *
      * Carries whatever `visibleTo(events, seat)` returned for that recipient — this type

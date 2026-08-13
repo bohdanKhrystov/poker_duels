@@ -12,6 +12,7 @@ Protocol version: **2**
 | `Act` | client → server | `handNumber`, `actionSequence`, `action` | Client attempts an action |
 | `Welcome` | server → client | `deviceId`, `protocolVersion` | Server accepts the connection |
 | `Failure` | server → client | `error` | Server refuses the connection |
+| `RoomJoined` | server → client | `code`, `seat` | The server seated you in a room |
 | `Snapshot` | server → client | `view` (PlayerView) | Server sends current game state |
 | `Events` | server → client | `events` (List of GameEvent) | Server broadcasts game events |
 | `YourTurn` | server → client | `handNumber`, `actionSequence`, `legalActions` | Server requests an action from client |

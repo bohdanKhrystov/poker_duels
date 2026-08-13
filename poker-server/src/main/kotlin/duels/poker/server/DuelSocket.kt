@@ -121,6 +121,7 @@ private suspend fun DefaultWebSocketServerSession.serve(
             close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, PROTOCOL_VERSION_MISMATCH))
         }
 
+        is ServerMessage.RoomJoined,
         is ServerMessage.Snapshot,
         is ServerMessage.Events,
         is ServerMessage.YourTurn,
