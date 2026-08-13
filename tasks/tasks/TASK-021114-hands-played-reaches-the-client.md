@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021114
 title: Hands played reaches the client instead of null
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
