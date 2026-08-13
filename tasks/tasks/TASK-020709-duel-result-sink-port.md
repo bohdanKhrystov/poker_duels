@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020709
 title: Declare the DuelResultSink port at its consumer, so this story stays free of the database
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: XS
