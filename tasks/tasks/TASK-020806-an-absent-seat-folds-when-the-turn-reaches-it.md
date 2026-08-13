@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020806
 title: An absent seat folds, as an ordinary action, whenever the turn reaches it
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: S
