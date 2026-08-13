@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020808
 title: The room folds for a seat nobody is sitting in, so the duel never stalls
 type: task
-status: ready
+status: blocked
 parent: STORY-0208
 module: poker-server
 estimate: S
@@ -11,7 +11,7 @@ tier: sonnet
 review: deep
 files_touched: 2
 labels: [server, rooms, duel, resilience]
-depends_on: [TASK-020807]
+depends_on: [TASK-020807, TASK-020816]
 verify:
   - ./gradlew :poker-server:test --tests '*RoomAbsentSeatTest'
   - ./gradlew :poker-server:test --tests '*RoomPausedTest'
@@ -102,3 +102,21 @@ somewhere to go after a folded hand, `seeds = HandSeedSource { 7L }`, and
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket:
 `verify` green, review passed, CI green, status `done`, `BOARD.md` updated, squash-merged into
 `develop`. Not done until the PR is merged.
+
+---
+
+## Blocked on `TASK-020816` / `DEC-020`
+
+The named trap — `isPaused` swallowing the absent-seat fold — **is solved**, and pinned by
+`foldAbsentSeatsIsNotSwallowedByARoomPausedForAnotherSeat`, which passes: `foldAbsentSeats` never
+consults `isPaused`, and `Room.act`'s pause branch is untouched.
+
+A second, unrelated defect blocks two of this ticket's own named cases, and it is in a file this
+ticket may not touch. `foldAbsent` always builds `PlayerAction.Fold`, but the engine excludes `FOLD`
+from the legal set whenever nothing is owed (`BettingRules.kt`: `if (callTo == committed) add(CHECK)
+else { add(FOLD); add(CALL) }`). At the big blind's option, or first to act on a checked street, the
+fold is rejected and the loop's no-progress guard stops it — the duel stalls forever.
+
+`TASK-020816` fixes `foldAbsent`; `DEC-020` decides what an absent seat does where folding is
+illegal. This ticket's two failing tests are left written to spec, unweakened, so the gap stays
+visible until then.

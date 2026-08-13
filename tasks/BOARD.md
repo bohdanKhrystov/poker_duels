@@ -326,6 +326,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020813](tasks/TASK-020813-a-closing-socket-tells-the-room-its-seat-is-gone.md) A closing socket tells the room its seat is gone, unless a newer socket took it | S | backlog |
 | | [TASK-020814](tasks/TASK-020814-a-returning-socket-picks-up-where-it-left-off.md) A returning socket picks up where it left off, and another device does not | S | backlog |
 | | [TASK-020815](tasks/TASK-020815-the-configured-window-decides-the-instant.md) The configured window decides the instant, on a clock that never sleeps | S | backlog |
+| | [TASK-020816](tasks/TASK-020816-an-absent-seat-gives-up-with-a-legal-action.md) An absent seat gives up with an action the engine will accept | S | backlog |
 | **[STORY-0209](stories/STORY-0209-postgres-schema-and-migrations.md)** PostgreSQL — schema, migrations, pool — *schema 2* | | **done** |
 | | [TASK-020901](tasks/TASK-020901-database-dependencies.md) Database dependencies in the catalog and server build | XS | **done** |
 | | [TASK-020902](tasks/TASK-020902-database-settings-in-server-config.md) Database URL, credentials and pool size from ServerConfig | S | **done** |
@@ -384,6 +385,7 @@ Stories are written; tickets come from `/plan-story` as each is reached.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-018 | **Product.** Does anyone see the pause? `STORY-0208` ships silence — a timeout fold is indistinguishable on the wire from a chosen one | [`STORY-0208`](stories/STORY-0208-disconnect-grace-period.md) | before v0.2 |
 | DEC-019 | **Technical.** What drives the periodic sweeps in production — `reap()` and `expireGracePeriods()` — with what period, scope and failure behaviour | [`STORY-0208`](stories/STORY-0208-disconnect-grace-period.md) | before `STORY-0212` wires `module()` |
+| DEC-020 | **Technical.** What does an absent seat do where `Fold` is illegal? `ADR-0013` says "folds", but the engine offers only `CHECK` when nothing is owed — so a duel with an absent player stalls forever today | [`TASK-020816`](tasks/TASK-020816-an-absent-seat-gives-up-with-a-legal-action.md) | blocks `TASK-020808` |
 
 **Answered.** `DEC-004` → [`ADR-0008`](../docs/adr/ADR-0008-loser-mucks-at-showdown.md) (the loser
 mucks). `DEC-005` → [`ADR-0009`](../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md)
