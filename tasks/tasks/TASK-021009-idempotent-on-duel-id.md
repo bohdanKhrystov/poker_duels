@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021009
 title: Make recording idempotent on the duel id, so a retry pays once
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
