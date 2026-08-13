@@ -6,6 +6,7 @@ import duels.poker.server.duel.Addressed
 import duels.poker.server.duel.DuelRunner
 import duels.poker.server.duel.DuelStep
 import duels.poker.server.duel.HandSeedSource
+import duels.poker.server.duel.foldAbsent
 import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
@@ -309,7 +310,14 @@ public data class Room(
      * case falls through to the delegation below like any other live frame. Only when neither
      * check above fires does this delegate to `duels.poker.server.duel.act`: legality, turn
      * order and hand advancement are all decided there, never re-decided here — this is a thin,
-     * pure adapter from a room to the runner it hosts. Refuses with `null`, never an exception,
+     * pure adapter from a room to the runner it hosts. The result is then handed to
+     * `duels.poker.server.duel.foldAbsent` together with [absentSeats]: that call decides
+     * nothing either, it only re-asks `duels.poker.server.duel.act` for a seat whose player is
+     * not there, exactly as this method just asked it for the seat [message] arrived on. The
+     * fold-through runs even when [message] itself was rejected: a rejection leaves the turn
+     * exactly where it was, and if that turn belongs to an absent seat it still has to be
+     * folded, or a bad frame from the seat that is still present would strand the duel on a
+     * seat nobody will ever answer for. Refuses with `null`, never an exception,
      * when there is nothing to move: a room that never started a duel, or one that already
      * finished, looks the same to a caller as one holding a stale frame for a live one — the
      * engine's own `guard` inside `act` is what tells those apart while a duel is running.
@@ -317,9 +325,10 @@ public data class Room(
      * @param seat the seat the inbound frame arrived on.
      * @param message the inbound attempt to act.
      * @param seeds the source a hand-ending action draws its next seed from.
-     * @return the duel after this frame and the frames each seat is entitled to see, a paused
-     *   refusal that leaves the runner untouched, or `null` if this room is not
-     *   [RoomState.PLAYING] or carries no [runner].
+     * @return the duel after this frame and any absent seat's fold that followed it, and the
+     *   frames each seat is entitled to see because of it; a paused refusal that leaves the
+     *   runner untouched; or `null` if this room is not [RoomState.PLAYING] or carries no
+     *   [runner].
      */
     public fun act(seat: Int, message: Act, seeds: HandSeedSource): DuelStep? {
         if (state != RoomState.PLAYING) return null
@@ -327,7 +336,40 @@ public data class Room(
         if (isPaused) {
             return DuelStep(liveRunner, listOf(Addressed(seat, ServerMessage.Failure(ProtocolError.DUEL_PAUSED))))
         }
-        return advanceDuel(liveRunner, seat, message, seeds)
+        return foldAbsent(advanceDuel(liveRunner, seat, message, seeds), absentSeats, seeds)
+    }
+
+    /**
+     * Fold every already-absent seat whose turn has arrived, with no inbound frame to apply
+     * first.
+     *
+     * This is the expiry path: nobody sent anything, so there is no seat and no [Act] for [act]
+     * to apply before folding. It asks `duels.poker.server.duel.act` directly, once per absent
+     * seat on turn, through the same `duels.poker.server.duel.foldAbsent` that [act] hands its
+     * own result to — a hand folded here is, in the log and on the wire, indistinguishable from
+     * one folded because [act] happened to be called right after it. Because it never goes
+     * through [act], it never consults [isPaused] either: a seat still counting down in
+     * [gracePeriods] is a reason to refuse a *new* frame in case its player is about to return,
+     * but it is not a reason to leave a *different*, already-absent seat's turn unresolved —
+     * doing so would deadlock the duel on whichever seat happens to still be counting down.
+     * Leaving [isPaused] unchecked is what lets a caller polling this method on a clock
+     * (`TASK-020812`) always make progress, whatever any other seat is doing.
+     *
+     * Pure and total: never throws. `null` when there is nothing to move — this room is not
+     * [RoomState.PLAYING], carries no [runner], holds no [absentSeats] at all, or the seat on
+     * turn belongs to a player who is still there.
+     *
+     * @param seeds the source a hand-ending fold draws its next hand's seed from.
+     * @return the duel after folding every absent seat whose turn arrived, and the frames each
+     *   seat is entitled to see because of it, or `null` if there is nothing to fold right now.
+     */
+    public fun foldAbsentSeats(seeds: HandSeedSource): DuelStep? {
+        if (state != RoomState.PLAYING) return null
+        val liveRunner = runner ?: return null
+        if (absentSeats.isEmpty()) return null
+        val untouched = DuelStep(liveRunner, emptyList())
+        val folded = foldAbsent(untouched, absentSeats, seeds)
+        return if (folded === untouched) null else folded
     }
 
     /**

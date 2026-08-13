@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020809
 title: The registry starts a seat's window on its own clock and configured limit
 type: task
-status: backlog
+status: ready
 parent: STORY-0208
 module: poker-server
 estimate: S

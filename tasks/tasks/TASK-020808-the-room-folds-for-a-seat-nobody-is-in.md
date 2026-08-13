@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020808
 title: The room folds for a seat nobody is sitting in, so the duel never stalls
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: S
@@ -79,8 +79,10 @@ somewhere to go after a folded hand, `seeds = HandSeedSource { 7L }`, and
 
 | Test | Proves |
 | --- | --- |
-| `aCallFromThePresentSeatIsFollowedByTheAbsentSeatsFold` | with `absentSeats = setOf(1 - onTurn)`, a legal `Call` from `onTurn` comes back as a step whose hand one log ends with `PlayerAction.Fold(1 - onTurn)` — the turn passed to the absent seat and did not stop there |
-| `theDuelIsOnTheNextHandAfterwards` | on the same step, `runner.hand!!.state.handNumber == 2` and `runner.outcome == null` |
+| `aCallFromThePresentSeatIsFollowedByTheAbsentSeatsGiveUp` | with `absentSeats = setOf(1 - onTurn)`, a legal `Call` from `onTurn` comes back as a step whose hand one log **grew past the call** — the turn reached the absent seat and did not stop there. A `Call` at the big blind's option leaves the absent seat owing nothing, so under `ADR-0023` the appended action is `PlayerAction.Check(1 - onTurn)`, never a `Fold` |
+| `theTurnReturnsToThePresentSeatAfterwards` | on the same step, `runner.hand!!.state.seatToAct == onTurn` and `runner.outcome == null` — the hand is still live and the present player is on turn again. This is the anti-stall claim, and it does not depend on the hand ending |
+| `aBetFromThePresentSeatIsFollowedByTheAbsentSeatsFold` | with `absentSeats = setOf(1 - onTurn)`, a legal **bet or raise** from `onTurn` leaves the absent seat facing a bet, so `FOLD` is legal and the log ends with `PlayerAction.Fold(1 - onTurn)` |
+| `theAbsentSeatKeepsFoldingAndTheDuelAdvances` | on that step, `runner.hand!!.state.handNumber == 3` and `runner.outcome == null`. **Three, not two, and deliberately so:** `absentSeats` persists across hands and heads-up alternates the button, so the seat that folded hand one holds hand two's button — whose opening decision owes the blind gap, making `FOLD` legal there too. It folds again before anyone present acts. Assert hand two's log is exactly that seat's fold if the runner's logs are reachable; the hand number alone is the weaker form of the same claim |
 | `oneStepCarriesBothTheActionAndTheFold` | the same call against a room with `absentSeats = emptySet()` yields strictly fewer `outbound` frames and leaves the duel on hand one — the comparison is what makes the case above falsifiable rather than merely green |
 | `aRoomWithNobodyAbsentIsUnchanged` | with `absentSeats = emptySet()`, `act` returns exactly what `duels.poker.server.duel.act` returns for the same arguments: same hand number, same seat to act, no fold in the log |
 | `foldAbsentSeatsFoldsTheSeatOnTurn` | with `absentSeats = setOf(onTurn)`, `foldAbsentSeats(seeds)` returns a non-null step whose hand one log ends with `PlayerAction.Fold(onTurn)` |
@@ -90,7 +92,7 @@ somewhere to go after a folded hand, `seeds = HandSeedSource { 7L }`, and
 
 ## Acceptance criteria
 
-- [ ] All eight `RoomAbsentSeatTest` cases named above pass
+- [ ] All ten `RoomAbsentSeatTest` cases named above pass
 - [ ] `RoomPausedTest` passes with the file unchanged
 - [ ] `RoomDuelTest` and `RoomReapTest` pass with those files **unchanged** — both build rooms
       through `RoomRegistry`, where `absentSeats` is empty, so neither observes the fold-through
@@ -104,6 +106,34 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 `develop`. Not done until the PR is merged.
 
 ---
+
+## Amended after `ADR-0023`, by the driver
+
+This ticket was written when an absent seat always folded. `ADR-0023` changed that: at a decision
+point where nothing is owed, the give-up action is `Check`. Two rows in the Tests table asserted
+outcomes that are now wrong about *correct* behaviour, and the coder was right to refuse to bend
+either the code or the tests to match.
+
+The fixture they used — the present seat's first action is a `Call` — is the heads-up big blind's
+option. The absent seat owes nothing there, in any hand, under any format, so it can never fold at
+that spot. Expecting `Fold(1 - onTurn)` and `handNumber == 2` from it was unsatisfiable.
+
+The rows are split across two fixtures rather than relaxed, so both original claims survive and the
+ticket covers one path it could not reach before:
+
+- a **free** spot proves the anti-stall property — the turn reaches the absent seat, an action is
+  appended, and the turn comes back to the present player with the hand still live;
+- a **facing-a-bet** spot proves the hand-ending property — `FOLD` is legal, the absent seat folds,
+  and the duel advances.
+
+**Second amendment, same day.** The first said the duel reaches hand *two*. It reaches hand *three*,
+and that is correct behaviour, not a bug: `absentSeats` persists across hands, heads-up alternates
+the button between only two seats, so the seat that folded hand one is hand two's button — and a
+button's opening decision always owes the blind gap, so it folds that hand too, immediately.
+
+The driver got this wrong twice and the coder refused to paper over it twice, which is the right
+trade. It is worth asserting rather than avoiding: an absent player folding hand after hand while
+the duel advances is exactly what `STORY-0208` exists to guarantee.
 
 ## Was blocked on `TASK-020816` / `DEC-020` — both landed
 
