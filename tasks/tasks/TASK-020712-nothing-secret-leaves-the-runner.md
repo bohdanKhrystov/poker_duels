@@ -30,7 +30,7 @@ own to get wrong.
 | `poker-server/src/test/kotlin/duels/poker/server/duel/RunnerLeakTest.kt` | create |
 
 Read, do not modify:
-`poker-server/src/test/kotlin/duels/poker/server/duel/RunnerDuel.kt` (`playDuel`),
+`poker-server/src/test/kotlin/duels/poker/server/duel/PlayedDuel.kt` (`playDuel`),
 `poker-server/src/main/kotlin/duels/poker/server/protocol/ProtocolCodec.kt` (`encode`),
 `poker-engine/src/main/kotlin/duels/poker/engine/game/EventRedaction.kt`,
 `poker-server/src/test/kotlin/duels/poker/server/duel/RunnerChipConservationTest.kt` (the shape to

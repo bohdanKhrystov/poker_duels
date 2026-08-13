@@ -30,7 +30,7 @@ the engine's own invariants hold.
 | `poker-server/src/test/kotlin/duels/poker/server/duel/RunnerChipConservationTest.kt` | create |
 
 Read, do not modify:
-`poker-server/src/test/kotlin/duels/poker/server/duel/RunnerDuel.kt` (`playDuel`),
+`poker-server/src/test/kotlin/duels/poker/server/duel/PlayedDuel.kt` (`playDuel`),
 `poker-engine/src/main/kotlin/duels/poker/engine/game/PlayerView.kt` (`pot` holds only swept chips;
 chips still in front of a seat are its `committedThisStreet`),
 `poker-engine/src/main/kotlin/duels/poker/engine/game/SeatView.kt`.
