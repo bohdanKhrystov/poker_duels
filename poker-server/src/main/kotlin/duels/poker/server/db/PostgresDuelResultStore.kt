@@ -27,6 +27,9 @@ public class PostgresDuelResultStore(private val dataSource: DataSource) {
      * a fixed global order (lower player id first) to prevent deadlock when two duels share
      * a player.
      *
+     * Recording is idempotent on [FinishedDuel.id]: recording the same duel twice writes its
+     * rows once and awards its coins once. Callers may retry without side effects.
+     *
      * @param duel the finished duel to record
      * @throws SQLException if the write fails; the transaction is rolled back and the exception
      *         is rethrown
@@ -42,7 +45,16 @@ public class PostgresDuelResultStore(private val dataSource: DataSource) {
         dataSource.connection.use { connection ->
             connection.autoCommit = false
             try {
-                insertDuel(connection, duel)
+                // The duel's primary key is the idempotency key: a second record of the same
+                // duel blocks on that unique index until the first transaction commits, then
+                // sees zero rows inserted and stops. That is what makes a retry safe without
+                // a second table or an application-level lock — and double-awarding a coin
+                // is the failure this ledger shape exists to make cheap to prevent and
+                // expensive to repair.
+                if (insertDuel(connection, duel) == 0) {
+                    connection.commit()
+                    return@use
+                }
                 moves.forEach { (player, delta) ->
                     insertResult(connection, duel.id, player, delta)
                     addToBalance(connection, player, delta)
@@ -55,10 +67,11 @@ public class PostgresDuelResultStore(private val dataSource: DataSource) {
         }
     }
 
-    private fun insertDuel(connection: java.sql.Connection, duel: FinishedDuel) {
-        connection.prepareStatement(
+    private fun insertDuel(connection: java.sql.Connection, duel: FinishedDuel): Int {
+        return connection.prepareStatement(
             """
             INSERT INTO duel (id, format, started_at, finished_at) VALUES (?, ?, ?, ?)
+            ON CONFLICT (id) DO NOTHING
             """.trimIndent(),
         ).use { statement ->
             statement.setObject(1, duel.id)

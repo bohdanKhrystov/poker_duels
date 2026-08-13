@@ -153,6 +153,30 @@ class PostgresDuelResultStoreTest {
         assertEquals(-1, coinBalanceOf(bob.id))
     }
 
+    @Test
+    fun recordingTheSameDuelTwiceAwardsCoinsOnce() = runBlocking {
+        val duelId = UUID.randomUUID()
+        val duel = finishedDuel(winner = 0, id = duelId)
+
+        store.record(duel)
+        store.record(duel)
+
+        assertEquals(1, coinBalanceOf(alice.id))
+        assertEquals(-1, coinBalanceOf(bob.id))
+    }
+
+    @Test
+    fun recordingTheSameDuelTwiceWritesItsRowsOnce() = runBlocking {
+        val duelId = UUID.randomUUID()
+        val duel = finishedDuel(winner = 0, id = duelId)
+
+        store.record(duel)
+        store.record(duel)
+
+        assertEquals(1, duelRowCount())
+        assertEquals(2, duelResultRowCount())
+    }
+
     private fun duelRowCount(): Int {
         return dataSource.connection.use { connection ->
             connection.prepareStatement("SELECT COUNT(*) FROM duel").use { statement ->
