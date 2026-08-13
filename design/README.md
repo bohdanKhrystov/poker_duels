@@ -10,7 +10,7 @@ is a render surface, never a store.
 
 ```
 design/
-├── tokens/     tokens.css (canonical) + the foundation preview cards (in flight: TASK-060102–04)
+├── tokens/     tokens.css (canonical) + the three foundation preview cards
 ├── screens/    (planned) screen designs — STORY-0602/0604
 └── graphics/   (planned) SVG art — STORY-0603
 ```

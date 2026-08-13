@@ -15,7 +15,7 @@ depends_on: [TASK-060101]
 verify:
   - 'head -1 design/tokens/spacing.html | grep -q "<!-- @dsCard group=\"Spacing\" -->"'
   - grep -q '<title>' design/tokens/spacing.html
-  - for t in space-1 space-2 space-3 space-4 space-5 space-6 space-7 space-8 space-9 radius-small radius-medium radius-card radius-pill focus focus-offset shadow-pop; do grep -q -- "--pd-$t" design/tokens/spacing.html || exit 1; done
+  - for t in space-1 space-2 space-3 space-4 space-5 space-6 space-7 space-8 space-9 radius-small radius-medium radius-card radius-pill focus focus-offset shadow-pop; do grep -q -- "--pd-$t:" design/tokens/spacing.html || exit 1; done
   - '! grep -q "http" design/tokens/spacing.html'
 ---
 
