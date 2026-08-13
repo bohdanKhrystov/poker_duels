@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020815
 title: The configured window decides the instant, on a clock that never sleeps
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: S
