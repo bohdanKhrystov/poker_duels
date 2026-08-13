@@ -50,6 +50,9 @@ public data class DuelResult(
  * so this is a port defined at its consumer (the duel package) rather than in a persistence
  * module. Whether the whole [MatchLog] is persisted, and where, is undecided (`DEC-008`);
  * carrying it in this value neither answers nor prejudges that.
+ *
+ * The shipping implementation is `duels.poker.server.db.PostgresDuelResultSink`, which adapts
+ * this port to `duels.poker.server.db.PostgresDuelResultStore`.
  */
 public fun interface DuelResultSink {
     /**
