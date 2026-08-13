@@ -2,10 +2,10 @@
 id: STORY-0203
 title: Generated TypeScript protocol types
 type: story
-status: blocked
+status: ready
 parent: EPIC-02
 module: poker-server
-labels: [protocol, typescript, tooling, blocked]
+labels: [protocol, typescript, tooling]
 depends_on: [STORY-0202]
 ---
 
@@ -21,30 +21,26 @@ on one condition — that the shared types are generated rather than hand-writte
 story as where that happens. Hand-written client types drift silently: the failure is a runtime
 `undefined` in the browser weeks after the Kotlin change, and nothing in either build notices.
 
-## ⚠ Blocked — `DEC-007`
+## Answered — `DEC-007` → [`ADR-0020`](../../docs/adr/ADR-0020-typescript-protocol-from-serial-descriptors.md)
 
-> **How are the TypeScript protocol types generated, and what stops the checked-in output
-> drifting?**
->
-> Three plausible answers, each dragging a different dependency into a different build:
->
-> 1. **A Gradle task in `poker-server`** that walks the kotlinx.serialization `SerialDescriptor`s
->    and emits a `.d.ts`. No third-party dependency, no new toolchain; a few hundred lines of
->    emitter we own and maintain, including its handling of sealed hierarchies and value classes.
-> 2. **A third-party generator** (e.g. a kotlinx-serialization-to-TypeScript plugin). Less code to
->    own; a dependency on a small project whose abandonment would be our problem, and whose output
->    shape we do not control.
-> 3. **Emit JSON Schema from Kotlin, run `quicktype` in the web build.** Both halves are
->    well-trodden, and the schema is useful on its own; it puts Node tooling in the path between
->    the two languages and makes the client build depend on a generation step.
->
-> It constrains `EPIC-03`'s build, so it is not a decision a ticket here should make in passing.
->
-> **Nothing else in `EPIC-02` depends on this story.** It is a leaf; `EPIC-03` is the consumer.
+The question was how the TypeScript types are generated and what stops the checked-in output
+drifting. Three answers were on the table: a Gradle task in `poker-server` walking the
+`SerialDescriptor`s, a third-party kotlinx-serialization-to-TypeScript generator, or JSON Schema
+plus `quicktype` in the web build.
+
+`ADR-0020` takes the first: **an emitter we own, over the `SerialDescriptor`s**, with a
+byte-comparing verify task wired into `check` so CI fails on any drift.
+
+The deciding argument is that the wire truth lives in the descriptors, not in the Kotlin class
+shapes — `Card` is a `@JvmInline value class` over an `Int`, but `CardSerializer` declares a
+`STRING` descriptor and writes `"As"`. Any generator reflecting over classes rather than
+descriptors emits a lie for that type, and would keep emitting it silently.
+
+**Nothing else in `EPIC-02` depends on this story.** It is a leaf; `EPIC-03` is the consumer.
 
 ## Design notes
 
-Whatever `DEC-007` settles, these hold:
+Alongside what `ADR-0020` settles, these hold:
 
 - **The generated file is committed.** The web build must not require a JVM to produce its own
   types, and a reviewer must be able to see the diff a protocol change causes.
@@ -61,7 +57,7 @@ Whatever `DEC-007` settles, these hold:
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Blocked on `DEC-007`. Tickets come from `/plan-story STORY-0203` once it is answered.* | — |
+| — | *Tickets come from `/plan-story STORY-0203`, now that `ADR-0020` has answered `DEC-007`.* | — |
 
 ## Acceptance criteria
 

@@ -2,7 +2,7 @@
 id: TASK-000102
 title: Enable branch protection on main and develop
 type: task
-status: blocked
+status: dropped
 parent: STORY-0001
 estimate: S
 labels: [process, meta, ci]
@@ -99,3 +99,17 @@ protection rule nobody has tried to violate has not been tested.
 Standard, per [`tasks/README.md`](../README.md): build green, tests green, `/code-review` run
 with findings fixed or answered, CI green, status `done`, `BOARD.md` updated, and
 **squash-merged into `develop`** by a PR linking this ticket. Not done until the PR is merged.
+
+---
+
+## Dropped — the owner's call, 2026-08-13
+
+Branch protection needs a paid plan on a private repository, or a public one. Asked which; the
+answer was **neither — leave it as convention and close the ticket**.
+
+So the branch model stays a convention this project's agents follow rather than a rule GitHub
+enforces: work happens on a `task/…` branch, lands by squash-merge into `develop`, and never
+commits to `develop` directly. Nothing stops a careless push. That is now a known, accepted risk
+rather than an open ticket pretending otherwise.
+
+Reopen this if the repository goes public, or if a push to `develop` ever actually happens.
