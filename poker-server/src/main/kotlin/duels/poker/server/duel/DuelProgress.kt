@@ -44,6 +44,10 @@ public fun advance(runner: DuelRunner, seeds: HandSeedSource): DuelStep {
                 log = log.copy(events = log.events + finished),
                 outcome = outcomeOf(match),
             )
+            val outcome = checkNotNull(current.outcome) {
+                "a match that produced MatchFinished must have an outcome, but runner.outcome was null"
+            }
+            outbound += finishedFrames(outcome)
             return DuelStep(current, outbound)
         }
 
