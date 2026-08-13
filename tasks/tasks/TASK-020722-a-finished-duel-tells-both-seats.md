@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020722
 title: A duel that ends says so, in the same step that ends it
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: S
