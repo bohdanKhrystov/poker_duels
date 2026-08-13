@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020304
 title: Walk both message roots into an ordered list of declarations
 type: task
-status: backlog
+status: ready
 parent: STORY-0203
 module: poker-server
 estimate: S
