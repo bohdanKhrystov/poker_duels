@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021111
 title: Read a just-finished duel and its coin back over HTTP, against the database
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: S
