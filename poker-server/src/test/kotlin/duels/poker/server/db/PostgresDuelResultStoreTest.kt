@@ -56,6 +56,24 @@ class PostgresDuelResultStoreTest {
         assertEquals(-1, resultDeltaOf(duel.id, bob.id))
     }
 
+    @Test
+    fun theWinnersBalanceRisesByExactlyOne() = runBlocking {
+        val duel = finishedDuel(winner = 0)
+
+        store.record(duel)
+
+        assertEquals(1, coinBalanceOf(alice.id))
+    }
+
+    @Test
+    fun theLosersBalanceFallsByExactlyOne() = runBlocking {
+        val duel = finishedDuel(winner = 0)
+
+        store.record(duel)
+
+        assertEquals(-1, coinBalanceOf(bob.id))
+    }
+
     private fun duelRowCount(): Int {
         return dataSource.connection.use { connection ->
             connection.prepareStatement("SELECT COUNT(*) FROM duel").use { statement ->
@@ -97,6 +115,20 @@ class PostgresDuelResultStoreTest {
             ).use { statement ->
                 statement.setObject(1, duelId)
                 statement.setObject(2, UUID.fromString(playerId.value))
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    resultSet.getInt(1)
+                }
+            }
+        }
+    }
+
+    private fun coinBalanceOf(playerId: PlayerId): Int {
+        return dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT coin_balance FROM player WHERE id = ?",
+            ).use { statement ->
+                statement.setObject(1, UUID.fromString(playerId.value))
                 statement.executeQuery().use { resultSet ->
                     resultSet.next()
                     resultSet.getInt(1)
