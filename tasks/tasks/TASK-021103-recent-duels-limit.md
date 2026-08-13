@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021103
 title: Parse, default and cap the recent-duels limit
 type: task
-status: backlog
+status: done
 parent: STORY-0211
 module: poker-server
 estimate: XS
