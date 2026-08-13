@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020812
 title: The window running out folds the hand, and both seats gone ends the room
 type: task
-status: backlog
+status: ready
 parent: STORY-0208
 module: poker-server
 estimate: S

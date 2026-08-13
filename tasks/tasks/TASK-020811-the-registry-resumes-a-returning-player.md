@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020811
 title: The registry resumes a returning player, and nobody else
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: S
