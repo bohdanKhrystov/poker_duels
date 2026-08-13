@@ -78,6 +78,7 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-013 | Is a per-room `Mutex` enough to serialise a room, or does the room become a channel-fed actor once a duel runs inside it? | `../../tasks/stories/STORY-0206-rooms-and-matchmaking.md` | before STORY-0207 |
 | DEC-014 | Does the `duel` table gain a `hands_played` column — `STORY-0211`'s result line wants it, and a column added after the first real duel cannot be backfilled — or does the read path do without it? | `../../tasks/stories/STORY-0210-profiles-results-and-coins.md` | before STORY-0211 |
 | DEC-015 | How does the end of a duel reach a client, given that `ServerMessage.Events` carries only `GameEvent` and `MatchFinished` is a `MatchEvent`? | `../../tasks/stories/STORY-0207-duel-runner.md` | before STORY-0212 |
+| DEC-016 | What names the opponent in a result line? `player` holds no display name, and `device_id` is the sole authentication token so it can never be shown — does a profile gain a display name, does the opponent's player id stand as the label, or does the client render a nickname derived from it? | `../../tasks/stories/STORY-0211-read-path-coins-and-recent-duels.md` | before EPIC-03's results list |
 
 ## Answered decisions
 

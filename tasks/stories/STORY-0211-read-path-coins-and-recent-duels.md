@@ -58,11 +58,32 @@ The rendering is `EPIC-03`'s. What `EPIC-02` owes it is an endpoint that already
 - Both endpoints are documented in `docs/protocol.md` beside the socket messages, so `EPIC-03` has
   exactly one document to read.
 
+- **`DEC-014` — open, and the read path is planned around it.** The `duel` table has no
+  `hands_played` column, so `handsPlayed` is a nullable field that every ticket here leaves `null`,
+  with the reason written into its KDoc. Whichever way the decision goes the change is additive: a
+  column and the two lines that read it, or the removal of one field. No ticket in this story is
+  blocked on it.
+- **`DEC-016` — raised while splitting.** A result line names the opponent, and the only thing
+  `player` holds is an id: `device_id` is the sole authentication token and must never be shown to
+  the other player. The tickets therefore return `opponentPlayerId`, and `DEC-016` asks whether a
+  profile gains a display name. A name would be a new field, not a change to that one.
+
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Tickets are produced by `/plan-story STORY-0211`.* | — |
+| [TASK-021101](../tasks/TASK-021101-read-path-response-types.md) | Declare the profile and duel-summary response types | ready |
+| [TASK-021102](../tasks/TASK-021102-outcome-from-a-stored-delta.md) | Read won, lost or drew off a stored coin delta | backlog |
+| [TASK-021103](../tasks/TASK-021103-recent-duels-limit.md) | Parse, default and cap the recent-duels limit | backlog |
+| [TASK-021104](../tasks/TASK-021104-profile-reads-port-and-balance.md) | Read a device's profile and balance behind a `ProfileReads` port | backlog |
+| [TASK-021105](../tasks/TASK-021105-the-balance-read-back-is-the-stored-one.md) | Prove the balance read back is the one the duels wrote, minus one included | backlog |
+| [TASK-021106](../tasks/TASK-021106-recent-duels-query.md) | Read a player's recent duels with their opponent in one query | backlog |
+| [TASK-021107](../tasks/TASK-021107-newest-first-capped-and-mine-only.md) | Prove the duel list is newest first, capped, and nobody else's | backlog |
+| [TASK-021108](../tasks/TASK-021108-a-draw-is-visible-in-the-list.md) | Prove a drawn duel is visible in both players' lists | backlog |
+| [TASK-021109](../tasks/TASK-021109-the-profile-endpoint.md) | Answer `GET /api/me` for a known device, refuse anything else | backlog |
+| [TASK-021110](../tasks/TASK-021110-the-recent-duels-endpoint.md) | Answer `GET /api/me/duels` with a bounded, ordered list | backlog |
+| [TASK-021111](../tasks/TASK-021111-endpoints-against-the-database.md) | Read a just-finished duel and its coin back over HTTP, against the database | backlog |
+| [TASK-021112](../tasks/TASK-021112-document-both-endpoints.md) | Document both read endpoints in `docs/protocol.md` | backlog |
 
 ## Acceptance criteria
 
