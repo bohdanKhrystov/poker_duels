@@ -34,7 +34,7 @@ Read, do not modify:
 `poker-engine/src/main/kotlin/duels/poker/engine/game/BettingRules.kt` (`legalActions(state)`),
 `poker-server/src/main/kotlin/duels/poker/server/protocol/ServerMessage.kt`
 (`YourTurn(handNumber, actionSequence, legalActions)`),
-`poker-server/src/main/kotlin/duels/poker/server/duel/DuelBroadcast.kt` (`Addressed`, `broadcast`).
+`poker-server/src/main/kotlin/duels/poker/server/duel/Addressed.kt` (`Addressed`, `broadcast`).
 
 ## Scope
 

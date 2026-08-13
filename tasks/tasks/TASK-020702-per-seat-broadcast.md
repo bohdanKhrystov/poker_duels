@@ -27,7 +27,7 @@ verify:
 
 | File | Action |
 | --- | --- |
-| `poker-server/src/main/kotlin/duels/poker/server/duel/DuelBroadcast.kt` | create |
+| `poker-server/src/main/kotlin/duels/poker/server/duel/Addressed.kt` | create |
 | `poker-server/src/test/kotlin/duels/poker/server/duel/DuelBroadcastTest.kt` | create |
 
 Read, do not modify:
@@ -100,8 +100,8 @@ events. For the reveal test, append a hand-made
 - [ ] `DuelBroadcastTest.aSeatWithNothingVisibleGetsNoEventsFrame` passes
 - [ ] `DuelBroadcastTest.aRevealedSeatIsShownToBothSeats` passes
 - [ ] `DuelBroadcastTest.framesAreOrderedEventsThenSnapshotWithinASeat` passes
-- [ ] `DuelBroadcast.kt` does not contain the string `holeCards`
-- [ ] `DuelBroadcast.kt` builds every payload by calling `PlayerView.of`, `visibleTo` or
+- [ ] `Addressed.kt` does not contain the string `holeCards`
+- [ ] `Addressed.kt` builds every payload by calling `PlayerView.of`, `visibleTo` or
       `revealedSeats`, and constructs no `PlayerView`, `SeatView` or `GameEvent` of its own
 - [ ] Every command in `verify:` exits 0
 
