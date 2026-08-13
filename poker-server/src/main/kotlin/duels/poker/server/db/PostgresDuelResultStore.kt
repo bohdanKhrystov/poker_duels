@@ -70,7 +70,7 @@ public class PostgresDuelResultStore(private val dataSource: DataSource) {
     private fun insertDuel(connection: java.sql.Connection, duel: FinishedDuel): Int {
         return connection.prepareStatement(
             """
-            INSERT INTO duel (id, format, started_at, finished_at) VALUES (?, ?, ?, ?)
+            INSERT INTO duel (id, format, started_at, finished_at, hands_played) VALUES (?, ?, ?, ?, ?)
             ON CONFLICT (id) DO NOTHING
             """.trimIndent(),
         ).use { statement ->
@@ -78,6 +78,7 @@ public class PostgresDuelResultStore(private val dataSource: DataSource) {
             statement.setString(2, duel.format)
             statement.setObject(3, duel.startedAt.atOffset(ZoneOffset.UTC))
             statement.setObject(4, duel.finishedAt.atOffset(ZoneOffset.UTC))
+            statement.setInt(5, duel.outcome.handsPlayed)
             statement.executeUpdate()
         }
     }
