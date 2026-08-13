@@ -2,25 +2,25 @@ package duels.poker.server.db
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class MigrationsTest {
     @Test
-    fun appliesEveryMigrationToAnEmptyDatabase() {
+    fun bothMigrationsApplyToAnEmptyDatabase() {
         val dataSource = PostgresTestSupport.freshDatabase()
 
-        val executed = Migrations.migrate(dataSource)
+        Migrations.migrate(dataSource)
 
-        assertTrue(executed >= 1)
+        // setupDatabase() already ran Migrations.migrate(dataSource) against a fresh
+        // database; V2 is the first evidence that the migration chain works with more
+        // than one file.
         dataSource.connection.use { connection ->
-            connection.createStatement().use { statement ->
-                statement
-                    .executeQuery(
-                        "SELECT count(*) FROM flyway_schema_history WHERE version = '1'",
-                    ).use { resultSet ->
-                        resultSet.next()
-                        assertEquals(1, resultSet.getInt(1))
-                    }
+            connection.prepareStatement(
+                "SELECT version FROM flyway_schema_history WHERE success = true ORDER BY version",
+            ).use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    val versions = generateSequence { if (resultSet.next()) resultSet.getString(1) else null }.toList()
+                    assertEquals(listOf("1", "2"), versions)
+                }
             }
         }
     }
