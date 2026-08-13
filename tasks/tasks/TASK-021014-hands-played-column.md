@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021014
 title: The duel table records how many hands were played
 type: task
-status: ready
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
