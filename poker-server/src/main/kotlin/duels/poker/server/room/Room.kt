@@ -61,6 +61,12 @@ public enum class RoomState {
  *   tells one duel apart from the next when guarding against the rematch race described on
  *   `RoomRegistry.offerRematch`: a rematch changes this field, so a check keyed to "the duel id
  *   that was current when recording started" stops applying the moment a rematch actually begins.
+ * @property gracePeriods each seat currently inside its disconnect grace window (`ADR-0013`),
+ *   mapped to the instant, in elapsed milliseconds on the same scale as [lastActivityAt], at
+ *   which that window runs out — an absolute deadline, never a remaining duration, because a
+ *   value that has to be decremented is a value someone has to remember to decrement.
+ * @property absentSeats the seats whose grace window has already run out; see [isPaused] for what
+ *   distinguishes them from [gracePeriods].
  */
 public data class Room(
     val code: RoomCode,
@@ -74,6 +80,8 @@ public data class Room(
     val lastActivityAt: Long,
     val runner: DuelRunner? = null,
     val duelId: UUID? = null,
+    val gracePeriods: Map<Int, Long> = emptyMap(),
+    val absentSeats: Set<Int> = emptySet(),
 ) {
     init {
         require(guest == null || guest != host) { "the guest must not be the host" }
@@ -95,11 +103,35 @@ public data class Room(
         require((runner == null) == (duelId == null)) {
             "duelId must be present exactly when runner is present"
         }
+        require((gracePeriods.keys + absentSeats).all { it in 0..1 }) {
+            "a seat named in gracePeriods or absentSeats must be 0 or 1"
+        }
+        require(guest != null || (1 !in gracePeriods && 1 !in absentSeats)) {
+            "seat 1 cannot be gone from a room with no guest seated"
+        }
+        require(gracePeriods.keys.none { it in absentSeats }) {
+            "a seat cannot be both inside its grace window and already absent"
+        }
+        require(gracePeriods.values.all { it >= 0 }) {
+            "every grace deadline must not be negative"
+        }
     }
 
     /** The host, plus the guest if seated. */
     public val players: Set<PlayerId>
         get() = if (guest != null) setOf(host, guest) else setOf(host)
+
+    /**
+     * Whether this room's duel is paused waiting for a seat to reconnect.
+     *
+     * This is the asymmetry the whole design rests on: a seat still counting down in
+     * [gracePeriods] pauses the duel, because it might still return before its window runs out.
+     * A seat whose window has already run out, recorded in [absentSeats] instead, does **not**
+     * pause the duel — it has become an ordinary absent player whose hand gets folded rather than
+     * a reason to keep waiting. Pausing on it forever is the "hold indefinitely" alternative
+     * `ADR-0013` rejected.
+     */
+    public val isPaused: Boolean get() = gracePeriods.isNotEmpty()
 
     /**
      * The heads-up seat number of [player]: `0` for the host, `1` for the guest, `null` for

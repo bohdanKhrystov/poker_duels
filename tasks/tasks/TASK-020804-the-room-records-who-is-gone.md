@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020804
 title: The room records which seats are inside a grace window and which are absent
 type: task
-status: ready
+status: done
 parent: STORY-0208
 module: poker-server
 estimate: S

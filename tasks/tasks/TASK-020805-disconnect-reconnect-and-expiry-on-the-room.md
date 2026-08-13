@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020805
 title: Disconnect starts the window, reconnect clears it, expiry makes the seat absent
 type: task
-status: backlog
+status: ready
 parent: STORY-0208
 module: poker-server
 estimate: S
