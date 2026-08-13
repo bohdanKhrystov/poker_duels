@@ -7,6 +7,7 @@ import duels.poker.server.duel.DuelResultSink
 import duels.poker.server.duel.DuelStep
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.SecureHandSeedSource
+import duels.poker.server.duel.resumeFrames
 import duels.poker.server.duel.startDuel
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.ServerClock
@@ -216,6 +217,54 @@ public class RoomRegistry(
                 val seat = room.seatOf(player) ?: return@mutate Pair(null, null)
                 val disconnected = room.disconnect(seat, clock.nowMillis() + timeouts.disconnectGraceMillis)
                 Pair(disconnected, disconnected)
+            },
+        )
+    }
+
+    /**
+     * Return a resumed session for [player], if [player] holds a seat with something to resume
+     * in this room.
+     *
+     * Applies to a [RoomState.PLAYING] or [RoomState.FINISHED] room only: a [RoomState.WAITING]
+     * room has no duel to resume — a self-rejoin there already gets [RoomRefusal.ALREADY_SEATED]
+     * from [join], and this method must not race that behaviour — and a [RoomState.ABANDONED]
+     * room is dead. Both answer `null`, the same idiom [disconnect] uses for a caller this room
+     * has nothing to give.
+     *
+     * [Room.seatOf] is the only credential checked, and it is checked before anything else: a
+     * caller this room has not seated changes nothing at all, not even the other seat's
+     * disconnect grace window (`ADR-0013`) — the write-back below only ever names the seat
+     * [player] holds, so a stranger's call, or a call for the wrong room's player, leaves both
+     * seats exactly as it found them. The lookup, the seat decision, the write-back and the
+     * frames handed back all happen inside the one [mutate] critical section, for the reason
+     * `TASK-020725` gives: a room state decided outside that lock could describe a room that, by
+     * the time this method returns, never existed.
+     *
+     * A returning seat's window is cleared with [Room.reconnect] and the room is
+     * [touched][Room.touch] at [clock]'s current instant: a [RoomState.FINISHED] room whose
+     * player just came back is not idle, and must not be reaped out from under them a moment
+     * later. The frames owed to [seat] are read off [resumeFrames], which asks the projection
+     * layer what that seat is entitled to see right now rather than rebuilding that view here.
+     *
+     * @param code The room to resume in.
+     * @param player The player asking for their seat back.
+     * @return A [Resumption] naming [player]'s seat and the frames it is owed, or `null` if the
+     *   room does not exist, [player] holds no seat in it, or there is nothing to resume.
+     */
+    public suspend fun resume(code: RoomCode, player: PlayerId): Resumption? {
+        return mutate(
+            code,
+            absent = { null },
+            block = { room ->
+                when (room.state) {
+                    RoomState.PLAYING, RoomState.FINISHED -> {
+                        val seat = room.seatOf(player) ?: return@mutate Pair(null, null)
+                        val runner = room.runner ?: return@mutate Pair(null, null)
+                        val returned = room.reconnect(seat).touch(clock.nowMillis())
+                        Pair(returned, Resumption(returned, seat, resumeFrames(runner, seat)))
+                    }
+                    RoomState.WAITING, RoomState.ABANDONED -> Pair(null, null)
+                }
             },
         )
     }
