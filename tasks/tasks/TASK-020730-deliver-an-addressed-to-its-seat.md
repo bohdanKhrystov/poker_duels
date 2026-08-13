@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020730
 title: Each Addressed is encoded once and written to that seat's writer only
 type: task
-status: backlog
+status: ready
 parent: STORY-0207
 module: poker-server
 estimate: S

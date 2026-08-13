@@ -107,12 +107,14 @@ private suspend fun DefaultWebSocketServerSession.serve(
             val player = deps.directory.resolve(deviceId)
             val session = Session(SessionRegistry.newSessionId(), player)
             val eviction = seats.adopt(deps.sessions, session)
+            deps.connections.register(player.id, writer)
             try {
                 writer.send(ProtocolCodec.encode(message))
                 serveUntilEvictedOrClosed(writer, pump, eviction, deps.maxFrameLength, deps.maxFrameNestingDepth)
             } finally {
                 deps.sessions.remove(session.id)
                 seats.forget(session.id)
+                deps.connections.forget(player.id, writer)
             }
         }
 
