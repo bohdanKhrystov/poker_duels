@@ -6,30 +6,6 @@ import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import java.time.Clock
 import java.time.Instant
-import java.util.UUID
-
-/**
- * A port for minting the primary key of a new duel row.
- *
- * `DuelResult` carries no id — the duel runner never invented one, so the write path has to.
- * Injected the way `RoomCodeSource` and `HandSeedSource` are, so a test can pin the id a
- * duel is recorded under instead of asserting against whatever `UUID.randomUUID()` produced.
- */
-public fun interface DuelIdSource {
-    /**
-     * Mint the id for a duel about to be recorded.
-     *
-     * @return a fresh [UUID] to use as the `duel` row's primary key.
-     */
-    public fun newDuelId(): UUID
-}
-
-/**
- * The production [DuelIdSource]: a fresh random [UUID] per call.
- */
-public class RandomDuelIdSource : DuelIdSource {
-    override fun newDuelId(): UUID = UUID.randomUUID()
-}
 
 /**
  * Adapts [PostgresDuelResultStore] to the [DuelResultSink] port so the duel runner can be handed
@@ -38,10 +14,9 @@ public class RandomDuelIdSource : DuelIdSource {
  * The adapter is deliberately thin: it does not open a connection, run SQL, or compute a coin
  * delta. All of that is [PostgresDuelResultStore]'s transaction (`TASK-021006`) and
  * `duels.poker.server.duel.coinDeltas` (`ADR-0014`); this class only builds the [FinishedDuel]
- * that store expects from the [DuelResult] the port receives, filling in the three things
- * `DuelResult` does not carry:
+ * that store expects from the [DuelResult] the port receives, filling in the two things
+ * `DuelResult` does not itself carry in [FinishedDuel]'s shape:
  *
- * - the duel id, from the injected [duelIdSource], never `UUID.randomUUID()` inline;
  * - `startedAt` / `finishedAt`, from the injected [clock], never `Instant.now()` directly, so a
  *   test can pin the wall-clock value stamped on a row. This is [java.time.Clock], not
  *   `duels.poker.server.time.ServerClock`: `ServerClock` measures elapsed time from an arbitrary
@@ -51,16 +26,22 @@ public class RandomDuelIdSource : DuelIdSource {
  * - the format label, read from the result's own [duels.poker.engine.log.MatchLog.format] via
  *   [formatLabel] — the log already carries the format, so there is nothing to invent here.
  *
+ * The duel id is not one of those two: it comes straight off [DuelResult.duelId], the same id
+ * the room that hosted the duel minted once and carries across any retry (`TASK-020717`). This
+ * class used to mint its own id per call via an injected `DuelIdSource`; that let a retried
+ * `record` insert a second row and double-award the coin, because the store's `ON CONFLICT (id)`
+ * idempotency (`TASK-021009`) only engages when every attempt to record the same duel carries the
+ * same id. There is now exactly one place a duel id is minted — the room — so that bug has
+ * nowhere left to come back from.
+ *
  * `seats` and `outcome` map straight across unchanged.
  *
  * @param store the store this sink delegates every write to.
- * @param duelIdSource mints the id for each duel row.
  * @param clock the source of the wall-clock timestamps stamped on each duel row. Defaults to
  *   [Clock.systemUTC].
  */
 public class PostgresDuelResultSink(
     private val store: PostgresDuelResultStore,
-    private val duelIdSource: DuelIdSource,
     private val clock: Clock = Clock.systemUTC(),
 ) : DuelResultSink {
     override suspend fun record(result: DuelResult) {
@@ -71,7 +52,7 @@ public class PostgresDuelResultSink(
         // this adapter exists to avoid.
         val recordedAt = Instant.now(clock)
         val duel = FinishedDuel(
-            id = duelIdSource.newDuelId(),
+            id = result.duelId,
             format = formatLabel(result.log.format),
             startedAt = recordedAt,
             finishedAt = recordedAt,

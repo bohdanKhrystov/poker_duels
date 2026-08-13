@@ -206,21 +206,22 @@ internal class RoomDuelTest {
 
     @Test
     fun aretriedFinishRecordsUnderTheSameDuelId() = runBlocking {
-        var code: RoomCode? = null
-        lateinit var registry: RoomRegistry
         val seenDuelIds = CopyOnWriteArrayList<UUID>()
         var attempts = 0
-        val sink = DuelResultSink {
+        val sink = DuelResultSink { result ->
             attempts++
-            seenDuelIds.add(checkNotNull(registry.get(checkNotNull(code))?.duelId) { "duelId must be set while recording" })
+            // Read the id the sink was actually handed, not one re-derived from the room: a sink
+            // that minted its own id per call — the bug this test guards against — would still
+            // pass if this asserted against `Room.duelId`, because that field never changes
+            // across a retry regardless of what the sink does with it.
+            seenDuelIds.add(result.duelId)
             if (attempts == 1) throw RuntimeException("store unavailable")
         }
-        registry = scriptedRegistry(sink = sink)
+        val registry = scriptedRegistry(sink = sink)
         val host = newPlayerId()
         val guest = newPlayerId()
         val oneHand = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
         val room = registry.create(host, oneHand)
-        code = room.code
         val seated = (registry.join(room.code, guest) as JoinResult.Seated).room
         val hand = seated.runner!!.hand!!
         val toActSeat = hand.state.seatToAct!!
@@ -242,6 +243,78 @@ internal class RoomDuelTest {
 
         assertEquals(2, seenDuelIds.size)
         assertEquals(seenDuelIds[0], seenDuelIds[1])
+    }
+
+    @Test
+    @Timeout(60)
+    fun arematchAgreedWhileRecordingIsInFlightCannotLoseTheOriginalDuel() = runBlocking {
+        val recorded = CopyOnWriteArrayList<DuelResult>()
+        var attempts = 0
+        val enteredRecord = CompletableDeferred<Unit>()
+        val releaseRecord = CompletableDeferred<Unit>()
+        val sink = DuelResultSink { result ->
+            attempts++
+            if (attempts == 1) {
+                // The room's write-back to FINISHED has already happened by the time `record` is
+                // called — this is the exact window a concurrent rematch could race. Signal the
+                // test that the window is open, then wait to be released before failing, so the
+                // rematch attempt below runs entirely inside it.
+                enteredRecord.complete(Unit)
+                releaseRecord.await()
+                throw RuntimeException("store unavailable")
+            }
+            recorded.add(result)
+        }
+        val registry = scriptedRegistry(sink = sink)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val oneHand = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
+        val room = registry.create(host, oneHand)
+        val seated = (registry.join(room.code, guest) as JoinResult.Seated).room
+        val originalDuelId = seated.duelId
+        val hand = seated.runner!!.hand!!
+        val toActSeat = hand.state.seatToAct!!
+        val fold = Act(
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            action = PlayerAction.Fold(toActSeat),
+        )
+
+        val finishing = async(Dispatchers.Default) {
+            var threw = false
+            try {
+                registry.act(room.code) { r -> r.act(toActSeat, fold, fixedSeeds) }
+            } catch (expected: RuntimeException) {
+                threw = true
+            }
+            threw
+        }
+
+        enteredRecord.await()
+        // The room is FINISHED here, but its result is not yet confirmed recorded: both offers
+        // must be refused exactly as they would be for a duel still in progress, never agreed.
+        assertEquals(RoomState.FINISHED, registry.get(room.code)!!.state)
+        val hostOffer = registry.offerRematch(room.code, host)
+        val guestOffer = registry.offerRematch(room.code, guest)
+        assertTrue(hostOffer is RematchResult.Refused)
+        assertTrue(guestOffer is RematchResult.Refused)
+        assertEquals(RematchRefusal.NOT_FINISHED, (hostOffer as RematchResult.Refused).reason)
+        assertEquals(RematchRefusal.NOT_FINISHED, (guestOffer as RematchResult.Refused).reason)
+
+        releaseRecord.complete(Unit)
+        assertTrue(finishing.await())
+
+        // The very frame that finished the duel is still replayable, and its retry finally
+        // records the original duel under its original id — nothing was lost to the race.
+        val retryStep = registry.act(room.code) { r -> r.act(toActSeat, fold, fixedSeeds) }
+        assertNotNull(retryStep)
+        assertEquals(1, recorded.size)
+        assertEquals(originalDuelId, recorded.single().duelId)
+
+        // Now that the duel is actually recorded, a rematch is allowed again.
+        registry.offerRematch(room.code, host)
+        val agreed = registry.offerRematch(room.code, guest)
+        assertTrue(agreed is RematchResult.Agreed)
     }
 
     @Test

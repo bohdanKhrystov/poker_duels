@@ -47,14 +47,14 @@ class PostgresDuelResultSinkTest {
             events = listOf(MatchFinished(sequence = 0, outcome = outcome)),
         )
 
-    private fun duelResult(winner: Int?): DuelResult {
+    private fun duelResult(winner: Int?, duelId: UUID = UUID.randomUUID()): DuelResult {
         val outcome = when (winner) {
             0 -> DuelOutcome(winner = 0, handsPlayed = 1, finalStacks = listOf(11_000, 9_000))
             1 -> DuelOutcome(winner = 1, handsPlayed = 1, finalStacks = listOf(9_000, 11_000))
             null -> DuelOutcome(winner = null, handsPlayed = 1, finalStacks = listOf(10_000, 10_000))
             else -> throw IllegalArgumentException("winner must be 0, 1, or null, got $winner")
         }
-        return DuelResult(outcome = outcome, seats = listOf(alice.id, bob.id), log = matchLog(outcome))
+        return DuelResult(duelId = duelId, outcome = outcome, seats = listOf(alice.id, bob.id), log = matchLog(outcome))
     }
 
     private fun duelRowCount(): Int =
@@ -130,7 +130,7 @@ class PostgresDuelResultSinkTest {
 
     @Test
     fun recordingThroughThePortWritesTheSameRowsAsTheStore() = runBlocking {
-        val sink = PostgresDuelResultSink(store, DuelIdSource { UUID.randomUUID() })
+        val sink = PostgresDuelResultSink(store)
 
         sink.record(duelResult(winner = 0))
 
@@ -140,7 +140,7 @@ class PostgresDuelResultSinkTest {
 
     @Test
     fun theWinnerGainsAndTheLoserLosesThroughThePort() = runBlocking {
-        val sink = PostgresDuelResultSink(store, DuelIdSource { UUID.randomUUID() })
+        val sink = PostgresDuelResultSink(store)
 
         sink.record(duelResult(winner = 0))
 
@@ -151,9 +151,9 @@ class PostgresDuelResultSinkTest {
     @Test
     fun aDrawRecordedThroughThePortWritesTwoZeroRows() = runBlocking {
         val duelId = UUID.randomUUID()
-        val fixedIdSink = PostgresDuelResultSink(store, DuelIdSource { duelId })
+        val sink = PostgresDuelResultSink(store)
 
-        fixedIdSink.record(duelResult(winner = null))
+        sink.record(duelResult(winner = null, duelId = duelId))
 
         assertEquals(2, duelResultRowCount())
         assertEquals(0, resultDeltaOf(duelId, alice.id))
@@ -164,7 +164,7 @@ class PostgresDuelResultSinkTest {
 
     @Test
     fun theStoreIsUsableWhereTheSinkIsExpected() = runBlocking {
-        val sink: DuelResultSink = PostgresDuelResultSink(store, DuelIdSource { UUID.randomUUID() })
+        val sink: DuelResultSink = PostgresDuelResultSink(store)
 
         sink.record(duelResult(winner = 1))
 
@@ -172,13 +172,13 @@ class PostgresDuelResultSinkTest {
     }
 
     @Test
-    fun theDuelIdAndTimestampsComeFromTheInjectedSources() = runBlocking {
+    fun theDuelIdComesFromTheResultAndTimestampsComeFromTheInjectedClock() = runBlocking {
         val fixedId = UUID.randomUUID()
         val fixedInstant = Instant.parse("2026-08-13T09:30:00Z")
         val clock = Clock.fixed(fixedInstant, ZoneOffset.UTC)
-        val sink = PostgresDuelResultSink(store, DuelIdSource { fixedId }, clock)
+        val sink = PostgresDuelResultSink(store, clock)
 
-        sink.record(duelResult(winner = 0))
+        sink.record(duelResult(winner = 0, duelId = fixedId))
 
         assertEquals(fixedId, singleDuelId())
         val (startedAt, finishedAt) = duelTimestamps(fixedId)
@@ -187,14 +187,29 @@ class PostgresDuelResultSinkTest {
     }
 
     @Test
+    fun aRetriedRecordUnderTheSameDuelIdWritesOneRow() = runBlocking {
+        val duelId = UUID.randomUUID()
+        val sink = PostgresDuelResultSink(store)
+
+        sink.record(duelResult(winner = 0, duelId = duelId))
+        sink.record(duelResult(winner = 0, duelId = duelId))
+
+        assertEquals(1, duelRowCount())
+        assertEquals(2, duelResultRowCount())
+        assertEquals(1, coinBalanceOf(alice.id))
+        assertEquals(-1, coinBalanceOf(bob.id))
+    }
+
+    @Test
     fun theFormatLabelComesFromTheMatchLog() = runBlocking {
         val outcome = DuelOutcome(winner = 0, handsPlayed = 1, finalStacks = listOf(11_000, 9_000))
         val result = DuelResult(
+            duelId = UUID.randomUUID(),
             outcome = outcome,
             seats = listOf(alice.id, bob.id),
             log = matchLog(outcome, format = DuelFormat.DEFAULT),
         )
-        val sink = PostgresDuelResultSink(store, DuelIdSource { UUID.randomUUID() })
+        val sink = PostgresDuelResultSink(store)
 
         sink.record(result)
 

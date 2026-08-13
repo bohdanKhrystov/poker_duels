@@ -54,11 +54,30 @@ Both have to change for a retry to mean anything.
 | --- | --- |
 | `poker-server/src/main/kotlin/duels/poker/server/room/Room.kt` | modify |
 | `poker-server/src/main/kotlin/duels/poker/server/room/RoomRegistry.kt` | modify |
+| `poker-server/src/main/kotlin/duels/poker/server/duel/DuelResultSink.kt` | modify |
+| `poker-server/src/main/kotlin/duels/poker/server/db/PostgresDuelResultSink.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/room/RoomDuelTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/duel/DuelResultSinkTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/db/PostgresDuelResultSinkTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/room/RoomReapTest.kt` | create |
 
-Do **not** modify `PostgresDuelResultStore.kt` or `PostgresDuelResultSink.kt` — the store's
-transaction and rollback are mutation-proven, and its idempotency is exactly what this ticket
-finally makes usable.
+> **Files table corrected during implementation.** The original table required "a retry carries
+> the same duel id" while forbidding `DuelResultSink.kt` and `PostgresDuelResultSink.kt` — the two
+> files that mint and carry that id. Its own Done criterion was unreachable at `files_touched: 3`.
+> The prohibition on those two files (plus their test counterparts) was lifted after the deep
+> review that found this; the prohibition on `PostgresDuelResultStore.kt` — the transaction,
+> rollback and `ON CONFLICT` idempotency — stands unchanged and untouched. Separately, the deep
+> review overruled this ticket's "record before you finish" ordering instruction: the
+> implementation claims the room as `FINISHED` before recording and gives the claim back
+> (`unclaim`) only if recording fails, because once a runner carries an outcome every later frame
+> yields the same terminal `DuelStep`, so the room's state gate is the only reliable claim, and
+> recording strictly before the flip would let two concurrent finishing frames both call `record`.
+> The reviewer judged that argument correct on its merits and kept the code as implemented. A
+> second deep review then found that `reap`/`isReapable` never consulted `recording`: a `record`
+> call that outlasts `timeouts.finishedMillis` let the reaper collect the still-`FINISHED` room out
+> from under it, so the later `unclaim` landed on a room `rooms` no longer held and silently did
+> nothing — the same "at most once" loss this ticket exists to close, reintroduced through the
+> reaper. `RoomReapTest.kt` was added as an 8th file to cover it.
 
 ## Scope
 

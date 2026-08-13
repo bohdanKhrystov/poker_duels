@@ -57,7 +57,10 @@ public enum class RoomState {
  *   `RoomRegistry` critical section that draws the opening hand seed — never re-minted on a
  *   retry — so that every attempt to record the same duel, including a retried finishing frame,
  *   carries the same id. That is what lets a persistence layer keyed on this id treat a repeat
- *   attempt as a no-op instead of a second row (`TASK-021009`).
+ *   attempt as a no-op instead of a second row (`TASK-021009`). It is also how `RoomRegistry`
+ *   tells one duel apart from the next when guarding against the rematch race described on
+ *   `RoomRegistry.offerRematch`: a rematch changes this field, so a check keyed to "the duel id
+ *   that was current when recording started" stops applying the moment a rematch actually begins.
  */
 public data class Room(
     val code: RoomCode,
@@ -224,7 +227,11 @@ public data class Room(
      * duel just finished — not against [MatchState.buttonSeat], which has already alternated
      * hand by hand over the course of that duel and by the end says nothing about who opened it.
      *
-     * Pure and total: never throws, never mutates.
+     * Pure and total: never throws, never mutates. This purity is exactly why the guard against
+     * `RoomRegistry`'s rematch race (see `RoomRegistry.offerRematch`) lives in the registry
+     * rather than here: this method has no way to know whether some other in-flight call is
+     * mid-way through recording the very duel this room just finished, and giving it one would
+     * mean threading that knowledge through every other pure `Room` method's tests as well.
      *
      * @param player the player offering the rematch.
      * @param now the current time in milliseconds; `Room` reads no clock of its own.
