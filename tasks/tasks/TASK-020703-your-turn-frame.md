@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020703
 title: The seat on turn gets YourTurn with the engine's legal actions, and the other seat gets nothing
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
