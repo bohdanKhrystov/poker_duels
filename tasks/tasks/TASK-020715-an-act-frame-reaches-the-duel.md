@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020715
 title: An Act arriving on a socket reaches the duel, and the duel's frames reach both sockets
 type: task
-status: blocked
+status: backlog
 parent: STORY-0207
 module: poker-server
 estimate: S

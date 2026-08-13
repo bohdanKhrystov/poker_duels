@@ -109,8 +109,9 @@ backlog  →  ready  →  in-progress  →  in-review  →  done
 | `in-review` | a PR is open |
 | `blocked` | waiting on a dependency or a decision — say which, in the ticket |
 | `done` | merged into `develop`, acceptance criteria all ticked |
+| `dropped` | filed, then correctly abandoned — most often because its premise turned out to be false. Not `done`: the file stays and records why, because rewriting it as done would hide a real event in the trail |
 
-An epic or story is `done` when all of its children are.
+An epic or story is `done` when every child is `done` or `dropped`.
 
 ## What makes a task ready
 

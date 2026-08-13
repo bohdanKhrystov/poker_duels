@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020511
 title: Decide and enforce what a second socket for one device id does
 type: task
-status: blocked
+status: backlog
 parent: STORY-0205
 module: poker-server
 estimate: S

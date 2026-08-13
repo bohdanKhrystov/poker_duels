@@ -17,7 +17,11 @@ from pathlib import Path
 TASKS = Path("tasks")
 SKIP_DIRS = {"templates"}
 
-STATUSES = {"backlog", "ready", "in-progress", "in-review", "blocked", "done"}
+# "dropped" is a ticket that was filed and then correctly abandoned — most often because its
+# premise turned out to be false. It is not "done", and rewriting it as such would hide a
+# real event in the trail; the ticket keeps its file and records why it was dropped.
+STATUSES = {"backlog", "ready", "in-progress", "in-review", "blocked", "done", "dropped"}
+SETTLED = {"done", "dropped"}
 
 # Schema 1 is the original hand-written backlog. Schema 2 is the token-lean format an agent
 # workflow consumes: smaller, tiered by model, and gated by executable verify commands.
@@ -229,7 +233,7 @@ def check_links(tickets: dict[str, dict]) -> None:
         if data["type"] == "task" and data["status"] == "ready":
             unmet = [
                 dep for dep in data.get("depends_on", [])
-                if dep in tickets and tickets[dep]["status"] != "done"
+                if dep in tickets and tickets[dep]["status"] not in SETTLED
             ]
             if unmet:
                 fail(where, f"status is 'ready' but these are not done: {', '.join(unmet)}")

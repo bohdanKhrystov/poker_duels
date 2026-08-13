@@ -60,6 +60,10 @@ Each with the reason it was not chosen.
 | [0013](ADR-0013-disconnect-grace-period.md) | A dropped connection gets a grace period, then folds | Accepted |
 | [0014](ADR-0014-duel-coin-economy.md) | The winner takes a coin, the loser gives one, a draw pays nothing | Accepted |
 | [0015](ADR-0015-a-draw-writes-two-result-rows.md) | A draw writes two result rows of zero, not no rows | Accepted |
+| [0016](ADR-0016-a-room-is-serialised-by-its-own-mutex.md) | A room is serialised by its own mutex, not by an actor | Accepted |
+| [0017](ADR-0017-the-server-says-when-a-duel-ends.md) | The server says when a duel ends | Accepted |
+| [0018](ADR-0018-a-second-socket-adopts-the-seat.md) | A second socket adopts the seat, and the first is closed | Accepted |
+| [0019](ADR-0019-the-duel-table-records-hands-played.md) | The duel table records how many hands were played | Accepted |
 
 ## Open decisions
 
@@ -72,12 +76,7 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-007 | How are the TypeScript protocol types generated from the Kotlin definitions, and what stops the checked-in output drifting? | `../../tasks/stories/STORY-0203-generated-typescript-protocol.md` | before EPIC-03 |
 | DEC-008 | Is the full `MatchLog` persisted in v0.1, and where — a column, a table per hand, or object storage? | `../../tasks/stories/STORY-0209-postgres-schema-and-migrations.md` | before EPIC-08 |
 | DEC-009 | Can a duel be watched, and if so what may a spectator see and when? | `../../tasks/stories/STORY-0204-player-view-projection.md` | before v0.2 |
-| DEC-010 | Do the room and lobby messages belong to `STORY-0202`'s protocol, or does `STORY-0207` extend the two sealed hierarchies once `RoomRegistry` exists? | `../../tasks/stories/STORY-0202-wire-protocol.md` | before STORY-0207 |
-| DEC-011 | A device id already holds a live session and the same device opens a second socket — does the server refuse the new one, close the old one and adopt the new, or let both live? | `../../tasks/stories/STORY-0205-sessions-and-socket-lifecycle.md` | before STORY-0208 |
 | DEC-012 | Is holding a room code sufficient authorisation to take the second seat — or does joining need rate limiting, or the host's confirmation of the guest? | `../../tasks/stories/STORY-0206-rooms-and-matchmaking.md` | before the first public link |
-| DEC-013 | Is a per-room `Mutex` enough to serialise a room, or does the room become a channel-fed actor once a duel runs inside it? | `../../tasks/stories/STORY-0206-rooms-and-matchmaking.md` | before STORY-0207 |
-| DEC-014 | Does the `duel` table gain a `hands_played` column — `STORY-0211`'s result line wants it, and a column added after the first real duel cannot be backfilled — or does the read path do without it? | `../../tasks/stories/STORY-0210-profiles-results-and-coins.md` | before STORY-0211 |
-| DEC-015 | How does the end of a duel reach a client, given that `ServerMessage.Events` carries only `GameEvent` and `MatchFinished` is a `MatchEvent`? | `../../tasks/stories/STORY-0207-duel-runner.md` | before STORY-0212 |
 | DEC-016 | What names the opponent in a result line? `player` holds no display name, and `device_id` is the sole authentication token so it can never be shown — does a profile gain a display name, does the opponent's player id stand as the label, or does the client render a nickname derived from it? | `../../tasks/stories/STORY-0211-read-path-coins-and-recent-duels.md` | before EPIC-03's results list |
 
 ## Answered decisions
@@ -86,4 +85,9 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | --- | --- | --- |
 | DEC-005 | Where does a match-level event live? | [ADR-0009](ADR-0009-match-events-are-their-own-hierarchy.md) — its own `MatchEvent` hierarchy |
 | DEC-006 | Where does event-log serialisation live, and in what format? | [ADR-0010](ADR-0010-engine-takes-a-serialization-dependency.md) — kotlinx.serialization, inside the engine, behind a narrowed guard |
+| DEC-010 | Do room and lobby messages belong to STORY-0202's protocol, or extend the sealed hierarchies? | [ADR-0017](ADR-0017-the-server-says-when-a-duel-ends.md) — later stories extend the existing hierarchies |
+| DEC-011 | A device opens a second socket while one is live — refuse, adopt, or allow both? | [ADR-0018](ADR-0018-a-second-socket-adopts-the-seat.md) — the new socket adopts the seat, the old is closed |
+| DEC-013 | Is a per-room `Mutex` enough once a duel runs inside the room? | [ADR-0016](ADR-0016-a-room-is-serialised-by-its-own-mutex.md) — the mutex stays; no actor |
+| DEC-014 | Does the `duel` table gain a `hands_played` column? | [ADR-0019](ADR-0019-the-duel-table-records-hands-played.md) — yes, now, via V2 while the table is empty |
+| DEC-015 | How does the end of a duel reach a client? | [ADR-0017](ADR-0017-the-server-says-when-a-duel-ends.md) — a new `ServerMessage.DuelFinished` |
 
