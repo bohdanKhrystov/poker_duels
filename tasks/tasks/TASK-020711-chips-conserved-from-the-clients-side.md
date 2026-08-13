@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020711
 title: Chips are conserved in what the client sees, not just in what the engine knows
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
