@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020714
 title: Give the live DuelRunner a home in the room, and publish the duel when it ends
 type: task
-status: backlog
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: S
