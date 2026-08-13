@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020816
 title: An absent seat gives up with an action the engine will accept
 type: task
-status: backlog
+status: ready
 parent: STORY-0208
 module: poker-server
 estimate: S
@@ -54,7 +54,7 @@ Every case in `AbsentSeatsTest` folds a seat that owes something, which is why t
 deep review. `TASK-020808`'s fixture — the present seat acts first, then the turn reaches the absent
 seat — is what first reached it, and two of that ticket's tests fail on it today.
 
-## Blocked on `DEC-020`
+## Answered by `ADR-0023` (`DEC-020`)
 
 `ADR-0013` is titled *"A dropped connection gets a grace period, then folds"* and says "the player's
 current hand is folded". That is not implementable where folding is illegal, so **what an absent
@@ -67,8 +67,11 @@ seat does at a free decision point is an open decision**, not an implementation 
   change to `poker-engine`'s legal-action rule, pinned by `TASK-020508` and its tests, and a much
   larger blast radius.
 
-Do not choose. `DEC-020` settles it and amends or supersedes `ADR-0013`; this ticket implements
-whatever it says.
+**`ADR-0023` chose the first**, and narrowed `ADR-0013` explicitly rather than diverging from it.
+The rule is: send `Fold` when `FOLD` is in the engine's `allowed` set, `Check` otherwise — never a
+chip into the pot. `BettingRules` adds `CHECK` *xor* `FOLD`, so every non-empty legal set holds
+exactly one of them and the rule is total: an all-in and a short stack need no special case.
+`poker-engine` does not change.
 
 ## Files
 

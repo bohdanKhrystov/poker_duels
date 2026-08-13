@@ -1,6 +1,8 @@
 # ADR-0013 — A dropped connection gets a grace period, then folds
 
-- **Status:** Accepted
+- **Status:** Accepted — amended by [ADR-0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md),
+  which narrows "the player's current hand is folded" to fold-when-facing-a-bet,
+  check-when-nothing-is-owed
 - **Date:** 2026-08-12
 - **Resolves:** what happens when a player's connection drops mid-duel
 
