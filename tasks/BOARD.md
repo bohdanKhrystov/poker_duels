@@ -400,10 +400,10 @@ parallel with `EPIC-02`; no shared file.
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
 | **[STORY-0601](stories/STORY-0601-design-foundations.md)** Design foundations — tokens and preview cards — *schema 2* | | | ready |
-| | [TASK-060101](tasks/TASK-060101-design-token-sheet.md) The canonical design token sheet | S | ready |
-| | [TASK-060102](tasks/TASK-060102-colors-preview-card.md) The Colors preview card | S | backlog |
-| | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | backlog |
-| | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | backlog |
+| | [TASK-060101](tasks/TASK-060101-design-token-sheet.md) The canonical design token sheet | S | **done** |
+| | [TASK-060102](tasks/TASK-060102-colors-preview-card.md) The Colors preview card | S | ready |
+| | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | ready |
+| | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | ready |
 | | [TASK-060105](tasks/TASK-060105-design-directory-readme.md) The design directory README and sync procedure | XS | ready |
 | STORY-0602 | The duel table screen | *not written* |
 | STORY-0603 | Graphics — card faces, duel coin, wordmark | *not written* |
