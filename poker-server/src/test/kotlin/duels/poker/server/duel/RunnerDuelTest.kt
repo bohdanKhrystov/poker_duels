@@ -14,7 +14,10 @@ import org.junit.jupiter.api.Timeout
 
 /** Plays a whole duel through [DuelRunner], seeing only what a client would see. */
 internal class RunnerDuelTest {
-    private val seeds = 1L..20L
+    // Use seeds whose decimal text cannot collide with sequence numbers, seats, hand numbers, chip
+    // amounts or stacks. The distinctive 0x5EED prefix ensures the seed value is unambiguous in
+    // the serialized output; collision avoidance is why they appear unusual rather than as 1L..20L.
+    private val seeds = (0..19).map { 0x5EED_000000000001L + it }
 
     @Test
     @Timeout(120)
@@ -37,8 +40,9 @@ internal class RunnerDuelTest {
 
     @Test
     fun theSameSeedPlaysTheSameDuel() {
-        val first = playDuel(7)
-        val second = playDuel(7)
+        val testSeed = seeds.first()
+        val first = playDuel(testSeed)
+        val second = playDuel(testSeed)
 
         assertEquals(first.outbound, second.outbound)
         assertEquals(first.runner, second.runner)
