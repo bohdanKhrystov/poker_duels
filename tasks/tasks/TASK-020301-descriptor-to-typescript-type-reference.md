@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020301
 title: Map a serial descriptor to a TypeScript type reference
 type: task
-status: ready
+status: done
 parent: STORY-0203
 module: poker-server
 estimate: S
