@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021010
 title: Prove ten losses read back as minus ten, and that nothing floors a balance
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
