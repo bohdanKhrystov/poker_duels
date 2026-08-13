@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021201
 title: Build the server's real collaborators from config and a DataSource
 type: task
-status: ready
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S
