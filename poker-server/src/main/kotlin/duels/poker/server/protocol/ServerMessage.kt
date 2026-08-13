@@ -1,5 +1,6 @@
 package duels.poker.server.protocol
 
+import duels.poker.engine.duel.DuelOutcome
 import duels.poker.engine.game.GameEvent
 import duels.poker.engine.game.LegalActions
 import duels.poker.engine.game.PlayerView
@@ -97,4 +98,18 @@ public sealed interface ServerMessage {
     @Serializable
     @SerialName("Rejected")
     public data class Rejected(val rejection: Rejection) : ServerMessage
+
+    /**
+     * The duel has ended.
+     *
+     * This is a projection, not a `MatchEvent` on the wire (`ADR-0017`). It carries the outcome
+     * the recipient is entitled to see and deliberately does **not** carry `MatchFinished` or its
+     * sequence number — `ADR-0009` gave match events their own sequence space and putting it on
+     * the wire would blur that boundary.
+     *
+     * @property outcome The duel's outcome from the recipient's perspective.
+     */
+    @Serializable
+    @SerialName("DuelFinished")
+    public data class DuelFinished(val outcome: DuelOutcome) : ServerMessage
 }
