@@ -2,10 +2,13 @@ package duels.poker.server.room
 
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.MatchState
+import duels.poker.server.duel.Addressed
 import duels.poker.server.duel.DuelRunner
 import duels.poker.server.duel.DuelStep
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.protocol.Act
+import duels.poker.server.protocol.ProtocolError
+import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
 import java.util.UUID
 import duels.poker.server.duel.act as advanceDuel
@@ -294,22 +297,36 @@ public data class Room(
     /**
      * Apply an inbound duel action to this room's live duel.
      *
-     * Delegates entirely to `duels.poker.server.duel.act`: legality, turn order and hand
-     * advancement are all decided there, never re-decided here — this is a thin, pure adapter
-     * from a room to the runner it hosts. Refuses with `null`, never an exception, when there
-     * is nothing to move: a room that never started a duel, or one that already finished, looks
-     * the same to a caller as one holding a stale frame for a live one — the engine's own
-     * `guard` inside `act` is what tells those apart while a duel is running.
+     * Checked strictly in this order, and the order is load-bearing: a room that is not
+     * [RoomState.PLAYING] answers `null` first, exactly as it always has, so a finished or
+     * abandoned room is never mistaken for a paused one. Only once a room is confirmed
+     * [RoomState.PLAYING] and holding a [runner] does [isPaused] get a say: while any seat is
+     * still counting down its disconnect grace window (`ADR-0013`), the frame is refused as
+     * [ProtocolError.DUEL_PAUSED], addressed to the sending seat alone, and [runner] is returned
+     * exactly as it came in — no `copy`, no re-derivation — so the caller can tell nothing moved
+     * by comparing the returned runner against the one it passed in. A seat whose
+     * window has already run out into [absentSeats] does **not** pause the room this way; that
+     * case falls through to the delegation below like any other live frame. Only when neither
+     * check above fires does this delegate to `duels.poker.server.duel.act`: legality, turn
+     * order and hand advancement are all decided there, never re-decided here — this is a thin,
+     * pure adapter from a room to the runner it hosts. Refuses with `null`, never an exception,
+     * when there is nothing to move: a room that never started a duel, or one that already
+     * finished, looks the same to a caller as one holding a stale frame for a live one — the
+     * engine's own `guard` inside `act` is what tells those apart while a duel is running.
      *
      * @param seat the seat the inbound frame arrived on.
      * @param message the inbound attempt to act.
      * @param seeds the source a hand-ending action draws its next seed from.
-     * @return the duel after this frame and the frames each seat is entitled to see, or `null`
-     *   if this room is not [RoomState.PLAYING] or carries no [runner].
+     * @return the duel after this frame and the frames each seat is entitled to see, a paused
+     *   refusal that leaves the runner untouched, or `null` if this room is not
+     *   [RoomState.PLAYING] or carries no [runner].
      */
     public fun act(seat: Int, message: Act, seeds: HandSeedSource): DuelStep? {
         if (state != RoomState.PLAYING) return null
         val liveRunner = runner ?: return null
+        if (isPaused) {
+            return DuelStep(liveRunner, listOf(Addressed(seat, ServerMessage.Failure(ProtocolError.DUEL_PAUSED))))
+        }
         return advanceDuel(liveRunner, seat, message, seeds)
     }
 
