@@ -139,6 +139,13 @@ public class RoomRegistry(
      * room. The finish operation and the write-back happen inside the one critical section so that
      * a concurrent finish request on the same room always finds the authoritative state.
      *
+     * **Test-only affordance.** Production code never calls this method; [act] finishes rooms
+     * itself as part of detecting that a duel has ended. Tests call this directly to reach
+     * [RoomState.FINISHED] for edge case coverage — specifically, `RoomRegistryLifecycleTest`
+     * exercises the failure modes: finishing a [RoomState.WAITING] room (which throws), and
+     * finishing a non-existent code (which returns null). These paths cannot be tested through
+     * [act] since [act] only works on rooms that exist and are [RoomState.PLAYING].
+     *
      * @param code The room to finish.
      * @return The room after the transition, or `null` for a code with no live room.
      * @throws IllegalStateException if the room is not [RoomState.PLAYING].

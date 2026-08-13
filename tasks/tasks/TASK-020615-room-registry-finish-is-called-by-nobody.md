@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020615
 title: RoomRegistry.finish is called by no production code — remove it or say why it stays
 type: task
-status: backlog
+status: done
 parent: STORY-0206
 module: poker-server
 estimate: XS
