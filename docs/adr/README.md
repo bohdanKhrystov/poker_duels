@@ -68,6 +68,7 @@ Each with the reason it was not chosen.
 | [0021](ADR-0021-a-profile-gains-a-display-name.md) | A profile gains a player-chosen display name | Accepted |
 | [0022](ADR-0022-the-room-code-is-the-invite.md) | The room code is the invite, and failed joins are budgeted | Accepted |
 | [0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) | An absent seat checks when nothing is owed, folds when facing a bet | Accepted — amends 0013 |
+| [0025](ADR-0025-one-ticker-coroutine-drives-both-sweeps.md) | One ticker coroutine on the application scope drives both sweeps | Accepted |
 
 ## Open decisions
 
@@ -81,7 +82,6 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-009 | Can a duel be watched, and if so what may a spectator see and when? | `../../tasks/stories/STORY-0204-player-view-projection.md` | before v0.2 |
 | DEC-017 | **The human's, not an architect's** — the display-name product rules `ADR-0021` deliberately leaves open: must a name be unique across players; can it be changed, and how often; what does a result line show for an opponent who never set one; is anything filtered or moderated on set? | [ADR-0021](ADR-0021-a-profile-gains-a-display-name.md) | before EPIC-03 renders names |
 | DEC-018 | **The human's, not an architect's** — does a player see anything while the duel is paused around them? `ADR-0013` holds the seat and folds it, and says nothing about what the *present* player is told: nothing at all (they discover it by being refused), a frame naming the opponent as away, or that plus the seconds remaining. The same question applies to the returning player and to a fold that was a timeout rather than a decision — a fold nobody is told about is indistinguishable from a fold somebody chose, which is either the honest design or a lie, and that is a product call. Anything richer than silence is a new `ServerMessage`, so it also decides whether the wire version moves. | [`STORY-0208`](../../tasks/stories/STORY-0208-disconnect-grace-period.md) | before EPIC-03 shows a duel |
-| DEC-019 | What drives the server's periodic sweeps in production — `RoomRegistry.reap()` since `TASK-020612` and now `expireGracePeriods()` — and what is their period, their scope and their failure behaviour? Nothing schedules either today, so a grace window only expires when a test asks it to. A ticker coroutine in `Application.module()`, a Ktor plugin, or an external trigger are all plausible, and the choice decides where the period is configured and what happens when one pass throws. | [`STORY-0208`](../../tasks/stories/STORY-0208-disconnect-grace-period.md) | before `STORY-0212` wires `module()` |
 
 ## Answered decisions
 
@@ -98,4 +98,5 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-012 | Is holding a room code sufficient authorisation to take the second seat, or does joining need rate limiting or host confirmation? | [ADR-0022](ADR-0022-the-room-code-is-the-invite.md) — the code is the invite (the human's call); `RoomRegistry.join` budgets failed attempts at 10 per player per minute |
 | DEC-016 | What names the opponent in a result line? | [ADR-0021](ADR-0021-a-profile-gains-a-display-name.md) — a profile gains a player-chosen display name (the human's call); nullable `player.display_name`, joined into the read path; product rules split to `DEC-017` |
 | DEC-020 | What does an absent seat do at a decision point where `Fold` is illegal? | [ADR-0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) — it checks; fold only when facing a bet, the action read from the engine's `legalActions`; `poker-engine` unchanged; amends ADR-0013 |
+| DEC-019 | What drives `RoomRegistry.reap()` and `expireGracePeriods()` in production, with what period, scope and failure behaviour? | [ADR-0025](ADR-0025-one-ticker-coroutine-drives-both-sweeps.md) — one ticker coroutine on the application scope in `module()`; one configured period (`sweepPeriodMillis`, default 1 s), fixed delay, expiry then delivery then reap; a throwing pass is logged and retried next tick, only cancellation at shutdown ends the loop |
 
