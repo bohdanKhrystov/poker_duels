@@ -1,8 +1,10 @@
 package duels.poker.server
 
 import duels.poker.server.protocol.Act
+import duels.poker.server.protocol.CreateRoom
 import duels.poker.server.protocol.Decoded
 import duels.poker.server.protocol.Hello
+import duels.poker.server.protocol.JoinRoom
 import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
@@ -326,6 +328,8 @@ private suspend fun ConnectionWriter.replyTo(frame: Frame, maxFrameLength: Int, 
         is Decoded.Message -> when (decoded.message) {
             is Hello -> ServerMessage.Failure(ProtocolError.MALFORMED_MESSAGE)
             is Act -> ServerMessage.Failure(ProtocolError.NOT_IN_DUEL)
+            is CreateRoom -> ServerMessage.Failure(ProtocolError.NOT_IN_DUEL) // Provisional: no RoomRegistry yet — TASK-020731 replaces this
+            is JoinRoom -> ServerMessage.Failure(ProtocolError.NOT_IN_DUEL) // Provisional: no RoomRegistry yet — TASK-020731 replaces this
         }
     }
     send(ProtocolCodec.encode(failure))

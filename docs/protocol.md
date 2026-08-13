@@ -10,6 +10,8 @@ Protocol version: **2**
 | --- | --- | --- | --- |
 | `Hello` | client → server | `deviceId`, `protocolVersion` | Client initiates connection |
 | `Act` | client → server | `handNumber`, `actionSequence`, `action` | Client attempts an action |
+| `CreateRoom` | client → server | (none) | Client attempts to open a room |
+| `JoinRoom` | client → server | `code` | Client attempts to join a room |
 | `Welcome` | server → client | `deviceId`, `protocolVersion` | Server accepts the connection |
 | `Failure` | server → client | `error` | Server refuses the connection |
 | `RoomJoined` | server → client | `code`, `seat` | The server seated you in a room |
