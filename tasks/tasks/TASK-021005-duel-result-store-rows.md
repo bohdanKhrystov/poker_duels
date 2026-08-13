@@ -31,7 +31,7 @@ each carrying that seat's signed coin delta, inside a single transaction.
 
 Read, do not modify:
 `poker-server/src/main/kotlin/duels/poker/server/duel/FinishedDuel.kt`,
-`poker-server/src/main/kotlin/duels/poker/server/duel/CoinAward.kt`,
+`poker-server/src/main/kotlin/duels/poker/server/duel/CoinDeltas.kt`,
 `poker-server/src/main/kotlin/duels/poker/server/db/PostgresPlayerDirectory.kt` (the JDBC and
 `withContext` idiom, and the `PlayerId`-is-a-UUID-string invariant).
 

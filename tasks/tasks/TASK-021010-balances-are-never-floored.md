@@ -45,7 +45,7 @@ a test that reads a file: the test working directory is the `poker-server` modul
 - New `NoBalanceIsFlooredTest`: plain text assertions over two main source files, no database and
   no Docker, in the style of `DevDatabaseComposeTest`. The files are
   `File("src/main/kotlin/duels/poker/server/db/PostgresDuelResultStore.kt")` and
-  `File("src/main/kotlin/duels/poker/server/duel/CoinAward.kt")`; assert each exists and is
+  `File("src/main/kotlin/duels/poker/server/duel/CoinDeltas.kt")`; assert each exists and is
   non-empty first, so a rename fails loudly instead of passing vacuously.
 - Forbidden substrings in both files: `coerceAtLeast`, `coerceIn`, `maxOf`, `Math.max`,
   `absoluteValue`, `UInt`. Each assertion message names the file and the token, and cites
@@ -74,7 +74,7 @@ a test that reads a file: the test working directory is the `poker-server` modul
 
 | Test | Proves |
 | --- | --- |
-| `theCoinRuleClampsNothing` | `CoinAward.kt` exists, is non-empty, and contains none of the forbidden tokens |
+| `theCoinRuleClampsNothing` | `CoinDeltas.kt` exists, is non-empty, and contains none of the forbidden tokens |
 | `theStoreClampsNothing` | `PostgresDuelResultStore.kt` exists, is non-empty, and contains none of the forbidden tokens |
 | `theStoreMovesBalancesWithAnSqlIncrement` | `PostgresDuelResultStore.kt` contains `coin_balance = coin_balance +` |
 

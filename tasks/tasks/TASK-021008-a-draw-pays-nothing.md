@@ -52,7 +52,7 @@ Read, do not modify:
 
 ## Out of scope
 
-- Any change to `PostgresDuelResultStore.kt` or to `CoinAward.kt`. `coinDeltas` already returns
+- Any change to `PostgresDuelResultStore.kt` or to `CoinDeltas.kt`. `coinDeltas` already returns
   `CoinDeltas(0, 0)` for a draw, and `TASK-021001` pinned it.
 - A new migration, or any edit to `V1__initial_schema.sql`.
 - The negative-balance cases — `TASK-021010`.

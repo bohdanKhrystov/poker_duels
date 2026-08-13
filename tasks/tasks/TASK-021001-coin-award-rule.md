@@ -27,7 +27,7 @@ server that decides what a duel is worth.
 
 | File | Action |
 | --- | --- |
-| `poker-server/src/main/kotlin/duels/poker/server/duel/CoinAward.kt` | create |
+| `poker-server/src/main/kotlin/duels/poker/server/duel/CoinDeltas.kt` | create |
 | `poker-server/src/test/kotlin/duels/poker/server/duel/CoinAwardTest.kt` | create |
 
 Read, do not modify:
@@ -97,9 +97,9 @@ database. Build outcomes directly, for example
 - [ ] `CoinAwardTest.theTwoDeltasAlwaysSumToZero` passes
 - [ ] `CoinAwardTest.forSeatReturnsTheDeltaOfThatSeat` passes
 - [ ] `CoinAwardTest.forSeatRejectsASeatThatIsNotZeroOrOne` passes
-- [ ] `CoinAward.kt` contains no `coerceAtLeast`, `coerceIn`, `maxOf`, `abs`, `absoluteValue` or
+- [ ] `CoinDeltas.kt` contains no `coerceAtLeast`, `coerceIn`, `maxOf`, `abs`, `absoluteValue` or
       `UInt`
-- [ ] `CoinAward.kt` names no SQL, `DataSource`, `Connection` or coroutine type
+- [ ] `CoinDeltas.kt` names no SQL, `DataSource`, `Connection` or coroutine type
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
