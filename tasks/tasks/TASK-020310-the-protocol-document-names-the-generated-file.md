@@ -3,7 +3,7 @@ schema: 2
 id: TASK-020310
 title: The protocol document names the generated file and its command
 type: task
-status: backlog
+status: ready
 parent: STORY-0203
 module: poker-server
 estimate: XS
