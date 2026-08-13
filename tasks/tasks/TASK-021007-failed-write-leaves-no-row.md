@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021007
 title: Prove a failure part-way through recording leaves no row and no coin behind
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: XS
