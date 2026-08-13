@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021012
 title: Prove profiles, results and balances survive a restart
 type: task
-status: backlog
+status: done
 parent: STORY-0210
 module: poker-server
 estimate: S
