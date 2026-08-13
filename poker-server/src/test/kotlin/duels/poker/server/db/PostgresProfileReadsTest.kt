@@ -161,6 +161,86 @@ class PostgresProfileReadsTest {
         assertNull(entry.handsPlayed)
     }
 
+    @Test
+    fun duelsComeBackNewestFirst() = runBlocking {
+        // Record three duels with distinct, deliberately out-of-order finishedAt values
+        // so a query returning insertion order would fail
+        val oldestInstant = Instant.parse("2026-08-13T10:00:00Z")
+        val middleInstant = Instant.parse("2026-08-13T10:01:00Z")
+        val newestInstant = Instant.parse("2026-08-13T10:02:00Z")
+
+        val oldestDuelId = UUID.randomUUID()
+        val middleDuelId = UUID.randomUUID()
+        val newestDuelId = UUID.randomUUID()
+
+        duelResultStore.record(finishedDuel(winner = 0, id = oldestDuelId, finishedAt = oldestInstant))
+        duelResultStore.record(finishedDuel(winner = 0, id = middleDuelId, finishedAt = middleInstant))
+        duelResultStore.record(finishedDuel(winner = 0, id = newestDuelId, finishedAt = newestInstant))
+
+        val duels = profileReads.recentDuelsOf(alice.id, 10)
+
+        assertEquals(3, duels.size)
+        assertEquals(newestDuelId.toString(), duels[0].duelId)
+        assertEquals(middleDuelId.toString(), duels[1].duelId)
+        assertEquals(oldestDuelId.toString(), duels[2].duelId)
+    }
+
+    @Test
+    fun theLimitCapsTheNumberOfDuelsReturned() = runBlocking {
+        // Record three duels with distinct instants, oldest to newest
+        val oldestInstant = Instant.parse("2026-08-13T10:00:00Z")
+        val middleInstant = Instant.parse("2026-08-13T10:01:00Z")
+        val newestInstant = Instant.parse("2026-08-13T10:02:00Z")
+
+        val oldestDuelId = UUID.randomUUID()
+        val middleDuelId = UUID.randomUUID()
+        val newestDuelId = UUID.randomUUID()
+
+        duelResultStore.record(finishedDuel(winner = 0, id = oldestDuelId, finishedAt = oldestInstant))
+        duelResultStore.record(finishedDuel(winner = 0, id = middleDuelId, finishedAt = middleInstant))
+        duelResultStore.record(finishedDuel(winner = 0, id = newestDuelId, finishedAt = newestInstant))
+
+        // Request only 2 duels
+        val duels = profileReads.recentDuelsOf(alice.id, 2)
+
+        // Should get exactly 2, and they should be the newest ones
+        assertEquals(2, duels.size)
+        assertEquals(newestDuelId.toString(), duels[0].duelId)
+        assertEquals(middleDuelId.toString(), duels[1].duelId)
+    }
+
+    @Test
+    fun anotherPlayersDuelsNeverAppear() = runBlocking {
+        val carol = playerDirectory.resolve(DeviceId("carol"))
+        val dave = playerDirectory.resolve(DeviceId("dave"))
+
+        // Record one alice/bob duel
+        val aliceBobDuelId = UUID.randomUUID()
+        duelResultStore.record(finishedDuel(winner = 0, id = aliceBobDuelId, finishedAt = Instant.parse("2026-08-13T10:00:00Z")))
+
+        // Record one carol/dave duel
+        val carolDaveDuelId = UUID.randomUUID()
+        val carolDaveDuel = FinishedDuel(
+            id = carolDaveDuelId,
+            format = formatLabel(DuelFormat.DEFAULT),
+            startedAt = Instant.parse("2026-08-13T10:05:00Z"),
+            finishedAt = Instant.parse("2026-08-13T10:06:00Z"),
+            seats = listOf(carol.id, dave.id),
+            outcome = DuelOutcome(winner = 0, handsPlayed = 1, finalStacks = listOf(11_000, 9_000)),
+        )
+        duelResultStore.record(carolDaveDuel)
+
+        // Alice should see only her duel with Bob
+        val aliceDuels = profileReads.recentDuelsOf(alice.id, 10)
+        assertEquals(1, aliceDuels.size)
+        assertEquals(aliceBobDuelId.toString(), aliceDuels.single().duelId)
+
+        // Carol should see only her duel with Dave
+        val carolDuels = profileReads.recentDuelsOf(carol.id, 10)
+        assertEquals(1, carolDuels.size)
+        assertEquals(carolDaveDuelId.toString(), carolDuels.single().duelId)
+    }
+
     private fun finishedDuel(
         winner: Int?,
         id: UUID = UUID.randomUUID(),
