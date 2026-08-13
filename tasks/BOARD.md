@@ -2,7 +2,7 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` is **done**. `EPIC-02` in flight: `STORY-0201`, `STORY-0202` (bar one follow-up) and `STORY-0204` are done — the server boots, the protocol is defined, and per-recipient projection is guarded by two adversarial properties.
+**Now:** `EPIC-01` is **done**. `EPIC-02` in flight: `STORY-0201`, `STORY-0202` (bar one follow-up) and `STORY-0204` are done — the server boots, the protocol is defined, and per-recipient projection is guarded by two adversarial properties. `EPIC-06` (design) opened early and runs in parallel — disjoint files, see `ADR-0024`.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -18,14 +18,16 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | EPIC-03 | Web client — table, lobby, duel flow | *not written* | v0.1 |
 | EPIC-04 | Identity and profiles | *not written* | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
-| EPIC-06 | Design system and art | *not written* | v0.2 |
+| [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **ready** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
 | EPIC-08 | Analysis and decision quality | *not written* | later |
 | EPIC-09 | Bots and simulation | *not written* | later |
 | EPIC-10 | The AI software factory — the case study | *not written* | continuous |
 
-Numbers 02–10 are **reserved**, not planned in detail. Epics are written when the one before
-them is close to done, because writing them earlier means rewriting them.
+Numbers 03–05 and 07–10 are **reserved**, not planned in detail. Epics are written when the one
+before them is close to done, because writing them earlier means rewriting them. `EPIC-06` is
+the recorded exception: opened ahead of its slot because design shares no file with the server
+work (`ADR-0024`).
 
 ---
 
@@ -389,6 +391,26 @@ Stories are written; tickets come from `/plan-story` as each is reached.
 
 ---
 
+## EPIC-06 — Design system and art
+
+The design track: authored in `design/`, mirrored to the claude.ai/design project **Poker
+Duels** for visual review, landed through the ordinary ticket lifecycle — `ADR-0024`. Runs in
+parallel with `EPIC-02`; no shared file.
+
+| Story | Task | Est | Status |
+| --- | --- | --- | --- |
+| **[STORY-0601](stories/STORY-0601-design-foundations.md)** Design foundations — tokens and preview cards — *schema 2* | | | ready |
+| | [TASK-060101](tasks/TASK-060101-design-token-sheet.md) The canonical design token sheet | S | ready |
+| | [TASK-060102](tasks/TASK-060102-colors-preview-card.md) The Colors preview card | S | backlog |
+| | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | backlog |
+| | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | backlog |
+| | [TASK-060105](tasks/TASK-060105-design-directory-readme.md) The design directory README and sync procedure | XS | ready |
+| STORY-0602 | The duel table screen | *not written* |
+| STORY-0603 | Graphics — card faces, duel coin, wordmark | *not written* |
+| STORY-0604 | Lobby and duel-flow screens | *not written* |
+
+---
+
 ## Open decisions
 
 | ID | Question | Where | Due |
@@ -398,7 +420,9 @@ Stories are written; tickets come from `/plan-story` as each is reached.
 | DEC-018 | **Product.** Does anyone see the pause? `STORY-0208` ships silence — a timeout fold is indistinguishable on the wire from a chosen one | [`STORY-0208`](stories/STORY-0208-disconnect-grace-period.md) | before v0.2 |
 | DEC-019 | **Technical.** What drives the periodic sweeps in production — `reap()` and `expireGracePeriods()` — with what period, scope and failure behaviour | [`STORY-0208`](stories/STORY-0208-disconnect-grace-period.md) | before `STORY-0212` wires `module()` |
 
-**Answered.** `DEC-004` → [`ADR-0008`](../docs/adr/ADR-0008-loser-mucks-at-showdown.md) (the loser
+**Answered.** `DEC-021` → [`ADR-0024`](../docs/adr/ADR-0024-design-follows-the-code-workflow.md)
+(design follows the code workflow, in the repository, mirrored to claude.ai/design).
+`DEC-004` → [`ADR-0008`](../docs/adr/ADR-0008-loser-mucks-at-showdown.md) (the loser
 mucks). `DEC-005` → [`ADR-0009`](../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md)
 (match events are their own hierarchy). `DEC-006` →
 [`ADR-0010`](../docs/adr/ADR-0010-engine-takes-a-serialization-dependency.md) (the engine may
