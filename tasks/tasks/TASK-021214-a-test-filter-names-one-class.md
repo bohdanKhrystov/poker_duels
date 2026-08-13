@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021214
 title: A test filter names one class, so a green run cannot have run nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0212
 module: poker-server
 estimate: XS

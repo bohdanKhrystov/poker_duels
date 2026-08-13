@@ -15,6 +15,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withTimeout
@@ -111,6 +112,47 @@ internal suspend fun HttpClient.openSocketDuel(handSeed: Long = HAND_SEED): Sock
     return SocketDuel(roomCode, handSeed, listOf(hostClient, guestClient))
 }
 
+/**
+ * Drops [seat]'s socket with a genuine WebSocket close and rejoins on a fresh one: opens a new
+ * `/ws`, completes the handshake with the same device id, and sends the same [JoinRoom] a first
+ * join would (`ADR-0018` — a device holds at most one live session, and the newest one wins).
+ *
+ * The [ServerMessage.RoomJoined] that answers is itself the proof the server-side resume already
+ * finished — `DuelSocket.replyToJoinRoom`'s resume branch sends it only after
+ * `RoomRegistry.resume` has already returned — so nothing further needs to be awaited here. It is
+ * checked to still name [seat], appended to that client's [SocketClient.received], and
+ * [SocketClient.session] is swapped to the new connection, so every later read on this duel
+ * (`nextFrame`, [playToFinish]) follows the swap without needing to know it happened.
+ *
+ * Whatever else the resume queued — a [ServerMessage.Snapshot] and, if [seat] is the one holding
+ * the duel up, a [ServerMessage.YourTurn] (`TASK-020810`) — is left on the new socket for
+ * whichever caller reads next, exactly as [openSocketDuel] leaves the opening hand's frames
+ * queued for [playToFinish].
+ *
+ * @param http The client the fresh `/ws` connection is opened on.
+ * @param seat The seat (0 or 1) to drop and reconnect.
+ * @throws IllegalStateException if the resumed [ServerMessage.RoomJoined] names a seat other than
+ *   [seat].
+ */
+internal suspend fun SocketDuel.reconnect(http: HttpClient, seat: Int) {
+    val client = this.seat(seat)
+    client.session.close()
+
+    val session = http.webSocketSession("/ws")
+    session.completeHandshake(client.deviceId)
+    session.send(Frame.Text(ProtocolCodec.encode(JoinRoom(code))))
+
+    val message = session.nextServerMessage()
+    val roomJoined = message as? ServerMessage.RoomJoined
+        ?: error("Expected RoomJoined on reconnect, got ${message::class.simpleName}")
+    check(roomJoined.seat == seat) {
+        "handSeed=$handSeed: reconnecting seat $seat came back seated at ${roomJoined.seat}"
+    }
+
+    client.received += roomJoined
+    client.session = session
+}
+
 /** A [ServerMessage] read off one of a duel's two sockets, paired with the client it came from. */
 private data class ReceivedFrame(val client: SocketClient, val message: ServerMessage)
 
@@ -157,12 +199,26 @@ private suspend fun nextFrame(clients: List<SocketClient>): ReceivedFrame {
  *
  * @param policySeed seeds the one action policy shared by both clients. Defaults to [POLICY_SEED].
  * @param maxActions the ceiling on `Act` frames sent, guarding against a duel that never ends.
+ * @param beforeAct called with the client and the `YourTurn` it just received, before any draw is
+ *   made or `Act` is sent. Returning `true` says the hook already disturbed this decision point —
+ *   [reconnect], say — so the loop drops the prompt it holds without drawing or sending anything,
+ *   and goes back to receiving; the `YourTurn` a resume then redelivers reaches this same branch
+ *   again and is answered normally. Defaults to a hook that never intervenes, so a caller that
+ *   omits it sees exactly the behaviour this function had before it gained the parameter. This is
+ *   what keeps an interrupted duel reproducible: the dropped prompt costs no draw, and the
+ *   redelivered one costs exactly the one draw it would have cost without the interruption — true
+ *   only because the draw happens here, when the `Act` is built, never when the `YourTurn` that
+ *   prompted it merely arrives.
  * @return the outcome both clients' `DuelFinished` frames agreed on.
  * @throws AssertionError naming [SocketDuel.handSeed], [policySeed], a seat and a frame, if either
  *   client is ever sent a `Rejected` or a `Failure`, if [maxActions] is exceeded, or if the two
  *   clients' `DuelFinished` outcomes disagree.
  */
-internal suspend fun SocketDuel.playToFinish(policySeed: Long = POLICY_SEED, maxActions: Int = 20_000): DuelOutcome {
+internal suspend fun SocketDuel.playToFinish(
+    policySeed: Long = POLICY_SEED,
+    maxActions: Int = 20_000,
+    beforeAct: suspend (SocketClient, ServerMessage.YourTurn) -> Boolean = { _, _ -> false },
+): DuelOutcome {
     fun reproducibleFailure(client: SocketClient, frame: ServerMessage, detail: String): AssertionError =
         AssertionError("handSeed=$handSeed policySeed=$policySeed seat=${client.seat}: $detail, frame=$frame")
 
@@ -174,7 +230,7 @@ internal suspend fun SocketDuel.playToFinish(policySeed: Long = POLICY_SEED, max
         while (outcomes.size < clients.size) {
             val (client, message) = nextFrame(clients)
             when (message) {
-                is ServerMessage.YourTurn -> {
+                is ServerMessage.YourTurn -> if (!beforeAct(client, message)) {
                     if (actions >= maxActions) {
                         throw reproducibleFailure(client, message, "exceeded maxActions ($maxActions)")
                     }
