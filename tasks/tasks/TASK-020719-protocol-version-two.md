@@ -3,13 +3,13 @@ schema: 2
 id: TASK-020719
 title: The wire protocol moves to version 2
 type: task
-status: ready
+status: done
 parent: STORY-0207
 module: poker-server
 estimate: XS
 tier: haiku
 review: light
-files_touched: 3
+files_touched: 6
 labels: [server, protocol]
 depends_on: [TASK-020718]
 verify:
@@ -34,6 +34,9 @@ before the growth — so no commit in this story ever ships a new message under 
 | `poker-server/src/main/kotlin/duels/poker/server/protocol/Protocol.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/protocol/ProtocolJsonTest.kt` | modify |
 | `docs/protocol.md` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/ServerMessageHandshakeTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/ProtocolCodecTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/ClientMessageTest.kt` | modify |
 
 `ProtocolJsonTest` is in the budget, not a bystander: `theProtocolVersionIsOne` asserts the literal
 `1` and is the one test this change is designed to turn red. This ticket owns renaming it and moving
@@ -69,6 +72,25 @@ Every other test that touches the version — `HandshakeTest`'s four cases, `Due
 `PROTOCOL_VERSION` symbolically and must pass **unchanged**. They are in `verify:`, not in the
 budget. If any of them needs editing, stop: that is a hard-coded `1` this ticket has not found, and
 it belongs in this ticket's diff with a note.
+
+**Three were found**, and this ticket was widened by three files to carry them, exactly as that
+instruction directs. They were invisible to the survey that wrote this ticket because none of them
+names `PROTOCOL_VERSION` — each asserts against the literal inside an encoded JSON string, so only
+`grep protocolVersion` finds them:
+
+| Assertion | Was |
+| --- | --- |
+| `ServerMessageHandshakeTest.theWelcomeCarriesTheProtocolVersion` | `encoded.contains("\"protocolVersion\":1")` |
+| `ProtocolCodecTest` line 34 | `frame.contains("\"protocolVersion\":1")` |
+| `ClientMessageTest` line 32 | `assertContains(encoded, "\"protocolVersion\":1")` |
+
+Each makes the same claim — that the field reaches the wire — and none of them is the version pin,
+so all three interpolate `PROTOCOL_VERSION` and cannot go stale at the next bump.
+`ProtocolJsonTest.theProtocolVersionIsTwo` stays the pin on the value.
+
+`ProtocolCodecJunkTest` lines 74 and 130 also contain `"protocolVersion":1`, inside junk frames fed
+to the codec. They are unaffected — the codec does not check the version at parse time — and are
+deliberately left alone.
 
 ## Acceptance criteria
 

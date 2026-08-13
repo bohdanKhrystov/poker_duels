@@ -29,7 +29,7 @@ internal class ClientMessageTest {
     fun helloCarriesItsVersionEvenWhenDefaulted() {
         val original = Hello()
         val encoded = protocolJson.encodeToString(ClientMessage.serializer(), original)
-        assertContains(encoded, "\"protocolVersion\":1")
+        assertContains(encoded, "\"protocolVersion\":$PROTOCOL_VERSION")
     }
 
     @Test

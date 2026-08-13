@@ -31,7 +31,7 @@ internal class ProtocolCodecTest {
     @Test
     fun anEncodedWelcomeCarriesItsDefaultedVersion() {
         val frame = ProtocolCodec.encode(ServerMessage.Welcome("d1"))
-        assertEquals(true, frame.contains("\"protocolVersion\":1"))
+        assertEquals(true, frame.contains("\"protocolVersion\":$PROTOCOL_VERSION"))
     }
 
     @Test
