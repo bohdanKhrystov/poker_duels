@@ -1,5 +1,7 @@
 package duels.poker.server.session
 
+import duels.poker.server.room.RoomRegistry
+
 /**
  * The collaborators a `/ws` socket handler needs.
  *
@@ -15,6 +17,8 @@ public data class SocketDependencies(
     val directory: PlayerDirectory,
     val deviceIds: DeviceIdSource,
     val sessions: SessionRegistry,
+    val rooms: RoomRegistry,
+    val connections: ConnectionDirectory,
     val maxFrameLength: Int,
     val maxFrameNestingDepth: Int,
 )

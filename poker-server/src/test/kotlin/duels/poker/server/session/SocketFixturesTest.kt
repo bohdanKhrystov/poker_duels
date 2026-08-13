@@ -12,6 +12,8 @@ class SocketFixturesTest {
 
         // They should be different instances
         assert(deps1.sessions !== deps2.sessions)
+        assert(deps1.rooms !== deps2.rooms)
+        assert(deps1.connections !== deps2.connections)
         // Both should start empty
         assertEquals(0, deps1.sessions.size)
         assertEquals(0, deps2.sessions.size)
@@ -38,5 +40,17 @@ class SocketFixturesTest {
         assertFailsWith<IllegalStateException> {
             source.newDeviceId() // Should throw
         }
+    }
+
+    @Test
+    fun theDefaultRoomRegistryStartsEmpty() {
+        val deps = testDeps()
+        assertEquals(0, deps.rooms.size)
+    }
+
+    @Test
+    fun theDefaultConnectionDirectoryStartsEmpty() {
+        val deps = testDeps()
+        assertEquals(0, deps.connections.size)
     }
 }
