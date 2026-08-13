@@ -48,7 +48,7 @@
   .tile .tok { display: block; }
   .sq { width: 72px; height: 44px; background: var(--pd-surface-raised);
     border: 1px solid var(--pd-hairline); }
-  .mini { width: 56px; height: 78px; background: var(--pd-card-face);
+  .mini { width: 96px; height: 134px; background: var(--pd-card-face);
     border-radius: var(--pd-radius-card); color: var(--pd-suit-black); font-weight: 700;
     display: flex; align-items: flex-start; padding: 6px 7px; }
   .pill { display: inline-block; background: var(--pd-surface-raised);
@@ -82,15 +82,15 @@
 
   <h2>The ladder</h2>
   <div class="ladder">
-    <div class="rung"><span class="tok">--pd-space-1</span><span class="px">2</span><span class="bar" style="width:2px"></span></div>
-    <div class="rung"><span class="tok">--pd-space-2</span><span class="px">4</span><span class="bar" style="width:4px"></span></div>
-    <div class="rung"><span class="tok">--pd-space-3</span><span class="px">8</span><span class="bar" style="width:8px"></span></div>
-    <div class="rung"><span class="tok">--pd-space-4</span><span class="px">12</span><span class="bar" style="width:12px"></span></div>
-    <div class="rung"><span class="tok">--pd-space-5</span><span class="px">16</span><span class="bar" style="width:16px"></span></div>
-    <div class="rung"><span class="tok">--pd-space-6</span><span class="px">24</span><span class="bar" style="width:24px"></span></div>
-    <div class="rung"><span class="tok">--pd-space-7</span><span class="px">32</span><span class="bar" style="width:32px"></span></div>
-    <div class="rung"><span class="tok">--pd-space-8</span><span class="px">48</span><span class="bar" style="width:48px"></span></div>
-    <div class="rung"><span class="tok">--pd-space-9</span><span class="px">64</span><span class="bar" style="width:64px"></span></div>
+    <div class="rung"><span class="tok">--pd-space-1</span><span class="px">2</span><span class="bar" style="width:var(--pd-space-1)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-2</span><span class="px">4</span><span class="bar" style="width:var(--pd-space-2)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-3</span><span class="px">8</span><span class="bar" style="width:var(--pd-space-3)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-4</span><span class="px">12</span><span class="bar" style="width:var(--pd-space-4)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-5</span><span class="px">16</span><span class="bar" style="width:var(--pd-space-5)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-6</span><span class="px">24</span><span class="bar" style="width:var(--pd-space-6)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-7</span><span class="px">32</span><span class="bar" style="width:var(--pd-space-7)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-8</span><span class="px">48</span><span class="bar" style="width:var(--pd-space-8)"></span></div>
+    <div class="rung"><span class="tok">--pd-space-9</span><span class="px">64</span><span class="bar" style="width:var(--pd-space-9)"></span></div>
   </div>
 
   <h2>Radii</h2>
@@ -100,7 +100,7 @@
     <div class="tile"><div class="demo sq" style="border-radius:var(--pd-radius-medium)"></div>
       <span class="tok">--pd-radius-medium</span><span class="px">8 — panels, buttons</span></div>
     <div class="tile"><div class="demo mini">A♠</div>
-      <span class="tok">--pd-radius-card</span><span class="px">6 at the 96px card — scales with it</span></div>
+      <span class="tok">--pd-radius-card</span><span class="px">6 — shown at the 96px reference; scale with the card</span></div>
     <div class="tile"><div class="demo"><span class="pill">streak · 3</span></div>
       <span class="tok">--pd-radius-pill</span><span class="px">badges, counters</span></div>
   </div>
