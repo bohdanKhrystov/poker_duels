@@ -14,7 +14,7 @@ labels: [client, build, toolchain]
 depends_on: [TASK-030107]
 verify:
   - cd web-client && npm test
-  - cd web-client && npm run --silent test 2>&1 | grep -qE 'Tests +3 passed \(3\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +3 passed \(3\)'
   - cd web-client && npm run lint
   - cd web-client && npm run typecheck
   - cd web-client && npm run format:check

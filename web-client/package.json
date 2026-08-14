@@ -11,6 +11,7 @@
     "dev": "vite",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

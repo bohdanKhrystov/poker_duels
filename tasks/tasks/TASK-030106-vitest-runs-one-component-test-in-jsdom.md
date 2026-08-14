@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030106
 title: Vitest renders the app in jsdom and asserts what it shows
 type: task
-status: ready
+status: done
 parent: STORY-0301
 module: web-client
 estimate: XS
@@ -14,7 +14,7 @@ labels: [client, test, toolchain]
 depends_on: [TASK-030105]
 verify:
   - cd web-client && npm test
-  - cd web-client && npm run --silent test 2>&1 | grep -qE 'Tests +1 passed \(1\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +1 passed \(1\)'
   - cd web-client && npm run typecheck
   - cd web-client && npm run format:check
   - ./gradlew :poker-server:verifyProtocolTypes
@@ -89,6 +89,25 @@ it here:
   satisfy it.
 
 Later tickets that add tests update that number to their own total; `TASK-030108` expects three.
+
+### Amended by the driver: the assertion had to survive a colourising terminal
+
+As first written the command was `npm run --silent test 2>&1 | grep -qE ...`, and it failed for the
+driver while passing for the coder. Vitest emits ANSI colour when `FORCE_COLOR` is set in the
+environment — Claude Code sets `FORCE_COLOR=3` — so the summary line arrives as
+
+```
+^[[2m      Tests ^[[22m ^[[1m^[[32m1 passed^[[39m^[[22m^[[90m (1)^[[39m
+```
+
+and no plain-text regex can match it. Setting `FORCE_COLOR=0` does **not** help: the colour library
+keys off the variable's presence, not its value. `NO_COLOR=1` does, so the verify command now carries
+that prefix.
+
+This is the *count* assertion, the one thing standing between a green run and a run that executed
+nothing, so an assertion that passes or fails on the terminal rather than on the tests is worse than
+no assertion at all. `TASK-030108` and `TASK-030109` carry the same pattern and were given the same
+prefix at the same time, rather than rediscovering this twice more.
 
 ## Acceptance criteria
 
