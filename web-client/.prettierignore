@@ -1,0 +1,3 @@
+dist
+package-lock.json
+src/protocol/protocol.gen.ts
