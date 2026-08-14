@@ -2,7 +2,7 @@
 id: STORY-0205
 title: Sessions and the socket lifecycle
 type: story
-status: ready
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, websocket, session]

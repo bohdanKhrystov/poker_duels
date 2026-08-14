@@ -2,7 +2,7 @@
 id: STORY-0204
 title: PlayerView — per-recipient projection in the engine
 type: story
-status: ready
+status: done
 parent: EPIC-02
 module: poker-engine
 labels: [engine, projection, security]

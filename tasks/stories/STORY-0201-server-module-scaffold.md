@@ -2,7 +2,7 @@
 id: STORY-0201
 title: Server module and build scaffold
 type: story
-status: ready
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, build, foundation]

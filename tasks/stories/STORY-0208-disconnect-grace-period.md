@@ -2,7 +2,7 @@
 id: STORY-0208
 title: Disconnect, grace period and reconnect
 type: story
-status: backlog
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, websocket, resilience]

@@ -2,7 +2,7 @@
 id: STORY-0207
 title: The duel runner — the engine behind the socket
 type: story
-status: backlog
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, engine-integration, duel]

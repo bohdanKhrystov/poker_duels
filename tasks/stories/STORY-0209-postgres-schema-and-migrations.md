@@ -2,7 +2,7 @@
 id: STORY-0209
 title: PostgreSQL — schema, migrations and the connection pool
 type: story
-status: backlog
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, persistence, postgres]
