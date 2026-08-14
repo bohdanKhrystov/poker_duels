@@ -29,12 +29,13 @@ temporary step in `.github/workflows/build.yml` — a bare `npx --package=typesc
 repository grows two ways of typechecking TypeScript and the ad-hoc one silently stops covering
 anything.
 
-## Blocked on
+## Unblocked by
 
-`DEC-022`. The build tool and dev server, the package manager and lockfile policy, the Node version,
-the test runner, the lint and format tooling, how the dev server reaches `/ws` and `/api`, and
-whether the client's checks are their own CI job or run through Gradle are all open. `ADR-0003`
-fixes React, TypeScript and Tailwind and nothing else; the rest is not a ticket's to improvise.
+[`ADR-0026`](../../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md), which resolves `DEC-022`:
+Vite + npm on Node 24 pinned once in `web-client/.nvmrc`, Vitest in `jsdom`, ESLint 9 and Prettier 3
+with `src/protocol/protocol.gen.ts` ignored **by path** in both, Vite's proxy carrying `/api` and
+`/ws` to Ktor on 8080, and a parallel `client` CI job running `npm ci`, `npm run check`,
+`npm run build` while Gradle stays JVM-only. No ticket below decides any of that; they implement it.
 
 ## Design notes
 
@@ -62,7 +63,39 @@ fixes React, TypeScript and Tailwind and nothing else; the rest is not a ticket'
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0301` once `DEC-022` is answered.* | — |
+| [TASK-030101](../tasks/TASK-030101-manifest-node-pin-and-locked-install.md) | A manifest, a Node pin and a locked install for web-client | ready |
+| [TASK-030102](../tasks/TASK-030102-prettier-never-reads-the-generated-file.md) | Prettier formats the client and never reads the generated file | backlog |
+| [TASK-030103](../tasks/TASK-030103-strict-tsconfig-keeps-the-generated-file-in-the-program.md) | A strict tsconfig that keeps the generated file inside the typechecked program | backlog |
+| [TASK-030104](../tasks/TASK-030104-an-app-root-that-mounts-one-component.md) | An app root that mounts one trivial component | backlog |
+| [TASK-030105](../tasks/TASK-030105-vite-builds-a-bundle-that-contains-the-app.md) | Vite builds a production bundle that contains the app | backlog |
+| [TASK-030106](../tasks/TASK-030106-vitest-runs-one-component-test-in-jsdom.md) | Vitest renders the app in jsdom and asserts what it shows | backlog |
+| [TASK-030107](../tasks/TASK-030107-eslint-lints-the-client-and-not-the-generated-file.md) | ESLint lints the client and never the generated file | backlog |
+| [TASK-030108](../tasks/TASK-030108-the-dev-server-proxies-api-and-ws-to-ktor.md) | The dev server proxies /api and /ws to the Ktor server | backlog |
+| [TASK-030109](../tasks/TASK-030109-one-npm-run-check-runs-all-four-checks.md) | One npm run check runs every check CI will run | backlog |
+| [TASK-030110](../tasks/TASK-030110-ci-gains-a-client-job-and-drops-the-ad-hoc-tsc.md) | CI gains a client job and drops the ad-hoc npx tsc in the same diff | backlog |
+| [TASK-030111](../tasks/TASK-030111-contributing-says-how-to-check-the-client.md) | CONTRIBUTING says how to install and check the web client | backlog |
+
+The chain is strictly linear — `030101 → 030102 → … → 030111` — because almost every ticket edits
+`web-client/package.json` and two of them edit `vite.config.ts`. Nothing here may run in parallel.
+
+Three deliberate orderings, each of which cost a dispatch somewhere else if reversed:
+
+- **Prettier lands second, before any source file exists.** A formatter introduced late has to
+  reformat files belonging to earlier tickets, which is a budget overrun by construction. Every file
+  after `TASK-030102` is written under Prettier's rules and every later ticket's `verify` re-runs
+  `format:check`.
+- **ESLint lands after the app root**, because `eslint .` over a directory whose only TypeScript is
+  the ignored generated file is an error, not a pass.
+- **Each ticket's `verify` block grows to match CI.** By `TASK-030109` it is exactly what the
+  `client` job runs. A verify narrower than CI let four defects through in `EPIC-02`.
+
+**`TASK-030110` needs a repository setting after it merges**: `client` must be added to `develop`'s
+required checks. No file expresses it and no `verify` command can prove it — until a human or the
+driver applies it, a red `client` job blocks nothing.
+
+`tailwindcss`, `@tailwindcss/vite` and `prettier-plugin-tailwindcss` are in `ADR-0026`'s toolchain
+but **not installed here**: the plugin needs a stylesheet to read, and the stylesheet is
+`STORY-0302`'s, which brings all three with it.
 
 ## Acceptance criteria
 
@@ -76,6 +109,8 @@ fixes React, TypeScript and Tailwind and nothing else; the rest is not a ticket'
 - [ ] `./gradlew :poker-server:verifyProtocolTypes` passes, and `protocol.gen.ts` is byte-identical
       to its state before this story.
 - [ ] `./gradlew check` is still green.
+- [ ] The `client` job is on `develop`'s required-checks list — a repository setting a human or the
+      driver applies when `TASK-030110` merges, not a file any ticket can change.
 
 ## Out of scope
 

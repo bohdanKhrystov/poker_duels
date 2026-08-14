@@ -502,7 +502,18 @@ parallel CI job. `STORY-0301` is the scaffold every other story stands on, and i
 
 | Story | Title | Status |
 | --- | --- | --- |
-| [STORY-0301](stories/STORY-0301-web-client-toolchain.md) | The web-client toolchain and its first green check | **ready** |
+| **[STORY-0301](stories/STORY-0301-web-client-toolchain.md)** The web-client toolchain and its first green check — *schema 2* | | **ready** |
+| | [TASK-030101](tasks/TASK-030101-manifest-node-pin-and-locked-install.md) A manifest, a Node pin and a locked install for web-client | S | ready |
+| | [TASK-030102](tasks/TASK-030102-prettier-never-reads-the-generated-file.md) Prettier formats the client and never reads the generated file | XS | backlog |
+| | [TASK-030103](tasks/TASK-030103-strict-tsconfig-keeps-the-generated-file-in-the-program.md) A strict tsconfig that keeps the generated file inside the typechecked program | XS | backlog |
+| | [TASK-030104](tasks/TASK-030104-an-app-root-that-mounts-one-component.md) An app root that mounts one trivial component | XS | backlog |
+| | [TASK-030105](tasks/TASK-030105-vite-builds-a-bundle-that-contains-the-app.md) Vite builds a production bundle that contains the app | XS | backlog |
+| | [TASK-030106](tasks/TASK-030106-vitest-runs-one-component-test-in-jsdom.md) Vitest renders the app in jsdom and asserts what it shows | XS | backlog |
+| | [TASK-030107](tasks/TASK-030107-eslint-lints-the-client-and-not-the-generated-file.md) ESLint lints the client and never the generated file | XS | backlog |
+| | [TASK-030108](tasks/TASK-030108-the-dev-server-proxies-api-and-ws-to-ktor.md) The dev server proxies /api and /ws to the Ktor server | XS | backlog |
+| | [TASK-030109](tasks/TASK-030109-one-npm-run-check-runs-all-four-checks.md) One npm run check runs every check CI will run | XS | backlog |
+| | [TASK-030110](tasks/TASK-030110-ci-gains-a-client-job-and-drops-the-ad-hoc-tsc.md) CI gains a client job and drops the ad-hoc npx tsc in the same diff | XS | backlog |
+| | [TASK-030111](tasks/TASK-030111-contributing-says-how-to-check-the-client.md) CONTRIBUTING says how to install and check the web client | XS | backlog |
 | [STORY-0302](stories/STORY-0302-design-tokens-in-the-client.md) | The design tokens are the client's only colours and sizes | backlog |
 | [STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md) | The typed socket — handshake and device identity | backlog |
 | [STORY-0304](stories/STORY-0304-client-store.md) | The store — state is the last frame the server sent | backlog |
