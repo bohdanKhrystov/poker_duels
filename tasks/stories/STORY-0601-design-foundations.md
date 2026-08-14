@@ -50,6 +50,7 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060110](../tasks/TASK-060110-no-bare-suit-anywhere.md) | No bare suit glyph anywhere, enforced in the drift check | done |
 | [TASK-060111](../tasks/TASK-060111-drift-check-compares-values.md) | The drift check compares values, not only names | ready |
 | [TASK-060112](../tasks/TASK-060112-drift-gate-reads-the-graphics.md) | The drift gate reads the graphics | backlog |
+| [TASK-060113](../tasks/TASK-060113-inlined-symbols-match-their-canonicals.md) | The gallery's inlined symbols match their canonicals | backlog |
 
 ## Acceptance criteria
 

@@ -17,7 +17,7 @@ verify:
   - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -pi -e "s/26231f/26231e/g" "$T/design/graphics/suits.svg" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
   - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -pi -e "s/fill=\"#26231f\"/fill=\"#26231e\"/g" "$T/design/graphics/suits.svg" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
   - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -pi -e "s/pd-suit-(black|red) \(#[0-9a-f]{6}\)//g" "$T/design/graphics/suits.svg" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
-  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && mv "$T/design/graphics/suits.svg" "$T/suits.away" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && mv "$T/design/graphics/suits.svg" "$T/suits.away" && mv "$T/design/graphics/duel-coin.svg" "$T/coin.away" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
 ---
 
 ## Goal
@@ -25,7 +25,8 @@ verify:
 `check-drift.sh` sweeps only `*.html`, so the graphics are the first design-file class the
 gate cannot see: `suits.svg` mirrors `--pd-suit-black`/`--pd-suit-red` as raw hex, and a
 sheet re-hex leaves the SVG stale with no failure anywhere (#436 review, CONFIRMED
-mechanism; the coin repeats the pattern).
+mechanism; the coin repeats the pattern). The sibling gap — the gallery's inlined
+copies of the symbol geometry — is TASK-060113's, not this ticket's.
 
 ## Files
 
@@ -41,11 +42,12 @@ mechanism; the coin repeats the pattern).
 - The gate extracts the pairs and fails when the sheet's `--pd-NAME` is missing or its
   value differs from the cited hex; an SVG with zero pairs fails, and so does finding
   zero SVGs under `design/graphics/` — the class must not go invisible again, vacuously
-  or otherwise (suits.svg is merged, so at least one always exists).
+  or otherwise (two graphics SVGs are merged today).
 - Stock macOS/Linux tools; keep the self-test pattern. The four negative-path verify
   commands pin one guard clause each — cited-pair drift, an orphaned fill hex, a
-  pair-less SVG, zero SVGs — and demand the gate's deliberate exit 1, with setup
-  failures forced to exit 2 so a broken scratch copy cannot green a proof.
+  pair-less SVG, and zero SVGs (both canonicals moved away) — and demand the gate's
+  deliberate exit 1, with setup failures forced to exit 2 so a broken scratch copy
+  cannot green a proof.
 - Runs after TASK-060111 (`depends_on`): both gate tickets rewrite the same sweep
   region of `check-drift.sh`, so they are ordered, never concurrent.
 
@@ -53,7 +55,8 @@ mechanism; the coin repeats the pattern).
 
 - Non-token literals (gradient highlights, shadows drawn as art) — the pair convention
   marks exactly what claims to mirror the sheet.
-- HTML cards — TASK-060111 guards their values.
+- HTML cards — TASK-060111 guards their token values, TASK-060113 their inlined
+  symbol copies.
 
 ## Tests
 
