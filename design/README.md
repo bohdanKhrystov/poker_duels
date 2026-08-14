@@ -11,7 +11,7 @@ is a render surface, never a store.
 ```
 design/
 ├── tokens/     tokens.css (canonical) + the three foundation preview cards
-├── screens/    (planned) screen designs — STORY-0602/0604
+├── screens/    the composed table and duel-flow screens — STORY-0602/0604
 └── graphics/   (planned) SVG art — STORY-0603
 ```
 
@@ -20,7 +20,7 @@ design/
 A preview card is one self-contained HTML file the claude.ai/design pane renders:
 
 - **Line 1 is exactly** `<!-- @dsCard group="…" -->` — the pane builds its card index from
-  that marker. Groups in use: `Colors`, `Type`, `Spacing`; screens and graphics add theirs.
+  that marker. Groups in use: `Colors`, `Type`, `Spacing`, `Components`, `Screens`; graphics adds `Graphics` and `Brand`.
 - All styles inline, no request to anywhere (`grep http` must find nothing).
 - A `<title>` names the card.
 - Cards inline copies of the token values they show (self-containment demands it);

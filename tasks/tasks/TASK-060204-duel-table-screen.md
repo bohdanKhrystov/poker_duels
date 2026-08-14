@@ -3,13 +3,13 @@ schema: 2
 id: TASK-060204
 title: The duel table screen, in play
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: S
 tier: opus
 review: light
-files_touched: 1
+files_touched: 2
 labels: [design]
 depends_on: [TASK-060201, TASK-060202, TASK-060203]
 verify:
@@ -30,6 +30,7 @@ seat, board with pot, hole cards, live action bar — one column, phone-first.
 | File | Action |
 | --- | --- |
 | `design/screens/duel-table.html` | create |
+| `design/README.md` | edit — screens/ stops being planned; the group index gains Components and Screens |
 
 ## Scope
 
