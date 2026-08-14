@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030513
 title: UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S

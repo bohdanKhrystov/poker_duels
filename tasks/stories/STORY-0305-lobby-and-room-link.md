@@ -66,8 +66,8 @@ this order and no two are startable at once.
 | TASK-030510 | The lobby creates a room, and joins by a pasted code it trims and upper-cases | done |
 | TASK-030511 | A joined room shows its code and a selectable invite link | done |
 | TASK-030512 | Copy the link where there is a clipboard, and keep it in reach where there is not | done |
-| TASK-030513 | UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries | ready |
-| TASK-030514 | The first Snapshot ends the wait, and no other frame does | backlog |
+| TASK-030513 | UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries | done |
+| TASK-030514 | The first Snapshot ends the wait, and no other frame does | ready |
 | TASK-030515 | main.tsx boots the client once and renders the lobby under the provider | backlog |
 | TASK-030516 | One connection per tab, booted in main.tsx and nowhere else | backlog |
 

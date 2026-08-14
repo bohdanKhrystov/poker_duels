@@ -1,4 +1,5 @@
 import { useState, type ReactElement } from "react";
+import type { ProtocolError } from "../protocol";
 import { useDuelState, useSend } from "../store/duel-provider";
 import { normalizeRoomCode, roomLink } from "./room-link";
 
@@ -15,6 +16,7 @@ export function Lobby(): ReactElement {
 
   return (
     <section>
+      {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
       <button type="button" onClick={() => send({ type: "CreateRoom" })}>
         Create a duel room
       </button>
@@ -37,6 +39,21 @@ export function Lobby(): ReactElement {
       </form>
     </section>
   );
+}
+
+/**
+ * The client shows the refusal and stops. Retrying on the player's behalf would
+ * spend the ten failed joins a minute `ADR-0022` budgets them.
+ */
+function refusalMessage(error: ProtocolError): string {
+  switch (error) {
+    case "UNKNOWN_ROOM":
+      return "No duel room has that code.";
+    case "ROOM_FULL":
+      return "That duel room already has a rival in it.";
+    default:
+      return "The server refused that.";
+  }
 }
 
 /**
