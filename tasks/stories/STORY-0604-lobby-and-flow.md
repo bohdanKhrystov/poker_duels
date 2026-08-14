@@ -1,0 +1,61 @@
+---
+id: STORY-0604
+title: Design the duel flow — create, join, result, rematch
+type: story
+status: ready
+parent: EPIC-06
+module: design
+labels: [design]
+depends_on: [STORY-0601, STORY-0602]
+---
+
+## Goal
+
+The v0.1 loop outside the table exists as screens: create a duel and share its link, take
+the offered seat, see the duel end with its coin, and offer the rematch — all composed from
+the merged tokens and components.
+
+## Why
+
+The success condition is one sentence: *send a link, she opens it in a browser, we play,
+someone wins, we hit Rematch* (docs/vision.md). The table (STORY-0602) covers "we play";
+this story draws everything around it.
+
+## Design notes
+
+- Vocabulary is duelling, never gambling: *challenge, duel, rematch, streak*. The room code
+  is the invite (`ADR-0022`) — the create screen shows the code huge and typable, the link
+  beside it, one copy action.
+- Join is one decision: the room found, who waits there, one accent action ("Take the
+  seat"). No forms; the display name is edited in place if the default is unwanted
+  (`ADR-0021`).
+- Duel end: "Victory" / "Defeat" in the hero sizes, the coin with ±1, hands played, and the
+  one accent action — Rematch. Defeat is stated in `--pd-loss`, never softened.
+- Rematch needs both seats (`STORY-0206`): show mine-offered ("Rematch offered — waiting
+  for ImKate"), theirs-offered ("ImKate offers a rematch"), both states quiet.
+- Waiting-for-opponent on the create screen is the empty table's seat: dashed outline plus
+  the code, nothing animated.
+- Cards are group `Screens`; conventions per `design/README.md`; every value traces to the
+  sheet (check-drift must pass).
+
+## Tasks
+
+| ID | Title | Status |
+| --- | --- | --- |
+| [TASK-060401](../tasks/TASK-060401-create-and-share-screen.md) | The create-and-share screen | ready |
+| [TASK-060402](../tasks/TASK-060402-join-screen.md) | The join screen | ready |
+| [TASK-060403](../tasks/TASK-060403-duel-end-screen.md) | The duel-end screen | ready |
+| [TASK-060404](../tasks/TASK-060404-rematch-states-card.md) | The rematch states | backlog |
+
+## Acceptance criteria
+
+- [ ] The four cards render in the pane under **Screens**.
+- [ ] The human has seen them there and signed off.
+- [ ] The whole loop — create → join → play → end → rematch — can be walked card to card
+      with no invented step.
+
+## Out of scope
+
+- Leaderboard, seasons, profiles — v0.2/v0.3 epics.
+- Matchmaking of strangers — later; the link is the only door in v0.1.
+- Any web-client code — `EPIC-03`.

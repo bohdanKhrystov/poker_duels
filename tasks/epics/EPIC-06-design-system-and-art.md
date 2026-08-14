@@ -62,10 +62,10 @@ claude.ai/design pane, by the human.
 | --- | --- | --- |
 | [STORY-0601](../stories/STORY-0601-design-foundations.md) | Design foundations — tokens and preview cards | ready |
 | [STORY-0602](../stories/STORY-0602-duel-table-screen.md) | Design the duel table — components and the screen | ready |
-| STORY-0603 | Graphics — card faces, duel coin, wordmark | *not written* |
-| STORY-0604 | Lobby and duel-flow screens | *not written* |
+| [STORY-0603](../stories/STORY-0603-graphics.md) | Draw the graphics — suit glyphs, the duel coin, the wordmark | ready |
+| [STORY-0604](../stories/STORY-0604-lobby-and-flow.md) | Design the duel flow — create, join, result, rematch | ready |
 
-Numbers 0602–0604 are reserved, written as the one before them closes.
+All four stories are written; each awaits the human's visual sign-off before `done`.
 
 ## Definition of done
 
