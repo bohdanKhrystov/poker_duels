@@ -2,7 +2,7 @@
 id: STORY-0304
 title: The store — state is the last frame the server sent
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, state, protocol]
