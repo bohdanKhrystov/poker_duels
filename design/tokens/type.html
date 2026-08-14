@@ -17,7 +17,7 @@
     --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem; --pd-fs-large: 1.125rem;
     --pd-fs-title: 1.375rem; --pd-fs-display: 1.875rem; --pd-fs-hero: 2.5rem;
     --pd-weight-regular: 400; --pd-weight-medium: 500; --pd-weight-bold: 700;
-    --pd-lh-tight: 1.15; --pd-lh-body: 1.5; --pd-track-caps: 0.08em;
+    --pd-lh-tight: 1.15; --pd-lh-body: 1.5; --pd-track-caps: 0.08em; --pd-track-code: 0.14em;
   }
   * { margin: 0; box-sizing: border-box; }
   body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
@@ -80,6 +80,8 @@
       <div class="sample" style="font-size:var(--pd-fs-small);color:var(--pd-text-muted)">Hand 14 · Blinds 75/150 · Season 1</div></div>
     <div class="step"><div class="tok">--pd-fs-micro<small>0.6875rem (11px) · 500 · caps, tracked</small></div>
       <div class="sample" style="font-size:var(--pd-fs-micro);font-weight:500;letter-spacing:var(--pd-track-caps);text-transform:uppercase;color:var(--pd-accent)">Your turn</div></div>
+    <div class="step"><div class="tok">--pd-track-code<small>0.14em · mono — a room code is read aloud, glyph by glyph</small></div>
+      <div class="sample" style="font-family:var(--pd-font-mono);letter-spacing:var(--pd-track-code)">7Q4M9K2T</div></div>
   </div>
 
   <h2>Weights</h2>

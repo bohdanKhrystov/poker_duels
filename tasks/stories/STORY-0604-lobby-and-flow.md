@@ -42,7 +42,7 @@ this story draws everything around it.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-060401](../tasks/TASK-060401-create-and-share-screen.md) | The create-and-share screen | ready |
+| [TASK-060401](../tasks/TASK-060401-create-and-share-screen.md) | The create-and-share screen | done |
 | [TASK-060402](../tasks/TASK-060402-join-screen.md) | The join screen | ready |
 | [TASK-060403](../tasks/TASK-060403-duel-end-screen.md) | The duel-end screen | ready |
 | [TASK-060404](../tasks/TASK-060404-rematch-states-card.md) | The rematch states | backlog |

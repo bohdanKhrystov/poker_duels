@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060401
 title: The create-and-share screen
 type: task
-status: ready
+status: done
 parent: STORY-0604
 module: design
 estimate: S
@@ -18,6 +18,8 @@ verify:
   - grep -q -- '--pd-accent-fill' design/screens/create-duel.html
   - grep -q -- '--pd-font-mono' design/screens/create-duel.html
   - '! grep -q "http" design/screens/create-duel.html'
+  - grep -q -- '--pd-track-code:' design/tokens/tokens.css
+  - grep -q 'var(--pd-track-code)' design/screens/create-duel.html
 ---
 
 ## Goal
@@ -31,6 +33,9 @@ waiting.
 | File | Action |
 | --- | --- |
 | `design/screens/create-duel.html` | create |
+| `design/tokens/tokens.css` | edit — review: the code's tracking is born on the sheet as `--pd-track-code` |
+| `web-client/src/styles/tokens.css` | edit — vendored mirror of the sheet; client CI pins byte-identity |
+| `design/tokens/type.html` | edit — the new tracking token's specimen joins the type card |
 
 ## Scope
 
@@ -53,3 +58,15 @@ None — structural gates in `verify:`.
 ## Definition of done
 
 Standard, with `EPIC-06`'s recorded deviation: the review is visual, in claude.ai/design.
+
+## Deviations
+
+- Review round 1 found the code's `letter-spacing: 0.14em` born off-sheet — the join
+  screen must render the same code and could only re-derive it. The value moved onto
+  the sheet as `--pd-track-code`, which drags the vendored client mirror along (its CI
+  test pins byte-identity), so the real footprint is three files; `files_touched` keeps
+  the planned figure per the `TASK-060108` precedent.
+- Review round 2: the token's birth and use are pinned in `verify:` and its specimen
+  joins the type foundation card — both per the same precedent. The wordmark-lockup
+  values duplicated across cards are follow-up-ticket material, filed at the story
+  boundary.
