@@ -8,7 +8,7 @@
 <style>
   /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
   :root {
-    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-bg: #131211; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
     --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
     --pd-on-accent: #ffffff; --pd-win: #79a862; --pd-loss: #c4655c;
@@ -47,20 +47,20 @@
     font-family: var(--pd-font-mono); font-size: 1.125rem; }
   .coin { width: 22px; height: 22px; border-radius: var(--pd-radius-pill);
     background: radial-gradient(circle at 36% 30%, #b8c6d6, var(--pd-coin) 55%, var(--pd-coin-deep));
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.22); }
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25); }
   /* Contrast themes strip gradients and shadows — keep the coin a visible ring. */
   @media (forced-colors: active) { .coin { border: 1px solid CanvasText; } }
   .delta.win { color: var(--pd-win); }
   .delta.loss { color: var(--pd-loss); }
   .meta { color: var(--pd-text-muted); font-size: var(--pd-fs-small); }
-  .how { color: var(--pd-text-faint); font-size: var(--pd-fs-small); }
 
   /* Screen-only glue: the lobby's standalone call-to-action — deliberately not the
    * action bar's in-duel .btn (that one is flex: 1 inside a bar and shows focus via
    * .focused); the flow screens share this treatment until it earns a component card. */
   .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
     line-height: var(--pd-lh-tight); padding: var(--pd-space-4) var(--pd-space-5);
-    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer; }
+    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer;
+    text-align: center; }
   .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
   .btn.fill:hover { background: var(--pd-accent-fill-hover); }
   .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
@@ -82,10 +82,9 @@
       <div class="verdict win">Victory</div>
       <div class="coinline"><span class="coin"></span><span class="delta win">+1 duel coin</span></div>
       <div class="meta">17 hands · 12 minutes · you took the whole stack</div>
-      <div class="how">Luck decides a hand. Skill decides whether she comes back tomorrow.</div>
       <div class="stack2">
         <button class="btn fill">Rematch</button>
-        <button class="btn ghost">Back to the door</button>
+        <button class="btn ghost">Back to lobby</button>
       </div>
       <p class="note">the coin is the CSS mark; the full SVG carries ceremonial duty in
       EPIC-03 if the client wants it larger</p>
@@ -94,12 +93,11 @@
     <div class="frame">
       <h2>Defeat</h2>
       <div class="verdict loss">Defeat</div>
-      <div class="coinline"><span class="coin"></span><span class="delta loss">−1 duel coin</span></div>
-      <div class="meta">17 hands · 12 minutes · ImKate takes the stack</div>
-      <div class="how">The rematch is one press away — that is the whole pitch.</div>
+      <div class="coinline"><span class="coin"></span><span class="delta loss">The coin goes to ImKate</span></div>
+      <div class="meta">17 hands · 12 minutes · she took the whole stack</div>
       <div class="stack2">
         <button class="btn fill">Rematch</button>
-        <button class="btn ghost">Back to the door</button>
+        <button class="btn ghost">Back to lobby</button>
       </div>
       <p class="note">same geometry as victory: losing must not feel like a different,
       smaller product</p>
