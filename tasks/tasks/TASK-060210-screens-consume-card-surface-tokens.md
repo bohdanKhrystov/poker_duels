@@ -13,19 +13,24 @@ files_touched: 2
 labels: [design]
 depends_on: [TASK-060108]
 verify:
-  - grep -q -- '--pd-shadow-card' design/screens/duel-table.html
-  - grep -q -- '--pd-card-back-stripes' design/screens/duel-table.html
-  - grep -q -- '--pd-shadow-card' design/screens/duel-table-states.html
-  - grep -q -- '--pd-card-back-stripes' design/screens/duel-table-states.html
+  - grep -qF -- 'var(--pd-shadow-card)' design/screens/duel-table.html
+  - grep -qF -- 'var(--pd-card-back-stripes)' design/screens/duel-table.html
+  - grep -qF -- 'var(--pd-shadow-card)' design/screens/duel-table-states.html
+  - grep -qF -- 'var(--pd-card-back-stripes)' design/screens/duel-table-states.html
+  - test "$(grep -c -- '0 1px 3px' design/screens/duel-table.html)" -eq 1
+  - test "$(grep -c -- '0 1px 3px' design/screens/duel-table-states.html)" -eq 1
+  - test "$(grep -c -- 'repeating-linear-gradient' design/screens/duel-table.html)" -eq 1
+  - test "$(grep -c -- 'repeating-linear-gradient' design/screens/duel-table-states.html)" -eq 1
   - ./design/check-drift.sh
 ---
 
 ## Goal
 
 TASK-060108 moved the card resting shadow and back-stripe texture into the sheet, but the
-two duel-table screen cards still carry the old byte-copied literals — the exact unguarded
-drift the tokens were born to kill, and the names-only drift check cannot see it
-(#431 review, CONFIRMED finding).
+two duel-table screen cards still carry the old byte-copied literals at their use sites
+(#431 review, CONFIRMED finding). Consuming the tokens puts the screens back on the single
+source when a value is retuned; the inline `:root` copies the convention requires stay
+byte-copies, and guarding those at the value level is TASK-060111's job.
 
 ## Files
 
@@ -46,7 +51,9 @@ drift the tokens were born to kill, and the names-only drift check cannot see it
 
 ## Tests
 
-None — the verify greps pin the token names at use, and check-drift passes.
+None — the verify pins `var()` consumption per file and pins each value literal to
+exactly its `:root` declaration (count of one), so a half-done replacement cannot pass;
+check-drift stays green.
 
 ## Acceptance criteria
 
