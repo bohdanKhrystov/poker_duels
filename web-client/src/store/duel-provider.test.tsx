@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { act } from "react";
 import { describe, it, expect, vi } from "vitest";
-import { DuelProvider, useDuelState } from "./duel-provider";
+import { DuelProvider, useDuelState, useSend } from "./duel-provider";
 import { createDuelStore, type DuelStore } from "./duel-store";
 import type { ClientMessage } from "../protocol";
 import type { ReactElement } from "react";
@@ -12,6 +12,15 @@ const WELCOME = { type: "Welcome", deviceId: "d", protocolVersion: 2 } as const;
 function RoomCode(): ReactElement {
   const state = useDuelState();
   return <p>{state.roomCode ?? "no room yet"}</p>;
+}
+
+function CreateButton(): ReactElement {
+  const send = useSend();
+  return (
+    <button type="button" onClick={() => send({ type: "CreateRoom" })}>
+      Create
+    </button>
+  );
 }
 
 function renderUnder(
@@ -71,5 +80,22 @@ describe("the duel provider", () => {
     });
 
     expect(rendered).toHaveBeenCalledOnce();
+  });
+
+  it("hands a component the send the client was booted with", () => {
+    const store = createDuelStore();
+    const send: (message: ClientMessage) => void = vi.fn();
+
+    renderUnder(store, send, <CreateButton />);
+
+    const button = screen.getByText("Create");
+    fireEvent.click(button);
+
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
+  });
+
+  it("refuses to render a duel component with no provider above it", () => {
+    expect(() => render(<RoomCode />)).toThrow(/DuelProvider/);
   });
 });
