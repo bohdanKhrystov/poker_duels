@@ -28,9 +28,9 @@
     -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 1020px; margin: 0 auto; }
   .eyebrow { font-size: var(--pd-fs-micro); font-weight: 500; letter-spacing: var(--pd-track-caps);
-    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: 8px; }
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: var(--pd-space-3); }
   h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
-  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  .lede { color: var(--pd-text-muted); margin-top: var(--pd-space-3); max-width: 56ch; }
   /* Screen-specific: frames keep their natural heights here — the refusal list runs
    * longer than the seat (the create screen's frames stretch equal, by default). */
   .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: var(--pd-space-7); align-items: flex-start; }
@@ -42,11 +42,15 @@
     margin-top: var(--pd-space-4); }
 
   .who { font-size: 1.375rem; font-weight: 700; line-height: var(--pd-lh-tight); }
-  /* The chip is the room code at reading size — same tracking token as the code well. */
+  /* The chip is the room code at reading size — same tracking token as the code well.
+   * Left-aligned, the trailing letter-space lands inside the right padding; the calc
+   * hands it back so the pill reads balanced. */
   .codechip { align-self: flex-start; font-family: var(--pd-font-mono);
     font-size: var(--pd-fs-small); letter-spacing: var(--pd-track-code);
     color: var(--pd-text-muted); border: 1px solid var(--pd-hairline);
-    border-radius: var(--pd-radius-pill); padding: var(--pd-space-2) var(--pd-space-4); }
+    border-radius: var(--pd-radius-pill);
+    padding: var(--pd-space-2) calc(var(--pd-space-4) - var(--pd-track-code))
+      var(--pd-space-2) var(--pd-space-4); }
   .namerow { display: flex; align-items: center; gap: var(--pd-space-4); background: var(--pd-surface);
     border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
     padding: var(--pd-space-4) var(--pd-space-5); }
