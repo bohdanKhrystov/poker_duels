@@ -8,7 +8,7 @@
 <style>
   /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
   :root {
-    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-bg: #131211; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
     --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
     --pd-on-accent: #ffffff; --pd-accent-subtle: rgba(77, 139, 201, 0.14);
@@ -17,7 +17,7 @@
     --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
     --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
     --pd-track-caps: 0.08em;
-    --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px;
+    --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px;
     --pd-space-6: 24px; --pd-space-7: 32px;
     --pd-radius-medium: 8px;
     --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
@@ -28,9 +28,9 @@
     -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 1020px; margin: 0 auto; }
   .eyebrow { font-size: var(--pd-fs-micro); font-weight: 500; letter-spacing: var(--pd-track-caps);
-    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: 8px; }
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: var(--pd-space-3); }
   h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
-  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  .lede { color: var(--pd-text-muted); margin-top: var(--pd-space-3); max-width: 56ch; }
   .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: var(--pd-space-7); align-items: flex-start; }
   .frame { width: min(320px, 100%); border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
     padding: var(--pd-space-6) var(--pd-space-5); display: flex; flex-direction: column; gap: var(--pd-space-4); }
@@ -49,13 +49,14 @@
   .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
   .btn.fill:hover { background: var(--pd-accent-fill-hover); }
   .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+  /* The chip the button becomes: same line-height as .btn so nothing jumps, and
+   * full-strength text — accent over accent-subtle measures 4.43:1, under AA. */
   .offered { background: var(--pd-accent-subtle); border: 1px solid var(--pd-accent);
-    color: var(--pd-accent); border-radius: var(--pd-radius-medium); padding: var(--pd-space-4) var(--pd-space-5);
-    text-align: center; font-weight: 500; }
+    color: var(--pd-text); line-height: var(--pd-lh-tight); border-radius: var(--pd-radius-medium);
+    padding: var(--pd-space-4) var(--pd-space-5); text-align: center; font-weight: 500; }
   .theirs { text-align: center; color: var(--pd-accent); font-size: var(--pd-fs-small);
     font-weight: 500; }
   .dealing { text-align: center; color: var(--pd-text-muted); }
-  .mono { font-family: var(--pd-font-mono); }
 </style>
 </head>
 <body>
@@ -84,7 +85,7 @@
     <div class="frame">
       <h2>Both — it begins</h2>
       <div class="dealing">Rematch. The button changes sides —<br>
-        <span class="mono">dealing hand 1…</span></div>
+        dealing hand 1…</div>
       <p class="note">the dealer flips per the room's rematch rule; stacks reset to
       10,000; the same room, the same link</p>
     </div>
