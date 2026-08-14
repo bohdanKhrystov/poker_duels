@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030111
 title: CONTRIBUTING says how to install and check the web client
 type: task
-status: backlog
+status: ready
 parent: STORY-0301
 module: web-client
 estimate: XS

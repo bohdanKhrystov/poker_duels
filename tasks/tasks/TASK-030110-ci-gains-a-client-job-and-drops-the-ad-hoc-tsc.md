@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030110
 title: CI gains a client job and drops the ad-hoc npx tsc in the same diff
 type: task
-status: ready
+status: done
 parent: STORY-0301
 module: web-client
 estimate: XS
