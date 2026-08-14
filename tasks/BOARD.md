@@ -411,14 +411,25 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | **done** |
 | | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | **done** |
 | | [TASK-060105](tasks/TASK-060105-design-directory-readme.md) The design directory README and sync procedure | XS | **done** |
+| | [TASK-060106](tasks/TASK-060106-token-name-drift-check.md) The token-name drift check | S | ready |
+| | [TASK-060107](tasks/TASK-060107-align-the-shipped-foundation-cards.md) Align the shipped foundation cards | S | ready |
+| | [TASK-060108](tasks/TASK-060108-card-surface-tokens.md) The card resting shadow and back texture become tokens | S | ready |
 | **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |
 | | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | **done** |
 | | [TASK-060202](tasks/TASK-060202-seat-plate-and-pot.md) The seat plate and pot strip | S | **done** |
 | | [TASK-060203](tasks/TASK-060203-action-bar.md) The action bar | S | **done** |
 | | [TASK-060204](tasks/TASK-060204-duel-table-screen.md) The duel table screen, in play | S | ready |
 | | [TASK-060205](tasks/TASK-060205-table-states.md) The table's other moments — waiting and showdown | S | backlog |
-| STORY-0603 | Graphics — card faces, duel coin, wordmark | *not written* |
-| STORY-0604 | Lobby and duel-flow screens | *not written* |
+| **[STORY-0603](stories/STORY-0603-graphics.md)** Draw the graphics — suit glyphs, the duel coin, the wordmark — *schema 2* | | | ready |
+| | [TASK-060301](tasks/TASK-060301-suit-glyph-set.md) The suit-glyph set | S | ready |
+| | [TASK-060302](tasks/TASK-060302-duel-coin.md) The duel coin | S | ready |
+| | [TASK-060303](tasks/TASK-060303-wordmark-card.md) The wordmark card | S | ready |
+| | [TASK-060304](tasks/TASK-060304-graphics-gallery-card.md) The graphics gallery card | S | backlog |
+| **[STORY-0604](stories/STORY-0604-lobby-and-flow.md)** Design the duel flow — create, join, result, rematch — *schema 2* | | | ready |
+| | [TASK-060401](tasks/TASK-060401-create-and-share-screen.md) The create-and-share screen | S | ready |
+| | [TASK-060402](tasks/TASK-060402-join-screen.md) The join screen | S | ready |
+| | [TASK-060403](tasks/TASK-060403-duel-end-screen.md) The duel-end screen | S | ready |
+| | [TASK-060404](tasks/TASK-060404-rematch-states-card.md) The rematch states | S | backlog |
 
 ---
 
