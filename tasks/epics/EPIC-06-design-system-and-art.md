@@ -67,7 +67,10 @@ claude.ai/design pane, by the human.
 
 All four stories are written. The human's visual sign-off is recorded for
 STORY-0601/0602/0603 and partially for STORY-0604 (its fifth screen, the typed-code
-door, has not landed); each story flips `done` in the PR that lands its last ticket.
+door, has not landed). A story flips `done` only when its tickets are all landed
+**and** its acceptance boxes all tick — the last-ticket PR carries the flip when
+nothing else remains, and holds it when a box (a human sign-off, a criterion not yet
+true) is still open.
 
 ## Definition of done
 
