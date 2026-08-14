@@ -416,8 +416,8 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060108](tasks/TASK-060108-card-surface-tokens.md) The card resting shadow and back texture become tokens | S | done |
 | | [TASK-060110](tasks/TASK-060110-no-bare-suit-anywhere.md) No bare suit glyph anywhere, enforced in the drift check | XS | **done** |
 | | [TASK-060111](tasks/TASK-060111-drift-check-compares-values.md) The drift check compares values, not only names | S | **done** |
-| | [TASK-060112](tasks/TASK-060112-drift-gate-reads-the-graphics.md) The drift gate reads the graphics | S | ready |
-| | [TASK-060113](tasks/TASK-060113-inlined-symbols-match-their-canonicals.md) The gallery's inlined symbols match their canonicals | S | backlog |
+| | [TASK-060112](tasks/TASK-060112-drift-gate-reads-the-graphics.md) The drift gate reads the graphics | S | **done** |
+| | [TASK-060113](tasks/TASK-060113-inlined-symbols-match-their-canonicals.md) The gallery's inlined symbols match their canonicals | S | ready |
 | | [TASK-060114](tasks/TASK-060114-lockup-constants-join-the-drift-gate.md) The lockup constants join the drift gate | S | backlog |
 | | [TASK-060115](tasks/TASK-060115-the-coin-glint-is-born-on-the-sheet.md) The coin glint is born on the sheet | XS | ready |
 | | [TASK-060116](tasks/TASK-060116-the-css-coins-consume-the-glint-token.md) The CSS coins consume the glint token | XS | backlog |
@@ -459,9 +459,13 @@ parallel with `EPIC-02`; no shared file.
 | DEC-030 | **Product.** After a player attaches a credential, may the device id that created the profile still sign in without it — forever, until revoked, or not at all? ADR-0030 never rewrites `player.device_id`, so today it is *forever* by construction | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before the account screens ship |
 | DEC-031 | **Product.** May a player ever sign in with a third-party account (Google, Apple), or is a handle and password the only credential? ADR-0027's `credential.kind` makes adding one additive, so this blocks nothing today | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before v0.2 ships accounts |
 | DEC-029 | **Product.** May a player delete their account, and what happens to the opponent's history lines that reference it? Nothing is built either way; the question is asked now so the credential schema does not silently foreclose an answer, as `ADR-0021` refused to do with `UNIQUE` | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before STORY-0403 lands the schema |
-| DEC-032 | **Technical.** Do a component's internal em ratios — the wordmark lockup's 0.92/0.42/0.01/0.06 — fall under `ADR-0024 §2`'s "every size is born in the sheet", or may they live in the canonical card, pinned by a drift gate ([`TASK-060114`](tasks/TASK-060114-lockup-constants-join-the-drift-gate.md)'s approach)? Raised by the #474 review; the glint half of the same finding was settled by conforming (`TASK-060115`) | [`STORY-0601`](stories/STORY-0601-design-foundations.md) | before TASK-060114 starts |
 
-**Answered.** `DEC-021` → [`ADR-0024`](../docs/adr/ADR-0024-design-follows-the-code-workflow.md)
+**Answered.** `DEC-034` → [`ADR-0033`](../docs/adr/ADR-0033-component-anatomy-is-born-in-its-canonical-card.md)
+(a component's anatomy is born in its canonical card; the sheet holds the vocabulary.
+Minted here as `DEC-032` and renumbered — the ADR directory's register had taken that
+number first, so `ADR-0033`'s immutable header cites the original minting; the question
+itself, restated there in full, is the durable reference).
+`DEC-021` → [`ADR-0024`](../docs/adr/ADR-0024-design-follows-the-code-workflow.md)
 (design follows the code workflow, in the repository, mirrored to claude.ai/design).
 `DEC-004` → [`ADR-0008`](../docs/adr/ADR-0008-loser-mucks-at-showdown.md) (the loser
 mucks). `DEC-005` → [`ADR-0009`](../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md)

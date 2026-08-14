@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060113
 title: The gallery's inlined symbols match their canonicals
 type: task
-status: backlog
+status: ready
 parent: STORY-0601
 module: design
 estimate: S
