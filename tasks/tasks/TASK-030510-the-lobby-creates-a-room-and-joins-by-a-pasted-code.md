@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030510
 title: The lobby creates a room, and joins by a pasted code it trims and upper-cases
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
