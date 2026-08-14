@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030303
 title: The frame codec decodes only what the generated union names
 type: task
-status: backlog
+status: ready
 parent: STORY-0303
 module: web-client
 estimate: S

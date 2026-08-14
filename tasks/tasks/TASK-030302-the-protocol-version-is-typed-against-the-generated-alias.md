@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030302
 title: The protocol version the client sends is typed against the generated alias
 type: task
-status: ready
+status: done
 parent: STORY-0303
 module: web-client
 estimate: XS
