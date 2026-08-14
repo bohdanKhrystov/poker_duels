@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030103
 title: A strict tsconfig that keeps the generated file inside the typechecked program
 type: task
-status: ready
+status: done
 parent: STORY-0301
 module: web-client
 estimate: XS
