@@ -535,7 +535,7 @@ on a literal — and `TASK-030201` is startable now.
 | | [TASK-030109](tasks/TASK-030109-one-npm-run-check-runs-all-four-checks.md) One npm run check runs every check CI will run | XS | **done** |
 | | [TASK-030110](tasks/TASK-030110-ci-gains-a-client-job-and-drops-the-ad-hoc-tsc.md) CI gains a client job and drops the ad-hoc npx tsc in the same diff | XS | **done** |
 | | [TASK-030111](tasks/TASK-030111-contributing-says-how-to-check-the-client.md) CONTRIBUTING says how to install and check the web client | XS | **done** |
-| **[STORY-0302](stories/STORY-0302-design-tokens-in-the-client.md)** The design tokens are the client's only colours and sizes — *schema 2* | | **ready** |
+| **[STORY-0302](stories/STORY-0302-design-tokens-in-the-client.md)** The design tokens are the client's only colours and sizes — *schema 2* | | **done** |
 | | [TASK-030201](tasks/TASK-030201-vendor-the-token-sheet-byte-for-byte.md) Vendor the token sheet into the client, byte for byte | S | **done** |
 | | [TASK-030202](tasks/TASK-030202-the-check-fails-on-a-colour-literal.md) The client's check fails on a colour literal outside the token layer | S | **done** |
 | | [TASK-030203](tasks/TASK-030203-tailwind-installs-and-its-vite-plugin-runs.md) Tailwind installs from the lockfile and its Vite plugin runs | XS | **done** |
@@ -544,7 +544,7 @@ on a literal — and `TASK-030201` is startable now.
 | | [TASK-030206](tasks/TASK-030206-the-themes-sizes-are-the-tokens.md) The theme's type, spacing and radii are the tokens and nothing else | S | **done** |
 | | [TASK-030207](tasks/TASK-030207-prettier-sorts-tailwind-classes.md) Prettier sorts Tailwind classes and still never reads the generated file | XS | **done** |
 | | [TASK-030208](tasks/TASK-030208-the-app-root-is-styled-through-the-theme.md) The app root is styled through the theme, proven by a test | XS | **done** |
-| | [TASK-030209](tasks/TASK-030209-contributing-says-the-token-sheet-is-a-copy.md) CONTRIBUTING says the client's token sheet is a copy | XS | ready |
+| | [TASK-030209](tasks/TASK-030209-contributing-says-the-token-sheet-is-a-copy.md) CONTRIBUTING says the client's token sheet is a copy | XS | **done** |
 | [STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md) | The typed socket — handshake and device identity | backlog |
 | [STORY-0304](stories/STORY-0304-client-store.md) | The store — state is the last frame the server sent | backlog |
 | [STORY-0305](stories/STORY-0305-lobby-and-room-link.md) | The lobby — create a room, join by code, share the link | backlog |

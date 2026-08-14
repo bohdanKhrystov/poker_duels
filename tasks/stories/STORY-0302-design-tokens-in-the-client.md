@@ -2,7 +2,7 @@
 id: STORY-0302
 title: The design tokens are the client's only colours and sizes
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, design, styling]

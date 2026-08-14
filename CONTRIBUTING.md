@@ -172,4 +172,6 @@ npm run check
 
 To start the development server—proxying `/api` and `/ws` to `localhost:8080`—run `npm run dev`.
 
+`web-client/src/styles/tokens.css` is a byte-for-byte copy of [`design/tokens/tokens.css`](design/tokens/tokens.css); edit the source under `design/` and re-copy it — a test in the client's suite fails when the two differ. Every colour and size in the client comes from a `--pd-` property or a Tailwind utility mapped to one; `npm run check` fails on a hex, `rgb()`, `hsl()` or `oklch()` literal written anywhere else. A value the design system does not have is an `EPIC-06` ticket, not a client change. See [`ADR-0024`](docs/adr/ADR-0024-design-follows-the-code-workflow.md).
+
 `./gradlew check` proves the JVM side only. The toolchains are separate on purpose (see [`ADR-0026`](docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md)), each with its own CI job.
