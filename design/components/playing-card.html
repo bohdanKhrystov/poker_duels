@@ -12,7 +12,6 @@
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
     --pd-card-face: #f3f0e9; --pd-suit-red: #bf3b30; --pd-suit-black: #26231f;
     --pd-card-back: #35567e;
-    --pd-radius-card: 6px; /* at the 96px reference width */
     --pd-radius-medium: 8px;
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
@@ -33,31 +32,36 @@
     font-size: 0.75rem; color: var(--pd-text-muted); }
   .spec .u { display: block; font-size: 0.75rem; color: var(--pd-text-faint); }
 
-  /* The card. One custom property --w drives every dimension: 5:7 ratio, radius
-   * 6px at the 96px reference, corner type scaling with the card. */
-  .pc { width: var(--w, 96px); aspect-ratio: 5 / 7; background: var(--pd-card-face);
-    border-radius: calc(var(--w, 96px) * 0.0625); position: relative;
-    color: var(--pd-suit-black); box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    display: inline-block; }
+  /* The card. One custom property --w drives every dimension. The three shapes
+   * share one geometry rule so ratio and corner can never drift apart; the
+   * 0.0625 radius factor is --pd-radius-card's 6px over the 96px reference. */
+  .pc, .back, .slot { width: var(--w, 96px); aspect-ratio: 5 / 7;
+    border-radius: calc(var(--w, 96px) * 0.0625);
+    display: inline-block; vertical-align: bottom; flex-shrink: 0; }
+  .pc { background: var(--pd-card-face); position: relative;
+    color: var(--pd-suit-black); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
   .pc.red { color: var(--pd-suit-red); }
-  .pc .ix { position: absolute; top: calc(var(--w) * 0.07); left: calc(var(--w) * 0.09);
-    line-height: 1; font-weight: 700; }
-  .pc .ix .r { font-size: calc(var(--w) * 0.24); display: block; }
-  .pc .ix .s { font-size: calc(var(--w) * 0.20); display: block; margin-top: calc(var(--w) * 0.02); }
-  .pc .pip { position: absolute; right: calc(var(--w) * 0.09); bottom: calc(var(--w) * 0.07);
-    font-size: calc(var(--w) * 0.34); line-height: 1; }
+  .pc .ix { position: absolute; top: calc(var(--w, 96px) * 0.07);
+    left: calc(var(--w, 96px) * 0.09); line-height: 1; font-weight: 700; }
+  .pc .ix .r { font-size: calc(var(--w, 96px) * 0.24); display: block; }
+  .pc .ix .s { font-size: calc(var(--w, 96px) * 0.20); display: block;
+    margin-top: calc(var(--w, 96px) * 0.02); }
+  .pc .pip { position: absolute; right: calc(var(--w, 96px) * 0.09);
+    bottom: calc(var(--w, 96px) * 0.07); font-size: calc(var(--w, 96px) * 0.34);
+    line-height: 1; }
+  /* one markup at every size — the mini carries its pip and this rule hides it */
   .pc.mini .pip { display: none; }
 
-  .back { width: var(--w, 96px); aspect-ratio: 5 / 7; border-radius: calc(var(--w, 96px) * 0.0625);
-    background-color: var(--pd-card-back);
+  .back { background-color: var(--pd-card-back);
     background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 7px);
-    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4);
-    display: inline-block; }
-  .slot { width: var(--w, 96px); aspect-ratio: 5 / 7; border-radius: calc(var(--w, 96px) * 0.0625);
-    border: 1.5px dashed var(--pd-hairline); display: inline-block; }
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4); }
+  .slot { border: 1px dashed var(--pd-hairline); }
+  /* contrast themes strip backgrounds and shadows: keep a hidden hand visible,
+   * and distinct from an undealt slot, with a real border */
+  @media (forced-colors: active) { .back { border: 1px solid CanvasText; } }
 
   .board-demo { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
-    border-radius: var(--pd-radius-medium); padding: 20px; display: inline-flex; gap: 10px; }
+    border-radius: var(--pd-radius-medium); padding: 20px; display: inline-flex; gap: 10px; flex-wrap: wrap; }
   .cap { font-size: 0.75rem; color: var(--pd-text-faint); margin-top: 12px; max-width: 56ch; }
 </style>
 </head>
@@ -72,15 +76,15 @@
   <h2>The three sizes</h2>
   <div class="row">
     <div class="spec">
-      <span class="pc mini" style="--w:40px"><span class="ix"><span class="r">A</span><span class="s">♠</span></span></span>
+      <span class="pc mini" style="--w:40px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip">♠︎</span></span>
       <span class="l">--w: 40px</span><span class="u">history, minis — corner only</span>
     </div>
     <div class="spec">
-      <span class="pc" style="--w:72px"><span class="ix"><span class="r">A</span><span class="s">♠</span></span><span class="pip">♠</span></span>
+      <span class="pc" style="--w:72px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip">♠︎</span></span>
       <span class="l">--w: 72px</span><span class="u">the board</span>
     </div>
     <div class="spec">
-      <span class="pc red" style="--w:96px"><span class="ix"><span class="r">A</span><span class="s">♥</span></span><span class="pip">♥</span></span>
+      <span class="pc red" style="--w:96px"><span class="ix"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip">♥︎</span></span>
       <span class="l">--w: 96px</span><span class="u">the hero's hole cards</span>
     </div>
   </div>
@@ -97,19 +101,19 @@
 
   <h2>Both colors, four suits</h2>
   <div class="row">
-    <span class="pc" style="--w:72px"><span class="ix"><span class="r">A</span><span class="s">♠</span></span><span class="pip">♠</span></span>
-    <span class="pc red" style="--w:72px"><span class="ix"><span class="r">K</span><span class="s">♥</span></span><span class="pip">♥</span></span>
-    <span class="pc red" style="--w:72px"><span class="ix"><span class="r">Q</span><span class="s">♦</span></span><span class="pip">♦</span></span>
-    <span class="pc" style="--w:72px"><span class="ix"><span class="r">J</span><span class="s">♣</span></span><span class="pip">♣</span></span>
+    <span class="pc" style="--w:72px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip">♠︎</span></span>
+    <span class="pc red" style="--w:72px"><span class="ix"><span class="r">K</span><span class="s">♥︎</span></span><span class="pip">♥︎</span></span>
+    <span class="pc red" style="--w:72px"><span class="ix"><span class="r">Q</span><span class="s">♦︎</span></span><span class="pip">♦︎</span></span>
+    <span class="pc" style="--w:72px"><span class="ix"><span class="r">J</span><span class="s">♣︎</span></span><span class="pip">♣︎</span></span>
   </div>
 
   <h2>On the table — a flop</h2>
   <div class="board-demo">
-    <span class="pc" style="--w:64px"><span class="ix"><span class="r">A</span><span class="s">♠</span></span><span class="pip">♠</span></span>
-    <span class="pc red" style="--w:64px"><span class="ix"><span class="r">7</span><span class="s">♦</span></span><span class="pip">♦</span></span>
-    <span class="pc" style="--w:64px"><span class="ix"><span class="r">2</span><span class="s">♣</span></span><span class="pip">♣</span></span>
-    <span class="slot" style="--w:64px"></span>
-    <span class="slot" style="--w:64px"></span>
+    <span class="pc" style="--w:72px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip">♠︎</span></span>
+    <span class="pc red" style="--w:72px"><span class="ix"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip">♦︎</span></span>
+    <span class="pc" style="--w:72px"><span class="ix"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip">♣︎</span></span>
+    <span class="slot" style="--w:72px"></span>
+    <span class="slot" style="--w:72px"></span>
   </div>
   <p class="cap">Typographic corners for now: the drawn SVG faces are STORY-0603's work and
   will replace the pip, never the geometry.</p>
