@@ -55,6 +55,9 @@
   .hero-h { font-size: 1.375rem; font-weight: 700; line-height: 1.15; }
   .sub { color: var(--pd-text-muted); margin-top: var(--pd-space-2); }
 
+  /* Screen-only glue: the lobby's standalone call-to-action — deliberately not the
+   * action bar's in-duel .btn (that one is flex: 1 inside a bar and shows focus via
+   * .focused); the flow screens share this treatment until it earns a component card. */
   .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
     line-height: var(--pd-lh-tight); padding: var(--pd-space-4) var(--pd-space-5);
     border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer;
@@ -89,10 +92,12 @@
   .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
     color: var(--pd-text); }
   /* Screen-only glue: the open seat is the plate's dashed twin — the .seat rules set
-   * its geometry, this override swaps paint only (the left edge keeps the reserved
-   * 2px turn-marker width), so a rival claiming the seat changes pixels, never
-   * layout: the card component's slot convention. */
-  .seat.seat-empty { background: none; border-style: dashed; border-color: var(--pd-hairline); }
+   * its geometry, this override swaps paint only. The dashes stay 1px on every edge
+   * (the turn-marker slot is never painted off-turn), and 1px border + 17px padding
+   * preserves the seat's 2px + 16px left metric, so a rival claiming the seat
+   * changes pixels, never layout: the card component's slot convention. */
+  .seat.seat-empty { background: none; border-style: dashed; border-color: var(--pd-hairline);
+    border-left-width: 1px; padding-left: 17px; }
   .seat.seat-empty .name { color: var(--pd-text-faint); }
 </style>
 </head>
