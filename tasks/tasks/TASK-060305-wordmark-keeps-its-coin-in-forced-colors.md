@@ -24,8 +24,9 @@ Forced-colors mode strips `background-image` (gradients included) and `box-shado
 so the wordmark's CSS coins — painted by exactly those two — vanish into empty
 spacers. `playing-card.html` guards this identical pitfall with a `CanvasText`
 border; `create-duel.html` and `duel-end.html` adopted the guard when their copies
-were reviewed, which makes the canonical the last card without one
-(verifier-confirmed inherited gap). The card has **five** coin instances — the four
+were reviewed. Two cards remain unguarded: this canonical, and the Colors card's
+swatches — the latter is `TASK-060117`'s, this ticket's is the canonical's (#474
+review corrected the inventory). The card has **five** coin instances — the four
 lockups plus the standalone 40px swatch in "The mark alone" — and all five vanish by
 the same mechanism (#474 review).
 
