@@ -36,9 +36,11 @@ proves itself or breaks.
   window: the plate goes faint with "reconnecting…" (`ADR-0013` vocabulary).
 - **Pot strip** between the seats: "Pot 2,450" in mono; "Blinds 75/150 · Hand 14" small
   muted beside it — hand 14 plays level-2 blinds per docs/duel-rules.md.
-- **Action bar**: at most three actions — Fold (ghost), Check/Call (ghost, amount shown),
-  Bet/Raise (accent fill, amount shown) — over a sizing row: min · ⅓ · ½ · pot · all-in
-  chips and a stepper. Disabled state is faint. Off turn, the bar is one line: "Waiting for
+- **Action bar**: at most three actions, exactly the engine's legal set (no fold exists
+  until something is owed) — Check/Call (ghost, amount shown), Bet/Raise (accent fill,
+  amount shown), Fold only when facing a bet — beneath a sizing row: min · ⅓ · ½ · pot ·
+  all-in chips and a stepper. Both rows are reserved in every state so the bar never
+  changes height; disabled is faint; off turn the action row carries "Waiting for
   ImKate…". Every control shows the focus outline.
 - **Screen**: one column, max 560px, the page *is* the table (no oval). Opponent top, board
   and pot center, hero's cards bottom, action bar pinned beneath. Works at 360px.
@@ -51,8 +53,8 @@ proves itself or breaks.
 | --- | --- | --- |
 | [TASK-060201](../tasks/TASK-060201-playing-card-component.md) | The playing-card component | done |
 | [TASK-060202](../tasks/TASK-060202-seat-plate-and-pot.md) | The seat plate and pot strip | done |
-| [TASK-060203](../tasks/TASK-060203-action-bar.md) | The action bar | ready |
-| [TASK-060204](../tasks/TASK-060204-duel-table-screen.md) | The duel table screen, in play | backlog |
+| [TASK-060203](../tasks/TASK-060203-action-bar.md) | The action bar | done |
+| [TASK-060204](../tasks/TASK-060204-duel-table-screen.md) | The duel table screen, in play | ready |
 | [TASK-060205](../tasks/TASK-060205-table-states.md) | The table's other moments — waiting and showdown | backlog |
 
 ## Acceptance criteria

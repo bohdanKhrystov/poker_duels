@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060203
 title: The action bar
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: S
