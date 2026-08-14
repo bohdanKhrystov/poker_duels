@@ -369,4 +369,82 @@ describe("the duel state", () => {
     });
     expect(stateAfterEvents.view?.seats[1]?.holeCards).toEqual([]);
   });
+
+  it("records the outcome exactly as the server sent it", () => {
+    const outcome = {
+      winner: 1,
+      handsPlayed: 12,
+      finalStacks: [0, 2000],
+    } as const;
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "DuelFinished",
+      outcome,
+    });
+    expect(state.outcome).toEqual(outcome);
+  });
+
+  it("clears any pending turn once the duel finishes", () => {
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 10,
+      minRaiseTo: 20,
+      allInTo: 100,
+    };
+    const stateWithPendingTurn = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "YourTurn",
+        handNumber: 1,
+        actionSequence: 1,
+        legalActions,
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithPendingTurn, {
+      type: "DuelFinished",
+      outcome: {
+        winner: 1,
+        handsPlayed: 12,
+        finalStacks: [0, 2000],
+      },
+    });
+    expect(state.pendingTurn).toBeNull();
+  });
+
+  it("leaves the view and narration untouched", () => {
+    const view = samplePlayerView();
+    const event1 = {
+      type: "ActionOn",
+      sequence: 1,
+      seat: 0,
+    } as const;
+    const event2 = {
+      type: "PlayerBet",
+      sequence: 2,
+      seat: 1,
+      to: 20,
+    } as const;
+    const stateWithView = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Snapshot",
+        view,
+      },
+    );
+    const stateWithEvents = duelState.applyServerMessage(stateWithView, {
+      type: "Events",
+      events: [event1, event2],
+    });
+    const state = duelState.applyServerMessage(stateWithEvents, {
+      type: "DuelFinished",
+      outcome: {
+        winner: 1,
+        handsPlayed: 12,
+        finalStacks: [0, 2000],
+      },
+    });
+    expect(state.view).toEqual(view);
+    expect(state.narration).toEqual([event1, event2]);
+  });
 });

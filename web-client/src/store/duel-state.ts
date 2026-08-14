@@ -57,6 +57,8 @@ export function applyServerMessage(
       return { ...state, pendingTurn: null, rejection: message.rejection };
     case "Events":
       return { ...state, narration: [...state.narration, ...message.events] };
+    case "DuelFinished":
+      return { ...state, outcome: message.outcome, pendingTurn: null };
     default:
       return state;
   }
