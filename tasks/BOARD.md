@@ -436,9 +436,10 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060304](tasks/TASK-060304-graphics-gallery-card.md) The graphics gallery card | S | **done** |
 | **[STORY-0604](stories/STORY-0604-lobby-and-flow.md)** Design the duel flow — create, join, result, rematch — *schema 2* | | | ready |
 | | [TASK-060401](tasks/TASK-060401-create-and-share-screen.md) The create-and-share screen | S | **done** |
-| | [TASK-060402](tasks/TASK-060402-join-screen.md) The join screen | S | ready |
+| | [TASK-060402](tasks/TASK-060402-join-screen.md) The join screen | S | **done** |
 | | [TASK-060403](tasks/TASK-060403-duel-end-screen.md) The duel-end screen | S | ready |
 | | [TASK-060404](tasks/TASK-060404-rematch-states-card.md) The rematch states | S | backlog |
+| | [TASK-060406](tasks/TASK-060406-the-typed-code-door.md) The typed-code door | S | ready |
 
 ---
 
