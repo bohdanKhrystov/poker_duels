@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030313
 title: The fake socket is a no-op when nothing is listening
 type: task
-status: ready
+status: done
 parent: STORY-0303
 module: web-client
 estimate: XS

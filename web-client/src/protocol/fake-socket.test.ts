@@ -40,4 +40,15 @@ describe("the fake socket", () => {
     expect(socket.closed).toBe(true);
     expect(called).toBe(true);
   });
+
+  it("opens without a handler and does nothing", () => {
+    const socket = new FakeSocket();
+    expect(() => socket.open()).not.toThrow();
+  });
+
+  it("receives without a handler and does nothing", () => {
+    const socket = new FakeSocket();
+    expect(() => socket.receive("{}")).not.toThrow();
+    expect(socket.sent).toEqual([]);
+  });
 });

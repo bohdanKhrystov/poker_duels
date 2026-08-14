@@ -2,7 +2,7 @@
 id: STORY-0303
 title: The typed socket — handshake and device identity
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, protocol, websocket]
