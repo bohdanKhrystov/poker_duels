@@ -1,0 +1,155 @@
+<!-- @dsCard group="Screens" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Table states — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent: #4d8bc9; --pd-win: #79a862;
+    --pd-card-face: #f3f0e9; --pd-suit-red: #bf3b30; --pd-suit-black: #26231f;
+    --pd-card-back: #35567e;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-radius-medium: 8px; --pd-radius-pill: 999px;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: 0.9375rem; line-height: 1.5; padding: 32px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-faint); margin-bottom: 8px; }
+  h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 32px; align-items: flex-start; }
+  .frame { width: 380px; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
+    padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .frame h2 { font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; margin-bottom: 4px; }
+
+  .seat { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-left: 2px solid transparent; border-radius: var(--pd-radius-medium);
+    padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+  .seat .name { font-weight: 500; }
+  .seat .status { display: block; font-size: 0.6875rem; line-height: 1.5;
+    min-height: 1.5em; margin-top: 2px; color: var(--pd-text-faint); }
+  .seat .status.turn { letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-accent); font-weight: 500; }
+  .seat .who { flex: 1; min-width: 0; }
+  .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  .seat.on-turn { border-left-color: var(--pd-accent); }
+  .dealer { font-family: var(--pd-font-mono); font-size: 0.6875rem; color: var(--pd-text-muted);
+    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill); padding: 2px 8px; }
+
+  .pc, .back, .slot { width: var(--w, 48px); aspect-ratio: 5 / 7;
+    border-radius: calc(var(--w, 48px) * 0.0625); display: inline-block;
+    vertical-align: bottom; flex-shrink: 0; }
+  .pc { background: var(--pd-card-face); position: relative; color: var(--pd-suit-black);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .pc.red { color: var(--pd-suit-red); }
+  .pc .ix { position: absolute; top: calc(var(--w, 48px) * 0.07);
+    left: calc(var(--w, 48px) * 0.10); line-height: 1; font-weight: 700; }
+  .pc .ix .r { font-size: calc(var(--w, 48px) * 0.26); display: block; }
+  .pc .ix .s { font-size: calc(var(--w, 48px) * 0.22); display: block;
+    margin-top: calc(var(--w, 48px) * 0.02); }
+  .back { background-color: var(--pd-card-back);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 7px);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4); }
+  .back.mucked { opacity: 0.45; }
+  .slot { border: 1px dashed var(--pd-hairline); }
+  .cards { display: flex; gap: 6px; justify-content: center; }
+  .muck-note { text-align: center; font-size: 0.8125rem; color: var(--pd-text-faint); }
+
+  .pot { display: flex; align-items: baseline; gap: 10px; justify-content: center; }
+  .pot .amount { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 1.125rem; }
+  .pot .meta { font-size: 0.8125rem; color: var(--pd-text-muted); }
+
+  .waitline { text-align: center; color: var(--pd-text-muted); background: var(--pd-surface);
+    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium); padding: 12px 0; }
+
+  .banner { text-align: center; padding: 10px 0 2px; }
+  .banner .win { color: var(--pd-win); font-weight: 700; font-size: 1.125rem; }
+  .banner .hand { color: var(--pd-text-muted); font-size: 0.8125rem; margin-top: 2px; }
+  .nextline { text-align: center; font-size: 0.8125rem; color: var(--pd-text-faint); }
+  .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
+    margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Screens</p>
+  <h1>Table states</h1>
+  <p class="lede">The table when it is not your move. Nothing glows, nothing animates in this
+  design — state is stated. The pot moves in numbers, the loser mucks, the next hand simply
+  arrives.</p>
+
+  <div class="frames">
+    <div class="frame">
+      <h2>Waiting — their turn, on the turn card</h2>
+      <div class="seat on-turn">
+        <span class="who"><span class="name">ImKate</span>
+          <span class="status turn">Their turn</span></span>
+        <span class="dealer">D</span>
+        <span class="chips">4,150</span>
+      </div>
+      <div class="cards">
+        <span class="back" style="--w:44px"></span>
+        <span class="back" style="--w:44px"></span>
+      </div>
+      <div class="cards">
+        <span class="pc" style="--w:48px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span></span>
+        <span class="pc red" style="--w:48px"><span class="ix"><span class="r">7</span><span class="s">♦︎</span></span></span>
+        <span class="pc" style="--w:48px"><span class="ix"><span class="r">2</span><span class="s">♣︎</span></span></span>
+        <span class="pc red" style="--w:48px"><span class="ix"><span class="r">J</span><span class="s">♥︎</span></span></span>
+        <span class="slot" style="--w:48px"></span>
+      </div>
+      <div class="pot"><span class="amount">Pot&nbsp;3,250</span>
+        <span class="meta">Blinds 75/150 · Hand 14</span></div>
+      <div class="cards">
+        <span class="pc red" style="--w:64px"><span class="ix"><span class="r">A</span><span class="s">♥︎</span></span></span>
+        <span class="pc" style="--w:64px"><span class="ix"><span class="r">K</span><span class="s">♠︎</span></span></span>
+      </div>
+      <div class="waitline">Waiting for ImKate…</div>
+      <p class="note">the bar keeps its place and height — no reflow when the turn returns</p>
+    </div>
+
+    <div class="frame">
+      <h2>Showdown — you win, the loser mucks</h2>
+      <div class="seat">
+        <span class="who"><span class="name">ImKate</span>
+          <span class="status"></span></span>
+        <span class="dealer">D</span>
+        <span class="chips">2,550</span>
+      </div>
+      <div class="cards">
+        <span class="back mucked" style="--w:44px"></span>
+        <span class="back mucked" style="--w:44px"></span>
+      </div>
+      <div class="muck-note">ImKate mucks</div>
+      <div class="cards">
+        <span class="pc" style="--w:48px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span></span>
+        <span class="pc red" style="--w:48px"><span class="ix"><span class="r">7</span><span class="s">♦︎</span></span></span>
+        <span class="pc" style="--w:48px"><span class="ix"><span class="r">2</span><span class="s">♣︎</span></span></span>
+        <span class="pc red" style="--w:48px"><span class="ix"><span class="r">J</span><span class="s">♥︎</span></span></span>
+        <span class="pc" style="--w:48px"><span class="ix"><span class="r">7</span><span class="s">♣︎</span></span></span>
+      </div>
+      <div class="banner">
+        <div class="win">You win 4,900</div>
+        <div class="hand">Two pair, aces and sevens</div>
+      </div>
+      <div class="cards">
+        <span class="pc red" style="--w:64px"><span class="ix"><span class="r">A</span><span class="s">♥︎</span></span></span>
+        <span class="pc" style="--w:64px"><span class="ix"><span class="r">K</span><span class="s">♠︎</span></span></span>
+      </div>
+      <div class="nextline">Dealing hand 15…</div>
+      <p class="note">ADR-0008: the loser's cards stay down, stated in words, dimmed on the felt-free table</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

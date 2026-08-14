@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060205
 title: The table's other moments — waiting and showdown
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: S
