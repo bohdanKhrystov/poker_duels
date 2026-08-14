@@ -4,6 +4,8 @@ import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
 
+const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
+
 function renderLobby(store: DuelStore = createDuelStore()): {
   send: ReturnType<typeof vi.fn>;
 } {
@@ -47,5 +49,35 @@ describe("the lobby", () => {
     fireEvent.click(screen.getByRole("button", { name: "Join the duel" }));
 
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("shows the room code the server named", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    expect(screen.getByText("ABCDEFGH")).toBeDefined();
+    expect(
+      screen.queryByRole("button", { name: "Create a duel room" }),
+    ).toBeNull();
+  });
+
+  it("shows an invite link carrying that code", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
+    expect(inviteLink.value).toBe("http://localhost:3000/?room=ABCDEFGH");
+  });
+
+  it("leaves the invite link selectable and focused for a copy by hand", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
+    expect(inviteLink.readOnly).toBe(true);
+    expect(document.activeElement).toBe(inviteLink);
   });
 });

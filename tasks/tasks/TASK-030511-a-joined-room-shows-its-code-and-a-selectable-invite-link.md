@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030511
 title: A joined room shows its code and a selectable invite link
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
