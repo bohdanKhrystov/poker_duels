@@ -46,6 +46,7 @@
   --pd-suit-red: #bf3b30;
   --pd-suit-black: #26231f;
   --pd-card-back: #35567e;
+  --pd-card-back-stripes: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 2px, transparent 2px 7px);
   --pd-coin: #9fb2c4;
   --pd-coin-deep: #64788c;
 
@@ -96,9 +97,11 @@
   /* Focus & elevation — one visible ring for every focusable thing, drawn as an
    * outline (`outline: var(--pd-focus); outline-offset: var(--pd-focus-offset)`):
    * the offset gap stays transparent on every surface, and outlines survive
-   * forced-colors mode where box-shadow rings vanish. One shadow, reserved for
-   * what floats (menus, dialogs); everything else is hairlines. */
+   * forced-colors mode where box-shadow rings vanish. Two shadows and no more:
+   * one for what floats (menus, dialogs), one for a playing card at rest;
+   * everything else is hairlines. */
   --pd-focus: 2px solid var(--pd-accent);
   --pd-focus-offset: 2px;
   --pd-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --pd-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
 }

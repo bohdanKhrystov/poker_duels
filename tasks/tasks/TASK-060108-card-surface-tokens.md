@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060108
 title: The card resting shadow and back texture become tokens
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
@@ -33,6 +33,7 @@ playing-card.html with nothing guarding agreement.
 | `design/tokens/tokens.css` | edit — add `--pd-shadow-card`, `--pd-card-back-stripes`; reword the one-shadow comment to name the exception |
 | `design/tokens/colors.html` | edit — consume the new tokens |
 | `design/components/playing-card.html` | edit — consume the new tokens |
+| `web-client/src/styles/tokens.css` | edit — CI-forced mirror of the canonical sheet (see Deviations) |
 
 ## Scope
 
@@ -57,3 +58,12 @@ None — the verify greps pin the new names at both birth and use, and check-dri
 ## Definition of done
 
 Standard, with `EPIC-06`'s recorded deviation: the review is visual, in claude.ai/design.
+
+## Deviations
+
+The real footprint was four files, not three: `web-client/src/styles/tokens.test.ts`
+pins the client's vendored sheet byte-identical to the canonical one, so any edit to
+`design/tokens/tokens.css` must copy the sheet to `web-client/src/styles/tokens.css`
+in the same PR (discovered on this ticket's first CI run). `files_touched` stays 3 —
+it is the planning estimate, and the schema caps it there. Every future tokens.css
+ticket must list the vendored sheet from the start.
