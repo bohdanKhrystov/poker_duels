@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060111
 title: The drift check compares values, not only names
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
