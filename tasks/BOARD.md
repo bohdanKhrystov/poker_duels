@@ -553,9 +553,16 @@ buildable — one store and one connection per tab, wired by a framework-free `b
 screen re-invents: `TASK-030507` mounts the tree in a real `<StrictMode>` and counts frames, and
 moving that send into a screen effect makes it send **three**.
 
-`STORY-0306` is next and is not yet split — run `/plan-story STORY-0306`. It replaces the one-line
-*"The duel has begun."* placeholder `TASK-030514` left with the table itself, reading the
-`PlayerView` the store already holds.
+`STORY-0306` is next and is split: seventeen tickets that replace the one-line *"The duel has
+begun."* placeholder `TASK-030514` left with the table itself. `TASK-030601` is startable now; the
+chain is strictly linear. It implements the owner's finished design — `design/screens/duel-table.html`
+and `duel-table-states.html` from `STORY-0602` — rather than inventing a layout.
+
+The story's own constraint is `CLAUDE.md`'s non-negotiable made executable: **the table renders the
+`PlayerView` and derives nothing from it.** No pot summed, no call priced, no street read off the
+board's length, no hand named, no winner declared. Two whole-table guards carry it — one extracts
+every digit run from the DOM and asserts each is a field of the view, the other pins all eight card
+`aria-label`s in document order — and ten enumerated violations were run against them.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -619,7 +626,24 @@ moving that send into a screen effect makes it send **three**.
 | | [TASK-030514](tasks/TASK-030514-the-first-snapshot-ends-the-wait-and-no-other-frame-does.md) The first Snapshot ends the wait, and no other frame does | S | **done** |
 | | [TASK-030515](tasks/TASK-030515-main-boots-the-client-once-and-renders-the-lobby.md) main.tsx boots the client once and renders the lobby under the provider | S | **done** |
 | | [TASK-030516](tasks/TASK-030516-one-connection-per-tab-booted-in-main-and-nowhere-else.md) One connection per tab, booted in main.tsx and nowhere else | S | **done** |
-| [STORY-0306](stories/STORY-0306-duel-table-screen.md) | The duel table renders a PlayerView | backlog |
+| **[STORY-0306](stories/STORY-0306-duel-table-screen.md)** The duel table renders a PlayerView — *schema 2* | | **ready** |
+| | [TASK-030601](tasks/TASK-030601-a-chip-amount-is-grouped-the-same-way-wherever-it-runs.md) A chip amount is grouped the same way wherever it runs | XS | ready |
+| | [TASK-030602](tasks/TASK-030602-a-card-string-splits-into-a-rank-character-and-a-suit-glyph.md) A card string splits into a rank character and a suit glyph | S | backlog |
+| | [TASK-030603](tasks/TASK-030603-a-card-says-its-name-aloud-and-carries-no-number.md) A card says its name aloud, and carries no number | S | backlog |
+| | [TASK-030604](tasks/TASK-030604-a-card-back-and-an-undealt-board-place.md) A card back and an undealt board place | S | backlog |
+| | [TASK-030605](tasks/TASK-030605-a-face-up-card-draws-its-rank-its-suit-and-the-suits-colour.md) A face-up card draws its rank, its suit and the suit's colour | S | backlog |
+| | [TASK-030606](tasks/TASK-030606-a-hand-is-two-places-wide-whatever-the-view-carries.md) A hand is two places wide, whatever the view carries | S | backlog |
+| | [TASK-030607](tasks/TASK-030607-the-board-is-five-places-wide-whatever-the-street.md) The board is five places wide, whatever the street | S | backlog |
+| | [TASK-030608](tasks/TASK-030608-a-playerview-fixture-with-every-field-the-wire-declares.md) A PlayerView fixture with every field the wire declares | S | backlog |
+| | [TASK-030609](tasks/TASK-030609-the-pot-strip-states-the-pot-the-blinds-the-hand-and-the-street.md) The pot strip states the pot, the blinds, the hand and the street | S | backlog |
+| | [TASK-030610](tasks/TASK-030610-a-seats-status-is-read-off-the-view-never-off-its-cards.md) A seat's status is read off the view, never off its cards | S | backlog |
+| | [TASK-030611](tasks/TASK-030611-the-seat-plate-shows-the-name-the-button-and-the-stack.md) The seat plate shows the name, the button and the stack | S | backlog |
+| | [TASK-030612](tasks/TASK-030612-the-duel-table-seats-the-views-two-players-around-the-board.md) The duel table seats the view's two players around the board | S | backlog |
+| | [TASK-030613](tasks/TASK-030613-your-hand-is-face-up-and-your-rivals-is-face-down.md) Your hand is face up and your rival's is face down | S | backlog |
+| | [TASK-030614](tasks/TASK-030614-the-reserved-line-states-what-the-rival-has-committed.md) The reserved line states what the rival has committed this street | XS | backlog |
+| | [TASK-030615](tasks/TASK-030615-the-table-shows-no-number-the-view-does-not-carry.md) The table shows no number the view does not carry | S | backlog |
+| | [TASK-030616](tasks/TASK-030616-the-table-names-no-card-the-view-did-not-send-and-no-hand.md) The table names no card the view did not send, and no hand | S | backlog |
+| | [TASK-030617](tasks/TASK-030617-the-lobby-hands-the-live-view-to-the-duel-table.md) The lobby hands the live view to the duel table | XS | backlog |
 | [STORY-0307](stories/STORY-0307-action-bar.md) | The action bar — acting on your turn | backlog |
 | [STORY-0308](stories/STORY-0308-result-screen.md) | The result screen — who won, and the coin | backlog |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen | **blocked** |
