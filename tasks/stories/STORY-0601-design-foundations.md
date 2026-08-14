@@ -58,9 +58,10 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 
 ## Acceptance criteria
 
-- [ ] The three foundation cards render in the claude.ai/design Design System pane, grouped
+- [x] The three foundation cards render in the claude.ai/design Design System pane, grouped
       Colors / Type / Spacing.
-- [ ] The human has seen them there and signed off on the direction.
+- [x] The human has seen them there and signed off on the direction.
+      *(Sign-off recorded 2026-08-15, in-session, after the 14-card sync.)*
 - [ ] `design/README.md` lets a fresh session repeat the sync without rediscovering anything.
 
 ## Out of scope

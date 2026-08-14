@@ -55,7 +55,12 @@ this story draws everything around it.
 
 - [ ] The story's five screens — create, join, duel-end, the rematch states, the
       typed-code door — render in the pane under **Screens**.
+      *(Ticks when the typed-code door — `TASK-060406` — joins the other four in the
+      pane.)*
 - [ ] The human has seen them there and signed off.
+      *(Partial record 2026-08-15: the four landed screens were signed off in-session
+      after the 14-card sync. Ticks only when the human has seen the fifth screen
+      there and signed it off.)*
 - [ ] The whole loop — create → join → play → end → rematch — can be walked card to card
       with no invented step.
 
