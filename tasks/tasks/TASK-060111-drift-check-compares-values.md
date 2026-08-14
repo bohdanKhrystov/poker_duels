@@ -51,7 +51,9 @@ whitespace-normalized outside quoted strings.
 ## Tests
 
 None — the verify runs the gate on the aligned tree and proves the negative path on a
-mutated scratch copy.
+mutated scratch copy. The copy is left for the OS to purge: agent permission profiles
+here deny `rm`, and a cleanup trap would stall an autonomous run on a prompt — ~100KB
+per run under `mktemp -d` is the recorded trade-off.
 
 ## Acceptance criteria
 

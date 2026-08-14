@@ -36,8 +36,9 @@ mechanism; the coin repeats the pattern).
   beside the literal, `pd-NAME (#hex)`, in its head comment; every `fill`/`stop-color`
   hex that mirrors a token appears in such a pair.
 - The gate extracts the pairs and fails when the sheet's `--pd-NAME` is missing or its
-  value differs from the cited hex; an SVG with zero pairs fails (the class must not be
-  invisible again).
+  value differs from the cited hex; an SVG with zero pairs fails, and so does finding
+  zero SVGs under `design/graphics/` — the class must not go invisible again, vacuously
+  or otherwise (suits.svg is merged, so at least one always exists).
 - Stock macOS/Linux tools; keep the self-test pattern — the verify's second command
   proves a re-hexed mirror fails.
 
@@ -50,7 +51,9 @@ mechanism; the coin repeats the pattern).
 ## Tests
 
 None — the verify runs the gate on the aligned tree and proves the negative path on a
-mutated scratch copy.
+mutated scratch copy. The copy is left for the OS to purge: agent permission profiles
+here deny `rm`, and a cleanup trap would stall an autonomous run on a prompt — ~100KB
+per run under `mktemp -d` is the recorded trade-off.
 
 ## Acceptance criteria
 
