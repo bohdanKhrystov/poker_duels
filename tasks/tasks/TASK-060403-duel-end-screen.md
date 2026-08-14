@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060403
 title: The duel-end screen
 type: task
-status: ready
+status: done
 parent: STORY-0604
 module: design
 estimate: S
