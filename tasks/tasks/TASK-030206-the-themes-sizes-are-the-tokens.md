@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030206
 title: The theme's type, spacing and radii are the tokens and nothing else
 type: task
-status: ready
+status: done
 parent: STORY-0302
 module: web-client
 estimate: S
@@ -119,6 +119,28 @@ custom properties, and Tailwind's own scales are gone.
 
 Watch it fail: delete `--spacing: initial;`, rebuild, and the `--spacing:` grep goes red because
 Tailwind emits its own base again. Restore it and say in the PR what you saw.
+
+### Amended by the driver: the `--spacing:` assertion is vacuous *here*, load-bearing later
+
+Same shape as `TASK-030205`'s `oklch(` assertion, and found the same way — by giving it something to
+trip on rather than trusting the green.
+
+`--spacing: initial;` **works**, proven four ways with a spacing utility temporarily in a component:
+
+| | `p-5` | `p-11` (off-ladder) | `--spacing:` in bundle |
+| --- | --- | --- | --- |
+| reset present | `padding:var(--spacing-5)` | **not emitted** | absent |
+| reset removed | emitted | `padding:calc(var(--spacing) * 11)` | `--spacing: .25rem` |
+
+So the reset is exactly what kills the off-ladder arithmetic, which is the property this ticket
+claims.
+
+But **as the codebase stands, no component uses a spacing utility**, so Tailwind prunes the
+multiplier either way and `grep -rl -e '--spacing:' dist/assets` returns 0 with *and* without the
+reset. This ticket's verify block therefore cannot fail on it.
+
+The assertion has been **moved to `TASK-030208`**, which applies `p-6` — the first spacing call site
+in the codebase. It joins the `oklch(` assertion moved there for the same reason.
 
 ## Acceptance criteria
 

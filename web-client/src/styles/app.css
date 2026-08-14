@@ -26,6 +26,51 @@
   --color-card-back: var(--pd-card-back);
   --color-coin: var(--pd-coin);
   --color-coin-deep: var(--pd-coin-deep);
+
+  --font-*: initial;
+  --font-ui: var(--pd-font-ui);
+  --font-mono: var(--pd-font-mono);
+
+  --text-*: initial;
+  --text-micro: var(--pd-fs-micro);
+  --text-small: var(--pd-fs-small);
+  --text-body: var(--pd-fs-body);
+  --text-large: var(--pd-fs-large);
+  --text-title: var(--pd-fs-title);
+  --text-display: var(--pd-fs-display);
+  --text-hero: var(--pd-fs-hero);
+
+  --font-weight-*: initial;
+  --font-weight-regular: var(--pd-weight-regular);
+  --font-weight-medium: var(--pd-weight-medium);
+  --font-weight-bold: var(--pd-weight-bold);
+
+  --leading-*: initial;
+  --leading-tight: var(--pd-lh-tight);
+  --leading-body: var(--pd-lh-body);
+
+  --tracking-*: initial;
+  --tracking-caps: var(--pd-track-caps);
+
+  --spacing: initial;
+  --spacing-1: var(--pd-space-1);
+  --spacing-2: var(--pd-space-2);
+  --spacing-3: var(--pd-space-3);
+  --spacing-4: var(--pd-space-4);
+  --spacing-5: var(--pd-space-5);
+  --spacing-6: var(--pd-space-6);
+  --spacing-7: var(--pd-space-7);
+  --spacing-8: var(--pd-space-8);
+  --spacing-9: var(--pd-space-9);
+
+  --radius-*: initial;
+  --radius-small: var(--pd-radius-small);
+  --radius-medium: var(--pd-radius-medium);
+  --radius-card: var(--pd-radius-card);
+  --radius-pill: var(--pd-radius-pill);
+
+  --shadow-*: initial;
+  --shadow-pop: var(--pd-shadow-pop);
 }
 
 /* Dark only. STORY-0601 scoped light out epic-wide: no light mode,
