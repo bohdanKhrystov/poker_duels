@@ -57,8 +57,8 @@ this order and no two are startable at once.
 | TASK-030501 | The store is subscribable, and notifies only when the state moved | done |
 | TASK-030502 | A Failure reaches the state through the reducer, and a join that lands clears it | done |
 | TASK-030503 | Boot joins the tab's one connection to its one store | done |
-| TASK-030504 | The code the URL carried joins on Welcome, exactly once | ready |
-| TASK-030505 | A component reads the store through useDuelState, and re-renders only when it moved | backlog |
+| TASK-030504 | The code the URL carried joins on Welcome, exactly once | done |
+| TASK-030505 | A component reads the store through useDuelState, and re-renders only when it moved | ready |
 | TASK-030506 | useSend hands a screen the boot-created send, and a missing provider says so | backlog |
 | TASK-030507 | A StrictMode double mount sends no second JoinRoom | backlog |
 | TASK-030508 | The framework-free store modules import nothing from react | backlog |

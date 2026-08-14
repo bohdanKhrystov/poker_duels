@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030504
 title: The code the URL carried joins on Welcome, exactly once
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S

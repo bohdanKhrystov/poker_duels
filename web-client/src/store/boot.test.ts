@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { bootDuelClient } from "./boot";
 import { FakeSocket } from "../protocol/fake-socket";
-import { openConnection, type ServerMessage } from "../protocol";
+import {
+  openConnection,
+  PROTOCOL_VERSION,
+  type ServerMessage,
+} from "../protocol";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -34,7 +38,13 @@ function inMemoryStorage(): Storage {
   };
 }
 
-function bootOverFakeSocket() {
+const WELCOME = JSON.stringify({
+  type: "Welcome",
+  deviceId: "d-1",
+  protocolVersion: PROTOCOL_VERSION,
+});
+
+function bootOverFakeSocket(joinRoomCode: string | null = null) {
   const socket = new FakeSocket();
   const connect = vi.fn((onMessage: (message: ServerMessage) => void) =>
     openConnection({
@@ -43,12 +53,16 @@ function bootOverFakeSocket() {
       onMessage,
     }),
   );
-  const client = bootDuelClient({ connect });
+  const client = bootDuelClient({ connect, joinRoomCode });
   return { socket, client, connect };
 }
 
 function sentFrames(socket: FakeSocket): { type: string; code?: string }[] {
   return socket.sent.map((frame) => JSON.parse(frame));
+}
+
+function sentJoinRooms(socket: FakeSocket): { type: string; code?: string }[] {
+  return sentFrames(socket).filter((frame) => frame.type === "JoinRoom");
 }
 
 describe("booting the duel client", () => {
@@ -72,5 +86,40 @@ describe("booting the duel client", () => {
     const frames = sentFrames(socket);
     expect(frames).toHaveLength(2);
     expect(frames[1]).toEqual({ type: "CreateRoom" });
+  });
+
+  it("sends exactly one JoinRoom when Welcome arrives with a code in hand", () => {
+    const { socket } = bootOverFakeSocket("ABCDEFGH");
+    socket.open();
+    socket.receive(WELCOME);
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ABCDEFGH" },
+    ]);
+  });
+
+  it("sends no JoinRoom when the tab opened without a code", () => {
+    const { socket } = bootOverFakeSocket(null);
+    socket.open();
+    socket.receive(WELCOME);
+    expect(sentJoinRooms(socket)).toEqual([]);
+  });
+
+  it("sends nothing but Hello before Welcome", () => {
+    const { socket } = bootOverFakeSocket("ABCDEFGH");
+    socket.open();
+    expect(sentFrames(socket).map((frame) => frame.type)).toEqual(["Hello"]);
+  });
+
+  it("leaves the socket open and quiet after a refusal", () => {
+    const { socket, client } = bootOverFakeSocket("ABCDEFGH");
+    socket.open();
+    socket.receive(WELCOME);
+    socket.receive('{"type":"Failure","error":"UNKNOWN_ROOM"}');
+    expect(sentFrames(socket).map((frame) => frame.type)).toEqual([
+      "Hello",
+      "JoinRoom",
+    ]);
+    expect(socket.closed).toBe(false);
+    expect(client.store.getState().refusal).toBe("UNKNOWN_ROOM");
   });
 });
