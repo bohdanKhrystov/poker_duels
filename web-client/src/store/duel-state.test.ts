@@ -1,6 +1,37 @@
 import { describe, expect, it } from "vitest";
-import type { LegalActions } from "../protocol";
+import type { LegalActions, PlayerView, SeatView } from "../protocol";
 import * as duelState from "./duel-state";
+
+function sampleSeat(overrides: Partial<SeatView> = {}): SeatView {
+  return {
+    index: 0,
+    stack: 500,
+    committedThisStreet: 0,
+    committedThisHand: 0,
+    hasFolded: false,
+    isAllIn: false,
+    holeCards: [],
+    ...overrides,
+  };
+}
+
+function samplePlayerView(overrides: Partial<PlayerView> = {}): PlayerView {
+  return {
+    viewerSeat: 0,
+    handNumber: 1,
+    buttonSeat: 0,
+    street: "PREFLOP",
+    board: { cards: [] },
+    pot: 30,
+    betToMatch: 20,
+    minRaiseTo: 40,
+    seatToAct: 0,
+    smallBlind: 10,
+    bigBlind: 20,
+    seats: [sampleSeat({ index: 0 }), sampleSeat({ index: 1 })],
+    ...overrides,
+  };
+}
 
 describe("the duel state", () => {
   it("starts with nothing the server has not sent", () => {
@@ -107,5 +138,84 @@ describe("the duel state", () => {
       actionSequence: 3,
       legalActions: secondLegalActions,
     });
+  });
+
+  it("replaces the view wholesale", () => {
+    const view = samplePlayerView();
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Snapshot",
+      view,
+    });
+    expect(state.view).toEqual(view);
+  });
+
+  it("clears a pending turn set by an earlier YourTurn", () => {
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 10,
+      minRaiseTo: 20,
+      allInTo: 100,
+    };
+    const stateWithPendingTurn = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "YourTurn",
+        handNumber: 1,
+        actionSequence: 1,
+        legalActions,
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithPendingTurn, {
+      type: "Snapshot",
+      view: samplePlayerView(),
+    });
+    expect(state.pendingTurn).toBeNull();
+  });
+
+  it("keeps mySeat from RoomJoined when a snapshot's viewerSeat disagrees", () => {
+    const stateWithSeat = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RoomJoined",
+        code: "ABCD",
+        seat: 0,
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithSeat, {
+      type: "Snapshot",
+      view: samplePlayerView({ viewerSeat: 1 }),
+    });
+    expect(state.mySeat).toBe(0);
+    expect(state.view?.viewerSeat).toBe(1);
+  });
+
+  it("keeps an opponent's hole cards empty until the snapshot reveals them", () => {
+    const view = samplePlayerView({
+      seats: [
+        sampleSeat({ index: 0 }),
+        sampleSeat({ index: 1, holeCards: [] }),
+      ],
+    });
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Snapshot",
+      view,
+    });
+    expect(state.view?.seats[1]?.holeCards).toEqual([]);
+  });
+
+  it("reflects a seat's hole cards exactly once the snapshot reveals them", () => {
+    const view = samplePlayerView({
+      seats: [
+        sampleSeat({ index: 0 }),
+        sampleSeat({ index: 1, holeCards: ["2c", "7h"] }),
+      ],
+    });
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Snapshot",
+      view,
+    });
+    expect(state.view?.seats[1]?.holeCards).toEqual(["2c", "7h"]);
   });
 });

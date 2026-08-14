@@ -579,8 +579,8 @@ failed join.
 | **[STORY-0304](stories/STORY-0304-client-store.md)** The store — state is the last frame the server sent — *schema 2* | | ready |
 | | [TASK-030401](tasks/TASK-030401-the-store-starts-empty-and-room-joined-sets-the-seat.md) The store starts empty, and RoomJoined sets the seat and room code | S | **done** |
 | | [TASK-030402](tasks/TASK-030402-your-turn-sets-a-pending-turn-identified-verbatim.md) YourTurn sets a pending turn identified verbatim by the message | S | **done** |
-| | [TASK-030403](tasks/TASK-030403-a-snapshot-replaces-the-view-and-a-disagreeing-seat-is-defined.md) A Snapshot replaces the view wholesale, and a disagreeing seat is a defined outcome | S | ready |
-| | [TASK-030404](tasks/TASK-030404-a-rejected-clears-the-pending-turn-and-leaves-the-view-alone.md) A Rejected clears the pending turn and leaves the view untouched | XS | backlog |
+| | [TASK-030403](tasks/TASK-030403-a-snapshot-replaces-the-view-and-a-disagreeing-seat-is-defined.md) A Snapshot replaces the view wholesale, and a disagreeing seat is a defined outcome | S | **done** |
+| | [TASK-030404](tasks/TASK-030404-a-rejected-clears-the-pending-turn-and-leaves-the-view-alone.md) A Rejected clears the pending turn and leaves the view untouched | XS | ready |
 | | [TASK-030405](tasks/TASK-030405-events-narrate-and-change-no-field-a-snapshot-established.md) Events narrate, and change no field a Snapshot established | S | backlog |
 | | [TASK-030406](tasks/TASK-030406-duel-finished-records-the-outcome-and-clears-the-pending-turn.md) DuelFinished records the outcome verbatim and clears the pending turn | XS | backlog |
 | [STORY-0305](stories/STORY-0305-lobby-and-room-link.md) | The lobby — create a room, join by code, share the link | backlog |
