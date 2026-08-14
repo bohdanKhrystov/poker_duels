@@ -414,7 +414,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060106](tasks/TASK-060106-token-name-drift-check.md) The token-name drift check | S | **done** |
 | | [TASK-060107](tasks/TASK-060107-align-the-shipped-foundation-cards.md) Align the shipped foundation cards | S | **done** |
 | | [TASK-060108](tasks/TASK-060108-card-surface-tokens.md) The card resting shadow and back texture become tokens | S | ready |
-| | [TASK-060110](tasks/TASK-060110-no-bare-suit-anywhere.md) No bare suit glyph anywhere, enforced in the drift check | XS | ready |
+| | [TASK-060110](tasks/TASK-060110-no-bare-suit-anywhere.md) No bare suit glyph anywhere, enforced in the drift check | XS | **done** |
 | **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |
 | | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | **done** |
 | | [TASK-060202](tasks/TASK-060202-seat-plate-and-pot.md) The seat plate and pot strip | S | **done** |

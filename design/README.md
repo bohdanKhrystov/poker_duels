@@ -25,8 +25,12 @@ A preview card is one self-contained HTML file the claude.ai/design pane renders
 - All styles inline, no request to anywhere (`grep http` must find nothing).
 - A `<title>` names the card.
 - Cards inline copies of the token values they show (self-containment demands it);
-  `tokens.css` stays canonical, and each card's ticket `verify:` greps pin the token names,
-  so a rename that forgets a card fails instead of drifting.
+  `tokens.css` stays canonical, and `./design/check-drift.sh` fails any card that mentions
+  a `--pd-` name the sheet does not declare, so a rename that forgets a card fails
+  instead of drifting.
+- Suit glyphs are written as the literal character plus a literal U+FE0E text-presentation
+  selector (`♠︎`), never bare and never as HTML entities — bare glyphs invite OEM emoji
+  repaints, and entity spellings hide from the source-level sweep in `check-drift.sh`.
 
 ## The cloud mirror
 
