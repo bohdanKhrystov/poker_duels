@@ -1,4 +1,4 @@
-import { readDeviceId } from "./device-id";
+import { readDeviceId, writeDeviceId } from "./device-id";
 import { decodeServerMessage, encodeClientMessage } from "./frames";
 import type {
   ClientMessage,
@@ -30,12 +30,9 @@ export interface Connection {
  * carrying the device id this browser holds (or `null` on a first visit) and
  * the protocol version this client speaks. It also forwards every inbound
  * frame the codec can decode to `options.onMessage` and drops the rest —
- * reconnection and identity persistence still belong to a later ticket.
+ * reconnection still belongs to a later ticket.
  */
 export function openConnection(options: ConnectionOptions): Connection {
-  // TASK-030309 and TASK-030310 reassign this once `Ready`/`Refused`/
-  // `Outdated` arrive; `prefer-const` cannot see across tickets.
-  // eslint-disable-next-line prefer-const
   let status: ConnectionStatus = { kind: "connecting" };
 
   options.socket.onopen = (): void => {
@@ -56,6 +53,14 @@ export function openConnection(options: ConnectionOptions): Connection {
       // after every transition.
       console.warn("protocol: dropped an unreadable frame", event.data);
       return;
+    }
+    if (message.type === "Welcome") {
+      if (message.protocolVersion === PROTOCOL_VERSION) {
+        writeDeviceId(options.storage, message.deviceId);
+        status = { kind: "ready", deviceId: message.deviceId };
+      } else {
+        status = { kind: "outdated" };
+      }
     }
     options.onMessage(message);
   };

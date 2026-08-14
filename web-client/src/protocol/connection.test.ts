@@ -179,4 +179,66 @@ describe("the connection", () => {
 
     expect(messages).toEqual([{ type: "RoomJoined", code: "ABCD", seat: 0 }]);
   });
+
+  it("remembers the device id the server issued", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive('{"type":"Welcome","deviceId":"d-7","protocolVersion":2}');
+
+    expect(connection.status).toEqual({ kind: "ready", deviceId: "d-7" });
+    expect(storage.getItem("pd.deviceId")).toBe("d-7");
+  });
+
+  it("hands the welcome to the listener too", () => {
+    const messages: ServerMessage[] = [];
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: (message) => messages.push(message),
+    });
+
+    socket.receive('{"type":"Welcome","deviceId":"d-7","protocolVersion":2}');
+
+    expect(messages).toEqual([
+      { type: "Welcome", deviceId: "d-7", protocolVersion: 2 },
+    ]);
+  });
+
+  it("sends the remembered device id on the next connection", () => {
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive('{"type":"Welcome","deviceId":"d-7","protocolVersion":2}');
+
+    const secondSocket = new FakeSocket();
+    openConnection({
+      socket: secondSocket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    secondSocket.open();
+
+    expect(JSON.parse(secondSocket.sent[0]).deviceId).toBe("d-7");
+  });
+
+  it("refuses to trust a welcome at another version", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive('{"type":"Welcome","deviceId":"d-7","protocolVersion":3}');
+
+    expect(connection.status).toEqual({ kind: "outdated" });
+    expect(storage.getItem("pd.deviceId")).toBeNull();
+  });
 });

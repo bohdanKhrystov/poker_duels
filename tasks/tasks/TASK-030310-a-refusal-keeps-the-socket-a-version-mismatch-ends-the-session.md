@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030310
 title: A refusal keeps the socket, and a version mismatch ends the connection for good
 type: task
-status: backlog
+status: ready
 parent: STORY-0303
 module: web-client
 estimate: S
