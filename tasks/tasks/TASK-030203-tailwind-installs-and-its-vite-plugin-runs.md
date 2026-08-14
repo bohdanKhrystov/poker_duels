@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030203
 title: Tailwind installs from the lockfile and its Vite plugin runs
 type: task
-status: ready
+status: done
 parent: STORY-0302
 module: web-client
 estimate: XS
