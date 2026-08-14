@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030307
 title: On open the client says Hello with the device id it holds
 type: task
-status: backlog
+status: ready
 parent: STORY-0303
 module: web-client
 estimate: S

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030306
 title: A WebSocket double the handshake tests drive by hand
 type: task
-status: ready
+status: done
 parent: STORY-0303
 module: web-client
 estimate: XS
