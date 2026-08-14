@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060303
 title: The wordmark card
 type: task
-status: ready
+status: done
 parent: STORY-0603
 module: design
 estimate: S
@@ -52,3 +52,12 @@ None — structural gates in `verify:`.
 ## Definition of done
 
 Standard, with `EPIC-06`'s recorded deviation: the review is visual, in claude.ai/design.
+
+## Deviations
+
+The #448 review corrected the card before merge: the lockup baseline-aligns (the coin
+opts back to center) so it drops into running text; the flex gap alone owns the word
+spacing (the &nbsp; doubled it); the mono caption stack becomes the full --pd-font-mono
+token; the light-surface muted color reuses --pd-text-faint instead of a hex born on the
+card; the eyebrow regains weight 500; one .coin rule owns the gradient for both coins on
+the card; and the glint moves to 36% 30% to match duel-coin.svg's cx/cy exactly.

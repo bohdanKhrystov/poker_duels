@@ -1,0 +1,77 @@
+<!-- @dsCard group="Brand" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wordmark — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024).
+   * The wordmark is deliberately a CSS lockup of the system stack plus the coin mark —
+   * no bespoke lettering, no webfont: the brand is the quiet, not a typeface. */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-coin: #9fb2c4; --pd-coin-deep: #64788c;
+    --pd-card-face: #f3f0e9; --pd-text-inverse: #131211;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-track-caps: 0.08em;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: 0.9375rem; line-height: 1.5; padding: 32px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: 0.6875rem; font-weight: 500; letter-spacing: var(--pd-track-caps);
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: 8px; }
+  h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  h2 { font-size: 0.6875rem; letter-spacing: var(--pd-track-caps); text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; margin: 40px 0 14px; }
+  .l { font-family: var(--pd-font-mono); font-size: 0.75rem; color: var(--pd-text-faint);
+    margin-top: 10px; }
+
+  /* One gradient for every coin on the card; the glint sits at 36% 30% because the
+   * canonical duel-coin.svg lights from cx=.36 cy=.30 — the two renderings must match. */
+  .coin { display: inline-block; border-radius: 999px;
+    background: radial-gradient(circle at 36% 30%, #b8c6d6, var(--pd-coin) 55%, var(--pd-coin-deep)); }
+  /* Baseline-align so the lockup drops into running text; the coin opts back to center. */
+  .mark { display: inline-flex; align-items: baseline; gap: 0.42em; font-weight: 700;
+    letter-spacing: 0.01em; }
+  .mark .coin { width: 0.92em; height: 0.92em; align-self: center;
+    box-shadow: inset 0 0 0 0.06em rgba(255,255,255,0.25); }
+  .mark .duels { color: var(--pd-text-muted); font-weight: 500; }
+
+  .row { display: flex; gap: 40px; align-items: baseline; flex-wrap: wrap; }
+  .onlight { background: var(--pd-card-face); color: var(--pd-text-inverse);
+    padding: 20px 28px; border-radius: 8px; display: inline-block; }
+  /* Muted-on-light reuses the sheet's faint token — no color is born on this card. */
+  .onlight .duels { color: var(--pd-text-faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Brand</p>
+  <h1>Wordmark</h1>
+  <p class="lede">A lockup, not a logotype: the product name in the same stack the interface
+  uses, the duel coin standing as the mark. Bold "Poker", quiet "Duels" — the pair carries
+  the voice: a game first, a ranking second.</p>
+
+  <h2>Primary, on the table</h2>
+  <div class="row">
+    <span class="mark" style="font-size:2.5rem"><span class="coin"></span>Poker<span class="duels">Duels</span></span>
+    <span class="mark" style="font-size:1.375rem"><span class="coin"></span>Poker<span class="duels">Duels</span></span>
+    <span class="mark" style="font-size:0.9375rem"><span class="coin"></span>Poker<span class="duels">Duels</span></span>
+  </div>
+  <p class="l">the coin scales with the type: 0.92em, always the leftmost element</p>
+
+  <h2>On a light surface</h2>
+  <span class="onlight"><span class="mark" style="font-size:1.875rem"><span class="coin"></span>Poker<span class="duels">Duels</span></span></span>
+  <p class="l">inverse text on card-face; the coin needs no swap — steel reads on both</p>
+
+  <h2>The mark alone</h2>
+  <span class="coin" style="width:40px;height:40px;box-shadow:inset 0 0 0 2px rgba(255,255,255,0.25)"></span>
+  <p class="l">favicon and app-icon duty falls to the full coin SVG (graphics/duel-coin.svg)</p>
+</div>
+</body>
+</html>
