@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030205
 title: The theme's colours are the tokens and nothing else
 type: task
-status: ready
+status: done
 parent: STORY-0302
 module: web-client
 estimate: S
@@ -125,6 +125,30 @@ fails it, and so does a reference to a token that does not exist.
 Watch it fail twice: replace one value with its hex from `tokens.css`, run `npm run check`, and both
 the theme test and the colour-literal guard go red. Then delete `--color-*: initial;`, rebuild, and
 the `oklch(` grep goes red. Restore both and say in the PR what each failure said.
+
+### Amended by the driver: the `oklch(` assertion is correct but vacuous *today*
+
+The coder reported this rather than letting it pass, and it was reproduced independently.
+
+`grep -rl 'oklch(' web-client/dist/assets | grep -c . | grep -qx 0` passes **whether or not
+`--color-*: initial;` is present**, because no component in this codebase yet uses any Tailwind
+colour utility, so Tailwind's usage-based pruning already drops the entire default palette. The
+built CSS is byte-identical with and without the reset line.
+
+The reset **is** load-bearing — that was verified, not assumed. With `text-red-500` temporarily
+placed in a real bundled component:
+
+| | `oklch(` in `dist/assets` |
+| --- | --- |
+| reset present | **0 files** — the class compiles to nothing, it is genuinely invalid |
+| reset removed | **1 file**, containing `oklch(63.7% .237 25.331)` |
+
+So the mechanism works and the block is right. What is untrue is that *this ticket's verify block*
+guards it. It cannot, because the guard needs a colour-utility call site and this ticket introduces
+none.
+
+The assertion has therefore been **moved to `TASK-030208`**, which is the first ticket to use a
+colour utility (`bg-bg`). It becomes a real regression guard there and nowhere earlier.
 
 ## Acceptance criteria
 

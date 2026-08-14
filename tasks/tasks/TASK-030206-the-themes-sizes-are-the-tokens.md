@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030206
 title: The theme's type, spacing and radii are the tokens and nothing else
 type: task
-status: backlog
+status: ready
 parent: STORY-0302
 module: web-client
 estimate: S
