@@ -37,7 +37,9 @@
   /* The bar's two rows exist in every state, so its height cannot change:
    * the sizing row reserves --pd-space-7 even hidden, and the action row's
    * height comes from tokens (body size × tight leading + space-4 padding).
-   * States swap visibility and color, never layout. */
+   * The hidden row must also MIRROR the live row's content — same chips, the
+   * last live stepper amount — because at wrap widths only identical content
+   * wraps identically. States swap visibility and color, never layout. */
   .bar { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
     border-radius: var(--pd-radius-medium); padding: var(--pd-space-4); max-width: 460px; }
   .sizing { display: flex; gap: var(--pd-space-2); align-items: center;
@@ -140,9 +142,9 @@
     </div>
     <div class="waiting">Waiting for ImKate<span class="dots">…</span></div>
   </div>
-  <span class="l">.off — the hidden sizing row mirrors the live content, stepper amount
-  included at the live digit width, so the rows wrap at the same points and the bar's
-  height matches the live bar at every viewport</span>
+  <span class="l">.off — the hidden sizing row mirrors the live content, and the client
+  keeps the stepper amount it last showed, so the rows wrap at the same points and the
+  bar's height matches the bar it replaced at every viewport</span>
 </div>
 </body>
 </html>
