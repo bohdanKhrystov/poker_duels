@@ -555,7 +555,7 @@ fail the client's typecheck rather than a browser's handshake.
 | | [TASK-030207](tasks/TASK-030207-prettier-sorts-tailwind-classes.md) Prettier sorts Tailwind classes and still never reads the generated file | XS | **done** |
 | | [TASK-030208](tasks/TASK-030208-the-app-root-is-styled-through-the-theme.md) The app root is styled through the theme, proven by a test | XS | **done** |
 | | [TASK-030209](tasks/TASK-030209-contributing-says-the-token-sheet-is-a-copy.md) CONTRIBUTING says the client's token sheet is a copy | XS | **done** |
-| **[STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md)** The typed socket — handshake and device identity — *schema 2* | | **ready** |
+| **[STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md)** The typed socket — handshake and device identity — *schema 2* | | **done** |
 | | [TASK-030301](tasks/TASK-030301-nothing-outside-the-protocol-module-declares-a-wire-type.md) Nothing outside src/protocol declares a wire type or touches a raw frame | S | **done** |
 | | [TASK-030302](tasks/TASK-030302-the-protocol-version-is-typed-against-the-generated-alias.md) The protocol version the client sends is typed against the generated alias | XS | **done** |
 | | [TASK-030303](tasks/TASK-030303-the-frame-codec-decodes-only-what-the-union-names.md) The frame codec decodes only what the generated union names | S | **done** |
@@ -568,7 +568,7 @@ fail the client's typecheck rather than a browser's handshake.
 | | [TASK-030310](tasks/TASK-030310-a-refusal-keeps-the-socket-a-version-mismatch-ends-the-session.md) A refusal keeps the socket, and a version mismatch ends the connection for good | S | **done** |
 | | [TASK-030311](tasks/TASK-030311-one-call-opens-the-duel-socket-with-no-network-in-the-test.md) One call opens the duel socket, and the test that proves it touches no network | S | **done** |
 | | [TASK-030312](tasks/TASK-030312-the-protocol-document-says-what-a-client-cannot-read.md) docs/protocol.md says what a client does with a frame it cannot read | XS | **done** |
-| | [TASK-030313](tasks/TASK-030313-the-fake-socket-is-a-no-op-when-nothing-is-listening.md) The fake socket is a no-op when nothing is listening | XS | ready |
+| | [TASK-030313](tasks/TASK-030313-the-fake-socket-is-a-no-op-when-nothing-is-listening.md) The fake socket is a no-op when nothing is listening | XS | **done** |
 | [STORY-0304](stories/STORY-0304-client-store.md) | The store — state is the last frame the server sent | backlog |
 | [STORY-0305](stories/STORY-0305-lobby-and-room-link.md) | The lobby — create a room, join by code, share the link | backlog |
 | [STORY-0306](stories/STORY-0306-duel-table-screen.md) | The duel table renders a PlayerView | backlog |
