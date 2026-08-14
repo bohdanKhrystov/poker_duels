@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030304
 title: The device id lives under one storage key this module owns
 type: task
-status: backlog
+status: ready
 parent: STORY-0303
 module: web-client
 estimate: XS
