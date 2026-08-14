@@ -2,7 +2,7 @@
 id: STORY-0211
 title: The read path — my coins and my recent duels
 type: story
-status: backlog
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, http, profiles, coins]

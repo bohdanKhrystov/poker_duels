@@ -2,7 +2,10 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` is **done**. `EPIC-02` in flight: `STORY-0201`, `STORY-0202` (bar one follow-up) and `STORY-0204` are done — the server boots, the protocol is defined, and per-recipient projection is guarded by two adversarial properties. `EPIC-06` (design) opened early and runs in parallel — disjoint files, see `ADR-0024`.
+**Now:** `EPIC-01` and `EPIC-02` are **done** — the engine, and a duel server that plays a whole
+duel over two real sockets against PostgreSQL, pays the winner a coin, and survives a disconnect.
+`EPIC-06` (design) runs in parallel on disjoint files, see `ADR-0023`. `EPIC-03` (web client) is
+next and not yet written.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -14,7 +17,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | --- | --- | --- | --- |
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
-| [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **ready** | v0.1 |
+| [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **done** | v0.1 |
 | EPIC-03 | Web client — table, lobby, duel flow | *not written* | v0.1 |
 | EPIC-04 | Identity and profiles | *not written* | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
@@ -236,7 +239,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020211](tasks/TASK-020211-no-forbidden-payload.md) No seed goes out, no card comes in | S | **done** |
 | | [TASK-020212](tasks/TASK-020212-protocol-doc.md) docs/protocol.md and the test that keeps it honest | S | **done** |
 | | [TASK-020213](tasks/TASK-020213-frame-limits.md) A frame too large or too deeply nested is refused before parsing | S | **done** |
-| **[STORY-0203](stories/STORY-0203-generated-typescript-protocol.md)** Generated TypeScript protocol types — *schema 2* | | ready |
+| **[STORY-0203](stories/STORY-0203-generated-typescript-protocol.md)** Generated TypeScript protocol types — *schema 2* | | **done** |
 | | [TASK-020301](tasks/TASK-020301-descriptor-to-typescript-type-reference.md) Map a serial descriptor to a TypeScript type reference | S | **done** |
 | | [TASK-020302](tasks/TASK-020302-interface-for-a-class-descriptor.md) Emit a TypeScript interface for a class or object descriptor | S | **done** |
 | | [TASK-020303](tasks/TASK-020303-unions-for-enums-and-sealed-hierarchies.md) Emit a TypeScript union for an enum and for a sealed hierarchy | S | **done** |
@@ -247,7 +250,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020308](tasks/TASK-020308-verify-task-fails-the-build-on-drift.md) verifyProtocolTypes byte-compares on every check | S | **done** |
 | | [TASK-020309](tasks/TASK-020309-ci-typechecks-the-generated-file.md) CI typechecks the generated file under strict | XS | **done** |
 | | [TASK-020310](tasks/TASK-020310-the-protocol-document-names-the-generated-file.md) The protocol document names the generated file and its command | XS | **done** |
-| **[STORY-0205](stories/STORY-0205-sessions-and-socket-lifecycle.md)** Sessions and the socket lifecycle — *schema 2* | | ready |
+| **[STORY-0205](stories/STORY-0205-sessions-and-socket-lifecycle.md)** Sessions and the socket lifecycle — *schema 2* | | **done** |
 | | [TASK-020501](tasks/TASK-020501-websocket-test-client.md) Put the WebSocket test client and coroutines on the poker-server classpath | S | **done** |
 | | [TASK-020502](tasks/TASK-020502-player-directory-port.md) Declare the PlayerDirectory port and an in-memory implementation for tests | S | **done** |
 | | [TASK-020503](tasks/TASK-020503-device-id-source.md) Mint opaque device ids from an injected secure random source | S | **done** |
@@ -261,7 +264,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020511](tasks/TASK-020511-second-socket-policy.md) Decide and enforce what a second socket for one device id does | S | **done** |
 | | [TASK-020512](tasks/TASK-020512-socket-uses-configured-limits.md) The socket enforces the operator's frame limits | S | **done** |
 | | [TASK-020513](tasks/TASK-020513-the-concurrency-test-races-on-its-own-list.md) The concurrency test races on its own result list | XS | **done** |
-| **[STORY-0206](stories/STORY-0206-rooms-and-matchmaking.md)** Rooms, join links and rematch — *schema 2* | | ready |
+| **[STORY-0206](stories/STORY-0206-rooms-and-matchmaking.md)** Rooms, join links and rematch — *schema 2* | | **done** |
 | | [TASK-020601](tasks/TASK-020601-server-clock.md) Declare the injectable ServerClock and a test clock that never sleeps | XS | **done** |
 | | [TASK-020602](tasks/TASK-020602-room-code-type.md) A RoomCode value type that only accepts a human-typable code | S | **done** |
 | | [TASK-020603](tasks/TASK-020603-room-code-source.md) Mint room codes from an injected secure source, never from the engine Rng | S | **done** |
@@ -277,7 +280,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020614](tasks/TASK-020614-concurrent-room-creation.md) Two concurrent creators never receive the same room code | S | **done** |
 | | [TASK-020613](tasks/TASK-020613-room-timeouts-in-server-config.md) Read the room idle limits from ServerConfig instead of a literal | S | **done** |
 | | [TASK-020615](tasks/TASK-020615-room-registry-finish-is-called-by-nobody.md) RoomRegistry.finish is called by no production code — remove it or say why it stays | XS | **done** |
-| [STORY-0207](stories/STORY-0207-duel-runner.md) | The duel runner — the engine behind the socket | backlog |
+| [STORY-0207](stories/STORY-0207-duel-runner.md) | The duel runner — the engine behind the socket | **done** |
 | | [TASK-020701](tasks/TASK-020701-hand-seed-source.md) Draw each hand's seed from an injected secure source, never from the engine Rng | XS | **done** |
 | | [TASK-020702](tasks/TASK-020702-per-seat-broadcast.md) Every outbound frame is addressed to one seat and built by the engine's projection layer | S | **done** |
 | | [TASK-020703](tasks/TASK-020703-your-turn-frame.md) The seat on turn gets YourTurn with the engine's legal actions, and the other seat gets nothing | S | **done** |
@@ -312,7 +315,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020715](tasks/TASK-020715-an-act-frame-reaches-the-duel.md) An Act arriving on a socket reaches the duel, and the duel's frames reach both sockets | S | **done** |
 | | [TASK-020733](tasks/TASK-020733-a-rematch-hands-back-its-opening-frames.md) A rematch hands back its opening frames, the way seating does | S | **done** |
 | | [TASK-020734](tasks/TASK-020734-the-rejoin-path-cannot-assume-the-room-survived.md) The rejoin path cannot assume the room survived its own refusal | XS | **done** |
-| **[STORY-0208](stories/STORY-0208-disconnect-grace-period.md)** Disconnect, grace period and reconnect — *schema 2* | | ready |
+| **[STORY-0208](stories/STORY-0208-disconnect-grace-period.md)** Disconnect, grace period and reconnect — *schema 2* | | **done** |
 | | [TASK-020801](tasks/TASK-020801-room-timeouts-carry-the-grace-window.md) RoomTimeouts carries the disconnect grace window | XS | **done** |
 | | [TASK-020802](tasks/TASK-020802-the-grace-window-is-configuration.md) The grace window is configuration, read once in ServerConfig | XS | **done** |
 | | [TASK-020803](tasks/TASK-020803-a-paused-duel-has-its-own-protocol-error.md) A paused duel has its own protocol error, and the document lists it | XS | **done** |
@@ -341,7 +344,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-020909](tasks/TASK-020909-local-development-database.md) A local database for a fresh clone | S | **done** |
 | | [TASK-020910](tasks/TASK-020910-pin-docker-api-version.md) The test JVM speaks a Docker API version modern daemons accept | XS | **done** |
 | | [TASK-020911](tasks/TASK-020911-expose-container-coordinates.md) The test harness hands out database coordinates without a cast | XS | **done** |
-| [STORY-0210](stories/STORY-0210-profiles-results-and-coins.md) | Profiles, duel results and duel coins | backlog |
+| [STORY-0210](stories/STORY-0210-profiles-results-and-coins.md) | Profiles, duel results and duel coins | **done** |
 | | [TASK-021001](tasks/TASK-021001-coin-award-rule.md) Map a DuelOutcome to two signed coin deltas, in one function | S | **done** |
 | | [TASK-021002](tasks/TASK-021002-finished-duel-record.md) Describe a finished duel as the write path's input | S | **done** |
 | | [TASK-021003](tasks/TASK-021003-postgres-player-directory.md) Resolve a device id to a durable profile, creating it at most once | S | **done** |
@@ -357,7 +360,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021013](tasks/TASK-021013-the-store-satisfies-the-sink.md) The Postgres store satisfies the DuelResultSink port | S | **done** |
 | | [TASK-021014](tasks/TASK-021014-hands-played-column.md) The duel table records how many hands were played | S | **done** |
 | | [TASK-021015](tasks/TASK-021015-migration-tests-live-with-migrations.md) The migration tests live with the migrations | XS | **done** |
-| [STORY-0211](stories/STORY-0211-read-path-coins-and-recent-duels.md) | The read path — my coins and my recent duels | backlog |
+| [STORY-0211](stories/STORY-0211-read-path-coins-and-recent-duels.md) | The read path — my coins and my recent duels | **done** |
 | | [TASK-021101](tasks/TASK-021101-read-path-response-types.md) Declare the profile and duel-summary response types | S | **done** |
 | | [TASK-021102](tasks/TASK-021102-outcome-from-a-stored-delta.md) Read won, lost or drew off a stored coin delta | XS | **done** |
 | | [TASK-021103](tasks/TASK-021103-recent-duels-limit.md) Parse, default and cap the recent-duels limit | XS | **done** |
@@ -373,7 +376,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021113](tasks/TASK-021113-one-json-for-the-wire.md) The HTTP routes encode with the same Json the tests assert against | XS | ~~dropped~~ |
 | | [TASK-021114](tasks/TASK-021114-hands-played-reaches-the-client.md) Hands played reaches the client instead of null | S | **done** |
 | | [TASK-021115](tasks/TASK-021115-the-document-test-checks-claims-not-words.md) The protocol document says handsPlayed is null, and its test cannot tell | S | **done** |
-| **[STORY-0212](stories/STORY-0212-end-to-end-duel-over-a-socket.md)** A real duel over a real socket, end to end — *schema 2* | | ready |
+| **[STORY-0212](stories/STORY-0212-end-to-end-duel-over-a-socket.md)** A real duel over a real socket, end to end — *schema 2* | | **done** |
 | | [TASK-021201](tasks/TASK-021201-the-servers-real-collaborators.md) Build the server's real collaborators from config and a DataSource | S | **done** |
 | | [TASK-021202](tasks/TASK-021202-the-composition-root-installs-every-route.md) One composition root installs the socket and both HTTP routes, and main calls it | S | **done** |
 | | [TASK-021203](tasks/TASK-021203-the-route-kdocs-name-their-production-installer.md) Both route KDocs name their production installer instead of a story that has landed | XS | **done** |
@@ -453,14 +456,34 @@ Actions minutes both come free there, so `TASK-000102` is done rather than dropp
 Updated as epics close. See [`docs/workflow.md`](../docs/workflow.md) — these are only worth
 recording if they are recorded when unflattering.
 
-| | EPIC-01 | Total |
-| --- | --- | --- |
-| Tasks completed | 131 / 131 | 132 / 134 |
-| Accepted on first review | — | — |
-| Average review iterations | — | — |
-| Test lines / production lines | — | — |
-| Tasks re-scoped mid-flight | — | — |
-| Reviews skipped (must stay 0) | 0 | 0 |
-| Tickets promoted haiku → sonnet | 1 | 1 |
-| Average coder dispatches per ticket | — | — |
-| Manual human edits | — | — |
+| | EPIC-01 | EPIC-02 | Total |
+| --- | --- | --- | --- |
+| Tasks completed | 131 / 131 | 173 / 174 | 305 / 308 |
+| Accepted on first review | — | 50 / 65 † | — |
+| Average review iterations | — | 1.25 † | — |
+| Test lines / production lines | — | 3.09 : 1 | — |
+| Tasks re-scoped mid-flight | — | 3 † | — |
+| Reviews skipped (must stay 0) | 0 | **0** | **0** |
+| Tickets promoted haiku → sonnet | 1 | 0 † | 1 |
+| Average coder dispatches per ticket | — | 1.25 † | — |
+| Manual human edits | — | 0 † | — |
+
+† Measured over the **65 tickets of the 2026-08-13/14 unattended run**, the only stretch of
+`EPIC-02` with a kept ledger. The earlier ~109 tickets ran in sessions that recorded no per-ticket
+data, so these are honest for the run and silent about the rest rather than extrapolated. One
+ticket was dropped (`TASK-021113`); `TASK-000102` is counted under `EPIC-00`.
+
+**What the run cost, and where.** Fifteen of the 65 needed a second coder dispatch. Only two were
+coder error in production code — the rest were a stale spec, a defect the coder was right to refuse
+to paper over, or a test that passed for the wrong reason. Three tickets were re-scoped mid-flight
+(`TASK-020719` split when it hit the three-file cap, `TASK-020808` amended twice after `ADR-0023`
+invalidated its assertions, `TASK-021214` narrowed when its target landed first). Four tickets were
+created from review findings and all four merged; two live bugs were found and fixed that no test
+had been able to see.
+
+**The recurring defect was never a broken feature.** It was an assertion that could not fail: a
+vacuous ordering check, a `--tests` filter matching a sibling suite, a regression test whose fixture
+did not control the race it guarded, a KDoc whose greps passed while the sentence was false, a
+`logger.error` with no backend behind it. Eight such themes are recorded in
+[`docs/workflow.md`](../docs/workflow.md); the cheapest fix in every case was naming the failure mode
+in the coder's brief before the work started.

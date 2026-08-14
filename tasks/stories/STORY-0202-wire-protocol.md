@@ -2,7 +2,7 @@
 id: STORY-0202
 title: The wire protocol, defined once in Kotlin
 type: story
-status: backlog
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, protocol, serialization]

@@ -2,7 +2,7 @@
 id: STORY-0210
 title: Profiles, duel results and duel coins
 type: story
-status: backlog
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, persistence, profiles, coins]

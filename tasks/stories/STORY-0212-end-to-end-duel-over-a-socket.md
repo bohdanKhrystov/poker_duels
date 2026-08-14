@@ -2,7 +2,7 @@
 id: STORY-0212
 title: A real duel over a real socket, end to end
 type: story
-status: backlog
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, testing, end-to-end]

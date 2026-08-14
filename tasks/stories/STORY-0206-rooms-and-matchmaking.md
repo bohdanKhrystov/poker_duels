@@ -2,7 +2,7 @@
 id: STORY-0206
 title: Rooms, join links and rematch
 type: story
-status: ready
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, rooms, matchmaking]

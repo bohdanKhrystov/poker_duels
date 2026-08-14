@@ -2,7 +2,7 @@
 id: STORY-0203
 title: Generated TypeScript protocol types
 type: story
-status: ready
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [protocol, typescript, tooling]
