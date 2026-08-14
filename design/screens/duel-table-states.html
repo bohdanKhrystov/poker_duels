@@ -138,7 +138,7 @@
 <div class="wrap">
   <p class="eyebrow">Poker Duels · Screens</p>
   <h1>Table states</h1>
-  <p class="lede">The same table at two later moments of the same hand. Every slot — the
+  <p class="lede">The same table at later moments of the same hand — the turn-card wait, then its two possible endings: the showdown branch and the fold branch. Every slot — the
   opponent's hidden hand, the bet/muck line, the pot row, the bar — exists in every state,
   so nothing appears, disappears, or moves; only text and card faces change.</p>
 
@@ -250,6 +250,61 @@
       <p class="note">ADR-0008: the loser's cards stay down, dimmed, stated in words in the
       reserved line; the pot row becomes the banner without changing shape — the amount is
       mono like every chip number</p>
+    </div>
+
+    <div class="frame">
+      <h2>Fold — you win, nobody shows</h2>
+      <div class="tbl">
+        <div class="opp">
+          <div class="seat">
+            <span class="who"><span class="name">ImKate</span>
+              <span class="status"></span></span>
+            <span class="dealer">D</span>
+            <span class="chips">3,750</span>
+          </div>
+          <div class="oppcards">
+            <span class="back mucked" style="--w:40px" role="img" aria-label="ImKate's folded hand, not shown"></span>
+            <span class="back mucked" style="--w:40px" aria-hidden="true"></span>
+          </div>
+          <div class="bet-line">ImKate folds</div>
+        </div>
+        <div class="center">
+          <div class="pot">
+            <span class="amount win">You win 3,250</span>
+            <span class="meta">Nobody shows — your uncalled 800 returns</span>
+          </div>
+          <div class="board">
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="seven of diamonds"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="two of clubs"><span class="ix" aria-hidden="true"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="jack of hearts"><span class="ix" aria-hidden="true"><span class="r">J</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="slot" style="--w:var(--bw)" role="img" aria-label="river card, not dealt — the hand ended first"></span>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="hole">
+            <span class="pc red" style="--w:96px" role="img" aria-label="ace of hearts"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="pc" style="--w:96px" role="img" aria-label="king of spades"><span class="ix" aria-hidden="true"><span class="r">K</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+          </div>
+          <div class="seat">
+            <span class="who"><span class="name">You</span>
+              <span class="status"></span></span>
+            <span class="chips">13,000</span>
+          </div>
+          <div class="bar off">
+            <div class="sizing">
+              <button class="chip">min</button><button class="chip">⅓</button>
+              <button class="chip">½</button><button class="chip">pot</button>
+              <button class="chip">all-in</button>
+              <span class="stepper"><button aria-label="decrease the bet">−</button><span>3,250</span><button aria-label="increase the bet">+</button></span>
+            </div>
+            <div class="waiting">Dealing hand 15<span class="dots">…</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="note">ADR-0008: a fold winner shows nothing — the banner carries the amount
+      and no hand name, your cards stay yours alone, and the folded hand takes the same
+      dimmed treatment as a muck</p>
     </div>
   </div>
 </div>
