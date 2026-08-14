@@ -459,12 +459,12 @@ parallel with `EPIC-02`; no shared file.
 mucks). `DEC-005` → [`ADR-0009`](../docs/adr/ADR-0009-match-events-are-their-own-hierarchy.md)
 (match events are their own hierarchy). `DEC-006` →
 [`ADR-0010`](../docs/adr/ADR-0010-engine-takes-a-serialization-dependency.md) (the engine may
-`DEC-019` →
+depend on `kotlinx.serialization`; `checkNoDependencies` is narrowed, not deleted). `DEC-019` →
 [`ADR-0025`](../docs/adr/ADR-0025-one-ticker-coroutine-drives-both-sweeps.md) (one ticker
 coroutine on the application scope drives both sweeps, on a configured fixed delay). `DEC-020` →
 [`ADR-0023`](../docs/adr/ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) (an absent seat
 checks when nothing is owed, folds when facing a bet; `ADR-0013` narrowed, `poker-engine`
-unchanged). depend on `kotlinx.serialization`; `checkNoDependencies` is narrowed, not deleted). `DEC-007` →
+unchanged). `DEC-007` →
 [`ADR-0020`](../docs/adr/ADR-0020-typescript-protocol-from-serial-descriptors.md) (an emitter we
 own over the serial descriptors), which unblocks `STORY-0203`.
 
