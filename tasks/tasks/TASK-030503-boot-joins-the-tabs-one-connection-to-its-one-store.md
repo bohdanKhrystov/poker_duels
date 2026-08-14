@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030503
 title: Boot joins the tab's one connection to its one store
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
