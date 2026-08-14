@@ -16,6 +16,7 @@
     --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
     --pd-on-accent: #ffffff;
     --pd-card-face: #f3f0e9; --pd-suit-red: #bf3b30; --pd-suit-black: #26231f;
+    --pd-card-back: #35567e;
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
     --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
@@ -55,6 +56,7 @@
   /* screen-only glue: the opponent block keeps seat and bet line one unit, and the
    * bet line's height is reserved even with no bet live, so nothing below shifts */
   .opp { display: flex; flex-direction: column; gap: var(--pd-space-2); }
+  .oppcards { display: flex; gap: var(--pd-space-2); justify-content: center; }
   .bet-line { text-align: center; font-size: var(--pd-fs-small);
     min-height: calc(var(--pd-fs-small) * var(--pd-lh-body)); color: var(--pd-text-muted); }
   .bet-line .amt { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
@@ -73,7 +75,7 @@
    * screen); --bw sizes the board row from the column itself, not the viewport */
   .board { display: flex; gap: var(--pd-space-3);
     --bw: clamp(48px, calc((100cqi - 64px) / 5), 72px); }
-  .pc, .slot { width: var(--w, 96px); aspect-ratio: 5 / 7;
+  .pc, .back, .slot { width: var(--w, 96px); aspect-ratio: 5 / 7;
     border-radius: calc(var(--w, 96px) * 0.0625);
     display: inline-block; vertical-align: bottom; flex-shrink: 0; }
   .pc { background: var(--pd-card-face); position: relative; color: var(--pd-suit-black);
@@ -88,6 +90,10 @@
     bottom: calc(var(--w, 96px) * 0.07); font-size: calc(var(--w, 96px) * 0.34);
     line-height: 1; }
   .slot { border: 1px dashed var(--pd-hairline); }
+  .back { background-color: var(--pd-card-back);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 7px);
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4); }
+  @media (forced-colors: active) { .back { border: 1px solid CanvasText; } }
 
   .hero { display: flex; flex-direction: column; gap: var(--pd-space-4); }
   .hole { display: flex; gap: var(--pd-space-3); justify-content: center; }
@@ -128,6 +134,10 @@
         <span class="status"></span></span>
       <span class="dealer">D</span>
       <span class="chips">4,150</span>
+    </div>
+    <div class="oppcards">
+      <span class="back" style="--w:40px" role="img" aria-label="ImKate's hidden hand"></span>
+      <span class="back" style="--w:40px" aria-hidden="true"></span>
     </div>
     <div class="bet-line">bets <span class="amt">400</span></div>
   </div>

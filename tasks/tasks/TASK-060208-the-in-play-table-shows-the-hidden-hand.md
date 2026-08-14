@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060208
 title: The in-play table shows the hidden hand
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: XS

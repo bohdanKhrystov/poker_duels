@@ -58,7 +58,7 @@ proves itself or breaks.
 | [TASK-060205](../tasks/TASK-060205-table-states.md) | The table's other moments — waiting and showdown | done |
 | [TASK-060206](../tasks/TASK-060206-action-bar-off-state-parity.md) | The off-state's hidden sizing row mirrors the live content | done |
 | [TASK-060207](../tasks/TASK-060207-the-fold-ending.md) | The fold ending — a win with nothing shown | ready |
-| [TASK-060208](../tasks/TASK-060208-the-in-play-table-shows-the-hidden-hand.md) | The in-play table shows the hidden hand | ready |
+| [TASK-060208](../tasks/TASK-060208-the-in-play-table-shows-the-hidden-hand.md) | The in-play table shows the hidden hand | done |
 | [TASK-060209](../tasks/TASK-060209-the-states-mirrors-use-the-live-bars-elements.md) | The states' hidden mirrors use the live bar's elements | ready |
 
 ## Acceptance criteria
