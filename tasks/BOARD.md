@@ -418,6 +418,10 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060111](tasks/TASK-060111-drift-check-compares-values.md) The drift check compares values, not only names | S | ready |
 | | [TASK-060112](tasks/TASK-060112-drift-gate-reads-the-graphics.md) The drift gate reads the graphics | S | backlog |
 | | [TASK-060113](tasks/TASK-060113-inlined-symbols-match-their-canonicals.md) The gallery's inlined symbols match their canonicals | S | backlog |
+| | [TASK-060114](tasks/TASK-060114-lockup-constants-join-the-drift-gate.md) The lockup constants join the drift gate | S | backlog |
+| | [TASK-060115](tasks/TASK-060115-the-coin-glint-is-born-on-the-sheet.md) The coin glint is born on the sheet | XS | ready |
+| | [TASK-060116](tasks/TASK-060116-the-css-coins-consume-the-glint-token.md) The CSS coins consume the glint token | XS | backlog |
+| | [TASK-060117](tasks/TASK-060117-the-colors-cards-coin-matches-the-canonical.md) The Colors card's coin matches the canonical | XS | backlog |
 | **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |
 | | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | **done** |
 | | [TASK-060202](tasks/TASK-060202-seat-plate-and-pot.md) The seat plate and pot strip | S | **done** |
@@ -434,6 +438,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060302](tasks/TASK-060302-duel-coin.md) The duel coin | S | **done** |
 | | [TASK-060303](tasks/TASK-060303-wordmark-card.md) The wordmark card | S | **done** |
 | | [TASK-060304](tasks/TASK-060304-graphics-gallery-card.md) The graphics gallery card | S | **done** |
+| | [TASK-060305](tasks/TASK-060305-wordmark-keeps-its-coin-in-forced-colors.md) The wordmark keeps its coin in forced colors | XS | ready |
 | **[STORY-0604](stories/STORY-0604-lobby-and-flow.md)** Design the duel flow — create, join, result, rematch — *schema 2* | | | ready |
 | | [TASK-060401](tasks/TASK-060401-create-and-share-screen.md) The create-and-share screen | S | **done** |
 | | [TASK-060402](tasks/TASK-060402-join-screen.md) The join screen | S | **done** |
@@ -454,6 +459,7 @@ parallel with `EPIC-02`; no shared file.
 | DEC-030 | **Product.** After a player attaches a credential, may the device id that created the profile still sign in without it — forever, until revoked, or not at all? ADR-0030 never rewrites `player.device_id`, so today it is *forever* by construction | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before the account screens ship |
 | DEC-031 | **Product.** May a player ever sign in with a third-party account (Google, Apple), or is a handle and password the only credential? ADR-0027's `credential.kind` makes adding one additive, so this blocks nothing today | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before v0.2 ships accounts |
 | DEC-029 | **Product.** May a player delete their account, and what happens to the opponent's history lines that reference it? Nothing is built either way; the question is asked now so the credential schema does not silently foreclose an answer, as `ADR-0021` refused to do with `UNIQUE` | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before STORY-0403 lands the schema |
+| DEC-032 | **Technical.** Do a component's internal em ratios — the wordmark lockup's 0.92/0.42/0.01/0.06 — fall under `ADR-0024 §2`'s "every size is born in the sheet", or may they live in the canonical card, pinned by a drift gate ([`TASK-060114`](tasks/TASK-060114-lockup-constants-join-the-drift-gate.md)'s approach)? Raised by the #474 review; the glint half of the same finding was settled by conforming (`TASK-060115`) | [`STORY-0601`](stories/STORY-0601-design-foundations.md) | before TASK-060114 starts |
 
 **Answered.** `DEC-021` → [`ADR-0024`](../docs/adr/ADR-0024-design-follows-the-code-workflow.md)
 (design follows the code workflow, in the repository, mirrored to claude.ai/design).
