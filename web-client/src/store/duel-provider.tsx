@@ -45,3 +45,8 @@ export function useDuelState(): DuelState {
   const { store } = useDuelClient();
   return useSyncExternalStore(store.subscribe, store.getState);
 }
+
+/** The boot-created send. Screens call it from event handlers, never effects. */
+export function useSend(): (message: ClientMessage) => void {
+  return useDuelClient().send;
+}
