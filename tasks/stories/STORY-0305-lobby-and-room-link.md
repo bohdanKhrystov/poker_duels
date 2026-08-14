@@ -69,7 +69,7 @@ this order and no two are startable at once.
 | TASK-030513 | UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries | done |
 | TASK-030514 | The first Snapshot ends the wait, and no other frame does | done |
 | TASK-030515 | main.tsx boots the client once and renders the lobby under the provider | done |
-| TASK-030516 | One connection per tab, booted in main.tsx and nowhere else | ready |
+| TASK-030516 | One connection per tab, booted in main.tsx and nowhere else | done |
 
 ## Acceptance criteria
 

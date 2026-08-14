@@ -618,7 +618,7 @@ at all.
 | | [TASK-030513](tasks/TASK-030513-unknown-room-and-room-full-each-get-their-own-message.md) UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries | S | **done** |
 | | [TASK-030514](tasks/TASK-030514-the-first-snapshot-ends-the-wait-and-no-other-frame-does.md) The first Snapshot ends the wait, and no other frame does | S | **done** |
 | | [TASK-030515](tasks/TASK-030515-main-boots-the-client-once-and-renders-the-lobby.md) main.tsx boots the client once and renders the lobby under the provider | S | **done** |
-| | [TASK-030516](tasks/TASK-030516-one-connection-per-tab-booted-in-main-and-nowhere-else.md) One connection per tab, booted in main.tsx and nowhere else | S | ready |
+| | [TASK-030516](tasks/TASK-030516-one-connection-per-tab-booted-in-main-and-nowhere-else.md) One connection per tab, booted in main.tsx and nowhere else | S | **done** |
 | [STORY-0306](stories/STORY-0306-duel-table-screen.md) | The duel table renders a PlayerView | backlog |
 | [STORY-0307](stories/STORY-0307-action-bar.md) | The action bar — acting on your turn | backlog |
 | [STORY-0308](stories/STORY-0308-result-screen.md) | The result screen — who won, and the coin | backlog |
