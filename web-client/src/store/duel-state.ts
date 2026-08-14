@@ -55,6 +55,8 @@ export function applyServerMessage(
       return { ...state, view: message.view, pendingTurn: null };
     case "Rejected":
       return { ...state, pendingTurn: null, rejection: message.rejection };
+    case "Events":
+      return { ...state, narration: [...state.narration, ...message.events] };
     default:
       return state;
   }

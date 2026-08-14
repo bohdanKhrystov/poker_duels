@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030405
 title: Events narrate, and change no field a Snapshot established
 type: task
-status: ready
+status: done
 parent: STORY-0304
 module: web-client
 estimate: S
