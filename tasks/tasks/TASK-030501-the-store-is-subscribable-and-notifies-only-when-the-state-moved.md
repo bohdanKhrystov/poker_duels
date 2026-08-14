@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030501
 title: The store is subscribable, and notifies only when the state moved
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
