@@ -2,7 +2,7 @@
 id: STORY-0304
 title: The store — state is the last frame the server sent
 type: story
-status: backlog
+status: ready
 parent: EPIC-03
 module: web-client
 labels: [client, state, protocol]
@@ -52,7 +52,18 @@ screens the rule lives in three places and one of them is wrong.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0304`.* | — |
+| [TASK-030401](../tasks/TASK-030401-the-store-starts-empty-and-room-joined-sets-the-seat.md) | The store starts empty, and RoomJoined sets the seat and room code | ready |
+| [TASK-030402](../tasks/TASK-030402-your-turn-sets-a-pending-turn-identified-verbatim.md) | YourTurn sets a pending turn identified verbatim by the message | backlog |
+| [TASK-030403](../tasks/TASK-030403-a-snapshot-replaces-the-view-and-a-disagreeing-seat-is-defined.md) | A Snapshot replaces the view wholesale, and a disagreeing seat is a defined outcome | backlog |
+| [TASK-030404](../tasks/TASK-030404-a-rejected-clears-the-pending-turn-and-leaves-the-view-alone.md) | A Rejected clears the pending turn and leaves the view untouched | backlog |
+| [TASK-030405](../tasks/TASK-030405-events-narrate-and-change-no-field-a-snapshot-established.md) | Events narrate, and change no field a Snapshot established | backlog |
+| [TASK-030406](../tasks/TASK-030406-duel-finished-records-the-outcome-and-clears-the-pending-turn.md) | DuelFinished records the outcome verbatim and clears the pending turn | backlog |
+
+`Failure` is named in the Goal paragraph above but is deliberately not split into a ticket here:
+no acceptance criterion or design note gives it a shape, and `UNKNOWN_ROOM` / `ROOM_FULL` read
+most naturally as the lobby's concern once `STORY-0305` exists to have an opinion about them. Not
+a `DEC-`, since nothing here is ambiguous — it is simply out of this story's precisely specified
+scope; picking it up is a ticket for whichever story first needs it.
 
 ## Acceptance criteria
 
