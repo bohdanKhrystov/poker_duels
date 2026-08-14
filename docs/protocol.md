@@ -91,6 +91,20 @@ Each duel summary in the array contains:
 - `DUEL_PAUSED`: The duel is paused; your action was not applied. The duel resumes when the opponent returns or when their grace period expires. Do not re-send your action.
 - `FRAME_LIMIT_EXCEEDED`: The frame was longer, or nested more deeply, than the server accepts, and was refused before parsing.
 
+## What a client does with a frame it cannot read
+
+The web client receives frames in exactly one place: `web-client/src/protocol/`. No other file in the client declares a wire type or touches the WebSocket.
+
+When the client encounters a frame or version it cannot process, it behaves as follows:
+
+- **Unrecognizable frames.** A frame that is not JSON, is not an object, carries no `type` field, or carries a `type` the client's generated union does not name is logged with `console.warn` and dropped. Nothing is rendered; instead, the next `Snapshot` from the server re-establishes the truth. This is why the server sends a `Snapshot` after every duel transition.
+
+- **Failures.** A `Failure` message never closes the socket. The client surfaces the `ProtocolError` verbatim to the user — including any error code its generated union does not yet recognize — and keeps the connection open.
+
+- **Terminal conditions.** `VERSION_MISMATCH`, and a `Welcome` whose `protocolVersion` does not match the version the client sent, are terminal for the connection. The client sends nothing further, does not close the socket, and does not reconnect. A mismatched `Welcome` is not persisted; reloading the page is the only remedy.
+
+- **Protocol evolution.** The client holds its protocol version in a single constant, typed against the generated `ProtocolVersion` alias ([ADR-0020](adr/ADR-0020-typescript-protocol-from-serial-descriptors.md)). When `PROTOCOL_VERSION` moves between messages — [ADR-0027](adr/ADR-0027-the-session-outranks-the-device-id.md), then [ADR-0028](adr/ADR-0028-the-wire-names-an-absent-opponent.md), or the other way round — the client's build fails until it moves with the wire. Adding a new `ServerMessage` variant requires exactly one new entry in the `frames.ts` lookup table that the generated code proves against the union.
+
 ## Notes
 
 - Every message on the wire carries a `type` field whose value is the message discriminator (e.g., `"Hello"`, `"Act"`, `"Welcome"`).
