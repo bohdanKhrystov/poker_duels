@@ -2,7 +2,7 @@
 id: STORY-0303
 title: The typed socket — handshake and device identity
 type: story
-status: backlog
+status: ready
 parent: EPIC-03
 module: web-client
 labels: [client, protocol, websocket]
@@ -48,11 +48,42 @@ each component is not.
 - Tests drive a fake WebSocket. No test in this story opens a real socket, binds a port, or needs a
   server running.
 
+## What the split settled
+
+Two questions the tickets could each have answered differently, decided once here so no coder has
+to guess. Neither needed an ADR: both are local to this module and follow from decisions already
+made.
+
+- **A `ServerMessage` variant the client does not recognise is logged and dropped.** The decoder
+  holds a table of discriminators pinned to the generated union by
+  `satisfies Record<ServerMessage["type"], true>`, so adding a variant fails `tsc` here — the
+  compiler proves the coverage, and the runtime set is what lets an unrecognised `type` be dropped
+  rather than cast. Nothing in the client `switch`es over `ServerMessage` or over `ProtocolError`.
+  When `ADR-0028` adds `OpponentPresence` and `ActedForAbsentSeat`, this client costs two lines in
+  one table; when `ADR-0027` adds `INVALID_SESSION`, it costs nothing — `TASK-030310` has a test
+  that receives that exact value today and keeps it verbatim.
+- **An unexpected version is terminal, in both directions.** `Failure(VERSION_MISMATCH)` and a
+  `Welcome` whose `protocolVersion` is not the one this client sent both produce
+  `{ kind: "outdated" }`: no further frames, no `close()`, no reconnect, and no device id written.
+  Not closing is deliberate — `STORY-0310`'s reconnect reacts to a close, so a terminal state that
+  closed the socket would be a retry loop against a server that will refuse identically forever.
+
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0303`.* | — |
+| [TASK-030301](../tasks/TASK-030301-nothing-outside-the-protocol-module-declares-a-wire-type.md) | Nothing outside src/protocol declares a wire type or touches a raw frame | ready |
+| [TASK-030302](../tasks/TASK-030302-the-protocol-version-is-typed-against-the-generated-alias.md) | The protocol version the client sends is typed against the generated alias | backlog |
+| [TASK-030303](../tasks/TASK-030303-the-frame-codec-decodes-only-what-the-union-names.md) | The frame codec decodes only what the generated union names | backlog |
+| [TASK-030304](../tasks/TASK-030304-the-device-id-lives-under-one-key-this-module-owns.md) | The device id lives under one storage key this module owns | backlog |
+| [TASK-030305](../tasks/TASK-030305-the-socket-url-comes-from-the-pages-own-origin.md) | The socket URL is derived from the page's own origin | backlog |
+| [TASK-030306](../tasks/TASK-030306-a-websocket-double-the-handshake-tests-drive-by-hand.md) | A WebSocket double the handshake tests drive by hand | backlog |
+| [TASK-030307](../tasks/TASK-030307-on-open-the-client-says-hello-with-the-device-id-it-holds.md) | On open the client says Hello with the device id it holds | backlog |
+| [TASK-030308](../tasks/TASK-030308-every-inbound-frame-reaches-the-listener-or-is-dropped.md) | Every inbound frame reaches the listener, and an unreadable one is logged and dropped | backlog |
+| [TASK-030309](../tasks/TASK-030309-welcome-makes-the-connection-ready-and-persists-the-device-id.md) | Welcome makes the connection ready and persists the device id the server issued | backlog |
+| [TASK-030310](../tasks/TASK-030310-a-refusal-keeps-the-socket-a-version-mismatch-ends-the-session.md) | A refusal keeps the socket, and a version mismatch ends the connection for good | backlog |
+| [TASK-030311](../tasks/TASK-030311-one-call-opens-the-duel-socket-with-no-network-in-the-test.md) | One call opens the duel socket, and the test that proves it touches no network | backlog |
+| [TASK-030312](../tasks/TASK-030312-the-protocol-document-says-what-a-client-cannot-read.md) | docs/protocol.md says what a client does with a frame it cannot read | backlog |
 
 ## Acceptance criteria
 
@@ -66,6 +97,24 @@ each component is not.
       handled.
 - [ ] No file outside `src/protocol/` declares a socket message type — asserted by a check the
       client's own test command runs.
+
+### Where each criterion lands
+
+| Criterion | Ticket | Test |
+| --- | --- | --- |
+| The `Hello`/`Welcome` round trip | `TASK-030307`, `TASK-030309` | `says hello with no device id on a first visit`, `sends the remembered device id on the next connection` |
+| Every variant decoded, a new one caught by the compiler | `TASK-030303` | `knows exactly the variants the generated union declares`, plus `satisfies Record<ServerMessage["type"], true>` in `frames.ts` |
+| `VERSION_MISMATCH` is terminal, with no reconnect | `TASK-030310` | `sends nothing more once the version is wrong`, `never closes the socket itself` |
+| A malformed frame is dropped and the next one still lands | `TASK-030308` | `handles the next valid frame after a dropped one` |
+| Nothing outside the module declares a wire type | `TASK-030301` | `finds no wire type declared outside the protocol module` |
+
+The second criterion says *"not by a list someone maintains"*, and the implementation does hold a
+list of eight discriminators. The distinction is real and worth keeping straight: the list is
+**maintained by the compiler's insistence**, not by anyone's diligence — a missing key is TS2739
+and an extra key is TS2353. A list is unavoidable, because TypeScript types are erased and a
+*runtime* set is the only thing that can tell an unknown `type` from a known one; what is avoidable
+is a list that can silently fall behind, and `satisfies` plus
+`knows exactly the variants the generated union declares` is what makes this one unable to.
 
 ## Out of scope
 

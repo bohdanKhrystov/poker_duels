@@ -517,9 +517,16 @@ from the Kotlin descriptors and byte-checked in CI — the client never hand-wri
 `DEC-022` is answered by [`ADR-0026`](../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md):
 Vite and npm, Node 24 pinned in `web-client/.nvmrc`, Vitest, and the client's checks as their own
 parallel CI job. `STORY-0301`, the scaffold every other story stands on, is **done**: `npm run check`
-typechecks, lints, format-checks and tests the client in its own CI job. `STORY-0302` is next — it
-makes `design/tokens/tokens.css` the client's only source of colours and sizes, and fails the check
-on a literal — and `TASK-030201` is startable now.
+typechecks, lints, format-checks and tests the client in its own CI job. `STORY-0302` is **done**
+too — `design/tokens/tokens.css` is the client's only source of colours and sizes, and the check
+fails on a literal outside the token layer.
+
+`STORY-0303` is next and is split: twelve tickets that build `src/protocol/` — the one module in the
+client that ever sees a raw frame — and nothing else. `TASK-030301` is startable now. The chain is
+strictly linear; two tickets never touch the same file at once. It is planned against a wire that is
+about to move twice: `ADR-0027` and `ADR-0028` each add to `ServerMessage` or `ProtocolError` and
+each bump `PROTOCOL_VERSION`, so the decoder is built to widen by one table entry and a version to
+fail the client's typecheck rather than a browser's handshake.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -545,7 +552,19 @@ on a literal — and `TASK-030201` is startable now.
 | | [TASK-030207](tasks/TASK-030207-prettier-sorts-tailwind-classes.md) Prettier sorts Tailwind classes and still never reads the generated file | XS | **done** |
 | | [TASK-030208](tasks/TASK-030208-the-app-root-is-styled-through-the-theme.md) The app root is styled through the theme, proven by a test | XS | **done** |
 | | [TASK-030209](tasks/TASK-030209-contributing-says-the-token-sheet-is-a-copy.md) CONTRIBUTING says the client's token sheet is a copy | XS | **done** |
-| [STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md) | The typed socket — handshake and device identity | backlog |
+| **[STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md)** The typed socket — handshake and device identity — *schema 2* | | **ready** |
+| | [TASK-030301](tasks/TASK-030301-nothing-outside-the-protocol-module-declares-a-wire-type.md) Nothing outside src/protocol declares a wire type or touches a raw frame | S | **ready** |
+| | [TASK-030302](tasks/TASK-030302-the-protocol-version-is-typed-against-the-generated-alias.md) The protocol version the client sends is typed against the generated alias | XS | backlog |
+| | [TASK-030303](tasks/TASK-030303-the-frame-codec-decodes-only-what-the-union-names.md) The frame codec decodes only what the generated union names | S | backlog |
+| | [TASK-030304](tasks/TASK-030304-the-device-id-lives-under-one-key-this-module-owns.md) The device id lives under one storage key this module owns | XS | backlog |
+| | [TASK-030305](tasks/TASK-030305-the-socket-url-comes-from-the-pages-own-origin.md) The socket URL is derived from the page's own origin | XS | backlog |
+| | [TASK-030306](tasks/TASK-030306-a-websocket-double-the-handshake-tests-drive-by-hand.md) A WebSocket double the handshake tests drive by hand | XS | backlog |
+| | [TASK-030307](tasks/TASK-030307-on-open-the-client-says-hello-with-the-device-id-it-holds.md) On open the client says Hello with the device id it holds | S | backlog |
+| | [TASK-030308](tasks/TASK-030308-every-inbound-frame-reaches-the-listener-or-is-dropped.md) Every inbound frame reaches the listener, and an unreadable one is logged and dropped | S | backlog |
+| | [TASK-030309](tasks/TASK-030309-welcome-makes-the-connection-ready-and-persists-the-device-id.md) Welcome makes the connection ready and persists the device id the server issued | S | backlog |
+| | [TASK-030310](tasks/TASK-030310-a-refusal-keeps-the-socket-a-version-mismatch-ends-the-session.md) A refusal keeps the socket, and a version mismatch ends the connection for good | S | backlog |
+| | [TASK-030311](tasks/TASK-030311-one-call-opens-the-duel-socket-with-no-network-in-the-test.md) One call opens the duel socket, and the test that proves it touches no network | S | backlog |
+| | [TASK-030312](tasks/TASK-030312-the-protocol-document-says-what-a-client-cannot-read.md) docs/protocol.md says what a client does with a frame it cannot read | XS | backlog |
 | [STORY-0304](stories/STORY-0304-client-store.md) | The store — state is the last frame the server sent | backlog |
 | [STORY-0305](stories/STORY-0305-lobby-and-room-link.md) | The lobby — create a room, join by code, share the link | backlog |
 | [STORY-0306](stories/STORY-0306-duel-table-screen.md) | The duel table renders a PlayerView | backlog |
