@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060107
 title: Align the shipped foundation cards with the later contract fixes
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
