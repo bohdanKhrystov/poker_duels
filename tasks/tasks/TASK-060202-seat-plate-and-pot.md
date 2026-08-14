@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060202
 title: The seat plate and pot strip
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: S

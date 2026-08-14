@@ -50,7 +50,7 @@ proves itself or breaks.
 | ID | Title | Status |
 | --- | --- | --- |
 | [TASK-060201](../tasks/TASK-060201-playing-card-component.md) | The playing-card component | done |
-| [TASK-060202](../tasks/TASK-060202-seat-plate-and-pot.md) | The seat plate and pot strip | ready |
+| [TASK-060202](../tasks/TASK-060202-seat-plate-and-pot.md) | The seat plate and pot strip | done |
 | [TASK-060203](../tasks/TASK-060203-action-bar.md) | The action bar | ready |
 | [TASK-060204](../tasks/TASK-060204-duel-table-screen.md) | The duel table screen, in play | backlog |
 | [TASK-060205](../tasks/TASK-060205-table-states.md) | The table's other moments — waiting and showdown | backlog |
