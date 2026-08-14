@@ -562,8 +562,8 @@ fail the client's typecheck rather than a browser's handshake.
 | | [TASK-030304](tasks/TASK-030304-the-device-id-lives-under-one-key-this-module-owns.md) The device id lives under one storage key this module owns | XS | **done** |
 | | [TASK-030305](tasks/TASK-030305-the-socket-url-comes-from-the-pages-own-origin.md) The socket URL is derived from the page's own origin | XS | **done** |
 | | [TASK-030306](tasks/TASK-030306-a-websocket-double-the-handshake-tests-drive-by-hand.md) A WebSocket double the handshake tests drive by hand | XS | **done** |
-| | [TASK-030307](tasks/TASK-030307-on-open-the-client-says-hello-with-the-device-id-it-holds.md) On open the client says Hello with the device id it holds | S | ready |
-| | [TASK-030308](tasks/TASK-030308-every-inbound-frame-reaches-the-listener-or-is-dropped.md) Every inbound frame reaches the listener, and an unreadable one is logged and dropped | S | backlog |
+| | [TASK-030307](tasks/TASK-030307-on-open-the-client-says-hello-with-the-device-id-it-holds.md) On open the client says Hello with the device id it holds | S | **done** |
+| | [TASK-030308](tasks/TASK-030308-every-inbound-frame-reaches-the-listener-or-is-dropped.md) Every inbound frame reaches the listener, and an unreadable one is logged and dropped | S | ready |
 | | [TASK-030309](tasks/TASK-030309-welcome-makes-the-connection-ready-and-persists-the-device-id.md) Welcome makes the connection ready and persists the device id the server issued | S | backlog |
 | | [TASK-030310](tasks/TASK-030310-a-refusal-keeps-the-socket-a-version-mismatch-ends-the-session.md) A refusal keeps the socket, and a version mismatch ends the connection for good | S | backlog |
 | | [TASK-030311](tasks/TASK-030311-one-call-opens-the-duel-socket-with-no-network-in-the-test.md) One call opens the duel socket, and the test that proves it touches no network | S | backlog |

@@ -1,0 +1,121 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import { openConnection } from "./connection";
+import { FakeSocket } from "./fake-socket";
+
+/**
+ * An in-memory `Storage`, deliberately not the global `localStorage`.
+ *
+ * Node 24+ defines its own `localStorage` global which is present but inert
+ * unless the process is started with `--localstorage-file`, and under Vitest it
+ * shadows the one jsdom provides: `typeof localStorage` is `"undefined"` while
+ * `sessionStorage` — which Node keeps in memory — works. Depending on that
+ * global would make these tests a property of the Node version rather than of
+ * this module, so `openConnection` is handed a `Storage` built here instead;
+ * see `device-id.test.ts` for the same pattern.
+ */
+function inMemoryStorage(): Storage {
+  const entries = new Map<string, string>();
+  return {
+    get length(): number {
+      return entries.size;
+    },
+    clear(): void {
+      entries.clear();
+    },
+    getItem(key: string): string | null {
+      return entries.has(key) ? (entries.get(key) as string) : null;
+    },
+    key(index: number): string | null {
+      return Array.from(entries.keys())[index] ?? null;
+    },
+    removeItem(key: string): void {
+      entries.delete(key);
+    },
+    setItem(key: string, value: string): void {
+      entries.set(key, value);
+    },
+  };
+}
+
+describe("the connection", () => {
+  let socket: FakeSocket;
+  let storage: Storage;
+
+  beforeEach(() => {
+    socket = new FakeSocket();
+    storage = inMemoryStorage();
+  });
+
+  it("starts out connecting", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    expect(connection.status).toEqual({ kind: "connecting" });
+  });
+
+  it("sends nothing before the socket opens", () => {
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    expect(socket.sent).toEqual([]);
+  });
+
+  it("says hello with no device id on a first visit", () => {
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.open();
+
+    expect(JSON.parse(socket.sent[0])).toEqual({
+      type: "Hello",
+      deviceId: null,
+      protocolVersion: 2,
+    });
+  });
+
+  it("says hello with the device id it already holds", () => {
+    storage.setItem("pd.deviceId", "d-1");
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.open();
+
+    expect(JSON.parse(socket.sent[0]).deviceId).toBe("d-1");
+  });
+
+  it("writes a client message to the socket", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    connection.send({ type: "CreateRoom" });
+
+    expect(socket.sent).toEqual(['{"type":"CreateRoom"}']);
+  });
+
+  it("closes the underlying socket", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    connection.close();
+
+    expect(socket.closed).toBe(true);
+  });
+});

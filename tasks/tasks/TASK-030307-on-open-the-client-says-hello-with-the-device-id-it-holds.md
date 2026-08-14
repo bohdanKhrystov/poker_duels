@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030307
 title: On open the client says Hello with the device id it holds
 type: task
-status: ready
+status: done
 parent: STORY-0303
 module: web-client
 estimate: S
@@ -88,9 +88,22 @@ You do not need to open the other two imports. Their whole surface is:
 - `status` is a getter over a closure variable — `let status: ConnectionStatus = { kind:
   "connecting" }` and `get status() { return status; }` on the returned object. **`let`, not
   `const`**, even though nothing reassigns it in this ticket: `TASK-030309` and `TASK-030310` do,
-  and a `const` here would make each of them rewrite a line this ticket wrote. Neither
-  `eslint:recommended` nor `typescript-eslint`'s recommended set enables `prefer-const`, so this
-  passes `npm run lint` as it stands.
+  and a `const` here would make each of them rewrite a line this ticket wrote.
+
+  **Correction, measured while landing this ticket:** the claim that neither `eslint:recommended`
+  nor `typescript-eslint`'s recommended set enables `prefer-const` is **wrong**.
+  `tseslint.configs.recommended` composes `typescript-eslint/eslint-recommended`, which sets core
+  `prefer-const: "error"`. Deleting the suppression gives, exactly:
+
+  ```
+  src/protocol/connection.ts
+    38:7  error  'status' is never reassigned. Use 'const' instead  prefer-const
+  ```
+
+  `let` is still right — the next two tickets reassign it — so the line carries a one-line
+  `// eslint-disable-next-line prefer-const` explaining why. **`TASK-030309` must delete that
+  suppression** in the same diff that adds the first reassignment, or it becomes a stale directive
+  claiming something untrue.
 - The **word "session" does not appear** in any name here. `ADR-0027` warns that `Session` already
   means a live socket on the server and that an auth session is a different thing with the same
   obvious name; the client is not going to be where those two get confused.
@@ -108,7 +121,13 @@ You do not need to open the other two imports. Their whole surface is:
 ## Tests
 
 `web-client/src/protocol/connection.test.ts`, describe block `"the connection"`. Six `it` blocks,
-with `beforeEach(() => localStorage.clear())`:
+with a fresh `FakeSocket` and a fresh **in-memory `Storage`** assigned in `beforeEach`.
+
+> This originally read `beforeEach(() => localStorage.clear())`. That global is unusable here —
+> Node 24+ defines its own inert `localStorage` which shadows jsdom's under Vitest. `TASK-030304`
+> hit the same wall and its "Why not the global `localStorage`" section carries the full
+> diagnosis; `DEC-032` holds the open question. `ConnectionOptions.storage` is a parameter, so the
+> tests build one and seed it with `storage.setItem("pd.deviceId", "d-1")`.
 
 | Test | Proves |
 | --- | --- |
