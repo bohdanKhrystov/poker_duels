@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030305
 title: The socket URL is derived from the page's own origin
 type: task
-status: backlog
+status: ready
 parent: STORY-0303
 module: web-client
 estimate: XS
