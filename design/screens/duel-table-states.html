@@ -138,7 +138,7 @@
 <div class="wrap">
   <p class="eyebrow">Poker Duels · Screens</p>
   <h1>Table states</h1>
-  <p class="lede">The same table at later moments of the same hand — the turn-card wait, then its two possible endings: the showdown branch and the fold branch. Every slot — the
+  <p class="lede">The same table at later moments of the same hand — the turn-card wait (checked through), then the river's two endings: ImKate bets and is called to a showdown, or you bet 800 and she folds. Every slot — the
   opponent's hidden hand, the bet/muck line, the pot row, the bar — exists in every state,
   so nothing appears, disappears, or moves; only text and card faces change.</p>
 
@@ -253,7 +253,7 @@
     </div>
 
     <div class="frame">
-      <h2>Fold — you win, nobody shows</h2>
+      <h2>Fold — you win on the river, nobody shows</h2>
       <div class="tbl">
         <div class="opp">
           <div class="seat">
@@ -271,14 +271,14 @@
         <div class="center">
           <div class="pot">
             <span class="amount win">You win 3,250</span>
-            <span class="meta">Nobody shows — your uncalled 800 returns</span>
+            <span class="meta">Nobody shows — your river bet of 800 goes uncalled and returns</span>
           </div>
           <div class="board">
             <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
             <span class="pc red" style="--w:var(--bw)" role="img" aria-label="seven of diamonds"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
             <span class="pc" style="--w:var(--bw)" role="img" aria-label="two of clubs"><span class="ix" aria-hidden="true"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
             <span class="pc red" style="--w:var(--bw)" role="img" aria-label="jack of hearts"><span class="ix" aria-hidden="true"><span class="r">J</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
-            <span class="slot" style="--w:var(--bw)" role="img" aria-label="river card, not dealt — the hand ended first"></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="seven of clubs"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
           </div>
         </div>
         <div class="hero">
@@ -302,9 +302,10 @@
           </div>
         </div>
       </div>
-      <p class="note">ADR-0008: a fold winner shows nothing — the banner carries the amount
-      and no hand name, your cards stay yours alone, and the folded hand takes the same
-      dimmed treatment as a muck</p>
+      <p class="note">ADR-0008: a fold winner shows nothing — the banner carries the amount and
+      no hand name, your cards stay yours alone, the folded hand takes the muck's dimmed
+      treatment, and the returned bet leaves the stacks exactly as the wait frame showed
+      them: 3,750 + 13,000 + 3,250 = 20,000</p>
     </div>
   </div>
 </div>
