@@ -1,12 +1,17 @@
 import { useState, type ReactElement } from "react";
-import { useSend } from "../store/duel-provider";
-import { normalizeRoomCode } from "./room-link";
+import { useDuelState, useSend } from "../store/duel-provider";
+import { normalizeRoomCode, roomLink } from "./room-link";
 
 /** The first screen: open a duel room, or join one by the code on the invite. */
 export function Lobby(): ReactElement {
+  const state = useDuelState();
   const send = useSend();
   const [typedCode, setTypedCode] = useState("");
   const code = normalizeRoomCode(typedCode);
+
+  if (state.roomCode !== null) {
+    return <WaitingForRival code={state.roomCode} />;
+  }
 
   return (
     <section>
@@ -30,6 +35,28 @@ export function Lobby(): ReactElement {
         />
         <button type="submit">Join the duel</button>
       </form>
+    </section>
+  );
+}
+
+/**
+ * The invite is selectable text before it is anything else: the one interaction
+ * this product depends on cannot need a working clipboard.
+ */
+function WaitingForRival(props: { code: string }): ReactElement {
+  const link = roomLink(window.location.origin, props.code);
+  return (
+    <section>
+      <h2>Waiting for your rival</h2>
+      <p>{props.code}</p>
+      <label htmlFor="invite-link">Invite link</label>
+      <input
+        autoFocus
+        id="invite-link"
+        readOnly
+        value={link}
+        onFocus={(event) => event.currentTarget.select()}
+      />
     </section>
   );
 }

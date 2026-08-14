@@ -64,8 +64,8 @@ this order and no two are startable at once.
 | TASK-030508 | The framework-free store modules import nothing from react | done |
 | TASK-030509 | The invite carries the code as a query parameter, trimmed and upper-cased | done |
 | TASK-030510 | The lobby creates a room, and joins by a pasted code it trims and upper-cases | done |
-| TASK-030511 | A joined room shows its code and a selectable invite link | ready |
-| TASK-030512 | Copy the link where there is a clipboard, and keep it in reach where there is not | backlog |
+| TASK-030511 | A joined room shows its code and a selectable invite link | done |
+| TASK-030512 | Copy the link where there is a clipboard, and keep it in reach where there is not | ready |
 | TASK-030513 | UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries | backlog |
 | TASK-030514 | The first Snapshot ends the wait, and no other frame does | backlog |
 | TASK-030515 | main.tsx boots the client once and renders the lobby under the provider | backlog |
