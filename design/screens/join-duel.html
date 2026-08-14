@@ -31,6 +31,8 @@
     text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: 8px; }
   h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
   .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  /* Screen-specific: frames keep their natural heights here — the refusal list runs
+   * longer than the seat (the create screen's frames stretch equal, by default). */
   .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: var(--pd-space-7); align-items: flex-start; }
   .frame { width: min(380px, 100%); border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
     padding: var(--pd-space-6) var(--pd-space-5); display: flex; flex-direction: column; gap: var(--pd-space-5); }
@@ -49,17 +51,19 @@
     border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
     padding: var(--pd-space-4) var(--pd-space-5); }
   .namerow .lbl { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
-  .namerow .val { flex: 1; font-weight: 500; }
-  .namerow .edit { color: var(--pd-accent); font-size: var(--pd-fs-small); cursor: pointer;
-    background: none; border: none; }
+  /* A name may legally run 32 code points — the seat component's ellipsis convention. */
+  .namerow .val { flex: 1; min-width: 0; font-weight: 500; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
   .stakes { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
+  .ratelimit { color: var(--pd-text-faint); font-size: var(--pd-fs-small); }
 
   /* Screen-only glue: the lobby's standalone call-to-action — deliberately not the
    * action bar's in-duel .btn (that one is flex: 1 inside a bar and shows focus via
    * .focused); the flow screens share this treatment until it earns a component card. */
   .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
     line-height: var(--pd-lh-tight); padding: var(--pd-space-4) var(--pd-space-5);
-    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer; }
+    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer;
+    text-align: center; }
   .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
   .btn.fill:hover { background: var(--pd-accent-fill-hover); }
   .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
@@ -74,8 +78,8 @@
   <p class="eyebrow">Poker Duels · Screens</p>
   <h1>Join a duel</h1>
   <p class="lede">The link opened. One decision on this screen and only one — take the seat.
-  The name is already filled and edited in place; there is no form between her and the
-  table (docs/vision.md's success sentence depends on it).</p>
+  No form stands between her and the table (docs/vision.md's success sentence depends
+  on it); a display name, once chosen, is simply shown — never edited (ADR-0029).</p>
 
   <div class="frames">
     <div class="frame">
@@ -87,24 +91,26 @@
       <span class="codechip">7Q4M9K2T</span>
       <div class="namerow">
         <span class="lbl">Playing as</span>
-        <span class="val">Guest-4218</span>
-        <button class="edit">change</button>
+        <span class="val">Miro</span>
       </div>
       <button class="btn fill">Take the seat</button>
-      <p class="note">no password, no account — holding the code is the invite (ADR-0022);
-      the name edits inline per ADR-0021's display-name rule</p>
+      <p class="note">no password, no account — holding the code is the invite (ADR-0022).
+      a name is chosen once and never changes (ADR-0029), so it is shown, not edited;
+      this frame draws the named player — what renders when the name is null, and how
+      one gets chosen at this door, is STORY-0411's call, deliberately not decided here</p>
     </div>
 
     <div class="frame">
       <h2>When the code refuses</h2>
       <div class="refusal"><span class="r">This duel already has two players.</span>
         Ask your rival for a fresh link, or create your own.</div>
-      <div class="refusal"><span class="r">This link has expired.</span>
-        Duels wait ten minutes for a second player, then the table is cleared.</div>
-      <div class="refusal"><span class="r">Too many tries.</span>
-        Wait a minute, then check the code with your rival.</div>
-      <p class="note">refusals are indistinguishable where the server says so — an expired
-      room and a wrong code read the same on the wire (ADR-0022) and nearly the same here</p>
+      <div class="refusal"><span class="r">This code doesn't open a duel.</span>
+        It may have expired — a room waits ten minutes for its second player — or a
+        character is off. Check it with your rival.</div>
+      <p class="ratelimit">Too many tries — wait a minute.</p>
+      <p class="note">the full room is the only refusal the wire distinguishes; expired,
+      finished and mistyped all read UNKNOWN_ROOM by design (ADR-0022), so one honest
+      card answers for all of them, and the rate limit stays a muted line per the ticket</p>
     </div>
   </div>
 </div>

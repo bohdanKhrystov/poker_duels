@@ -53,3 +53,14 @@ None — structural gates in `verify:`.
 ## Definition of done
 
 Standard, with `EPIC-06`'s recorded deviation: the review is visual, in claude.ai/design.
+
+## Deviations
+
+- The ticket's goal line ("your editable display name") predates `ADR-0029`, which made
+  a name one-shot and permanent. Review round 1 caught the card citing the superseded
+  rule: the change affordance is gone, the card draws the named player only, and the
+  null-name rendering is deferred to `STORY-0411` in so many words rather than decided
+  here by a placeholder.
+- The rate-limit refusal had grown a full card; the ticket's own out-of-scope line
+  ("one muted line, no dedicated design") now holds. The typed-code door the remedy
+  copy used to reference is real discovered work, filed as `TASK-060406`.
