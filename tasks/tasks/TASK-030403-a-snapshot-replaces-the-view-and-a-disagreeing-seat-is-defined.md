@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030403
 title: A Snapshot replaces the view wholesale, and a disagreeing seat is a defined outcome
 type: task
-status: backlog
+status: ready
 parent: STORY-0304
 module: web-client
 estimate: S

@@ -42,6 +42,15 @@ export function applyServerMessage(
   switch (message.type) {
     case "RoomJoined":
       return { ...state, mySeat: message.seat, roomCode: message.code };
+    case "YourTurn":
+      return {
+        ...state,
+        pendingTurn: {
+          handNumber: message.handNumber,
+          actionSequence: message.actionSequence,
+          legalActions: message.legalActions,
+        },
+      };
     default:
       return state;
   }
