@@ -57,6 +57,32 @@ function WaitingForRival(props: { code: string }): ReactElement {
         value={link}
         onFocus={(event) => event.currentTarget.select()}
       />
+      <CopyLink link={link} />
     </section>
+  );
+}
+
+/** Absent where the clipboard API is: the box above is always the fallback. */
+function CopyLink(props: { link: string }): ReactElement | null {
+  const [outcome, setOutcome] = useState<"none" | "copied" | "refused">("none");
+  if (!navigator.clipboard) {
+    return null;
+  }
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard.writeText(props.link).then(
+            () => setOutcome("copied"),
+            () => setOutcome("refused"),
+          );
+        }}
+      >
+        Copy the link
+      </button>
+      {outcome === "copied" && <p>Link copied.</p>}
+      {outcome === "refused" && <p>Copy it from the box above.</p>}
+    </>
   );
 }

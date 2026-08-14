@@ -1,10 +1,21 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
+
+function withClipboard(writeText: () => Promise<void>): void {
+  Object.defineProperty(navigator, "clipboard", {
+    value: { writeText },
+    configurable: true,
+  });
+}
+
+afterEach(() => {
+  Reflect.deleteProperty(navigator, "clipboard");
+});
 
 function renderLobby(store: DuelStore = createDuelStore()): {
   send: ReturnType<typeof vi.fn>;
@@ -79,5 +90,43 @@ describe("the lobby", () => {
     const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
     expect(inviteLink.readOnly).toBe(true);
     expect(document.activeElement).toBe(inviteLink);
+  });
+
+  it("copies the invite link when the browser has a clipboard", async () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    const writeText = vi.fn(() => Promise.resolve());
+    withClipboard(writeText);
+    renderLobby(store);
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy the link" }));
+
+    expect(writeText).toHaveBeenCalledWith(
+      "http://localhost:3000/?room=ABCDEFGH",
+    );
+    await screen.findByText("Link copied.");
+  });
+
+  it("offers no copy button when the browser has no clipboard", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    expect(screen.queryByRole("button", { name: "Copy the link" })).toBeNull();
+    const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
+    expect(inviteLink.value).toBe("http://localhost:3000/?room=ABCDEFGH");
+  });
+
+  it("keeps the link in reach when the clipboard refuses", async () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    withClipboard(() => Promise.reject(new Error("denied")));
+    renderLobby(store);
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy the link" }));
+
+    await screen.findByText("Copy it from the box above.");
+    const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
+    expect(inviteLink.value).toBe("http://localhost:3000/?room=ABCDEFGH");
   });
 });

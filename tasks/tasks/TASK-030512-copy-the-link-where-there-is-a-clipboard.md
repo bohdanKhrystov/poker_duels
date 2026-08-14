@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030512
 title: Copy the link where there is a clipboard, and keep it in reach where there is not
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
