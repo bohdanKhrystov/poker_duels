@@ -5,9 +5,12 @@
 - **Resolves:** `DEC-032` as registered on [`tasks/BOARD.md`](../../tasks/BOARD.md) — do the
   wordmark lockup's internal em ratios fall under `ADR-0024 §2`, or may they live in the
   canonical card behind a drift-gate clause? (Distinct from the `DEC-032` in this directory's
-  own register, an unrelated client-storage question — the two registers collided on the
-  number. Flipping this row does not untangle that by itself; reconciling the numbering is
-  explicit work in the driver's next board PR, alongside the flip.)
+  own register, an earlier-minted, unrelated client-storage question — the two registers
+  collided on the number. Flipping this row does not untangle that by itself; reconciling the
+  numbering is explicit work in the driver's next board PR, alongside the flip — and since
+  the board's later-minted row is the one that renumbers while this ADR is immutable once
+  merged, that PR must annotate the renumbered row with a pointer back here. The durable
+  reference is the question restated above, not the number.)
 - **Clarifies:** [`ADR-0024`](ADR-0024-design-follows-the-code-workflow.md) §2 — bounds what
   "size" means there; nothing else in it moves
 - **Constrains:** [`TASK-060114`](../../tasks/tasks/TASK-060114-lockup-constants-join-the-drift-gate.md)
@@ -35,8 +38,9 @@ instead drafted to build a bespoke gate clause and keep the constants in the car
 the §2 question implicitly, in ticket prose, where nobody would find it again. The #474
 review pulled that answer out into `DEC-032` and blocked the ticket on it.
 
-The precedents point both ways, which is what makes this a real decision — and only one of
-them is merged fact; the rest are filed specifications, and this ADR cites them as such.
+The precedents point both ways, which is what makes this a real decision — and only two of
+them are merged fact (TASK-060108, and `--pd-track-code` on the sheet); the rest are filed
+specifications, and this ADR cites them as such.
 Sheet-ward: TASK-060108 (done) promoted the card-born resting shadow and back-stripe texture
 onto the sheet; `--pd-track-code: 0.14em` is a single-purpose, em-denominated value living
 there; and the other half of the very finding behind this DEC — the coin's glint `#b8c6d6`,

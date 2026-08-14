@@ -68,7 +68,7 @@ Each with the reason it was not chosen.
 | [0021](ADR-0021-a-profile-gains-a-display-name.md) | A profile gains a player-chosen display name | Accepted |
 | [0022](ADR-0022-the-room-code-is-the-invite.md) | The room code is the invite, and failed joins are budgeted | Accepted |
 | [0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) | An absent seat checks when nothing is owed, folds when facing a bet | Accepted — amends 0013; amended by 0028 |
-| [0024](ADR-0024-design-follows-the-code-workflow.md) | Design follows the code workflow, in the repository, mirrored to claude.ai/design | Accepted |
+| [0024](ADR-0024-design-follows-the-code-workflow.md) | Design follows the code workflow, in the repository, mirrored to claude.ai/design | Accepted — §2's "size" bounded by 0033 |
 | [0025](ADR-0025-one-ticker-coroutine-drives-both-sweeps.md) | One ticker coroutine on the application scope drives both sweeps | Accepted |
 | [0026](ADR-0026-vite-and-npm-drive-the-web-client.md) | Vite and npm drive the web client, and its checks are their own CI job | Accepted |
 | [0027](ADR-0027-the-session-outranks-the-device-id.md) | A session token outranks a device id, and the handshake carries it | Accepted — amended by 0030 |
@@ -77,6 +77,7 @@ Each with the reason it was not chosen.
 | [0030](ADR-0030-a-claim-adds-a-credential-and-moves-nothing.md) | A claim adds a credential and moves nothing; a sign-in swaps identity and moves nothing | Accepted |
 | [0031](ADR-0031-an-optional-verified-recovery-email.md) | An optional recovery email, proven before it can do anything, and a handle that is not a name | Accepted |
 | [0032](ADR-0032-react-subscribes-to-a-store-it-does-not-own.md) | React subscribes to a store it does not own, and the tab's one connection is wired at boot | Accepted |
+| [0033](ADR-0033-component-anatomy-is-born-in-its-canonical-card.md) | A component's anatomy is born in its canonical card; the sheet holds the vocabulary | Accepted — bounds 0024 §2 |
 
 ## Open decisions
 
