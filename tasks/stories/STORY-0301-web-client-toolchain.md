@@ -2,7 +2,7 @@
 id: STORY-0301
 title: The web-client toolchain and its first green check
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, build, foundation]

@@ -159,3 +159,17 @@ If Docker is not available:
   and the protocol is not blocked.
 - `./gradlew check -PrequireDocker=true` *fails* instead. This is what CI runs, because a test
   suite that skips silently in CI is a test suite that has stopped testing.
+
+### The web client
+
+Node is pinned in `web-client/.nvmrc`; CI reads the same file. From the repository root:
+
+```sh
+cd web-client
+npm ci
+npm run check
+```
+
+To start the development server—proxying `/api` and `/ws` to `localhost:8080`—run `npm run dev`.
+
+`./gradlew check` proves the JVM side only. The toolchains are separate on purpose (see [`ADR-0026`](docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md)), each with its own CI job.
