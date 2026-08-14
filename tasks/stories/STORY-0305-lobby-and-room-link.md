@@ -60,8 +60,8 @@ this order and no two are startable at once.
 | TASK-030504 | The code the URL carried joins on Welcome, exactly once | done |
 | TASK-030505 | A component reads the store through useDuelState, and re-renders only when it moved | done |
 | TASK-030506 | useSend hands a screen the boot-created send, and a missing provider says so | done |
-| TASK-030507 | A StrictMode double mount sends no second JoinRoom | ready |
-| TASK-030508 | The framework-free store modules import nothing from react | backlog |
+| TASK-030507 | A StrictMode double mount sends no second JoinRoom | done |
+| TASK-030508 | The framework-free store modules import nothing from react | ready |
 | TASK-030509 | The invite carries the code as a query parameter, trimmed and upper-cased | backlog |
 | TASK-030510 | The lobby creates a room, and joins by a pasted code it trims and upper-cases | backlog |
 | TASK-030511 | A joined room shows its code and a selectable invite link | backlog |
