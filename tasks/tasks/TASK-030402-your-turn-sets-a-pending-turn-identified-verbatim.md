@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030402
 title: YourTurn sets a pending turn identified verbatim by the message
 type: task
-status: ready
+status: done
 parent: STORY-0304
 module: web-client
 estimate: S
@@ -105,10 +105,23 @@ Two tests. Sixty-five exist, so the suite reports **67**.
    `actionSequence`, dropping `legalActions: message.legalActions` from the explicit fields (an
    attempt to "merge" that reads as reasonable) → `replaces rather than merges a pending turn
    already set` fails. Because the first `YourTurn` in the test starts from `pendingTurn: null`,
-   spreading it forward carries nothing, so `legalActions` is missing from both turns and the
-   assertion throws `TypeError: Cannot read properties of undefined (reading 'allowed')` rather
-   than a clean mismatch — which is itself the point: a merge here does not gracefully fall back,
-   it silently drops a field the caller needs. Revert.
+   spreading it forward carries nothing, so `legalActions` is silently dropped — a merge here
+   does not fall back gracefully. Revert.
+
+   **Measured while landing this ticket.** This ticket predicted the assertion would throw
+   `TypeError: Cannot read properties of undefined (reading 'allowed')`. It does not, because the
+   test as written compares the whole `pendingTurn` with `toEqual` rather than reaching into
+   `pendingTurn.legalActions.allowed`. The real failure is a clean mismatch that names the dropped
+   field:
+
+   ```
+   AssertionError: expected { handNumber: 3, actionSequence: 3 } to deeply equal { handNumber: 3, …(2) }
+   -   "legalActions": Object { … },
+   ```
+
+   The whole-object comparison is the stronger assertion of the two — it catches a *stale* field
+   carried forward from the first turn as well as a missing one, which a nested-path assertion
+   would not. Kept as written.
 
 Quote both in the PR.
 
