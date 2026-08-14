@@ -10,6 +10,12 @@ export function Lobby(): ReactElement {
   const [typedCode, setTypedCode] = useState("");
   const code = normalizeRoomCode(typedCode);
 
+  // The first Snapshot is how the host learns the guest arrived: seating the
+  // guest starts the duel, and there is no "opponent joined" frame to wait for.
+  if (state.view !== null) {
+    return <p>The duel has begun.</p>;
+  }
+
   if (state.roomCode !== null) {
     return <WaitingForRival code={state.roomCode} />;
   }

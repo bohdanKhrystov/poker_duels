@@ -1,10 +1,41 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
+import type { SeatView, ServerMessage } from "../protocol";
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
+
+function seatView(index: number): SeatView {
+  return {
+    index,
+    stack: 500,
+    committedThisStreet: 0,
+    committedThisHand: 0,
+    hasFolded: false,
+    isAllIn: false,
+    holeCards: [],
+  };
+}
+
+const SNAPSHOT: ServerMessage = {
+  type: "Snapshot",
+  view: {
+    viewerSeat: 0,
+    handNumber: 1,
+    buttonSeat: 0,
+    street: "PREFLOP",
+    board: { cards: [] },
+    pot: 30,
+    betToMatch: 20,
+    minRaiseTo: 40,
+    seatToAct: 0,
+    smallBlind: 10,
+    bigBlind: 20,
+    seats: [seatView(0), seatView(1)],
+  },
+};
 
 function withClipboard(writeText: () => Promise<void>): void {
   Object.defineProperty(navigator, "clipboard", {
@@ -160,5 +191,50 @@ describe("the lobby", () => {
 
     expect(send).toHaveBeenCalledOnce();
     expect(send).toHaveBeenCalledWith({ type: "JoinRoom", code: "ABCDEFGH" });
+  });
+
+  it("leaves the waiting panel when the first Snapshot arrives", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    expect(screen.getByText("Waiting for your rival")).toBeDefined();
+
+    act(() => {
+      store.apply(SNAPSHOT);
+    });
+
+    expect(screen.queryByText("Waiting for your rival")).toBeNull();
+    expect(screen.getByText("The duel has begun.")).toBeDefined();
+  });
+
+  it("keeps waiting through every frame that is not a Snapshot", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    expect(screen.getByText("Waiting for your rival")).toBeDefined();
+
+    act(() => {
+      store.apply({
+        type: "Events",
+        events: [{ type: "ActionOn", sequence: 1, seat: 0 }],
+      });
+      store.apply({
+        type: "YourTurn",
+        handNumber: 1,
+        actionSequence: 1,
+        legalActions: {
+          seat: 0,
+          allowed: ["CHECK"],
+          callTo: 0,
+          minBetTo: 0,
+          minRaiseTo: 0,
+          allInTo: 1000,
+        },
+      });
+    });
+
+    expect(screen.getByText("Waiting for your rival")).toBeDefined();
   });
 });
