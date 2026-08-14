@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030508
 title: The framework-free store modules import nothing from react
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: XS
