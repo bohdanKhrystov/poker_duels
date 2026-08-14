@@ -49,6 +49,7 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060108](../tasks/TASK-060108-card-surface-tokens.md) | The card resting shadow and back texture become tokens | done |
 | [TASK-060110](../tasks/TASK-060110-no-bare-suit-anywhere.md) | No bare suit glyph anywhere, enforced in the drift check | done |
 | [TASK-060111](../tasks/TASK-060111-drift-check-compares-values.md) | The drift check compares values, not only names | ready |
+| [TASK-060112](../tasks/TASK-060112-drift-gate-reads-the-graphics.md) | The drift gate reads the graphics | ready |
 
 ## Acceptance criteria
 
