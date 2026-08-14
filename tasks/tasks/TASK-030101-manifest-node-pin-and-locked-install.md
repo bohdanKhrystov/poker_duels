@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030101
 title: A manifest, a Node pin and a locked install for web-client
 type: task
-status: ready
+status: done
 parent: STORY-0301
 module: web-client
 estimate: S
