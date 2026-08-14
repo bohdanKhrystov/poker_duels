@@ -56,31 +56,37 @@ EXTRACT='
   }
 '
 # flags card declarations whose name the sheet knows but whose value differs; names
-# the sheet lacks stay the name gate speaking alone, not a double report
+# the sheet lacks stay the name gate speaking alone, not a double report. The sheet
+# set arrives as the first input file — awk -v would reprocess backslash escapes and
+# silently mangle a value that ever gains one, so the set never travels through -v.
 COMPARE='
-  BEGIN {
-    n = split(sheet, a, "\036")
-    for (i = 1; i <= n; i++) {
-      if (a[i] == "") continue
-      ok[a[i]] = 1
-      eq = index(a[i], "="); if (eq) val[substr(a[i], 1, eq - 1)] = substr(a[i], eq + 1)
-    }
+  NR == FNR {
+    if ($0 == "") next
+    ok[$0] = 1
+    eq = index($0, "="); if (eq) val[substr($0, 1, eq - 1)] = substr($0, eq + 1)
+    next
   }
   $0 != "" && !ok[$0] {
     eq = index($0, "="); nm = substr($0, 1, eq - 1)
     if (nm in val) printf "drift: %s declares %s as %s, but the sheet says %s\n", f, nm, substr($0, eq + 1), val[nm]
   }
 '
-# self-test both halves before trusting their silence, like the suit sweep above
-probe=$(printf -- '--pd-probe :  rgba(0, 0, 0, 0.4) ;\n' | awk "$EXTRACT")
+# self-test both halves before trusting their silence, like the suit sweep above; the
+# || true keeps a hard awk death inside the comparison below, where the message says
+# what broke, instead of dying with awk usage noise under set -e. Scratch files are
+# left for the OS to purge, the trade-off this repo records in its gate tickets.
+probe=$(printf -- '--pd-probe :  rgba(0, 0, 0, 0.4) ;\n' | awk "$EXTRACT" 2>/dev/null || true)
 [ "$probe" = "--pd-probe=rgba(0,0,0,0.4)" ] \
   || { echo "check-drift: self-test failed — value extractor broke (awk?)" >&2; exit 1; }
-mism=$(printf -- '--pd-probe=2px\n' | awk -v sheet='--pd-probe=1px' -v f=self "$COMPARE")
+probe_sheet=$(mktemp)
+printf -- '--pd-probe=1px\n' > "$probe_sheet"
+mism=$(printf -- '--pd-probe=2px\n' | awk -v f=self "$COMPARE" "$probe_sheet" - 2>/dev/null || true)
 [ -n "$mism" ] \
   || { echo "check-drift: self-test failed — a drifted value went undetected" >&2; exit 1; }
 
-# BSD awk refuses a newline inside -v, so the set travels on the RS control char
-sheet_vals=$(awk "$EXTRACT" "$SHEET" | tr '\n' '\036')
+sheet_file=$(mktemp)
+awk "$EXTRACT" "$SHEET" > "$sheet_file"
+[ -s "$sheet_file" ] || { echo "check-drift: no declarations extracted from $SHEET" >&2; exit 1; }
 declared=$(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$SHEET" | sort -u)
 fail=0
 mentions=0
@@ -95,9 +101,9 @@ for f in $(find "$DIR" -name '*.html' | sort); do
     fi
   done
 
-  card_vals=$(awk "$EXTRACT" "$f")
+  card_vals=$(awk "$EXTRACT" "$f" 2>/dev/null || true)
   if [ -n "$card_vals" ]; then
-    bad=$(printf '%s\n' "$card_vals" | awk -v sheet="$sheet_vals" -v f="$f" "$COMPARE") || {
+    bad=$(printf '%s\n' "$card_vals" | awk -v f="$f" "$COMPARE" "$sheet_file" -) || {
       echo "check-drift: value comparison failed on $f (awk error)" >&2; fail=1; bad=""
     }
     if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
@@ -123,4 +129,4 @@ done
 # an empty tree must fail as loudly as a missing sheet — a vacuous pass guards nothing
 [ "$files" -gt 0 ] || { echo "check-drift: no cards found under $DIR" >&2; exit 1; }
 if [ "$fail" -ne 0 ]; then exit 1; fi
-echo "check-drift: tokens resolve and suits carry U+FE0E ($mentions distinct mentions across $files cards)"
+echo "check-drift: tokens resolve, values match the sheet, and suits carry U+FE0E ($mentions distinct mentions across $files cards)"
