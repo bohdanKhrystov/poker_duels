@@ -33,7 +33,8 @@ script instead of per-ticket grep lists.
 
 - For every `design/**/*.html`: extract each `--pd-*` name it mentions; every name must be
   declared in `design/tokens/tokens.css`. Unknown name → exit 1, naming file and token.
-- Report a summary line; exit 0 when clean. No dependencies beyond POSIX tools.
+- Report a summary line; exit 0 when clean. No dependencies beyond stock macOS/Linux
+  tools (`grep -o` is the one BSD/GNU extension used).
 
 ## Out of scope
 

@@ -2,7 +2,8 @@
 # Poker Duels — token-name drift check (TASK-060106, ADR-0024 §2).
 # Every `--pd-*` name any design card mentions — in CSS or printed on the card —
 # must be declared in the canonical sheet. A rename that forgets a card fails here
-# instead of drifting silently. POSIX tools only.
+# instead of drifting silently. Stock macOS/Linux tools only (grep -o is a BSD/GNU
+# extension both platforms ship; strict POSIX omits it).
 set -eu
 DIR=$(dirname "$0")
 SHEET="$DIR/tokens/tokens.css"
