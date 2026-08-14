@@ -19,7 +19,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **done** | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
-| EPIC-04 | Identity and profiles | *not written* | v0.2 |
+| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **backlog** | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **ready** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
@@ -429,6 +429,11 @@ parallel with `EPIC-02`; no shared file.
 | DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-018 | **Product.** Does anyone see the pause? `STORY-0208` ships silence — a timeout fold is indistinguishable on the wire from a chosen one | [`STORY-0208`](stories/STORY-0208-disconnect-grace-period.md) | before v0.2 |
+| DEC-025 | **Product.** Is an account ever required to play, or is anonymous play permanent? `ADR-0012` makes a device profile the default and `EPIC-04` keeps it — but nothing says whether an account is optional forever, prompted after a first win, or mandatory at some point | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before EPIC-04 closes |
+| DEC-026 | **Product.** What does a claim convert, and what happens when a device that already has an anonymous profile with coins signs into a different existing account? Merge the two balances and histories, keep one and discard the other, or refuse the sign-in — and `ADR-0014` says a coin is `wins − losses`, so any answer but "refuse" mints or destroys coins somewhere | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before STORY-0407 |
+| DEC-027 | **Product.** Does an account carry an email address, what may it be used for (recovery only, or contact), and can a password be recovered without one? The vision is quiet and minimal, which argues against asking — but an unrecoverable password re-creates the lost-device problem `EPIC-04` exists to fix | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before EPIC-04 starts — it blocks the credential chain |
+| DEC-028 | **Architect.** What is the credential, session and handshake model once a device id is no longer the only credential? What is hashed and with what, what a session is and how long it lives, what the socket presents in `Hello` and what HTTP presents beside `X-Device-Id`, and whether `PROTOCOL_VERSION` moves | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before EPIC-04 starts — it blocks the credential chain |
+| DEC-029 | **Product.** May a player delete their account, and what happens to the opponent's history lines that reference it? Nothing is built either way; the question is asked now so the credential schema does not silently foreclose an answer, as `ADR-0021` refused to do with `UNIQUE` | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before STORY-0403 lands the schema |
 
 **Answered.** `DEC-021` → [`ADR-0024`](../docs/adr/ADR-0024-design-follows-the-code-workflow.md)
 (design follows the code workflow, in the repository, mirrored to claude.ai/design).
