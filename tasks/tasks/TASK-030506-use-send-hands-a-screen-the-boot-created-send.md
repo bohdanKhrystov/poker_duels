@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030506
 title: useSend hands a screen the boot-created send, and a missing provider says so
 type: task
-status: backlog
+status: ready
 parent: STORY-0305
 module: web-client
 estimate: XS

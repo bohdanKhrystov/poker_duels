@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030505
 title: A component reads the store through useDuelState, and re-renders only when it moved
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
