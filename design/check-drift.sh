@@ -24,6 +24,14 @@ for f in $(find "$DIR" -name '*.html' | sort); do
   done
 done
 
+# a suit glyph without U+FE0E lets OEM emoji fallbacks repaint it — sweep every card
+for f in $(find "$DIR" -name '*.html' | sort); do
+  if grep -nE '[♠♥♦♣]([^︎]|$)' "$f" >&2; then
+    echo "check-drift: bare suit glyph (no U+FE0E) in $f" >&2
+    fail=1
+  fi
+done
+
 # an empty tree must fail as loudly as a missing sheet — a vacuous pass guards nothing
 [ "$files" -gt 0 ] || { echo "check-drift: no cards found under $DIR" >&2; exit 1; }
 if [ "$fail" -ne 0 ]; then exit 1; fi
