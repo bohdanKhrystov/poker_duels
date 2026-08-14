@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030401
 title: The store starts empty, and RoomJoined sets the seat and room code
 type: task
-status: ready
+status: done
 parent: STORY-0304
 module: web-client
 estimate: S
