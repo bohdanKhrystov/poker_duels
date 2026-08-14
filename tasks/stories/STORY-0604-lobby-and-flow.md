@@ -30,8 +30,9 @@ this story draws everything around it.
   seat"). No forms; a display name, once chosen, is permanent and simply shown
   (`ADR-0029`, amending `ADR-0021`) — what renders for a null name, and how a nameless
   player picks one, is `STORY-0411`'s call, not these cards'.
-- Duel end: "Victory" / "Defeat" in the hero sizes, the coin with ±1, hands played, and the
-  one accent action — Rematch. Defeat is stated in `--pd-loss`, never softened.
+- Duel end: "Victory" / "Defeat" in the hero sizes, the winner's coin +1 — the coin
+  counts duels won, no debit exists (`docs/vision.md`) — hands played, and the one
+  accent action — Rematch. Defeat is stated in `--pd-loss`, never softened.
 - Rematch needs both seats (`STORY-0206`): show mine-offered ("Rematch offered — waiting
   for ImKate"), theirs-offered ("ImKate offers a rematch"), both states quiet.
 - Waiting-for-opponent on the create screen is the empty table's seat: dashed outline plus
@@ -47,11 +48,13 @@ this story draws everything around it.
 | [TASK-060402](../tasks/TASK-060402-join-screen.md) | The join screen | done |
 | [TASK-060403](../tasks/TASK-060403-duel-end-screen.md) | The duel-end screen | done |
 | [TASK-060404](../tasks/TASK-060404-rematch-states-card.md) | The rematch states | ready |
+| [TASK-060405](../tasks/TASK-060405-flow-vocabulary-earns-a-component-card.md) | The flow vocabulary earns a component card | backlog |
 | [TASK-060406](../tasks/TASK-060406-the-typed-code-door.md) | The typed-code door | ready |
 
 ## Acceptance criteria
 
-- [ ] The four cards render in the pane under **Screens**.
+- [ ] The story's five screens — create, join, duel-end, the rematch states, the
+      typed-code door — render in the pane under **Screens**.
 - [ ] The human has seen them there and signed off.
 - [ ] The whole loop — create → join → play → end → rematch — can be walked card to card
       with no invented step.
