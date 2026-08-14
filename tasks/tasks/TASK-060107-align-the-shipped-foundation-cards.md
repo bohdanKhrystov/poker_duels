@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060107
 title: Align the shipped foundation cards with the later contract fixes
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
@@ -38,7 +38,9 @@ again.
 
 - Append `&#xFE0E;` to every raw ♠♥♦♣ so OEM emoji fallbacks cannot repaint the suits.
 - `.eyebrow` gains `font-weight: 500` in colors.html (type.html already has it).
-- README enumerations match the directory as it exists at this ticket's merge.
+- README enumerations match the directory as it exists at this ticket's merge, and the
+  push procedure gains the `_ds_manifest.json` step — without it a new card's file exists
+  in the project but never appears in the pane (the 2026-08-14 incident).
 
 ## Out of scope
 

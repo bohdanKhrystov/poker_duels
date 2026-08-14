@@ -11,6 +11,7 @@ is a render surface, never a store.
 ```
 design/
 ├── tokens/     tokens.css (canonical) + the three foundation preview cards
+├── components/ the table's parts — playing card, seat & pot, action bar
 ├── screens/    the composed table and duel-flow screens — STORY-0602/0604
 └── graphics/   (planned) SVG art — STORY-0603
 ```
@@ -42,7 +43,12 @@ assets.
    (globs allowed, e.g. `tokens/*.html`), plus any `deletes`.
 3. `DesignSync write_files` with `localPath` per file, under the returned `planId` —
    contents upload straight from disk.
-4. The human reviews the rendered cards in the claude.ai/design Design System pane. That
+4. When a *new* card is added, also update `_ds_manifest.json` in the project: fetch it,
+   append `{"path": "<project path>", "group": "<group>"}` to its `cards` array, and write
+   it back in the same plan. The pane indexes cards from that manifest and the app does not
+   rebuild it on upload — without this step a new card's file exists but never appears
+   (learned 2026-08-14).
+5. The human reviews the rendered cards in the claude.ai/design Design System pane. That
    look is the design review (`ADR-0024` §3).
 
 ### Pull (cloud → repo)
