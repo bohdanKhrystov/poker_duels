@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060201
 title: The playing-card component
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: S

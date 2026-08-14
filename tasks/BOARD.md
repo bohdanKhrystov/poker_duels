@@ -412,7 +412,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060104](tasks/TASK-060104-spacing-preview-card.md) The Spacing preview card | S | **done** |
 | | [TASK-060105](tasks/TASK-060105-design-directory-readme.md) The design directory README and sync procedure | XS | **done** |
 | **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |
-| | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | ready |
+| | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | **done** |
 | | [TASK-060202](tasks/TASK-060202-seat-plate-and-pot.md) The seat plate and pot strip | S | ready |
 | | [TASK-060203](tasks/TASK-060203-action-bar.md) The action bar | S | ready |
 | | [TASK-060204](tasks/TASK-060204-duel-table-screen.md) The duel table screen, in play | S | backlog |
