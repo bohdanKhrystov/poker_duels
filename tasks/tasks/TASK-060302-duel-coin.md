@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060302
 title: The duel coin
 type: task
-status: ready
+status: done
 parent: STORY-0603
 module: design
 estimate: S
