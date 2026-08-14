@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060303
 title: The wordmark card
 type: task
-status: ready
+status: done
 parent: STORY-0603
 module: design
 estimate: S
