@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060209
 title: The states' hidden mirrors use the live bar's elements
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: XS
