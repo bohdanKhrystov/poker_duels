@@ -47,6 +47,7 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060106](../tasks/TASK-060106-token-name-drift-check.md) | The token-name drift check | done |
 | [TASK-060107](../tasks/TASK-060107-align-the-shipped-foundation-cards.md) | Align the shipped foundation cards | done |
 | [TASK-060108](../tasks/TASK-060108-card-surface-tokens.md) | The card resting shadow and back texture become tokens | ready |
+| [TASK-060110](../tasks/TASK-060110-no-bare-suit-anywhere.md) | No bare suit glyph anywhere, enforced in the drift check | ready |
 
 ## Acceptance criteria
 
