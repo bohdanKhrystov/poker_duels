@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030402
 title: YourTurn sets a pending turn identified verbatim by the message
 type: task
-status: backlog
+status: ready
 parent: STORY-0304
 module: web-client
 estimate: S
