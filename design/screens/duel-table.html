@@ -53,12 +53,13 @@
     color: var(--pd-text-muted); border: 1px solid var(--pd-hairline);
     border-radius: var(--pd-radius-pill); padding: 2px var(--pd-space-3); }
 
-  /* screen-only glue: the opponent block keeps seat and bet line one unit, and the
-   * bet line's height is reserved even with no bet live, so nothing below shifts */
+  /* screen-only glue: the opponent block keeps seat, hidden hand and bet line one
+   * unit — the cards at the 40px mini reference, the bet line's height reserved even
+   * with no bet live — so nothing below ever shifts */
   .opp { display: flex; flex-direction: column; gap: var(--pd-space-2); }
   .oppcards { display: flex; gap: var(--pd-space-2); justify-content: center; }
   .bet-line { text-align: center; font-size: var(--pd-fs-small);
-    min-height: calc(var(--pd-fs-small) * var(--pd-lh-body)); color: var(--pd-text-muted); }
+    min-height: calc(var(--pd-fs-small) * var(--pd-lh-body)); color: var(--pd-text-faint); }
   .bet-line .amt { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
     color: var(--pd-text); }
 
@@ -71,8 +72,8 @@
     font-size: var(--pd-fs-large); }
   .pot .meta { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
 
-  /* playing card — faithful copy of components/playing-card.html (no .back on this
-   * screen); --bw sizes the board row from the column itself, not the viewport */
+  /* playing card — faithful copy of components/playing-card.html;
+   * --bw sizes the board row from the column itself, not the viewport */
   .board { display: flex; gap: var(--pd-space-3);
     --bw: clamp(48px, calc((100cqi - 64px) / 5), 72px); }
   .pc, .back, .slot { width: var(--w, 96px); aspect-ratio: 5 / 7;
