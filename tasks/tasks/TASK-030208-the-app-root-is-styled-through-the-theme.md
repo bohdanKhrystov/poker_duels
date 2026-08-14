@@ -19,6 +19,7 @@ verify:
   - grep -rqE -e '\.bg-bg *\{' web-client/dist/assets
   - grep -rqF -e 'var(--pd-fs-title)' web-client/dist/assets
   - grep -rl 'oklch(' web-client/dist/assets | grep -c . | grep -qx 0
+  - grep -rl -e '--spacing:' web-client/dist/assets | grep -c . | grep -qx 0
   - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +12 passed \(12\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders the application heading'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'gives the heading a token-derived class'
