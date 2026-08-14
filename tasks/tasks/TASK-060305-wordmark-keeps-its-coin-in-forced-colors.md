@@ -13,8 +13,7 @@ files_touched: 1
 labels: [design]
 depends_on: []
 verify:
-  - 'grep -qF "@media (forced-colors: active)" design/graphics/wordmark.html'
-  - 'grep -qF "border: 1px solid CanvasText" design/graphics/wordmark.html'
+  - 'grep -qF "@media (forced-colors: active) { .coin { border: 1px solid CanvasText; } }" design/graphics/wordmark.html'
   - ./design/check-drift.sh
 ---
 
