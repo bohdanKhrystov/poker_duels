@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030202
 title: The client's check fails on a colour literal outside the token layer
 type: task
-status: backlog
+status: ready
 parent: STORY-0302
 module: web-client
 estimate: S
