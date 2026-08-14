@@ -52,3 +52,13 @@ None — XML parse and color greps in `verify:`; nothing golden, asserted.
 ## Definition of done
 
 Standard, with `EPIC-06`'s recorded deviation: the review is visual, in claude.ai/design.
+
+## Deviations
+
+The #447 review reshaped the emblem before merge: the gradient ids took the `pd-` prefix
+(`pd-coin-steel`, `pd-coin-rim`) so the gallery can inline the coin without id collisions
+— the gallery ticket is barred from editing SVGs, so the rename had to precede it; the
+cross-guards and pommels moved outside the count disc (radial 18 and 23.5 against the
+disc's 16) because the promised hilt anatomy was painted under the disc, pixel-verified
+after the move; a dead `stroke-linecap` on unstroked geometry and a what-comment were
+dropped. Final look still routes to the visual review in the design pane.

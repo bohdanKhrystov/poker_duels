@@ -4,33 +4,35 @@
        they mirror the pd-coin (#9fb2c4), pd-coin-deep (#64788c) and pd-bg (#131211) tokens.
        (Token names are spelled without their leading dashes here: XML forbids them in comments.) -->
   <defs>
-    <radialGradient id="steel" cx="0.36" cy="0.30" r="0.85">
+    <radialGradient id="pd-coin-steel" cx="0.36" cy="0.30" r="0.85">
       <stop offset="0" stop-color="#b8c6d6"/>
       <stop offset="0.55" stop-color="#9fb2c4"/>
       <stop offset="1" stop-color="#64788c"/>
     </radialGradient>
-    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="pd-coin-rim" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#c2cfdd"/>
       <stop offset="1" stop-color="#556879"/>
     </linearGradient>
   </defs>
 
-  <!-- rim and field -->
-  <circle cx="48" cy="48" r="46" fill="url(#rim)"/>
-  <circle cx="48" cy="48" r="41.5" fill="url(#steel)"/>
+  <!-- the lathed rim seats the field; the hairline keeps them separate in flat light -->
+  <circle cx="48" cy="48" r="46" fill="url(#pd-coin-rim)"/>
+  <circle cx="48" cy="48" r="41.5" fill="url(#pd-coin-steel)"/>
   <circle cx="48" cy="48" r="41.5" fill="none" stroke="#131211" stroke-opacity="0.18" stroke-width="1"/>
 
-  <!-- crossed rapiers: blade, simple cross-guard, pommel — geometry, not illustration -->
-  <g stroke-linecap="round">
+  <!-- crossed rapiers: blade, simple cross-guard, pommel — geometry, not illustration.
+       The guard and pommel sit outside the count disc (radius 16) so the hilt anatomy
+       actually renders instead of hiding under the later-painted disc. -->
+  <g>
     <g transform="rotate(45 48 48)">
-      <rect x="46.6" y="16" width="2.8" height="52" rx="1.4" fill="#3d4e5e"/>
-      <rect x="40" y="60.4" width="16" height="2.8" rx="1.4" fill="#3d4e5e"/>
-      <circle cx="48" cy="68.5" r="2.6" fill="#3d4e5e"/>
+      <rect x="46.6" y="16" width="2.8" height="54.5" rx="1.4" fill="#3d4e5e"/>
+      <rect x="40" y="64.6" width="16" height="2.8" rx="1.4" fill="#3d4e5e"/>
+      <circle cx="48" cy="71.5" r="2.6" fill="#3d4e5e"/>
     </g>
     <g transform="rotate(-45 48 48)">
-      <rect x="46.6" y="16" width="2.8" height="52" rx="1.4" fill="#2c3a47"/>
-      <rect x="40" y="60.4" width="16" height="2.8" rx="1.4" fill="#2c3a47"/>
-      <circle cx="48" cy="68.5" r="2.6" fill="#2c3a47"/>
+      <rect x="46.6" y="16" width="2.8" height="54.5" rx="1.4" fill="#2c3a47"/>
+      <rect x="40" y="64.6" width="16" height="2.8" rx="1.4" fill="#2c3a47"/>
+      <circle cx="48" cy="71.5" r="2.6" fill="#2c3a47"/>
     </g>
   </g>
 
