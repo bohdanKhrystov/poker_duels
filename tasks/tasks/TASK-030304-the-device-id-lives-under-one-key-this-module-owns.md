@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030304
 title: The device id lives under one storage key this module owns
 type: task
-status: ready
+status: done
 parent: STORY-0303
 module: web-client
 estimate: XS
@@ -62,7 +62,8 @@ The device id the server issues is read and written through one exported key, so
 - `readDeviceId` returns the stored value verbatim otherwise — do not trim what it returns, only
   what it tests.
 - `storage` is a parameter, not `localStorage` reached for directly: the caller passes it
-  (`TASK-030311` passes `localStorage`) and a test passes jsdom's. No default value.
+  (`TASK-030311` passes `localStorage`) and a test passes an in-memory double. No default value.
+  This is what makes the module testable at all — see *Why not the global `localStorage`* below.
 - `ADR-0012` accepts what this costs — clearing site data or switching browser loses the profile —
   so nothing here tries to be cleverer than a single key in `Storage`.
 
@@ -78,16 +79,45 @@ The device id the server issues is read and written through one exported key, so
 ## Tests
 
 `web-client/src/protocol/device-id.test.ts`, describe block `"the device id store"`. Four `it`
-blocks, with `beforeEach(() => localStorage.clear())`:
+blocks, each against a **fresh in-memory `Storage` built in the test file** and assigned in
+`beforeEach` — see *Why not the global `localStorage`* below.
 
 | Test | Proves |
 | --- | --- |
-| `reads nothing on a first visit` | `readDeviceId(localStorage)` is `null` with nothing stored |
-| `reads back what was written` | after `writeDeviceId(localStorage, "d-1")`, `readDeviceId(localStorage)` is `"d-1"` |
-| `treats a blank stored value as no device id` | after `localStorage.setItem(DEVICE_ID_STORAGE_KEY, "   ")`, `readDeviceId(localStorage)` is `null` |
-| `writes under the one key the profile endpoint will read` | after `writeDeviceId(localStorage, "d-1")`, `localStorage.getItem("pd.deviceId")` is `"d-1"` |
+| `reads nothing on a first visit` | `readDeviceId(storage)` is `null` with nothing stored |
+| `reads back what was written` | after `writeDeviceId(storage, "d-1")`, `readDeviceId(storage)` is `"d-1"` |
+| `treats a blank stored value as no device id` | after `storage.setItem(DEVICE_ID_STORAGE_KEY, "   ")`, `readDeviceId(storage)` is `null` |
+| `writes under the one key the profile endpoint will read` | after `writeDeviceId(storage, "d-1")`, `storage.getItem("pd.deviceId")` is `"d-1"` |
 
 Four tests. Twenty-seven exist, so the suite reports **31**.
+
+### Why not the global `localStorage`
+
+This ticket originally specified `beforeEach(() => localStorage.clear())` and the global
+`localStorage` throughout. **That is not implementable here**, and the reason is worth recording
+because it will resurface in `TASK-030307`, `TASK-030309` and `STORY-0311`:
+
+Node 24+ defines its own `localStorage` global. It is present but **inert** unless the process is
+started with `--localstorage-file`, and under Vitest it shadows the one jsdom supplies. Measured on
+Node 26.7.0:
+
+```
+$ node -e "console.log(typeof localStorage, typeof sessionStorage)"
+undefined object
+ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+```
+
+Inside Vitest, `"localStorage" in window` is `true` and `typeof window.localStorage` is
+`"undefined"`, while `sessionStorage` works — Node keeps that one in memory. jsdom itself is fine:
+constructed directly, `new JSDOM(…).window.localStorage` reads and writes normally. The setting the
+first diagnosis reached for — a jsdom `url` — was already correct at `http://localhost:3000/` and
+was never the cause.
+
+Depending on that global would make these tests a property of the runtime's Node version rather
+than of this module — and note **CI pins Node 24 while a developer machine here runs Node 26**, so
+it could pass in one place and fail in the other. Because `readDeviceId` and `writeDeviceId` take
+their `Storage` as a parameter — which the Scope section already required, for its own reasons —
+the tests supply one and depend on no global at all. See `DEC-032`.
 
 The last test uses the **literal string** `"pd.deviceId"`, not `DEVICE_ID_STORAGE_KEY`. Asserting a
 constant against itself proves nothing; the literal is what `STORY-0311` will have to match.
