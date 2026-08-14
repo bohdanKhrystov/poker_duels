@@ -13,8 +13,8 @@ files_touched: 1
 labels: [design]
 depends_on: []
 verify:
-  - grep -q 'class="bar off"' design/components/action-bar.html
-  - grep -c 'class="chip"' design/components/action-bar.html | grep -qv '^0$'
+  - python3 -c "import re,sys; t=open('design/components/action-bar.html').read(); off=t[t.index('bar off'):]; sys.exit(0 if off.count('chip')>=5 and 'all-in' in off else 1)"
+  - grep -q 'mirrors the live content' design/components/action-bar.html
   - '! grep -q "http" design/components/action-bar.html'
 ---
 

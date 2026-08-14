@@ -6,7 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Table states — Poker Duels</title>
 <style>
-  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024).
+   * Each frame below is a full instance of the merged duel-table layout, not a sketch:
+   * same component CSS, same reference widths, same reserved slots. The only moving
+   * parts between states are text and card faces — never geometry. */
   :root {
     --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
@@ -15,142 +18,236 @@
     --pd-card-back: #35567e;
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
+    --pd-fs-large: 1.125rem;
+    --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
+    --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px;
+    --pd-space-6: 24px; --pd-space-7: 32px;
     --pd-radius-medium: 8px; --pd-radius-pill: 999px;
   }
   * { margin: 0; box-sizing: border-box; }
   body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
-    font-size: 0.9375rem; line-height: 1.5; padding: 32px; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 1020px; margin: 0 auto; }
-  .eyebrow { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--pd-text-faint); margin-bottom: 8px; }
-  h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
-  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
-  .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 32px; align-items: flex-start; }
-  .frame { width: 380px; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
-    padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
-  .frame h2 { font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--pd-text-muted); font-weight: 500; margin-bottom: 4px; }
+    font-size: var(--pd-fs-body); line-height: var(--pd-lh-body); padding: var(--pd-space-7);
+    -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1160px; margin: 0 auto; }
+  .eyebrow { font-size: var(--pd-fs-micro); font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: var(--pd-space-3); }
+  h1 { font-size: 1.875rem; line-height: var(--pd-lh-tight); font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: var(--pd-space-3); max-width: 56ch; }
+  .frames { display: flex; gap: var(--pd-space-6); flex-wrap: wrap;
+    margin-top: var(--pd-space-7); align-items: flex-start; }
+  .frame { flex: 1 1 400px; max-width: 560px; border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); padding: var(--pd-space-5);
+    container-type: inline-size; }
+  .frame h2 { font-size: var(--pd-fs-micro); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; margin-bottom: var(--pd-space-5); }
+  .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
+    margin-top: var(--pd-space-4); }
 
+  .tbl { display: flex; flex-direction: column; gap: var(--pd-space-5); }
+
+  /* seat plate — faithful copy of components/seat-and-pot.html */
   .seat { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
     border-left: 2px solid transparent; border-radius: var(--pd-radius-medium);
-    padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
-  .seat .name { font-weight: 500; }
-  .seat .status { display: block; font-size: 0.6875rem; line-height: 1.5;
+    padding: var(--pd-space-4) var(--pd-space-5); display: flex; align-items: center;
+    gap: var(--pd-space-4); }
+  .seat .name { font-weight: 500; display: block; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  .seat .status { display: block; font-size: var(--pd-fs-micro); line-height: var(--pd-lh-body);
     min-height: 1.5em; margin-top: 2px; color: var(--pd-text-faint); }
   .seat .status.turn { letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--pd-accent); font-weight: 500; }
   .seat .who { flex: 1; min-width: 0; }
   .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
   .seat.on-turn { border-left-color: var(--pd-accent); }
-  .dealer { font-family: var(--pd-font-mono); font-size: 0.6875rem; color: var(--pd-text-muted);
-    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill); padding: 2px 8px; }
+  .dealer { font-family: var(--pd-font-mono); font-size: var(--pd-fs-micro);
+    color: var(--pd-text-muted); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-pill); padding: 2px var(--pd-space-3); }
 
-  .pc, .back, .slot { width: var(--w, 48px); aspect-ratio: 5 / 7;
-    border-radius: calc(var(--w, 48px) * 0.0625); display: inline-block;
-    vertical-align: bottom; flex-shrink: 0; }
+  /* opponent block: the hidden hand at the 40px mini reference, and the reserved
+   * muck/bet line — both slots exist in every state */
+  .opp { display: flex; flex-direction: column; gap: var(--pd-space-2); }
+  .oppcards { display: flex; gap: var(--pd-space-2); justify-content: center; }
+  .oppline { text-align: center; font-size: var(--pd-fs-small);
+    min-height: calc(var(--pd-fs-small) * var(--pd-lh-body)); color: var(--pd-text-faint); }
+
+  .center { display: flex; flex-direction: column; align-items: center;
+    gap: var(--pd-space-4); padding: var(--pd-space-5) 0; }
+  /* the pot strip and the winner banner are the same two-row shape, so the
+   * showdown swap cannot reflow: amount row in mono, meta row beneath */
+  .potline { display: flex; align-items: baseline; gap: var(--pd-space-4);
+    padding: var(--pd-space-3) var(--pd-space-2); }
+  .potline .amount { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: var(--pd-fs-large); }
+  .potline .amount.win { color: var(--pd-win); font-weight: 700; }
+  .potline .meta { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
+
+  /* playing card — faithful copy of components/playing-card.html */
+  .board { display: flex; gap: var(--pd-space-3);
+    --bw: clamp(48px, calc((100cqi - 64px) / 5), 72px); }
+  .pc, .back, .slot { width: var(--w, 96px); aspect-ratio: 5 / 7;
+    border-radius: calc(var(--w, 96px) * 0.0625);
+    display: inline-block; vertical-align: bottom; flex-shrink: 0; }
   .pc { background: var(--pd-card-face); position: relative; color: var(--pd-suit-black);
     box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
   .pc.red { color: var(--pd-suit-red); }
-  .pc .ix { position: absolute; top: calc(var(--w, 48px) * 0.07);
-    left: calc(var(--w, 48px) * 0.10); line-height: 1; font-weight: 700; }
-  .pc .ix .r { font-size: calc(var(--w, 48px) * 0.26); display: block; }
-  .pc .ix .s { font-size: calc(var(--w, 48px) * 0.22); display: block;
-    margin-top: calc(var(--w, 48px) * 0.02); }
+  .pc .ix { position: absolute; top: calc(var(--w, 96px) * 0.07);
+    left: calc(var(--w, 96px) * 0.09); line-height: 1; font-weight: 700; }
+  .pc .ix .r { font-size: calc(var(--w, 96px) * 0.24); display: block; }
+  .pc .ix .s { font-size: calc(var(--w, 96px) * 0.20); display: block;
+    margin-top: calc(var(--w, 96px) * 0.02); }
+  .pc .pip { position: absolute; right: calc(var(--w, 96px) * 0.09);
+    bottom: calc(var(--w, 96px) * 0.07); font-size: calc(var(--w, 96px) * 0.34);
+    line-height: 1; }
+  .pc.mini .pip { display: none; }
   .back { background-color: var(--pd-card-back);
     background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 7px);
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4); }
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4); }
   .back.mucked { opacity: 0.45; }
   .slot { border: 1px dashed var(--pd-hairline); }
-  .cards { display: flex; gap: 6px; justify-content: center; }
-  .muck-note { text-align: center; font-size: 0.8125rem; color: var(--pd-text-faint);
-    min-height: calc(0.8125rem * 1.5); }
+  @media (forced-colors: active) { .back { border: 1px solid CanvasText; } }
 
-  .pot { display: flex; align-items: baseline; gap: 10px; justify-content: center; }
-  .pot .amount { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
-    font-size: 1.125rem; }
-  .pot .meta { font-size: 0.8125rem; color: var(--pd-text-muted); }
+  .hero { display: flex; flex-direction: column; gap: var(--pd-space-4); }
+  .hole { display: flex; gap: var(--pd-space-3); justify-content: center; }
 
-  .waitline { text-align: center; color: var(--pd-text-muted); background: var(--pd-surface);
-    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium); padding: 12px 0; }
-
-  .banner { text-align: center; padding: 10px 0 2px; }
-  .banner .win { color: var(--pd-win); font-weight: 700; font-size: 1.125rem; }
-  .banner .hand { color: var(--pd-text-muted); font-size: 0.8125rem; margin-top: 2px; }
-  .nextline { text-align: center; font-size: 0.8125rem; color: var(--pd-text-faint); }
-  .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
-    margin-top: 10px; }
+  /* action bar — the component's .off state: both rows reserved, sizing hidden
+   * with the full live content so wrap widths keep parity */
+  .bar { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); padding: var(--pd-space-4); }
+  .sizing { display: flex; gap: var(--pd-space-2); align-items: center;
+    margin-bottom: var(--pd-space-3); flex-wrap: wrap; min-height: var(--pd-space-7); }
+  .chip { font-family: var(--pd-font-mono); font-size: var(--pd-fs-micro);
+    color: var(--pd-text-muted); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-pill); padding: var(--pd-space-2) var(--pd-space-4);
+    background: none; }
+  .stepper { margin-left: auto; display: flex; align-items: center; gap: var(--pd-space-3);
+    font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  .stepper button { width: var(--pd-space-7); height: var(--pd-space-7);
+    border-radius: var(--pd-radius-medium); border: 1px solid var(--pd-hairline);
+    background: none; color: var(--pd-text); font-size: var(--pd-fs-body); }
+  .bar.off .sizing { visibility: hidden; }
+  .waiting { display: flex; align-items: center; justify-content: center;
+    color: var(--pd-text-muted);
+    min-height: calc(var(--pd-fs-body) * var(--pd-lh-tight) + 2 * var(--pd-space-4) + 2px); }
+  .waiting .dots { color: var(--pd-text-faint); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <p class="eyebrow">Poker Duels · Screens</p>
   <h1>Table states</h1>
-  <p class="lede">The table when it is not your move. Nothing glows, nothing animates in this
-  design — state is stated. The pot moves in numbers, the loser mucks, the next hand simply
-  arrives.</p>
+  <p class="lede">The same table at two later moments of the same hand. Every slot — the
+  opponent's hidden hand, the bet/muck line, the pot row, the bar — exists in every state,
+  so nothing appears, disappears, or moves; only text and card faces change.</p>
 
   <div class="frames">
     <div class="frame">
-      <h2>Waiting — their turn, on the turn card</h2>
-      <div class="seat on-turn">
-        <span class="who"><span class="name">ImKate</span>
-          <span class="status turn">Their turn</span></span>
-        <span class="dealer">D</span>
-        <span class="chips">4,150</span>
+      <h2>Waiting — their turn on the turn card</h2>
+      <div class="tbl">
+        <div class="opp">
+          <div class="seat on-turn">
+            <span class="who"><span class="name">ImKate</span>
+              <span class="status turn">Their turn</span></span>
+            <span class="dealer">D</span>
+            <span class="chips">4,150</span>
+          </div>
+          <div class="oppcards">
+            <span class="back" style="--w:40px" role="img" aria-label="ImKate's hidden hand"></span>
+            <span class="back" style="--w:40px" role="img" aria-label=""></span>
+          </div>
+          <div class="oppline"></div>
+        </div>
+        <div class="center">
+          <div class="potline">
+            <span class="amount">Pot&nbsp;3,250</span>
+            <span class="meta">Blinds 75/150 · Hand 14</span>
+          </div>
+          <div class="board">
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="seven of diamonds"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="two of clubs"><span class="ix" aria-hidden="true"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="jack of hearts"><span class="ix" aria-hidden="true"><span class="r">J</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="slot" style="--w:var(--bw)" role="img" aria-label="river card, not yet dealt"></span>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="hole">
+            <span class="pc red" style="--w:96px" role="img" aria-label="ace of hearts"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="pc" style="--w:96px" role="img" aria-label="king of spades"><span class="ix" aria-hidden="true"><span class="r">K</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+          </div>
+          <div class="seat">
+            <span class="who"><span class="name">You</span>
+              <span class="status"></span></span>
+            <span class="chips">12,600</span>
+          </div>
+          <div class="bar off">
+            <div class="sizing">
+              <span class="chip">min</span><span class="chip">⅓</span>
+              <span class="chip">½</span><span class="chip">pot</span>
+              <span class="chip">all-in</span>
+              <span class="stepper"><button aria-label="decrease the bet">−</button><span>0</span><button aria-label="increase the bet">+</button></span>
+            </div>
+            <div class="waiting">Waiting for ImKate<span class="dots">…</span></div>
+          </div>
+        </div>
       </div>
-      <div class="cards">
-        <span class="back" style="--w:44px"></span>
-        <span class="back" style="--w:44px"></span>
-      </div>
-      <div class="muck-note"></div>
-      <div class="cards">
-        <span class="pc" style="--w:48px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span></span>
-        <span class="pc red" style="--w:48px"><span class="ix"><span class="r">7</span><span class="s">♦︎</span></span></span>
-        <span class="pc" style="--w:48px"><span class="ix"><span class="r">2</span><span class="s">♣︎</span></span></span>
-        <span class="pc red" style="--w:48px"><span class="ix"><span class="r">J</span><span class="s">♥︎</span></span></span>
-        <span class="slot" style="--w:48px"></span>
-      </div>
-      <div class="pot"><span class="amount">Pot&nbsp;3,250</span>
-        <span class="meta">Blinds 75/150 · Hand 14</span></div>
-      <div class="cards">
-        <span class="pc red" style="--w:64px"><span class="ix"><span class="r">A</span><span class="s">♥︎</span></span></span>
-        <span class="pc" style="--w:64px"><span class="ix"><span class="r">K</span><span class="s">♠︎</span></span></span>
-      </div>
-      <div class="waitline">Waiting for ImKate…</div>
-      <p class="note">the bar, the status line and the muck slot all keep their places —
-      no state change reflows the table</p>
+      <p class="note">the hidden sizing row carries the full live content, so even where it
+      wraps, the bar's height matches the live bar exactly</p>
     </div>
 
     <div class="frame">
       <h2>Showdown — you win, the loser mucks</h2>
-      <div class="seat">
-        <span class="who"><span class="name">ImKate</span>
-          <span class="status"></span></span>
-        <span class="dealer">D</span>
-        <span class="chips">3,350</span>
+      <div class="tbl">
+        <div class="opp">
+          <div class="seat">
+            <span class="who"><span class="name">ImKate</span>
+              <span class="status"></span></span>
+            <span class="dealer">D</span>
+            <span class="chips">3,350</span>
+          </div>
+          <div class="oppcards">
+            <span class="back mucked" style="--w:40px" role="img" aria-label="ImKate's mucked hand, not shown"></span>
+            <span class="back mucked" style="--w:40px" role="img" aria-label=""></span>
+          </div>
+          <div class="oppline">ImKate mucks</div>
+        </div>
+        <div class="center">
+          <div class="potline">
+            <span class="amount win">You win 4,850</span>
+            <span class="meta">Two pair, aces and sevens</span>
+          </div>
+          <div class="board">
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="seven of diamonds"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="two of clubs"><span class="ix" aria-hidden="true"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="jack of hearts"><span class="ix" aria-hidden="true"><span class="r">J</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="seven of clubs"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="hole">
+            <span class="pc red" style="--w:96px" role="img" aria-label="ace of hearts"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="pc" style="--w:96px" role="img" aria-label="king of spades"><span class="ix" aria-hidden="true"><span class="r">K</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+          </div>
+          <div class="seat">
+            <span class="who"><span class="name">You</span>
+              <span class="status"></span></span>
+            <span class="chips">11,800</span>
+          </div>
+          <div class="bar off">
+            <div class="sizing">
+              <span class="chip">min</span><span class="chip">⅓</span>
+              <span class="chip">½</span><span class="chip">pot</span>
+              <span class="chip">all-in</span>
+              <span class="stepper"><button aria-label="decrease the bet">−</button><span>0</span><button aria-label="increase the bet">+</button></span>
+            </div>
+            <div class="waiting">Dealing hand 15<span class="dots">…</span></div>
+          </div>
+        </div>
       </div>
-      <div class="cards">
-        <span class="back mucked" style="--w:44px"></span>
-        <span class="back mucked" style="--w:44px"></span>
-      </div>
-      <div class="muck-note">ImKate mucks</div>
-      <div class="cards">
-        <span class="pc" style="--w:48px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span></span>
-        <span class="pc red" style="--w:48px"><span class="ix"><span class="r">7</span><span class="s">♦︎</span></span></span>
-        <span class="pc" style="--w:48px"><span class="ix"><span class="r">2</span><span class="s">♣︎</span></span></span>
-        <span class="pc red" style="--w:48px"><span class="ix"><span class="r">J</span><span class="s">♥︎</span></span></span>
-        <span class="pc" style="--w:48px"><span class="ix"><span class="r">7</span><span class="s">♣︎</span></span></span>
-      </div>
-      <div class="banner">
-        <div class="win">You win 4,850</div>
-        <div class="hand">Two pair, aces and sevens</div>
-      </div>
-      <div class="cards">
-        <span class="pc red" style="--w:64px"><span class="ix"><span class="r">A</span><span class="s">♥︎</span></span></span>
-        <span class="pc" style="--w:64px"><span class="ix"><span class="r">K</span><span class="s">♠︎</span></span></span>
-      </div>
-      <div class="nextline">Dealing hand 15…</div>
-      <p class="note">ADR-0008: the loser's cards stay down, stated in words, dimmed on the felt-free table</p>
+      <p class="note">ADR-0008: the loser's cards stay down, dimmed, stated in words in the
+      reserved line; the pot row becomes the banner without changing shape — the amount is
+      mono like every chip number</p>
     </div>
   </div>
 </div>

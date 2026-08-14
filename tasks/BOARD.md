@@ -421,6 +421,8 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060204](tasks/TASK-060204-duel-table-screen.md) The duel table screen, in play | S | **done** |
 | | [TASK-060205](tasks/TASK-060205-table-states.md) The table's other moments — waiting and showdown | S | **done** |
 | | [TASK-060206](tasks/TASK-060206-action-bar-off-state-parity.md) The off-state's hidden sizing row mirrors the live content | XS | backlog |
+| | [TASK-060207](tasks/TASK-060207-the-fold-ending.md) The fold ending — a win with nothing shown | S | backlog |
+| | [TASK-060208](tasks/TASK-060208-the-in-play-table-shows-the-hidden-hand.md) The in-play table shows the hidden hand | XS | backlog |
 | **[STORY-0603](stories/STORY-0603-graphics.md)** Draw the graphics — suit glyphs, the duel coin, the wordmark — *schema 2* | | | ready |
 | | [TASK-060301](tasks/TASK-060301-suit-glyph-set.md) The suit-glyph set | S | ready |
 | | [TASK-060302](tasks/TASK-060302-duel-coin.md) The duel coin | S | ready |
