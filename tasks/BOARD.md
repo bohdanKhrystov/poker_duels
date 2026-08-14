@@ -531,13 +531,23 @@ frame — decodes every inbound message, says `Hello`, and turns `Welcome` and `
 connection state, built against a wire that is about to move twice without needing to change for
 either bump.
 
-`STORY-0304` is next and is split: six tickets that build `src/store/`, a pure, framework-free
-reducer that folds a `ServerMessage` into the state every future screen reads. `TASK-030401` is
-startable now. The chain is strictly linear, and it computes nothing any message did not already
-carry — no legality, no pot arithmetic, no hand rank, no winner. `Failure` is deliberately not
-folded into this store; nothing in the story's acceptance criteria gives it a shape, and it reads
-most naturally as `STORY-0305`'s lobby concern once that screen exists to have an opinion about a
-failed join.
+`STORY-0304` is **done**: `src/store/duel-state.ts` folds a `ServerMessage` into the state every
+screen reads, computing nothing a message did not already carry — no legality, no pot arithmetic,
+no hand rank, no winner.
+
+`STORY-0305` is next and is split: sixteen tickets that build the React binding and then the lobby
+on top of it. `TASK-030501` is startable now; the chain is strictly linear and every ticket pins a
+cumulative test count, so exactly one is startable at a time.
+[`ADR-0032`](../docs/adr/ADR-0032-react-subscribes-to-a-store-it-does-not-own.md) is what made it
+plannable: one store and one connection per tab, wired by a framework-free `bootDuelClient` that
+`main.tsx` calls once **outside** the component tree, read through `useDuelState()`
+(`useSyncExternalStore`, no store library) and sent through `useSend()` from event handlers only.
+That is what makes *"exactly one `JoinRoom`, after `Welcome`"* structural rather than a `useRef`
+guard each screen re-invents — StrictMode's double mount cannot reach a socket that does not live
+in the tree, and `TASK-030507` proves it by counting frames. `Failure`, which `STORY-0304`
+deliberately left unfolded, gains its reducer case here in `TASK-030502`: `ADR-0032` forbids a
+screen reading `Connection.status`, so a refused join reaches the lobby through the reducer or not
+at all.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -584,7 +594,23 @@ failed join.
 | | [TASK-030404](tasks/TASK-030404-a-rejected-clears-the-pending-turn-and-leaves-the-view-alone.md) A Rejected clears the pending turn and leaves the view untouched | XS | **done** |
 | | [TASK-030405](tasks/TASK-030405-events-narrate-and-change-no-field-a-snapshot-established.md) Events narrate, and change no field a Snapshot established | S | **done** |
 | | [TASK-030406](tasks/TASK-030406-duel-finished-records-the-outcome-and-clears-the-pending-turn.md) DuelFinished records the outcome verbatim and clears the pending turn | XS | **done** |
-| [STORY-0305](stories/STORY-0305-lobby-and-room-link.md) | The lobby — create a room, join by code, share the link | backlog |
+| **[STORY-0305](stories/STORY-0305-lobby-and-room-link.md)** The lobby — create a room, join by code, share the link — *schema 2* | | **ready** |
+| | [TASK-030501](tasks/TASK-030501-the-store-is-subscribable-and-notifies-only-when-the-state-moved.md) The store is subscribable, and notifies only when the state moved | S | ready |
+| | [TASK-030502](tasks/TASK-030502-a-failure-reaches-the-state-through-the-reducer.md) A Failure reaches the state through the reducer, and a join that lands clears it | S | backlog |
+| | [TASK-030503](tasks/TASK-030503-boot-joins-the-tabs-one-connection-to-its-one-store.md) Boot joins the tab's one connection to its one store | S | backlog |
+| | [TASK-030504](tasks/TASK-030504-the-code-from-the-url-joins-on-welcome-exactly-once.md) The code the URL carried joins on Welcome, exactly once | S | backlog |
+| | [TASK-030505](tasks/TASK-030505-a-component-reads-the-store-through-use-duel-state.md) A component reads the store through useDuelState, and re-renders only when it moved | S | backlog |
+| | [TASK-030506](tasks/TASK-030506-use-send-hands-a-screen-the-boot-created-send.md) useSend hands a screen the boot-created send, and a missing provider says so | XS | backlog |
+| | [TASK-030507](tasks/TASK-030507-a-strictmode-double-mount-sends-no-second-joinroom.md) A StrictMode double mount sends no second JoinRoom | S | backlog |
+| | [TASK-030508](tasks/TASK-030508-the-framework-free-store-modules-import-nothing-from-react.md) The framework-free store modules import nothing from react | XS | backlog |
+| | [TASK-030509](tasks/TASK-030509-the-invite-carries-the-code-as-a-query-parameter.md) The invite carries the code as a query parameter, trimmed and upper-cased | S | backlog |
+| | [TASK-030510](tasks/TASK-030510-the-lobby-creates-a-room-and-joins-by-a-pasted-code.md) The lobby creates a room, and joins by a pasted code it trims and upper-cases | S | backlog |
+| | [TASK-030511](tasks/TASK-030511-a-joined-room-shows-its-code-and-a-selectable-invite-link.md) A joined room shows its code and a selectable invite link | S | backlog |
+| | [TASK-030512](tasks/TASK-030512-copy-the-link-where-there-is-a-clipboard.md) Copy the link where there is a clipboard, and keep it in reach where there is not | S | backlog |
+| | [TASK-030513](tasks/TASK-030513-unknown-room-and-room-full-each-get-their-own-message.md) UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries | S | backlog |
+| | [TASK-030514](tasks/TASK-030514-the-first-snapshot-ends-the-wait-and-no-other-frame-does.md) The first Snapshot ends the wait, and no other frame does | S | backlog |
+| | [TASK-030515](tasks/TASK-030515-main-boots-the-client-once-and-renders-the-lobby.md) main.tsx boots the client once and renders the lobby under the provider | S | backlog |
+| | [TASK-030516](tasks/TASK-030516-one-connection-per-tab-booted-in-main-and-nowhere-else.md) One connection per tab, booted in main.tsx and nowhere else | S | backlog |
 | [STORY-0306](stories/STORY-0306-duel-table-screen.md) | The duel table renders a PlayerView | backlog |
 | [STORY-0307](stories/STORY-0307-action-bar.md) | The action bar — acting on your turn | backlog |
 | [STORY-0308](stories/STORY-0308-result-screen.md) | The result screen — who won, and the coin | backlog |
