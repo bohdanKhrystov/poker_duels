@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { openConnection } from "./connection";
 import { FakeSocket } from "./fake-socket";
+import type { ServerMessage } from "./protocol.gen";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -44,6 +45,10 @@ describe("the connection", () => {
   beforeEach(() => {
     socket = new FakeSocket();
     storage = inMemoryStorage();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("starts out connecting", () => {
@@ -117,5 +122,61 @@ describe("the connection", () => {
     connection.close();
 
     expect(socket.closed).toBe(true);
+  });
+
+  it("hands a decoded frame to the listener", () => {
+    const messages: ServerMessage[] = [];
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: (message) => messages.push(message),
+    });
+
+    socket.receive('{"type":"RoomJoined","code":"ABCD","seat":0}');
+
+    expect(messages).toEqual([{ type: "RoomJoined", code: "ABCD", seat: 0 }]);
+  });
+
+  it("logs and drops a frame it cannot read", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const messages: ServerMessage[] = [];
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: (message) => messages.push(message),
+    });
+
+    socket.receive("not json");
+
+    expect(messages).toEqual([]);
+    expect(warn).toHaveBeenCalledOnce();
+  });
+
+  it("drops a frame whose type it does not know", () => {
+    const messages: ServerMessage[] = [];
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: (message) => messages.push(message),
+    });
+
+    socket.receive('{"type":"Nonsense"}');
+
+    expect(messages).toEqual([]);
+  });
+
+  it("handles the next valid frame after a dropped one", () => {
+    const messages: ServerMessage[] = [];
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: (message) => messages.push(message),
+    });
+
+    socket.receive("not json");
+    socket.receive('{"type":"Nonsense"}');
+    socket.receive('{"type":"RoomJoined","code":"ABCD","seat":0}');
+
+    expect(messages).toEqual([{ type: "RoomJoined", code: "ABCD", seat: 0 }]);
   });
 });

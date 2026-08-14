@@ -1,5 +1,5 @@
 import { readDeviceId } from "./device-id";
-import { encodeClientMessage } from "./frames";
+import { decodeServerMessage, encodeClientMessage } from "./frames";
 import type {
   ClientMessage,
   ProtocolError,
@@ -28,9 +28,9 @@ export interface Connection {
 /**
  * Wraps an already-constructed socket and says `Hello` the moment it opens,
  * carrying the device id this browser holds (or `null` on a first visit) and
- * the protocol version this client speaks. `openConnection` sets nothing
- * beyond `onopen` — inbound frames, reconnection and identity persistence
- * each belong to a later ticket.
+ * the protocol version this client speaks. It also forwards every inbound
+ * frame the codec can decode to `options.onMessage` and drops the rest —
+ * reconnection and identity persistence still belong to a later ticket.
  */
 export function openConnection(options: ConnectionOptions): Connection {
   // TASK-030309 and TASK-030310 reassign this once `Ready`/`Refused`/
@@ -46,6 +46,18 @@ export function openConnection(options: ConnectionOptions): Connection {
         protocolVersion: PROTOCOL_VERSION,
       }),
     );
+  };
+
+  options.socket.onmessage = (event) => {
+    const message = decodeServerMessage(event.data);
+    if (message === null) {
+      // A frame we cannot read is not an error to raise into a render: the next
+      // Snapshot re-establishes the truth, which is why the server sends one
+      // after every transition.
+      console.warn("protocol: dropped an unreadable frame", event.data);
+      return;
+    }
+    options.onMessage(message);
   };
 
   return {
