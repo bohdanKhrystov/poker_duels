@@ -2,7 +2,10 @@
 
 - **Status:** Accepted — amended by [ADR-0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md),
   which narrows "the player's current hand is folded" to fold-when-facing-a-bet,
-  check-when-nothing-is-owed
+  check-when-nothing-is-owed; and by
+  [ADR-0028](ADR-0028-the-wire-names-an-absent-opponent.md), which ends the silence around the
+  pause — the present player is told the opponent is away and how long the server will wait, and
+  every action the server takes for an absent seat is marked on the wire
 - **Date:** 2026-08-12
 - **Resolves:** what happens when a player's connection drops mid-duel
 

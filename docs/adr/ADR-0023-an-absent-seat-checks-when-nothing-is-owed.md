@@ -1,6 +1,10 @@
 # ADR-0023 — An absent seat checks when nothing is owed, folds when facing a bet
 
-- **Status:** Accepted
+- **Status:** Accepted — amended by
+  [ADR-0028](ADR-0028-the-wire-names-an-absent-opponent.md) on one point only: an absence action
+  stays indistinguishable **in the log**, but is no longer indistinguishable **on the wire** — a
+  `ServerMessage` marks every check or fold the server took for an absent seat. Which action is
+  sent, and why, is unchanged
 - **Date:** 2026-08-13
 - **Resolves:** DEC-020 — what an absent seat does at a decision point where `Fold` is illegal
 - **Amends:** [ADR-0013](ADR-0013-disconnect-grace-period.md) — narrows "the player's current
