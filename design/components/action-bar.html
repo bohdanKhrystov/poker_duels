@@ -1,0 +1,117 @@
+<!-- @dsCard group="Components" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Action bar — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
+    --pd-on-accent: #ffffff;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-radius-medium: 8px; --pd-radius-pill: 999px;
+    --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: 0.9375rem; line-height: 1.5; padding: 32px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-faint); margin-bottom: 8px; }
+  h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  h2 { font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; margin: 40px 0 14px; }
+  .l { font-family: var(--pd-font-mono); font-size: 0.75rem; color: var(--pd-text-faint);
+    margin-top: 8px; }
+
+  .bar { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); padding: 12px; max-width: 460px; }
+  .actions { display: flex; gap: 8px; }
+  .btn { font: 500 0.9375rem var(--pd-font-ui); padding: 12px 0; border-radius: var(--pd-radius-medium);
+    border: 1px solid transparent; cursor: pointer; flex: 1; text-align: center; }
+  .btn .amt { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
+  .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
+  .btn.fill:hover { background: var(--pd-accent-fill-hover); }
+  .btn.focused { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+  .bar.disabled .btn { color: var(--pd-text-faint); border-color: var(--pd-hairline);
+    background: none; cursor: default; }
+
+  .sizing { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .chip { font-family: var(--pd-font-mono); font-size: 0.75rem; color: var(--pd-text-muted);
+    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill);
+    padding: 4px 10px; background: none; cursor: pointer; }
+  .chip.sel { color: var(--pd-accent); border-color: var(--pd-accent); }
+  .stepper { margin-left: auto; display: flex; align-items: center; gap: 8px;
+    font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  .stepper button { width: 28px; height: 28px; border-radius: var(--pd-radius-medium);
+    border: 1px solid var(--pd-hairline); background: none; color: var(--pd-text);
+    cursor: pointer; font-size: 0.9375rem; }
+
+  .waiting { text-align: center; color: var(--pd-text-muted); padding: 14px 0; }
+  .waiting .dots { color: var(--pd-text-faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Components</p>
+  <h1>Action bar</h1>
+  <p class="lede">Never more than three choices, exactly as the engine's legal actions offer
+  them. The one filled button is the aggressive line; everything else is quiet. Amounts are
+  mono, keyboard focus is the outline pair.</p>
+
+  <h2>Your move — nothing owed</h2>
+  <div class="bar">
+    <div class="sizing">
+      <button class="chip">min</button><button class="chip">⅓</button>
+      <button class="chip sel">½</button><button class="chip">pot</button>
+      <button class="chip">all-in</button>
+      <span class="stepper"><button>−</button><span>250</span><button>+</button></span>
+    </div>
+    <div class="actions">
+      <button class="btn ghost">Fold</button>
+      <button class="btn ghost">Check</button>
+      <button class="btn fill focused">Bet <span class="amt">250</span></button>
+    </div>
+  </div>
+  <p class="l">the fill button carries the focus outline here — every control can</p>
+
+  <h2>Your move — facing 400</h2>
+  <div class="bar">
+    <div class="sizing">
+      <button class="chip">min</button><button class="chip">⅓</button>
+      <button class="chip">½</button><button class="chip sel">pot</button>
+      <button class="chip">all-in</button>
+      <span class="stepper"><button>−</button><span>1,200</span><button>+</button></span>
+    </div>
+    <div class="actions">
+      <button class="btn ghost">Fold</button>
+      <button class="btn ghost">Call <span class="amt">400</span></button>
+      <button class="btn fill">Raise to <span class="amt">1,200</span></button>
+    </div>
+  </div>
+
+  <h2>Sent — waiting on the server</h2>
+  <div class="bar disabled">
+    <div class="actions">
+      <button class="btn">Fold</button>
+      <button class="btn">Call <span class="amt">400</span></button>
+      <button class="btn">Raise to <span class="amt">1,200</span></button>
+    </div>
+  </div>
+  <p class="l">.disabled — everything faint, nothing moves, no spinner</p>
+
+  <h2>Not your move</h2>
+  <div class="bar">
+    <div class="waiting">Waiting for ImKate<span class="dots">…</span></div>
+  </div>
+  <p class="l">off turn the bar keeps its height, so the table never reflows</p>
+</div>
+</body>
+</html>

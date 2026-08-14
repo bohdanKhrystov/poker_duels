@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060204
 title: The duel table screen, in play
 type: task
-status: backlog
+status: ready
 parent: STORY-0602
 module: design
 estimate: S
