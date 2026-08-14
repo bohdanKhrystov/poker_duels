@@ -272,4 +272,101 @@ describe("the duel state", () => {
     });
     expect(state.view).toEqual(view);
   });
+
+  it("appends events to the narration log in order", () => {
+    const event1 = {
+      type: "ActionOn",
+      sequence: 1,
+      seat: 0,
+    } as const;
+    const event2 = {
+      type: "PlayerBet",
+      sequence: 2,
+      seat: 1,
+      to: 20,
+    } as const;
+    const stateAfterFirstEvents = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Events",
+        events: [event1],
+      },
+    );
+    expect(stateAfterFirstEvents.narration).toEqual([event1]);
+    const stateAfterSecondEvents = duelState.applyServerMessage(
+      stateAfterFirstEvents,
+      {
+        type: "Events",
+        events: [event2],
+      },
+    );
+    expect(stateAfterSecondEvents.narration).toEqual([event1, event2]);
+  });
+
+  it("changes no field a snapshot or a pending turn established", () => {
+    const view = samplePlayerView();
+    const legalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 10,
+      minRaiseTo: 20,
+      allInTo: 100,
+    } as const;
+    const stateWithView = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Snapshot",
+        view,
+      },
+    );
+    const stateWithPending = duelState.applyServerMessage(stateWithView, {
+      type: "YourTurn",
+      handNumber: 1,
+      actionSequence: 1,
+      legalActions,
+    });
+    const event = {
+      type: "ActionOn",
+      sequence: 1,
+      seat: 0,
+    } as const;
+    const stateAfterEvents = duelState.applyServerMessage(stateWithPending, {
+      type: "Events",
+      events: [event],
+    });
+    expect(stateAfterEvents.view).toEqual(view);
+    expect(stateAfterEvents.pendingTurn).toEqual({
+      handNumber: 1,
+      actionSequence: 1,
+      legalActions,
+    });
+  });
+
+  it("does not populate a seat's hole cards from a HandRevealed event", () => {
+    const view = samplePlayerView({
+      seats: [
+        sampleSeat({ index: 0 }),
+        sampleSeat({ index: 1, holeCards: [] }),
+      ],
+    });
+    const stateWithView = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Snapshot",
+        view,
+      },
+    );
+    const handRevealed = {
+      type: "HandRevealed",
+      sequence: 1,
+      seat: 1,
+      cards: ["2c", "7h"],
+    } as const;
+    const stateAfterEvents = duelState.applyServerMessage(stateWithView, {
+      type: "Events",
+      events: [handRevealed],
+    });
+    expect(stateAfterEvents.view?.seats[1]?.holeCards).toEqual([]);
+  });
 });

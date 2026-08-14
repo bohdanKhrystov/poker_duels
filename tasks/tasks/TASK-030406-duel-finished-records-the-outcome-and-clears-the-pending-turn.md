@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030406
 title: DuelFinished records the outcome verbatim and clears the pending turn
 type: task
-status: backlog
+status: ready
 parent: STORY-0304
 module: web-client
 estimate: XS
