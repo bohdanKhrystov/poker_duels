@@ -15,13 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Typecheck the generated protocol types
-        run: npx --yes --package=typescript@5.6.3 tsc --noEmit --strict web-client/src/protocol/protocol.gen.ts
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -38,3 +31,27 @@ jobs:
         with:
           name: test-report
           path: build/reports/
+
+  client:
+    name: client
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web-client/.nvmrc
+          cache: npm
+          cache-dependency-path: web-client/package-lock.json
+
+      - name: Install from the lockfile
+        run: npm ci
+
+      - name: Typecheck, lint, format and test
+        run: npm run check
+
+      - name: Production build
+        run: npm run build
