@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030106
 title: Vitest renders the app in jsdom and asserts what it shows
 type: task
-status: backlog
+status: ready
 parent: STORY-0301
 module: web-client
 estimate: XS
