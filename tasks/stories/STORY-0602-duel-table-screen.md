@@ -64,9 +64,11 @@ proves itself or breaks.
 
 ## Acceptance criteria
 
-- [ ] The five cards render in the claude.ai/design pane under **Components** and
+- [x] The five cards render in the claude.ai/design pane under **Components** and
       **Screens**.
-- [ ] The human has seen the table there and signed off on it.
+- [x] The human has seen the table there and signed off on it.
+      *(Components approved on sight 2026-08-14; full sign-off recorded 2026-08-15,
+      in-session, after the 14-card sync.)*
 - [ ] Every value on every card traces to `design/tokens/tokens.css`.
 
 ## Out of scope

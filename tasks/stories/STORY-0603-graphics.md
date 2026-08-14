@@ -48,8 +48,9 @@ favicon, victory screen — and `EPIC-03`/`EPIC-04` consume it.
 
 ## Acceptance criteria
 
-- [ ] The gallery and wordmark cards render in the pane under **Graphics** and **Brand**.
-- [ ] The human has seen them there and signed off.
+- [x] The gallery and wordmark cards render in the pane under **Graphics** and **Brand**.
+- [x] The human has seen them there and signed off.
+      *(Sign-off recorded 2026-08-15, in-session, after the 14-card sync.)*
 - [ ] Both SVGs parse as XML and contain nothing golden.
 
 ## Out of scope
