@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030204
 title: The tokens and Tailwind reach the bundle through one stylesheet
 type: task
-status: ready
+status: done
 parent: STORY-0302
 module: web-client
 estimate: XS

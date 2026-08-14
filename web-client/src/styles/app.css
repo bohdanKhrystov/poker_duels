@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Dark only. STORY-0601 scoped light out epic-wide: no light mode,
+ * no theme switch, no second palette. */
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--pd-bg);
+  color: var(--pd-text);
+  font-family: var(--pd-font-ui);
+  font-size: var(--pd-fs-body);
+  line-height: var(--pd-lh-body);
+}

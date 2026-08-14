@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030205
 title: The theme's colours are the tokens and nothing else
 type: task
-status: backlog
+status: ready
 parent: STORY-0302
 module: web-client
 estimate: S
