@@ -68,19 +68,21 @@
    * muck/bet line — both slots exist in every state */
   .opp { display: flex; flex-direction: column; gap: var(--pd-space-2); }
   .oppcards { display: flex; gap: var(--pd-space-2); justify-content: center; }
-  .oppline { text-align: center; font-size: var(--pd-fs-small);
+  .bet-line { text-align: center; font-size: var(--pd-fs-small);
     min-height: calc(var(--pd-fs-small) * var(--pd-lh-body)); color: var(--pd-text-faint); }
+  .bet-line .amt { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    color: var(--pd-text); }
 
   .center { display: flex; flex-direction: column; align-items: center;
     gap: var(--pd-space-4); padding: var(--pd-space-5) 0; }
   /* the pot strip and the winner banner are the same two-row shape, so the
    * showdown swap cannot reflow: amount row in mono, meta row beneath */
-  .potline { display: flex; align-items: baseline; gap: var(--pd-space-4);
+  .pot { display: flex; align-items: baseline; gap: var(--pd-space-4);
     padding: var(--pd-space-3) var(--pd-space-2); }
-  .potline .amount { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+  .pot .amount { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
     font-size: var(--pd-fs-large); }
-  .potline .amount.win { color: var(--pd-win); font-weight: 700; }
-  .potline .meta { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
+  .pot .amount.win { color: var(--pd-win); font-weight: 700; }
+  .pot .meta { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
 
   /* playing card — faithful copy of components/playing-card.html */
   .board { display: flex; gap: var(--pd-space-3);
@@ -149,16 +151,16 @@
             <span class="who"><span class="name">ImKate</span>
               <span class="status turn">Their turn</span></span>
             <span class="dealer">D</span>
-            <span class="chips">4,150</span>
+            <span class="chips">3,750</span>
           </div>
           <div class="oppcards">
             <span class="back" style="--w:40px" role="img" aria-label="ImKate's hidden hand"></span>
-            <span class="back" style="--w:40px" role="img" aria-label=""></span>
+            <span class="back" style="--w:40px" aria-hidden="true"></span>
           </div>
-          <div class="oppline"></div>
+          <div class="bet-line"></div>
         </div>
         <div class="center">
-          <div class="potline">
+          <div class="pot">
             <span class="amount">Pot&nbsp;3,250</span>
             <span class="meta">Blinds 75/150 · Hand 14</span>
           </div>
@@ -178,14 +180,14 @@
           <div class="seat">
             <span class="who"><span class="name">You</span>
               <span class="status"></span></span>
-            <span class="chips">12,600</span>
+            <span class="chips">13,000</span>
           </div>
           <div class="bar off">
             <div class="sizing">
               <span class="chip">min</span><span class="chip">⅓</span>
               <span class="chip">½</span><span class="chip">pot</span>
               <span class="chip">all-in</span>
-              <span class="stepper"><button aria-label="decrease the bet">−</button><span>0</span><button aria-label="increase the bet">+</button></span>
+              <span class="stepper"><button aria-label="decrease the bet">−</button><span>3,250</span><button aria-label="increase the bet">+</button></span>
             </div>
             <div class="waiting">Waiting for ImKate<span class="dots">…</span></div>
           </div>
@@ -203,16 +205,16 @@
             <span class="who"><span class="name">ImKate</span>
               <span class="status"></span></span>
             <span class="dealer">D</span>
-            <span class="chips">3,350</span>
+            <span class="chips">2,950</span>
           </div>
           <div class="oppcards">
             <span class="back mucked" style="--w:40px" role="img" aria-label="ImKate's mucked hand, not shown"></span>
-            <span class="back mucked" style="--w:40px" role="img" aria-label=""></span>
+            <span class="back mucked" style="--w:40px" aria-hidden="true"></span>
           </div>
-          <div class="oppline">ImKate mucks</div>
+          <div class="bet-line">ImKate mucks</div>
         </div>
         <div class="center">
-          <div class="potline">
+          <div class="pot">
             <span class="amount win">You win 4,850</span>
             <span class="meta">Two pair, aces and sevens</span>
           </div>
@@ -232,14 +234,14 @@
           <div class="seat">
             <span class="who"><span class="name">You</span>
               <span class="status"></span></span>
-            <span class="chips">11,800</span>
+            <span class="chips">12,200</span>
           </div>
           <div class="bar off">
             <div class="sizing">
               <span class="chip">min</span><span class="chip">⅓</span>
               <span class="chip">½</span><span class="chip">pot</span>
               <span class="chip">all-in</span>
-              <span class="stepper"><button aria-label="decrease the bet">−</button><span>0</span><button aria-label="increase the bet">+</button></span>
+              <span class="stepper"><button aria-label="decrease the bet">−</button><span>3,250</span><button aria-label="increase the bet">+</button></span>
             </div>
             <div class="waiting">Dealing hand 15<span class="dots">…</span></div>
           </div>

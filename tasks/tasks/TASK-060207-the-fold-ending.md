@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060207
 title: The fold ending — a win with nothing shown
 type: task
-status: backlog
+status: ready
 parent: STORY-0602
 module: design
 estimate: S

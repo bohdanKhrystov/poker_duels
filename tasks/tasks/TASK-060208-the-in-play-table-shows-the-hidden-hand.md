@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060208
 title: The in-play table shows the hidden hand
 type: task
-status: backlog
+status: ready
 parent: STORY-0602
 module: design
 estimate: XS
@@ -14,7 +14,8 @@ labels: [design]
 depends_on: [TASK-060204]
 verify:
   - grep -q 'class="back"' design/screens/duel-table.html
-  - grep -q 'oppline' design/screens/duel-table.html
+  - grep -q 'oppcards' design/screens/duel-table.html
+  - grep -q -- '--pd-card-back:' design/screens/duel-table.html
   - '! grep -q "http" design/screens/duel-table.html'
 ---
 
@@ -32,7 +33,8 @@ skeleton and nothing appears from nowhere at a transition.
 
 ## Scope
 
-- Markup and the faithful `.back`/`.oppcards`/`.oppline` copies; no new values.
+- Markup and the faithful `.back`/`.oppcards`/`.bet-line` copies; the only :root addition
+  is `--pd-card-back: #35567e`, which the back requires.
 
 ## Out of scope
 

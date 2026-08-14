@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060206
 title: The off-state's hidden sizing row mirrors the live content
 type: task
-status: backlog
+status: ready
 parent: STORY-0602
 module: design
 estimate: XS
@@ -13,7 +13,7 @@ files_touched: 1
 labels: [design]
 depends_on: []
 verify:
-  - python3 -c "import re,sys; t=open('design/components/action-bar.html').read(); off=t[t.index('bar off'):]; sys.exit(0 if off.count('chip')>=5 and 'all-in' in off else 1)"
+  - python3 -c "import re,sys; t=open('design/components/action-bar.html').read(); off=t[t.index('bar off'):]; sys.exit(0 if off.count('chip')>=5 and 'all-in' in off and re.search(r'\\d,\\d{3}', off) else 1)"
   - grep -q 'mirrors the live content' design/components/action-bar.html
   - '! grep -q "http" design/components/action-bar.html'
 ---
@@ -32,8 +32,8 @@ TASK-060204 review measured at phone width.
 
 ## Scope
 
-- Markup only in the off frame; a one-line caption records why the hidden content must
-  mirror the live content.
+- Markup only in the off frame: the full chip set, and a stepper amount of the live row's
+  digit width, so wrap points match; a one-line caption records why.
 
 ## Out of scope
 
