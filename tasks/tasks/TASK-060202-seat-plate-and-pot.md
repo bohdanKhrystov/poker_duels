@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060202
 title: The seat plate and pot strip
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: S
@@ -35,7 +35,7 @@ window — plus the dealer button and the pot strip.
 
 - Plate: name, mono tabular stack, "D" pill; accent left edge + micro caps on turn;
   faint + "reconnecting…" in the grace window.
-- Pot strip: mono pot amount, small muted "Blinds 50/100 · Hand 14".
+- Pot strip: mono pot amount, small muted "Blinds 75/150 · Hand 14" — level-2 blinds, the only ones hand 14 can play (docs/duel-rules.md).
 
 ## Out of scope
 
