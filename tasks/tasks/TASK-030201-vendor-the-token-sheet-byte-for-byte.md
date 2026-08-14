@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030201
 title: Vendor the token sheet into the client, byte for byte
 type: task
-status: ready
+status: done
 parent: STORY-0302
 module: web-client
 estimate: S
