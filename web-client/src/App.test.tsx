@@ -7,4 +7,10 @@ describe("App", () => {
     render(<App />);
     expect(screen.getByRole("heading").textContent).toBe("Poker Duels");
   });
+
+  it("gives the heading a token-derived class", () => {
+    render(<App />);
+    const heading = screen.getByRole("heading");
+    expect(heading.className.split(" ")).toContain("text-title");
+  });
 });

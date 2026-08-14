@@ -543,8 +543,8 @@ on a literal — and `TASK-030201` is startable now.
 | | [TASK-030205](tasks/TASK-030205-the-themes-colours-are-the-tokens.md) The theme's colours are the tokens and nothing else | S | **done** |
 | | [TASK-030206](tasks/TASK-030206-the-themes-sizes-are-the-tokens.md) The theme's type, spacing and radii are the tokens and nothing else | S | **done** |
 | | [TASK-030207](tasks/TASK-030207-prettier-sorts-tailwind-classes.md) Prettier sorts Tailwind classes and still never reads the generated file | XS | **done** |
-| | [TASK-030208](tasks/TASK-030208-the-app-root-is-styled-through-the-theme.md) The app root is styled through the theme, proven by a test | XS | ready |
-| | [TASK-030209](tasks/TASK-030209-contributing-says-the-token-sheet-is-a-copy.md) CONTRIBUTING says the client's token sheet is a copy | XS | backlog |
+| | [TASK-030208](tasks/TASK-030208-the-app-root-is-styled-through-the-theme.md) The app root is styled through the theme, proven by a test | XS | **done** |
+| | [TASK-030209](tasks/TASK-030209-contributing-says-the-token-sheet-is-a-copy.md) CONTRIBUTING says the client's token sheet is a copy | XS | ready |
 | [STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md) | The typed socket — handshake and device identity | backlog |
 | [STORY-0304](stories/STORY-0304-client-store.md) | The store — state is the last frame the server sent | backlog |
 | [STORY-0305](stories/STORY-0305-lobby-and-room-link.md) | The lobby — create a room, join by code, share the link | backlog |

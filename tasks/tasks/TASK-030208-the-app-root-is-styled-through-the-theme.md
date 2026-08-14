@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030208
 title: The app root is styled through the theme, proven by a test
 type: task
-status: ready
+status: done
 parent: STORY-0302
 module: web-client
 estimate: XS
@@ -103,6 +103,55 @@ If a utility that exists in the theme produces no rule in the build, the cause i
 detection not reaching `src/`. That is the one case in which this ticket may touch a third file: add
 `@source "../../src";` beside the imports in `app.css` and say so in the PR. Expect not to need it —
 `App.tsx` is in the module graph the Vite plugin scans.
+
+### Amended by the driver: what the two moved assertions actually guard
+
+`TASK-030205`'s `oklch(` assertion and `TASK-030206`'s `--spacing:` assertion were moved here on the
+reasoning that this ticket is the first with a colour and spacing call site, so they would finally be
+able to fail. **That reasoning was incomplete.** Measured on this ticket's own component:
+
+| component uses | resets present | resets removed |
+| --- | --- | --- |
+| only mapped classes (`bg-bg`, `p-6`) | 0 / 0 | **0 / 0** |
+| plus `text-red-500` and `p-11` | 0 / 0 | **1 / 1** |
+
+Both assertions fire only on a **compound** failure: an off-theme class in a component *and* the
+corresponding reset missing. Either alone leaves them green. With the reset present, an off-theme
+class compiles to nothing at all — which is the design working, and also why the assertion cannot
+observe it.
+
+So they are **defence in depth, not proof that the reset works.** They are kept because they cost
+nothing and would catch that compound regression, but no ticket should claim they demonstrate the
+reset.
+
+What does demonstrate it is direct experiment, already recorded in `TASK-030205` and `TASK-030206`:
+removing `--color-*: initial` makes `text-red-500` emit `oklch(63.7% .237 25.331)`, and removing
+`--spacing: initial` makes `p-11` emit `padding:calc(var(--spacing) * 11)`.
+
+The transferable lesson, and the third variant of it in this story: **a reset is invisible to any
+assertion while the codebase obeys it.** Testing one requires deliberately violating it, which is a
+thing a temporary experiment can do and a permanent `verify:` block cannot.
+
+### Also amended: the `.text-title` grep does not prove what the Proof section claims
+
+The Proof section says that `.text-title {` appearing in `dist/assets` shows *"Tailwind saw
+`App.tsx`, recognised the class, and generated a rule for it. If source detection missed the
+component, no rule would exist."* **That is not true.**
+
+Renaming `text-title` to `text-headline` in `App.tsx` alone leaves `.text-title {` in the bundle,
+because `App.test.tsx` contains the literal string `"text-title"` in its `toContain(...)` assertion —
+Tailwind scans `.tsx` test files too and treats that string as a class candidate. The rule only
+disappears when the name is renamed in **both** files.
+
+So the assertion's subject is kept alive by the assertion's own sibling test. What genuinely caught
+the rename was the unit test:
+
+```
+AssertionError: expected [ 'text-headline' ] to include 'text-title'
+```
+
+The grep is still worth keeping — it fails if the class stops resolving entirely — but it is not
+evidence of source detection, and the ticket should not have claimed it was.
 
 ## Acceptance criteria
 
