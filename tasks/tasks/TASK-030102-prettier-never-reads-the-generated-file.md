@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030102
 title: Prettier formats the client and never reads the generated file
 type: task
-status: ready
+status: done
 parent: STORY-0301
 module: web-client
 estimate: XS
