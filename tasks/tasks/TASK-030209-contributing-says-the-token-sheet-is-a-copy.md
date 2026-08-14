@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030209
 title: CONTRIBUTING says the client's token sheet is a copy
 type: task
-status: backlog
+status: ready
 parent: STORY-0302
 module: web-client
 estimate: XS
