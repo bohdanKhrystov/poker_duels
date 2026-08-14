@@ -241,4 +241,78 @@ describe("the connection", () => {
     expect(connection.status).toEqual({ kind: "outdated" });
     expect(storage.getItem("pd.deviceId")).toBeNull();
   });
+
+  it("surfaces a refusal and keeps the socket", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive('{"type":"Failure","error":"UNKNOWN_ROOM"}');
+
+    expect(connection.status).toEqual({
+      kind: "refused",
+      error: "UNKNOWN_ROOM",
+    });
+    expect(socket.closed).toBe(false);
+
+    connection.send({ type: "CreateRoom" });
+
+    expect(socket.sent).toEqual(['{"type":"CreateRoom"}']);
+  });
+
+  it("keeps a refusal it has never heard of verbatim", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive('{"type":"Failure","error":"INVALID_SESSION"}');
+
+    expect(connection.status).toEqual({
+      kind: "refused",
+      error: "INVALID_SESSION",
+    });
+  });
+
+  it("treats a version mismatch as the end of the connection", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive('{"type":"Failure","error":"VERSION_MISMATCH"}');
+
+    expect(connection.status).toEqual({ kind: "outdated" });
+  });
+
+  it("sends nothing more once the version is wrong", () => {
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive('{"type":"Failure","error":"VERSION_MISMATCH"}');
+    const sentSoFar = socket.sent.length;
+
+    connection.send({ type: "CreateRoom" });
+
+    expect(socket.sent.length).toBe(sentSoFar);
+  });
+
+  it("never closes the socket itself", () => {
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive('{"type":"Failure","error":"VERSION_MISMATCH"}');
+
+    expect(socket.closed).toBe(false);
+  });
 });
