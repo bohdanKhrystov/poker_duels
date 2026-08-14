@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030312
 title: docs/protocol.md says what a client does with a frame it cannot read
 type: task
-status: backlog
+status: ready
 parent: STORY-0303
 module: poker-server
 estimate: XS
