@@ -129,4 +129,36 @@ describe("the lobby", () => {
     const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
     expect(inviteLink.value).toBe("http://localhost:3000/?room=ABCDEFGH");
   });
+
+  it("says an unknown room is unknown", () => {
+    const store = createDuelStore();
+    store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    renderLobby(store);
+
+    expect(screen.getByText("No duel room has that code.")).toBeDefined();
+  });
+
+  it("says a full room is full", () => {
+    const store = createDuelStore();
+    store.apply({ type: "Failure", error: "ROOM_FULL" });
+    renderLobby(store);
+
+    expect(
+      screen.getByText("That duel room already has a rival in it."),
+    ).toBeDefined();
+  });
+
+  it("sends nothing after a refusal until a fresh click", () => {
+    const store = createDuelStore();
+    store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    const { send } = renderLobby(store);
+
+    expect(send).not.toHaveBeenCalled();
+
+    typeCode("abcdefgh");
+    fireEvent.click(screen.getByRole("button", { name: "Join the duel" }));
+
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "JoinRoom", code: "ABCDEFGH" });
+  });
 });

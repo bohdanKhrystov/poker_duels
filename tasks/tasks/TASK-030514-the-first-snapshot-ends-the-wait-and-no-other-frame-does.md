@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030514
 title: The first Snapshot ends the wait, and no other frame does
 type: task
-status: backlog
+status: ready
 parent: STORY-0305
 module: web-client
 estimate: S
