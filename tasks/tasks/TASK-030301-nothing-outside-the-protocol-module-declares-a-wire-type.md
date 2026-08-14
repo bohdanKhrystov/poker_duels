@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030301
 title: Nothing outside src/protocol declares a wire type or touches a raw frame
 type: task
-status: ready
+status: done
 parent: STORY-0303
 module: web-client
 estimate: S
