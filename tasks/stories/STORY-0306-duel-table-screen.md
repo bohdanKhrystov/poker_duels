@@ -54,8 +54,8 @@ prop, and reaches the store only in the last ticket.
 | ID | Title | Status |
 | --- | --- | --- |
 | [TASK-030601](../tasks/TASK-030601-a-chip-amount-is-grouped-the-same-way-wherever-it-runs.md) | A chip amount is grouped the same way wherever it runs | done |
-| [TASK-030602](../tasks/TASK-030602-a-card-string-splits-into-a-rank-character-and-a-suit-glyph.md) | A card string splits into a rank character and a suit glyph | ready |
-| [TASK-030603](../tasks/TASK-030603-a-card-says-its-name-aloud-and-carries-no-number.md) | A card says its name aloud, and carries no number | backlog |
+| [TASK-030602](../tasks/TASK-030602-a-card-string-splits-into-a-rank-character-and-a-suit-glyph.md) | A card string splits into a rank character and a suit glyph | done |
+| [TASK-030603](../tasks/TASK-030603-a-card-says-its-name-aloud-and-carries-no-number.md) | A card says its name aloud, and carries no number | ready |
 | [TASK-030604](../tasks/TASK-030604-a-card-back-and-an-undealt-board-place.md) | A card back and an undealt board place | backlog |
 | [TASK-030605](../tasks/TASK-030605-a-face-up-card-draws-its-rank-its-suit-and-the-suits-colour.md) | A face-up card draws its rank, its suit and the suit's colour | backlog |
 | [TASK-030606](../tasks/TASK-030606-a-hand-is-two-places-wide-whatever-the-view-carries.md) | A hand is two places wide, whatever the view carries | backlog |
