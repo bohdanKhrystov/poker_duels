@@ -12,7 +12,9 @@ SHEET="$DIR/tokens/tokens.css"
 declared=$(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$SHEET" | sort -u)
 fail=0
 mentions=0
+files=0
 for f in $(find "$DIR" -name '*.html' | sort); do
+  files=$((files + 1))
   for name in $(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$f" | sort -u); do
     mentions=$((mentions + 1))
     if ! printf '%s\n' "$declared" | grep -qx -- "$name"; then
@@ -22,5 +24,7 @@ for f in $(find "$DIR" -name '*.html' | sort); do
   done
 done
 
+# an empty tree must fail as loudly as a missing sheet — a vacuous pass guards nothing
+[ "$files" -gt 0 ] || { echo "check-drift: no cards found under $DIR" >&2; exit 1; }
 if [ "$fail" -ne 0 ]; then exit 1; fi
-echo "check-drift: every mentioned token name resolves ($mentions distinct mentions across cards)"
+echo "check-drift: every mentioned token name resolves ($mentions distinct mentions across $files cards)"
