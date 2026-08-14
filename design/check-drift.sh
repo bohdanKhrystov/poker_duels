@@ -70,6 +70,7 @@ COMPARE='
   NR == FNR {
     if ($0 == "") next
     ok[$0] = 1
+    # this sheet-set loader is mirrored in the SVG pair sweep — change both or neither
     eq = index($0, "="); if (eq) val[substr($0, 1, eq - 1)] = substr($0, eq + 1)
     next
   }
@@ -144,12 +145,26 @@ svgs=0
 pairs_total=0
 for g in $(find "$DIR/graphics" -name '*.svg' 2>/dev/null | sort); do
   svgs=$((svgs + 1))
-  pairs=$(grep -oE -- 'pd-[a-z0-9-]* \(#[0-9a-f]{6}\)' "$g" || true)
+  # read errors are read errors, never convention verdicts — the st= discipline again
+  st=0; pairs=$(grep -oE -- 'pd-[a-z0-9-]* \(#[0-9a-f]{6}\)' "$g") || st=$?
+  if [ "$st" -gt 1 ]; then
+    echo "check-drift: grep error $st reading $g for mirror pairs" >&2; fail=1; continue
+  fi
+  # every parenthesized hex must belong to a well-formed pair — a wrapped, uppercased
+  # or otherwise malformed pair would silently leave enforcement while its siblings
+  # keep the SVG looking covered
+  cited=$(grep -oE -- '\(#[0-9a-fA-F]{6}\)' "$g" | grep -c . || true)
+  strict=$([ -n "$pairs" ] && printf '%s\n' "$pairs" | grep -c . || echo 0)
+  if [ "$cited" -ne "$strict" ]; then
+    echo "check-drift: $g has $cited parenthesized hex citations but $strict well-formed 'pd-NAME (#hex)' pairs — a pair is malformed, wrapped, or uppercased" >&2
+    fail=1
+  fi
   if [ -z "$pairs" ]; then
     echo "check-drift: $g carries no pd-NAME (#hex) mirror pair — every graphics SVG names what it mirrors" >&2
     fail=1; continue
   fi
-  pairs_total=$((pairs_total + $(printf '%s\n' "$pairs" | grep -c .)))
+  pairs_total=$((pairs_total + strict))
+  # the sheet-set loader below mirrors the one in COMPARE — change both or neither
   bad=$(printf '%s\n' "$pairs" | awk -v g="$g" '
     NR == FNR { eq = index($0, "="); if (eq) val[substr($0, 1, eq - 1)] = substr($0, eq + 1); next }
     {
@@ -160,10 +175,12 @@ for g in $(find "$DIR/graphics" -name '*.svg' 2>/dev/null | sort); do
     }
   ' "$sheet_file" -) || { echo "check-drift: pair comparison failed on $g (awk error)" >&2; fail=1; bad=""; }
   if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
-  # a pair whose hex no longer paints anything is stale — the artwork moved on
+  # a pair whose hex paints nothing is stale — the artwork moved on. The citation
+  # itself is stripped first, and any remaining occurrence counts as paint (attribute,
+  # style=, or a <style> block all legitimately carry it).
   for hx in $(printf '%s\n' "$pairs" | grep -oE -- '#[0-9a-f]{6}'); do
-    if ! grep -q -- "\"$hx\"" "$g"; then
-      echo "check-drift: $g cites $hx in a mirror pair but no attribute carries it" >&2; fail=1
+    if ! sed 's/(#[0-9a-fA-F]\{6\})//g' "$g" | grep -qi -- "$hx"; then
+      echo "check-drift: $g cites $hx in a mirror pair but nothing outside the citation carries it" >&2; fail=1
     fi
   done
 done
