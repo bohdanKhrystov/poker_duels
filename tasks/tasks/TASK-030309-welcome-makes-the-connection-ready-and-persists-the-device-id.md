@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030309
 title: Welcome makes the connection ready and persists the device id the server issued
 type: task
-status: ready
+status: done
 parent: STORY-0303
 module: web-client
 estimate: S
