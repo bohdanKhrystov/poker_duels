@@ -18,7 +18,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **done** | v0.1 |
-| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **blocked: DEC-022** | v0.1 |
+| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
 | EPIC-04 | Identity and profiles | *not written* | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **ready** | v0.2 |
@@ -496,12 +496,13 @@ The browser half. It renders what the server sends and asserts nothing: no legal
 computed here, no winner decided, no card inferred. Types come from `protocol.gen.ts`, generated
 from the Kotlin descriptors and byte-checked in CI — the client never hand-writes a wire type.
 
-**Blocked on `DEC-022`** — the toolchain. `STORY-0301` is the scaffold every other story stands
-on, so nothing here is startable until it is answered.
+`DEC-022` is answered by [`ADR-0026`](../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md):
+Vite and npm, Node 24 pinned in `web-client/.nvmrc`, Vitest, and the client's checks as their own
+parallel CI job. `STORY-0301` is the scaffold every other story stands on, and it is startable now.
 
 | Story | Title | Status |
 | --- | --- | --- |
-| [STORY-0301](stories/STORY-0301-web-client-toolchain.md) | The web-client toolchain and its first green check | **blocked** |
+| [STORY-0301](stories/STORY-0301-web-client-toolchain.md) | The web-client toolchain and its first green check | **ready** |
 | [STORY-0302](stories/STORY-0302-design-tokens-in-the-client.md) | The design tokens are the client's only colours and sizes | backlog |
 | [STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md) | The typed socket — handshake and device identity | backlog |
 | [STORY-0304](stories/STORY-0304-client-store.md) | The store — state is the last frame the server sent | backlog |

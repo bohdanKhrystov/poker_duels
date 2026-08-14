@@ -70,6 +70,7 @@ Each with the reason it was not chosen.
 | [0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) | An absent seat checks when nothing is owed, folds when facing a bet | Accepted — amends 0013 |
 | [0024](ADR-0024-design-follows-the-code-workflow.md) | Design follows the code workflow, in the repository, mirrored to claude.ai/design | Accepted |
 | [0025](ADR-0025-one-ticker-coroutine-drives-both-sweeps.md) | One ticker coroutine on the application scope drives both sweeps | Accepted |
+| [0026](ADR-0026-vite-and-npm-drive-the-web-client.md) | Vite and npm drive the web client, and its checks are their own CI job | Accepted |
 
 ## Open decisions
 
@@ -104,4 +105,5 @@ Questions deliberately left open are marked `DEC-NNN` in the document they affec
 | DEC-020 | What does an absent seat do at a decision point where `Fold` is illegal? | [ADR-0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md) — it checks; fold only when facing a bet, the action read from the engine's `legalActions`; `poker-engine` unchanged; amends ADR-0013 |
 | DEC-021 | How is design work run — conversationally, or through the ticket lifecycle? | [ADR-0024](ADR-0024-design-follows-the-code-workflow.md) — ordinary ticketed work; `design/` is canonical and claude.ai/design is a render surface |
 | DEC-019 | What drives `RoomRegistry.reap()` and `expireGracePeriods()` in production, with what period, scope and failure behaviour? | [ADR-0025](ADR-0025-one-ticker-coroutine-drives-both-sweeps.md) — one ticker coroutine on the application scope in `module()`; one configured period (`sweepPeriodMillis`, default 1 s), fixed delay, expiry then delivery then reap; a throwing pass is logged and retried next tick, only cancellation at shutdown ends the loop |
+| DEC-022 | What is `web-client`'s toolchain, and how do its checks enter CI? | [ADR-0026](ADR-0026-vite-and-npm-drive-the-web-client.md) — Vite + npm on Node 24 (pinned once, in `web-client/.nvmrc`; CI governs); Vitest, ESLint + Prettier with `src/protocol/protocol.gen.ts` ignored by path in both; Vite's proxy carries `/api` and `/ws` to Ktor on 8080; a parallel `client` CI job runs `npm ci`, `npm run check`, `npm run build`, and Gradle stays JVM-only |
 
