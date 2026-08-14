@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030105
 title: Vite builds a production bundle that contains the app
 type: task
-status: backlog
+status: ready
 parent: STORY-0301
 module: web-client
 estimate: XS
