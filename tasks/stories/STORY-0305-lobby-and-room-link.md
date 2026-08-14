@@ -2,7 +2,7 @@
 id: STORY-0305
 title: The lobby — create a room, join by code, share the link
 type: story
-status: backlog
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, lobby, rooms]
