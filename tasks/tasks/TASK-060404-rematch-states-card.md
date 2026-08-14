@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060404
 title: The rematch states
 type: task
-status: ready
+status: done
 parent: STORY-0604
 module: design
 estimate: S

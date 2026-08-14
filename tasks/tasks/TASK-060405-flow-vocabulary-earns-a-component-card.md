@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060405
 title: The flow vocabulary earns a component card
 type: task
-status: backlog
+status: ready
 parent: STORY-0604
 module: design
 estimate: S
@@ -41,6 +41,10 @@ screen to re-derive — the join screen's chip had in fact re-derived the tracki
   `:focus-visible`), the code well (`--pd-track-code` with its centering indent), the
   linkline row, and the refusal panel — each with the states it owns and a line on
   when a screen may copy it.
+- The action pair's states include the offered chip the button becomes (`.offered` —
+  same box geometry and line-height, so the swap never jumps) and the quiet
+  companions `.theirs` and `.dealing` (#468 review: vocabulary born in the rematch
+  card must not be left homeless by this ticket's enumeration).
 - Values consume the card's inlined tokens; geometry matches the merged screens
   byte-for-byte, so the screens' existing copies are already faithful.
 

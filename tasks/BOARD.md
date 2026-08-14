@@ -438,8 +438,8 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060401](tasks/TASK-060401-create-and-share-screen.md) The create-and-share screen | S | **done** |
 | | [TASK-060402](tasks/TASK-060402-join-screen.md) The join screen | S | **done** |
 | | [TASK-060403](tasks/TASK-060403-duel-end-screen.md) The duel-end screen | S | **done** |
-| | [TASK-060404](tasks/TASK-060404-rematch-states-card.md) The rematch states | S | ready |
-| | [TASK-060405](tasks/TASK-060405-flow-vocabulary-earns-a-component-card.md) The flow vocabulary earns a component card | S | backlog |
+| | [TASK-060404](tasks/TASK-060404-rematch-states-card.md) The rematch states | S | **done** |
+| | [TASK-060405](tasks/TASK-060405-flow-vocabulary-earns-a-component-card.md) The flow vocabulary earns a component card | S | ready |
 | | [TASK-060406](tasks/TASK-060406-the-typed-code-door.md) The typed-code door | S | ready |
 
 ---
