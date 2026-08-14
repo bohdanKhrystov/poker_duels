@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030516
 title: One connection per tab, booted in main.tsx and nowhere else
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
