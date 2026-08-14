@@ -1,0 +1,112 @@
+<!-- @dsCard group="Screens" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create a duel — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
+    --pd-on-accent: #ffffff; --pd-coin: #9fb2c4; --pd-coin-deep: #64788c;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
+    --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
+    --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px;
+    --pd-space-6: 24px; --pd-space-7: 32px;
+    --pd-radius-medium: 8px; --pd-radius-pill: 999px;
+    --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: 0.9375rem; line-height: 1.5; padding: 32px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: 8px; }
+  h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
+  .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 32px; align-items: stretch; }
+  .frame { width: 380px; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
+    padding: var(--pd-space-6) var(--pd-space-5); display: flex; flex-direction: column; gap: var(--pd-space-5); }
+  .frame h2 { font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; }
+  .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
+    margin-top: 10px; }
+
+  .mark { display: inline-flex; align-items: center; gap: 0.42em; font-weight: 700; }
+  .mark .coin { width: 0.92em; height: 0.92em; border-radius: 999px;
+    background: radial-gradient(circle at 36% 30%, #b8c6d6, var(--pd-coin) 55%, var(--pd-coin-deep));
+    box-shadow: inset 0 0 0 0.06em rgba(255,255,255,0.25); }
+  .mark .duels { color: var(--pd-text-muted); font-weight: 500; }
+
+  .hero-h { font-size: 1.375rem; font-weight: 700; line-height: 1.15; }
+  .sub { color: var(--pd-text-muted); font-size: 0.9375rem; margin-top: 4px; }
+
+  .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
+    line-height: var(--pd-lh-tight); padding: var(--pd-space-4) var(--pd-space-5);
+    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer;
+    text-align: center; }
+  .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
+  .btn.fill:hover { background: var(--pd-accent-fill-hover); }
+  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
+  .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+
+  .code { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 1.875rem; letter-spacing: 0.14em; text-align: center; padding: var(--pd-space-5) 0;
+    background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); }
+  .linkline { display: flex; gap: var(--pd-space-3); align-items: center; }
+  .linkline .path { flex: 1; font-family: var(--pd-font-mono); font-size: 0.8125rem;
+    color: var(--pd-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    padding: var(--pd-space-3) var(--pd-space-4); background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); }
+  .seat-empty { border: 1px dashed var(--pd-hairline); border-radius: var(--pd-radius-medium);
+    padding: var(--pd-space-5); color: var(--pd-text-faint); text-align: center; }
+  .seat { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); padding: var(--pd-space-4) var(--pd-space-5); display: flex;
+    align-items: center; gap: var(--pd-space-4); }
+  .seat .name { font-weight: 500; flex: 1; }
+  .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Screens</p>
+  <h1>Create a duel</h1>
+  <p class="lede">The whole product in one promise: send a link, they open it, you play.
+  Creating asks nothing — no account, no settings. The code is the invite (ADR-0022), big
+  enough to read across a room.</p>
+
+  <div class="frames">
+    <div class="frame">
+      <h2>Before — the front door</h2>
+      <span class="mark" style="font-size:1.875rem"><span class="coin"></span>Poker&nbsp;<span class="duels">Duels</span></span>
+      <div>
+        <div class="hero-h">Challenge someone</div>
+        <div class="sub">One link. One duel. One winner takes the coin.</div>
+      </div>
+      <button class="btn fill">Create a duel</button>
+      <button class="btn ghost">I have a code</button>
+      <p class="note">nothing else on the door — no lobby noise, no tables list</p>
+    </div>
+
+    <div class="frame">
+      <h2>Created — waiting for your rival</h2>
+      <div class="code">7Q4M9K2T</div>
+      <div class="linkline">
+        <span class="path">…/duel/7Q4M9K2T</span>
+        <button class="btn fill">Copy link</button>
+      </div>
+      <div class="seat-empty">The other seat is open — send the link or read the code aloud</div>
+      <div class="seat"><span class="name">You</span><span class="chips">10,000</span></div>
+      <p class="note">the empty seat is the dashed slot from the card component — same
+      vocabulary, nothing animated; the room lives 10 minutes unclaimed</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
