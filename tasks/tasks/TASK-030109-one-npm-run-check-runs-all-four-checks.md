@@ -15,7 +15,7 @@ depends_on: [TASK-030108]
 verify:
   - cd web-client && npm run check
   - cd web-client && npm run build
-  - cd web-client && npm run --silent check 2>&1 | grep -qE 'Tests +3 passed \(3\)'
+  - cd web-client && NO_COLOR=1 npm run --silent check 2>&1 | grep -qE 'Tests +3 passed \(3\)'
   - node -e "const s=require('./web-client/package.json').scripts.check; if (s !== 'npm run typecheck && npm run lint && npm run format:check && npm run test') process.exit(1)"
   - ./gradlew :poker-server:verifyProtocolTypes
 ---
