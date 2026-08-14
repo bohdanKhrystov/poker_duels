@@ -1,6 +1,33 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
+@theme static {
+  --color-*: initial;
+  --color-bg: var(--pd-bg);
+  --color-surface: var(--pd-surface);
+  --color-surface-raised: var(--pd-surface-raised);
+  --color-hairline: var(--pd-hairline);
+  --color-overlay: var(--pd-overlay);
+  --color-text: var(--pd-text);
+  --color-text-muted: var(--pd-text-muted);
+  --color-text-faint: var(--pd-text-faint);
+  --color-text-inverse: var(--pd-text-inverse);
+  --color-accent: var(--pd-accent);
+  --color-accent-fill: var(--pd-accent-fill);
+  --color-accent-fill-hover: var(--pd-accent-fill-hover);
+  --color-on-accent: var(--pd-on-accent);
+  --color-accent-subtle: var(--pd-accent-subtle);
+  --color-win: var(--pd-win);
+  --color-loss: var(--pd-loss);
+  --color-warn: var(--pd-warn);
+  --color-card-face: var(--pd-card-face);
+  --color-suit-red: var(--pd-suit-red);
+  --color-suit-black: var(--pd-suit-black);
+  --color-card-back: var(--pd-card-back);
+  --color-coin: var(--pd-coin);
+  --color-coin-deep: var(--pd-coin-deep);
+}
+
 /* Dark only. STORY-0601 scoped light out epic-wide: no light mode,
  * no theme switch, no second palette. */
 :root {
