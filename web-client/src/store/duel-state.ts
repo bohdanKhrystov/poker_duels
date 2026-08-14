@@ -51,6 +51,8 @@ export function applyServerMessage(
           legalActions: message.legalActions,
         },
       };
+    case "Snapshot":
+      return { ...state, view: message.view, pendingTurn: null };
     default:
       return state;
   }
