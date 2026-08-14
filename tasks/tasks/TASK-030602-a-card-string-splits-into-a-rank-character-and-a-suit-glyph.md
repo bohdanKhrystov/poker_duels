@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030602
 title: A card string splits into a rank character and a suit glyph
 type: task
-status: backlog
+status: ready
 parent: STORY-0306
 module: web-client
 estimate: S

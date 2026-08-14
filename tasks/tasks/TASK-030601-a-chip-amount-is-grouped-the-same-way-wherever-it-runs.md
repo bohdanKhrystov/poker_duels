@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030601
 title: A chip amount is grouped the same way wherever it runs
 type: task
-status: ready
+status: done
 parent: STORY-0306
 module: web-client
 estimate: XS
