@@ -428,7 +428,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060209](tasks/TASK-060209-the-states-mirrors-use-the-live-bars-elements.md) The states' hidden mirrors use the live bar's elements | XS | **done** |
 | | [TASK-060210](tasks/TASK-060210-screens-consume-card-surface-tokens.md) The duel-table screens consume the card-surface tokens | XS | ready |
 | **[STORY-0603](stories/STORY-0603-graphics.md)** Draw the graphics — suit glyphs, the duel coin, the wordmark — *schema 2* | | | ready |
-| | [TASK-060301](tasks/TASK-060301-suit-glyph-set.md) The suit-glyph set | S | ready |
+| | [TASK-060301](tasks/TASK-060301-suit-glyph-set.md) The suit-glyph set | S | **done** |
 | | [TASK-060302](tasks/TASK-060302-duel-coin.md) The duel coin | S | ready |
 | | [TASK-060303](tasks/TASK-060303-wordmark-card.md) The wordmark card | S | ready |
 | | [TASK-060304](tasks/TASK-060304-graphics-gallery-card.md) The graphics gallery card | S | backlog |
