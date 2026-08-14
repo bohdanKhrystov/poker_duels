@@ -133,13 +133,16 @@
   <h2>Not your move</h2>
   <div class="bar off">
     <div class="sizing">
-      <button class="chip">min</button>
-      <span class="stepper"><button>−</button><span>0</span><button>+</button></span>
+      <button class="chip">min</button><button class="chip">⅓</button>
+      <button class="chip">½</button><button class="chip">pot</button>
+      <button class="chip">all-in</button>
+      <span class="stepper"><button>−</button><span>1,200</span><button>+</button></span>
     </div>
     <div class="waiting">Waiting for ImKate<span class="dots">…</span></div>
   </div>
-  <span class="l">.off — the sizing row is hidden but reserved, the waiting line fills the
-  action row's exact token height: the table cannot reflow on a turn change</span>
+  <span class="l">.off — the hidden sizing row mirrors the live content, stepper amount
+  included at the live digit width, so the rows wrap at the same points and the bar's
+  height matches the live bar at every viewport</span>
 </div>
 </body>
 </html>
