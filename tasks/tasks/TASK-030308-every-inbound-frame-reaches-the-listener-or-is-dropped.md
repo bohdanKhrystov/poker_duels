@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030308
 title: Every inbound frame reaches the listener, and an unreadable one is logged and dropped
 type: task
-status: ready
+status: done
 parent: STORY-0303
 module: web-client
 estimate: S
