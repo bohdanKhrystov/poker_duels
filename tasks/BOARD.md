@@ -534,8 +534,8 @@ on a literal — and `TASK-030201` is startable now.
 | **[STORY-0302](stories/STORY-0302-design-tokens-in-the-client.md)** The design tokens are the client's only colours and sizes — *schema 2* | | **ready** |
 | | [TASK-030201](tasks/TASK-030201-vendor-the-token-sheet-byte-for-byte.md) Vendor the token sheet into the client, byte for byte | S | **done** |
 | | [TASK-030202](tasks/TASK-030202-the-check-fails-on-a-colour-literal.md) The client's check fails on a colour literal outside the token layer | S | **done** |
-| | [TASK-030203](tasks/TASK-030203-tailwind-installs-and-its-vite-plugin-runs.md) Tailwind installs from the lockfile and its Vite plugin runs | XS | ready |
-| | [TASK-030204](tasks/TASK-030204-the-tokens-and-tailwind-reach-the-bundle.md) The tokens and Tailwind reach the bundle through one stylesheet | XS | backlog |
+| | [TASK-030203](tasks/TASK-030203-tailwind-installs-and-its-vite-plugin-runs.md) Tailwind installs from the lockfile and its Vite plugin runs | XS | **done** |
+| | [TASK-030204](tasks/TASK-030204-the-tokens-and-tailwind-reach-the-bundle.md) The tokens and Tailwind reach the bundle through one stylesheet | XS | ready |
 | | [TASK-030205](tasks/TASK-030205-the-themes-colours-are-the-tokens.md) The theme's colours are the tokens and nothing else | S | backlog |
 | | [TASK-030206](tasks/TASK-030206-the-themes-sizes-are-the-tokens.md) The theme's type, spacing and radii are the tokens and nothing else | S | backlog |
 | | [TASK-030207](tasks/TASK-030207-prettier-sorts-tailwind-classes.md) Prettier sorts Tailwind classes and still never reads the generated file | XS | backlog |
