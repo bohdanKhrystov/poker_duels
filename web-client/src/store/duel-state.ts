@@ -3,6 +3,7 @@ import type {
   GameEvent,
   LegalActions,
   PlayerView,
+  ProtocolError,
   Rejection,
   ServerMessage,
 } from "../protocol";
@@ -15,6 +16,7 @@ export interface DuelState {
   readonly narration: readonly GameEvent[];
   readonly rejection: Rejection | null;
   readonly outcome: DuelOutcome | null;
+  readonly refusal: ProtocolError | null;
 }
 
 export interface PendingTurn {
@@ -32,6 +34,7 @@ export function initialState(): DuelState {
     narration: [],
     rejection: null,
     outcome: null,
+    refusal: null,
   };
 }
 
@@ -41,7 +44,12 @@ export function applyServerMessage(
 ): DuelState {
   switch (message.type) {
     case "RoomJoined":
-      return { ...state, mySeat: message.seat, roomCode: message.code };
+      return {
+        ...state,
+        mySeat: message.seat,
+        roomCode: message.code,
+        refusal: null,
+      };
     case "YourTurn":
       return {
         ...state,
@@ -59,6 +67,8 @@ export function applyServerMessage(
       return { ...state, narration: [...state.narration, ...message.events] };
     case "DuelFinished":
       return { ...state, outcome: message.outcome, pendingTurn: null };
+    case "Failure":
+      return { ...state, refusal: message.error };
     default:
       return state;
   }

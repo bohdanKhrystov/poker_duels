@@ -44,6 +44,7 @@ describe("the duel state", () => {
       narration: [],
       rejection: null,
       outcome: null,
+      refusal: null,
     });
   });
 
@@ -446,5 +447,54 @@ describe("the duel state", () => {
     });
     expect(state.view).toEqual(view);
     expect(state.narration).toEqual([event1, event2]);
+  });
+
+  it("records the room the server does not know", () => {
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Failure",
+      error: "UNKNOWN_ROOM",
+    });
+    expect(state.refusal).toBe("UNKNOWN_ROOM");
+  });
+
+  it("records a room that already has a rival in it", () => {
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Failure",
+      error: "ROOM_FULL",
+    });
+    expect(state.refusal).toBe("ROOM_FULL");
+  });
+
+  it("a refusal changes nothing a RoomJoined established", () => {
+    const stateWithRoom = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RoomJoined",
+        code: "ABCDEFGH",
+        seat: 0,
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithRoom, {
+      type: "Failure",
+      error: "ROOM_FULL",
+    });
+    expect(state.mySeat).toBe(0);
+    expect(state.roomCode).toBe("ABCDEFGH");
+  });
+
+  it("a join that lands clears the refusal before it", () => {
+    const stateWithRefusal = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Failure",
+        error: "UNKNOWN_ROOM",
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithRefusal, {
+      type: "RoomJoined",
+      code: "ABCDEFGH",
+      seat: 1,
+    });
+    expect(state.refusal).toBeNull();
   });
 });
