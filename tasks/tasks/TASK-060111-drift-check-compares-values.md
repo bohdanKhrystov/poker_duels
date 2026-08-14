@@ -14,7 +14,7 @@ labels: [design]
 depends_on: [TASK-060108]
 verify:
   - ./design/check-drift.sh
-  - sh -c 'T=$(mktemp -d); cp -R design "$T/design"; perl -pi -e "s/0 1px 3px/0 1px 4px/" "$T/design/components/playing-card.html"; ! "$T/design/check-drift.sh" >/dev/null 2>&1'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -pi -e "s/0 1px 3px/0 1px 4px/" "$T/design/components/playing-card.html" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
 ---
 
 ## Goal
@@ -51,7 +51,9 @@ whitespace-normalized outside quoted strings.
 ## Tests
 
 None — the verify runs the gate on the aligned tree and proves the negative path on a
-mutated scratch copy.
+mutated scratch copy. The copy is left for the OS to purge: agent permission profiles
+here deny `rm`, and a cleanup trap would stall an autonomous run on a prompt — ~100KB
+per run under `mktemp -d` is the recorded trade-off.
 
 ## Acceptance criteria
 
