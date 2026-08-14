@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030109
 title: One npm run check runs every check CI will run
 type: task
-status: ready
+status: done
 parent: STORY-0301
 module: web-client
 estimate: XS
