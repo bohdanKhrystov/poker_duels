@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030104
 title: An app root that mounts one trivial component
 type: task
-status: backlog
+status: ready
 parent: STORY-0301
 module: web-client
 estimate: XS
