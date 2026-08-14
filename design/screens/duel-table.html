@@ -1,0 +1,146 @@
+<!-- @dsCard group="Screens" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duel table — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024).
+   * This file IS the screen: one column, the page is the table, no oval. */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
+    --pd-on-accent: #ffffff;
+    --pd-card-face: #f3f0e9; --pd-suit-red: #bf3b30; --pd-suit-black: #26231f;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px; --pd-space-6: 24px; --pd-space-7: 32px;
+    --pd-fs-micro: 0.6875rem; --pd-fs-body: 0.9375rem; --pd-lh-tight: 1.15;
+    --pd-radius-medium: 8px; --pd-radius-pill: 999px;
+    --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: 0.9375rem; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .table { max-width: 560px; min-height: 100vh; margin: 0 auto; padding: var(--pd-space-5);
+    display: flex; flex-direction: column; gap: var(--pd-space-5); }
+
+  .seat { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-left: 2px solid transparent; border-radius: var(--pd-radius-medium);
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .seat .name { font-weight: 500; display: block; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  .seat .status { display: block; font-size: 0.6875rem; line-height: 1.5;
+    min-height: 1.5em; margin-top: 2px; color: var(--pd-text-faint); }
+  .seat .status.turn { letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-accent); font-weight: 500; }
+  .seat .who { flex: 1; min-width: 0; }
+  .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  .seat.on-turn { border-left-color: var(--pd-accent); }
+  .dealer { font-family: var(--pd-font-mono); font-size: 0.6875rem; color: var(--pd-text-muted);
+    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill); padding: 2px 8px; }
+  .bet-line { text-align: center; font-size: 0.8125rem; color: var(--pd-text-muted);
+    margin-top: calc(-1 * var(--pd-space-3)); }
+  .bet-line .amt { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    color: var(--pd-text); }
+
+  .center { flex: 1; display: flex; flex-direction: column; justify-content: center;
+    align-items: center; gap: var(--pd-space-4); }
+  .board { display: flex; gap: var(--pd-space-3); --bw: clamp(48px, calc((100vw - 64px) / 5), 72px); }
+  .pc { width: var(--w, 64px); aspect-ratio: 5 / 7; background: var(--pd-card-face);
+    border-radius: calc(var(--w, 64px) * 0.0625); position: relative; color: var(--pd-suit-black);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4); display: inline-block; }
+  .pc.red { color: var(--pd-suit-red); }
+  .pc .ix { position: absolute; top: calc(var(--w) * 0.07); left: calc(var(--w) * 0.09);
+    line-height: 1; font-weight: 700; }
+  .pc .ix .r { font-size: calc(var(--w) * 0.24); display: block; }
+  .pc .ix .s { font-size: calc(var(--w) * 0.20); display: block; margin-top: calc(var(--w) * 0.02); }
+  .pc .pip { position: absolute; right: calc(var(--w) * 0.09); bottom: calc(var(--w) * 0.07);
+    font-size: calc(var(--w) * 0.34); line-height: 1; }
+  .slot { width: var(--w, 64px); aspect-ratio: 5 / 7; border-radius: calc(var(--w, 64px) * 0.0625);
+    border: 1px dashed var(--pd-hairline); }
+  .pot { display: flex; align-items: baseline; gap: 14px; }
+  .pot .amount { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 1.125rem; }
+  .pot .meta { font-size: 0.8125rem; color: var(--pd-text-muted); }
+
+  .hero { display: flex; flex-direction: column; gap: var(--pd-space-4); }
+  .hole { display: flex; gap: var(--pd-space-3); justify-content: center; }
+
+  .bar { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); padding: 12px; }
+  .sizing { display: flex; gap: var(--pd-space-2); align-items: center; margin-bottom: var(--pd-space-3); flex-wrap: wrap; min-height: var(--pd-space-7); }
+  .chip { font-family: var(--pd-font-mono); font-size: var(--pd-fs-micro); color: var(--pd-text-muted);
+    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill);
+    padding: var(--pd-space-2) var(--pd-space-4); background: none; cursor: pointer; }
+  .chip.sel { color: var(--pd-accent); border-color: var(--pd-accent); }
+  .stepper { margin-left: auto; display: flex; align-items: center; gap: var(--pd-space-3);
+    font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  .stepper button { width: var(--pd-space-7); height: var(--pd-space-7);
+    border-radius: var(--pd-radius-medium); border: 1px solid var(--pd-hairline);
+    background: none; color: var(--pd-text); cursor: pointer; font-size: var(--pd-fs-body); }
+  .actions { display: flex; gap: var(--pd-space-3); }
+  .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
+    line-height: var(--pd-lh-tight); padding: var(--pd-space-4) 0;
+    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer;
+    flex: 1; text-align: center; }
+  .btn .amt { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
+  .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
+  .btn.fill:hover { background: var(--pd-accent-fill-hover); }
+  .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+</style>
+</head>
+<body>
+<div class="table">
+  <div class="seat">
+    <span class="who"><span class="name">ImKate</span>
+          <span class="status"></span></span>
+    <span class="dealer">D</span>
+    <span class="chips">4,150</span>
+  </div>
+  <div class="bet-line">bets <span class="amt">400</span></div>
+
+  <div class="center">
+    <div class="board">
+      <span class="pc" style="--w:var(--bw)"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip">♠︎</span></span>
+      <span class="pc red" style="--w:var(--bw)"><span class="ix"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip">♦︎</span></span>
+      <span class="pc" style="--w:var(--bw)"><span class="ix"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip">♣︎</span></span>
+      <span class="slot" style="--w:var(--bw)"></span>
+      <span class="slot" style="--w:var(--bw)"></span>
+    </div>
+    <div class="pot">
+      <span class="amount">Pot&nbsp;2,450</span>
+      <span class="meta">Blinds 75/150 · Hand 14</span>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hole">
+      <span class="pc red" style="--w:96px"><span class="ix"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip">♥︎</span></span>
+      <span class="pc" style="--w:96px"><span class="ix"><span class="r">K</span><span class="s">♠︎</span></span><span class="pip">♠︎</span></span>
+    </div>
+    <div class="seat on-turn">
+      <span class="who"><span class="name">You</span>
+        <span class="status turn">Your turn</span></span>
+      <span class="chips">13,400</span>
+    </div>
+    <div class="bar">
+      <div class="sizing">
+        <button class="chip">min</button><button class="chip">⅓</button>
+        <button class="chip">½</button><button class="chip sel">pot</button>
+        <button class="chip">all-in</button>
+        <span class="stepper"><button>−</button><span>1,200</span><button>+</button></span>
+      </div>
+      <div class="actions">
+        <button class="btn ghost">Fold</button>
+        <button class="btn ghost">Call <span class="amt">400</span></button>
+        <button class="btn fill">Raise to <span class="amt">1,200</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
