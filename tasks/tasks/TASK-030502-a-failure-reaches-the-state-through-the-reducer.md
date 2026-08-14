@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030502
 title: A Failure reaches the state through the reducer, and a join that lands clears it
 type: task
-status: backlog
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
