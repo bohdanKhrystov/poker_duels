@@ -13,7 +13,7 @@ design/
 ├── tokens/     tokens.css (canonical) + the three foundation preview cards
 ├── components/ the table's parts — playing card, seat & pot, action bar
 ├── screens/    the composed table and duel-flow screens — STORY-0602/0604
-└── graphics/   (planned) SVG art — STORY-0603
+└── graphics/   SVG art — STORY-0603
 ```
 
 ## Preview-card conventions

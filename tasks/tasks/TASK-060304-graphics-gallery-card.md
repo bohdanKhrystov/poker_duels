@@ -15,7 +15,7 @@ depends_on: [TASK-060301, TASK-060302]
 verify:
   - 'head -1 design/graphics/gallery.html | grep -q "<!-- @dsCard group=\"Graphics\" -->"'
   - grep -q '<title>' design/graphics/gallery.html
-  - grep -q 'symbol id="spade"' design/graphics/gallery.html
+  - grep -q 'symbol id="pd-spade"' design/graphics/gallery.html
   - grep -q '9fb2c4' design/graphics/gallery.html
   - '! grep -q "http" design/graphics/gallery.html'
 ---
