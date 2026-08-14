@@ -57,8 +57,9 @@ this story draws everything around it.
       typed-code door — render in the pane under **Screens**.
 - [ ] The human has seen them there and signed off.
       *(Partial record 2026-08-15: the four landed screens were signed off in-session
-      after the 14-card sync; both boxes tick when the typed-code door —
-      `TASK-060406` — joins them in the pane.)*
+      after the 14-card sync. The render box ticks when the typed-code door —
+      `TASK-060406` — joins them in the pane; the sign-off box ticks only when the
+      human has seen the fifth screen there and signed it off.)*
 - [ ] The whole loop — create → join → play → end → rematch — can be walked card to card
       with no invented step.
 

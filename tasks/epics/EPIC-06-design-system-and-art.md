@@ -65,7 +65,9 @@ claude.ai/design pane, by the human.
 | [STORY-0603](../stories/STORY-0603-graphics.md) | Draw the graphics — suit glyphs, the duel coin, the wordmark | ready |
 | [STORY-0604](../stories/STORY-0604-lobby-and-flow.md) | Design the duel flow — create, join, result, rematch | ready |
 
-All four stories are written; each awaits the human's visual sign-off before `done`.
+All four stories are written. The human's visual sign-off is recorded for
+STORY-0601/0602/0603 and partially for STORY-0604 (its fifth screen, the typed-code
+door, has not landed); each story flips `done` in the PR that lands its last ticket.
 
 ## Definition of done
 
