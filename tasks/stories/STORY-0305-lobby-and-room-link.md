@@ -54,8 +54,8 @@ this order and no two are startable at once.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| TASK-030501 | The store is subscribable, and notifies only when the state moved | ready |
-| TASK-030502 | A Failure reaches the state through the reducer, and a join that lands clears it | backlog |
+| TASK-030501 | The store is subscribable, and notifies only when the state moved | done |
+| TASK-030502 | A Failure reaches the state through the reducer, and a join that lands clears it | ready |
 | TASK-030503 | Boot joins the tab's one connection to its one store | backlog |
 | TASK-030504 | The code the URL carried joins on Welcome, exactly once | backlog |
 | TASK-030505 | A component reads the store through useDuelState, and re-renders only when it moved | backlog |
