@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030507
 title: A StrictMode double mount sends no second JoinRoom
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
