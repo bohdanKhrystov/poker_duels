@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060112
 title: The drift gate reads the graphics
 type: task
-status: ready
+status: backlog
 parent: STORY-0601
 module: design
 estimate: S
@@ -11,10 +11,13 @@ tier: opus
 review: light
 files_touched: 1
 labels: [design]
-depends_on: [TASK-060110]
+depends_on: [TASK-060110, TASK-060111]
 verify:
   - ./design/check-drift.sh
-  - sh -c 'T=$(mktemp -d); cp -R design "$T/design"; perl -pi -e "s/26231f/26231e/g" "$T/design/graphics/suits.svg"; ! "$T/design/check-drift.sh" >/dev/null 2>&1'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -pi -e "s/26231f/26231e/g" "$T/design/graphics/suits.svg" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -pi -e "s/fill=\"#26231f\"/fill=\"#26231e\"/g" "$T/design/graphics/suits.svg" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -pi -e "s/pd-suit-(black|red) \(#[0-9a-f]{6}\)//g" "$T/design/graphics/suits.svg" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && mv "$T/design/graphics/suits.svg" "$T/suits.away" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
 ---
 
 ## Goal
@@ -39,8 +42,12 @@ mechanism; the coin repeats the pattern).
   value differs from the cited hex; an SVG with zero pairs fails, and so does finding
   zero SVGs under `design/graphics/` — the class must not go invisible again, vacuously
   or otherwise (suits.svg is merged, so at least one always exists).
-- Stock macOS/Linux tools; keep the self-test pattern — the verify's second command
-  proves a re-hexed mirror fails.
+- Stock macOS/Linux tools; keep the self-test pattern. The four negative-path verify
+  commands pin one guard clause each — cited-pair drift, an orphaned fill hex, a
+  pair-less SVG, zero SVGs — and demand the gate's deliberate exit 1, with setup
+  failures forced to exit 2 so a broken scratch copy cannot green a proof.
+- Runs after TASK-060111 (`depends_on`): both gate tickets rewrite the same sweep
+  region of `check-drift.sh`, so they are ordered, never concurrent.
 
 ## Out of scope
 

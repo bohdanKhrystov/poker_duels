@@ -14,7 +14,7 @@ labels: [design]
 depends_on: [TASK-060108]
 verify:
   - ./design/check-drift.sh
-  - sh -c 'T=$(mktemp -d); cp -R design "$T/design"; perl -pi -e "s/0 1px 3px/0 1px 4px/" "$T/design/components/playing-card.html"; ! "$T/design/check-drift.sh" >/dev/null 2>&1'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -pi -e "s/0 1px 3px/0 1px 4px/" "$T/design/components/playing-card.html" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
 ---
 
 ## Goal
