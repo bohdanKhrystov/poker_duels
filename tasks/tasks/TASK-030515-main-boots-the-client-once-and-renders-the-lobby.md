@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030515
 title: main.tsx boots the client once and renders the lobby under the provider
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S
