@@ -56,7 +56,7 @@ proves itself or breaks.
 | [TASK-060203](../tasks/TASK-060203-action-bar.md) | The action bar | done |
 | [TASK-060204](../tasks/TASK-060204-duel-table-screen.md) | The duel table screen, in play | done |
 | [TASK-060205](../tasks/TASK-060205-table-states.md) | The table's other moments — waiting and showdown | done |
-| [TASK-060206](../tasks/TASK-060206-action-bar-off-state-parity.md) | The off-state's hidden sizing row mirrors the live content | ready |
+| [TASK-060206](../tasks/TASK-060206-action-bar-off-state-parity.md) | The off-state's hidden sizing row mirrors the live content | backlog |
 
 ## Acceptance criteria
 

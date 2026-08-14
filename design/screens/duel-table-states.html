@@ -62,7 +62,8 @@
   .back.mucked { opacity: 0.45; }
   .slot { border: 1px dashed var(--pd-hairline); }
   .cards { display: flex; gap: 6px; justify-content: center; }
-  .muck-note { text-align: center; font-size: 0.8125rem; color: var(--pd-text-faint); }
+  .muck-note { text-align: center; font-size: 0.8125rem; color: var(--pd-text-faint);
+    min-height: calc(0.8125rem * 1.5); }
 
   .pot { display: flex; align-items: baseline; gap: 10px; justify-content: center; }
   .pot .amount { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
@@ -101,6 +102,7 @@
         <span class="back" style="--w:44px"></span>
         <span class="back" style="--w:44px"></span>
       </div>
+      <div class="muck-note"></div>
       <div class="cards">
         <span class="pc" style="--w:48px"><span class="ix"><span class="r">A</span><span class="s">♠︎</span></span></span>
         <span class="pc red" style="--w:48px"><span class="ix"><span class="r">7</span><span class="s">♦︎</span></span></span>
@@ -115,7 +117,8 @@
         <span class="pc" style="--w:64px"><span class="ix"><span class="r">K</span><span class="s">♠︎</span></span></span>
       </div>
       <div class="waitline">Waiting for ImKate…</div>
-      <p class="note">the bar keeps its place and height — no reflow when the turn returns</p>
+      <p class="note">the bar, the status line and the muck slot all keep their places —
+      no state change reflows the table</p>
     </div>
 
     <div class="frame">
@@ -124,7 +127,7 @@
         <span class="who"><span class="name">ImKate</span>
           <span class="status"></span></span>
         <span class="dealer">D</span>
-        <span class="chips">2,550</span>
+        <span class="chips">3,350</span>
       </div>
       <div class="cards">
         <span class="back mucked" style="--w:44px"></span>
@@ -139,7 +142,7 @@
         <span class="pc" style="--w:48px"><span class="ix"><span class="r">7</span><span class="s">♣︎</span></span></span>
       </div>
       <div class="banner">
-        <div class="win">You win 4,900</div>
+        <div class="win">You win 4,850</div>
         <div class="hand">Two pair, aces and sevens</div>
       </div>
       <div class="cards">

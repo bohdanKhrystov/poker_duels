@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060206
 title: The off-state's hidden sizing row mirrors the live content
 type: task
-status: ready
+status: backlog
 parent: STORY-0602
 module: design
 estimate: XS
