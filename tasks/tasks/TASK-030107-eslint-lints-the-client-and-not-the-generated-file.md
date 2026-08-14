@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030107
 title: ESLint lints the client and never the generated file
 type: task
-status: ready
+status: done
 parent: STORY-0301
 module: web-client
 estimate: XS

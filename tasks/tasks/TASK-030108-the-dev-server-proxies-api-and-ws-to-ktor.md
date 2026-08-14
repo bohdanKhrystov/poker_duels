@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030108
 title: The dev server proxies /api and /ws to the Ktor server
 type: task
-status: backlog
+status: ready
 parent: STORY-0301
 module: web-client
 estimate: XS

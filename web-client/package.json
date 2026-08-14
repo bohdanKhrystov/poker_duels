@@ -11,6 +11,7 @@
     "dev": "vite",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "lint": "eslint --max-warnings 0 .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
