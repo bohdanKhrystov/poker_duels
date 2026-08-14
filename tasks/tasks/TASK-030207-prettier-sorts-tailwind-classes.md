@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030207
 title: Prettier sorts Tailwind classes and still never reads the generated file
 type: task
-status: ready
+status: done
 parent: STORY-0302
 module: web-client
 estimate: XS
