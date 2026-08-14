@@ -49,9 +49,27 @@ one.
 
 ## Tasks
 
+Sixteen tickets in one chain — each one's `verify` pins the cumulative test count, so they merge in
+this order and no two are startable at once.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0305`.* | — |
+| TASK-030501 | The store is subscribable, and notifies only when the state moved | ready |
+| TASK-030502 | A Failure reaches the state through the reducer, and a join that lands clears it | backlog |
+| TASK-030503 | Boot joins the tab's one connection to its one store | backlog |
+| TASK-030504 | The code the URL carried joins on Welcome, exactly once | backlog |
+| TASK-030505 | A component reads the store through useDuelState, and re-renders only when it moved | backlog |
+| TASK-030506 | useSend hands a screen the boot-created send, and a missing provider says so | backlog |
+| TASK-030507 | A StrictMode double mount sends no second JoinRoom | backlog |
+| TASK-030508 | The framework-free store modules import nothing from react | backlog |
+| TASK-030509 | The invite carries the code as a query parameter, trimmed and upper-cased | backlog |
+| TASK-030510 | The lobby creates a room, and joins by a pasted code it trims and upper-cases | backlog |
+| TASK-030511 | A joined room shows its code and a selectable invite link | backlog |
+| TASK-030512 | Copy the link where there is a clipboard, and keep it in reach where there is not | backlog |
+| TASK-030513 | UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries | backlog |
+| TASK-030514 | The first Snapshot ends the wait, and no other frame does | backlog |
+| TASK-030515 | main.tsx boots the client once and renders the lobby under the provider | backlog |
+| TASK-030516 | One connection per tab, booted in main.tsx and nowhere else | backlog |
 
 ## Acceptance criteria
 
