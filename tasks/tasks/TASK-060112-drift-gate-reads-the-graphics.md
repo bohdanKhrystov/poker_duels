@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060112
 title: The drift gate reads the graphics
 type: task
-status: backlog
+status: ready
 parent: STORY-0601
 module: design
 estimate: S
