@@ -36,7 +36,9 @@ fi
 
 # joins every `--pd-NAME: … ;` declaration to one line and strips whitespace outside
 # quoted strings, emitting `name=value` — the sheet wraps long values, cards do not,
-# and both must land on the same normalized form
+# and both must land on the same normalized form. The `--pd-` name charset below is
+# the same language as the name gate's grep in the loop — a change to what a token
+# name may contain must change both.
 EXTRACT='
   { buf = buf $0 "\n" }
   END {
@@ -87,6 +89,7 @@ mism=$(printf -- '--pd-probe=2px\n' | awk -v f=self "$COMPARE" "$probe_sheet" - 
 sheet_file=$(mktemp)
 awk "$EXTRACT" "$SHEET" > "$sheet_file"
 [ -s "$sheet_file" ] || { echo "check-drift: no declarations extracted from $SHEET" >&2; exit 1; }
+# this BRE and EXTRACT's awk ERE describe the same name language — change both or neither
 declared=$(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$SHEET" | sort -u)
 fail=0
 mentions=0
@@ -101,7 +104,13 @@ for f in $(find "$DIR" -name '*.html' | sort); do
     fi
   done
 
-  card_vals=$(awk "$EXTRACT" "$f" 2>/dev/null || true)
+  # extraction failures fail as loudly as the st= sweeps below — an unreadable card
+  # must never read as a value-clean card (the || true softening is for the
+  # self-tests only, where the assert right after catches a dead awk)
+  st=0; card_vals=$(awk "$EXTRACT" "$f" 2>/dev/null) || st=$?
+  if [ "$st" -ne 0 ]; then
+    echo "check-drift: awk error $st extracting values from $f" >&2; fail=1; card_vals=""
+  fi
   if [ -n "$card_vals" ]; then
     bad=$(printf '%s\n' "$card_vals" | awk -v f="$f" "$COMPARE" "$sheet_file" -) || {
       echo "check-drift: value comparison failed on $f (awk error)" >&2; fail=1; bad=""
