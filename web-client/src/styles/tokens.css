@@ -74,6 +74,7 @@
   --pd-lh-tight: 1.15;
   --pd-lh-body: 1.5;
   --pd-track-caps: 0.08em;
+  --pd-track-code: 0.14em; /* a room code is read aloud, glyph by glyph — wide air */
 
   /* Spacing — one ladder, named by step so the scale can be retuned in one move.
    * Layout geometry stays px on purpose: it spaces surfaces, not text. */

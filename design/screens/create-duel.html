@@ -6,7 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Create a duel — Poker Duels</title>
 <style>
-  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024).
+   * Component rules are faithful copies of the merged cards; screen-only glue is
+   * commented as such. */
   :root {
     --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
@@ -16,6 +18,7 @@
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
     --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
     --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
+    --pd-track-caps: 0.08em; --pd-track-code: 0.14em;
     --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px;
     --pd-space-6: 24px; --pd-space-7: 32px;
     --pd-radius-medium: 8px; --pd-radius-pill: 999px;
@@ -23,28 +26,34 @@
   }
   * { margin: 0; box-sizing: border-box; }
   body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
-    font-size: 0.9375rem; line-height: 1.5; padding: 32px; -webkit-font-smoothing: antialiased; }
+    font-size: var(--pd-fs-body); line-height: var(--pd-lh-body); padding: var(--pd-space-7);
+    -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 1020px; margin: 0 auto; }
-  .eyebrow { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em;
+  .eyebrow { font-size: var(--pd-fs-micro); font-weight: 500; letter-spacing: var(--pd-track-caps);
     text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: 8px; }
   h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
   .lede { color: var(--pd-text-muted); margin-top: 8px; max-width: 56ch; }
-  .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 32px; align-items: stretch; }
-  .frame { width: 380px; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
+  .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: var(--pd-space-7); }
+  .frame { width: min(380px, 100%); border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
     padding: var(--pd-space-6) var(--pd-space-5); display: flex; flex-direction: column; gap: var(--pd-space-5); }
-  .frame h2 { font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
+  .frame h2 { font-size: var(--pd-fs-micro); letter-spacing: var(--pd-track-caps); text-transform: uppercase;
     color: var(--pd-text-muted); font-weight: 500; }
   .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
-    margin-top: 10px; }
+    margin-top: var(--pd-space-4); }
 
-  .mark { display: inline-flex; align-items: center; gap: 0.42em; font-weight: 700; }
-  .mark .coin { width: 0.92em; height: 0.92em; border-radius: 999px;
+  /* wordmark lockup — faithful copy of graphics/wordmark.html.
+   * Baseline-align so the lockup drops into running text; the coin opts back to center. */
+  .mark { display: inline-flex; align-items: baseline; gap: 0.42em; font-weight: 700;
+    letter-spacing: 0.01em; }
+  .mark .coin { width: 0.92em; height: 0.92em; align-self: center; border-radius: var(--pd-radius-pill);
     background: radial-gradient(circle at 36% 30%, #b8c6d6, var(--pd-coin) 55%, var(--pd-coin-deep));
     box-shadow: inset 0 0 0 0.06em rgba(255,255,255,0.25); }
   .mark .duels { color: var(--pd-text-muted); font-weight: 500; }
+  /* Contrast themes strip gradients and shadows — keep the coin a visible ring. */
+  @media (forced-colors: active) { .mark .coin { border: 1px solid CanvasText; } }
 
   .hero-h { font-size: 1.375rem; font-weight: 700; line-height: 1.15; }
-  .sub { color: var(--pd-text-muted); font-size: 0.9375rem; margin-top: 4px; }
+  .sub { color: var(--pd-text-muted); margin-top: var(--pd-space-2); }
 
   .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
     line-height: var(--pd-lh-tight); padding: var(--pd-space-4) var(--pd-space-5);
@@ -55,22 +64,36 @@
   .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
   .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
 
-  .code { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
-    font-size: 1.875rem; letter-spacing: 0.14em; text-align: center; padding: var(--pd-space-5) 0;
+  /* The trailing letter-space is counted inside the centered line; the matching
+   * text-indent puts the glyphs themselves back on center. */
+  .code { font-family: var(--pd-font-mono); font-size: 1.875rem;
+    letter-spacing: var(--pd-track-code); text-indent: var(--pd-track-code);
+    text-align: center; padding: var(--pd-space-5) 0;
     background: var(--pd-surface); border: 1px solid var(--pd-hairline);
     border-radius: var(--pd-radius-medium); }
   .linkline { display: flex; gap: var(--pd-space-3); align-items: center; }
-  .linkline .path { flex: 1; font-family: var(--pd-font-mono); font-size: 0.8125rem;
+  .linkline .path { flex: 1; font-family: var(--pd-font-mono); font-size: var(--pd-fs-small);
     color: var(--pd-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     padding: var(--pd-space-3) var(--pd-space-4); background: var(--pd-surface); border: 1px solid var(--pd-hairline);
     border-radius: var(--pd-radius-medium); }
-  .seat-empty { border: 1px dashed var(--pd-hairline); border-radius: var(--pd-radius-medium);
-    padding: var(--pd-space-5); color: var(--pd-text-faint); text-align: center; }
+
+  /* seat plate — faithful copy of components/seat-and-pot.html */
   .seat { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
-    border-radius: var(--pd-radius-medium); padding: var(--pd-space-4) var(--pd-space-5); display: flex;
-    align-items: center; gap: var(--pd-space-4); }
-  .seat .name { font-weight: 500; flex: 1; }
-  .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+    border-left: 2px solid transparent; border-radius: var(--pd-radius-medium);
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .seat .name { font-weight: 500; display: block; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  .seat .status { display: block; font-size: 0.6875rem; line-height: 1.5;
+    min-height: 1.5em; margin-top: 2px; color: var(--pd-text-faint); }
+  .seat .who { flex: 1; min-width: 0; }
+  .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    color: var(--pd-text); }
+  /* Screen-only glue: the open seat is the plate's dashed twin — the .seat rules set
+   * its geometry, this override swaps paint only (the left edge keeps the reserved
+   * 2px turn-marker width), so a rival claiming the seat changes pixels, never
+   * layout: the card component's slot convention. */
+  .seat.seat-empty { background: none; border-style: dashed; border-color: var(--pd-hairline); }
+  .seat.seat-empty .name { color: var(--pd-text-faint); }
 </style>
 </head>
 <body>
@@ -84,7 +107,7 @@
   <div class="frames">
     <div class="frame">
       <h2>Before — the front door</h2>
-      <span class="mark" style="font-size:1.875rem"><span class="coin"></span>Poker&nbsp;<span class="duels">Duels</span></span>
+      <span class="mark" style="font-size:1.875rem"><span class="coin"></span>Poker<span class="duels">Duels</span></span>
       <div>
         <div class="hero-h">Challenge someone</div>
         <div class="sub">One link. One duel. One winner takes the coin.</div>
@@ -101,10 +124,17 @@
         <span class="path">…/duel/7Q4M9K2T</span>
         <button class="btn fill">Copy link</button>
       </div>
-      <div class="seat-empty">The other seat is open — send the link or read the code aloud</div>
-      <div class="seat"><span class="name">You</span><span class="chips">10,000</span></div>
-      <p class="note">the empty seat is the dashed slot from the card component — same
-      vocabulary, nothing animated; the room lives 10 minutes unclaimed</p>
+      <div class="seat seat-empty">
+        <span class="who"><span class="name">Open seat</span>
+        <span class="status">send the link or read the code aloud</span></span>
+      </div>
+      <div class="seat">
+        <span class="who"><span class="name">You</span>
+        <span class="status">host</span></span>
+        <span class="chips">10,000</span>
+      </div>
+      <p class="note">the open seat is the seat plate's dashed twin — same geometry,
+      claiming it moves nothing; the room lives 10 minutes unclaimed</p>
     </div>
   </div>
 </div>

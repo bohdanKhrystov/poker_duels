@@ -31,6 +31,8 @@ waiting.
 | File | Action |
 | --- | --- |
 | `design/screens/create-duel.html` | create |
+| `design/tokens/tokens.css` | edit — review: the code's tracking is born on the sheet as `--pd-track-code` |
+| `web-client/src/styles/tokens.css` | edit — vendored mirror of the sheet; client CI pins byte-identity |
 
 ## Scope
 
@@ -53,3 +55,11 @@ None — structural gates in `verify:`.
 ## Definition of done
 
 Standard, with `EPIC-06`'s recorded deviation: the review is visual, in claude.ai/design.
+
+## Deviations
+
+- Review round 1 found the code's `letter-spacing: 0.14em` born off-sheet — the join
+  screen must render the same code and could only re-derive it. The value moved onto
+  the sheet as `--pd-track-code`, which drags the vendored client mirror along (its CI
+  test pins byte-identity), so the real footprint is three files; `files_touched` keeps
+  the planned figure per the `TASK-060108` precedent.
