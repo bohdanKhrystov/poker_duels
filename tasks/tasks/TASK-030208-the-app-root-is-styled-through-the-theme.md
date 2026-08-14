@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030208
 title: The app root is styled through the theme, proven by a test
 type: task
-status: backlog
+status: ready
 parent: STORY-0302
 module: web-client
 estimate: XS
