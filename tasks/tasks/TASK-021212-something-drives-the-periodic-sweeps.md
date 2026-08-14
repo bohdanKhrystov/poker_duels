@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021212
 title: Something drives the periodic sweeps in the server that ships
 type: task
-status: blocked
+status: done
 parent: STORY-0212
 module: poker-server
 estimate: S
