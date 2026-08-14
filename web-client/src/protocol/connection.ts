@@ -62,6 +62,12 @@ export function openConnection(options: ConnectionOptions): Connection {
         status = { kind: "outdated" };
       }
     }
+    if (message.type === "Failure") {
+      status =
+        message.error === "VERSION_MISMATCH"
+          ? { kind: "outdated" }
+          : { kind: "refused", error: message.error };
+    }
     options.onMessage(message);
   };
 
@@ -70,6 +76,9 @@ export function openConnection(options: ConnectionOptions): Connection {
       return status;
     },
     send(message: ClientMessage): void {
+      // A server that refused this version will refuse it identically forever.
+      // Talking to it again is the retry loop STORY-0303 exists to not build.
+      if (status.kind === "outdated") return;
       options.socket.send(encodeClientMessage(message));
     },
     close(): void {
