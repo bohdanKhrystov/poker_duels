@@ -53,6 +53,8 @@ export function applyServerMessage(
       };
     case "Snapshot":
       return { ...state, view: message.view, pendingTurn: null };
+    case "Rejected":
+      return { ...state, pendingTurn: null, rejection: message.rejection };
     default:
       return state;
   }

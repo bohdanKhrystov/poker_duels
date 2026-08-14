@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030404
 title: A Rejected clears the pending turn and leaves the view untouched
 type: task
-status: ready
+status: done
 parent: STORY-0304
 module: web-client
 estimate: XS
