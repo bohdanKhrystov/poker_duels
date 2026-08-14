@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060301
 title: The suit-glyph set
 type: task
-status: ready
+status: done
 parent: STORY-0603
 module: design
 estimate: S

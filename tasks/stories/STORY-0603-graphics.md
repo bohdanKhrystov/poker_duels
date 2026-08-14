@@ -40,7 +40,7 @@ favicon, victory screen — and `EPIC-03`/`EPIC-04` consume it.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-060301](../tasks/TASK-060301-suit-glyph-set.md) | The suit-glyph set | ready |
+| [TASK-060301](../tasks/TASK-060301-suit-glyph-set.md) | The suit-glyph set | done |
 | [TASK-060302](../tasks/TASK-060302-duel-coin.md) | The duel coin | ready |
 | [TASK-060303](../tasks/TASK-060303-wordmark-card.md) | The wordmark card | ready |
 | [TASK-060304](../tasks/TASK-060304-graphics-gallery-card.md) | The graphics gallery card | backlog |
