@@ -514,7 +514,10 @@ from the Kotlin descriptors and byte-checked in CI — the client never hand-wri
 
 `DEC-022` is answered by [`ADR-0026`](../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md):
 Vite and npm, Node 24 pinned in `web-client/.nvmrc`, Vitest, and the client's checks as their own
-parallel CI job. `STORY-0301` is the scaffold every other story stands on, and it is startable now.
+parallel CI job. `STORY-0301`, the scaffold every other story stands on, is **done**: `npm run check`
+typechecks, lints, format-checks and tests the client in its own CI job. `STORY-0302` is next — it
+makes `design/tokens/tokens.css` the client's only source of colours and sizes, and fails the check
+on a literal — and `TASK-030201` is startable now.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -530,7 +533,16 @@ parallel CI job. `STORY-0301` is the scaffold every other story stands on, and i
 | | [TASK-030109](tasks/TASK-030109-one-npm-run-check-runs-all-four-checks.md) One npm run check runs every check CI will run | XS | **done** |
 | | [TASK-030110](tasks/TASK-030110-ci-gains-a-client-job-and-drops-the-ad-hoc-tsc.md) CI gains a client job and drops the ad-hoc npx tsc in the same diff | XS | **done** |
 | | [TASK-030111](tasks/TASK-030111-contributing-says-how-to-check-the-client.md) CONTRIBUTING says how to install and check the web client | XS | **done** |
-| [STORY-0302](stories/STORY-0302-design-tokens-in-the-client.md) | The design tokens are the client's only colours and sizes | backlog |
+| **[STORY-0302](stories/STORY-0302-design-tokens-in-the-client.md)** The design tokens are the client's only colours and sizes — *schema 2* | | **ready** |
+| | [TASK-030201](tasks/TASK-030201-vendor-the-token-sheet-byte-for-byte.md) Vendor the token sheet into the client, byte for byte | S | **ready** |
+| | [TASK-030202](tasks/TASK-030202-the-check-fails-on-a-colour-literal.md) The client's check fails on a colour literal outside the token layer | S | backlog |
+| | [TASK-030203](tasks/TASK-030203-tailwind-installs-and-its-vite-plugin-runs.md) Tailwind installs from the lockfile and its Vite plugin runs | XS | backlog |
+| | [TASK-030204](tasks/TASK-030204-the-tokens-and-tailwind-reach-the-bundle.md) The tokens and Tailwind reach the bundle through one stylesheet | XS | backlog |
+| | [TASK-030205](tasks/TASK-030205-the-themes-colours-are-the-tokens.md) The theme's colours are the tokens and nothing else | S | backlog |
+| | [TASK-030206](tasks/TASK-030206-the-themes-sizes-are-the-tokens.md) The theme's type, spacing and radii are the tokens and nothing else | S | backlog |
+| | [TASK-030207](tasks/TASK-030207-prettier-sorts-tailwind-classes.md) Prettier sorts Tailwind classes and still never reads the generated file | XS | backlog |
+| | [TASK-030208](tasks/TASK-030208-the-app-root-is-styled-through-the-theme.md) The app root is styled through the theme, proven by a test | XS | backlog |
+| | [TASK-030209](tasks/TASK-030209-contributing-says-the-token-sheet-is-a-copy.md) CONTRIBUTING says the client's token sheet is a copy | XS | backlog |
 | [STORY-0303](stories/STORY-0303-typed-socket-and-handshake.md) | The typed socket — handshake and device identity | backlog |
 | [STORY-0304](stories/STORY-0304-client-store.md) | The store — state is the last frame the server sent | backlog |
 | [STORY-0305](stories/STORY-0305-lobby-and-room-link.md) | The lobby — create a room, join by code, share the link | backlog |
