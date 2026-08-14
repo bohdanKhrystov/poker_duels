@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030509
 title: The invite carries the code as a query parameter, trimmed and upper-cased
 type: task
-status: ready
+status: done
 parent: STORY-0305
 module: web-client
 estimate: S

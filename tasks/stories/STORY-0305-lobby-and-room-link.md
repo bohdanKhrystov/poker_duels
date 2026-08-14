@@ -62,8 +62,8 @@ this order and no two are startable at once.
 | TASK-030506 | useSend hands a screen the boot-created send, and a missing provider says so | done |
 | TASK-030507 | A StrictMode double mount sends no second JoinRoom | done |
 | TASK-030508 | The framework-free store modules import nothing from react | done |
-| TASK-030509 | The invite carries the code as a query parameter, trimmed and upper-cased | ready |
-| TASK-030510 | The lobby creates a room, and joins by a pasted code it trims and upper-cases | backlog |
+| TASK-030509 | The invite carries the code as a query parameter, trimmed and upper-cased | done |
+| TASK-030510 | The lobby creates a room, and joins by a pasted code it trims and upper-cases | ready |
 | TASK-030511 | A joined room shows its code and a selectable invite link | backlog |
 | TASK-030512 | Copy the link where there is a clipboard, and keep it in reach where there is not | backlog |
 | TASK-030513 | UNKNOWN_ROOM and ROOM_FULL each get their own message, and nothing retries | backlog |
