@@ -44,7 +44,7 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060103](../tasks/TASK-060103-type-preview-card.md) | The Type preview card | done |
 | [TASK-060104](../tasks/TASK-060104-spacing-preview-card.md) | The Spacing preview card | done |
 | [TASK-060105](../tasks/TASK-060105-design-directory-readme.md) | The design directory README and sync procedure | done |
-| [TASK-060106](../tasks/TASK-060106-token-name-drift-check.md) | The token-name drift check | ready |
+| [TASK-060106](../tasks/TASK-060106-token-name-drift-check.md) | The token-name drift check | done |
 | [TASK-060107](../tasks/TASK-060107-align-the-shipped-foundation-cards.md) | Align the shipped foundation cards | ready |
 | [TASK-060108](../tasks/TASK-060108-card-surface-tokens.md) | The card resting shadow and back texture become tokens | ready |
 

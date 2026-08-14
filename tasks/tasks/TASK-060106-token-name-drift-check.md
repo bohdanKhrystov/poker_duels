@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060106
 title: A drift check that diffs every card's inlined token names against the sheet
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S

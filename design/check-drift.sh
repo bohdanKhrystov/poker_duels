@@ -1,0 +1,25 @@
+#!/bin/sh
+# Poker Duels — token-name drift check (TASK-060106, ADR-0024 §2).
+# Every `--pd-*` name any design card mentions — in CSS or printed on the card —
+# must be declared in the canonical sheet. A rename that forgets a card fails here
+# instead of drifting silently. POSIX tools only.
+set -eu
+DIR=$(dirname "$0")
+SHEET="$DIR/tokens/tokens.css"
+[ -f "$SHEET" ] || { echo "check-drift: missing $SHEET" >&2; exit 1; }
+
+declared=$(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$SHEET" | sort -u)
+fail=0
+mentions=0
+for f in $(find "$DIR" -name '*.html' | sort); do
+  for name in $(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$f" | sort -u); do
+    mentions=$((mentions + 1))
+    if ! printf '%s\n' "$declared" | grep -qx -- "$name"; then
+      echo "drift: $f mentions $name, which tokens.css does not declare" >&2
+      fail=1
+    fi
+  done
+done
+
+if [ "$fail" -ne 0 ]; then exit 1; fi
+echo "check-drift: every mentioned token name resolves ($mentions distinct mentions across cards)"
