@@ -25,6 +25,11 @@ export function ActionBar(props: {
   turn: PendingTurn | null;
   rejection: Rejection | null;
   refusal: ProtocolError | null;
+  /**
+   * Client bookkeeping the store keeps, not a game fact: the count of
+   * refusals, whose only job is to change.
+   */
+  rejectionCount?: number;
   send: (message: ClientMessage) => void;
 }): ReactElement {
   const { turn } = props;
@@ -36,11 +41,12 @@ export function ActionBar(props: {
       {turn === null ? (
         <Waiting />
       ) : (
-        // Keyed by the turn's identity, so a new decision point mounts a fresh
-        // bar: the amount returns to the server's minimum and the sent lock
-        // lifts, by construction rather than by an effect that clears them.
+        // Keyed by the turn's identity and the refusal count, so a new decision
+        // point *or* a rejected attempt at the same one mounts a fresh bar: the
+        // amount returns to the server's minimum and the sent lock lifts, by
+        // construction rather than by an effect that clears them.
         <Live
-          key={`${turn.handNumber}:${turn.actionSequence}`}
+          key={`${turn.handNumber}:${turn.actionSequence}:${props.rejectionCount ?? 0}`}
           turn={turn}
           send={props.send}
         />

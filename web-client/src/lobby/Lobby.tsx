@@ -22,6 +22,7 @@ export function Lobby(): ReactElement {
           turn={state.pendingTurn}
           rejection={state.rejection}
           refusal={state.refusal}
+          rejectionCount={state.rejectionCount}
           send={send}
         />
       </div>
