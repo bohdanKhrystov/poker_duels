@@ -58,8 +58,8 @@ prop, and reaches the store only in the last ticket.
 | [TASK-030603](../tasks/TASK-030603-a-card-says-its-name-aloud-and-carries-no-number.md) | A card says its name aloud, and carries no number | done |
 | [TASK-030604](../tasks/TASK-030604-a-card-back-and-an-undealt-board-place.md) | A card back and an undealt board place | done |
 | [TASK-030605](../tasks/TASK-030605-a-face-up-card-draws-its-rank-its-suit-and-the-suits-colour.md) | A face-up card draws its rank, its suit and the suit's colour | done |
-| [TASK-030606](../tasks/TASK-030606-a-hand-is-two-places-wide-whatever-the-view-carries.md) | A hand is two places wide, whatever the view carries | ready |
-| [TASK-030607](../tasks/TASK-030607-the-board-is-five-places-wide-whatever-the-street.md) | The board is five places wide, whatever the street | backlog |
+| [TASK-030606](../tasks/TASK-030606-a-hand-is-two-places-wide-whatever-the-view-carries.md) | A hand is two places wide, whatever the view carries | done |
+| [TASK-030607](../tasks/TASK-030607-the-board-is-five-places-wide-whatever-the-street.md) | The board is five places wide, whatever the street | ready |
 | [TASK-030608](../tasks/TASK-030608-a-playerview-fixture-with-every-field-the-wire-declares.md) | A PlayerView fixture with every field the wire declares | backlog |
 | [TASK-030609](../tasks/TASK-030609-the-pot-strip-states-the-pot-the-blinds-the-hand-and-the-street.md) | The pot strip states the pot, the blinds, the hand and the street | backlog |
 | [TASK-030610](../tasks/TASK-030610-a-seats-status-is-read-off-the-view-never-off-its-cards.md) | A seat's status is read off the view, never off its cards | backlog |

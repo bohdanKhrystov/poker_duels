@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030606
 title: A hand is two places wide, whatever the view carries
 type: task
-status: ready
+status: done
 parent: STORY-0306
 module: web-client
 estimate: S
