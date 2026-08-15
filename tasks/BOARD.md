@@ -21,7 +21,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **backlog** | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
-| [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **ready** | v0.2 |
+| [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
 | EPIC-08 | Analysis and decision quality | *not written* | later |
 | EPIC-09 | Bots and simulation | *not written* | later |
@@ -445,7 +445,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060303](tasks/TASK-060303-wordmark-card.md) The wordmark card | S | **done** |
 | | [TASK-060304](tasks/TASK-060304-graphics-gallery-card.md) The graphics gallery card | S | **done** |
 | | [TASK-060305](tasks/TASK-060305-wordmark-keeps-its-coin-in-forced-colors.md) The wordmark keeps its coin in forced colors | XS | **done** |
-| **[STORY-0604](stories/STORY-0604-lobby-and-flow.md)** Design the duel flow — create, join, result, rematch — *schema 2* | | | ready |
+| **[STORY-0604](stories/STORY-0604-lobby-and-flow.md)** Design the duel flow — create, join, result, rematch — *schema 2* | | | **done** |
 | | [TASK-060401](tasks/TASK-060401-create-and-share-screen.md) The create-and-share screen | S | **done** |
 | | [TASK-060402](tasks/TASK-060402-join-screen.md) The join screen | S | **done** |
 | | [TASK-060403](tasks/TASK-060403-duel-end-screen.md) The duel-end screen | S | **done** |

@@ -2,7 +2,7 @@
 id: EPIC-06
 title: Design system and art
 type: epic
-status: ready
+status: done
 module: design
 labels: [design]
 ---
@@ -63,30 +63,48 @@ claude.ai/design pane, by the human.
 | [STORY-0601](../stories/STORY-0601-design-foundations.md) | Design foundations — tokens and preview cards | done |
 | [STORY-0602](../stories/STORY-0602-duel-table-screen.md) | Design the duel table — components and the screen | done |
 | [STORY-0603](../stories/STORY-0603-graphics.md) | Draw the graphics — suit glyphs, the duel coin, the wordmark | done |
-| [STORY-0604](../stories/STORY-0604-lobby-and-flow.md) | Design the duel flow — create, join, result, rematch | ready |
+| [STORY-0604](../stories/STORY-0604-lobby-and-flow.md) | Design the duel flow — create, join, result, rematch | done |
 
-**Every ticket in this epic is merged** — 44 across four stories. STORY-0601, 0602 and
-0603 are `done`: their tickets landed and every acceptance box is ticked. STORY-0604
-holds at `ready` for one reason only: its fifth screen, the typed-code door, reached
-the pane after the human's last sign-off, so the sign-off box is not this run's to
-tick. The pane shows all 16 cards.
+**The epic is closed.** All 43 tickets are merged across four stories, every story is
+`done`, and the human signed off the full set in the claude.ai/design pane on
+2026-08-15: 16 cards — three foundation, four components, seven screens, a gallery and
+the wordmark.
 
 ## Definition of done
 
-- [ ] Every story is `done` or `dropped`.
+- [x] Every story is `done` or `dropped`.
 - [x] The claude.ai/design project shows the full system: foundations, table, graphics, flow.
       *(16 cards synced 2026-08-15; manifest verified by read-back.)*
-- [ ] EPIC-03 builds its first screen without inventing a single color or size.
+- [x] EPIC-03 builds its first screen without inventing a single color or size.
+      *(`STORY-0302` is done: `design/tokens/tokens.css` is vendored into the client
+      under a byte-identity test, and `color-literals.ts` fails the client check on a
+      literal outside the token layer.)*
 
 ## Metrics
 
-Filled in when the epic closes; feeds the Product B case study.
+Closed 2026-08-15. Feeds the Product B case study.
 
 | | |
 | --- | --- |
-| Tasks completed | |
-| Accepted on first review | |
-| Average review iterations | |
-| Test lines / production lines | |
-| Tasks re-scoped mid-flight | |
-| Manual human edits | |
+| Tasks completed | 43, across four stories |
+| Accepted on first review | 14 of 43 |
+| Average review iterations | 1.7 (a second round was the norm; `TASK-060121` took four) |
+| Test lines / production lines | n/a — design cards carry no tests; the invariant gate is the test, and it grew from 1 clause to 6 |
+| Tasks re-scoped mid-flight | 4 (`TASK-060112` split, `TASK-060114` narrowed, `TASK-060121` re-approached three times, `TASK-060123` unbundled) |
+| Manual human edits | 0 design files; the human's contribution was direction and two sign-offs |
+
+**What the reviews caught that the author did not.** A `-1 duel coin` on the duel-end
+screen, contradicting the vision's coin-counts-wins rule; a join screen citing
+`ADR-0021` after `ADR-0029` had made display names permanent; sub-AA contrast on the
+rematch chip; a lockup that grew 5px when it became a state; and three separate
+attempts at the value reader that each introduced a worse defect than the one they
+fixed — the third caught only because the reviewer ran the gate rather than reading it.
+
+**What it cost to learn.** The run used the `/code-review` multi-angle mechanism on
+`review: light` tickets for its first 40 PRs, against `ADR-0007`'s rule that `light`
+means one reviewer subagent. That inverted the epic's economics — roughly 40M subagent
+tokens, two session-limit outages — and, worse, manufactured work: ten-angle reviews of
+one-line tickets produced 12 follow-up tickets that each drew their own review. The last
+11 PRs ran the documented mechanism at 20–45k tokens each and still caught real defects.
+The lesson for the case study is that review depth is a scope decision, not a quality
+dial.
