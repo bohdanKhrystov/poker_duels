@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060210
 title: The duel-table screens consume the card-surface tokens
 type: task
-status: ready
+status: done
 parent: STORY-0602
 module: design
 estimate: XS

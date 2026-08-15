@@ -60,7 +60,7 @@ proves itself or breaks.
 | [TASK-060207](../tasks/TASK-060207-the-fold-ending.md) | The fold ending — a win with nothing shown | done |
 | [TASK-060208](../tasks/TASK-060208-the-in-play-table-shows-the-hidden-hand.md) | The in-play table shows the hidden hand | done |
 | [TASK-060209](../tasks/TASK-060209-the-states-mirrors-use-the-live-bars-elements.md) | The states' hidden mirrors use the live bar's elements | done |
-| [TASK-060210](../tasks/TASK-060210-screens-consume-card-surface-tokens.md) | The duel-table screens consume the card-surface tokens | ready |
+| [TASK-060210](../tasks/TASK-060210-screens-consume-card-surface-tokens.md) | The duel-table screens consume the card-surface tokens | done |
 
 ## Acceptance criteria
 
