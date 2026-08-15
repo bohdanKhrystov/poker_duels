@@ -65,6 +65,33 @@ function numbersOnScreen(container: HTMLElement): number[] {
   return digits.map((run) => Number(run.replaceAll(",", "")));
 }
 
+/**
+ * Every string the table speaks without printing it: `aria-label` and `title`.
+ *
+ * A screen reader reads the first aloud and a browser shows the second on hover,
+ * so anything named in either reaches a player exactly as printed text does —
+ * and neither is a text node, so `wordsOnScreen` cannot see it. Measured, not
+ * reasoned about: a card name and a made-hand name in each of them shipped
+ * `Tests 189 passed (189)` before this existed.
+ */
+function spokenOnScreen(container: HTMLElement): string {
+  return [...container.querySelectorAll("[aria-label], [title]")]
+    .flatMap((element) => [
+      element.getAttribute("aria-label"),
+      element.getAttribute("title"),
+    ])
+    .filter((value): value is string => value !== null)
+    .join(" ");
+}
+
+/** A card named in words, spelled as `cardText` spells it. */
+const CARD_NAME =
+  /\b(ace|king|queen|jack|ten|nine|eight|seven|six|five|four|three|two) of (spades|hearts|diamonds|clubs)\b/i;
+
+/** Vocabulary of made hands and winner declarations that only a client would derive. */
+const HAND_TALK =
+  /\b(pair|trips|set|straight|flush|full house|quads|high card|wins?|won|loses?|loser|winner|beats)\b/i;
+
 describe("the table renders and never derives", () => {
   it("shows no number the view does not carry", () => {
     // Every number is distinct, and no two of them add, subtract, double or halve
@@ -136,5 +163,149 @@ describe("the table renders and never derives", () => {
 
     expect(screen.getByText(/· Turn$/)).toBeDefined();
     expect(screen.queryByText(/· Flop$/)).toBeNull();
+  });
+
+  it("names exactly the cards the view carries and no others", () => {
+    const VIEW: PlayerView = aView({
+      viewerSeat: 0,
+      handNumber: 14,
+      buttonSeat: 1,
+      street: "TURN",
+      board: { cards: ["As", "7d", "2c"] },
+      pot: 5675,
+      betToMatch: 1450,
+      minRaiseTo: 2025,
+      seatToAct: 0,
+      smallBlind: 100,
+      bigBlind: 175,
+      seats: [
+        aSeat({
+          index: 0,
+          stack: 10200,
+          committedThisStreet: 125,
+          committedThisHand: 775,
+          holeCards: ["Ah", "Ks"],
+        }),
+        aSeat({
+          index: 1,
+          stack: 14750,
+          committedThisStreet: 825,
+          committedThisHand: 1725,
+          holeCards: [],
+        }),
+      ],
+    });
+
+    const { container } = render(<DuelTable view={VIEW} />);
+
+    const cards = screen
+      .getAllByRole("img")
+      .map((card) => card.getAttribute("aria-label"));
+
+    expect(cards).toEqual([
+      "your rival's hidden hand",
+      "ace of spades",
+      "seven of diamonds",
+      "two of clubs",
+      "turn card, not yet dealt",
+      "river card, not yet dealt",
+      "ace of hearts",
+      "king of spades",
+    ]);
+
+    // A card can be named outside a `role="img"` too. The list above only reads
+    // card elements, so `aria-label="queen of clubs"` on anything else ships
+    // green — and a screen reader would say it. Every card the table speaks must
+    // belong to a card.
+    const strays = [...container.querySelectorAll("[aria-label], [title]")]
+      .filter((element) => element.getAttribute("role") !== "img")
+      .flatMap((element) => [
+        element.getAttribute("aria-label"),
+        element.getAttribute("title"),
+      ])
+      .filter((value): value is string => value !== null);
+    expect(strays.filter((value) => CARD_NAME.test(value))).toEqual([]);
+  });
+
+  it("puts no rank and no suit on a hand the view did not send", () => {
+    const VIEW: PlayerView = aView({
+      viewerSeat: 0,
+      handNumber: 14,
+      buttonSeat: 1,
+      street: "TURN",
+      board: { cards: ["As", "7d", "2c"] },
+      pot: 5675,
+      betToMatch: 1450,
+      minRaiseTo: 2025,
+      seatToAct: 0,
+      smallBlind: 100,
+      bigBlind: 175,
+      seats: [
+        aSeat({
+          index: 0,
+          stack: 10200,
+          committedThisStreet: 125,
+          committedThisHand: 775,
+          holeCards: ["Ah", "Ks"],
+        }),
+        aSeat({
+          index: 1,
+          stack: 14750,
+          committedThisStreet: 825,
+          committedThisHand: 1725,
+          holeCards: [],
+        }),
+      ],
+    });
+
+    render(<DuelTable view={VIEW} />);
+
+    const hidden = screen.getByRole("img", {
+      name: "your rival's hidden hand",
+    });
+    const row = hidden.parentElement;
+    expect(row).not.toBeNull();
+
+    expect(row!.textContent).toBe("");
+    expect(row!.innerHTML).not.toMatch(/aria-label="(?!your rival)/);
+  });
+
+  it("names no hand and declares no winner", () => {
+    const VIEW: PlayerView = aView({
+      viewerSeat: 0,
+      handNumber: 14,
+      buttonSeat: 1,
+      street: "TURN",
+      board: { cards: ["As", "7d", "2c"] },
+      pot: 5675,
+      betToMatch: 1450,
+      minRaiseTo: 2025,
+      seatToAct: 0,
+      smallBlind: 100,
+      bigBlind: 175,
+      seats: [
+        aSeat({
+          index: 0,
+          stack: 10200,
+          committedThisStreet: 125,
+          committedThisHand: 775,
+          holeCards: ["Ah", "Ks"],
+        }),
+        aSeat({
+          index: 1,
+          stack: 14750,
+          committedThisStreet: 825,
+          committedThisHand: 1725,
+          holeCards: [],
+        }),
+      ],
+    });
+
+    const { container } = render(<DuelTable view={VIEW} />);
+
+    expect(wordsOnScreen(container)).not.toMatch(HAND_TALK);
+    // Spoken as well as printed: "Two pair" in an aria-label and "You win" in a
+    // title each shipped green against the line above.
+    expect(spokenOnScreen(container)).not.toMatch(HAND_TALK);
   });
 });
