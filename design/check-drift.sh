@@ -62,6 +62,9 @@ EXTRACT='
     }
   }
 '
+# the one sheet-set loader kernel, spliced into both consumers below so the HTML
+# value gate and the SVG pair gate can never disagree about how the sheet parses
+LOAD='eq = index($0, "="); if (eq) val[substr($0, 1, eq - 1)] = substr($0, eq + 1)'
 # flags card declarations whose name the sheet knows but whose value differs; names
 # the sheet lacks stay the name gate speaking alone, not a double report. The sheet
 # set arrives as the first input file — awk -v would reprocess backslash escapes and
@@ -70,8 +73,7 @@ COMPARE='
   NR == FNR {
     if ($0 == "") next
     ok[$0] = 1
-    # this sheet-set loader is mirrored in the SVG pair sweep — change both or neither
-    eq = index($0, "="); if (eq) val[substr($0, 1, eq - 1)] = substr($0, eq + 1)
+    '"$LOAD"'
     next
   }
   $0 != "" && !ok[$0] {
@@ -79,6 +81,33 @@ COMPARE='
     if (nm in val) printf "drift: %s declares %s as %s, but the sheet says %s\n", f, nm, substr($0, eq + 1), val[nm]
   }
 '
+# the SVG pair judge, same spliced loader
+PAIRCHECK='
+  NR == FNR { if ($0 != "") { '"$LOAD"' } next }
+  {
+    nm = "--" $1
+    hex = $2; gsub(/[()]/, "", hex)
+    if (!(nm in val)) printf "check-drift: %s cites %s, which tokens.css does not declare\n", g, $1
+    else if (val[nm] != hex) printf "check-drift: %s cites %s as %s, but the sheet says %s\n", g, $1, hex, val[nm]
+  }
+'
+# every suit sweep, HTML and SVG alike, through one function: grep exits 0 on match,
+# 1 on clean no-match; anything else means the file was never actually read, which
+# must fail as loudly as a bad file
+sweep_suits() {
+  st=0; grep -nE -- "$BARE" "$1" >&2 || st=$?
+  if [ "$st" -eq 0 ]; then
+    echo "check-drift: bare suit glyph (no U+FE0E) in $1" >&2; fail=1
+  elif [ "$st" -ne 1 ]; then
+    echo "check-drift: grep error $st sweeping $1 for bare suits" >&2; fail=1
+  fi
+  st=0; grep -nE -- "$ENTITY" "$1" >&2 || st=$?
+  if [ "$st" -eq 0 ]; then
+    echo "check-drift: entity-form suit or selector in $1 — write the literal glyph plus literal U+FE0E" >&2; fail=1
+  elif [ "$st" -ne 1 ]; then
+    echo "check-drift: grep error $st sweeping $1 for entity suits" >&2; fail=1
+  fi
+}
 # self-test both halves before trusting their silence, like the suit sweep above; the
 # || true keeps a hard awk death inside the comparison below, where the message says
 # what broke, instead of dying with awk usage noise under set -e. Scratch files are
@@ -124,21 +153,7 @@ for f in $(find "$DIR" -name '*.html' | sort); do
     if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
   fi
 
-  # grep exits 0 on match, 1 on clean no-match; anything else means the card was
-  # never actually read, which must fail as loudly as a bad card
-  st=0; grep -nE -- "$BARE" "$f" >&2 || st=$?
-  if [ "$st" -eq 0 ]; then
-    echo "check-drift: bare suit glyph (no U+FE0E) in $f" >&2; fail=1
-  elif [ "$st" -ne 1 ]; then
-    echo "check-drift: grep error $st sweeping $f for bare suits" >&2; fail=1
-  fi
-
-  st=0; grep -nE -- "$ENTITY" "$f" >&2 || st=$?
-  if [ "$st" -eq 0 ]; then
-    echo "check-drift: entity-form suit or selector in $f — write the literal glyph plus literal U+FE0E" >&2; fail=1
-  elif [ "$st" -ne 1 ]; then
-    echo "check-drift: grep error $st sweeping $f for entity suits" >&2; fail=1
-  fi
+  sweep_suits "$f"
 done
 
 svgs=0
@@ -150,10 +165,11 @@ for g in $(find "$DIR/graphics" -name '*.svg' 2>/dev/null | sort); do
   if [ "$st" -gt 1 ]; then
     echo "check-drift: grep error $st reading $g for mirror pairs" >&2; fail=1; continue
   fi
-  # every parenthesized hex must belong to a well-formed pair — a wrapped, uppercased
-  # or otherwise malformed pair would silently leave enforcement while its siblings
-  # keep the SVG looking covered
-  cited=$(grep -oE -- '\(#[0-9a-fA-F]{6}\)' "$g" | grep -c . || true)
+  # every parenthesized hex must belong to a well-formed pair — a wrapped, uppercased,
+  # alpha-lengthened or otherwise malformed pair would silently leave enforcement
+  # while its siblings keep the SVG looking covered (id refs like url(#pd-coin-steel)
+  # start with a non-hex letter and stay outside this count)
+  cited=$(grep -oE -- '\(#[0-9a-fA-F]+\)' "$g" | grep -c . || true)
   strict=$([ -n "$pairs" ] && printf '%s\n' "$pairs" | grep -c . || echo 0)
   if [ "$cited" -ne "$strict" ]; then
     echo "check-drift: $g has $cited parenthesized hex citations but $strict well-formed 'pd-NAME (#hex)' pairs — a pair is malformed, wrapped, or uppercased" >&2
@@ -164,25 +180,18 @@ for g in $(find "$DIR/graphics" -name '*.svg' 2>/dev/null | sort); do
     fail=1; continue
   fi
   pairs_total=$((pairs_total + strict))
-  # the sheet-set loader below mirrors the one in COMPARE — change both or neither
-  bad=$(printf '%s\n' "$pairs" | awk -v g="$g" '
-    NR == FNR { eq = index($0, "="); if (eq) val[substr($0, 1, eq - 1)] = substr($0, eq + 1); next }
-    {
-      nm = "--" $1
-      hex = $2; gsub(/[()]/, "", hex)
-      if (!(nm in val)) printf "check-drift: %s cites %s, which tokens.css does not declare\n", g, $1
-      else if (val[nm] != hex) printf "check-drift: %s cites %s as %s, but the sheet says %s\n", g, $1, hex, val[nm]
-    }
-  ' "$sheet_file" -) || { echo "check-drift: pair comparison failed on $g (awk error)" >&2; fail=1; bad=""; }
+  bad=$(printf '%s\n' "$pairs" | awk -v g="$g" "$PAIRCHECK" "$sheet_file" -) \
+    || { echo "check-drift: pair comparison failed on $g (awk error)" >&2; fail=1; bad=""; }
   if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
-  # a pair whose hex paints nothing is stale — the artwork moved on. The citation
-  # itself is stripped first, and any remaining occurrence counts as paint (attribute,
-  # style=, or a <style> block all legitimately carry it).
+  # a pair whose hex paints nothing is stale — the artwork moved on. XML comments are
+  # stripped first (the citations live there, and comment prose must not vouch for
+  # paint); any remaining occurrence is real — an attribute, style=, or a style block.
   for hx in $(printf '%s\n' "$pairs" | grep -oE -- '#[0-9a-f]{6}'); do
-    if ! sed 's/(#[0-9a-fA-F]\{6\})//g' "$g" | grep -qi -- "$hx"; then
-      echo "check-drift: $g cites $hx in a mirror pair but nothing outside the citation carries it" >&2; fail=1
+    if ! perl -0777 -pe 's/<!--.*?-->//gs' "$g" | grep -qi -- "$hx"; then
+      echo "check-drift: $g cites $hx in a mirror pair but nothing outside comments carries it" >&2; fail=1
     fi
   done
+  sweep_suits "$g"
 done
 [ "$svgs" -gt 0 ] || { echo "check-drift: no SVGs under $DIR/graphics — the graphics class went invisible" >&2; fail=1; }
 
