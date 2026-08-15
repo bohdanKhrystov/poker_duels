@@ -464,10 +464,13 @@ parallel with `EPIC-02`; no shared file.
 | DEC-025 | **Product.** Is an account ever required to play, or is anonymous play permanent? `ADR-0012` makes a device profile the default and `EPIC-04` keeps it — but nothing says whether an account is optional forever, prompted after a first win, or mandatory at some point | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before EPIC-04 closes |
 | DEC-030 | **Product.** After a player attaches a credential, may the device id that created the profile still sign in without it — forever, until revoked, or not at all? ADR-0030 never rewrites `player.device_id`, so today it is *forever* by construction | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before the account screens ship |
 | DEC-031 | **Product.** May a player ever sign in with a third-party account (Google, Apple), or is a handle and password the only credential? ADR-0027's `credential.kind` makes adding one additive, so this blocks nothing today | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before v0.2 ships accounts |
-| DEC-035 | **Technical**, registered in [`docs/adr/README.md`](../docs/adr/README.md) with the other architect's decisions — how does `check-drift.sh` read a CSS value? Its reader knows nothing about strings: a missing terminating semicolon, a semicolon inside a quoted value, and a quoted string wrapped across sheet lines each misread, the last as a *false* drift on legal CSS. Three approaches were built and all three **withdrawn under review** (#511 closed unmerged) | [`STORY-0601`](stories/STORY-0601-design-foundations.md) | before the sheet's quoted values are reflowed |
 | DEC-029 | **Product.** May a player delete their account, and what happens to the opponent's history lines that reference it? Nothing is built either way; the question is asked now so the credential schema does not silently foreclose an answer, as `ADR-0021` refused to do with `UNIQUE` | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before STORY-0403 lands the schema |
 
-**Answered.** `DEC-034` → [`ADR-0033`](../docs/adr/ADR-0033-component-anatomy-is-born-in-its-canonical-card.md)
+**Answered.** `DEC-035` → [`ADR-0034`](../docs/adr/ADR-0034-the-value-gate-reads-css-string-aware.md)
+(the value gate reads CSS regions string-aware, and refuses by name any shape it cannot read
+rather than returning a partial set). The ADR left this row for the driver to strike and seven
+board PRs passed without it — a deferred strike is a strike nobody owns.
+`DEC-034` → [`ADR-0033`](../docs/adr/ADR-0033-component-anatomy-is-born-in-its-canonical-card.md)
 (a component's anatomy is born in its canonical card; the sheet holds the vocabulary.
 Minted here as `DEC-032` and renumbered — the ADR directory's register had taken that
 number first, so `ADR-0033`'s immutable header cites the original minting; the question
