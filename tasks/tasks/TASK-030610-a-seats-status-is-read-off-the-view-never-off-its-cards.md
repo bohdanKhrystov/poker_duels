@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030610
 title: A seat's status is read off the view, never off its cards
 type: task
-status: ready
+status: done
 parent: STORY-0306
 module: web-client
 estimate: S
