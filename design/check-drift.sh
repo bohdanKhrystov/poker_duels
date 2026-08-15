@@ -316,7 +316,15 @@ for f in $(find "$DIR" -name '*.html' | sort); do
       echo "check-drift: anatomy extraction failed ($st) on $f" >&2; fail=1; anat=""
     fi
     case "$anat" in
-      "") : ;;
+      # A card that shows the lockup must be readable as a copy. Renaming its classes
+      # would otherwise drop it out of the count and leave the clause reporting that
+      # the anatomy holds — across nothing (TASK-060123).
+      "")
+        if grep -q 'class="mark' "$f"; then
+          echo "check-drift: $f shows the lockup but no .mark .coin rule could be read — the clause would pass it in silence" >&2
+          fail=1
+        fi
+        ;;
       missing=*) echo "check-drift: $f copies the lockup but lacks: ${anat#missing=}" >&2; fail=1 ;;
       conflict=*) echo "check-drift: $f declares ${anat#conflict=} more than once with disagreeing values in its lockup copy" >&2; fail=1 ;;
       *)

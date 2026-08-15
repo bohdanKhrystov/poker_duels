@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060123
 title: The lockup clause cannot go quiet
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: XS
