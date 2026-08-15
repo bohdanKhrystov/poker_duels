@@ -604,10 +604,13 @@ board's length, no hand named, no winner declared. Two whole-table guards carry 
 every digit run from the DOM and asserts each is a field of the view, the other pins all eight card
 `aria-label`s in document order — and ten enumerated violations were run against them.
 
-`STORY-0307` is next and is split: twelve tickets, cumulative counts **194 → 232** from the measured
-baseline of 190, plus four follow-ups filed during the run (`TASK-030713`–`16`), which carry no
-count because they may land in any order. Eleven are merged and `TASK-030712` is startable now; the
-chain is strictly linear. The bar it builds is
+`STORY-0307` is merged to its last ticket: twelve tickets, cumulative counts **194 → 232** from the
+measured baseline of 190, plus five follow-ups filed during the run (`TASK-030713`–`17`), which
+carry no count because they may land in any order. Sixteen are merged; `TASK-030717` is the one
+still open, filed on 2026-08-16 by `TASK-030716`'s own second red edit — delete `guard`'s
+`message.handNumber != state.handNumber` line and the whole of `DuelActionTest` stays green, because
+the suite's only staleness coverage replays a frame from the *same* hand. The chain is strictly
+linear. The bar it builds is
 the **only place this client asserts anything**, so the same constraint appears one level sharper:
 it draws `legalActions.allowed` and no other control, clamps its amount control to bounds the server
 sent rather than working any out, copies `handNumber`, `actionSequence` and `seat` verbatim into the
@@ -641,6 +644,28 @@ new scope:
 - `TASK-030716` — `poker-server` proves the invariant the client now leans on. A rejection that
   advanced the hand number would turn every retry into a `STALE_FRAME` the server drops in silence,
   and `ADR-0043` records that nothing tests it.
+- `TASK-030717` — the untested branch `TASK-030716` reported on its way past: a frame naming a
+  **stale hand** whose `actionSequence` still fits is refused by one line nothing exercises. One
+  test, with the control frame that proves which branch fired.
+
+`STORY-0308` is next and is split: **nine tickets**, cumulative counts **250 → 275** from a measured
+baseline of 247, and `TASK-030801` is startable now. It implements the owner's finished
+`design/screens/duel-end.html` rather than inventing a layout, and lands in a new
+`web-client/src/result/` beside `src/lobby/` and `src/table/`.
+
+The story's constraint is the epic's, one step further than the bar's: **the client asserts nothing
+and derives nothing about the result.** The verdict is `outcome.winner === mySeat` and nothing else —
+`TASK-030808` renders one outcome with **equal final stacks** twice, from either seat, so a verdict
+computed from chips cannot produce the two different words the test demands. The coin is stated, not
+counted: `+1`, `−1` or nothing, `ADR-0014`'s constant, while the *balance* stays the server's and
+arrives with `STORY-0311`'s `GET /api/me`. `winner: null` is rendered as a draw, never as an error or
+a loss (`ADR-0015`), and a client holding no seat says *Duel over* rather than guessing a side.
+
+Three departures from the design, recorded in the story: no rival name on the defeat line, because
+none is on the wire (`ADR-0021`, `DEC-017`); no duration, because `DuelOutcome` carries no clock; and
+no rematch button, because `STORY-0309` owns it and it is blocked on `DEC-023` — `TASK-030807` has
+the test that stops a later coder adding a dead one. The way on is a plain `<a href="/">`: the
+reducer clears nothing a frame established, so the lobby is reached by starting from an empty store.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -740,7 +765,17 @@ new scope:
 | | [TASK-030714](tasks/TASK-030714-the-refusal-sentence-stops-when-the-server-next-speaks.md) The refusal sentence stops when the server next speaks | S | **done** |
 | | [TASK-030715](tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) The derivation guards read the numbers that reach the DOM as attributes | S | **done** |
 | | [TASK-030716](tasks/TASK-030716-a-rejection-leaves-the-act-identity-valid.md) The server proves a rejection leaves the client's Act identity valid | S | **done** |
-| [STORY-0308](stories/STORY-0308-result-screen.md) | The result screen — who won, and the coin | backlog |
+| | [TASK-030717](tasks/TASK-030717-a-frame-from-an-earlier-hand-is-dropped.md) A frame from an earlier hand is dropped, though its sequence fits | XS | backlog |
+| **[STORY-0308](stories/STORY-0308-result-screen.md)** The result screen — who won, and the coin — *schema 2* | | **ready** |
+| | [TASK-030801](tasks/TASK-030801-a-duel-outcome-fixture-with-every-field-the-wire-declares.md) A DuelOutcome fixture with every field the wire declares | S | **ready** |
+| | [TASK-030802](tasks/TASK-030802-the-verdict-is-read-off-the-winner-and-your-seat.md) The verdict is read off the winner and your seat, and nothing else | S | backlog |
+| | [TASK-030803](tasks/TASK-030803-the-coin-line-states-the-one-coin-the-duel-moved.md) The coin line states the one coin the duel moved, and no balance | XS | backlog |
+| | [TASK-030804](tasks/TASK-030804-the-coin-mark-is-steel-and-says-nothing.md) The coin mark is steel, and says nothing a screen reader has to hear twice | XS | backlog |
+| | [TASK-030805](tasks/TASK-030805-the-result-screen-declares-the-verdict-and-the-coin.md) The result screen declares the verdict and the coin beside it | S | backlog |
+| | [TASK-030806](tasks/TASK-030806-the-result-states-the-hands-played-and-both-final-stacks.md) The result states the hands played and every final stack, exactly as sent | S | backlog |
+| | [TASK-030807](tasks/TASK-030807-the-way-on-from-the-result-is-back-to-the-lobby.md) The way on is back to the lobby, and there is no dead rematch | XS | backlog |
+| | [TASK-030808](tasks/TASK-030808-the-result-derives-no-winner-and-no-figure.md) The result derives no winner and shows no figure the outcome did not carry | S | backlog |
+| | [TASK-030809](tasks/TASK-030809-the-duel-screen-shows-the-result-when-the-duel-ends.md) The duel screen shows the result when the duel ends | S | backlog |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen | **blocked** |
 | [STORY-0310](stories/STORY-0310-reconnect-and-resume.md) | Reconnect — the client resumes its seat | backlog |
 | [STORY-0311](stories/STORY-0311-profile-strip.md) | The profile strip — my coins and my recent duels | backlog |

@@ -72,9 +72,9 @@ ticket.
 | [TASK-030711](../tasks/TASK-030711-the-duel-screen-puts-the-bar-under-the-table.md) | The duel screen puts the bar under the table and sends what it built | backlog |
 | [TASK-030712](../tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) | A rejection leaves the decision point open (store half) | ready |
 
-### Four follow-ups, filed during the run
+### Five follow-ups, filed during the run
 
-Not a re-split: the twelve above stand as written. These four were named by `ADR-0043` itself or
+Not a re-split: the twelve above stand as written. These five were named by `ADR-0043` itself or
 found by a review of the merged bar, and each is scope the split could not have seen.
 
 | ID | Title | Status |
@@ -83,6 +83,7 @@ found by a review of the merged bar, and each is scope the split could not have 
 | [TASK-030714](../tasks/TASK-030714-the-refusal-sentence-stops-when-the-server-next-speaks.md) | The refusal sentence stops when the server next speaks | backlog |
 | [TASK-030715](../tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) | The derivation guards read the numbers that reach the DOM as attributes | backlog |
 | [TASK-030716](../tasks/TASK-030716-a-rejection-leaves-the-act-identity-valid.md) | The server proves a rejection leaves the client's `Act` identity valid | backlog |
+| [TASK-030717](../tasks/TASK-030717-a-frame-from-an-earlier-hand-is-dropped.md) | A frame from an earlier hand is dropped, though its sequence fits | backlog |
 
 - **`TASK-030714`** — `refusal` is cleared by nothing but a `RoomJoined`, so `Failure{DUEL_PAUSED}`'s
   sentence stays under the bar for the rest of the duel. `ADR-0043` names it *"the same lifetime bug
@@ -94,6 +95,11 @@ found by a review of the merged bar, and each is scope the split could not have 
 - **`TASK-030716`** — the server side of `ADR-0043`. A rejection that appended an `ActionOn` or
   advanced the hand number would turn every retry into a `STALE_FRAME` the server drops in silence;
   the ADR records that `docs/protocol.md` states the invariant and nothing tests it.
+- **`TASK-030717`** — filed by `TASK-030716`'s own second red edit and confirmed by review: delete
+  `guard`'s `message.handNumber != state.handNumber` line and the whole of `DuelActionTest` stays
+  green, because the suite's only staleness coverage replays a frame from the *same* hand and the
+  `actionSequence` check catches that alone. Nothing constructs a frame naming a stale hand whose
+  sequence still fits. One test closes it.
 
 ### The one decision the split could not take, now answered
 
