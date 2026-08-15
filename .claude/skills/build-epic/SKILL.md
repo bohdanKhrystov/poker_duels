@@ -110,6 +110,13 @@ to survive:
 EPIC-04 parked — 0 of 5 stories; every story gated on DEC-025. Starting EPIC-05.
 ```
 
+An epic that had to be written first says so, because it is the one case where the run produced
+scope rather than code:
+
+```
+EPIC-05 written — 4 stories, 2 decisions raised. Planning STORY-0501.
+```
+
 **Do not stop between epics**, and do not ask whether to go on. The list was the authorisation; a
 run that pauses for permission it was already given is a stalled run with extra steps.
 
@@ -117,10 +124,32 @@ Three things make an epic *end* rather than *continue*:
 
 - every story in it is `done` — finished
 - nothing in it is startable, and what blocks it is a **product** decision — parked
-- an epic has no epic file or no stories written yet — **not written**, which is a planning gap and
-  not something a coder dispatch can fix; record it and move on
 
-Only the first is success. All three are reasons to go to the next epic, not reasons to stop.
+Only the first is success. Both are reasons to go to the next epic, not reasons to stop.
+
+**"Not written" is not one of them.** `tasks/BOARD.md` states the policy: *epics are written when
+the one before them is close to done, because writing them earlier means rewriting them.* An
+unwritten epic reaching the front of the list is therefore the moment the workflow schedules it to
+be written — not a gap, and not a reason to skip it. Reaching it and moving on would defeat the
+policy exactly when it comes due.
+
+So write it, then work it:
+
+```
+→ /plan-story <EPIC-ID>      (Opus planner, splitting an epic into stories)
+```
+
+The planner does this one level up from its usual job: same agent, same model, epic → stories
+instead of story → tickets. It writes the epic file from `docs/vision.md` and the ADRs, and the
+stories under it, and then the loop proceeds as normal — the first story gets split into tickets and
+the run continues.
+
+The guard is the one that governs everything else here. **An epic's scope is mostly a product
+question** — what a coin is worth, what a season is, what the thing fundamentally is. The planner
+writes only what the vision and the ADRs already settle, and registers the rest as `DEC-NNN`s. If
+what is unsettled is the epic's *shape*, the epic parks on that decision like any other, and the run
+moves on. What it must never do is invent the answer: an epic written around a guessed product
+decision reads as settled and shapes every story under it.
 
 An epic whose stories depend on an epic you just parked is very likely unstartable too — check its
 first story rather than assuming either way. If it is, park it in the same breath and keep going;
@@ -216,7 +245,7 @@ Neither ends the run while an epic remains in the list. Park it, keep the questi
 
 Stop the **whole run** only if:
 
-- every epic in the list is done, parked or not written — there is nothing left to work, or
+- every epic in the list is done or parked — there is nothing left to work, or
 - three consecutive tickets fail — something systemic is wrong, and continuing will burn budget
   producing more of it. This one stops everything, not just the epic: a systemic failure follows
   you into the next epic, and three more failures there prove nothing the first three did not.
@@ -314,7 +343,7 @@ RUN: <epic ids, in the order given>
 
 EPIC-03 — Web client            done    12 stories, 147 tickets
 EPIC-04 — Identity and profiles parked  0 of 5 stories — DEC-025
-EPIC-05 — Ranking and coins     not written
+EPIC-05 — Ranking and coins     written, then parked  4 stories — DEC-036
 
 MERGED:  <n> tickets
 BLOCKED: <n> tickets
@@ -329,8 +358,10 @@ BLOCKED, NOT ON A DECISION
 NEXT: <what unblocks the most, first>
 ```
 
-Every epic named gets a line, including the ones never started, and each says which of the three
-endings it reached. An epic missing from the report is indistinguishable from one silently skipped.
+Every epic named gets a line, including the ones never started, and each says how it ended. An epic
+missing from the report is indistinguishable from one silently skipped — and an epic the run
+**wrote** says so, because that is scope no human reviewed, and it should be the first thing they
+look at.
 
 Order `DECISIONS NEEDED` by how much each unblocks — the question gating a whole epic goes above one
 gating a ticket. The human answers them in the order you print them, so printing them in arrival
