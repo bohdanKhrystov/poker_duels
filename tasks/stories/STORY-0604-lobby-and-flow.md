@@ -2,7 +2,7 @@
 id: STORY-0604
 title: Design the duel flow — create, join, result, rematch
 type: story
-status: ready
+status: done
 parent: EPIC-06
 module: design
 labels: [design]
@@ -56,10 +56,10 @@ this story draws everything around it.
 - [x] The story's five screens — create, join, duel-end, the rematch states, the
       typed-code door — render in the pane under **Screens**.
       *(All five live in the pane as of the 16-card sync, 2026-08-15.)*
-- [ ] The human has seen them there and signed off.
-      *(Partial record 2026-08-15: the four landed screens were signed off in-session
-      after the 14-card sync. Ticks only when the human has seen the fifth screen
-      there and signed it off.)*
+- [x] The human has seen them there and signed off.
+      *(Four screens signed off 2026-08-15 after the 14-card sync; the fifth — the
+      typed-code door — and the flow-actions component card signed off the same day,
+      after the full 16-card re-sync that corrected five stale cards in the pane.)*
 - [x] The whole loop — create → join → play → end → rematch — can be walked card to card
       with no invented step. The typed-code door covers the one gap the reviews found:
       the front door offers "I have a code" and the screen it opens now exists.
