@@ -3,6 +3,7 @@ import type { ActionType, ClientMessage, LegalActions } from "../protocol";
 import type { PendingTurn } from "../store/duel-state";
 import { actionText } from "./action-text";
 import { formatChips } from "./chips";
+import { actFrame } from "./act-frame";
 
 /**
  * The action bar: the one place a player asserts anything.
@@ -23,7 +24,18 @@ export function ActionBar(props: {
       aria-label="your move"
       className="mx-auto flex w-full max-w-[460px] flex-col gap-3 rounded-medium border border-hairline bg-surface p-4"
     >
-      {turn === null ? <Waiting /> : <Live turn={turn} send={props.send} />}
+      {turn === null ? (
+        <Waiting />
+      ) : (
+        // Keyed by the turn's identity, so a new decision point mounts a fresh
+        // bar: the amount returns to the server's minimum and the sent lock
+        // lifts, by construction rather than by an effect that clears them.
+        <Live
+          key={`${turn.handNumber}:${turn.actionSequence}`}
+          turn={turn}
+          send={props.send}
+        />
+      )}
     </section>
   );
 }
@@ -41,6 +53,7 @@ function Live(props: {
   // 0 when no amount is on offer: it reaches no frame, because only Bet and
   // Raise carry a total, and neither is allowed here.
   const [to, setTo] = useState(floor ?? 0);
+  const [sent, setSent] = useState(false);
   const filled = filledAction(actions.allowed);
 
   return (
@@ -59,6 +72,7 @@ function Live(props: {
               step={1}
               type="range"
               value={to}
+              disabled={sent}
             />
             <span className="font-mono tabular-nums">{formatChips(to)}</span>
           </>
@@ -73,8 +87,13 @@ function Live(props: {
                 type === filled
                   ? "border-transparent bg-accent-fill text-on-accent"
                   : "border-hairline text-text"
-              }`}
+              } disabled:border-hairline disabled:bg-transparent disabled:text-text-faint`}
+              disabled={sent}
               key={type}
+              onClick={() => {
+                setSent(true);
+                props.send(actFrame(props.turn, type, to));
+              }}
               type="button"
             >
               {text.verb}
