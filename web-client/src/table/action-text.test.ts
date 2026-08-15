@@ -20,12 +20,22 @@ describe("the action text", () => {
       verb: "Call",
       amount: 400,
     });
+    expect(actionText("CALL", aLegalActions({ callTo: 925 }), 9999)).toEqual({
+      verb: "Call",
+      amount: 925,
+    });
   });
 
   it("prices an all-in from the server's allInTo", () => {
     expect(actionText("ALL_IN", aLegalActions(), 9999)).toEqual({
       verb: "All in",
       amount: 13400,
+    });
+    expect(
+      actionText("ALL_IN", aLegalActions({ allInTo: 8500 }), 9999),
+    ).toEqual({
+      verb: "All in",
+      amount: 8500,
     });
   });
 
@@ -37,6 +47,14 @@ describe("the action text", () => {
     expect(actionText("RAISE", aLegalActions(), 3250)).toEqual({
       verb: "Raise to",
       amount: 3250,
+    });
+    expect(actionText("BET", aLegalActions(), 5000)).toEqual({
+      verb: "Bet",
+      amount: 5000,
+    });
+    expect(actionText("RAISE", aLegalActions(), 5000)).toEqual({
+      verb: "Raise to",
+      amount: 5000,
     });
   });
 
