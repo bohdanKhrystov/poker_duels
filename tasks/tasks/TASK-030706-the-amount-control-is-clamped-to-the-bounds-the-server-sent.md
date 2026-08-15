@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030706
 title: The amount control is clamped to the bounds the server sent
 type: task
-status: backlog
+status: ready
 parent: STORY-0307
 module: web-client
 estimate: S
