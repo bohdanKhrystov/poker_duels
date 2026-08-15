@@ -42,6 +42,12 @@ export function DuelResult(props: {
       <p className="text-small text-text-muted">
         {metaLine(props.outcome, props.mySeat)}
       </p>
+      <a
+        className="rounded-medium bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
+        href="/"
+      >
+        Back to the lobby
+      </a>
     </section>
   );
 }

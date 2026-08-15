@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030807
 title: The way on from the result is back to the lobby, and there is no dead rematch
 type: task
-status: ready
+status: done
 parent: STORY-0308
 module: web-client
 estimate: XS
