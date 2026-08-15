@@ -76,6 +76,6 @@ DECISIONS: <DEC-NNN raised, or none — say which are the architect's, which the
 A raised `DEC-NNN` does not end the run. Route it: technical to the `architect` agent, product to
 the `product-owner` agent (which derives its answer from `docs/vision.md`), and only a decision that
 would *change* the vision — money, what the product is or is not, the roadmap's shape, risk with
-consequences outside the software — to the human. The answering PR is an ADR plus its register rows
-and is merged without asking; the tickets it unblocks start once it is **merged**, not once it is
-written.
+consequences outside the software — to the human. The answering PR is merged without asking, like
+every PR except one changing `docs/vision.md`; the tickets it unblocks start once it is **merged**,
+not once it is written.

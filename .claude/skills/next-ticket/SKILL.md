@@ -145,11 +145,11 @@ rather than stopping:
   product owner returns them with `FOR THE HUMAN:` set if you route one by mistake.
 
 The agent writes the ADR and leaves the tree dirty. You open the PR, wait for CI, and **merge it
-yourself** — a PR whose whole diff is an ADR plus its register rows is self-mergeable, as a bare
-`gh pr merge <n> --squash --delete-branch` (chaining it with `&&` misses the allowlist prefix and
-gets refused). Before merging, `grep -rn "DEC-0NN" docs/ tasks/` and confirm no register still
-lists it open — `docs/adr/README.md`, `tasks/BOARD.md`, and every `## Open decisions` table under
-`tasks/epics/`.
+yourself**, as a bare `gh pr merge <n> --squash --delete-branch` — chaining it with `&&` misses the
+allowlist prefix and gets refused. Every PR is yours to merge on its gates; the only PR that waits
+for the human is one changing `docs/vision.md`. Before merging a decision PR,
+`grep -rn "DEC-0NN" docs/ tasks/` and confirm no register still lists it open —
+`docs/adr/README.md`, `tasks/BOARD.md`, and every `## Open decisions` table under `tasks/epics/`.
 
 Then continue the ticket against the **merged** ADR. Never guess at a decision to keep the loop
 moving — a wrong decision propagates into every ticket built on top of it.

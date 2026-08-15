@@ -208,37 +208,49 @@ parallel:
 If a rebase conflicts or a post-rebase verify fails, that ticket goes back for one more coder
 dispatch against the updated `develop`. If it fails again, block it and land the others.
 
-## Merging a decision PR
+## Merging
 
-A PR whose whole diff is an ADR plus its register rows — nothing under `poker-engine/`,
-`poker-server/`, `poker-ai/`, `web-client/` or `design/` — is **yours to merge without asking.**
-That is standing authorisation, given deliberately: a decision that has been made but not landed
-blocks exactly as hard as one that was never asked, and waiting for a human to click merge
-reintroduces the stall the `product-owner` and `architect` agents exist to remove.
+**Every PR in this run is yours to merge**, on its objective gates and without asking — code,
+tickets, stories, epics, ADRs, design, process, agent definitions, permission files. There is no
+class that is *docs-only-and-therefore-safe* or *process-and-therefore-sensitive*. There is only
+green and not green.
 
-The bar is the same as any other merge, and it is not lowered by the authorisation:
+Do not invent a category that needs human sign-off. That is `ADR-0006` returning one
+reasonable-sounding exception at a time, and each one costs the run a stall.
+
+**The single exception: `docs/vision.md`.** A PR that changes it waits for the human, however
+green. The `product-owner` agent's boundary is *"apply the vision, escalate anything that would
+change it"* — if the vision can move without the human, that boundary is decoration and the agent's
+authority becomes self-granting. This one carve-out is what makes everything else safe to delegate.
+
+The gates, unchanged by the authorisation:
 
 1. CI green — `lint backlog`, `client`, and `check`.
-2. `grep -rn "DEC-0NN" docs/ tasks/` returns no row still listing the id as **open**, in any
+2. The reviewer returned `pass`, and the ticket's `verify` exits 0.
+3. One `BOARD.md`-touching PR in flight at a time.
+
+A **decision** PR carries two more:
+
+4. `grep -rn "DEC-0NN" docs/ tasks/` returns no row still listing the id as **open**, in any
    register: `docs/adr/README.md`, `tasks/BOARD.md`, and every `## Open decisions` table under
    `tasks/epics/`.
-3. The ADR's `## Consequences` names a cost. One that lists none was a preference, and it goes back
+5. The ADR's `## Consequences` names a cost. One that lists none was a preference, and it goes back
    to the agent rather than into `develop`.
-4. One BOARD-touching PR in flight at a time — decision PRs touch `tasks/BOARD.md` like any other.
 
-Then merge it as a **bare command**, not chained:
+Merge as a **bare command**, never chained:
 
 ```
 gh pr merge <n> --squash --delete-branch
 ```
 
 `Bash(gh pr merge:*)` is allowed in `.claude/settings.json`, but the allowlist matches a command
-prefix — `gh pr merge … && git checkout develop` does not match it and gets sent to the
-classifier, which refuses. Merge first, then `git checkout develop` as a separate call.
+*prefix* — `gh pr merge … && git checkout develop` does not match it, is sent to the classifier,
+and is refused. Merge first; `git checkout develop` as a separate call.
 
-**What is still not yours to merge:** anything containing code, a ticket file, a story, an epic, or
-a change to `docs/vision.md`. A PR that mixes an ADR with any of those is not a decision PR — split
-it or hand it over.
+**Say so when you change your own rules.** A merged PR touching `.claude/agents/*`,
+`.claude/skills/*` or `.claude/settings*.json` gets its own line in the final report. It merges like
+anything else; it is never silent. Product B is a legible process log, and *"the agent changed its
+own operating rules"* is the line a reader must be able to find rather than reconstruct.
 
 ## Backpressure — drop to sequential
 
@@ -282,9 +294,9 @@ The design goal is: one command in, **one small batch of vision-level questions 
 none at all.
 
 **Land the decision before you use it.** A `DEC-NNN` is answered when the ADR is *merged*, not when
-the agent reports. Open the PR, wait for CI, and merge it yourself — decision PRs are
-self-mergeable (see *Merging a decision PR*). A ticket unblocked against an unmerged ADR is a
-ticket built on a file that may still change.
+the agent reports. Open the PR, wait for CI, and merge it yourself — like every other PR in the run
+(see [Merging](#merging)). A ticket unblocked against an unmerged ADR is a ticket built on a file
+that may still change.
 
 Leave the **current epic** and start the next one when:
 
@@ -418,6 +430,9 @@ PROMOTED TO SONNET: <ids>
 DECISIONS ANSWERED AND LANDED
   DEC-00N — <ADR-NNNN, one line>  (architect | product owner)
 
+OWN RULES CHANGED
+  <PR> — <what changed in .claude/agents, .claude/skills or .claude/settings*.json>
+
 DECISIONS NEEDED FROM THE HUMAN
   DEC-00N — <question>  → blocks <epic or ticket ids>
 
@@ -435,6 +450,10 @@ look at.
 `DECISIONS ANSWERED AND LANDED` exists so the human can audit what was decided in their absence —
 it is the section most worth reading, because it is scope nobody reviewed. Name the agent that
 answered each one.
+
+`OWN RULES CHANGED` is the other one. Omit the heading when nothing under `.claude/` changed; never
+omit it when something did. A run that quietly rewrote the rules it runs under is the one entry a
+reader of this process log must not have to reconstruct from the git history.
 
 Order `DECISIONS NEEDED FROM THE HUMAN` by how much each unblocks — the question gating a whole epic
 goes above one gating a ticket. The human answers them in the order you print them, so printing them

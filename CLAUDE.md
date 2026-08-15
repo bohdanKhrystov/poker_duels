@@ -16,9 +16,11 @@ Code built it. Tickets, ADRs and metrics *are* the second product, so keep the t
 5. **Never guess a decision.** No ADR covers it → register `DEC-NNN`, block the ticket, and route
    it: technical to the `architect` agent, product to the `product-owner` agent, which derives its
    answer from `docs/vision.md`. Only a decision that would *change* the vision waits for the human.
-   An ADR is an answer once it is **merged**, and a PR that is only an ADR plus its register rows is
-   merged without asking.
-6. **Tests ship with the ticket**, and a task is not done until its PR is merged into `develop`.
+   An ADR is an answer once it is **merged**.
+6. **Every PR merges on its objective gates**, by the driver, without asking — code, tickets, ADRs,
+   process, agent definitions, settings. The one exception is a PR changing `docs/vision.md`, which
+   waits for the human. See [`docs/workflow.md`](docs/workflow.md#what-the-driver-may-merge).
+7. **Tests ship with the ticket**, and a task is not done until its PR is merged into `develop`.
 
 ## Non-negotiables
 

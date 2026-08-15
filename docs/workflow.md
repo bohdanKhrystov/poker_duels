@@ -134,6 +134,32 @@ What carries that risk instead:
 If a wrong rule ever does reach `develop`, the metrics in `tasks/BOARD.md` are what should show
 it, and the correct response is to move correctness-critical tickets back behind a human merge.
 
+#### What the driver may merge
+
+**Everything, with one exception.** Code, tickets, stories, epics, ADRs, design, process, the agent
+definitions, and the permission files — all of it lands on the objective gates above, merged by the
+driver without asking. There is no category that is docs-only-and-therefore-safe or
+process-and-therefore-sensitive; there is only *gates green* and *gates not green*.
+
+This is written down because the opposite kept re-appearing. A driver that invents a class of PR
+needing human sign-off has quietly reintroduced `ADR-0006` one exception at a time, and it will
+always sound reasonable at the moment it does it.
+
+**The exception is [`docs/vision.md`](vision.md).** A PR that changes it waits for the human,
+however green it is.
+
+Not out of caution — out of structural integrity. The `product-owner` agent's whole boundary is
+*"apply the vision, escalate anything that would change it."* If the vision itself can move without
+the human, that boundary is decoration and the agent's authority becomes self-granting: it could
+widen the vision, then answer the question the widened vision now permits. This one carve-out is
+what makes everything else safe to delegate.
+
+**Two classes merge, but are never silent.** A PR touching `.claude/agents/*`, `.claude/skills/*` or
+`.claude/settings*.json` changes how the agents govern themselves. It merges on the gates like
+anything else — and the driver **names it explicitly in the run report**, because Product B's value
+is a legible process log, and *"the agent changed its own operating rules"* is exactly the line a
+reader needs to find rather than reconstruct.
+
 ## The roles
 
 Five agents, each seeing as little as its job allows.
@@ -354,11 +380,11 @@ which is the observation the `product-owner` role is built on.
 An ADR is not an answer until it is **merged**. A `DEC-NNN` answered in a branch blocks exactly as
 hard as one never asked.
 
-A PR whose whole diff is an ADR plus its register rows — no code, no ticket, no story, no epic, no
-change to `docs/vision.md` — is **merged by the driver without asking**. Standing authorisation,
-given deliberately: waiting for a human to click merge reintroduces the stall the two decision
-agents exist to remove. The bar is unchanged — CI green, a `## Consequences` section that names a
-cost, and no register still listing the id as open.
+A decision PR is merged by the driver like every other PR — see
+[What the driver may merge](#what-the-driver-may-merge). Waiting for a human to click merge
+reintroduces the stall the two decision agents exist to remove. It carries two gates of its own on
+top of CI: a `## Consequences` section that names a cost, and no register still listing the id as
+open.
 
 **Every register.** A `DEC-NNN` can appear in four places: `docs/adr/README.md`, `tasks/BOARD.md`,
 and the `## Open decisions` table of any epic under `tasks/epics/`. The PR that answers a decision
