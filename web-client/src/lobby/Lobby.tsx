@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useSend } from "../store/duel-provider";
+import { ActionBar } from "../table/ActionBar";
 import { DuelTable } from "../table/DuelTable";
 import { normalizeRoomCode, roomLink } from "./room-link";
 
@@ -14,7 +15,17 @@ export function Lobby(): ReactElement {
   // The first Snapshot is how the host learns the guest arrived: seating the
   // guest starts the duel, and there is no "opponent joined" frame to wait for.
   if (state.view !== null) {
-    return <DuelTable view={state.view} />;
+    return (
+      <div className="mx-auto flex max-w-[560px] flex-col gap-5">
+        <DuelTable view={state.view} />
+        <ActionBar
+          turn={state.pendingTurn}
+          rejection={state.rejection}
+          refusal={state.refusal}
+          send={send}
+        />
+      </div>
+    );
   }
 
   if (state.roomCode !== null) {

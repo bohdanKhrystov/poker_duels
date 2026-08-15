@@ -204,8 +204,53 @@ describe("the lobby", () => {
       store.apply(SNAPSHOT);
     });
 
-    expect(screen.queryByText("Waiting for your rival")).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Waiting for your rival" }),
+    ).toBeNull();
     expect(screen.getByText("Pot 30")).toBeDefined();
+  });
+
+  it("puts the action bar under the table", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+    });
+
+    expect(screen.getByRole("region", { name: "your move" })).toBeDefined();
+  });
+
+  it("sends the Act the bar built from the pending turn", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    const { send } = renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "YourTurn",
+        handNumber: 4,
+        actionSequence: 9,
+        legalActions: {
+          seat: 0,
+          allowed: ["FOLD", "CALL"],
+          callTo: 400,
+          minBetTo: 0,
+          minRaiseTo: 0,
+          allInTo: 500,
+        },
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fold" }));
+
+    expect(send).toHaveBeenCalledWith({
+      type: "Act",
+      handNumber: 4,
+      actionSequence: 9,
+      action: { type: "Fold", seat: 0 },
+    });
   });
 
   it("keeps waiting through every frame that is not a Snapshot", () => {
