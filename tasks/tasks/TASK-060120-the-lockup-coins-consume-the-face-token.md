@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060120
 title: The lockup coins consume the face token
 type: task
-status: backlog
+status: ready
 parent: STORY-0601
 module: design
 estimate: XS
