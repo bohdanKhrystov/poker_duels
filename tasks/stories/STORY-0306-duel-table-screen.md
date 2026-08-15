@@ -69,8 +69,8 @@ prop, and reaches the store only in the last ticket.
 | [TASK-030614](../tasks/TASK-030614-the-reserved-line-states-what-the-rival-has-committed.md) | The reserved line states what the rival has committed this street | done |
 | [TASK-030615](../tasks/TASK-030615-the-table-shows-no-number-the-view-does-not-carry.md) | The table shows no number the view does not carry | done |
 | [TASK-030616](../tasks/TASK-030616-the-table-names-no-card-the-view-did-not-send-and-no-hand.md) | The table names no card the view did not send, and no hand | done |
-| [TASK-030617](../tasks/TASK-030617-the-lobby-hands-the-live-view-to-the-duel-table.md) | The lobby hands the live view to the duel table | ready |
-| [TASK-030618](../tasks/TASK-030618-the-suit-glyphs-are-asserted-by-codepoint-not-by-a-matching-literal.md) | The suit glyphs are asserted by codepoint, not by a matching literal | backlog |
+| [TASK-030617](../tasks/TASK-030617-the-lobby-hands-the-live-view-to-the-duel-table.md) | The lobby hands the live view to the duel table | done |
+| [TASK-030618](../tasks/TASK-030618-the-suit-glyphs-are-asserted-by-codepoint-not-by-a-matching-literal.md) | The suit glyphs are asserted by codepoint, not by a matching literal | ready |
 
 **Three decisions the split made, recorded here so a reviewer reads them as chosen rather than
 found:**

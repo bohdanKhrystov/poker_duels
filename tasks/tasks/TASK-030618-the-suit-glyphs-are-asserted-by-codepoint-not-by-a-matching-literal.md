@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030618
 title: The suit glyphs are asserted by codepoint, not by a matching literal
 type: task
-status: backlog
+status: ready
 parent: STORY-0306
 module: web-client
 estimate: XS

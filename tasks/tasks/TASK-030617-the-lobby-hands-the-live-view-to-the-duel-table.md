@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030617
 title: The lobby hands the live view to the duel table
 type: task
-status: ready
+status: done
 parent: STORY-0306
 module: web-client
 estimate: XS
