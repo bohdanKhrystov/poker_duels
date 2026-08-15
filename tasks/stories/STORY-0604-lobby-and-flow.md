@@ -49,7 +49,7 @@ this story draws everything around it.
 | [TASK-060403](../tasks/TASK-060403-duel-end-screen.md) | The duel-end screen | done |
 | [TASK-060404](../tasks/TASK-060404-rematch-states-card.md) | The rematch states | done |
 | [TASK-060405](../tasks/TASK-060405-flow-vocabulary-earns-a-component-card.md) | The flow vocabulary earns a component card | ready |
-| [TASK-060406](../tasks/TASK-060406-the-typed-code-door.md) | The typed-code door | ready |
+| [TASK-060406](../tasks/TASK-060406-the-typed-code-door.md) | The typed-code door | done |
 
 ## Acceptance criteria
 
