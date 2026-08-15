@@ -89,11 +89,21 @@ test pins the whole shape, so the day someone adds a numeric rank to this object
 - The words are the design's, verbatim: `duel-table.html` labels its cards `ace of spades`, `seven
   of diamonds`, `two of clubs`, `jack of hearts`, `king of spades`. Ten is `"ten"`, not `"10"` —
   the label is speech, and the glyph on the card stays `"T"`.
+- **One existing assertion moves, and only one.** `TASK-030602`'s first test closes over the return
+  value with `toEqual({ rank: "A", suit: "♠︎", isRed: false })`. A `toEqual` literal is a closed
+  shape: adding `label` to `CardText` reddens it with `expected { rank: 'A', suit: '♠︎', …(2) } to
+  deeply equal { rank: 'A', suit: '♠︎', isRed: false }`. Add `label: "ace of spades"` to that
+  literal, changing nothing else in the block. Keep it a `toEqual` — do not weaken it to
+  `toMatchObject`. Two independent closed-shape pins on `CardText` is the point: this one and
+  `attaches no number to a card` both fail the day someone adds a numeric rank.
 
 ## Out of scope
 
-- Editing any test above the new describe block. `TASK-030602`'s four `it` blocks are untouched:
-  none of them names `label`, which is why this ticket adds a field without moving an assertion.
+- Editing any test above the new describe block **beyond the single line named in `Scope`**.
+  `TASK-030603` originally claimed all four of `TASK-030602`'s `it` blocks were untouched, on the
+  grounds that none of them names `label`. That was wrong: the first one closes over the whole
+  object with `toEqual`, so it asserts the *absence* of a fourth field whether or not it names one.
+  Three of the four are untouched; the first gains one line.
 - Anything that renders. The first component is `TASK-030604`.
 
 ## Tests
@@ -106,7 +116,7 @@ appended below `"a card string"`. It reuses the file's existing `EVERY_CARD` con
 | `names a card the way the design says it aloud` | `"As"` → `"ace of spades"`, `"7d"` → `"seven of diamonds"`, `"2c"` → `"two of clubs"`, `"Jh"` → `"jack of hearts"` — the four labels `duel-table.html` writes |
 | `names the picture ranks and the ten in words` | `"Ks"` → `"king of spades"`, `"Qc"` → `"queen of clubs"`, `"Td"` → `"ten of diamonds"` |
 | `gives all fifty-two cards fifty-two different names` | `new Set(EVERY_CARD.map((card) => cardText(card)?.label)).size` is `52` |
-| `attaches no number to a card` | `Object.keys(cardText("As") ?? {}).sort()` equals `["isRed", "label", "rank", "suit"]`, and no value of that object is a `number` |
+| `attaches no number to a card` | for **every one of the fifty-two cards**, `Object.keys(...).sort()` equals `["isRed", "label", "rank", "suit"]` and no value of that object is a `number`. Not a single sample: a field added on a condition — `value` on the number ranks only — passes a one-card check, and this is the assertion the story leans on |
 
 Four tests. One hundred and forty exist, so the suite reports **144**.
 
@@ -131,6 +141,12 @@ Four tests. One hundred and forty exist, so the suite reports **144**.
    equal [ 'isRed', 'label', 'rank', 'suit' ]`. Revert. This is the one that matters: it is the
    executable form of "the client attaches no value to a card".
 
+   A fourth, because a universal claim deserves a test of its universality: make that field
+   **conditional** — `...(Number.isNaN(Number(card[0])) ? {} : { value: Number(card[0]) })`, so the
+   thirty-six number ranks carry a pip value and the picture ranks do not. Against a check that
+   samples `cardText("As")` alone this ships `Tests 144 passed (144)` — verified, not predicted.
+   Against the loop over `EVERY_CARD` it reddens. Revert.
+
 Quote all three in the PR.
 
 ## Acceptance criteria
@@ -139,8 +155,10 @@ Quote all three in the PR.
 - [ ] `a card's spoken name > names the picture ranks and the ten in words` passes
 - [ ] `a card's spoken name > gives all fifty-two cards fifty-two different names` passes
 - [ ] `a card's spoken name > attaches no number to a card` passes
-- [ ] The four `it` blocks in `describe("a card string")` are unedited and their assertions are
-      byte-identical
+- [ ] `a card string > splits into the rank character and the suit glyph` still passes, with
+      `label: "ace of spades"` added to its `toEqual` literal and nothing else in it changed
+- [ ] The other three `it` blocks in `describe("a card string")` are unedited and their assertions
+      are byte-identical
 - [ ] `npm run --silent test` reports `Tests  144 passed (144)`
 - [ ] Every command in `verify:` exits 0
 

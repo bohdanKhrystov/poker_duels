@@ -3,9 +3,10 @@
  *
  * The engine writes a card as a rank character then a suit character — `"As"`,
  * `"Td"`, `"2c"`. This module turns those two characters into ink: the glyph to
- * print and whether the suit is drawn red. It attaches no order, no value and
- * no comparison to a card, because ranking hands is the server's job and a
- * client that can compare two cards is one refactor from asserting who won.
+ * print, whether the suit is drawn red, and the words a screen reader says. It
+ * attaches no order, no value and no comparison to a card, because ranking hands
+ * is the server's job and a client that can compare two cards is one refactor
+ * from asserting who won.
  */
 export interface CardText {
   /** The rank character, verbatim — `"A"`, `"T"`, `"2"`. */
@@ -14,20 +15,37 @@ export interface CardText {
   readonly suit: string;
   /** Whether the suit is drawn with `--pd-suit-red`. */
   readonly isRed: boolean;
+  /** The spoken name, as the design writes it: `"ace of spades"`. */
+  readonly label: string;
 }
 
-const RANKS = new Set([..."AKQJT98765432"]);
+const RANK_NAMES: Record<string, string | undefined> = {
+  A: "ace",
+  K: "king",
+  Q: "queen",
+  J: "jack",
+  T: "ten",
+  "9": "nine",
+  "8": "eight",
+  "7": "seven",
+  "6": "six",
+  "5": "five",
+  "4": "four",
+  "3": "three",
+  "2": "two",
+};
 
 interface SuitText {
   readonly glyph: string;
+  readonly name: string;
   readonly isRed: boolean;
 }
 
 const SUITS: Record<string, SuitText | undefined> = {
-  s: { glyph: "♠︎", isRed: false },
-  h: { glyph: "♥︎", isRed: true },
-  d: { glyph: "♦︎", isRed: true },
-  c: { glyph: "♣︎", isRed: false },
+  s: { glyph: "♠︎", name: "spades", isRed: false },
+  h: { glyph: "♥︎", name: "hearts", isRed: true },
+  d: { glyph: "♦︎", name: "diamonds", isRed: true },
+  c: { glyph: "♣︎", name: "clubs", isRed: false },
 };
 
 /**
@@ -36,7 +54,13 @@ const SUITS: Record<string, SuitText | undefined> = {
  */
 export function cardText(card: string): CardText | null {
   if (card.length !== 2) return null;
+  const rank = RANK_NAMES[card[0]];
   const suit = SUITS[card[1]];
-  if (!RANKS.has(card[0]) || suit === undefined) return null;
-  return { rank: card[0], suit: suit.glyph, isRed: suit.isRed };
+  if (rank === undefined || suit === undefined) return null;
+  return {
+    rank: card[0],
+    suit: suit.glyph,
+    isRed: suit.isRed,
+    label: `${rank} of ${suit.name}`,
+  };
 }
