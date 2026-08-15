@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { ActionBar } from "./ActionBar";
 import { aTurn, aLegalActions } from "./turn-fixture";
@@ -101,5 +101,84 @@ describe("the action bar", () => {
 
     expect(allInButton.textContent).toBe("All in 13,400");
     expect(allInButton.className).toContain("bg-accent-fill");
+  });
+
+  it("clamps the amount control to the bounds the server sent", () => {
+    const { getByRole } = bar();
+    const slider = getByRole("slider", { name: "raise to" });
+    expect(slider.getAttribute("min")).toBe("1200");
+    expect(slider.getAttribute("max")).toBe("13400");
+
+    const { getByRole: getByRole2 } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          minBetTo: 2750,
+          allInTo: 9100,
+          allowed: ["CHECK", "BET", "ALL_IN"],
+        }),
+      }),
+    });
+    const slider2 = getByRole2("slider", { name: "bet to" });
+    expect(slider2.getAttribute("min")).toBe("2750");
+    expect(slider2.getAttribute("max")).toBe("9100");
+  });
+
+  it("starts the amount at the server's minimum for the action it allowed", () => {
+    const { getByRole } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+        }),
+      }),
+    });
+
+    const slider = getByRole("slider", { name: "raise to" });
+    expect(slider.getAttribute("value")).toBe("1200");
+    expect(slider.getAttribute("min")).toBe("1200");
+    expect(slider.getAttribute("max")).toBe("13400");
+
+    const { getByRole: getByRole2 } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          minBetTo: 350,
+          allInTo: 8200,
+          allowed: ["CHECK", "BET", "ALL_IN"],
+        }),
+      }),
+    });
+
+    const slider2 = getByRole2("slider", { name: "bet to" });
+    expect(slider2.getAttribute("value")).toBe("350");
+    expect(slider2.getAttribute("min")).toBe("350");
+    expect(slider2.getAttribute("max")).toBe("8200");
+  });
+
+  it("offers no amount control when neither a bet nor a raise is allowed", () => {
+    const { queryByRole } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          allowed: ["FOLD", "CALL", "ALL_IN"],
+        }),
+      }),
+    });
+
+    const slider = queryByRole("slider");
+    expect(slider).toBeNull();
+  });
+
+  it("writes the raise button's total from the amount control", () => {
+    const { getByRole } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+        }),
+      }),
+    });
+
+    const slider = getByRole("slider", { name: "raise to" });
+    fireEvent.change(slider, { target: { value: "3250" } });
+
+    const raiseButton = getByRole("button", { name: "Raise to 3,250" });
+    expect(raiseButton).toBeDefined();
   });
 });
