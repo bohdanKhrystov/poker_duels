@@ -13,7 +13,8 @@ files_touched: 1
 labels: [design]
 depends_on: []
 verify:
-  - 'grep -qE "^[^#]*design/check-drift\.sh" .github/workflows/tickets.yml'
+  - 'grep -qE "^[^#]*run:[^#]*design/check-drift\.sh" .github/workflows/tickets.yml'
+  - 'grep -qF "name: lint backlog" .github/workflows/tickets.yml'
   - ./design/check-drift.sh
 ---
 
@@ -36,9 +37,12 @@ defects in `TASK-060121`'s attempts reached review instead of CI.
 
 - It joins the existing lightweight job (the one already running `lint_tickets.py`),
   not the Gradle or client jobs: the gate is stock shell and needs no toolchain.
-- The verify matches the path on any non-comment line, so both `run: ./design/…` and
-  a `run: |` block scalar satisfy it while a commented-out mention does not (#511
-  review found the first spelling too weak and too strict at once).
+- The verify requires the script on a non-comment `run:` line — a step merely *named*
+  after it, or a `paths:` filter mentioning it, must not satisfy the gate's own ticket
+  (#523 review found exactly those three spellings passing).
+- The second verify pins the job name `lint backlog`, because the merge automation
+  watches that check: a new job would pass the first gate while a red design gate
+  never blocked a merge.
 
 ## Out of scope
 
