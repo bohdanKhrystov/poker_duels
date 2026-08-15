@@ -425,7 +425,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060118](tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) The gallery lede names every mirrored token | XS | **done** |
 | | [TASK-060119](tasks/TASK-060119-the-coin-face-is-born-on-the-sheet.md) The coin face is born on the sheet | XS | ready |
 | | [TASK-060120](tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) The lockup coins consume the face token | XS | backlog |
-| | [TASK-060121](tasks/TASK-060121-the-colors-swatch-consumes-the-face-token.md) The Colors swatch consumes the face token | XS | backlog |
+| | [TASK-060121](tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) A final declaration without a semicolon still enters the gate | XS | ready |
 | **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |
 | | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | **done** |
 | | [TASK-060202](tasks/TASK-060202-seat-plate-and-pot.md) The seat plate and pot strip | S | **done** |

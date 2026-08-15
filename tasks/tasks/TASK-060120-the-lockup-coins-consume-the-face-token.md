@@ -14,33 +14,38 @@ labels: [design]
 depends_on: [TASK-060119]
 verify:
   - grep -q 'var(--pd-coin-face)' design/graphics/wordmark.html
+  - 'grep -qF -- "--pd-coin-face:" design/graphics/wordmark.html'
   - grep -q 'var(--pd-coin-face)' design/screens/create-duel.html
+  - 'grep -qF -- "--pd-coin-face:" design/screens/create-duel.html'
   - grep -q 'var(--pd-coin-face)' design/screens/duel-end.html
+  - 'grep -qF -- "--pd-coin-face:" design/screens/duel-end.html'
   - ./design/check-drift.sh
 ---
 
 ## Goal
 
 Three cards paint the coin face as a hand-copied gradient literal; once
-`TASK-060119` births `--pd-coin-face`, each declares the token in its inlined
-`:root` and consumes it, so the value gate covers the copies and a canonical retune
-reaches every CSS coin (#509 review).
+`TASK-060119` births `--pd-coin-face`, each consumes it, so the value gate covers
+the copies and a canonical retune reaches every CSS coin (#509 review).
 
 ## Files
 
 | File | Action |
 | --- | --- |
-| `design/graphics/wordmark.html` | edit — `background: var(--pd-coin-face)`, value inlined in `:root` |
+| `design/graphics/wordmark.html` | edit — `background: var(--pd-coin-face)`, full declaration inlined in `:root` |
 | `design/screens/create-duel.html` | edit — same |
 | `design/screens/duel-end.html` | edit — same |
 
 ## Scope
 
 - Pixel-identical renders — the gradient does not change, only where it is born.
+- The verify pins both the `var()` use and the `:root` inline per card — a card is
+  self-contained, so a forgotten inline paints a blank coin while a use-only grep
+  stays green (#510 review).
 
 ## Out of scope
 
-- The Colors card's swatch — `TASK-060121`.
+- The Colors swatch — `TASK-060119` carries it with the birth.
 
 ## Tests
 
