@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030603
 title: A card says its name aloud, and carries no number
 type: task
-status: ready
+status: done
 parent: STORY-0306
 module: web-client
 estimate: S

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030604
 title: A card back and an undealt board place
 type: task
-status: backlog
+status: ready
 parent: STORY-0306
 module: web-client
 estimate: S
