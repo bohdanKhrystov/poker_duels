@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060116
 title: The CSS coins consume the glint token
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: XS
