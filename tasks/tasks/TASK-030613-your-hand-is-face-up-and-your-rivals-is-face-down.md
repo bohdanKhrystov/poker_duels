@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030613
 title: Your hand is face up and your rival's is face down
 type: task
-status: backlog
+status: ready
 parent: STORY-0306
 module: web-client
 estimate: S
