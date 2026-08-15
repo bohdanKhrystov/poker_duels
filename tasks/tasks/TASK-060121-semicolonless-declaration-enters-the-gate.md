@@ -34,7 +34,7 @@ strings. Three shapes follow from that one fact, and they are the same bug:
   The reader preserves whitespace inside quotes and strips it outside, so a sheet
   wrapping `"Segoe UI"` mid-string yields a **false** drift against a card that does
   not. `tokens.css` already wraps `--pd-font-ui` and `--pd-font-mono`, both holding
-  quoted names with spaces, and 13 cards declare them: one reflow that moves a wrap
+  quoted names with spaces, and all 14 cards declare them: one reflow that moves a wrap
   point inside a quoted name reddens the gate across all of them.
 
 All three need the reader to know where a string starts and ends. **`DEC-035` blocks
