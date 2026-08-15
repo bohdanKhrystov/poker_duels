@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030709
 title: The bar states what the server refused, and retries nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0307
 module: web-client
 estimate: S
