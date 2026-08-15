@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030712
 title: A rejection leaves the decision point open
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: S

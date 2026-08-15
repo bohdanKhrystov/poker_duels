@@ -735,8 +735,8 @@ new scope:
 | | [TASK-030709](tasks/TASK-030709-the-bar-states-what-the-server-refused.md) The bar states what the server refused, and retries nothing | S | **done** |
 | | [TASK-030710](tasks/TASK-030710-the-bar-shows-no-number-and-offers-no-action-the-turn-did-not-carry.md) The bar shows no number and offers no action the turn did not carry | S | **done** |
 | | [TASK-030711](tasks/TASK-030711-the-duel-screen-puts-the-bar-under-the-table.md) The duel screen puts the bar under the table and sends what it built | S | **done** |
-| | [TASK-030712](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) A rejection leaves the decision point open (store half, `ADR-0043`) | S | ready |
-| | [TASK-030713](tasks/TASK-030713-the-bar-comes-back-after-a-rejection.md) The bar comes back after a rejection, at the same decision point (bar half, `ADR-0043`) | S | backlog |
+| | [TASK-030712](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) A rejection leaves the decision point open (store half, `ADR-0043`) | S | **done** |
+| | [TASK-030713](tasks/TASK-030713-the-bar-comes-back-after-a-rejection.md) The bar comes back after a rejection, at the same decision point (bar half, `ADR-0043`) | S | ready |
 | | [TASK-030714](tasks/TASK-030714-the-refusal-sentence-stops-when-the-server-next-speaks.md) The refusal sentence stops when the server next speaks | S | backlog |
 | | [TASK-030715](tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) The derivation guards read the numbers that reach the DOM as attributes | S | backlog |
 | | [TASK-030716](tasks/TASK-030716-a-rejection-leaves-the-act-identity-valid.md) The server proves a rejection leaves the client's Act identity valid | S | backlog |
