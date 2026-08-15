@@ -1,6 +1,6 @@
 ---
 name: build-epic
-description: Work one or more epics unattended, in the order given — plan each story, then run its tickets to merged PRs, up to three at a time in isolated worktrees when they touch disjoint files, carrying straight on to the next epic and stopping only for decisions a human must make. Use when the user names a goal like "implement the poker engine", or a list like "EPIC-03 EPIC-04 EPIC-05", rather than a single ticket.
+description: Work one or more epics unattended, in the order given — plan each story, then run its tickets to merged PRs, up to three at a time in isolated worktrees when they touch disjoint files, answering technical and product decisions through the architect and product-owner agents as they arise, carrying straight on to the next epic and stopping only for decisions that would change the product vision itself. Use when the user names a goal like "implement the poker engine", or a list like "EPIC-03 EPIC-04 EPIC-05", rather than a single ticket.
 ---
 
 # Build an epic
@@ -123,7 +123,12 @@ run that pauses for permission it was already given is a stalled run with extra 
 Three things make an epic *end* rather than *continue*:
 
 - every story in it is `done` — finished
-- nothing in it is startable, and what blocks it is a **product** decision — parked
+- nothing in it is startable, and what blocks it is a decision **the product owner escalated to the
+  human** — parked
+
+A product decision on its own no longer parks an epic: it is dispatched to the `product-owner`
+agent and the epic continues once the ADR merges. Only a question the product owner *refuses* —
+one that would change the vision rather than apply it — parks anything.
 
 Only the first is success. Both are reasons to go to the next epic, not reasons to stop.
 
@@ -203,6 +208,38 @@ parallel:
 If a rebase conflicts or a post-rebase verify fails, that ticket goes back for one more coder
 dispatch against the updated `develop`. If it fails again, block it and land the others.
 
+## Merging a decision PR
+
+A PR whose whole diff is an ADR plus its register rows — nothing under `poker-engine/`,
+`poker-server/`, `poker-ai/`, `web-client/` or `design/` — is **yours to merge without asking.**
+That is standing authorisation, given deliberately: a decision that has been made but not landed
+blocks exactly as hard as one that was never asked, and waiting for a human to click merge
+reintroduces the stall the `product-owner` and `architect` agents exist to remove.
+
+The bar is the same as any other merge, and it is not lowered by the authorisation:
+
+1. CI green — `lint backlog`, `client`, and `check`.
+2. `grep -rn "DEC-0NN" docs/ tasks/` returns no row still listing the id as **open**, in any
+   register: `docs/adr/README.md`, `tasks/BOARD.md`, and every `## Open decisions` table under
+   `tasks/epics/`.
+3. The ADR's `## Consequences` names a cost. One that lists none was a preference, and it goes back
+   to the agent rather than into `develop`.
+4. One BOARD-touching PR in flight at a time — decision PRs touch `tasks/BOARD.md` like any other.
+
+Then merge it as a **bare command**, not chained:
+
+```
+gh pr merge <n> --squash --delete-branch
+```
+
+`Bash(gh pr merge:*)` is allowed in `.claude/settings.json`, but the allowlist matches a command
+prefix — `gh pr merge … && git checkout develop` does not match it and gets sent to the
+classifier, which refuses. Merge first, then `git checkout develop` as a separate call.
+
+**What is still not yours to merge:** anything containing code, a ticket file, a story, an epic, or
+a change to `docs/vision.md`. A PR that mixes an ADR with any of those is not a decision PR — split
+it or hand it over.
+
 ## Backpressure — drop to sequential
 
 Fall back to **one ticket at a time** as soon as any of these is true:
@@ -226,20 +263,37 @@ Then route it by kind — this is the difference between a run that stalls and o
   concurrency and failure semantics. Dispatch the **`architect`** agent (Fable) to answer it and
   write the ADR. Do this *while* the run continues; it is not a reason to wait. The test is
   whether two competent engineers with the same requirements would land in the same place.
-- **Product** — what a player sees, what a duel *is*, what a coin is worth, which risks are
-  acceptable to ship with. Collect these and present them together at the end. Only the human can
-  answer them, and no amount of technical reasoning substitutes.
+- **Product** — what a player sees, what a duel *is*, what a coin is worth, which risks inside the
+  software are acceptable to ship with. Dispatch the **`product-owner`** agent (Opus, max effort)
+  to answer it and write the ADR, exactly as you would the architect, and keep the run moving while
+  it works. It derives the answer from `docs/vision.md` and escalates to the human anything that
+  would *change* the vision rather than apply it — so you do not have to pre-judge the line.
+- **The human's, and only the human's** — money in any form, adding to or subtracting from the
+  vision's *"What it is" / "What it is not"*, reordering the roadmap, and risk with consequences
+  outside the software. The product owner returns these with `FOR THE HUMAN:` set; collect those
+  and present them together at the end. If a question is plainly one of these, skip the agent run
+  and collect it directly.
 
-A question with both halves is two `DEC-NNN`s. Split it and route each half. Never ask the human
-a technical question because it is hard, and never let the architect answer a product one because
-it is blocking — the second failure is far more expensive, because it reads as settled.
+A question with both halves is two `DEC-NNN`s. Split it and route each half. Never ask the human a
+technical question because it is hard, and never let the architect answer a product one because it
+is blocking — the second failure is far more expensive, because it reads as settled.
 
-The design goal is: one command in, **one batch of product questions out**.
+The design goal is: one command in, **one small batch of vision-level questions out** — and often
+none at all.
+
+**Land the decision before you use it.** A `DEC-NNN` is answered when the ADR is *merged*, not when
+the agent reports. Open the PR, wait for CI, and merge it yourself — decision PRs are
+self-mergeable (see *Merging a decision PR*). A ticket unblocked against an unmerged ADR is a
+ticket built on a file that may still change.
 
 Leave the **current epic** and start the next one when:
 
-- **every** remaining ticket in it is blocked on a *product* decision, or
-- a product decision blocks the rest of it (what the thing fundamentally is).
+- **every** remaining ticket in it is blocked on a decision the product owner escalated to the
+  human, or
+- such a decision blocks the rest of it (what the thing fundamentally is).
+
+An epic blocked only on *answerable* product decisions is not parked — it is waiting on an agent
+run you should have already dispatched.
 
 Neither ends the run while an epic remains in the list. Park it, keep the questions, carry on.
 
@@ -261,6 +315,11 @@ Stop the **whole run** only if:
   tier hardcoded in two places drifts in one of them. Runs on demand, when a technical `DEC-NNN`
   blocks something. It answers the decision and writes the ADR; the planner then writes tickets
   from that ADR.
+- **product-owner** — whatever `.claude/agents/product-owner.md` declares (Opus, max effort); do not
+  override it per dispatch, for the same reason. Runs on demand, when a *product* `DEC-NNN` blocks
+  something. Max effort is deliberate and is not an economy to make: a wrong product decision is
+  discovered only when the product turns out to be the wrong one, and by then every story beneath it
+  was built on it.
 - **planner** — Opus, always. It runs once per story, and how precisely it specifies a ticket
   decides whether the coder needs one dispatch or three. This is the last place to economise:
   a well-planned story lands in one dispatch per ticket, a vague one burns dispatches and
@@ -349,7 +408,10 @@ MERGED:  <n> tickets
 BLOCKED: <n> tickets
 PROMOTED TO SONNET: <ids>
 
-DECISIONS NEEDED
+DECISIONS ANSWERED AND LANDED
+  DEC-00N — <ADR-NNNN, one line>  (architect | product owner)
+
+DECISIONS NEEDED FROM THE HUMAN
   DEC-00N — <question>  → blocks <epic or ticket ids>
 
 BLOCKED, NOT ON A DECISION
@@ -363,8 +425,13 @@ missing from the report is indistinguishable from one silently skipped — and a
 **wrote** says so, because that is scope no human reviewed, and it should be the first thing they
 look at.
 
-Order `DECISIONS NEEDED` by how much each unblocks — the question gating a whole epic goes above one
-gating a ticket. The human answers them in the order you print them, so printing them in arrival
-order wastes the ordering.
+`DECISIONS ANSWERED AND LANDED` exists so the human can audit what was decided in their absence —
+it is the section most worth reading, because it is scope nobody reviewed. Name the agent that
+answered each one.
+
+Order `DECISIONS NEEDED FROM THE HUMAN` by how much each unblocks — the question gating a whole epic
+goes above one gating a ticket. The human answers them in the order you print them, so printing them
+in arrival order wastes the ordering. This list should now be **short or empty**: anything the
+`product-owner` agent could settle from `docs/vision.md` has already been settled and landed.
 
 Then stop. The list is finished; do not add epics to it that the human did not name.

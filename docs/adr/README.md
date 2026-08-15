@@ -91,6 +91,19 @@ Each with the reason it was not chosen.
 
 Questions deliberately left open are marked `DEC-NNN` in the document they affect.
 
+**Who answers one** — see [`docs/workflow.md`](../workflow.md#who-answers-a-dec):
+
+| Kind | Answered by |
+| --- | --- |
+| **Technical** — where a type lives, schema shape, wire format, concurrency, failure semantics | the `architect` agent |
+| **Product** — what a player sees, what a duel *is*, which risks inside the software are acceptable | the `product-owner` agent, deriving from [`docs/vision.md`](../vision.md) |
+| **Vision** — money; what the product *is* or *is not*; the roadmap's shape; risk with consequences outside the software | the human, and nothing else |
+
+A `DEC-NNN` can be listed in **four** places: this file, [`tasks/BOARD.md`](../../tasks/BOARD.md),
+and the `## Open decisions` table of any epic under `tasks/epics/`. The PR that answers a decision
+**strikes every row it answers, in the same PR.** A strike deferred to somebody else's next PR is a
+strike nobody makes — `DEC-035` sat listed open and answered simultaneously for weeks that way.
+
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | What performance budget does the hand evaluator carry, how is it measured, and does `HandRank` become a packed integer? | `../../tasks/stories/STORY-0103-hand-evaluator.md` | before STORY-0108 |

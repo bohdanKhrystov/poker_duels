@@ -136,11 +136,12 @@ it, and the correct response is to move correctness-critical tickets back behind
 
 ## The roles
 
-Four agents, each seeing as little as its job allows.
+Five agents, each seeing as little as its job allows.
 
 | Role | Model | Runs | Sees |
 | --- | --- | --- | --- |
 | **Architect** | Fable | when a technical `DEC-NNN` blocks something | the decision, the tickets it blocks, the ADRs it touches |
+| **Product owner** | Opus, max effort | when a product `DEC-NNN` blocks something | `docs/vision.md`, the decision, what it blocks, the ADRs it touches |
 | **Planner** | Opus, high effort | once per story | the story, its epic, 2–3 linked docs |
 | **Coder** | Haiku (promoted to Sonnet on failure) | once per ticket | one ticket + the ≤5 files it names |
 | **Reviewer** | Haiku, or Sonnet when `review: deep` | once per ticket | the diff + the ticket |
@@ -150,8 +151,14 @@ story — and is frozen into tickets that cheap agents consume. There is deliber
 planner: it would pay a second cold start to re-derive what the first already knows.
 
 The architect exists because open decisions were the largest source of stalled runs, and most of
-them were never questions only a human could answer. It decides **how**; the human decides
-**what**. See [Who answers a DEC](#who-answers-a-dec).
+them were never questions only a human could answer. It decides **how**.
+
+The product owner exists because the remainder were still stalling runs. It decides **what the
+product does** — but only ever by *applying* `docs/vision.md`, never by extending it. It runs at
+**max effort**, the most expensive setting in this workflow, on the reasoning that a wrong product
+decision is the one class of error nothing downstream catches: a bad ticket fails its verify, a bad
+design fails review, and a bad product decision ships. What remains the human's is the vision
+itself. See [Who answers a DEC](#who-answers-a-dec).
 
 Coders originally ran **strictly one at a time**, on the reasoning that parallel agents over a
 shared codebase cost more, conflict, and leave half-finished work in flight. That held until
@@ -172,7 +179,7 @@ Full design and the measurements behind it:
 
 | Command | Does |
 | --- | --- |
-| `/build-epic EPIC-01` | Plans each story, then runs its tickets to merged PRs. Stops only for decisions. |
+| `/build-epic EPIC-01` | Plans each story, then runs its tickets to merged PRs. Answers technical and product decisions through the `architect` and `product-owner` agents as they arise; stops only for a decision that would change the vision. |
 | `/next-ticket [ID]` | One ticket, end to end. |
 | `/plan-story STORY-0102` | Opus planning pass over one story. Run before its tickets. |
 
@@ -292,18 +299,46 @@ Decisions are routed by kind, not by difficulty.
 | Kind | Answered by | Examples |
 | --- | --- | --- |
 | **Technical** | the `architect` agent, which writes the ADR | where a type lives, which of two designs, schema shape, wire format, concurrency and failure semantics |
-| **Product** | the human, and nothing else | what a player sees, what a duel *is*, what a coin is worth, which risks are acceptable to ship with |
+| **Product** | the `product-owner` agent, which writes the ADR | what a player sees, what a duel *is*, how a feature behaves, which risks *inside the software* are acceptable to ship with |
+| **Vision** | the human, and nothing else | money in any form; adding to or subtracting from the vision's *"What it is" / "What it is not"*; reordering the roadmap; risk with consequences **outside** the software; anything about Product B |
 
 The test for "technical": **would two competent engineers with the same requirements land in the
-same place?** If yes, it is the architect's. If the answer depends on what this product is trying
-to be, no amount of technical reasoning will produce it, and asking a model to supply it produces
-something worse than an open question — a confident answer nobody will revisit.
+same place?** If yes, it is the architect's.
 
-A question with both halves is two `DEC-NNN`s. Split it and route each half.
+The test for "product": **does `docs/vision.md`, plus the shipped ADRs and `duel-rules.md`, already
+contain the answer?** If applying what is written lands somewhere defensible, it is the product
+owner's — and its ADR must cite the sentence that licensed it. If answering would *add a commitment
+the vision does not make*, it is the human's, and no amount of reasoning substitutes, because there
+is nothing to reason from.
+
+The product owner is not trusted because it is clever. It is trusted because it is **required to
+refuse**: returning `FOR THE HUMAN:` with no ADR is a successful run, and that escape hatch is what
+makes delegating the rest safe. An agent that answered everything would invent the product.
+
+A question with more than one half is that many `DEC-NNN`s. Split it and route each part.
 
 This exists because open decisions were stalling runs. `DEC-001`, `DEC-002` and `DEC-007` through
 `DEC-009` sat open across four epics while the tickets they blocked waited for a human who was not
-at the keyboard — and most of them were never product questions at all.
+at the keyboard — and most of them were never product questions at all. The seven product decisions
+answered on 2026-08-15 were the remainder: all seven turned out to be derivable from the vision,
+which is the observation the `product-owner` role is built on.
+
+### Landing a decision
+
+An ADR is not an answer until it is **merged**. A `DEC-NNN` answered in a branch blocks exactly as
+hard as one never asked.
+
+A PR whose whole diff is an ADR plus its register rows — no code, no ticket, no story, no epic, no
+change to `docs/vision.md` — is **merged by the driver without asking**. Standing authorisation,
+given deliberately: waiting for a human to click merge reintroduces the stall the two decision
+agents exist to remove. The bar is unchanged — CI green, a `## Consequences` section that names a
+cost, and no register still listing the id as open.
+
+**Every register.** A `DEC-NNN` can appear in four places: `docs/adr/README.md`, `tasks/BOARD.md`,
+and the `## Open decisions` table of any epic under `tasks/epics/`. The PR that answers a decision
+strikes every row it answers, in the same PR. A strike deferred to somebody else's next PR is a
+strike nobody makes — that has happened here, and `DEC-035` sat listed open-and-answered
+simultaneously for weeks as a result.
 
 ## Metrics
 

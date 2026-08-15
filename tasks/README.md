@@ -127,7 +127,10 @@ A task is `ready` only when an agent could complete it without asking anything. 
   unfinished dependency fails the lint. It means the board never advertises work that cannot
   actually be started.
 
-Anything that requires a decision is not ready. Make the decision first, in an ADR.
+Anything that requires a decision is not ready. Make the decision first, in an ADR — the
+`architect` agent for a technical one, the `product-owner` agent for a product one, and the human
+only for a decision that would change `docs/vision.md`. The ADR must be **merged** before a ticket
+built on it is startable.
 
 A task that is fully specified but still waiting on a dependency stays in `backlog` and moves to
 `ready` in the PR that finishes the thing it was waiting for. That keeps a single question —

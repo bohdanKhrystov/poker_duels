@@ -132,13 +132,33 @@ NEXT: <next startable ticket id, or "none">
 
 ---
 
+## When the ticket needs a decision
+
+Register the `DEC-NNN` in `docs/adr/README.md`, set the ticket `blocked`, and **route it by kind**
+rather than stopping:
+
+- **Technical** — dispatch the `architect` agent.
+- **Product** — dispatch the `product-owner` agent (Opus, max effort), which derives the answer
+  from `docs/vision.md`.
+- **Vision-level** — money, the vision's *"What it is" / "What it is not"*, the roadmap's shape, or
+  risk with consequences outside the software. Only these stop the run and wait for the human. The
+  product owner returns them with `FOR THE HUMAN:` set if you route one by mistake.
+
+The agent writes the ADR and leaves the tree dirty. You open the PR, wait for CI, and **merge it
+yourself** — a PR whose whole diff is an ADR plus its register rows is self-mergeable, as a bare
+`gh pr merge <n> --squash --delete-branch` (chaining it with `&&` misses the allowlist prefix and
+gets refused). Before merging, `grep -rn "DEC-0NN" docs/ tasks/` and confirm no register still
+lists it open — `docs/adr/README.md`, `tasks/BOARD.md`, and every `## Open decisions` table under
+`tasks/epics/`.
+
+Then continue the ticket against the **merged** ADR. Never guess at a decision to keep the loop
+moving — a wrong decision propagates into every ticket built on top of it.
+
 ## Stop and ask the human when
 
-- The ticket needs a decision no ADR covers → register `DEC-NNN` in `docs/adr/README.md`, set
-  the ticket `blocked`, report it. Do not guess.
+- The decision is vision-level, per the list above.
 - `verify` cannot pass without doing something the ticket puts out of scope.
 - The work needs a new dependency.
 - Three verify failures or two review failures.
 
-In every case: **record it, block the ticket, and stop this run.** Never guess at a decision to
-keep the loop moving — a wrong decision propagates into every ticket built on top of it.
+In every case: **record it, block the ticket, and stop this run.**
