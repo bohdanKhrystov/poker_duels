@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030705
 title: One button per action the server allowed, and not one more
 type: task
-status: backlog
+status: ready
 parent: STORY-0307
 module: web-client
 estimate: S

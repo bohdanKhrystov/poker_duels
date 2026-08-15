@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030704
 title: The bar exists in every state, and waits in most of them
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: S
