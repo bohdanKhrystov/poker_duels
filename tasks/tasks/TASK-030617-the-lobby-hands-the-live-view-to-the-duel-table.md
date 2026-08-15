@@ -93,7 +93,7 @@ assertion is rewritten, as set out above.
 | Test | Proves |
 | --- | --- |
 | `leaves the waiting panel when the first Snapshot arrives` | after `ROOM_JOINED` and a render, `Waiting for your rival` is on screen; `act(() => { store.apply(SNAPSHOT); })` then leaves it `null` and puts `Pot 30` on screen — the table, rendering the fixture's pot |
-| `keeps waiting through every frame that is not a Snapshot` | **unchanged, from `TASK-030514`** — an `Events` and a `YourTurn` leave the waiting panel up |
+| `keeps waiting through every frame that is not a Snapshot` | **widened here** — it now applies *every* variant of `ServerMessage` except `Snapshot` (`Welcome`, `RoomJoined`, `Events`, `YourTurn`, `Rejected`, `DuelFinished`, `Failure`) and asserts the waiting panel survives each. `TASK-030514` sampled two of the seven, and this ticket is what makes the gap matter: a reducer leaking a `view` on `DuelFinished` ships `Tests 189 passed (189)` while the identical leak on `Events` fails — same bug, caught only by which frame the test happened to name. Verified both ways, not predicted |
 
 ## Proof
 

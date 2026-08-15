@@ -205,7 +205,7 @@ describe("the lobby", () => {
     });
 
     expect(screen.queryByText("Waiting for your rival")).toBeNull();
-    expect(screen.getByText("The duel has begun.")).toBeDefined();
+    expect(screen.getByText("Pot 30")).toBeDefined();
   });
 
   it("keeps waiting through every frame that is not a Snapshot", () => {
@@ -215,12 +215,16 @@ describe("the lobby", () => {
 
     expect(screen.getByText("Waiting for your rival")).toBeDefined();
 
-    act(() => {
-      store.apply({
-        type: "Events",
-        events: [{ type: "ActionOn", sequence: 1, seat: 0 }],
-      });
-      store.apply({
+    // Every variant of ServerMessage except Snapshot, not a representative two.
+    // The claim is universal and the cost of getting it wrong is exact: a
+    // reducer that leaks a `view` on DuelFinished shipped `189 passed` while the
+    // identical leak on Events failed — same bug, caught only by luck of which
+    // frame the test happened to name.
+    const NOT_A_SNAPSHOT: readonly ServerMessage[] = [
+      { type: "Welcome", deviceId: "d-1", protocolVersion: 2 },
+      { type: "RoomJoined", code: "ABCDEFGH", seat: 0 },
+      { type: "Events", events: [{ type: "ActionOn", sequence: 1, seat: 0 }] },
+      {
         type: "YourTurn",
         handNumber: 1,
         actionSequence: 1,
@@ -232,9 +236,27 @@ describe("the lobby", () => {
           minRaiseTo: 0,
           allInTo: 1000,
         },
-      });
-    });
+      },
+      {
+        type: "Rejected",
+        rejection: {
+          type: "ActionNotAllowed",
+          attempted: "BET",
+          allowed: ["CHECK"],
+        },
+      },
+      {
+        type: "DuelFinished",
+        outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+      },
+      { type: "Failure", error: "NOT_YOUR_TURN" },
+    ];
 
-    expect(screen.getByText("Waiting for your rival")).toBeDefined();
+    for (const frame of NOT_A_SNAPSHOT) {
+      act(() => {
+        store.apply(frame);
+      });
+      expect(screen.getByText("Waiting for your rival")).toBeDefined();
+    }
   });
 });
