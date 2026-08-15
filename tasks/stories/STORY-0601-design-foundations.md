@@ -2,7 +2,7 @@
 id: STORY-0601
 title: Establish the design foundations — tokens and preview cards
 type: story
-status: ready
+status: done
 parent: EPIC-06
 module: design
 labels: [design]
@@ -68,7 +68,8 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
       Colors / Type / Spacing.
 - [x] The human has seen them there and signed off on the direction.
       *(Sign-off recorded 2026-08-15, in-session, after the 14-card sync.)*
-- [ ] `design/README.md` lets a fresh session repeat the sync without rediscovering anything.
+- [x] `design/README.md` lets a fresh session repeat the sync without rediscovering anything.
+      *(Exercised repeatedly this session, including by cold-resumed runs.)*
 
 ## Out of scope
 

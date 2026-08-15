@@ -2,7 +2,7 @@
 id: STORY-0602
 title: Design the duel table — components and the screen
 type: story
-status: ready
+status: done
 parent: EPIC-06
 module: design
 labels: [design]
@@ -69,7 +69,9 @@ proves itself or breaks.
 - [x] The human has seen the table there and signed off on it.
       *(Components approved on sight 2026-08-14; full sign-off recorded 2026-08-15,
       in-session, after the 14-card sync.)*
-- [ ] Every value on every card traces to `design/tokens/tokens.css`.
+- [x] Every value on every card traces to `design/tokens/tokens.css`.
+      *(`TASK-060210` removed the last copied literals; `check-drift.sh` clause 3 now
+      enforces it on every PR, per `TASK-060122`.)*
 
 ## Out of scope
 

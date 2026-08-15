@@ -53,16 +53,16 @@ this story draws everything around it.
 
 ## Acceptance criteria
 
-- [ ] The story's five screens — create, join, duel-end, the rematch states, the
+- [x] The story's five screens — create, join, duel-end, the rematch states, the
       typed-code door — render in the pane under **Screens**.
-      *(Ticks when the typed-code door — `TASK-060406` — joins the other four in the
-      pane.)*
+      *(All five live in the pane as of the 16-card sync, 2026-08-15.)*
 - [ ] The human has seen them there and signed off.
       *(Partial record 2026-08-15: the four landed screens were signed off in-session
       after the 14-card sync. Ticks only when the human has seen the fifth screen
       there and signed it off.)*
-- [ ] The whole loop — create → join → play → end → rematch — can be walked card to card
-      with no invented step.
+- [x] The whole loop — create → join → play → end → rematch — can be walked card to card
+      with no invented step. The typed-code door covers the one gap the reviews found:
+      the front door offers "I have a code" and the screen it opens now exists.
 
 ## Out of scope
 

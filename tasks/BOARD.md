@@ -405,7 +405,7 @@ parallel with `EPIC-02`; no shared file.
 
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
-| **[STORY-0601](stories/STORY-0601-design-foundations.md)** Design foundations — tokens and preview cards — *schema 2* | | | ready |
+| **[STORY-0601](stories/STORY-0601-design-foundations.md)** Design foundations — tokens and preview cards — *schema 2* | | | **done** |
 | | [TASK-060101](tasks/TASK-060101-design-token-sheet.md) The canonical design token sheet | S | **done** |
 | | [TASK-060102](tasks/TASK-060102-colors-preview-card.md) The Colors preview card | S | **done** |
 | | [TASK-060103](tasks/TASK-060103-type-preview-card.md) The Type preview card | S | **done** |
@@ -428,7 +428,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060121](tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) The value gate reads CSS values correctly | S | **done** |
 | | [TASK-060122](tasks/TASK-060122-the-design-gate-runs-in-ci.md) The design gate runs in CI | XS | **done** |
 | | [TASK-060123](tasks/TASK-060123-the-gates-remaining-silent-edges.md) The lockup clause cannot go quiet | XS | **done** |
-| **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |
+| **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | **done** |
 | | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | **done** |
 | | [TASK-060202](tasks/TASK-060202-seat-plate-and-pot.md) The seat plate and pot strip | S | **done** |
 | | [TASK-060203](tasks/TASK-060203-action-bar.md) The action bar | S | **done** |
@@ -439,7 +439,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060208](tasks/TASK-060208-the-in-play-table-shows-the-hidden-hand.md) The in-play table shows the hidden hand | XS | **done** |
 | | [TASK-060209](tasks/TASK-060209-the-states-mirrors-use-the-live-bars-elements.md) The states' hidden mirrors use the live bar's elements | XS | **done** |
 | | [TASK-060210](tasks/TASK-060210-screens-consume-card-surface-tokens.md) The duel-table screens consume the card-surface tokens | XS | **done** |
-| **[STORY-0603](stories/STORY-0603-graphics.md)** Draw the graphics — suit glyphs, the duel coin, the wordmark — *schema 2* | | | ready |
+| **[STORY-0603](stories/STORY-0603-graphics.md)** Draw the graphics — suit glyphs, the duel coin, the wordmark — *schema 2* | | | **done** |
 | | [TASK-060301](tasks/TASK-060301-suit-glyph-set.md) The suit-glyph set | S | **done** |
 | | [TASK-060302](tasks/TASK-060302-duel-coin.md) The duel coin | S | **done** |
 | | [TASK-060303](tasks/TASK-060303-wordmark-card.md) The wordmark card | S | **done** |

@@ -60,22 +60,22 @@ claude.ai/design pane, by the human.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [STORY-0601](../stories/STORY-0601-design-foundations.md) | Design foundations — tokens and preview cards | ready |
-| [STORY-0602](../stories/STORY-0602-duel-table-screen.md) | Design the duel table — components and the screen | ready |
-| [STORY-0603](../stories/STORY-0603-graphics.md) | Draw the graphics — suit glyphs, the duel coin, the wordmark | ready |
+| [STORY-0601](../stories/STORY-0601-design-foundations.md) | Design foundations — tokens and preview cards | done |
+| [STORY-0602](../stories/STORY-0602-duel-table-screen.md) | Design the duel table — components and the screen | done |
+| [STORY-0603](../stories/STORY-0603-graphics.md) | Draw the graphics — suit glyphs, the duel coin, the wordmark | done |
 | [STORY-0604](../stories/STORY-0604-lobby-and-flow.md) | Design the duel flow — create, join, result, rematch | ready |
 
-All four stories are written. The human's visual sign-off is recorded for
-STORY-0601/0602/0603 and partially for STORY-0604 (its fifth screen, the typed-code
-door, has not landed). A story flips `done` only when its tickets are all landed
-**and** its acceptance boxes all tick — the last-ticket PR carries the flip when
-nothing else remains, and holds it when a box (a human sign-off, a criterion not yet
-true) is still open.
+**Every ticket in this epic is merged** — 44 across four stories. STORY-0601, 0602 and
+0603 are `done`: their tickets landed and every acceptance box is ticked. STORY-0604
+holds at `ready` for one reason only: its fifth screen, the typed-code door, reached
+the pane after the human's last sign-off, so the sign-off box is not this run's to
+tick. The pane shows all 16 cards.
 
 ## Definition of done
 
 - [ ] Every story is `done` or `dropped`.
-- [ ] The claude.ai/design project shows the full system: foundations, table, graphics, flow.
+- [x] The claude.ai/design project shows the full system: foundations, table, graphics, flow.
+      *(16 cards synced 2026-08-15; manifest verified by read-back.)*
 - [ ] EPIC-03 builds its first screen without inventing a single color or size.
 
 ## Metrics
