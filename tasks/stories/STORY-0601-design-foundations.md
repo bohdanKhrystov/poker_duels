@@ -58,7 +58,7 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060118](../tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) | The gallery lede names every mirrored token | done |
 | [TASK-060119](../tasks/TASK-060119-the-coin-face-is-born-on-the-sheet.md) | The coin face is born on the sheet | ready |
 | [TASK-060120](../tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) | The lockup coins consume the face token | backlog |
-| [TASK-060121](../tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) | A final declaration without a semicolon still enters the gate | ready |
+| [TASK-060121](../tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) | A final declaration without a semicolon still enters the gate | done |
 
 ## Acceptance criteria
 

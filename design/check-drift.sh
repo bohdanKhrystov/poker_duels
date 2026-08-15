@@ -52,13 +52,16 @@ fi
 
 # joins every `--pd-NAME: … ;` declaration to one line and strips whitespace outside
 # quoted strings, emitting `name=value` — the sheet wraps long values, cards do not,
-# and both must land on the same normalized form. The `--pd-` name charset below is
-# the same language as the name gate's grep in the loop — a change to what a token
-# name may contain must change both.
+# and both must land on the same normalized form. A declaration ends at `;` or at
+# its block's `}`: a final declaration legally omits the semicolon, and requiring
+# one made the sheet's last token escape the set while a card's garbled forward
+# into a false report (TASK-060121). The `--pd-` name charset below is the same
+# language as the name gate's grep in the loop — a change to what a token name may
+# contain must change both.
 EXTRACT='
   { buf = buf $0 "\n" }
   END {
-    while (match(buf, /--pd-[a-z0-9-]*[ \t]*:[^;]*;/)) {
+    while (match(buf, /--pd-[a-z0-9-]*[ \t]*:[^;{}]*[;}]/)) {
       d = substr(buf, RSTART, RLENGTH); buf = substr(buf, RSTART + RLENGTH)
       out = ""; inq = 0; q = ""
       for (i = 1; i <= length(d); i++) {
@@ -68,7 +71,7 @@ EXTRACT='
         if (c == " " || c == "\t" || c == "\n" || c == "\r") continue
         out = out c
       }
-      sub(/:/, "=", out); sub(/;$/, "", out)
+      sub(/:/, "=", out); sub(/[;}]$/, "", out)
       print out
     }
   }
@@ -126,6 +129,9 @@ sweep_suits() {
 probe=$(printf -- '--pd-probe :  rgba(0, 0, 0, 0.4) ;\n' | awk "$EXTRACT" 2>/dev/null || true)
 [ "$probe" = "--pd-probe=rgba(0,0,0,0.4)" ] \
   || { echo "check-drift: self-test failed — value extractor broke (awk?)" >&2; exit 1; }
+probe2=$(printf -- ':root { --pd-a: 1px; --pd-b: 2px }\n' | awk "$EXTRACT" 2>/dev/null || true)
+[ "$probe2" = "$(printf -- '--pd-a=1px\n--pd-b=2px')" ] \
+  || { echo "check-drift: self-test failed — a semicolon-less final declaration escaped (awk?)" >&2; exit 1; }
 probe_sheet=$(mktemp)
 printf -- '--pd-probe=1px\n' > "$probe_sheet"
 mism=$(printf -- '--pd-probe=2px\n' | awk -v f=self "$COMPARE" "$probe_sheet" - 2>/dev/null || true)

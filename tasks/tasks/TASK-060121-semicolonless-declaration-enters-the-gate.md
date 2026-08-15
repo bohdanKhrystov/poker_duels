@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060121
 title: A final declaration without a semicolon still enters the gate
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: XS
