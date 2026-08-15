@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030708
 title: A rejection reads from its own fields, in the server's numbers
 type: task
-status: backlog
+status: ready
 parent: STORY-0307
 module: web-client
 estimate: S

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030707
 title: A click sends one Act, and the bar goes quiet until the next turn
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: S
