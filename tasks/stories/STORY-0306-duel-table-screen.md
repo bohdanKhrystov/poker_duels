@@ -60,8 +60,8 @@ prop, and reaches the store only in the last ticket.
 | [TASK-030605](../tasks/TASK-030605-a-face-up-card-draws-its-rank-its-suit-and-the-suits-colour.md) | A face-up card draws its rank, its suit and the suit's colour | done |
 | [TASK-030606](../tasks/TASK-030606-a-hand-is-two-places-wide-whatever-the-view-carries.md) | A hand is two places wide, whatever the view carries | done |
 | [TASK-030607](../tasks/TASK-030607-the-board-is-five-places-wide-whatever-the-street.md) | The board is five places wide, whatever the street | done |
-| [TASK-030608](../tasks/TASK-030608-a-playerview-fixture-with-every-field-the-wire-declares.md) | A PlayerView fixture with every field the wire declares | ready |
-| [TASK-030609](../tasks/TASK-030609-the-pot-strip-states-the-pot-the-blinds-the-hand-and-the-street.md) | The pot strip states the pot, the blinds, the hand and the street | backlog |
+| [TASK-030608](../tasks/TASK-030608-a-playerview-fixture-with-every-field-the-wire-declares.md) | A PlayerView fixture with every field the wire declares | done |
+| [TASK-030609](../tasks/TASK-030609-the-pot-strip-states-the-pot-the-blinds-the-hand-and-the-street.md) | The pot strip states the pot, the blinds, the hand and the street | ready |
 | [TASK-030610](../tasks/TASK-030610-a-seats-status-is-read-off-the-view-never-off-its-cards.md) | A seat's status is read off the view, never off its cards | backlog |
 | [TASK-030611](../tasks/TASK-030611-the-seat-plate-shows-the-name-the-button-and-the-stack.md) | The seat plate shows the name, the button and the stack | backlog |
 | [TASK-030612](../tasks/TASK-030612-the-duel-table-seats-the-views-two-players-around-the-board.md) | The duel table seats the view's two players around the board | backlog |
