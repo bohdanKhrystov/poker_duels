@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030803
 title: The coin line states the one coin the duel moved, and no balance
 type: task
-status: backlog
+status: ready
 parent: STORY-0308
 module: web-client
 estimate: XS
