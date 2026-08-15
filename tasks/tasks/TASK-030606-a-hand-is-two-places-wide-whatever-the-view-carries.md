@@ -97,7 +97,7 @@ the player nothing.
 | --- | --- |
 | `draws two faces when the view carries two cards` | `["Ah", "Ks"]` renders `ace of hearts` and `king of spades`, and `queryByRole("img", { name: "your rival's hidden hand" })` is `null` |
 | `draws two backs when the view carries no card` | `[]` renders one element named `your rival's hidden hand`, `container.childElementCount` is `2`, and `container.textContent` is `""` |
-| `is two places wide whatever the view carries` | for each of `[]`, `["Ah"]` and `["Ah", "Ks"]`, `container.childElementCount` is `2` |
+| `is two places wide whatever the view carries` | for each of `[]`, `["Ah"]`, `["Ah", "Ks"]` and `["Ah", "Ks", "2c"]`, `container.childElementCount` is `2`. The fourth case carries the title's weight: the first three render two places under "always two" *and* under "at least two", so a hand that widens to `Math.max(2, cards.length)` ships `Tests 154 passed (154)` against them — verified, not predicted. A hand that widens breaks the row exactly as badly as one that narrows |
 
 Three tests. One hundred and fifty-one exist, so the suite reports **154**.
 
