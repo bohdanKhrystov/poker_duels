@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030702
 title: Each action says its verb and carries the server's figure
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: S
