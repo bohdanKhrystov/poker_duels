@@ -64,8 +64,8 @@ prop, and reaches the store only in the last ticket.
 | [TASK-030609](../tasks/TASK-030609-the-pot-strip-states-the-pot-the-blinds-the-hand-and-the-street.md) | The pot strip states the pot, the blinds, the hand and the street | done |
 | [TASK-030610](../tasks/TASK-030610-a-seats-status-is-read-off-the-view-never-off-its-cards.md) | A seat's status is read off the view, never off its cards | done |
 | [TASK-030611](../tasks/TASK-030611-the-seat-plate-shows-the-name-the-button-and-the-stack.md) | The seat plate shows the name, the button and the stack | done |
-| [TASK-030612](../tasks/TASK-030612-the-duel-table-seats-the-views-two-players-around-the-board.md) | The duel table seats the view's two players around the board | ready |
-| [TASK-030613](../tasks/TASK-030613-your-hand-is-face-up-and-your-rivals-is-face-down.md) | Your hand is face up and your rival's is face down | backlog |
+| [TASK-030612](../tasks/TASK-030612-the-duel-table-seats-the-views-two-players-around-the-board.md) | The duel table seats the view's two players around the board | done |
+| [TASK-030613](../tasks/TASK-030613-your-hand-is-face-up-and-your-rivals-is-face-down.md) | Your hand is face up and your rival's is face down | ready |
 | [TASK-030614](../tasks/TASK-030614-the-reserved-line-states-what-the-rival-has-committed.md) | The reserved line states what the rival has committed this street | backlog |
 | [TASK-030615](../tasks/TASK-030615-the-table-shows-no-number-the-view-does-not-carry.md) | The table shows no number the view does not carry | backlog |
 | [TASK-030616](../tasks/TASK-030616-the-table-names-no-card-the-view-did-not-send-and-no-hand.md) | The table names no card the view did not send, and no hand | backlog |
