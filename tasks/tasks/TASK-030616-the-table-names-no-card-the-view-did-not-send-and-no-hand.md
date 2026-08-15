@@ -66,9 +66,9 @@ never says which hand anyone has or who is winning.
 
 | Test | Proves |
 | --- | --- |
-| `names exactly the cards the view carries and no others` | `screen.getAllByRole("img").map((card) => card.getAttribute("aria-label"))` equals, in order: `your rival's hidden hand`, `ace of spades`, `seven of diamonds`, `two of clubs`, `turn card, not yet dealt`, `river card, not yet dealt`, `ace of hearts`, `king of spades` |
+| `names exactly the cards the view carries and no others` | `screen.getAllByRole("img").map((card) => card.getAttribute("aria-label"))` equals, in order: `your rival's hidden hand`, `ace of spades`, `seven of diamonds`, `two of clubs`, `turn card, not yet dealt`, `river card, not yet dealt`, `ace of hearts`, `king of spades` — **and no element outside a `role="img"` carries a card name in an `aria-label` or a `title`.** That list only reads card elements, so `aria-label="queen of clubs"` on anything else ships `Tests 189 passed (189)` without the second check, and a screen reader would say it |
 | `puts no rank and no suit on a hand the view did not send` | the element named `your rival's hidden hand` has a parent row whose `textContent` is `""` and whose `innerHTML` matches no `aria-label="` other than the rival's own |
-| `names no hand and declares no winner` | `wordsOnScreen(container)` matches none of `HAND_TALK` |
+| `names no hand and declares no winner` | **neither** `wordsOnScreen(container)` **nor** `spokenOnScreen(container)` matches `HAND_TALK`. Text alone is not enough: `"Two pair"` in an `aria-label` and `"You win"` in a `title` each shipped `Tests 189 passed (189)` against a text-only scan. Both are spoken to a player — one read aloud, one on hover — and neither is a text node |
 
 Three tests. One hundred and eighty-six exist, so the suite reports **189**, which is the story's
 total: fifty-eight tests over the hundred and thirty-one that existed at `4936f0f`.
