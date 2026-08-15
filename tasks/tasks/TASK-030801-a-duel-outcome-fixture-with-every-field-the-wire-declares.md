@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030801
 title: A DuelOutcome fixture with every field the wire declares
 type: task
-status: ready
+status: done
 parent: STORY-0308
 module: web-client
 estimate: S

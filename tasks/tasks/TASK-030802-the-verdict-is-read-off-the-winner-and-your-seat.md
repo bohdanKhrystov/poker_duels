@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030802
 title: The verdict is read off the winner and your seat, and nothing else
 type: task
-status: backlog
+status: ready
 parent: STORY-0308
 module: web-client
 estimate: S
