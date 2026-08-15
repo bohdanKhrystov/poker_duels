@@ -169,35 +169,86 @@ extract_syms() {
 symprobe=$(printf '<symbol id="pd-x" a="1">\n  <p/> <!-- c -->\n</symbol>\n' | perl -e "$SYMEXTRACT" 2>/dev/null || true)
 [ "$symprobe" = "$(printf 'pd-x\t<symbol id="pd-x" a="1"> <p/> </symbol>\n!opens\t1')" ] \
   || { echo "check-drift: self-test failed — symbol extractor broke (perl?)" >&2; exit 1; }
-# pulls the lockup's four em constants — gap/track from .mark, width/ring from
-# .mark .coin — as `gap=… track=… width=… ring=…`, or reports what a .mark .coin
-# copy is missing; comments are stripped first
+# pulls the lockup anatomy — gap and letter-spacing from every .mark rule, width,
+# height and the inset ring from every rule whose subject is .coin under .mark —
+# as one `anat-NAME=value` line each. Rules are walked block-wise (combinators,
+# compound classes and rules inside @media all count), every declaration of a
+# property is collected, and a property whose declarations disagree is reported as
+# a conflict rather than half-compared. CSS comments are stripped quote-aware so a
+# stray /* inside content cannot swallow the lockup. The ring is the fourth length
+# token of the inset layer, wherever that layer sits in a shadow list.
 ANATOMY='
   my $src = do { local $/; <STDIN> };
   $src =~ s/<!--.*?-->//gs;
-  $src =~ s/\/\*.*?\*\///gs;
-  my ($mark) = $src =~ /\.mark\s*\{([^}]*)\}/s;
-  my ($coin) = $src =~ /\.mark\s+\.coin\s*\{([^}]*)\}/s;
-  exit 0 unless defined $coin;
-  my ($gap)   = ($mark // "") =~ /gap\s*:\s*([^;]+);/;
-  my ($track) = ($mark // "") =~ /letter-spacing\s*:\s*([^;]+);/;
-  my ($width) = $coin =~ /width\s*:\s*([^;]+);/;
-  my ($ring)  = $coin =~ /box-shadow\s*:\s*inset\s+\S+\s+\S+\s+\S+\s+(\S+)/;
-  for ($gap, $track, $width, $ring) { if (defined) { s/^\s+|\s+$//g } }
-  my %v = (gap => $gap, track => $track, width => $width, ring => $ring);
-  my @missing = grep { !defined $v{$_} } qw(gap track width ring);
-  if (@missing) { print "MISSING\t@missing\n"; exit 0 }
-  print "gap=$v{gap} track=$v{track} width=$v{width} ring=$v{ring}\n";
+  my ($out, $q, $i) = ("", "", 0);
+  while ($i < length $src) {
+    my $c = substr($src, $i, 1);
+    if ($q) { $out .= $c; $q = "" if $c eq $q; $i++; next }
+    if ($c eq "\"" || $c eq "\x27") { $q = $c; $out .= $c; $i++; next }
+    if ($c eq "/" && substr($src, $i, 2) eq "/*") {
+      my $e = index($src, "*/", $i + 2); last if $e < 0; $i = $e + 2; next;
+    }
+    $out .= $c; $i++;
+  }
+  $src = $out;
+  my ($markbody, $coinbody) = ("", "");
+  while ($src =~ /([^{}]+)\{([^{}]*)\}/gs) {
+    my ($sels, $body) = ($1, $2);
+    for my $s (split /,/, $sels) {
+      $s =~ s/^\s+|\s+$//g;
+      next if $s =~ /\@/;
+      $markbody .= ";" . $body if $s =~ /(^|[\s>+~])\.mark(\.[-\w]+)*$/;
+      $coinbody .= ";" . $body if $s =~ /(^|[\s>+~])\.mark\b/ && $s =~ /\.coin(\.[-\w]+)*$/;
+    }
+  }
+  exit 0 if $coinbody eq "";
+  sub decls {
+    my ($body, $prop) = @_;
+    my %seen;
+    while ($body =~ /(?<![-\w])$prop\s*:\s*((?:[^;{}()]|\([^()]*\))*)/gi) {
+      my $v = $1; $v =~ s/^\s+|\s+$//g; $v =~ s/\s+/ /g;
+      $seen{$v} = 1 if length $v;
+    }
+    return keys %seen;
+  }
+  my %v;
+  my %want = (gap => [$markbody, "gap"], track => [$markbody, "letter-spacing"],
+              width => [$coinbody, "width"], height => [$coinbody, "height"]);
+  for my $k (sort keys %want) {
+    my @d = decls(@{$want{$k}});
+    if (@d > 1) { print "conflict=$k\n"; exit 0 }
+    $v{$k} = $d[0] if @d;
+  }
+  my @sh = decls($coinbody, "box-shadow");
+  if (@sh > 1) { print "conflict=ring\n"; exit 0 }
+  if (@sh) {
+    for my $layer (split /,(?![^(]*\))/, $sh[0]) {
+      next unless $layer =~ /\binset\b/i;
+      my @tok = $layer =~ /((?:[^\s()]|\([^()]*\))+)/g;
+      my @len = grep { !/^inset$/i && !/^(#|rgba?\(|hsla?\(|var\()/i } @tok;
+      $v{ring} = $len[3] if @len >= 4;
+      last;
+    }
+  }
+  my @missing = grep { !defined $v{$_} } qw(gap track width height ring);
+  if (@missing) { print "missing=@missing\n"; exit 0 }
+  print "anat-$_=$v{$_}\n" for qw(gap track width height ring);
 '
-anat_probe=$(printf '.mark { gap: 1em; letter-spacing: 2em; }\n.mark .coin { width: 3em; box-shadow: inset 0 0 0 4em red; }\n' | perl -e "$ANATOMY" 2>/dev/null || true)
-[ "$anat_probe" = "gap=1em track=2em width=3em ring=4em" ] \
+anat_probe=$(printf '%s\n' \
+  '/* c */ .other { gap: 9em; }' \
+  '.mark { row-gap: 0; gap: 1em; letter-spacing: 2em /* tail */ }' \
+  '@media (x) { .mark > .coin.big { WIDTH: 3em } }' \
+  '.mark .coin { min-width: 9em; width: 3em; height: 5em;' \
+  '  box-shadow: 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 4em rgba(255,255,255,.25); }' \
+  | perl -e "$ANATOMY" 2>/dev/null || true)
+[ "$anat_probe" = "$(printf 'anat-gap=1em\nanat-track=2em\nanat-width=3em\nanat-height=5em\nanat-ring=4em')" ] \
   || { echo "check-drift: self-test failed — anatomy extractor broke (perl?)" >&2; exit 1; }
 WORDMARK="$DIR/graphics/wordmark.html"
-canon_anat=$(perl -e "$ANATOMY" < "$WORDMARK" 2>/dev/null || true)
-case "$canon_anat" in
-  gap=*) : ;;
-  *) echo "check-drift: could not read the lockup anatomy from $WORDMARK — the canonical broke" >&2; exit 1 ;;
-esac
+canon_anat_file=$(mktemp)
+perl -e "$ANATOMY" < "$WORDMARK" > "$canon_anat_file" 2>/dev/null \
+  || { echo "check-drift: anatomy extraction failed on $WORDMARK" >&2; exit 1; }
+grep -q '^anat-gap=' "$canon_anat_file" \
+  || { echo "check-drift: could not read the lockup anatomy from $WORDMARK — the canonical broke ($(cat "$canon_anat_file"))" >&2; exit 1; }
 
 canon_syms=$(mktemp)
 canon_fail=0
@@ -241,8 +292,8 @@ for f in $(find "$DIR" -name '*.html' | sort); do
     if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
   fi
 
-  # a card declaring .mark .coin copies the lockup — its four anatomy values must
-  # equal the canonical's (the canonical itself is the source, not a copy)
+  # a card whose rules target .coin under .mark copies the lockup — its anatomy
+  # values must equal the canonical's, constant by constant
   if [ "$f" != "$WORDMARK" ]; then
     st=0; anat=$(perl -e "$ANATOMY" < "$f" 2>/dev/null) || st=$?
     if [ "$st" -ne 0 ]; then
@@ -250,9 +301,18 @@ for f in $(find "$DIR" -name '*.html' | sort); do
     fi
     case "$anat" in
       "") : ;;
-      MISSING*) echo "check-drift: $f declares .mark .coin but its lockup copy lacks: ${anat#MISSING?}" >&2; fail=1 ;;
-      "$canon_anat") anat_copies=$((anat_copies + 1)) ;;
-      *) echo "check-drift: $f copies the lockup as [$anat], but the canonical is [$canon_anat]" >&2; fail=1 ;;
+      missing=*) echo "check-drift: $f copies the lockup but lacks: ${anat#missing=}" >&2; fail=1 ;;
+      conflict=*) echo "check-drift: $f declares ${anat#conflict=} more than once with disagreeing values in its lockup copy" >&2; fail=1 ;;
+      *)
+        bad=$(printf '%s\n' "$anat" | awk -v f="$f" '
+          NR == FNR { eq = index($0, "="); if (eq) c[substr($0, 1, eq - 1)] = substr($0, eq + 1); next }
+          { eq = index($0, "="); nm = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+            if (nm in c && c[nm] != v)
+              printf "check-drift: %s copies the lockup %s as %s, but the canonical carries %s\n", f, substr(nm, 6), v, c[nm] }
+        ' "$canon_anat_file" -) || { echo "check-drift: anatomy comparison failed on $f (awk error)" >&2; fail=1; bad=""; }
+        if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1
+        else anat_copies=$((anat_copies + 1)); fi
+      ;;
     esac
   fi
 
@@ -315,4 +375,5 @@ done
 # an empty tree must fail as loudly as a missing sheet — a vacuous pass guards nothing
 [ "$files" -gt 0 ] || { echo "check-drift: no cards found under $DIR" >&2; exit 1; }
 if [ "$fail" -ne 0 ]; then exit 1; fi
-echo "check-drift: tokens resolve, values match the sheet, suits carry U+FE0E, $pairs_total graphics pairs and $syms_total inlined symbols mirror truly, and the lockup anatomy holds across $anat_copies copies ($mentions distinct mentions across $files cards)"
+[ "$anat_copies" -eq 1 ] && copyword=copy || copyword=copies
+echo "check-drift: tokens resolve, values match the sheet, suits carry U+FE0E, $pairs_total graphics pairs and $syms_total inlined symbols mirror truly, and the lockup anatomy holds across $anat_copies $copyword ($mentions distinct mentions across $files cards)"

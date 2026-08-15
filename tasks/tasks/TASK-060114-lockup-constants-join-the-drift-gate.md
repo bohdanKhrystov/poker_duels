@@ -57,8 +57,10 @@ put it on the sheet, where the existing gates cover it.
 
 ## Tests
 
-None — the verify runs the gate on the aligned tree and proves two negative paths
-(a drifted em constant, a drifted glint hex) on mutated scratch copies.
+None — the verify runs the gate on the aligned tree and proves the negative path on
+both sides: a drifted copy and a drifted canonical, each on a mutated scratch copy.
+(The glint half of the original finding moved to `TASK-060115`–`117`, so no glint
+negative lives here.)
 
 ## Acceptance criteria
 
