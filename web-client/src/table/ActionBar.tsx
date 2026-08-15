@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
-import type { ClientMessage } from "../protocol";
+import type { ActionType, ClientMessage, LegalActions } from "../protocol";
 import type { PendingTurn } from "../store/duel-state";
+import { actionText } from "./action-text";
+import { formatChips } from "./chips";
 
 /**
  * The action bar: the one place a player asserts anything.
@@ -21,9 +23,74 @@ export function ActionBar(props: {
       aria-label="your move"
       className="mx-auto flex w-full max-w-[460px] flex-col gap-3 rounded-medium border border-hairline bg-surface p-4"
     >
-      {turn === null && <Waiting />}
+      {turn === null ? <Waiting /> : <Live turn={turn} send={props.send} />}
     </section>
   );
+}
+
+/**
+ * Your turn. One button per action the server allowed, in the order it sent
+ * them, and an amount control only when a bet or a raise is on offer.
+ */
+function Live(props: {
+  turn: PendingTurn;
+  send: (message: ClientMessage) => void;
+}): ReactElement {
+  const actions = props.turn.legalActions;
+  // 0 when no amount is on offer: it reaches no button, because only Bet and
+  // Raise print a total, and neither is allowed then.
+  const to = amountFloor(actions) ?? 0;
+  const filled = filledAction(actions.allowed);
+
+  return (
+    <div className="flex gap-3">
+      {actions.allowed.map((type) => {
+        const text = actionText(type, actions, to);
+        return (
+          <button
+            className={`flex-1 rounded-medium border px-3 py-4 leading-tight font-medium ${
+              type === filled
+                ? "border-transparent bg-accent-fill text-on-accent"
+                : "border-hairline text-text"
+            }`}
+            key={type}
+            type="button"
+          >
+            {text.verb}
+            {text.amount !== null && (
+              <>
+                {" "}
+                <span className="font-mono tabular-nums">
+                  {formatChips(text.amount)}
+                </span>
+              </>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * The total the amount control starts at: the server's own minimum for whichever
+ * of a bet or a raise it allowed, or `null` when it allowed neither.
+ */
+function amountFloor(actions: LegalActions): number | null {
+  if (actions.allowed.includes("RAISE")) return actions.minRaiseTo;
+  if (actions.allowed.includes("BET")) return actions.minBetTo;
+  return null;
+}
+
+/**
+ * The one filled button — the design's aggressive line. The last button the
+ * server named carries it when neither a bet nor a raise is on offer, which is
+ * the only case where the aggressive line is the all-in.
+ */
+function filledAction(allowed: readonly ActionType[]): ActionType | undefined {
+  if (allowed.includes("RAISE")) return "RAISE";
+  if (allowed.includes("BET")) return "BET";
+  return allowed[allowed.length - 1];
 }
 
 /**
