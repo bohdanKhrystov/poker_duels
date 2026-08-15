@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030806
 title: The result states the hands played and every final stack, exactly as sent
 type: task
-status: backlog
+status: ready
 parent: STORY-0308
 module: web-client
 estimate: S
