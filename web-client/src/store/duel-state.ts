@@ -67,6 +67,7 @@ export function applyServerMessage(
           legalActions: message.legalActions,
         },
         rejection: null,
+        refusal: null,
       };
     case "Snapshot":
       return {
@@ -74,6 +75,7 @@ export function applyServerMessage(
         view: message.view,
         pendingTurn: null,
         rejection: null,
+        refusal: null,
       };
     case "Rejected":
       // A rejection reports on an attempt, not on state (ADR-0043): `pendingTurn` and `view` stay
@@ -91,6 +93,7 @@ export function applyServerMessage(
         outcome: message.outcome,
         pendingTurn: null,
         rejection: null,
+        refusal: null,
       };
     case "Failure":
       return { ...state, refusal: message.error };

@@ -657,4 +657,116 @@ describe("the duel state", () => {
     });
     expect(state.refusal).toBeNull();
   });
+
+  it("a refusal stops being shown when the next turn opens", () => {
+    const stateWithRefusal = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Failure",
+        error: "DUEL_PAUSED",
+      },
+    );
+    // Events is narration; it must not clear the refusal a Failure set
+    const stateAfterEvents = duelState.applyServerMessage(stateWithRefusal, {
+      type: "Events",
+      events: [
+        {
+          type: "ActionOn",
+          sequence: 1,
+          seat: 0,
+        } as const,
+      ],
+    });
+    expect(stateAfterEvents.refusal).toBe("DUEL_PAUSED");
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 10,
+      minRaiseTo: 20,
+      allInTo: 100,
+    };
+    const state = duelState.applyServerMessage(stateAfterEvents, {
+      type: "YourTurn",
+      handNumber: 2,
+      actionSequence: 5,
+      legalActions,
+    });
+    expect(state.refusal).toBeNull();
+  });
+
+  it("a refusal stops being shown when the next snapshot arrives", () => {
+    const stateWithRefusal = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Failure",
+        error: "DUEL_PAUSED",
+      },
+    );
+    const stateWithRejection = duelState.applyServerMessage(stateWithRefusal, {
+      type: "Rejected",
+      rejection: { type: "AmountTooSmall", attempted: 5, minimum: 10 },
+    });
+    // Rejected is about an action attempt; it must not clear the refusal a Failure set
+    expect(stateWithRejection.refusal).toBe("DUEL_PAUSED");
+    const state = duelState.applyServerMessage(stateWithRejection, {
+      type: "Snapshot",
+      view: samplePlayerView(),
+    });
+    expect(state.refusal).toBeNull();
+    expect(state.rejection).toBeNull();
+    expect(state.rejectionCount).toBe(1);
+  });
+
+  it("a refusal stops being shown when the duel finishes", () => {
+    const stateWithRefusal = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Failure",
+        error: "DUEL_PAUSED",
+      },
+    );
+    const outcome = {
+      winner: 0,
+      handsPlayed: 8,
+      finalStacks: [1500, 500],
+    } as const;
+    const state = duelState.applyServerMessage(stateWithRefusal, {
+      type: "DuelFinished",
+      outcome,
+    });
+    expect(state.refusal).toBeNull();
+    expect(state.outcome).toEqual(outcome);
+  });
+
+  it("a refusal closes no decision point", () => {
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 10,
+      minRaiseTo: 20,
+      allInTo: 100,
+    };
+    const stateWithPendingTurn = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "YourTurn",
+        handNumber: 1,
+        actionSequence: 1,
+        legalActions,
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithPendingTurn, {
+      type: "Failure",
+      error: "DUEL_PAUSED",
+    });
+    expect(state.refusal).toBe("DUEL_PAUSED");
+    expect(state.pendingTurn).toEqual({
+      handNumber: 1,
+      actionSequence: 1,
+      legalActions,
+    });
+    expect(state.rejectionCount).toBe(0);
+  });
 });
