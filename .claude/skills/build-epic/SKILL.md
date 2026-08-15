@@ -1,14 +1,20 @@
 ---
 name: build-epic
-description: Work an entire epic unattended — plan each story, then run its tickets to merged PRs, up to three at a time in isolated worktrees when they touch disjoint files, stopping only for decisions a human must make. Use when the user names a goal like "implement the poker engine" rather than a single ticket.
+description: Work one or more epics unattended, in the order given — plan each story, then run its tickets to merged PRs, up to three at a time in isolated worktrees when they touch disjoint files, carrying straight on to the next epic and stopping only for decisions a human must make. Use when the user names a goal like "implement the poker engine", or a list like "EPIC-03 EPIC-04 EPIC-05", rather than a single ticket.
 ---
 
 # Build an epic
 
-Takes an epic ID, or a goal in plain words (*"implement the poker engine"* → `EPIC-01`).
+Takes **one or more epic IDs**, or a goal in plain words (*"implement the poker engine"* → `EPIC-01`).
+A list — `EPIC-03 EPIC-04 EPIC-05` — is worked **in the order given**, and the order is the human's
+statement of dependency: a later epic may build on an earlier one, never the reverse.
 
-This is the entry point for **"here is the goal, go"**. It runs until the epic is done or until
-it needs a decision that is not yours to make.
+This is the entry point for **"here is the goal, go"**. It runs until every epic named is done, or
+until nothing anywhere in the list is startable.
+
+**A blocked epic does not end the run — it ends that epic.** The whole point of taking a list is
+that `EPIC-04` waiting on a product decision must not stop `EPIC-05` from being worked. Record what
+blocked, move to the next epic, and collect the questions for one batch at the end.
 
 ---
 
@@ -47,18 +53,24 @@ written dozens of times per epic.
 
 ```
 1. read tasks/BOARD.md — once, at the start
-2. pick the epic's first story that is not `done`
-3. if that story's tickets lack `schema: 2`:
-        → /plan-story <STORY-ID>          (Opus planner, once per story)
-4. while the story has a startable ticket:
-        → select a compatible batch of 1–3 tickets   (see "Batching tickets")
-        → run each in its own git worktree, concurrently
-        → land them ONE AT A TIME (see "Landing")
-        → append one line per ticket to the ledger
-        → if blocked: record it, continue to the next startable ticket
-5. story done → report it in one line → back to 2
-6. no stories left → final report
+2. for each epic in the list, in order:
+3.     pick the epic's first story that is not `done`
+4.     if that story's tickets lack `schema: 2`:
+            → /plan-story <STORY-ID>          (Opus planner, once per story)
+5.     while the story has a startable ticket:
+            → select a compatible batch of 1–3 tickets   (see "Batching tickets")
+            → run each in its own git worktree, concurrently
+            → land them ONE AT A TIME (see "Landing")
+            → append one line per ticket to the ledger
+            → if blocked: record it, continue to the next startable ticket
+6.     story done → report it in one line → back to 3
+7.     no stories left, or nothing startable → one-line epic report → back to 2
+8. no epics left → final report
 ```
+
+Re-read `BOARD.md` once when an epic ends, not once per epic at the start. Earlier epics move the
+board underneath the later ones — a story you judged unstartable an hour ago may be startable now
+because its blocker landed.
 
 ## At a story boundary, report and continue
 
@@ -81,6 +93,38 @@ one.** If the human is present and wants the reset, they can `/clear` and re-iss
 
 Do not simulate the reset either — summarising your own context or "starting fresh" in place
 reclaims nothing and costs a turn.
+
+## At an epic boundary, report and continue
+
+Exactly as at a story boundary, one level up. When an epic's last story lands, say so in one line
+and start the next epic in the list:
+
+```
+EPIC-03 done — 12 stories, 147 tickets merged. Starting EPIC-04.
+```
+
+Say it the same way when an epic ends **without** finishing, because that is the case a list exists
+to survive:
+
+```
+EPIC-04 parked — 0 of 5 stories; every story gated on DEC-025. Starting EPIC-05.
+```
+
+**Do not stop between epics**, and do not ask whether to go on. The list was the authorisation; a
+run that pauses for permission it was already given is a stalled run with extra steps.
+
+Three things make an epic *end* rather than *continue*:
+
+- every story in it is `done` — finished
+- nothing in it is startable, and what blocks it is a **product** decision — parked
+- an epic has no epic file or no stories written yet — **not written**, which is a planning gap and
+  not something a coder dispatch can fix; record it and move on
+
+Only the first is success. All three are reasons to go to the next epic, not reasons to stop.
+
+An epic whose stories depend on an epic you just parked is very likely unstartable too — check its
+first story rather than assuming either way. If it is, park it in the same breath and keep going;
+the cost of checking is one board read.
 
 ## Batching tickets
 
@@ -163,12 +207,19 @@ it is blocking — the second failure is far more expensive, because it reads as
 
 The design goal is: one command in, **one batch of product questions out**.
 
-Stop the run entirely only if:
+Leave the **current epic** and start the next one when:
 
-- **every** remaining ticket is blocked on a *product* decision, or
-- a product decision blocks the rest of the epic (what the thing fundamentally is), or
-- three consecutive tickets fail — something systemic is wrong and continuing will burn budget
-  producing more of it.
+- **every** remaining ticket in it is blocked on a *product* decision, or
+- a product decision blocks the rest of it (what the thing fundamentally is).
+
+Neither ends the run while an epic remains in the list. Park it, keep the questions, carry on.
+
+Stop the **whole run** only if:
+
+- every epic in the list is done, parked or not written — there is nothing left to work, or
+- three consecutive tickets fail — something systemic is wrong, and continuing will burn budget
+  producing more of it. This one stops everything, not just the epic: a systemic failure follows
+  you into the next epic, and three more failures there prove nothing the first three did not.
 
 ## Model tiers
 
@@ -176,8 +227,11 @@ Stop the run entirely only if:
 - **reviewer** — `haiku` for `review: light` and `review: standard`; `sonnet` only for
   `review: deep`. A shallow review is fixed by asking a sharper question — naming the specific
   defect to hunt for — not by buying a bigger model on every ticket.
-- **architect** — Fable, always. Runs on demand, when a technical `DEC-NNN` blocks something. It
-  answers the decision and writes the ADR; the planner then writes tickets from that ADR.
+- **architect** — whatever `.claude/agents/architect.md` declares; do not override it per dispatch.
+  It is pinned there rather than here because it gets switched when a model is rate-limited, and a
+  tier hardcoded in two places drifts in one of them. Runs on demand, when a technical `DEC-NNN`
+  blocks something. It answers the decision and writes the ADR; the planner then writes tickets
+  from that ADR.
 - **planner** — Opus, always. It runs once per story, and how precisely it specifies a ticket
   decides whether the coder needs one dispatch or three. This is the last place to economise:
   a well-planned story lands in one dispatch per ticket, a vague one burns dispatches and
@@ -223,17 +277,23 @@ liveness check, and make the do-nothing path cheap and explicit:
 - nothing startable and nothing in flight → reply `nothing startable`, stop
 - otherwise → resume the loop
 
-Write the resume half so it can restart cold — epic id, repo path, and the instruction to inspect
-`git status` and the current branch before dispatching anything. A feature branch often already
-holds committed, unreviewed work, and the cheap recovery is to review it, not to re-dispatch a
-coder over the top of it.
+Write the resume half so it can restart cold — **the full remaining epic list**, repo path, and the
+instruction to inspect `git status` and the current branch before dispatching anything. A feature
+branch often already holds committed, unreviewed work, and the cheap recovery is to review it, not
+to re-dispatch a coder over the top of it.
 
-**Delete the job when the epic lands** (`CronDelete`), so a finished run stops waking up.
+Carrying the *whole* list matters: a resume that names only the epic in flight silently drops every
+epic after it, and the run ends early looking like it succeeded. Rewrite the job's prompt as each
+epic ends, so the list it carries is always what is left.
+
+**Delete the job when the last epic in the list ends** (`CronDelete`), not when the first one does —
+a run with epics remaining still needs its resume armed.
 
 A usage limit is **infrastructure, not a verdict** — the same class as a dropped connection. It
 does not count against the retry policy. If you are still alive when one hits (it interrupted a
 subagent rather than you), land whatever is already reviewed, say so in one line, and stop. Do
-not write the final report: the epic is paused, not finished.
+not write the final report: the run is paused, not finished, and naming the epics still unstarted
+is the one thing the resume needs from you.
 
 Two constraints bound how much this can be trusted:
 
@@ -246,19 +306,34 @@ Two constraints bound how much this can be trusted:
 
 ## Final report
 
+Written **once, at the end of the whole list** — not once per epic. Epics report themselves in one
+line as they end; this is the run's report.
+
 ```
-EPIC: <id> — <title>
+RUN: <epic ids, in the order given>
+
+EPIC-03 — Web client            done    12 stories, 147 tickets
+EPIC-04 — Identity and profiles parked  0 of 5 stories — DEC-025
+EPIC-05 — Ranking and coins     not written
+
 MERGED:  <n> tickets
 BLOCKED: <n> tickets
 PROMOTED TO SONNET: <ids>
 
 DECISIONS NEEDED
-  DEC-00N — <question>  → blocks <ticket ids>
+  DEC-00N — <question>  → blocks <epic or ticket ids>
 
 BLOCKED, NOT ON A DECISION
   <ticket> — <why>
 
-NEXT: <what happens after the decisions are answered>
+NEXT: <what unblocks the most, first>
 ```
 
-Then stop. Do not start another epic.
+Every epic named gets a line, including the ones never started, and each says which of the three
+endings it reached. An epic missing from the report is indistinguishable from one silently skipped.
+
+Order `DECISIONS NEEDED` by how much each unblocks — the question gating a whole epic goes above one
+gating a ticket. The human answers them in the order you print them, so printing them in arrival
+order wastes the ordering.
+
+Then stop. The list is finished; do not add epics to it that the human did not name.
