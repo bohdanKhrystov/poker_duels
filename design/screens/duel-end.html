@@ -12,7 +12,7 @@
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
     --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
     --pd-on-accent: #ffffff; --pd-win: #79a862; --pd-loss: #c4655c;
-    --pd-coin: #9fb2c4; --pd-coin-deep: #64788c;
+    --pd-coin: #9fb2c4; --pd-coin-deep: #64788c; --pd-coin-glint: #b8c6d6;
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
     --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
@@ -46,7 +46,7 @@
   .coinline { display: inline-flex; gap: var(--pd-space-3); align-items: center; justify-content: center;
     font-family: var(--pd-font-mono); font-size: 1.125rem; }
   .coin { width: 22px; height: 22px; border-radius: var(--pd-radius-pill);
-    background: radial-gradient(circle at 36% 30%, #b8c6d6, var(--pd-coin) 55%, var(--pd-coin-deep));
+    background: radial-gradient(circle at 36% 30%, var(--pd-coin-glint), var(--pd-coin) 55%, var(--pd-coin-deep));
     box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25); }
   /* Contrast themes strip gradients and shadows — keep the coin a visible ring. */
   @media (forced-colors: active) { .coin { border: 1px solid CanvasText; } }
