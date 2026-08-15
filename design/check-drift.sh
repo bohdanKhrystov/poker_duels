@@ -20,6 +20,13 @@
 #      carries a copy of canonical geometry; the copy must equal the same-id symbol in
 #      a graphics SVG, compared with XML comments stripped and whitespace runs
 #      collapsed, so an asset retune can never leave a card silently stale.
+#   6. Lockup anatomy (TASK-060114, per ADR-0033): the wordmark's em constants —
+#      gap and letter-spacing on `.mark`; width, height and the inset ring on
+#      `.mark .coin` (the 0.92em coin constant pins both axes) — are born in
+#      graphics/wordmark.html; any other card whose rules target `.coin` under
+#      `.mark` must carry the same values (values, deliberately not declaration
+#      blocks — a conformant copy folds shared-`.coin` properties in). A card
+#      copying only `.mark` stays outside the clause: the recorded residual gap.
 # Stock macOS/Linux tools only (grep -o is a BSD/GNU extension both platforms ship;
 # strict POSIX omits it).
 set -eu
@@ -163,6 +170,102 @@ extract_syms() {
 symprobe=$(printf '<symbol id="pd-x" a="1">\n  <p/> <!-- c -->\n</symbol>\n' | perl -e "$SYMEXTRACT" 2>/dev/null || true)
 [ "$symprobe" = "$(printf 'pd-x\t<symbol id="pd-x" a="1"> <p/> </symbol>\n!opens\t1')" ] \
   || { echo "check-drift: self-test failed — symbol extractor broke (perl?)" >&2; exit 1; }
+# pulls the lockup anatomy — gap and letter-spacing from every .mark rule, width,
+# height and the inset ring from every rule whose subject is .coin under .mark —
+# as one `anat-NAME=value` line each. Rules are walked block-wise (combinators,
+# compound classes and rules inside @media all count), every declaration of a
+# property is collected, and a property whose declarations disagree is reported as
+# a conflict rather than half-compared. CSS comments are stripped quote-aware so a
+# stray /* inside content cannot swallow the lockup. The ring is the fourth length
+# token of the inset layer, wherever that layer sits in a shadow list.
+ANATOMY='
+  my $src = do { local $/; <STDIN> };
+  $src =~ s/<!--.*?-->//gs;
+  # only style blocks are CSS — prose apostrophes must never flip the string tracker
+  my $css = join "", $src =~ /<style[^>]*>(.*?)<\/style>/gis;
+  $css = $src unless $src =~ /<style/i;
+  my ($out, $q, $i) = ("", "", 0);
+  while ($i < length $css) {
+    my $c = substr($css, $i, 1);
+    if ($q) { $out .= $c; $q = "" if $c eq $q; $i++; next }
+    if ($c eq "\"" || $c eq "\x27") { $q = $c; $out .= $c; $i++; next }
+    if ($c eq "/" && substr($css, $i, 2) eq "/*") {
+      my $e = index($css, "*/", $i + 2); last if $e < 0; $i = $e + 2; next;
+    }
+    $out .= $c; $i++;
+  }
+  $css = $out;
+  my ($markbody, $coinbody) = ("", "");
+  while ($css =~ /([^{}]+)\{([^{}]*)\}/gs) {
+    my ($sels, $body) = ($1, $2);
+    for my $s (split /,/, $sels) {
+      $s =~ s/^\s+|\s+$//g;
+      next if $s =~ /\@/;
+      $markbody .= ";" . $body if $s =~ /(^|[\s>+~])\.mark(\.[-\w]+)*$/;
+      $coinbody .= ";" . $body if $s =~ /(^|[\s>+~])\.mark(?![-\w])/ && $s =~ /\.coin(\.[-\w]+)*$/;
+    }
+  }
+  exit 0 if $coinbody eq "";
+  # quoted strings are opaque — a content string naming a property is not a declaration
+  for ($markbody, $coinbody) { s/"[^"]*"|\x27[^\x27]*\x27/__str__/g }
+  my $PAREN = qr/\((?:[^()]|\([^()]*\))*\)/;
+  sub decls {
+    my ($body, $prop, $paren) = @_;
+    my %seen;
+    while ($body =~ /(?<![-\w])$prop\s*:\s*((?:[^;{}()]|$paren)*)/gi) {
+      my $v = $1; $v =~ s/^\s+|\s+$//g; $v =~ s/\s+/ /g;
+      $seen{$v} = 1 if length $v;
+    }
+    return keys %seen;
+  }
+  my %v;
+  my %want = (gap => [$markbody, "gap"], track => [$markbody, "letter-spacing"],
+              width => [$coinbody, "width"], height => [$coinbody, "height"]);
+  for my $k (sort keys %want) {
+    my @d = decls(@{$want{$k}}, $PAREN);
+    if (@d > 1) { print "conflict=$k\n"; exit 0 }
+    $v{$k} = $d[0] if @d;
+  }
+  my @sh = decls($coinbody, "box-shadow", $PAREN);
+  if (@sh > 1) { print "conflict=ring\n"; exit 0 }
+  if (@sh) {
+    # any inset layer may carry the ring — take the first that yields a 4th length
+    for my $layer (split /,(?![^(]*\))/, $sh[0]) {
+      next unless $layer =~ /\binset\b/i;
+      my @tok = $layer =~ /((?:[^\s()]|$PAREN)+)/g;
+      my @len = grep { !/^inset$/i && !/^(#|rgba?\(|hsla?\(|var\()/i } @tok;
+      if (@len >= 4) { $v{ring} = $len[3]; last }
+    }
+  }
+  my @missing = grep { !defined $v{$_} } qw(gap track width height ring);
+  if (@missing) { print "missing=@missing\n"; exit 0 }
+  print "anat-$_=$v{$_}\n" for qw(gap track width height ring);
+'
+anat_probe=$(printf '%s\n' \
+  '/* c */ .other { gap: 9em; }' \
+  '.mark { row-gap: 0; gap: 1em; letter-spacing: 2em /* tail */ }' \
+  '@media (x) { .mark > .coin.big { WIDTH: 3em } }' \
+  '.mark .coin { min-width: 9em; width: 3em; height: 5em;' \
+  '  box-shadow: 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 4em rgba(255,255,255,.25); }' \
+  | perl -e "$ANATOMY" 2>/dev/null || true)
+[ "$anat_probe" = "$(printf 'anat-gap=1em\nanat-track=2em\nanat-width=3em\nanat-height=5em\nanat-ring=4em')" ] \
+  || { echo "check-drift: self-test failed — anatomy extractor broke (perl?)" >&2; exit 1; }
+# the error arms are load-bearing too: prove conflict and missing still report
+cprobe=$(printf '.mark { gap: 1em; letter-spacing: 1em; }\n.mark .coin { width: 1em; width: 2em; }\n' | perl -e "$ANATOMY" 2>/dev/null || true)
+[ "$cprobe" = "conflict=width" ] \
+  || { echo "check-drift: self-test failed — a conflicting lockup copy went unreported" >&2; exit 1; }
+mprobe=$(printf '.mark .coin { width: 1em; }\n' | perl -e "$ANATOMY" 2>/dev/null || true)
+case "$mprobe" in
+  missing=*ring*) : ;;
+  *) echo "check-drift: self-test failed — an incomplete lockup copy went unreported" >&2; exit 1 ;;
+esac
+WORDMARK="$DIR/graphics/wordmark.html"
+canon_anat_file=$(mktemp)
+perl -e "$ANATOMY" < "$WORDMARK" > "$canon_anat_file" 2>/dev/null \
+  || { echo "check-drift: anatomy extraction failed on $WORDMARK" >&2; exit 1; }
+grep -q '^anat-gap=' "$canon_anat_file" \
+  || { echo "check-drift: could not read the lockup anatomy from $WORDMARK — the canonical broke ($(cat "$canon_anat_file"))" >&2; exit 1; }
+
 canon_syms=$(mktemp)
 canon_fail=0
 for g in $(find "$DIR/graphics" -name '*.svg' 2>/dev/null | sort); do
@@ -180,6 +283,7 @@ fail=0
 mentions=0
 files=0
 syms_total=0
+anat_copies=0
 for f in $(find "$DIR" -name '*.html' | sort); do
   files=$((files + 1))
   for name in $(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$f" | sort -u); do
@@ -202,6 +306,30 @@ for f in $(find "$DIR" -name '*.html' | sort); do
       echo "check-drift: value comparison failed on $f (awk error)" >&2; fail=1; bad=""
     }
     if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
+  fi
+
+  # a card whose rules target .coin under .mark copies the lockup — its anatomy
+  # values must equal the canonical's, constant by constant
+  if [ "$f" != "$WORDMARK" ]; then
+    st=0; anat=$(perl -e "$ANATOMY" < "$f" 2>/dev/null) || st=$?
+    if [ "$st" -ne 0 ]; then
+      echo "check-drift: anatomy extraction failed ($st) on $f" >&2; fail=1; anat=""
+    fi
+    case "$anat" in
+      "") : ;;
+      missing=*) echo "check-drift: $f copies the lockup but lacks: ${anat#missing=}" >&2; fail=1 ;;
+      conflict=*) echo "check-drift: $f declares ${anat#conflict=} more than once with disagreeing values in its lockup copy" >&2; fail=1 ;;
+      *)
+        bad=$(printf '%s\n' "$anat" | awk -v f="$f" '
+          NR == FNR { eq = index($0, "="); if (eq) c[substr($0, 1, eq - 1)] = substr($0, eq + 1); next }
+          { eq = index($0, "="); nm = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+            if (nm in c && c[nm] != v)
+              printf "check-drift: %s copies the lockup %s as %s, but the canonical carries %s\n", f, substr(nm, 6), v, c[nm] }
+        ' "$canon_anat_file" -) || { echo "check-drift: anatomy comparison failed on $f (awk error)" >&2; fail=1; bad=""; }
+        if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1
+        else anat_copies=$((anat_copies + 1)); fi
+      ;;
+    esac
   fi
 
   # inlined pd- symbol blocks must equal their same-id canonicals
@@ -263,4 +391,5 @@ done
 # an empty tree must fail as loudly as a missing sheet — a vacuous pass guards nothing
 [ "$files" -gt 0 ] || { echo "check-drift: no cards found under $DIR" >&2; exit 1; }
 if [ "$fail" -ne 0 ]; then exit 1; fi
-echo "check-drift: tokens resolve, values match the sheet, suits carry U+FE0E, $pairs_total graphics pairs and $syms_total inlined symbols mirror truly ($mentions distinct mentions across $files cards)"
+[ "$anat_copies" -eq 1 ] && copyword=copy || copyword=copies
+echo "check-drift: tokens resolve, values match the sheet, suits carry U+FE0E, $pairs_total graphics pairs and $syms_total inlined symbols mirror truly, and the lockup anatomy holds across $anat_copies $copyword ($mentions distinct mentions across $files cards)"
