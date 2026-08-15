@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030714
 title: The refusal sentence stops when the server next speaks
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: S

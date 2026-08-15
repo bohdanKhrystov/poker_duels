@@ -737,8 +737,8 @@ new scope:
 | | [TASK-030711](tasks/TASK-030711-the-duel-screen-puts-the-bar-under-the-table.md) The duel screen puts the bar under the table and sends what it built | S | **done** |
 | | [TASK-030712](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) A rejection leaves the decision point open (store half, `ADR-0043`) | S | **done** |
 | | [TASK-030713](tasks/TASK-030713-the-bar-comes-back-after-a-rejection.md) The bar comes back after a rejection, at the same decision point (bar half, `ADR-0043`) | S | **done** |
-| | [TASK-030714](tasks/TASK-030714-the-refusal-sentence-stops-when-the-server-next-speaks.md) The refusal sentence stops when the server next speaks | S | ready |
-| | [TASK-030715](tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) The derivation guards read the numbers that reach the DOM as attributes | S | backlog |
+| | [TASK-030714](tasks/TASK-030714-the-refusal-sentence-stops-when-the-server-next-speaks.md) The refusal sentence stops when the server next speaks | S | **done** |
+| | [TASK-030715](tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) The derivation guards read the numbers that reach the DOM as attributes | S | ready |
 | | [TASK-030716](tasks/TASK-030716-a-rejection-leaves-the-act-identity-valid.md) The server proves a rejection leaves the client's Act identity valid | S | backlog |
 | [STORY-0308](stories/STORY-0308-result-screen.md) | The result screen — who won, and the coin | backlog |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen | **blocked** |
