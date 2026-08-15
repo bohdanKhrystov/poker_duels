@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030616
 title: The table names no card the view did not send, and no hand
 type: task
-status: ready
+status: done
 parent: STORY-0306
 module: web-client
 estimate: S
