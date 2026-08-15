@@ -459,14 +459,27 @@ parallel with `EPIC-02`; no shared file.
 
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
-| DEC-001 | What exactly is one duel? | [`docs/duel-rules.md`](../docs/duel-rules.md) | before v0.2 |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-025 | **Product.** Is an account ever required to play, or is anonymous play permanent? `ADR-0012` makes a device profile the default and `EPIC-04` keeps it — but nothing says whether an account is optional forever, prompted after a first win, or mandatory at some point | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before EPIC-04 closes |
-| DEC-030 | **Product.** After a player attaches a credential, may the device id that created the profile still sign in without it — forever, until revoked, or not at all? ADR-0030 never rewrites `player.device_id`, so today it is *forever* by construction | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before the account screens ship |
-| DEC-031 | **Product.** May a player ever sign in with a third-party account (Google, Apple), or is a handle and password the only credential? ADR-0027's `credential.kind` makes adding one additive, so this blocks nothing today | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before v0.2 ships accounts |
-| DEC-029 | **Product.** May a player delete their account, and what happens to the opponent's history lines that reference it? Nothing is built either way; the question is asked now so the credential schema does not silently foreclose an answer, as `ADR-0021` refused to do with `UNIQUE` | [`EPIC-04`](epics/EPIC-04-identity-and-profiles.md) | before STORY-0403 lands the schema |
 
-**Answered.** `DEC-035` → [`ADR-0034`](../docs/adr/ADR-0034-the-value-gate-reads-css-string-aware.md)
+**Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
+answered, each recorded as its own ADR. `DEC-001` →
+[`ADR-0035`](../docs/adr/ADR-0035-a-duel-is-a-freezeout.md) (a duel is a freezeout; the numbers
+stay configuration). `DEC-025` →
+[`ADR-0036`](../docs/adr/ADR-0036-an-account-is-offered-never-required.md) (never required —
+anonymous play stays fully ranked, and an account is offered after a first win, dismissibly).
+`DEC-030` → [`ADR-0037`](../docs/adr/ADR-0037-the-device-is-a-credential-until-revoked.md) (the
+device signs in until the player revokes it). `DEC-017` →
+[`ADR-0038`](../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) (a
+blocklist screens, an operator may take a name away, and a name taken away is retired forever —
+unblocking `STORY-0410`). `DEC-029` →
+[`ADR-0039`](../docs/adr/ADR-0039-v01-offers-no-account-deletion.md) (no deletion in v0.1, with
+the schema forbidden from foreclosing one). `DEC-009` →
+[`ADR-0040`](../docs/adr/ADR-0040-a-duel-may-be-watched-without-hole-cards.md) (a duel may be
+watched live, minus every hole card, through a third projection in the engine). `DEC-031` →
+[`ADR-0041`](../docs/adr/ADR-0041-a-handle-and-a-password-are-the-only-credential.md) (handle and
+password only, for now, and the account screens are designed for one credential).
+
+`DEC-035` → [`ADR-0034`](../docs/adr/ADR-0034-the-value-gate-reads-css-string-aware.md)
 (the value gate reads CSS regions string-aware, and refuses by name any shape it cannot read
 rather than returning a partial set). The ADR left this row for the driver to strike and seven
 board PRs passed without it — a deferred strike is a strike nobody owns.

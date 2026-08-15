@@ -112,36 +112,40 @@ are authored when the epic opens.
 | --- | --- | --- | --- |
 | STORY-0401 | `player.display_name` and the write path | — | *not written* |
 | STORY-0402 | The read path carries the display name | 0401 | *not written* |
-| STORY-0403 | Credentials: storage and hashing | — | *blocked* (`DEC-027`, `DEC-028`) |
-| STORY-0404 | Sign-up: an account for a profile | 0403 | *blocked* (`DEC-027`) |
-| STORY-0405 | Sign-in, the session, and what the socket presents | 0404 | *blocked* (`DEC-028`) |
+| STORY-0403 | Credentials: storage and hashing | — | *not written* |
+| STORY-0404 | Sign-up: an account for a profile | 0403 | *not written* |
+| STORY-0405 | Sign-in, the session, and what the socket presents | 0404 | *not written* |
 | STORY-0406 | The claim: credentials attach to the profile already here | 0405 | *not written* |
-| STORY-0407 | Recovery: signing in from a device that has never been seen | 0406 | *blocked* (`DEC-026`) |
+| STORY-0407 | Recovery: signing in from a device that has never been seen | 0406 | *not written* |
 | STORY-0408 | Duel history, paged over the whole record | 0402 | *not written* |
 | STORY-0409 | History filters and search | 0408 | *not written* |
-| STORY-0410 | The display-name product rules | 0401 | *blocked* (`DEC-017`) |
+| STORY-0410 | The display-name product rules | 0401 | *not written* |
 | STORY-0411 | The name in the client: shown, and settable | 0402 | *not written* |
 | STORY-0412 | The account screens: sign up, sign in, claim | 0406, 0411 | *not written* |
 | STORY-0413 | The history screen: pages, filters, search | 0409, 0411 | *not written* |
 | STORY-0414 | Claimed here, recovered there, end to end | 0407, 0412, 0413 | *not written* |
+| STORY-0415 | The offer: an account after a first win, dismissed for good | 0412 | *not written* |
 
 ## What can run in parallel
 
-The honest headline first: **this epic starts decision-starved.** Exactly one story is startable
-without an answer from someone — `STORY-0401`, which builds a shape `ADR-0021` already fixed in
-full. Everything credential-shaped waits on `DEC-027` and `DEC-028`, and no amount of ticket
-writing moves that.
+The honest headline has changed: **this epic is no longer decision-starved.** It was written
+when six of its seven decisions were open, and the scheduling advice below was shaped by that.
+All seven are now answered (see *Open decisions*), so every story here is startable in dependency
+order and nothing waits on a human.
 
-Once those two land, there are two long branches that share no file:
+There are two long branches that share no file:
 
 - **The credential chain** — `0403 → 0404 → 0405 → 0406 → 0407` — lives in new auth files plus the
   handshake `STORY-0405` owns.
 - **The name-and-history chain** — `0401 → 0402 → 0408 → 0409` — touches the migration chain,
   `RECENT_DUELS_SQL` and the profile DTOs, and nothing the credential chain opens.
 
-They meet only at `STORY-0414`. `STORY-0410` is a leaf hanging off `0401`, blocked on `DEC-017`,
-and its being blocked stalls nothing. Each client story pairs with its server half and can be
-worked as soon as that half merges.
+They meet only at `STORY-0414`. `STORY-0410` is a leaf hanging off `0401` and is now unblocked
+by [`ADR-0038`](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md),
+which gives it three pieces of work rather than one: the blocklist on the write path, the
+operator force-rename, and the retired-name set that uniqueness must also consult. `STORY-0415`
+is a second leaf, hanging off `0412`, since an offer to make an account needs the screen it opens.
+Each client story pairs with its server half and can be worked as soon as that half merges.
 
 And the non-parallelism, recorded so nobody tries to break it:
 
@@ -151,20 +155,31 @@ And the non-parallelism, recorded so nobody tries to break it:
 - `0412` and `0413` both extend `EPIC-03`'s store and screen shell, so they queue behind `0411`
   rather than beside it.
 
-**Critical path:** `DEC-027`/`DEC-028` → `0403 → 0404 → 0405 → 0406 → 0407 → 0412 → 0414`. It
-begins with a decision rather than a ticket, which is the single most useful thing to know about
-scheduling this epic.
+**Critical path:** `0403 → 0404 → 0405 → 0406 → 0407 → 0412 → 0414`. It begins with a ticket now,
+not a decision — which is the single most useful thing that changed about scheduling this epic.
+
+Two answers add work inside stories already listed, rather than new stories:
+[`ADR-0037`](../../docs/adr/ADR-0037-the-device-is-a-credential-until-revoked.md) puts a revoke
+path and a session rule into `0406`/`0412`, and
+[`ADR-0039`](../../docs/adr/ADR-0039-v01-offers-no-account-deletion.md) constrains `0403`'s schema
+without adding a story.
 
 ## Open decisions
 
-| ID | Question | For | Blocks |
-| --- | --- | --- | --- |
-| `DEC-025` | Is an account ever required, or is anonymous play permanent? | the human | nothing structurally — it decides whether a fifteenth story exists |
-| `DEC-026` | What does a claim convert, and what happens when a device that already has an anonymous profile with coins signs into a different existing account? | the human | `STORY-0407` |
-| `DEC-027` | Does an account carry an email address, what may it be used for, and can a password be recovered without one? | the human | `STORY-0403`, `STORY-0404` |
-| `DEC-028` | What is the credential, session and handshake model once a device id is no longer the only credential? | architect | `STORY-0403`, `STORY-0405`, and therefore the whole credential chain |
-| `DEC-029` | May a player delete their account, and what happens to the opponent's history lines that reference it? | the human | nothing here — the epic builds no deletion, and must only avoid foreclosing an answer |
-| `DEC-017` | The display-name product rules — uniqueness, renaming, the unset fallback, moderation | the human | `STORY-0410` only. `ADR-0021`'s shape ships without it |
+**None.** Every decision this epic was blocked on has been answered. They are kept here with
+their answers because the epic's story table still cites them, and because what each ADR
+*constrains* is this epic's work.
+
+| ID | Answered by | What it means here |
+| --- | --- | --- |
+| `DEC-025` | [ADR-0036](../../docs/adr/ADR-0036-an-account-is-offered-never-required.md) | Never required; anonymous play stays fully ranked. The fifteenth story **does** exist: the client offers an account after a first win, dismissible permanently. Nothing else in the epic gates on identity |
+| `DEC-026` | [ADR-0030](../../docs/adr/ADR-0030-a-claim-adds-a-credential-and-moves-nothing.md) | A claim attaches a credential to the `player` row already resolved — no second profile, no copied `duel_result`, no `UPDATE player`. Unblocks `STORY-0407` |
+| `DEC-027` | [ADR-0031](../../docs/adr/ADR-0031-an-optional-verified-recovery-email.md) | An optional, **verified-only** recovery email in its own table, feeding a single-use one-hour reset token; sign-in is by a lowercase handle, never the display name. Unblocks `STORY-0403`, `STORY-0404` |
+| `DEC-028` | [ADR-0027](../../docs/adr/ADR-0027-the-session-outranks-the-device-id.md) | A session token outranks a device id and never falls back to it; stored as SHA-256, 30-day absolute expiry. `PROTOCOL_VERSION` moves to 3 once, in `STORY-0405`. Unblocks the whole credential chain |
+| `DEC-029` | [ADR-0039](../../docs/adr/ADR-0039-v01-offers-no-account-deletion.md) | No deletion in v0.1 — but `STORY-0403`'s schema **may not foreclose one**, which forbids denormalising a display name into `duel_result`. The history read path keeps joining for it |
+| `DEC-030` | [ADR-0037](../../docs/adr/ADR-0037-the-device-is-a-credential-until-revoked.md) | The device signs in until the player revokes it. Adds a revoke path, a settings affordance and a session rule to `STORY-0406`/`STORY-0412`; the account screens must state which routes are live |
+| `DEC-031` | [ADR-0041](../../docs/adr/ADR-0041-a-handle-and-a-password-are-the-only-credential.md) | Handle and password only. `STORY-0412`'s screens are designed for one credential — no provider row |
+| `DEC-017` | [ADR-0038](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) | A blocklist screens at set time, an operator may force-rename, and a taken name is **retired forever**. Uniqueness gains two more sources of truth. Unblocks `STORY-0410` |
 
 `ADR-0012` is **not** open: anonymous device-bound profiles stay, and this epic adds identity on
 top of them rather than replacing them. `ADR-0021` is **not** open either — the display name's
