@@ -1,7 +1,8 @@
 ---
 name: architect
 description: Answers one open technical decision (DEC-NNN) by writing the ADR that settles it. Decides how things are built, never what gets built.
-model: fable
+model: opus
+effort: max
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
