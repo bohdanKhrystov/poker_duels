@@ -42,6 +42,28 @@ describe("a card string", () => {
     expect(cardText("Ax")).toBeNull();
     expect(cardText("as")).toBeNull();
   });
+
+  it("draws each suit in text presentation, not as an emoji", () => {
+    // Deliberately not compared against a glyph literal. Every other assertion
+    // in this file compares one literal to another, so a variation selector
+    // dropped from the source and the expectation together is invisible to all
+    // of them — the two have a common cause. Codepoints do not.
+    const VARIATION_SELECTOR_15 = 0xfe0e;
+    const SUIT_CHARACTERS: Record<string, number> = {
+      s: 0x2660,
+      h: 0x2665,
+      d: 0x2666,
+      c: 0x2663,
+    };
+
+    for (const [suit, character] of Object.entries(SUIT_CHARACTERS)) {
+      const glyph = cardText(`A${suit}`)?.suit ?? "";
+      expect([...glyph].map((c) => c.codePointAt(0))).toEqual([
+        character,
+        VARIATION_SELECTOR_15,
+      ]);
+    }
+  });
 });
 
 describe("a card's spoken name", () => {
