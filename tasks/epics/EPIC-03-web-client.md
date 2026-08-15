@@ -60,13 +60,13 @@ inventing colours ([`ADR-0024`](../../docs/adr/ADR-0024-design-follows-the-code-
 | --- | --- |
 | Any change to the server, the protocol, or the rules | Nowhere in this epic. A client that needs a new frame raises a decision (`DEC-023`) rather than editing Kotlin |
 | Deciding the visual language — palette, type, the table's composition | EPIC-06. This epic consumes `design/tokens/tokens.css` and the screen designs; it authors none |
-| Accounts, the claim flow, display names | EPIC-04. No name is on the wire today, so no name is rendered — see `DEC-017` |
+| Accounts, the claim flow, display names | EPIC-04. No name is on the wire today, so no name is rendered — see [`ADR-0038`](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) |
 | Leaderboard, seasons, ratings | EPIC-05 |
 | Replay viewer, equity, decision quality | EPIC-08 |
 | Hosting, TLS, serving the built assets in production, Docker | EPIC-07. This epic builds a bundle and runs a dev server; delivering it is not its problem |
 | A bot driving the client | EPIC-09 |
-| Spectating | `DEC-009`, unanswered, and no `PlayerView` exists for a third party |
-| What a player is shown while the opponent is away | `DEC-018`, the human's, unanswered. Nothing in this epic renders a pause state |
+| Spectating | [`ADR-0040`](../../docs/adr/ADR-0040-a-duel-may-be-watched-without-hole-cards.md) settles the shape — live, minus every hole card — but no `PlayerView` exists for a third party and no epic owns building one |
+| What a player is shown while the opponent is away | Answered by [`ADR-0028`](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) after this epic was written; `STORY-0310` renders the pause state |
 | Sound, chip animation, celebration | Later. The event log lands in the store here and drives nothing yet |
 | Internationalisation, an accessibility audit, a native mobile app | Later. The client is English, dark, and follows whatever responsive layout EPIC-06's designs give it |
 
@@ -136,13 +136,21 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
+**Two remain, both the architect's.** No decision here waits on a human.
+
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
-| `DEC-022` | What is the `web-client` toolchain, and how do its checks enter CI? | architect | `STORY-0301`, and therefore all of it |
 | `DEC-023` | How does a rematch reach the server, given the wire carries no rematch message? | architect | `STORY-0309` only |
-| `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a thirteenth story exists |
-| `DEC-018` | What does a player see while the duel is paused around them? | the human | nothing here — the epic renders no pause state until it is answered |
-| `DEC-017` | The display-name product rules | the human | nothing here — no name is on the wire, so `STORY-0311` renders none |
+| `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a thirteenth story exists — but it is due **before this epic closes** |
+
+### Answered since this epic was written
+
+| ID | Answered by | What it means here |
+| --- | --- | --- |
+| `DEC-022` | [ADR-0026](../../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md) | Vite + npm on Node 24, Vitest, ESLint + Prettier, and a parallel `client` CI job. `STORY-0301` shipped on it |
+| `DEC-018` | [ADR-0028](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) | `OpponentPresence` carries PRESENT/AWAY/ABSENT with a countdown the client renders but never acts on, and `ActedForAbsentSeat` marks every action taken for an absent seat. `STORY-0310` renders a pause state after all |
+| `DEC-017` | [ADR-0038](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) | Still nothing here — the rules are set-time and operator-side, and `STORY-0311` renders whatever name the wire carries |
+| `DEC-009` | [ADR-0040](../../docs/adr/ADR-0040-a-duel-may-be-watched-without-hole-cards.md) | Spectating stays out of scope for this epic, but is no longer undecided: live, minus every hole card, through a third projection in the engine |
 
 `ADR-0003` is **not** open: React, TypeScript and Tailwind are settled and `DEC-022` does not
 reopen them.

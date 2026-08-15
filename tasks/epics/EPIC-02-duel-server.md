@@ -127,8 +127,12 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 | ID | Question | Blocks |
 | --- | --- | --- |
-| `DEC-007` | How is the TypeScript generated from the Kotlin protocol, and what stops the checked-in output drifting? | `STORY-0203` only |
-| `DEC-008` | Is the full `MatchLog` persisted in v0.1, and where? | nothing; out of scope for `STORY-0209` until answered |
+| `DEC-008` | Is the full `MatchLog` persisted in v0.1, and where — a column, a table per hand, or object storage? | nothing; out of scope for `STORY-0209` until answered. Due before `EPIC-08` |
+
+`DEC-007` is **answered**, by
+[`ADR-0020`](../../docs/adr/ADR-0020-typescript-protocol-from-serial-descriptors.md): an emitter
+we own over the `SerialDescriptor`s, with a byte-comparing verify task failing CI on drift.
+`STORY-0203` shipped on it.
 
 The coin economy is **not** open: [`ADR-0014`](../../docs/adr/ADR-0014-duel-coin-economy.md)
 settles it. Winner `+1`, loser `−1`, draw nothing, balance `= wins − losses` and **may be
