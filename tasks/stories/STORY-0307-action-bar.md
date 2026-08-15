@@ -70,18 +70,23 @@ ticket.
 | [TASK-030709](../tasks/TASK-030709-the-bar-states-what-the-server-refused.md) | The bar states what the server refused, and retries nothing | backlog |
 | [TASK-030710](../tasks/TASK-030710-the-bar-shows-no-number-and-offers-no-action-the-turn-did-not-carry.md) | The bar shows no number and offers no action the turn did not carry | backlog |
 | [TASK-030711](../tasks/TASK-030711-the-duel-screen-puts-the-bar-under-the-table.md) | The duel screen puts the bar under the table and sends what it built | backlog |
-| [TASK-030712](../tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) | After a rejection the player can act again | blocked (`DEC-037`) |
+| [TASK-030712](../tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) | A rejection leaves the decision point open (store half) | backlog |
 
-### The one decision the split could not take
+### The one decision the split could not take, now answered
 
-**`DEC-037` — after a `Rejected`, is the decision point still open on the client, and when does a
-rejection stop being shown?** The architect's. `DuelAction.act` returns only the `Rejected` frame,
-so no fresh `YourTurn` follows one; `duel-state.ts` clears `pendingTurn` on `Rejected`
-(`TASK-030404` pins it) and never clears `rejection`. Together those mean a rejected action ends the
-player's hand and leaves its sentence on screen for the rest of the duel. Three shapes answer it and
-they are not equivalent — reducer, component, or a server re-prompt this epic forbids itself — so
-this story's **fifth acceptance criterion is unmet until `TASK-030712` unblocks**. Everything else
-ships without it.
+**`DEC-037` → [`ADR-0043`](../../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md).** A
+`Rejected` closes nothing: the engine's rejection changes no state, so `handNumber`, the hand's last
+`ActionOn` and `seatToAct` are all unchanged and `guard` still accepts the very identity the client
+holds. The reducer therefore keeps `pendingTurn` through a `Rejected`, clears `rejection` on the
+next `YourTurn`, `Snapshot` or `DuelFinished`, and counts refusals in a new `DuelState.rejectionCount`
+so that the bar's remount key — `TASK-030707`'s reset mechanism — lifts the in-flight lock by
+unmounting `Live`. **No server change and no protocol change.**
+
+The fix is five files, two more than a schema-2 ticket may touch, so it lands as two:
+`TASK-030712` is the **store half** (`duel-state.ts`, `duel-state.test.ts`), and the **bar half**
+(`ActionBar.tsx`, `ActionBar.test.tsx`, `Lobby.tsx`) is a sibling ticket the planner files from the
+ADR. This story's **fifth acceptance criterion closes when both land**; the other eleven tickets
+ship without either.
 
 ### Five decisions the split made, recorded as chosen rather than found
 
@@ -118,8 +123,9 @@ ships without it.
       cannot be submitted from the control.
 - [ ] With no pending turn, every control is disabled and no frame is sent by any click.
 - [ ] `Rejected{AmountTooSmall}` renders the server's `minimum` and re-enables the bar; a second
-      action can then be sent. *(Rendering: `TASK-030709`. Re-enabling: blocked on `DEC-037`,
-      `TASK-030712`.)*
+      action can then be sent. *(Rendering: `TASK-030709`. Keeping the decision point open and
+      clearing the sentence: `TASK-030712`. Re-enabling the controls: the bar half `ADR-0043` names,
+      which the planner files.)*
 - [ ] `Failure{DUEL_PAUSED}` sends nothing further and shows that the action was not applied.
 
 ## Out of scope

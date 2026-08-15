@@ -467,7 +467,6 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-037 | **The architect's** — after a `Rejected`, is the decision point still open on the client, and when does a rejection stop being shown? The server sends no fresh `YourTurn` after one and `duel-state.ts` clears `pendingTurn`, so one rejected action ends that player's hand with both players still connected | [`TASK-030712`](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) | before STORY-0307 closes |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -486,6 +485,13 @@ the schema forbidden from foreclosing one). `DEC-009` →
 watched live, minus every hole card, through a third projection in the engine). `DEC-031` →
 [`ADR-0041`](../docs/adr/ADR-0041-a-handle-and-a-password-are-the-only-credential.md) (handle and
 password only, for now, and the account screens are designed for one credential).
+
+`DEC-037` → [`ADR-0043`](../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md)
+(a `Rejected` closes no decision point: the reducer keeps `pendingTurn`, clears `rejection` on the
+next `YourTurn`, `Snapshot` or `DuelFinished`, and counts refusals so the bar's existing remount key
+lifts its in-flight lock. The server is not changed — `guard` proves the identity the client already
+holds is still valid after a rejection. Five files exceed one schema-2 ticket, so `TASK-030712` is
+the store half and the bar half is a sibling the planner files).
 
 `DEC-035` → [`ADR-0034`](../docs/adr/ADR-0034-the-value-gate-reads-css-string-aware.md)
 (the value gate reads CSS regions string-aware, and refuses by name any shape it cannot read
@@ -611,10 +617,14 @@ because `BettingRules` offers it in almost every legal set; the `−`/`+` steppe
 input because no increment is on the wire and inventing one would be a raising rule; and the three
 pot-fraction sizing chips go, because they are the bet presets the story puts out of scope.
 
-**`DEC-037` blocks the twelfth ticket only.** After a `Rejected` the server sends no fresh
-`YourTurn` and the reducer clears `pendingTurn`, so a rejected action currently ends that player's
-hand while both players are still connected. Which layer reopens it is the architect's, and eleven
-tickets ship without the answer.
+**`DEC-037` is answered** by
+[`ADR-0043`](../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md): a `Rejected` closes no
+decision point, so the reducer keeps `pendingTurn`, clears `rejection` on the next `YourTurn`,
+`Snapshot` or `DuelFinished`, and counts refusals in a new `rejectionCount` that the bar's remount
+key consumes. No server or protocol change. The fix is five files, which is two files more than a
+schema-2 ticket may touch, so `TASK-030712` is now the **store half** and the **bar half** —
+`ActionBar.tsx`, `ActionBar.test.tsx`, `Lobby.tsx` — is a sibling ticket the planner files from the
+ADR. `STORY-0307`'s fifth acceptance criterion closes when both land.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -709,7 +719,7 @@ tickets ship without the answer.
 | | [TASK-030709](tasks/TASK-030709-the-bar-states-what-the-server-refused.md) The bar states what the server refused, and retries nothing | S | backlog |
 | | [TASK-030710](tasks/TASK-030710-the-bar-shows-no-number-and-offers-no-action-the-turn-did-not-carry.md) The bar shows no number and offers no action the turn did not carry | S | backlog |
 | | [TASK-030711](tasks/TASK-030711-the-duel-screen-puts-the-bar-under-the-table.md) The duel screen puts the bar under the table and sends what it built | S | backlog |
-| | [TASK-030712](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) After a rejection the player can act again | S | **blocked** (`DEC-037`) |
+| | [TASK-030712](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) A rejection leaves the decision point open (store half, `ADR-0043`) | S | backlog |
 | [STORY-0308](stories/STORY-0308-result-screen.md) | The result screen — who won, and the coin | backlog |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen | **blocked** |
 | [STORY-0310](stories/STORY-0310-reconnect-and-resume.md) | Reconnect — the client resumes its seat | backlog |

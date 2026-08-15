@@ -116,7 +116,7 @@ python3 scripts/notify/notify.py report                       # print, do not se
 python3 scripts/notify/notify.py send "text"                  # or pipe on stdin
 python3 scripts/notify/notify.py heartbeat [--force]          # send if a window has passed
 python3 scripts/notify/notify.py stop --reason "…"
-python3 scripts/notify/notify.py blocked --decision DEC-037 --question "…"
+python3 scripts/notify/notify.py blocked --decision DEC-NNN --question "…"
 python3 scripts/notify/notify.py budget --cron-armed armed|not-armed|unknown
 python3 scripts/notify/notify.py state --epic EPIC-11 --epics EPIC-11,EPIC-03 --cron-armed armed
 python3 scripts/notify/notify.py doctor                       # the loud one

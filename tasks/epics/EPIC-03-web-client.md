@@ -136,13 +136,12 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
-**Three remain, all the architect's.** No decision here waits on a human.
+**Two remain, both the architect's.** No decision here waits on a human.
 
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
 | `DEC-023` | How does a rematch reach the server, given the wire carries no rematch message? | architect | `STORY-0309` only |
 | `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a thirteenth story exists — but it is due **before this epic closes** |
-| `DEC-037` | After a `Rejected`, is the decision point still open on the client, and when does a rejection stop being shown? The server sends no fresh `YourTurn` after one and the reducer clears `pendingTurn`, so today a rejected action ends that player's hand | architect | `TASK-030712` only; `STORY-0307`'s other eleven tickets ship without it |
 
 ### Answered since this epic was written
 
@@ -152,6 +151,7 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 | `DEC-018` | [ADR-0028](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) | `OpponentPresence` carries PRESENT/AWAY/ABSENT with a countdown the client renders but never acts on, and `ActedForAbsentSeat` marks every action taken for an absent seat. `STORY-0310` renders a pause state after all |
 | `DEC-017` | [ADR-0038](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) | Still nothing here — the rules are set-time and operator-side, and `STORY-0311` renders whatever name the wire carries |
 | `DEC-009` | [ADR-0040](../../docs/adr/ADR-0040-a-duel-may-be-watched-without-hole-cards.md) | Spectating stays out of scope for this epic, but is no longer undecided: live, minus every hole card, through a third projection in the engine |
+| `DEC-037` | [ADR-0043](../../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md) | A `Rejected` closes no decision point. The reducer keeps `pendingTurn`, clears `rejection` on the next `YourTurn`, `Snapshot` or `DuelFinished`, and counts refusals in a new `rejectionCount` the bar's remount key consumes. **This epic's self-imposed "no server, no protocol change" holds** — `guard` already accepts the identity the client holds after a rejection, so nothing on the wire moves. The fix is five files, so `TASK-030712` is the store half and the bar half is a sibling ticket |
 
 `ADR-0003` is **not** open: React, TypeScript and Tailwind are settled and `DEC-022` does not
 reopen them.
