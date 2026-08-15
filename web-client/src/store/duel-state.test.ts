@@ -373,6 +373,38 @@ describe("the duel state", () => {
     });
   });
 
+  it("a new turn does not reset the rejection count", () => {
+    const stateAfterFirstRejection = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 4, minimum: 15 },
+      },
+    );
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 5,
+      minRaiseTo: 10,
+      allInTo: 200,
+    };
+    const stateWithNewTurn = duelState.applyServerMessage(
+      stateAfterFirstRejection,
+      {
+        type: "YourTurn",
+        handNumber: 5,
+        actionSequence: 2,
+        legalActions,
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithNewTurn, {
+      type: "Rejected",
+      rejection: { type: "AmountTooSmall", attempted: 6, minimum: 15 },
+    });
+    expect(state.rejectionCount).toBe(2);
+  });
+
   it("surfaces the rejection exactly as the server sent it", () => {
     const rejection = {
       type: "AmountTooSmall",
