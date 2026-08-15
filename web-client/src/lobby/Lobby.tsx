@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useSend } from "../store/duel-provider";
+import { DuelTable } from "../table/DuelTable";
 import { normalizeRoomCode, roomLink } from "./room-link";
 
 /** The first screen: open a duel room, or join one by the code on the invite. */
@@ -13,7 +14,7 @@ export function Lobby(): ReactElement {
   // The first Snapshot is how the host learns the guest arrived: seating the
   // guest starts the duel, and there is no "opponent joined" frame to wait for.
   if (state.view !== null) {
-    return <p>The duel has begun.</p>;
+    return <DuelTable view={state.view} />;
   }
 
   if (state.roomCode !== null) {
