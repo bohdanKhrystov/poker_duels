@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030608
 title: A PlayerView fixture with every field the wire declares
 type: task
-status: backlog
+status: ready
 parent: STORY-0306
 module: web-client
 estimate: S
