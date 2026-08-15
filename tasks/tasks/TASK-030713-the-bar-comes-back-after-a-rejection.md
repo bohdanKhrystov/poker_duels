@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030713
 title: The bar comes back after a rejection, at the same decision point
 type: task
-status: backlog
+status: ready
 parent: STORY-0307
 module: web-client
 estimate: S

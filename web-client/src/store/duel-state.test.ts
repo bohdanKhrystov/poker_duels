@@ -43,6 +43,7 @@ describe("the duel state", () => {
       pendingTurn: null,
       narration: [],
       rejection: null,
+      rejectionCount: 0,
       outcome: null,
       refusal: null,
     });
@@ -220,7 +221,68 @@ describe("the duel state", () => {
     expect(state.view?.seats[1]?.holeCards).toEqual(["2c", "7h"]);
   });
 
-  it("a rejected action clears the pending turn", () => {
+  it("a rejected action leaves the decision point open", () => {
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET", "RAISE"],
+      callTo: 0,
+      minBetTo: 15,
+      minRaiseTo: 30,
+      allInTo: 150,
+    };
+    const stateWithPendingTurn = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "YourTurn",
+        handNumber: 1,
+        actionSequence: 1,
+        legalActions,
+      },
+    );
+    const rejection = {
+      type: "AmountTooSmall",
+      attempted: 5,
+      minimum: 10,
+    } as const;
+    const state = duelState.applyServerMessage(stateWithPendingTurn, {
+      type: "Rejected",
+      rejection,
+    });
+    expect(state.pendingTurn).toEqual({
+      handNumber: 1,
+      actionSequence: 1,
+      legalActions,
+    });
+    expect(state.rejection).toEqual(rejection);
+    expect(state.rejectionCount).toBe(1);
+  });
+
+  it("a rejection stops being shown when the next turn opens", () => {
+    const stateWithRejection = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 3, minimum: 25 },
+      },
+    );
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["FOLD", "CALL"],
+      callTo: 15,
+      minBetTo: 25,
+      minRaiseTo: 55,
+      allInTo: 300,
+    };
+    const state = duelState.applyServerMessage(stateWithRejection, {
+      type: "YourTurn",
+      handNumber: 2,
+      actionSequence: 6,
+      legalActions,
+    });
+    expect(state.rejection).toBeNull();
+  });
+
+  it("a rejection stops being shown when the next snapshot arrives", () => {
     const legalActions: LegalActions = {
       seat: 0,
       allowed: ["CHECK", "BET"],
@@ -238,11 +300,109 @@ describe("the duel state", () => {
         legalActions,
       },
     );
-    const state = duelState.applyServerMessage(stateWithPendingTurn, {
-      type: "Rejected",
-      rejection: { type: "AmountTooSmall", attempted: 5, minimum: 10 },
+    const stateWithRejection = duelState.applyServerMessage(
+      stateWithPendingTurn,
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 12, minimum: 50 },
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithRejection, {
+      type: "Snapshot",
+      view: samplePlayerView(),
     });
+    expect(state.rejection).toBeNull();
     expect(state.pendingTurn).toBeNull();
+  });
+
+  it("a rejection stops being shown when the duel finishes", () => {
+    const stateWithRejection = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 1, minimum: 2 },
+      },
+    );
+    const outcome = {
+      winner: 0,
+      handsPlayed: 7,
+      finalStacks: [1500, 0],
+    } as const;
+    const state = duelState.applyServerMessage(stateWithRejection, {
+      type: "DuelFinished",
+      outcome,
+    });
+    expect(state.rejection).toBeNull();
+    expect(state.outcome).toEqual(outcome);
+  });
+
+  it("two rejections at one decision point are two attempts", () => {
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["FOLD", "CALL", "RAISE"],
+      callTo: 20,
+      minBetTo: 50,
+      minRaiseTo: 100,
+      allInTo: 500,
+    };
+    const stateWithPendingTurn = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "YourTurn",
+        handNumber: 4,
+        actionSequence: 9,
+        legalActions,
+      },
+    );
+    const stateAfterFirstRejection = duelState.applyServerMessage(
+      stateWithPendingTurn,
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 5, minimum: 10 },
+      },
+    );
+    const state = duelState.applyServerMessage(stateAfterFirstRejection, {
+      type: "Rejected",
+      rejection: { type: "AmountTooSmall", attempted: 7, minimum: 10 },
+    });
+    expect(state.rejectionCount).toBe(2);
+    expect(state.pendingTurn).toEqual({
+      handNumber: 4,
+      actionSequence: 9,
+      legalActions,
+    });
+  });
+
+  it("a new turn does not reset the rejection count", () => {
+    const stateAfterFirstRejection = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 4, minimum: 15 },
+      },
+    );
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 5,
+      minRaiseTo: 10,
+      allInTo: 200,
+    };
+    const stateWithNewTurn = duelState.applyServerMessage(
+      stateAfterFirstRejection,
+      {
+        type: "YourTurn",
+        handNumber: 5,
+        actionSequence: 2,
+        legalActions,
+      },
+    );
+    const state = duelState.applyServerMessage(stateWithNewTurn, {
+      type: "Rejected",
+      rejection: { type: "AmountTooSmall", attempted: 6, minimum: 15 },
+    });
+    expect(state.rejectionCount).toBe(2);
   });
 
   it("surfaces the rejection exactly as the server sent it", () => {
