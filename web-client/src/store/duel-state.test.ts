@@ -666,6 +666,18 @@ describe("the duel state", () => {
         error: "DUEL_PAUSED",
       },
     );
+    // Events is narration; it must not clear the refusal a Failure set
+    const stateAfterEvents = duelState.applyServerMessage(stateWithRefusal, {
+      type: "Events",
+      events: [
+        {
+          type: "ActionOn",
+          sequence: 1,
+          seat: 0,
+        } as const,
+      ],
+    });
+    expect(stateAfterEvents.refusal).toBe("DUEL_PAUSED");
     const legalActions: LegalActions = {
       seat: 0,
       allowed: ["CHECK", "BET"],
@@ -674,7 +686,7 @@ describe("the duel state", () => {
       minRaiseTo: 20,
       allInTo: 100,
     };
-    const state = duelState.applyServerMessage(stateWithRefusal, {
+    const state = duelState.applyServerMessage(stateAfterEvents, {
       type: "YourTurn",
       handNumber: 2,
       actionSequence: 5,
@@ -695,6 +707,8 @@ describe("the duel state", () => {
       type: "Rejected",
       rejection: { type: "AmountTooSmall", attempted: 5, minimum: 10 },
     });
+    // Rejected is about an action attempt; it must not clear the refusal a Failure set
+    expect(stateWithRejection.refusal).toBe("DUEL_PAUSED");
     const state = duelState.applyServerMessage(stateWithRejection, {
       type: "Snapshot",
       view: samplePlayerView(),
