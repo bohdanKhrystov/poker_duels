@@ -23,3 +23,6 @@ jobs:
 
       - name: Validate ticket structure
         run: python3 .github/scripts/lint_tickets.py
+
+      - name: Check design-card invariants
+        run: ./design/check-drift.sh
