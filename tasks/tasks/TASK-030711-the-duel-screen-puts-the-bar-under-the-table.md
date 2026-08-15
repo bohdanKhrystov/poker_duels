@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030711
 title: The duel screen puts the bar under the table and sends what it built
 type: task
-status: backlog
+status: ready
 parent: STORY-0307
 module: web-client
 estimate: S
