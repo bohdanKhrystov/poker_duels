@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { verdictOf, verdictHeadline } from "./outcome-text";
+import { verdictOf, verdictHeadline, coinLine } from "./outcome-text";
 import { anOutcome } from "./outcome-fixture";
 
 describe("the verdict", () => {
@@ -31,5 +31,21 @@ describe("the verdict", () => {
     expect(verdictHeadline("loss")).toBe("Defeat");
     expect(verdictHeadline("draw")).toBe("Draw");
     expect(verdictHeadline("unknown")).toBe("Duel over");
+  });
+});
+
+describe("the coin line", () => {
+  it("gives the winner the coin", () => {
+    expect(coinLine("win")).toBe("+1 duel coin");
+  });
+
+  it("takes the loser's coin, in a true minus sign", () => {
+    expect(coinLine("loss")).toBe("−1 duel coin");
+    expect(coinLine("loss")).not.toContain("-");
+  });
+
+  it("moves no coin on a draw, or without a seat", () => {
+    expect(coinLine("draw")).toBe(null);
+    expect(coinLine("unknown")).toBe(null);
   });
 });

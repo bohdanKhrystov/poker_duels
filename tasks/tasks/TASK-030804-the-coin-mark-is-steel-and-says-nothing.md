@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030804
 title: The coin mark is steel, and says nothing a screen reader has to hear twice
 type: task
-status: backlog
+status: ready
 parent: STORY-0308
 module: web-client
 estimate: XS

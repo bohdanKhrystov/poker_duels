@@ -769,8 +769,8 @@ reducer clears nothing a frame established, so the lobby is reached by starting 
 | **[STORY-0308](stories/STORY-0308-result-screen.md)** The result screen — who won, and the coin — *schema 2* | | **ready** |
 | | [TASK-030801](tasks/TASK-030801-a-duel-outcome-fixture-with-every-field-the-wire-declares.md) A DuelOutcome fixture with every field the wire declares | S | **done** |
 | | [TASK-030802](tasks/TASK-030802-the-verdict-is-read-off-the-winner-and-your-seat.md) The verdict is read off the winner and your seat, and nothing else | S | **done** |
-| | [TASK-030803](tasks/TASK-030803-the-coin-line-states-the-one-coin-the-duel-moved.md) The coin line states the one coin the duel moved, and no balance | XS | ready |
-| | [TASK-030804](tasks/TASK-030804-the-coin-mark-is-steel-and-says-nothing.md) The coin mark is steel, and says nothing a screen reader has to hear twice | XS | backlog |
+| | [TASK-030803](tasks/TASK-030803-the-coin-line-states-the-one-coin-the-duel-moved.md) The coin line states the one coin the duel moved, and no balance | XS | **done** |
+| | [TASK-030804](tasks/TASK-030804-the-coin-mark-is-steel-and-says-nothing.md) The coin mark is steel, and says nothing a screen reader has to hear twice | XS | ready |
 | | [TASK-030805](tasks/TASK-030805-the-result-screen-declares-the-verdict-and-the-coin.md) The result screen declares the verdict and the coin beside it | S | backlog |
 | | [TASK-030806](tasks/TASK-030806-the-result-states-the-hands-played-and-both-final-stacks.md) The result states the hands played and every final stack, exactly as sent | S | backlog |
 | | [TASK-030807](tasks/TASK-030807-the-way-on-from-the-result-is-back-to-the-lobby.md) The way on is back to the lobby, and there is no dead rematch | XS | backlog |
