@@ -149,4 +149,40 @@ class DuelActionTest {
             assertTrue(step.runner.hand == null || step.runner.hand!!.state.seatToAct != null)
         }
     }
+
+    @Test
+    fun aRejectionMovesNoDecisionPoint() {
+        val illegal = current.copy(action = PlayerAction.Bet(seatToAct, 1))
+        val handNumberBefore = runner.hand!!.state.handNumber
+        val sequenceBefore = decisionPointOf(runner.hand!!.log.events)!!.sequence
+        val seatToActBefore = runner.hand!!.state.seatToAct
+
+        val step = act(runner, seatToAct, illegal, seeds)
+
+        assertEquals(handNumberBefore, step.runner.hand!!.state.handNumber)
+        assertEquals(sequenceBefore, decisionPointOf(step.runner.hand!!.log.events)!!.sequence)
+        assertEquals(seatToActBefore, step.runner.hand!!.state.seatToAct)
+    }
+
+    @Test
+    fun aFrameTheEngineRejectedStillPassesTheGuard() {
+        val illegal = current.copy(action = PlayerAction.Bet(seatToAct, 1))
+        val step = act(runner, seatToAct, illegal, seeds)
+
+        val refusal = guard(step.runner.hand!!.state, step.runner.hand!!.log.events, seatToAct, current)
+
+        assertNull(refusal)
+    }
+
+    @Test
+    fun anActionRetriedAfterARejectionIsApplied() {
+        val illegal = current.copy(action = PlayerAction.Bet(seatToAct, 1))
+        val rejected = act(runner, seatToAct, illegal, seeds)
+
+        val retried = act(rejected.runner, seatToAct, current, seeds)
+
+        assertTrue(current.action in retried.runner.hand!!.log.actions)
+        assertTrue(retried.outbound.any { it.seat == 0 && it.message is ServerMessage.Snapshot })
+        assertTrue(retried.outbound.any { it.seat == 1 && it.message is ServerMessage.Snapshot })
+    }
 }
