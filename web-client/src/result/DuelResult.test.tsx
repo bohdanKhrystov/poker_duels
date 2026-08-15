@@ -107,4 +107,25 @@ describe("the result screen", () => {
     expect(screen.queryByText(/You/)).toBeNull();
     expect(screen.queryByText(/Your rival/)).toBeNull();
   });
+
+  it("offers a way back to the lobby", () => {
+    render(<DuelResult outcome={anOutcome()} mySeat={0} />);
+
+    const back = screen.getByRole("link", { name: "Back to the lobby" });
+    expect(back.getAttribute("href")).toBe("/");
+  });
+
+  it("offers no rematch it cannot honour", () => {
+    const { container } = render(
+      <DuelResult outcome={anOutcome()} mySeat={0} />,
+    );
+
+    expect(screen.queryByRole("button", { name: /rematch/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /rematch/i })).toBeNull();
+    expect(
+      container
+        .querySelector('[aria-label="the result"]')
+        ?.textContent?.match(/rematch/i),
+    ).toBeNull();
+  });
 });
