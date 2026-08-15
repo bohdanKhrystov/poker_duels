@@ -46,11 +46,13 @@ class DueTest(unittest.TestCase):
 
 
 class BeatTest(unittest.TestCase):
-    def beat(self, state, sender, force=False):
+    def beat(self, state, sender, force=False, stamp=True):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "run-state.json"
             run_state.save(path, state)
-            sent, _ = heartbeat.beat(".", path, sender, now=NOW, force=force, composer=composer)
+            sent, _ = heartbeat.beat(
+                ".", path, sender, now=NOW, force=force, composer=composer, stamp=stamp
+            )
             return sent, run_state.load(path)
 
     def test_force_sends_inside_the_window(self):
@@ -63,6 +65,13 @@ class BeatTest(unittest.TestCase):
         sent, state = self.beat(run_state.RunState(), Sender(ok=True))
         self.assertTrue(sent)
         self.assertTrue(state.last_report_at.startswith("2026-08-15T22:00"))
+
+    def test_dry_run_does_not_consume_the_window(self):
+        # Printing a report is not delivering one. A preview that stamped the window would
+        # silently suppress the next real heartbeat for two hours.
+        sent, state = self.beat(run_state.RunState(), Sender(ok=True), force=True, stamp=False)
+        self.assertTrue(sent)
+        self.assertIsNone(state.last_report_at)
 
     def test_failed_send_does_not_stamp(self):
         # Stamping a failed send would suppress the next window too, turning one lost message

@@ -96,6 +96,7 @@ def cmd_heartbeat(args) -> int:
         sender=lambda body: deliver(body, args.dry_run)[0],
         now=_now(),
         force=args.force,
+        stamp=not args.dry_run,
     )
     print(f"heartbeat: {'sent' if sent else 'skipped'}")
     return 0

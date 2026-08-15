@@ -36,6 +36,8 @@ receives exactly one message per two-hour window.
   `last_report_at` — **only on a successful send.** A failed send that stamps anyway suppresses
   the next two hours as well, converting one lost message into two.
 - `--force` skips the due check, for the agent reporting a landing deliberately.
+- `--dry-run` prints without stamping. Printing a report is not delivering one, and a preview
+  that consumed the window would silently suppress the next real heartbeat for two hours.
 - A malformed or future-dated `last_report_at` is treated as due. A clock that has gone backwards
   must not silence the channel indefinitely.
 - Exits 0 always.
@@ -57,12 +59,13 @@ receives exactly one message per two-hour window.
 | `test_force_sends_inside_the_window` | the agent can report a landing |
 | `test_successful_send_stamps_the_state` | the window starts on delivery |
 | `test_failed_send_does_not_stamp` | a lost message does not cost the next one |
+| `test_dry_run_does_not_consume_the_window` | a preview is not a delivery |
 | `test_malformed_timestamp_is_due` | a corrupt stamp does not silence the channel |
 | `test_future_timestamp_is_due` | a backwards clock does not silence it either |
 
 ## Acceptance criteria
 
-- [ ] All eight tests above pass by name
+- [ ] All nine tests above pass by name
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

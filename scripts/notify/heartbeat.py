@@ -22,11 +22,14 @@ def due(state, now, window=WINDOW) -> bool:
     return (now - stamped) >= window
 
 
-def beat(repo, state_path, sender, now=None, window=WINDOW, force=False, composer=None):
+def beat(repo, state_path, sender, now=None, window=WINDOW, force=False, composer=None, stamp=True):
     """Compose, send, and stamp — stamping **only** on a successful send.
 
     A failed send that stamped anyway would suppress the next window too, turning one lost
     message into two.
+
+    ``stamp=False`` is for a dry run. Printing a report is not delivering one, and letting a
+    preview consume the window would silently suppress the next real heartbeat.
     """
     now = datetime.now(timezone.utc) if now is None else now
     state = run_state_module.load(state_path)
@@ -38,6 +41,7 @@ def beat(repo, state_path, sender, now=None, window=WINDOW, force=False, compose
     text = composer(repo, state, now)
 
     if sender(text):
-        run_state_module.stamp_report(state_path, now)
+        if stamp:
+            run_state_module.stamp_report(state_path, now)
         return True, text
     return False, text
