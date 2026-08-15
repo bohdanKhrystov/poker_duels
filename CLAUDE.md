@@ -13,7 +13,11 @@ Code built it. Tickets, ADRs and metrics *are* the second product, so keep the t
    resource here, and the ticket's file list is the budget.
 3. **Done is an exit code**: every command in the ticket's `verify:` block exits 0.
 4. **Never widen scope.** Something you found outside the ticket becomes a new ticket.
-5. **Never guess a decision.** No ADR covers it → register `DEC-NNN`, block the ticket, move on.
+5. **Never guess a decision.** No ADR covers it → register `DEC-NNN`, block the ticket, and route
+   it: technical to the `architect` agent, product to the `product-owner` agent, which derives its
+   answer from `docs/vision.md`. Only a decision that would *change* the vision waits for the human.
+   An ADR is an answer once it is **merged**, and a PR that is only an ADR plus its register rows is
+   merged without asking.
 6. **Tests ship with the ticket**, and a task is not done until its PR is merged into `develop`.
 
 ## Non-negotiables

@@ -125,7 +125,7 @@ Two rules bound this, and the second is the one that matters:
   story should be startable when the one before it merges.
 - **An epic's scope is mostly a *product* question** — what a coin is worth, what a season is, what
   the thing fundamentally is. Write only what `docs/vision.md` and the ADRs already settle. Register
-  everything else as a `DEC-NNN` and say it is the human's.
+  everything else as a `DEC-NNN` and say it is the **product owner's**.
 
 **Never invent an epic's scope to avoid raising a question.** A guessed product decision inside a
 ticket is cheap to find and cheap to undo; the same guess inside an epic shapes every story beneath
@@ -148,8 +148,15 @@ Say in your report **who each decision is for**, because they are routed differe
   concurrency and failure semantics. These go to the `architect` agent, which answers them by
   writing the ADR. Two competent engineers with the same requirements would land in the same
   place; that is the test.
-- **Product** — what a player sees, what a duel *is*, what a coin is worth, which risks are
-  acceptable to ship with. These go to the human, and nothing else can answer them.
+- **Product** — what a player sees, what a duel *is*, what a coin is worth, which risks inside the
+  software are acceptable to ship with. These go to the `product-owner` agent, which answers them
+  by writing the ADR, deriving the answer from `docs/vision.md`. It escalates to the human anything
+  that would *change* the vision rather than apply it — so you do not have to work out which side of
+  that line a question falls on. Mark it product and route it.
+
+  **Still the human's, and only the human's:** money in any form, adding to or subtracting from the
+  vision's *"What it is" / "What it is not"*, reordering the roadmap, and risk with consequences
+  outside the software. If a question is plainly one of those, say so — it saves an agent run.
 
 If a question has both halves, split it into two `DEC-NNN`s. A product decision answered by
 technical reasoning reads as settled and never gets revisited.
@@ -171,9 +178,14 @@ Splitting an epic:
 EPIC: <id>
 STORIES: <ids created, in dependency order>
 READY: <the single startable story, or NONE and why>
-DECISIONS: <DEC-NNN raised, or none — say which are the human's>
+DECISIONS: <DEC-NNN raised, or none — say which are the product owner's,
+            which the architect's, and which are the human's>
 ```
 
 `READY: NONE` is a successful run, not a failed one, when the reason is a product decision. Say
 which decision, and say whether it blocks the whole epic or only the first story — the scheduler
 routes those differently.
+
+It is also no longer the end of the road: a product `DEC-NNN` goes to the `product-owner` agent and
+the run continues. `READY: NONE` now means "the scheduler has one agent run to make before this
+epic moves", not "wait for a human".
