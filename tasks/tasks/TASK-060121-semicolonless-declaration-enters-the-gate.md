@@ -60,3 +60,21 @@ termination fix on mutated scratch copies, per the sibling gate tickets.
 ## Definition of done
 
 Standard, with `EPIC-06`'s recorded deviation: the review is visual, in claude.ai/design.
+
+## Deviations
+
+- The fix's shape changed under review. Adding `}` to the regex's terminator class
+  delivered the goal but introduced five reproduced regressions — a value carrying a
+  brace left the gate on both sides in silence, commented-out declarations and code
+  samples became live, a brace inside a quoted value truncated it — so the value gate
+  moved onto the reader `SYMEXTRACT` and `ANATOMY` already use: HTML comments dropped,
+  `<style>` blocks scoped, CSS comments stripped quote-aware, declarations walked with
+  quotes opaque, and candidates cross-counted against emissions so an unreadable shape
+  fails loudly instead of leaving enforcement. Extraction is byte-identical to the
+  previous reader across all fifteen design files, proved by diffing both programs
+  over every one.
+- That closes three pre-existing holes the review found beside the regressions: a
+  commented-out declaration in a card or the sheet no longer reads as live, and a
+  comment quoting a superseded value no longer licenses that value in a card.
+- `files_touched: 1` counts the design file; the bookkeeping flips ride along per the
+  `TASK-060108` precedent.
