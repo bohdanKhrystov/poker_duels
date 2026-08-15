@@ -765,7 +765,7 @@ reducer clears nothing a frame established, so the lobby is reached by starting 
 | | [TASK-030714](tasks/TASK-030714-the-refusal-sentence-stops-when-the-server-next-speaks.md) The refusal sentence stops when the server next speaks | S | **done** |
 | | [TASK-030715](tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) The derivation guards read the numbers that reach the DOM as attributes | S | **done** |
 | | [TASK-030716](tasks/TASK-030716-a-rejection-leaves-the-act-identity-valid.md) The server proves a rejection leaves the client's Act identity valid | S | **done** |
-| | [TASK-030717](tasks/TASK-030717-a-frame-from-an-earlier-hand-is-dropped.md) A frame from an earlier hand is dropped, though its sequence fits | XS | backlog |
+| | [TASK-030717](tasks/TASK-030717-a-frame-from-an-earlier-hand-is-dropped.md) A frame from an earlier hand is dropped, though its sequence fits | XS | **done** |
 | **[STORY-0308](stories/STORY-0308-result-screen.md)** The result screen — who won, and the coin — *schema 2* | | **ready** |
 | | [TASK-030801](tasks/TASK-030801-a-duel-outcome-fixture-with-every-field-the-wire-declares.md) A DuelOutcome fixture with every field the wire declares | S | **ready** |
 | | [TASK-030802](tasks/TASK-030802-the-verdict-is-read-off-the-winner-and-your-seat.md) The verdict is read off the winner and your seat, and nothing else | S | backlog |
