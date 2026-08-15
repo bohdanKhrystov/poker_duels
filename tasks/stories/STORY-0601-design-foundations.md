@@ -54,7 +54,8 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060114](../tasks/TASK-060114-lockup-constants-join-the-drift-gate.md) | The lockup constants join the drift gate | done |
 | [TASK-060115](../tasks/TASK-060115-the-coin-glint-is-born-on-the-sheet.md) | The coin glint is born on the sheet | done |
 | [TASK-060116](../tasks/TASK-060116-the-css-coins-consume-the-glint-token.md) | The CSS coins consume the glint token | done |
-| [TASK-060117](../tasks/TASK-060117-the-colors-cards-coin-matches-the-canonical.md) | The Colors card's coin matches the canonical | ready |
+| [TASK-060117](../tasks/TASK-060117-the-colors-cards-coin-matches-the-canonical.md) | The Colors card's coin matches the canonical | done |
+| [TASK-060118](../tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) | The gallery lede names every mirrored token | ready |
 
 ## Acceptance criteria
 

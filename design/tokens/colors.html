@@ -16,7 +16,7 @@
     --pd-on-accent: #ffffff; --pd-accent-subtle: rgba(77,139,201,0.14);
     --pd-win: #79a862; --pd-loss: #c4655c; --pd-warn: #c99a4a;
     --pd-card-face: #f3f0e9; --pd-suit-red: #bf3b30; --pd-suit-black: #26231f;
-    --pd-card-back: #35567e; --pd-coin: #9fb2c4; --pd-coin-deep: #64788c;
+    --pd-card-back: #35567e; --pd-coin: #9fb2c4; --pd-coin-deep: #64788c; --pd-coin-glint: #b8c6d6;
     --pd-card-back-stripes: repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 7px);
     --pd-shadow-card: 0 1px 3px rgba(0,0,0,0.4);
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -56,8 +56,10 @@
     box-shadow: inset 0 0 0 3px rgba(255,255,255,0.14), var(--pd-shadow-card);
     background-image: var(--pd-card-back-stripes); }
   .coin { width: 34px; height: 34px; border-radius: 999px;
-    background: radial-gradient(circle at 34% 30%, var(--pd-coin), var(--pd-coin-deep) 78%);
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.22); display: inline-block; }
+    background: radial-gradient(circle at 36% 30%, var(--pd-coin-glint), var(--pd-coin) 55%, var(--pd-coin-deep));
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25); display: inline-block; }
+  /* Contrast themes strip gradients and shadows — keep the swatches visible. */
+  @media (forced-colors: active) { .coin, .pback { border: 1px solid CanvasText; } }
 
   /* The demo strip — one glance at the whole hierarchy. */
   .demo { margin-top: 16px; background: var(--pd-bg); border: 1px solid var(--pd-hairline);
@@ -166,7 +168,7 @@
       <div class="meta"><div class="name">--pd-card-back</div><div class="hex">#35567e</div>
       <div class="use">A hidden hand</div></div></div>
     <div class="sw"><div class="chip"><span class="coin"></span></div>
-      <div class="meta"><div class="name">--pd-coin / --pd-coin-deep</div><div class="hex">#9fb2c4 / #64788c</div>
+      <div class="meta"><div class="name">--pd-coin / --pd-coin-deep / --pd-coin-glint</div><div class="hex">#9fb2c4 / #64788c / #b8c6d6</div>
       <div class="use">The duel coin — steel, never glitter</div></div></div>
   </div>
 
