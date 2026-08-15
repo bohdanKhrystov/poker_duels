@@ -9,6 +9,8 @@ describe("the action bar", () => {
     const rendered = render(
       <ActionBar
         turn={props.turn === undefined ? aTurn() : props.turn}
+        rejection={props.rejection ?? null}
+        refusal={props.refusal ?? null}
         send={props.send ?? send}
       />,
     );
@@ -187,6 +189,8 @@ describe("the action bar", () => {
     const { rerender, getByRole } = render(
       <ActionBar
         turn={aTurn({ handNumber: 61, actionSequence: 103 })}
+        rejection={null}
+        refusal={null}
         send={send}
       />,
     );
@@ -206,6 +210,8 @@ describe("the action bar", () => {
           actionSequence: 88,
           legalActions: aLegalActions({ seat: 1 }),
         })}
+        rejection={null}
+        refusal={null}
         send={send}
       />,
     );
@@ -230,6 +236,8 @@ describe("the action bar", () => {
             allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
           }),
         })}
+        rejection={null}
+        refusal={null}
         send={send}
       />,
     );
@@ -253,6 +261,8 @@ describe("the action bar", () => {
             allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
           }),
         })}
+        rejection={null}
+        refusal={null}
         send={send}
       />,
     );
@@ -313,7 +323,7 @@ describe("the action bar", () => {
   it("comes back to life on the next turn, at the new minimum", () => {
     const send = vi.fn();
     const { rerender, getByRole } = render(
-      <ActionBar turn={aTurn()} send={send} />,
+      <ActionBar turn={aTurn()} rejection={null} refusal={null} send={send} />,
     );
     fireEvent.click(getByRole("button", { name: "Fold" }));
 
@@ -323,6 +333,8 @@ describe("the action bar", () => {
           actionSequence: 28,
           legalActions: aLegalActions({ minRaiseTo: 2400 }),
         })}
+        rejection={null}
+        refusal={null}
         send={send}
       />,
     );
@@ -332,5 +344,31 @@ describe("the action bar", () => {
     ).toBe("2400");
     fireEvent.click(getByRole("button", { name: "Fold" }));
     expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it("states a rejection in the server's own numbers", () => {
+    const { getByText } = bar({
+      rejection: { type: "AmountTooSmall", attempted: 900, minimum: 1200 },
+    });
+
+    const text = getByText("900 is under the minimum of 1,200.");
+    expect(text).toBeDefined();
+  });
+
+  it("says a paused duel did not apply the action", () => {
+    const { getByText } = bar({
+      refusal: "DUEL_PAUSED",
+    });
+
+    const text = getByText("The duel is paused. That action was not applied.");
+    expect(text).toBeDefined();
+  });
+
+  it("has nothing to say when nothing was refused", () => {
+    const { queryByText, send } = bar();
+
+    const refusedText = queryByText(/refused|minimum|paused/);
+    expect(refusedText).toBeNull();
+    expect(send).not.toHaveBeenCalled();
   });
 });

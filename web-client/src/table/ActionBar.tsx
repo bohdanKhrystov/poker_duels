@@ -1,9 +1,16 @@
 import { useState, type ReactElement } from "react";
-import type { ActionType, ClientMessage, LegalActions } from "../protocol";
+import type {
+  ActionType,
+  ClientMessage,
+  LegalActions,
+  ProtocolError,
+  Rejection,
+} from "../protocol";
 import type { PendingTurn } from "../store/duel-state";
 import { actionText } from "./action-text";
 import { formatChips } from "./chips";
 import { actFrame } from "./act-frame";
+import { rejectionText } from "./rejection-text";
 
 /**
  * The action bar: the one place a player asserts anything.
@@ -16,6 +23,8 @@ import { actFrame } from "./act-frame";
  */
 export function ActionBar(props: {
   turn: PendingTurn | null;
+  rejection: Rejection | null;
+  refusal: ProtocolError | null;
   send: (message: ClientMessage) => void;
 }): ReactElement {
   const { turn } = props;
@@ -36,6 +45,7 @@ export function ActionBar(props: {
           send={props.send}
         />
       )}
+      <Notice rejection={props.rejection} refusal={props.refusal} />
     </section>
   );
 }
@@ -148,4 +158,41 @@ function Waiting(): ReactElement {
       </p>
     </>
   );
+}
+
+/**
+ * The line the server's last word about this seat's action goes on. It is
+ * reserved whether or not there is anything to say, so saying something moves
+ * nothing.
+ */
+function Notice(props: {
+  rejection: Rejection | null;
+  refusal: ProtocolError | null;
+}): ReactElement {
+  return (
+    <p className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-center text-small text-text-muted">
+      {noticeText(props.rejection, props.refusal)}
+    </p>
+  );
+}
+
+/** A rejection is the server's answer to the action itself, so it wins. */
+function noticeText(
+  rejection: Rejection | null,
+  refusal: ProtocolError | null,
+): string {
+  if (rejection !== null) return rejectionText(rejection);
+  if (refusal !== null) return refusalText(refusal);
+  return "";
+}
+
+/**
+ * A refused frame, said plainly and once. `DUEL_PAUSED` means the action was
+ * not applied, so the client says so and sends nothing again — retrying is how
+ * a client turns one refusal into two.
+ */
+function refusalText(error: ProtocolError): string {
+  return error === "DUEL_PAUSED"
+    ? "The duel is paused. That action was not applied."
+    : "The server did not apply that action.";
 }
