@@ -7,6 +7,7 @@ import {
   verdictOf,
   type Verdict,
 } from "./outcome-text";
+import { formatChips } from "../table/chips";
 
 /**
  * The result screen: who won, and the coin.
@@ -38,6 +39,9 @@ export function DuelResult(props: {
           <span className={verdictColour(verdict)}>{coin}</span>
         </p>
       )}
+      <p className="text-small text-text-muted">
+        {metaLine(props.outcome, props.mySeat)}
+      </p>
     </section>
   );
 }
@@ -56,4 +60,24 @@ function verdictColour(verdict: Verdict): string {
     case "unknown":
       return "";
   }
+}
+
+/**
+ * The duel's ledger: the hand count, then one entry per final stack, in the
+ * order the server sent them. Mapped rather than indexed — the wire says
+ * `finalStacks` is an array and says nothing about its length, so the line
+ * states what arrived instead of assuming two.
+ *
+ * The owner words are the table's own (`DuelTable`), and they need a seat: a
+ * client that does not know which side it sat on states the stacks plainly
+ * rather than guessing which is whose.
+ */
+function metaLine(outcome: DuelOutcome, mySeat: number | null): string {
+  const hands = `${outcome.handsPlayed} ${outcome.handsPlayed === 1 ? "hand" : "hands"}`;
+  const stacks = outcome.finalStacks.map((stack, seat) =>
+    mySeat === null
+      ? formatChips(stack)
+      : `${seat === mySeat ? "You" : "Your rival"} ${formatChips(stack)}`,
+  );
+  return [hands, ...stacks].join(" · ");
 }
