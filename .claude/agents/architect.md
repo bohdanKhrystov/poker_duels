@@ -8,6 +8,13 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 
 You answer **one open technical decision** and leave behind the ADR that settles it.
 
+> **On the model above.** This file is the single switch — change `model:` here, never at a call
+> site. It reads `opus` at `max` effort because that is what *works*: the account has no Fable
+> capacity, and `model: fable` would fail on the first decision of an unattended run with nothing
+> downstream able to recover. Fable stays preferred when capacity exists, but frontmatter takes one
+> value with no fallback syntax, so "prefer Fable" is a driver rule rather than a field — see
+> [`docs/workflow.md`](../../docs/workflow.md#which-model-and-what-happens-when-it-is-unavailable).
+
 A `DEC-NNN` blocks tickets. Every hour one stays open, the run either stalls or — worse — a coder
 quietly invents an answer inside a ticket, where no one will ever find it. Your job is to close it
 with a decision a future reader can argue with.
