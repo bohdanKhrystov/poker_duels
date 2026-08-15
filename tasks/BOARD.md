@@ -648,8 +648,8 @@ every digit run from the DOM and asserts each is a field of the view, the other 
 | | [TASK-030611](tasks/TASK-030611-the-seat-plate-shows-the-name-the-button-and-the-stack.md) The seat plate shows the name, the button and the stack | S | **done** |
 | | [TASK-030612](tasks/TASK-030612-the-duel-table-seats-the-views-two-players-around-the-board.md) The duel table seats the view's two players around the board | S | **done** |
 | | [TASK-030613](tasks/TASK-030613-your-hand-is-face-up-and-your-rivals-is-face-down.md) Your hand is face up and your rival's is face down | S | **done** |
-| | [TASK-030614](tasks/TASK-030614-the-reserved-line-states-what-the-rival-has-committed.md) The reserved line states what the rival has committed this street | XS | ready |
-| | [TASK-030615](tasks/TASK-030615-the-table-shows-no-number-the-view-does-not-carry.md) The table shows no number the view does not carry | S | backlog |
+| | [TASK-030614](tasks/TASK-030614-the-reserved-line-states-what-the-rival-has-committed.md) The reserved line states what the rival has committed this street | XS | **done** |
+| | [TASK-030615](tasks/TASK-030615-the-table-shows-no-number-the-view-does-not-carry.md) The table shows no number the view does not carry | S | ready |
 | | [TASK-030616](tasks/TASK-030616-the-table-names-no-card-the-view-did-not-send-and-no-hand.md) The table names no card the view did not send, and no hand | S | backlog |
 | | [TASK-030617](tasks/TASK-030617-the-lobby-hands-the-live-view-to-the-duel-table.md) The lobby hands the live view to the duel table | XS | backlog |
 | | [TASK-030618](tasks/TASK-030618-the-suit-glyphs-are-asserted-by-codepoint-not-by-a-matching-literal.md) The suit glyphs are asserted by codepoint, not by a matching literal | XS | backlog |
