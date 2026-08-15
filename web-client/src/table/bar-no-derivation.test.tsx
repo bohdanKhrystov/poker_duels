@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { ActionBar } from "./ActionBar";
+import { formatChips } from "./chips";
 import { aLegalActions, aTurn } from "./turn-fixture";
 
 /**
@@ -22,7 +23,20 @@ function numbersOnScreen(container: HTMLElement): number[] {
       element.getAttribute("title"),
     ])
     .filter((value): value is string => value !== null);
-  const digits = [...parts, ...spoken].join(" ").match(/\d[\d,]*/g) ?? [];
+  // Nor is everything a player receives a word. `min`, `max` and `value` reach
+  // the DOM as attributes and nothing prints them, so a bound the client worked
+  // out for itself is invisible to a text-and-aria scan. Measured, not reasoned
+  // about: with BET or RAISE allowed and ALL_IN withheld, `max={allInTo}` is the
+  // only place that ceiling appears anywhere in the bar.
+  const bounds = [...container.querySelectorAll("[min], [max], [value]")]
+    .flatMap((element) => [
+      element.getAttribute("min"),
+      element.getAttribute("max"),
+      element.getAttribute("value"),
+    ])
+    .filter((value): value is string => value !== null);
+  const digits =
+    [...parts, ...spoken, ...bounds].join(" ").match(/\d[\d,]*/g) ?? [];
   return digits.map((run) => Number(run.replaceAll(",", "")));
 }
 
@@ -43,6 +57,52 @@ describe("the bar offers and derives nothing", () => {
 
     expect(shown.length).toBeGreaterThan(0);
     expect(shown.filter((n) => !allowed.has(n))).toEqual([]);
+  });
+
+  it("counts the ceiling that reaches the player only as a slider bound", () => {
+    for (const allowed of [
+      ["CHECK", "BET"],
+      ["FOLD", "CALL", "RAISE"],
+    ] as const) {
+      const turn = aTurn({
+        legalActions: aLegalActions({ allowed: [...allowed] }),
+      });
+      const { container, unmount } = render(
+        <ActionBar
+          turn={turn}
+          rejection={null}
+          refusal={null}
+          send={vi.fn()}
+        />,
+      );
+      const ceiling = turn.legalActions.allInTo;
+
+      const printedOrSpoken = [
+        container.textContent ?? "",
+        ...[...container.querySelectorAll("[aria-label], [title]")].flatMap(
+          (element) => [
+            element.getAttribute("aria-label") ?? "",
+            element.getAttribute("title") ?? "",
+          ],
+        ),
+      ].join(" ");
+      expect(printedOrSpoken).not.toContain(formatChips(ceiling));
+      expect(printedOrSpoken).not.toContain(String(ceiling));
+
+      expect(numbersOnScreen(container)).toContain(ceiling);
+
+      const fromTheTurn = new Set([
+        turn.legalActions.callTo,
+        turn.legalActions.minBetTo,
+        turn.legalActions.minRaiseTo,
+        turn.legalActions.allInTo,
+      ]);
+      expect(
+        numbersOnScreen(container).filter((n) => !fromTheTurn.has(n)),
+      ).toEqual([]);
+
+      unmount();
+    }
   });
 
   it("offers no control the turn did not allow", () => {

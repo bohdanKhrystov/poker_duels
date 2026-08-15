@@ -60,8 +60,21 @@ function numbersOnScreen(container: HTMLElement): number[] {
       element.getAttribute("title"),
     ])
     .filter((value): value is string => value !== null);
+  // Nor is everything a player receives a word. `min`, `max` and `value` reach
+  // the DOM as attributes and nothing prints them, so a bound the client worked
+  // out for itself is invisible to a text-and-aria scan. Measured, not reasoned
+  // about: with BET or RAISE allowed and ALL_IN withheld, `max={allInTo}` is the
+  // only place that ceiling appears anywhere in the bar.
+  const bounds = [...copy.querySelectorAll("[min], [max], [value]")]
+    .flatMap((element) => [
+      element.getAttribute("min"),
+      element.getAttribute("max"),
+      element.getAttribute("value"),
+    ])
+    .filter((value): value is string => value !== null);
   const digits =
-    [wordsOnScreen(copy), ...spoken].join(" ").match(/\d[\d,]*/g) ?? [];
+    [wordsOnScreen(copy), ...spoken, ...bounds].join(" ").match(/\d[\d,]*/g) ??
+    [];
   return digits.map((run) => Number(run.replaceAll(",", "")));
 }
 
@@ -151,6 +164,19 @@ describe("the table renders and never derives", () => {
     expect(shown.length).toBeGreaterThan(0);
     const notAllowed = shown.filter((n) => !allowed.has(n));
     expect(notAllowed).toEqual([]);
+  });
+
+  it("counts a number that reaches the player only as an attribute", () => {
+    // DuelTable renders no min, max or value today, so nothing here can carry
+    // one honestly — this is a probe of the sweep's reach, not an assertion
+    // about the table. Delete the sweep and this is the test that goes red.
+    const { container } = render(<DuelTable view={aView()} />);
+    const probe = document.createElement("input");
+    probe.setAttribute("type", "range");
+    probe.setAttribute("max", "987654");
+    container.appendChild(probe);
+
+    expect(numbersOnScreen(container)).toContain(987654);
   });
 
   it("names the street the view names, not the one the board looks like", () => {
