@@ -63,6 +63,12 @@ never asking why.
         )}
   ```
 
+- **The order is asserted, not just written.** Yours is cards above the plate and your rival's is
+  cards below theirs — both hands toward the board. Label and text queries cannot see arrangement:
+  moving each hand to the far side of its plate ships `Tests 182 passed (182)` against every content
+  assertion in the file. `draws your two cards face up and your rival's face down` therefore also
+  asserts document position, with a `contains()` guard on each so a wrapper `div` cannot satisfy it
+  by holding the hand. Verified, not predicted.
 - Yours is the design's `.hero` block, cards **above** the plate:
 
   ```tsx
