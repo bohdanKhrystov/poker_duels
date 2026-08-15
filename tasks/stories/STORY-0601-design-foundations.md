@@ -60,7 +60,7 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060120](../tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) | The lockup coins consume the face token | done |
 | [TASK-060121](../tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) | The value gate reads CSS values correctly | blocked |
 | [TASK-060122](../tasks/TASK-060122-the-design-gate-runs-in-ci.md) | The design gate runs in CI | ready |
-| [TASK-060123](../tasks/TASK-060123-the-gates-remaining-silent-edges.md) | The lockup clause cannot go quiet | ready |
+| [TASK-060123](../tasks/TASK-060123-the-gates-remaining-silent-edges.md) | The lockup clause cannot go quiet | done |
 
 ## Acceptance criteria
 
