@@ -106,7 +106,7 @@ the design draws it.
 | --- | --- |
 | `names a face-up card in words` | `<CardFace card="As" />` is findable by `getByRole("img", { name: "ace of spades" })` |
 | `prints the rank character and the suit glyph` | `<CardFace card="Td" />` renders `container.textContent` exactly `"T♦︎♦︎"` — rank, corner suit, pip |
-| `paints a red suit with the suit-red token and a black one without it` | the root element's `className.split(" ")` contains `text-suit-red` for `"Ah"` and `text-suit-black` for `"Ks"` |
+| `paints a red suit with the suit-red token and a black one without it` | the root element's `className.split(" ")` contains `text-suit-red` for `"Ah"` and `text-suit-black` for `"Ks"`, **and each lacks the other's class**. Presence alone is only half the title's claim: a card carrying both ships `Tests 151 passed (151)` — verified, not predicted — and leaves the colour to whichever rule the stylesheet defines last, painting every suit alike |
 | `keeps a card it cannot read face down` | `<CardFace card="Zz" />` is findable by `getByRole("img", { name: "an unreadable card" })` and its `container.textContent` is `""` |
 
 Four tests. One hundred and forty-seven exist, so the suite reports **151**.
