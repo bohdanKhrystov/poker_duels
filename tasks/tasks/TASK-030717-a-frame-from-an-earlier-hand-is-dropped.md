@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030717
 title: A frame from an earlier hand is dropped, though its sequence fits
 type: task
-status: backlog
+status: done
 parent: STORY-0307
 module: poker-server
 estimate: XS
