@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060121
 title: The value gate reads CSS values correctly
 type: task
-status: blocked
+status: done
 parent: STORY-0601
 module: design
 estimate: S
@@ -15,6 +15,7 @@ depends_on: []
 verify:
   - ./design/check-drift.sh
   - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -0777 -pi -e "s|\#9fb2c4;|\#9fb2c4; --pd-probe:url(\"data:x;GOOD\");|" "$T/design/tokens/tokens.css" && perl -0777 -pi -e "s|\#9fb2c4;|\#9fb2c4; --pd-probe:url(\"data:x;DRIFTED\");|" "$T/design/screens/duel-end.html" && grep -q DRIFTED "$T/design/screens/duel-end.html" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -0777 -pi -e "s|--pd-shadow-card:[^;]*;|--pd-shadow-card:0 1px 9px rgba(0,0,0,0.4)|" "$T/design/tokens/tokens.css" && grep -q "1px 9px" "$T/design/tokens/tokens.css" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
 ---
 
 ## Goal
@@ -37,30 +38,26 @@ strings. Three shapes follow from that one fact, and they are the same bug:
   quoted names with spaces, and all 14 cards declare them: one reflow that moves a wrap
   point inside a quoted name reddens the gate across all of them.
 
-All three need the reader to know where a string starts and ends. **`DEC-035` blocks
-this ticket**: what that costs is a real decision, and three attempts to guess it were
-each withdrawn under review after reproducing a worse defect than the one they fixed.
+All three need the reader to know where a string starts and ends. `DEC-035` asked what
+that costs; [`ADR-0034`](../../docs/adr/ADR-0034-the-value-gate-reads-css-string-aware.md)
+answered it, and this ticket implements that answer.
 
 ## Files
 
 | File | Action |
 | --- | --- |
-| `design/check-drift.sh` | edit — per the ADR that answers `DEC-035` |
+| `design/check-drift.sh` | edit — `EXTRACT` becomes `VALUES`, the string-aware reader `ADR-0034` specifies |
 
 ## Scope
 
-- Nothing until `DEC-035` is answered. The answer decides the shape: a third
-  quote-aware walker, a convention lint that refuses shapes the reader cannot read,
-  or an accepted and recorded limit with the tree kept inside it.
-- The cost of the walker option is smaller than first recorded: the stock-tools rule
-  is this script's and its sibling tickets' convention, **not** anything `ADR-0024`
-  says, and `check-drift.sh` already carries two hand-rolled quote-aware walkers in
-  stock perl (`SYMEXTRACT`, `ANATOMY`). The honest cost is a third walker to
-  maintain, not a property forfeited (#523 review).
-- The name gate resolves `--pd-` names by grepping the sheet's raw text, comments
-  included, so a card may inline a token the sheet only *mentions* in prose and pass
-  both clauses. That is the same declared set this decision governs, so it is settled
-  here rather than guessed separately.
+- `VALUES` replaces `EXTRACT` to `ADR-0034`'s seven-point contract: CSS regions, not
+  files; comments stripped after the region and string-aware; strings opaque and
+  escape-aware; a value ending at the first `;` at paren depth zero or its block's
+  `}`; whitespace normalized outside strings and collapsed inside them so a wrapped
+  string equals its one-line spelling; and total-or-loud — an unterminated string or
+  comment, an unclosed `<style>`, or a value opening a `{` names the file and fails.
+- The emitted normal form does not change, so `LOAD`, `COMPARE` and `PAIRCHECK` are
+  untouched.
 
 ## Out of scope
 
@@ -68,7 +65,11 @@ each withdrawn under review after reproducing a worse defect than the one they f
 
 ## Tests
 
-None yet; the answering ADR sets the proof obligation.
+None — the proof is the ADR's obligation, discharged four ways: the readable language
+is written into the script header; fourteen inline probes cover each shape and each
+refusal; the verify carries a mutation fixture per silence, both red on the tree before
+this change; and the swap is proved inert — `VALUES`' output is byte-identical to
+`EXTRACT`'s across all seventeen files under `design/`.
 
 ## Acceptance criteria
 

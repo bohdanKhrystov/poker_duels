@@ -50,27 +50,100 @@ if printf 'A♠︎ x\n' | grep -qE -- "$BARE"; then
   echo "check-drift: self-test failed — a suited glyph read as bare (locale?)" >&2; exit 1
 fi
 
-# joins every `--pd-NAME: … ;` declaration to one line and strips whitespace outside
-# quoted strings, emitting `name=value` — the sheet wraps long values, cards do not,
-# and both must land on the same normalized form. The `--pd-` name charset below is
-# the same language as the name gate's grep in the loop — a change to what a token
-# name may contain must change both.
-EXTRACT='
-  { buf = buf $0 "\n" }
-  END {
-    while (match(buf, /--pd-[a-z0-9-]*[ \t]*:[^;]*;/)) {
-      d = substr(buf, RSTART, RLENGTH); buf = substr(buf, RSTART + RLENGTH)
-      out = ""; inq = 0; q = ""
-      for (i = 1; i <= length(d); i++) {
-        c = substr(d, i, 1)
-        if (inq) { out = out c; if (c == q) inq = 0; continue }
-        if (c == "\"" || c == "\047") { q = c; inq = 1; out = out c; continue }
-        if (c == " " || c == "\t" || c == "\n" || c == "\r") continue
-        out = out c
+# The value clause's reader (ADR-0034). It reads CSS regions, string-aware, and is
+# total or loud: it reads a file completely or exits non-zero naming what stopped it,
+# never a partial set. The readable language:
+#   region     for *.html the concatenation of every <style>…</style> body; for *.css
+#              the whole file. Text outside a style block is prose, not CSS — clause
+#              1's name gate still greps the whole file, by design.
+#   comments   /* … */ stripped after the region is taken, string-aware, CSS only.
+#   strings    " and ' open one; a \\ inside consumes the next character; a ; { } /* or
+#              quote inside is content.
+#   value      after `--pd-NAME:`, up to the first ; at paren depth zero outside a
+#              string, or the } closing its block — so a final declaration may legally
+#              omit its semicolon.
+#   normal     whitespace outside strings removed; inside a string a whitespace run
+#              collapses to one space and a \\-newline continuation is dropped, so a
+#              wrapped string equals its one-line spelling.
+#   refusals   unterminated string, unterminated comment, unclosed <style>, or a value
+#              that opens a { — each names the file and fails the gate.
+# The `--pd-` name charset here is the same language as the name gate's grep in the
+# loop — a change to what a token name may contain must change both.
+VALUES='
+  my $src = do { local $/; <STDIN> };
+  my $file = $ARGV[0] // "input";
+  sub die_loud { print STDERR "check-drift: $file — $_[0]\n"; exit 3 }
+  my $css;
+  if ($src =~ /<style\b/i) {
+    my @b;
+    while ($src =~ /<style\b[^>]*>(.*?)<\/style\s*>/gis) { push @b, $1 }
+    my $opens = () = $src =~ /<style\b/gi;
+    die_loud("an unclosed <style> block") if @b != $opens;
+    $css = join "\n", @b;
+  } else { $css = $src }
+  my ($out, $i, $n) = ("", 0, length $css);
+  while ($i < $n) {
+    my $c = substr($css, $i, 1);
+    if ($c eq "\"" || $c eq "\x27") {
+      my $q = $c; $out .= $c; $i++; my $done = 0;
+      while ($i < $n) {
+        my $d = substr($css, $i, 1);
+        if ($d eq "\\") { $out .= substr($css, $i, 2); $i += 2; next }
+        $out .= $d; $i++;
+        if ($d eq $q) { $done = 1; last }
       }
-      sub(/:/, "=", out); sub(/;$/, "", out)
-      print out
+      die_loud("an unterminated string") unless $done;
+      next;
     }
+    if ($c eq "/" && substr($css, $i, 2) eq "/*") {
+      my $e = index($css, "*/", $i + 2);
+      die_loud("an unterminated comment") if $e < 0;
+      $i = $e + 2; next;
+    }
+    $out .= $c; $i++;
+  }
+  $css = $out;
+  while ($css =~ /(--pd-[a-z0-9-]*)[ \t]*:/g) {
+    my ($name, $j) = ($1, pos($css));
+    my ($val, $depth) = ("", 0);
+    while ($j < length $css) {
+      my $c = substr($css, $j, 1);
+      if ($c eq "\"" || $c eq "\x27") {
+        my $q = $c; $val .= $c; $j++;
+        while ($j < length $css) {
+          my $d = substr($css, $j, 1);
+          if ($d eq "\\") { $val .= substr($css, $j, 2); $j += 2; next }
+          $val .= $d; $j++;
+          last if $d eq $q;
+        }
+        next;
+      }
+      if ($c eq "(") { $depth++; $val .= $c; $j++; next }
+      if ($c eq ")") { $depth-- if $depth; $val .= $c; $j++; next }
+      last if ($c eq ";" || $c eq "}") && $depth == 0;
+      die_loud("a value for $name that opens a {") if $c eq "{";
+      $val .= $c; $j++;
+    }
+    pos($css) = $j;
+    my ($norm, $k) = ("", 0);
+    while ($k < length $val) {
+      my $c = substr($val, $k, 1);
+      if ($c eq "\"" || $c eq "\x27") {
+        my $q = $c; $norm .= $c; $k++; my $sp = 0;
+        while ($k < length $val) {
+          my $d = substr($val, $k, 1);
+          if ($d eq "\\" && substr($val, $k + 1, 1) eq "\n") { $k += 2; next }
+          if ($d =~ /\s/) { $sp = 1; $k++; next }
+          if ($sp) { $norm .= " "; $sp = 0 }
+          $norm .= $d; $k++;
+          last if $d eq $q;
+        }
+        next;
+      }
+      if ($c =~ /\s/) { $k++; next }
+      $norm .= $c; $k++;
+    }
+    print "$name=$norm\n" if length $norm;
   }
 '
 # the one sheet-set loader kernel, spliced into both consumers below so the HTML
@@ -123,9 +196,30 @@ sweep_suits() {
 # || true keeps a hard awk death inside the comparison below, where the message says
 # what broke, instead of dying with awk usage noise under set -e. Scratch files are
 # left for the OS to purge, the trade-off this repo records in its gate tickets.
-probe=$(printf -- '--pd-probe :  rgba(0, 0, 0, 0.4) ;\n' | awk "$EXTRACT" 2>/dev/null || true)
-[ "$probe" = "--pd-probe=rgba(0,0,0,0.4)" ] \
-  || { echo "check-drift: self-test failed — value extractor broke (awk?)" >&2; exit 1; }
+# one probe per shape the reader promises to read, and per refusal it promises to make
+# loud — a reader that quietly stops reading is the defect this clause has hit three
+# times (ADR-0034 point 7)
+vprobe() {
+  # `set -e` would kill the script at a refusal probe before it could report, so the
+  # exit code is captured in the same expression that tolerates it
+  _got=$(printf -- "%b" "$2" | perl -e "$VALUES" probe 2>&1) && _rc=0 || _rc=$?
+  if [ "$_rc" != "$3" ] || [ "$_got" != "$4" ]; then
+    echo "check-drift: self-test failed — $1 (exit $_rc, read [$_got])" >&2; exit 1
+  fi
+}
+vprobe "a spaced declaration"        '--pd-probe :  rgba(0, 0, 0, 0.4) ;\n' 0 '--pd-probe=rgba(0,0,0,0.4)'
+vprobe "a semicolon-less final"      ':root { --pd-a: 1px; --pd-b: 2px }\n' 0 '--pd-a=1px
+--pd-b=2px'
+vprobe "a quoted semicolon"          ':root { --pd-u: url("data:x;y") }\n' 0 '--pd-u=url("data:x;y")'
+vprobe "a quoted brace"              ':root { --pd-q: "a}b"; }\n' 0 '--pd-q="a}b"'
+vprobe "an escaped quote"            ':root { --pd-e: "a\\"b"; }\n' 0 '--pd-e="a\"b"'
+vprobe "a wrapped string"            ':root { --pd-w: "Se \\\ngoe"; }\n' 0 '--pd-w="Se goe"'
+vprobe "a commented-out declaration" '<style>:root{--pd-a:1px;/* --pd-x:9px; */}</style>\n' 0 '--pd-a=1px'
+vprobe "a declaration in prose"      '<style>:root{--pd-a:1px;}</style><p>--pd-x: 9px;</p>\n' 0 '--pd-a=1px'
+vprobe "a value opening a brace"     ':root { --pd-x: {oops}; }\n' 3 'check-drift: probe — a value for --pd-x that opens a {'
+vprobe "an unterminated comment"     ':root { --pd-y: 1px; /* open\n' 3 'check-drift: probe — an unterminated comment'
+vprobe "an unterminated string"      ':root { --pd-z: "open ;\n' 3 'check-drift: probe — an unterminated string'
+vprobe "an unclosed style block"     '<style>:root{--pd-a:1px;}\n' 3 'check-drift: probe — an unclosed <style> block'
 probe_sheet=$(mktemp)
 printf -- '--pd-probe=1px\n' > "$probe_sheet"
 mism=$(printf -- '--pd-probe=2px\n' | awk -v f=self "$COMPARE" "$probe_sheet" - 2>/dev/null || true)
@@ -133,7 +227,7 @@ mism=$(printf -- '--pd-probe=2px\n' | awk -v f=self "$COMPARE" "$probe_sheet" - 
   || { echo "check-drift: self-test failed — a drifted value went undetected" >&2; exit 1; }
 
 sheet_file=$(mktemp)
-awk "$EXTRACT" "$SHEET" > "$sheet_file"
+perl -e "$VALUES" "$SHEET" < "$SHEET" > "$sheet_file"
 [ -s "$sheet_file" ] || { echo "check-drift: no declarations extracted from $SHEET" >&2; exit 1; }
 
 # pulls every <symbol id="pd-…">…</symbol> block, comments stripped and whitespace
@@ -297,7 +391,7 @@ for f in $(find "$DIR" -name '*.html' | sort); do
   # extraction failures fail as loudly as the st= sweeps below — an unreadable card
   # must never read as a value-clean card (the || true softening is for the
   # self-tests only, where the assert right after catches a dead awk)
-  st=0; card_vals=$(awk "$EXTRACT" "$f" 2>/dev/null) || st=$?
+  st=0; card_vals=$(perl -e "$VALUES" "$f" < "$f" 2>/dev/null) || st=$?
   if [ "$st" -ne 0 ]; then
     echo "check-drift: awk error $st extracting values from $f" >&2; fail=1; card_vals=""
   fi
