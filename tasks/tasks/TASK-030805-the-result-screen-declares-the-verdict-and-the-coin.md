@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030805
 title: The result screen declares the verdict and the coin beside it
 type: task
-status: backlog
+status: ready
 parent: STORY-0308
 module: web-client
 estimate: S
