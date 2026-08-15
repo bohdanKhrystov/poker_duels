@@ -46,3 +46,4 @@ Thumbs.db
 
 # Claude Code — settings.local.json holds per-machine overrides and is not shared
 .claude/settings.local.json
+.claude/run-state.json

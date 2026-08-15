@@ -7,6 +7,12 @@ duel over two real sockets against PostgreSQL, pays the winner a coin, and survi
 `EPIC-06` (design) runs in parallel on disjoint files, see `ADR-0023`. `EPIC-03` (web client) is
 next and not yet written.
 
+`EPIC-11` (status notifications) is **ahead of `EPIC-03`, `EPIC-04` and `EPIC-05` in the
+queue**, by the human's instruction on 2026-08-15. Those three are the first epics long enough
+for a silent stall to cost a night, so the run learns to report itself before it runs them
+rather than after the first one goes quiet. It touches no file any of them touch —
+`scripts/notify/`, `docs/notifications.md` and the skill.
+
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
 ---
@@ -26,6 +32,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | EPIC-08 | Analysis and decision quality | *not written* | later |
 | EPIC-09 | Bots and simulation | *not written* | later |
 | EPIC-10 | The AI software factory — the case study | *not written* | continuous |
+| [EPIC-11](epics/EPIC-11-status-notifications.md) | Status notifications — the run reports itself | **in progress** | v0.1 |
 
 Numbers 03–05 and 07–10 are **reserved**, not planned in detail. Epics are written when the one
 before them is close to done, because writing them earlier means rewriting them. `EPIC-06` is
@@ -678,3 +685,34 @@ every digit run from the DOM and asserts each is a field of the view, the other 
 | [STORY-0310](stories/STORY-0310-reconnect-and-resume.md) | Reconnect — the client resumes its seat | backlog |
 | [STORY-0311](stories/STORY-0311-profile-strip.md) | The profile strip — my coins and my recent duels | backlog |
 | [STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | backlog |
+
+---
+
+## EPIC-11 — Status notifications
+
+Ahead of `EPIC-03`/`04`/`05` by the human's instruction on 2026-08-15. Settled by
+[`ADR-0042`](../docs/adr/ADR-0042-the-run-reports-itself-every-two-hours.md) (`DEC-036`):
+Telegram over stdlib Python, reports composed from repository state so a dead agent is not a
+missing report, an in-session two-hourly cron, and the stop report carried by a `Stop` hook.
+
+| Story | Task | Est | Status |
+| --- | --- | --- | --- |
+| **[STORY-1101](stories/STORY-1101-send-a-real-message.md)** Send a real message — *schema 2* | | | **done** |
+| | [TASK-110101](tasks/TASK-110101-credentials-resolve-and-redact.md) Resolve credentials, and redact the token from everything | S | **done** |
+| | [TASK-110102](tasks/TASK-110102-send-one-telegram-message.md) Send one message to the Telegram Bot API | S | **done** |
+| | [TASK-110103](tasks/TASK-110103-notify-cli-and-doctor.md) The notify CLI, and a doctor that proves the channel | S | **done** |
+| | [TASK-110104](tasks/TASK-110104-the-suite-runs-in-ci.md) Run the notifier suite in CI | XS | **done** |
+| **[STORY-1102](stories/STORY-1102-compose-the-report.md)** Compose the report from repository state — *schema 2* | | | **done** |
+| | [TASK-110201](tasks/TASK-110201-the-run-state-breadcrumb.md) The run-state breadcrumb the agent stamps | S | **done** |
+| | [TASK-110202](tasks/TASK-110202-read-the-board.md) Read ticket and epic status out of the board | S | **done** |
+| | [TASK-110203](tasks/TASK-110203-compose-the-status-report.md) Compose the status report, degrading section by section | S | **done** |
+| **[STORY-1103](stories/STORY-1103-the-four-reports.md)** The four reports the run owes — *schema 2* | | | **done** |
+| | [TASK-110301](tasks/TASK-110301-heartbeat-dedupes-on-the-window.md) The heartbeat sends once per window, whoever fires it | S | **done** |
+| | [TASK-110302](tasks/TASK-110302-stop-and-budget-reports.md) The stop and budget reports, and the cron line | S | **done** |
+| | [TASK-110303](tasks/TASK-110303-the-stop-hook.md) The Stop hook, and the one line that registers it | S | **done** |
+| | [TASK-110304](tasks/TASK-110304-build-epic-reports.md) build-epic gains its reporting duties | S | **done** |
+| [STORY-1104](stories/STORY-1104-a-heartbeat-that-outlives-the-session.md) A heartbeat that outlives the session | | | backlog |
+
+`STORY-1104` is written and deliberately unstarted — the launchd option the human declined on
+2026-08-15. It is kept so that reversing that judgement costs one command rather than one
+rediscovery, and its tickets are written only if it is ever started.

@@ -411,6 +411,49 @@ Two constraints bound how much this can be trusted:
 - Jobs fire only while the REPL is **idle**, which is why the liveness guard above is mandatory
   rather than decorative.
 
+## Report while you run
+
+The human cannot see the ledger. From outside, *working through ticket 40 of 60* and *dead since
+11pm* look identical, and a run designed never to stop is a run that is silent for hours by
+construction. So it reports itself, over Telegram, through `scripts/notify/notify.py`
+(`ADR-0042`, `docs/notifications.md`).
+
+This section sits beside *Arm the resume before you need it* because it shares that section's
+cause: **both are set up while the budget is healthy, or not at all.**
+
+At the **start of the run**, alongside the resume job:
+
+```
+notify.py state --epic <first epic> --epics <the whole remaining list> --cron-armed armed|not-armed
+CronCreate(cron: "0 */2 * * *", recurring: true, prompt: "run: python3 scripts/notify/notify.py heartbeat")
+```
+
+Pass `--cron-armed armed` **only once `CronCreate` has returned successfully** — never
+optimistically. The whole value of that flag is that the human can trust it.
+
+Then, the four reports:
+
+- **heartbeat** — the cron sends it every two hours. Call `notify.py heartbeat --force` yourself
+  at each **epic boundary**, so a landing is not held until the clock comes round. It
+  deduplicates on the last-sent stamp, so a forced report and the cron cannot both fire.
+- **stop** — carried by the `Stop` hook, which is silent unless the run state names a
+  `current_epic`. Keep `--epic` current as epics change, and run `notify.py state --clear` when
+  the list is finished, so the hook falls silent with it.
+- **blocked** — `notify.py blocked --decision DEC-NNN --question "…"` when an epic parks on a
+  decision the product owner escalated. Send it when you park, not at the final report: the
+  human can answer it while the run works the next epic.
+- **budget** — `notify.py budget --cron-armed armed|not-armed|unknown` **the moment a usage
+  warning appears, before doing anything else.** A usage limit ends the turn and every turn
+  after it, so a plan that reports after the limit never reports. This is the one report whose
+  ordering is load-bearing: send it first, then land what is already reviewed.
+
+Reporting is not narration. The prohibition above still holds — no message per dispatch, per
+merge or per ticket. A heartbeat is a digest, and the notifier is what makes staying quiet in the
+terminal safe.
+
+Failures here are ignorable by design: every command exits 0 whether or not it sent. **Never let
+a notification failure stop, retry or slow the run.**
+
 ## Final report
 
 Written **once, at the end of the whole list** — not once per epic. Epics report themselves in one
