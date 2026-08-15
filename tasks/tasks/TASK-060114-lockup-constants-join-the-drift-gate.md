@@ -40,12 +40,12 @@ put it on the sheet, where the existing gates cover it.
   rules and fails any other card declaring `.mark .coin` whose values differ. Cards
   without the lockup stay silent — `duel-end.html` declares no `.mark` (its 22px/2px
   coin is its own scale, not a copy of the lockup's).
-- **Gated by `DEC-032`**: whether a component's internal em ratios fall under
-  `ADR-0024 §2`'s "every size is born in the sheet" — the reading under which this
-  ticket collapses into a `TASK-060116`-shaped tokenization and the gate clause is
-  never built — is an open decision this ticket must not pre-empt (#474 review). Do
-  not start before the answering ADR lands; whichever way it answers, this ticket
-  follows it.
+- **Decided by [`ADR-0033`](../../docs/adr/ADR-0033-component-anatomy-is-born-in-its-canonical-card.md)**:
+  the anatomy is card-born and this gate clause is the mechanism. The gate reads the
+  four em values, deliberately not the declaration blocks (a conformant copy may fold
+  shared-`.coin` properties in). The question was minted as `DEC-032` and renumbered
+  `DEC-034` on the register; the ticket proceeds when its `depends_on` chain reaches
+  it.
 - Stock macOS/Linux tools; setup failures exit 2, the gate's deliberate failure is
   exit 1; the scratch copy is left for the OS to purge, per the sibling gate tickets.
   The two negatives mutate the copy and the canonical respectively, so an
