@@ -14,30 +14,35 @@ labels: [design]
 depends_on: []
 verify:
   - ./design/check-drift.sh
-  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -0777 -pi -e "s/--pd-focus-offset: 2px;/--pd-focus-offset: 3px/" "$T/design/screens/create-duel.html" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -0777 -pi -e "s/--pd-shadow-card:[^;]*;/--pd-shadow-card:0 1px 4px rgba(0,0,0,0.4)/" "$T/design/tokens/tokens.css" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1; [ $? -eq 1 ]'
+  - sh -c 'T=$(mktemp -d) && cp -R design "$T/design" && perl -0777 -pi -e "s/--pd-focus-offset:\s*2px;/--pd-focus-offset:2px/" "$T/design/screens/create-duel.html" || exit 2; "$T/design/check-drift.sh" >/dev/null 2>&1'
 ---
 
 ## Goal
 
-The value gate's extractor matches declarations only up to a `;`, so a `:root`'s
-final declaration written without one — legal CSS that renders identically — never
-enters the compared set: the #510 review proved a semicolon-less `--pd-` declaration
-escapes value comparison forever, on both the sheet side and the card side, the
-exact silent-stale class the gate chain exists to close.
+The value gate's extractor matches declarations only up to a `;`, and a final
+declaration legally written without one misbehaves differently on each side — both
+proved by the #510 review's experiments. Sheet side: the sheet's last declaration
+(`--pd-shadow-card`, nothing after it but `}`) never enters the compared set, so
+drifting it semicolon-less passes every clause silently. Card side: the walk merges
+forward across `}` to the next `;`, so an aligned semicolon-less value garbles into
+a **false** drift report. The fix — the walk ends at `;` or the block's `}` — cures
+both at once.
 
 ## Files
 
 | File | Action |
 | --- | --- |
-| `design/check-drift.sh` | edit — `EXTRACT` accepts a declaration terminated by `;` or by its block's `}`; the self-test probes the semicolon-less form |
+| `design/check-drift.sh` | edit — `EXTRACT` terminates a declaration at `;` or `}`; the self-test probes the semicolon-less form |
 
 ## Scope
 
-- The extractor's declaration walk ends at `;` or `}`, whichever comes first; the
-  emitted normal form is unchanged, so every existing comparison keeps working.
-- The self-test gains a semicolon-less fixture, and the negative verify drifts a
-  card's final declaration after stripping its semicolon — the gate must still
-  catch it.
+- The emitted normal form is unchanged, so every existing comparison keeps working
+  (verified byte-identical extraction across all current files by the review).
+- The verify's two fixtures are discriminating, red on the unfixed tree by the
+  review's own runs: the sheet-side drift must start failing (it silently passes
+  today), and the card-side aligned mutation must stop failing (it false-positives
+  today).
 
 ## Out of scope
 
@@ -45,8 +50,8 @@ exact silent-stale class the gate chain exists to close.
 
 ## Tests
 
-None — the verify runs the gate on the aligned tree and proves the negative path on
-a mutated scratch copy, per the sibling gate tickets.
+None — the verify runs the gate on the aligned tree and proves both sides of the
+termination fix on mutated scratch copies, per the sibling gate tickets.
 
 ## Acceptance criteria
 
