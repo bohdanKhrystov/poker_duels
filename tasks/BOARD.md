@@ -424,7 +424,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060117](tasks/TASK-060117-the-colors-cards-coin-matches-the-canonical.md) The Colors card's coin matches the canonical | XS | **done** |
 | | [TASK-060118](tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) The gallery lede names every mirrored token | XS | **done** |
 | | [TASK-060119](tasks/TASK-060119-the-coin-face-is-born-on-the-sheet.md) The coin face is born on the sheet | XS | **done** |
-| | [TASK-060120](tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) The lockup coins consume the face token | XS | ready |
+| | [TASK-060120](tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) The lockup coins consume the face token | XS | **done** |
 | | [TASK-060121](tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) The value gate reads CSS values correctly | S | blocked — `DEC-035` |
 | | [TASK-060122](tasks/TASK-060122-the-design-gate-runs-in-ci.md) The design gate runs in CI | XS | ready |
 | | [TASK-060123](tasks/TASK-060123-the-gates-remaining-silent-edges.md) The lockup clause cannot go quiet | XS | ready |

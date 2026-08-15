@@ -13,7 +13,7 @@
     --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
     --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4;
-    --pd-on-accent: #ffffff; --pd-coin: #9fb2c4; --pd-coin-deep: #64788c; --pd-coin-glint: #b8c6d6;
+    --pd-on-accent: #ffffff; --pd-coin: #9fb2c4; --pd-coin-deep: #64788c; --pd-coin-glint: #b8c6d6; --pd-coin-face: radial-gradient(circle at 36% 30%, var(--pd-coin-glint), var(--pd-coin) 55%, var(--pd-coin-deep));
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
     --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
@@ -46,7 +46,7 @@
   .mark { display: inline-flex; align-items: baseline; gap: 0.42em; font-weight: 700;
     letter-spacing: 0.01em; }
   .mark .coin { width: 0.92em; height: 0.92em; align-self: center; border-radius: var(--pd-radius-pill);
-    background: radial-gradient(circle at 36% 30%, var(--pd-coin-glint), var(--pd-coin) 55%, var(--pd-coin-deep));
+    background: var(--pd-coin-face);
     box-shadow: inset 0 0 0 0.06em rgba(255,255,255,0.25); }
   .mark .duels { color: var(--pd-text-muted); font-weight: 500; }
   /* Contrast themes strip gradients and shadows — keep the coin a visible ring. */
