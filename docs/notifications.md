@@ -138,6 +138,26 @@ missing or corrupt file degrades a report rather than preventing one.
 The driver writes it — `notify.py state --epic … ` at the start of a run, `--clear` at the end so
 the stop hook falls silent again.
 
+## The heartbeat clock, and its two expiry dates
+
+The two-hourly heartbeat is an in-session cron job armed at the start of a run:
+
+```
+CronCreate(cron: "17 */2 * * *", recurring: true,
+           prompt: "run: python3 scripts/notify/notify.py heartbeat")
+```
+
+Two things end it, and neither announces itself:
+
+- **Quitting Claude Code.** Cron jobs are session-only — nothing is written to disk. They survive
+  a usage limit, which leaves the process running, but not a quit and not a reboot.
+- **Seven days.** Recurring jobs auto-expire after a week; the job fires one last time and is
+  deleted.
+
+So the heartbeat is re-armed at the start of every run rather than assumed, and jobs fire only
+while the REPL is idle — which is why the dedup window lives in the script rather than in the
+schedule. An off-minute (`:17`, not `:00`) is deliberate.
+
 ## What is deliberately not built
 
 - **A heartbeat that survives Claude Code being quit.** The cron is session-only. It survives a
