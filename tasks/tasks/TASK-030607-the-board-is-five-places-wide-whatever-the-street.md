@@ -100,7 +100,7 @@ dashed outlines — so the board's width never changes between streets.
 | `reserves five places before a card is dealt` | `[]` renders five `role="img"` elements, including `turn card, not yet dealt` and `river card, not yet dealt` |
 | `deals the flop into the first three places` | `["As", "7d", "2c"]` names all three faces and still offers both undealt slots |
 | `still draws five places on the river` | five cards render five images and `queryByRole("img", { name: /not yet dealt/ })` is `null` |
-| `draws exactly five places on every street` | for card counts 0, 3, 4 and 5, the row element's `childElementCount` is `5` |
+| `draws exactly five places on every street` | for card counts 0, 3, 4, 5 **and 6**, the row element's `childElementCount` is `5`. The sixth carries the title's weight: 0, 3, 4 and 5 all render five places under "exactly five" *and* under "at least five", so none of them can tell the two rules apart — a board widening to `Math.max(5, cards.length)` ships `Tests 158 passed (158)` against them. Verified, not predicted |
 
 Four tests. One hundred and fifty-four exist, so the suite reports **158**.
 
