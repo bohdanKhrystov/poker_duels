@@ -20,6 +20,12 @@
 #      carries a copy of canonical geometry; the copy must equal the same-id symbol in
 #      a graphics SVG, compared with XML comments stripped and whitespace runs
 #      collapsed, so an asset retune can never leave a card silently stale.
+#   6. Lockup anatomy (TASK-060114, per ADR-0033): the wordmark's four em constants —
+#      gap and letter-spacing on `.mark`, width and inset-ring on `.mark .coin` — are
+#      born in graphics/wordmark.html; any other card declaring `.mark .coin` must
+#      carry the same four values (values, deliberately not declaration blocks — a
+#      conformant copy folds shared-`.coin` properties in). A card copying only
+#      `.mark` stays outside the clause: the recorded residual gap.
 # Stock macOS/Linux tools only (grep -o is a BSD/GNU extension both platforms ship;
 # strict POSIX omits it).
 set -eu
@@ -163,6 +169,36 @@ extract_syms() {
 symprobe=$(printf '<symbol id="pd-x" a="1">\n  <p/> <!-- c -->\n</symbol>\n' | perl -e "$SYMEXTRACT" 2>/dev/null || true)
 [ "$symprobe" = "$(printf 'pd-x\t<symbol id="pd-x" a="1"> <p/> </symbol>\n!opens\t1')" ] \
   || { echo "check-drift: self-test failed — symbol extractor broke (perl?)" >&2; exit 1; }
+# pulls the lockup's four em constants — gap/track from .mark, width/ring from
+# .mark .coin — as `gap=… track=… width=… ring=…`, or reports what a .mark .coin
+# copy is missing; comments are stripped first
+ANATOMY='
+  my $src = do { local $/; <STDIN> };
+  $src =~ s/<!--.*?-->//gs;
+  $src =~ s/\/\*.*?\*\///gs;
+  my ($mark) = $src =~ /\.mark\s*\{([^}]*)\}/s;
+  my ($coin) = $src =~ /\.mark\s+\.coin\s*\{([^}]*)\}/s;
+  exit 0 unless defined $coin;
+  my ($gap)   = ($mark // "") =~ /gap\s*:\s*([^;]+);/;
+  my ($track) = ($mark // "") =~ /letter-spacing\s*:\s*([^;]+);/;
+  my ($width) = $coin =~ /width\s*:\s*([^;]+);/;
+  my ($ring)  = $coin =~ /box-shadow\s*:\s*inset\s+\S+\s+\S+\s+\S+\s+(\S+)/;
+  for ($gap, $track, $width, $ring) { if (defined) { s/^\s+|\s+$//g } }
+  my %v = (gap => $gap, track => $track, width => $width, ring => $ring);
+  my @missing = grep { !defined $v{$_} } qw(gap track width ring);
+  if (@missing) { print "MISSING\t@missing\n"; exit 0 }
+  print "gap=$v{gap} track=$v{track} width=$v{width} ring=$v{ring}\n";
+'
+anat_probe=$(printf '.mark { gap: 1em; letter-spacing: 2em; }\n.mark .coin { width: 3em; box-shadow: inset 0 0 0 4em red; }\n' | perl -e "$ANATOMY" 2>/dev/null || true)
+[ "$anat_probe" = "gap=1em track=2em width=3em ring=4em" ] \
+  || { echo "check-drift: self-test failed — anatomy extractor broke (perl?)" >&2; exit 1; }
+WORDMARK="$DIR/graphics/wordmark.html"
+canon_anat=$(perl -e "$ANATOMY" < "$WORDMARK" 2>/dev/null || true)
+case "$canon_anat" in
+  gap=*) : ;;
+  *) echo "check-drift: could not read the lockup anatomy from $WORDMARK — the canonical broke" >&2; exit 1 ;;
+esac
+
 canon_syms=$(mktemp)
 canon_fail=0
 for g in $(find "$DIR/graphics" -name '*.svg' 2>/dev/null | sort); do
@@ -180,6 +216,7 @@ fail=0
 mentions=0
 files=0
 syms_total=0
+anat_copies=0
 for f in $(find "$DIR" -name '*.html' | sort); do
   files=$((files + 1))
   for name in $(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$f" | sort -u); do
@@ -202,6 +239,21 @@ for f in $(find "$DIR" -name '*.html' | sort); do
       echo "check-drift: value comparison failed on $f (awk error)" >&2; fail=1; bad=""
     }
     if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
+  fi
+
+  # a card declaring .mark .coin copies the lockup — its four anatomy values must
+  # equal the canonical's (the canonical itself is the source, not a copy)
+  if [ "$f" != "$WORDMARK" ]; then
+    st=0; anat=$(perl -e "$ANATOMY" < "$f" 2>/dev/null) || st=$?
+    if [ "$st" -ne 0 ]; then
+      echo "check-drift: anatomy extraction failed ($st) on $f" >&2; fail=1; anat=""
+    fi
+    case "$anat" in
+      "") : ;;
+      MISSING*) echo "check-drift: $f declares .mark .coin but its lockup copy lacks: ${anat#MISSING?}" >&2; fail=1 ;;
+      "$canon_anat") anat_copies=$((anat_copies + 1)) ;;
+      *) echo "check-drift: $f copies the lockup as [$anat], but the canonical is [$canon_anat]" >&2; fail=1 ;;
+    esac
   fi
 
   # inlined pd- symbol blocks must equal their same-id canonicals
@@ -263,4 +315,4 @@ done
 # an empty tree must fail as loudly as a missing sheet — a vacuous pass guards nothing
 [ "$files" -gt 0 ] || { echo "check-drift: no cards found under $DIR" >&2; exit 1; }
 if [ "$fail" -ne 0 ]; then exit 1; fi
-echo "check-drift: tokens resolve, values match the sheet, suits carry U+FE0E, $pairs_total graphics pairs and $syms_total inlined symbols mirror truly ($mentions distinct mentions across $files cards)"
+echo "check-drift: tokens resolve, values match the sheet, suits carry U+FE0E, $pairs_total graphics pairs and $syms_total inlined symbols mirror truly, and the lockup anatomy holds across $anat_copies copies ($mentions distinct mentions across $files cards)"

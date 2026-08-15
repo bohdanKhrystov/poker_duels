@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060114
 title: The lockup constants join the drift gate
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
