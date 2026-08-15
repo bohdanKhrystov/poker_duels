@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030701
 title: A turn fixture with every field the wire declares
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: XS
