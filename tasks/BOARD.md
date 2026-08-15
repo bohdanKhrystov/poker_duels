@@ -634,8 +634,8 @@ every digit run from the DOM and asserts each is a field of the view, the other 
 | | [TASK-030601](tasks/TASK-030601-a-chip-amount-is-grouped-the-same-way-wherever-it-runs.md) A chip amount is grouped the same way wherever it runs | XS | **done** |
 | | [TASK-030602](tasks/TASK-030602-a-card-string-splits-into-a-rank-character-and-a-suit-glyph.md) A card string splits into a rank character and a suit glyph | S | **done** |
 | | [TASK-030603](tasks/TASK-030603-a-card-says-its-name-aloud-and-carries-no-number.md) A card says its name aloud, and carries no number | S | **done** |
-| | [TASK-030604](tasks/TASK-030604-a-card-back-and-an-undealt-board-place.md) A card back and an undealt board place | S | ready |
-| | [TASK-030605](tasks/TASK-030605-a-face-up-card-draws-its-rank-its-suit-and-the-suits-colour.md) A face-up card draws its rank, its suit and the suit's colour | S | backlog |
+| | [TASK-030604](tasks/TASK-030604-a-card-back-and-an-undealt-board-place.md) A card back and an undealt board place | S | **done** |
+| | [TASK-030605](tasks/TASK-030605-a-face-up-card-draws-its-rank-its-suit-and-the-suits-colour.md) A face-up card draws its rank, its suit and the suit's colour | S | ready |
 | | [TASK-030606](tasks/TASK-030606-a-hand-is-two-places-wide-whatever-the-view-carries.md) A hand is two places wide, whatever the view carries | S | backlog |
 | | [TASK-030607](tasks/TASK-030607-the-board-is-five-places-wide-whatever-the-street.md) The board is five places wide, whatever the street | S | backlog |
 | | [TASK-030608](tasks/TASK-030608-a-playerview-fixture-with-every-field-the-wire-declares.md) A PlayerView fixture with every field the wire declares | S | backlog |
