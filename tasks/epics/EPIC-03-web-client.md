@@ -98,12 +98,12 @@ Every one of these is cheap to violate in a component and expensive to notice in
 
 | ID | Title | Depends on | Status |
 | --- | --- | --- | --- |
-| [STORY-0301](../stories/STORY-0301-web-client-toolchain.md) | The web-client toolchain and its first green check | — | blocked (`DEC-022`) |
-| [STORY-0302](../stories/STORY-0302-design-tokens-in-the-client.md) | The design tokens are the client's only colours and sizes | 0301 | backlog |
-| [STORY-0303](../stories/STORY-0303-typed-socket-and-handshake.md) | The typed socket: handshake and device identity | 0301 | backlog |
-| [STORY-0304](../stories/STORY-0304-client-store.md) | The store: state is the last frame the server sent | 0303 | backlog |
-| [STORY-0305](../stories/STORY-0305-lobby-and-room-link.md) | The lobby: create a room, join by code, share the link | 0302, 0304 | backlog |
-| [STORY-0306](../stories/STORY-0306-duel-table-screen.md) | The duel table renders a `PlayerView` | 0305 | backlog |
+| [STORY-0301](../stories/STORY-0301-web-client-toolchain.md) | The web-client toolchain and its first green check | — | done |
+| [STORY-0302](../stories/STORY-0302-design-tokens-in-the-client.md) | The design tokens are the client's only colours and sizes | 0301 | done |
+| [STORY-0303](../stories/STORY-0303-typed-socket-and-handshake.md) | The typed socket: handshake and device identity | 0301 | done |
+| [STORY-0304](../stories/STORY-0304-client-store.md) | The store: state is the last frame the server sent | 0303 | done |
+| [STORY-0305](../stories/STORY-0305-lobby-and-room-link.md) | The lobby: create a room, join by code, share the link | 0302, 0304 | done |
+| [STORY-0306](../stories/STORY-0306-duel-table-screen.md) | The duel table renders a `PlayerView` | 0305 | done |
 | [STORY-0307](../stories/STORY-0307-action-bar.md) | The action bar: acting on your turn | 0306 | backlog |
 | [STORY-0308](../stories/STORY-0308-result-screen.md) | The result screen: who won, and the coin | 0307 | backlog |
 | [STORY-0309](../stories/STORY-0309-rematch.md) | Rematch from the result screen | 0308 | blocked (`DEC-023`) |
