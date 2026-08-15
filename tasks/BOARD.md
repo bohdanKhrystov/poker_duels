@@ -467,6 +467,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
+| DEC-037 | **The architect's** — after a `Rejected`, is the decision point still open on the client, and when does a rejection stop being shown? The server sends no fresh `YourTurn` after one and `duel-state.ts` clears `pendingTurn`, so one rejected action ends that player's hand with both players still connected | [`TASK-030712`](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) | before STORY-0307 closes |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -587,16 +588,33 @@ buildable — one store and one connection per tab, wired by a framework-free `b
 screen re-invents: `TASK-030507` mounts the tree in a real `<StrictMode>` and counts frames, and
 moving that send into a screen effect makes it send **three**.
 
-`STORY-0306` is next and is split: seventeen tickets that replace the one-line *"The duel has
-begun."* placeholder `TASK-030514` left with the table itself. `TASK-030601` is startable now; the
-chain is strictly linear. It implements the owner's finished design — `design/screens/duel-table.html`
+`STORY-0306` is **done**: eighteen tickets replaced the one-line *"The duel has begun."* placeholder
+with the table itself, implementing the owner's finished design — `design/screens/duel-table.html`
 and `duel-table-states.html` from `STORY-0602` — rather than inventing a layout.
 
-The story's own constraint is `CLAUDE.md`'s non-negotiable made executable: **the table renders the
+The story's own constraint was `CLAUDE.md`'s non-negotiable made executable: **the table renders the
 `PlayerView` and derives nothing from it.** No pot summed, no call priced, no street read off the
 board's length, no hand named, no winner declared. Two whole-table guards carry it — one extracts
 every digit run from the DOM and asserts each is a field of the view, the other pins all eight card
 `aria-label`s in document order — and ten enumerated violations were run against them.
+
+`STORY-0307` is next and is split: twelve tickets, cumulative counts **194 → 232** from the measured
+baseline of 190. `TASK-030701` is startable now; the chain is strictly linear. The bar it builds is
+the **only place this client asserts anything**, so the same constraint appears one level sharper:
+it draws `legalActions.allowed` and no other control, clamps its amount control to bounds the server
+sent rather than working any out, copies `handNumber`, `actionSequence` and `seat` verbatim into the
+one `Act` a click sends, and then disables everything until the server's next frame. A third guard
+(`TASK-030710`) asserts every digit run in the bar is one of the four amounts `LegalActions` carries.
+
+Three deliberate departures from the design, recorded in the story: `ALL_IN` is a fourth button
+because `BettingRules` offers it in almost every legal set; the `−`/`+` stepper becomes a range
+input because no increment is on the wire and inventing one would be a raising rule; and the three
+pot-fraction sizing chips go, because they are the bet presets the story puts out of scope.
+
+**`DEC-037` blocks the twelfth ticket only.** After a `Rejected` the server sends no fresh
+`YourTurn` and the reducer clears `pendingTurn`, so a rejected action currently ends that player's
+hand while both players are still connected. Which layer reopens it is the architect's, and eleven
+tickets ship without the answer.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -679,7 +697,19 @@ every digit run from the DOM and asserts each is a field of the view, the other 
 | | [TASK-030616](tasks/TASK-030616-the-table-names-no-card-the-view-did-not-send-and-no-hand.md) The table names no card the view did not send, and no hand | S | **done** |
 | | [TASK-030617](tasks/TASK-030617-the-lobby-hands-the-live-view-to-the-duel-table.md) The lobby hands the live view to the duel table | XS | **done** |
 | | [TASK-030618](tasks/TASK-030618-the-suit-glyphs-are-asserted-by-codepoint-not-by-a-matching-literal.md) The suit glyphs are asserted by codepoint, not by a matching literal | XS | **done** |
-| [STORY-0307](stories/STORY-0307-action-bar.md) | The action bar — acting on your turn | backlog |
+| **[STORY-0307](stories/STORY-0307-action-bar.md)** The action bar — acting on your turn — *schema 2* | | **ready** |
+| | [TASK-030701](tasks/TASK-030701-a-turn-fixture-with-every-field-the-wire-declares.md) A turn fixture with every field the wire declares | XS | ready |
+| | [TASK-030702](tasks/TASK-030702-each-action-says-its-verb-and-carries-the-servers-figure.md) Each action says its verb and carries the server's figure | S | backlog |
+| | [TASK-030703](tasks/TASK-030703-the-act-frame-echoes-the-turns-identity-verbatim.md) The Act frame echoes the turn's identity verbatim | S | backlog |
+| | [TASK-030704](tasks/TASK-030704-the-bar-exists-in-every-state-and-waits-in-most.md) The bar exists in every state, and waits in most of them | S | backlog |
+| | [TASK-030705](tasks/TASK-030705-one-button-per-action-the-server-allowed.md) One button per action the server allowed, and not one more | S | backlog |
+| | [TASK-030706](tasks/TASK-030706-the-amount-control-is-clamped-to-the-bounds-the-server-sent.md) The amount control is clamped to the bounds the server sent | S | backlog |
+| | [TASK-030707](tasks/TASK-030707-a-click-sends-one-act-and-the-bar-goes-quiet.md) A click sends one Act, and the bar goes quiet until the next turn | S | backlog |
+| | [TASK-030708](tasks/TASK-030708-a-rejection-reads-from-its-own-fields.md) A rejection reads from its own fields, in the server's numbers | S | backlog |
+| | [TASK-030709](tasks/TASK-030709-the-bar-states-what-the-server-refused.md) The bar states what the server refused, and retries nothing | S | backlog |
+| | [TASK-030710](tasks/TASK-030710-the-bar-shows-no-number-and-offers-no-action-the-turn-did-not-carry.md) The bar shows no number and offers no action the turn did not carry | S | backlog |
+| | [TASK-030711](tasks/TASK-030711-the-duel-screen-puts-the-bar-under-the-table.md) The duel screen puts the bar under the table and sends what it built | S | backlog |
+| | [TASK-030712](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) After a rejection the player can act again | S | **blocked** (`DEC-037`) |
 | [STORY-0308](stories/STORY-0308-result-screen.md) | The result screen — who won, and the coin | backlog |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen | **blocked** |
 | [STORY-0310](stories/STORY-0310-reconnect-and-resume.md) | Reconnect — the client resumes its seat | backlog |

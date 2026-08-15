@@ -104,7 +104,7 @@ Every one of these is cheap to violate in a component and expensive to notice in
 | [STORY-0304](../stories/STORY-0304-client-store.md) | The store: state is the last frame the server sent | 0303 | done |
 | [STORY-0305](../stories/STORY-0305-lobby-and-room-link.md) | The lobby: create a room, join by code, share the link | 0302, 0304 | done |
 | [STORY-0306](../stories/STORY-0306-duel-table-screen.md) | The duel table renders a `PlayerView` | 0305 | done |
-| [STORY-0307](../stories/STORY-0307-action-bar.md) | The action bar: acting on your turn | 0306 | backlog |
+| [STORY-0307](../stories/STORY-0307-action-bar.md) | The action bar: acting on your turn | 0306 | ready |
 | [STORY-0308](../stories/STORY-0308-result-screen.md) | The result screen: who won, and the coin | 0307 | backlog |
 | [STORY-0309](../stories/STORY-0309-rematch.md) | Rematch from the result screen | 0308 | blocked (`DEC-023`) |
 | [STORY-0310](../stories/STORY-0310-reconnect-and-resume.md) | Reconnect: the client resumes its seat | 0306 | backlog |
@@ -136,12 +136,13 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
-**Two remain, both the architect's.** No decision here waits on a human.
+**Three remain, all the architect's.** No decision here waits on a human.
 
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
 | `DEC-023` | How does a rematch reach the server, given the wire carries no rematch message? | architect | `STORY-0309` only |
 | `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a thirteenth story exists — but it is due **before this epic closes** |
+| `DEC-037` | After a `Rejected`, is the decision point still open on the client, and when does a rejection stop being shown? The server sends no fresh `YourTurn` after one and the reducer clears `pendingTurn`, so today a rejected action ends that player's hand | architect | `TASK-030712` only; `STORY-0307`'s other eleven tickets ship without it |
 
 ### Answered since this epic was written
 
