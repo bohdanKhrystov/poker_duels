@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030614
 title: The reserved line states what the rival has committed this street
 type: task
-status: backlog
+status: ready
 parent: STORY-0306
 module: web-client
 estimate: XS
