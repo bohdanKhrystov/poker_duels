@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060115
 title: The coin glint is born on the sheet
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: XS
