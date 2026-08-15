@@ -110,8 +110,8 @@ dashed undealt outline, both sized from the `--w` their row sets.
 
 | Test | Proves |
 | --- | --- |
-| `shows a face-down card with no rank and no suit in it` | rendering `<CardBack label="your rival's hidden hand" />` leaves `container.textContent` exactly `""`, the element's `aria-label` exactly the label given, and its `childElementCount` `0` |
-| `hides the second card of a pair from the accessibility tree` | rendering `<CardBack />` leaves `screen.queryAllByRole("img")` equal to `[]` |
+| `shows a face-down card with no rank and no suit in it` | rendering `<CardBack label="your rival's hidden hand" />` leaves `container.textContent` exactly `""`, the element's `aria-label` exactly the label given, its `childElementCount` `0`, and its `title` **null** — a `title` both speaks and shows a tooltip, so it is the one remaining way a rank reaches a player past the other three |
+| `hides the second card of a pair from the accessibility tree` | rendering `<CardBack />` leaves `screen.queryAllByRole("img")` equal to `[]` **and** the element's `aria-hidden` exactly `"true"`. Both, not either: a bare `<span>` is not an `img` either, so the role check alone passes against a card that was never hidden — deleting `aria-hidden` outright ships `Tests 147 passed (147)`. Verified, not predicted |
 | `names an undealt board place` | `<CardSlot label="river card, not yet dealt" />` is findable by `getByRole("img", { name: "river card, not yet dealt" })` |
 
 Three tests. One hundred and forty-four exist, so the suite reports **147**.
