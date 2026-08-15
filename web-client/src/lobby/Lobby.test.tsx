@@ -204,8 +204,83 @@ describe("the lobby", () => {
       store.apply(SNAPSHOT);
     });
 
-    expect(screen.queryByText("Waiting for your rival")).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Waiting for your rival" }),
+    ).toBeNull();
     expect(screen.getByText("Pot 30")).toBeDefined();
+  });
+
+  it("puts the action bar under the table", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+    });
+
+    expect(screen.getByRole("region", { name: "your move" })).toBeDefined();
+    // Verify no-turn case reaches the bar: waiting line is shown when pendingTurn is null
+    expect(screen.getByText("Waiting for your rival…")).toBeDefined();
+  });
+
+  it("sends the Act the bar built from the pending turn", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    const { send } = renderLobby(store);
+
+    // First turn: handNumber 4, actionSequence 9, allowed: ["FOLD", "CALL"]
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "YourTurn",
+        handNumber: 4,
+        actionSequence: 9,
+        legalActions: {
+          seat: 0,
+          allowed: ["FOLD", "CALL"],
+          callTo: 400,
+          minBetTo: 0,
+          minRaiseTo: 0,
+          allInTo: 500,
+        },
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fold" }));
+
+    expect(send).toHaveBeenCalledWith({
+      type: "Act",
+      handNumber: 4,
+      actionSequence: 9,
+      action: { type: "Fold", seat: 0 },
+    });
+
+    // Second turn with different identity and allowed actions: handNumber 61, actionSequence 103, allowed: ["CHECK", "CALL"]
+    act(() => {
+      store.apply({
+        type: "YourTurn",
+        handNumber: 61,
+        actionSequence: 103,
+        legalActions: {
+          seat: 0,
+          allowed: ["CHECK", "CALL"],
+          callTo: 0,
+          minBetTo: 0,
+          minRaiseTo: 0,
+          allInTo: 500,
+        },
+      });
+    });
+    // Clicking Check proves the bar follows the store's second turn allowed actions,
+    // not hardcoded values: first turn had ["FOLD", "CALL"], this has ["CHECK", "CALL"]
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
+
+    expect(send).toHaveBeenLastCalledWith({
+      type: "Act",
+      handNumber: 61,
+      actionSequence: 103,
+      action: { type: "Check", seat: 0 },
+    });
   });
 
   it("keeps waiting through every frame that is not a Snapshot", () => {
