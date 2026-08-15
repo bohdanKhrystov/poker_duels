@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030715
 title: The derivation guards read the numbers that reach the DOM as attributes
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: S

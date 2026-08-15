@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030716
 title: The server proves a rejection leaves the client's Act identity valid
 type: task
-status: backlog
+status: ready
 parent: STORY-0307
 module: poker-server
 estimate: S
