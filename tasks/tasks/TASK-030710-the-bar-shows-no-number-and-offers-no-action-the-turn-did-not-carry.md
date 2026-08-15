@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030710
 title: The bar shows no number and offers no action the turn did not carry
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: S
