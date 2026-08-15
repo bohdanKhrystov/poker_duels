@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import type { ActionType, ClientMessage, LegalActions } from "../protocol";
 import type { PendingTurn } from "../store/duel-state";
 import { actionText } from "./action-text";
@@ -37,38 +37,60 @@ function Live(props: {
   send: (message: ClientMessage) => void;
 }): ReactElement {
   const actions = props.turn.legalActions;
-  // 0 when no amount is on offer: it reaches no button, because only Bet and
-  // Raise print a total, and neither is allowed then.
-  const to = amountFloor(actions) ?? 0;
+  const floor = amountFloor(actions);
+  // 0 when no amount is on offer: it reaches no frame, because only Bet and
+  // Raise carry a total, and neither is allowed here.
+  const [to, setTo] = useState(floor ?? 0);
   const filled = filledAction(actions.allowed);
 
   return (
-    <div className="flex gap-3">
-      {actions.allowed.map((type) => {
-        const text = actionText(type, actions, to);
-        return (
-          <button
-            className={`flex-1 rounded-medium border px-3 py-4 leading-tight font-medium ${
-              type === filled
-                ? "border-transparent bg-accent-fill text-on-accent"
-                : "border-hairline text-text"
-            }`}
-            key={type}
-            type="button"
-          >
-            {text.verb}
-            {text.amount !== null && (
-              <>
-                {" "}
-                <span className="font-mono tabular-nums">
-                  {formatChips(text.amount)}
-                </span>
-              </>
-            )}
-          </button>
-        );
-      })}
-    </div>
+    <>
+      <div className="flex min-h-7 items-center gap-3">
+        {floor !== null && (
+          <>
+            <input
+              aria-label={
+                actions.allowed.includes("RAISE") ? "raise to" : "bet to"
+              }
+              className="flex-1"
+              max={actions.allInTo}
+              min={floor}
+              onChange={(event) => setTo(Number(event.target.value))}
+              step={1}
+              type="range"
+              value={to}
+            />
+            <span className="font-mono tabular-nums">{formatChips(to)}</span>
+          </>
+        )}
+      </div>
+      <div className="flex gap-3">
+        {actions.allowed.map((type) => {
+          const text = actionText(type, actions, to);
+          return (
+            <button
+              className={`flex-1 rounded-medium border px-3 py-4 leading-tight font-medium ${
+                type === filled
+                  ? "border-transparent bg-accent-fill text-on-accent"
+                  : "border-hairline text-text"
+              }`}
+              key={type}
+              type="button"
+            >
+              {text.verb}
+              {text.amount !== null && (
+                <>
+                  {" "}
+                  <span className="font-mono tabular-nums">
+                    {formatChips(text.amount)}
+                  </span>
+                </>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
