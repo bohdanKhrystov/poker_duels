@@ -140,11 +140,37 @@ Five agents, each seeing as little as its job allows.
 
 | Role | Model | Runs | Sees |
 | --- | --- | --- | --- |
-| **Architect** | Fable | when a technical `DEC-NNN` blocks something | the decision, the tickets it blocks, the ADRs it touches |
+| **Architect** | Opus, max effort (Fable when available) | when a technical `DEC-NNN` blocks something | the decision, the tickets it blocks, the ADRs it touches |
 | **Product owner** | Opus, max effort | when a product `DEC-NNN` blocks something | `docs/vision.md`, the decision, what it blocks, the ADRs it touches |
 | **Planner** | Opus, high effort | once per story | the story, its epic, 2–3 linked docs |
 | **Coder** | Haiku (promoted to Sonnet on failure) | once per ticket | one ticket + the ≤5 files it names |
 | **Reviewer** | Haiku, or Sonnet when `review: deep` | once per ticket | the diff + the ticket |
+
+### Which model, and what happens when it is unavailable
+
+Every agent's model is declared in **one place** — its own file under `.claude/agents/` — and
+nothing overrides it per dispatch by default. A tier written down twice drifts in one of them.
+
+The declared value is always the one that **works today**, not the one that would be preferred in
+a better world. The architect ran on Fable and no longer does: the account has no Fable capacity,
+so `model: fable` would have failed on the first decision of a run, unattended, with nothing
+downstream able to recover. It is `opus` at `max` effort.
+
+Fable stays *preferred* for the architect when capacity exists, because a decision is a
+read-heavy, argument-shaped task and Fable is strong at it for the price. But subagent frontmatter
+takes a **single** model — there is no list, no fallback syntax, nothing tried in order — so
+"prefer Fable" cannot be expressed in the file. It is a driver rule instead:
+
+- **Default:** dispatch with no model override; the agent file decides.
+- **Fable:** override with `model: fable` only when capacity is *known* to exist — the human said
+  so, or a Fable dispatch already succeeded this session. Never speculatively: a failed dispatch
+  costs a round trip on every decision in the run, and Fable is unavailable far more often than
+  not.
+- **On any model-availability or rate-limit failure:** re-dispatch immediately with **no override**
+  and carry on. The pinned value is the one that always works, so the fallback direction is always
+  safe. A run must never stall on a model being busy.
+
+When capacity changes for good, change the **file** — that is the switch, and it is one line.
 
 Expensive reasoning happens **once** — in the architect for a decision, in the planner for a
 story — and is frozen into tickets that cheap agents consume. There is deliberately no mid-level

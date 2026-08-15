@@ -260,7 +260,7 @@ ticket `blocked`, and carry on with the next startable ticket.
 Then route it by kind — this is the difference between a run that stalls and one that does not:
 
 - **Technical** — where a type lives, which of two designs, schema shape, wire format,
-  concurrency and failure semantics. Dispatch the **`architect`** agent (Fable) to answer it and
+  concurrency and failure semantics. Dispatch the **`architect`** agent to answer it and
   write the ADR. Do this *while* the run continues; it is not a reason to wait. The test is
   whether two competent engineers with the same requirements would land in the same place.
 - **Product** — what a player sees, what a duel *is*, what a coin is worth, which risks inside the
@@ -310,9 +310,16 @@ Stop the **whole run** only if:
 - **reviewer** — `haiku` for `review: light` and `review: standard`; `sonnet` only for
   `review: deep`. A shallow review is fixed by asking a sharper question — naming the specific
   defect to hunt for — not by buying a bigger model on every ticket.
-- **architect** — whatever `.claude/agents/architect.md` declares; do not override it per dispatch.
-  It is pinned there rather than here because it gets switched when a model is rate-limited, and a
-  tier hardcoded in two places drifts in one of them. Runs on demand, when a technical `DEC-NNN`
+- **architect** — whatever `.claude/agents/architect.md` declares (Opus, max effort); do not
+  override it per dispatch. It is pinned there rather than here because it gets switched when a
+  model is unavailable, and a tier hardcoded in two places drifts in one of them.
+
+  **Fable is preferred when the account has capacity**, and frontmatter cannot say so — `model`
+  takes a single value, with no list and no fallback syntax. So: override with `model: fable` only
+  when capacity is *known* to exist (the human said so, or a Fable dispatch already succeeded this
+  session), never speculatively. On any model-availability or rate-limit failure, re-dispatch with
+  **no override** and carry on — the pinned value always works, so falling back is always safe, and
+  a run must never stall on a busy model. The same applies to `product-owner`. Runs on demand, when a technical `DEC-NNN`
   blocks something. It answers the decision and writes the ADR; the planner then writes tickets
   from that ADR.
 - **product-owner** — whatever `.claude/agents/product-owner.md` declares (Opus, max effort); do not
