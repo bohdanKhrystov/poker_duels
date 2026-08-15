@@ -1,0 +1,156 @@
+<!-- @dsCard group="Components" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow actions — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024).
+   * This card is the canonical home for the vocabulary the flow screens share; every
+   * rule below is the merged screens' rule verbatim, so their existing copies are
+   * already faithful and a retune starts here. */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent: #4d8bc9; --pd-accent-subtle: rgba(77, 139, 201, 0.14);
+    --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4; --pd-on-accent: #ffffff;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
+    --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
+    --pd-track-caps: 0.08em; --pd-track-code: 0.14em;
+    --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px;
+    --pd-space-6: 24px; --pd-space-7: 32px;
+    --pd-radius-medium: 8px;
+    --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: var(--pd-fs-body); line-height: var(--pd-lh-body); padding: var(--pd-space-7);
+    -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: var(--pd-fs-micro); font-weight: 500; letter-spacing: var(--pd-track-caps);
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: var(--pd-space-3); }
+  h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: var(--pd-space-3); max-width: 62ch; }
+  h2 { font-size: var(--pd-fs-micro); letter-spacing: var(--pd-track-caps); text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; margin: 40px 0 14px; }
+  .stack { display: grid; gap: 14px; max-width: 420px; }
+  .row { display: flex; gap: var(--pd-space-3); align-items: center; flex-wrap: wrap; }
+  .l { display: block; font-family: var(--pd-font-mono); font-size: 0.75rem;
+    color: var(--pd-text-faint); margin-top: var(--pd-space-2); }
+
+  /* The standalone call-to-action. Deliberately not the action bar's in-duel .btn —
+   * that one is flex: 1 inside a bar and shows focus via a .focused class, because a
+   * duel's actions are a fixed row. This one stands alone on a lobby screen. */
+  .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
+    line-height: var(--pd-lh-tight); padding: var(--pd-space-4) var(--pd-space-5);
+    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer;
+    text-align: center; }
+  .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
+  .btn.fill:hover { background: var(--pd-accent-fill-hover); }
+  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
+  .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+  /* The chip the button becomes when an offer is out: same box, same line-height, so
+   * the swap never jumps. Full-strength text — accent over accent-subtle measures
+   * 4.43:1, under AA. */
+  .offered { background: var(--pd-accent-subtle); border: 1px solid var(--pd-accent);
+    color: var(--pd-text); line-height: var(--pd-lh-tight); border-radius: var(--pd-radius-medium);
+    padding: var(--pd-space-4) var(--pd-space-5); text-align: center; font-weight: 500; }
+
+  /* The room code at reading-aloud size. The trailing letter-space is counted inside
+   * the centered line; the matching text-indent puts the glyphs themselves back on
+   * center. */
+  .code { font-family: var(--pd-font-mono); font-size: 1.875rem;
+    letter-spacing: var(--pd-track-code); text-indent: var(--pd-track-code);
+    text-align: center; padding: var(--pd-space-5) 0;
+    background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); }
+
+  /* The share row: the path takes the slack and truncates, the action keeps its size. */
+  .linkline { display: flex; gap: var(--pd-space-3); align-items: center; }
+  .linkline .path { flex: 1; font-family: var(--pd-font-mono); font-size: var(--pd-fs-small);
+    color: var(--pd-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    padding: var(--pd-space-3) var(--pd-space-4); background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); }
+
+  /* A refusal states what happened and what to do, in that order, and never guesses
+   * at a cause the wire withholds (ADR-0022). */
+  .refusal { border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
+    padding: var(--pd-space-5); color: var(--pd-text-muted); font-size: var(--pd-fs-body); }
+  .refusal .r { color: var(--pd-text); font-weight: 500; display: block; margin-bottom: 2px; }
+  /* The budgeted refusal is a muted line, not a panel: it is a wait, not a verdict. */
+  .ratelimit { color: var(--pd-text-faint); font-size: var(--pd-fs-small); }
+
+  /* The quiet companions: what the other seat is doing, and what the room is doing. */
+  .theirs { text-align: center; color: var(--pd-accent); font-size: var(--pd-fs-small);
+    font-weight: 500; }
+  .dealing { text-align: center; color: var(--pd-text-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Components</p>
+  <h1>Flow actions</h1>
+  <p class="lede">The vocabulary the lobby screens share — the standalone action, the
+  room code, the share row, the refusal. Every rule here is the merged screens' rule
+  verbatim, so this card is where a retune starts: change it here, then the copies.
+  A screen may copy any of these, and says so in a comment where it does.</p>
+
+  <h2>The standalone action</h2>
+  <div class="stack">
+    <button class="btn fill">Create a duel</button>
+    <button class="btn ghost">I have a code</button>
+    <span class="l">fill is the one bright thing on a lobby screen; ghost is the way
+    back or sideways. Never two fills in one frame.</span>
+  </div>
+
+  <h2>The action, waiting on the other seat</h2>
+  <div class="stack">
+    <div class="offered">Rematch offered — waiting for ImKate</div>
+    <span class="l">the button becomes this chip: same box, same line-height, so the
+    control never jumps. No spinner — the offer just stands.</span>
+  </div>
+
+  <h2>The room code</h2>
+  <div class="stack">
+    <div class="code">7Q4M9K2T</div>
+    <span class="l">display size, mono, tracked wide enough to read aloud a character
+    at a time; the typed door shows the same well with a caret in it.</span>
+  </div>
+
+  <h2>The share row</h2>
+  <div class="stack">
+    <div class="linkline">
+      <span class="path">…/duel/7Q4M9K2T</span>
+      <button class="btn fill">Copy link</button>
+    </div>
+    <span class="l">the path takes the slack and truncates rather than wrapping, so
+    the row stays one line at any width; the host is elided in the copy because the
+    code is the part worth reading.</span>
+  </div>
+
+  <h2>The refusals</h2>
+  <div class="stack">
+    <div class="refusal"><span class="r">This duel already has two players.</span>
+      Ask your rival for a fresh link, or create your own.</div>
+    <div class="refusal"><span class="r">This code doesn't open a duel.</span>
+      It may have expired — a room waits ten minutes for its second player — or a
+      character is off. Check it with your rival.</div>
+    <p class="ratelimit">Too many tries — wait a minute.</p>
+    <span class="l">a full room is the only refusal the wire distinguishes; expired,
+    finished and mistyped all read UNKNOWN_ROOM (ADR-0022), so one card answers for
+    all of them and none of them guesses a cause.</span>
+  </div>
+
+  <h2>The quiet companions</h2>
+  <div class="stack">
+    <div class="theirs">ImKate offers a rematch</div>
+    <div class="dealing">Rematch. The button changes sides —<br>dealing hand 1…</div>
+    <span class="l">what the other seat did, and what the room is doing. Both are
+    statements, never countdowns.</span>
+  </div>
+</div>
+</body>
+</html>
