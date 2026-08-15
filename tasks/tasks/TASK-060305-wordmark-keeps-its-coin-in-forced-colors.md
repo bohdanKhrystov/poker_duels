@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060305
 title: The wordmark keeps its coin in forced colors
 type: task
-status: ready
+status: done
 parent: STORY-0603
 module: design
 estimate: XS

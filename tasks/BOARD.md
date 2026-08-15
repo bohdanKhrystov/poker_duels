@@ -444,7 +444,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060302](tasks/TASK-060302-duel-coin.md) The duel coin | S | **done** |
 | | [TASK-060303](tasks/TASK-060303-wordmark-card.md) The wordmark card | S | **done** |
 | | [TASK-060304](tasks/TASK-060304-graphics-gallery-card.md) The graphics gallery card | S | **done** |
-| | [TASK-060305](tasks/TASK-060305-wordmark-keeps-its-coin-in-forced-colors.md) The wordmark keeps its coin in forced colors | XS | ready |
+| | [TASK-060305](tasks/TASK-060305-wordmark-keeps-its-coin-in-forced-colors.md) The wordmark keeps its coin in forced colors | XS | **done** |
 | **[STORY-0604](stories/STORY-0604-lobby-and-flow.md)** Design the duel flow — create, join, result, rematch — *schema 2* | | | ready |
 | | [TASK-060401](tasks/TASK-060401-create-and-share-screen.md) The create-and-share screen | S | **done** |
 | | [TASK-060402](tasks/TASK-060402-join-screen.md) The join screen | S | **done** |

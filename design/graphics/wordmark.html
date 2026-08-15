@@ -35,6 +35,9 @@
    * canonical duel-coin.svg lights from cx=.36 cy=.30 — the two renderings must match. */
   .coin { display: inline-block; border-radius: 999px;
     background: radial-gradient(circle at 36% 30%, var(--pd-coin-glint), var(--pd-coin) 55%, var(--pd-coin-deep)); }
+  /* Contrast themes strip gradients and shadows, and the coin is painted by nothing
+   * else — bare .coin, so every instance keeps a ring, the specimen included. */
+  @media (forced-colors: active) { .coin { border: 1px solid CanvasText; } }
   /* Baseline-align so the lockup drops into running text; the coin opts back to center. */
   .mark { display: inline-flex; align-items: baseline; gap: 0.42em; font-weight: 700;
     letter-spacing: 0.01em; }
