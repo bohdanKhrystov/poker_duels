@@ -38,4 +38,37 @@ describe("the result screen", () => {
     expect(heading).toBeDefined();
     expect(screen.queryByText(/duel coin/)).toBeNull();
   });
+
+  it("states the hand count and both final stacks", () => {
+    render(<DuelResult outcome={anOutcome()} mySeat={0} />);
+
+    expect(
+      screen.getByText("17 hands · You 19,400 · Your rival 4,600"),
+    ).toBeDefined();
+  });
+
+  it("counts one hand in the singular", () => {
+    render(<DuelResult outcome={anOutcome({ handsPlayed: 1 })} mySeat={0} />);
+
+    expect(
+      screen.getByText("1 hand · You 19,400 · Your rival 4,600"),
+    ).toBeDefined();
+    expect(screen.queryByText(/1 hands/)).toBeNull();
+  });
+
+  it("follows your seat when it says which stack is yours", () => {
+    render(<DuelResult outcome={anOutcome()} mySeat={1} />);
+
+    expect(
+      screen.getByText("17 hands · Your rival 19,400 · You 4,600"),
+    ).toBeDefined();
+  });
+
+  it("drops the owner words when the client holds no seat", () => {
+    render(<DuelResult outcome={anOutcome()} mySeat={null} />);
+
+    expect(screen.getByText("17 hands · 19,400 · 4,600")).toBeDefined();
+    expect(screen.queryByText(/You/)).toBeNull();
+    expect(screen.queryByText(/Your rival/)).toBeNull();
+  });
 });
