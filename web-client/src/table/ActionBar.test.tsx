@@ -181,4 +181,156 @@ describe("the action bar", () => {
     const raiseButton = getByRole("button", { name: "Raise to 3,250" });
     expect(raiseButton).toBeDefined();
   });
+
+  it("sends one Act carrying the turn's identity", () => {
+    const send = vi.fn();
+    const { rerender, getByRole } = render(
+      <ActionBar
+        turn={aTurn({ handNumber: 61, actionSequence: 103 })}
+        send={send}
+      />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+    expect(send).toHaveBeenNthCalledWith(1, {
+      type: "Act",
+      handNumber: 61,
+      actionSequence: 103,
+      action: { type: "Fold", seat: 0 },
+    });
+
+    rerender(
+      <ActionBar
+        turn={aTurn({
+          handNumber: 42,
+          actionSequence: 88,
+          legalActions: aLegalActions({ seat: 1 }),
+        })}
+        send={send}
+      />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+    expect(send).toHaveBeenNthCalledWith(2, {
+      type: "Act",
+      handNumber: 42,
+      actionSequence: 88,
+      action: { type: "Fold", seat: 1 },
+    });
+
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends the total the amount control holds", () => {
+    const send = vi.fn();
+    const { rerender, getByRole } = render(
+      <ActionBar
+        turn={aTurn({
+          legalActions: aLegalActions({
+            allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+          }),
+        })}
+        send={send}
+      />,
+    );
+
+    let slider = getByRole("slider", { name: "raise to" });
+    fireEvent.change(slider, { target: { value: "3250" } });
+    fireEvent.click(getByRole("button", { name: "Raise to 3,250" }));
+
+    expect(send).toHaveBeenNthCalledWith(1, {
+      type: "Act",
+      handNumber: 14,
+      actionSequence: 27,
+      action: { type: "Raise", seat: 0, to: 3250 },
+    });
+
+    rerender(
+      <ActionBar
+        turn={aTurn({
+          actionSequence: 28,
+          legalActions: aLegalActions({
+            allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+          }),
+        })}
+        send={send}
+      />,
+    );
+
+    slider = getByRole("slider", { name: "raise to" });
+    fireEvent.change(slider, { target: { value: "5000" } });
+    fireEvent.click(getByRole("button", { name: "Raise to 5,000" }));
+
+    expect(send).toHaveBeenNthCalledWith(2, {
+      type: "Act",
+      handNumber: 14,
+      actionSequence: 28,
+      action: { type: "Raise", seat: 0, to: 5000 },
+    });
+
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it("disables every control once an action is sent", () => {
+    const { getByRole } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+        }),
+      }),
+    });
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+
+    const slider = getByRole("slider", {
+      name: "raise to",
+    }) as HTMLInputElement;
+    expect(slider.disabled).toBe(true);
+
+    const buttons = getByRole("button", {
+      name: "Fold",
+    }).parentElement?.querySelectorAll("button");
+    buttons?.forEach((button) => {
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+    });
+  });
+
+  it("sends nothing more once an action is sent", () => {
+    const { getByRole, send } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+        }),
+      }),
+    });
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+    fireEvent.click(getByRole("button", { name: "Call 400" }));
+
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("comes back to life on the next turn, at the new minimum", () => {
+    const send = vi.fn();
+    const { rerender, getByRole } = render(
+      <ActionBar turn={aTurn()} send={send} />,
+    );
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+
+    rerender(
+      <ActionBar
+        turn={aTurn({
+          actionSequence: 28,
+          legalActions: aLegalActions({ minRaiseTo: 2400 }),
+        })}
+        send={send}
+      />,
+    );
+
+    expect(
+      (getByRole("slider", { name: "raise to" }) as HTMLInputElement).value,
+    ).toBe("2400");
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+    expect(send).toHaveBeenCalledTimes(2);
+  });
 });
