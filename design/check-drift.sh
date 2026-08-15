@@ -7,11 +7,10 @@
 #      by a literal U+FE0E text-presentation selector. A bare glyph lets OEM emoji
 #      fonts repaint it, and entity spellings (&spades; &#x2660; &#xFE0E;) hide from
 #      a source-level sweep — so the literal form is the convention, enforced here.
-#   3. Value drift (TASK-060111): every live `--pd-NAME: VALUE` a card inlines must
-#      equal the sheet's declaration for that name — whitespace is stripped outside
-#      quoted strings so `rgba(0, 0, 0, 0.4)` and `rgba(0,0,0,0.4)` compare equal.
-#      Live means inside a `<style>` block and outside every comment: parked markup
-#      and code samples describe CSS, they are not CSS (TASK-060121).
+#   3. Value drift (TASK-060111): every `--pd-NAME: VALUE` a card inlines must equal
+#      the sheet's declaration for that name — whitespace is stripped outside quoted
+#      strings so `rgba(0, 0, 0, 0.4)` and `rgba(0,0,0,0.4)` compare equal, and
+#      declarations join to their `;` across the sheet's wrapped lines.
 #   4. Graphics mirrors (TASK-060112): SVGs cannot var(), so each names the tokens it
 #      mirrors as `pd-NAME (#hex)` in its head comment. The sheet must declare the
 #      name with exactly that value, the cited hex must still paint an attribute in
@@ -51,76 +50,51 @@ if printf 'A♠︎ x\n' | grep -qE -- "$BARE"; then
   echo "check-drift: self-test failed — a suited glyph read as bare (locale?)" >&2; exit 1
 fi
 
-# reads every live `--pd-NAME: value` declaration and emits `name=value`, whitespace
-# stripped outside quoted strings, so the sheet's wrapped values and a card's inline
-# copies land on the same normal form. It is a reader, not a regex over raw text —
-# the same discipline SYMEXTRACT and ANATOMY use, because each shape this gate
-# ignored or misread cost a review round: parked markup and commented-out
-# declarations are not live CSS, prose in a code sample is not a declaration, a
-# brace inside a quoted value is not a terminator, and a final declaration legally
-# omits its semicolon (TASK-060121). A declaration ends at `;`, at its block's `}`,
-# or at end of input; the trailers count candidates against emissions so a shape the
-# walk cannot read fails loudly instead of leaving the gate in silence.
-VEXTRACT='
-  my $src = do { local $/; <STDIN> };
-  $src =~ s/<!--.*?-->//gs;
-  my $css = ($src =~ /<style/i)
-    ? join("", $src =~ /<style[^>]*>(.*?)<\/style>/gis)
-    : $src;
-  my ($out, $q, $i) = ("", "", 0);
-  while ($i < length $css) {
-    my $c = substr($css, $i, 1);
-    if ($q) { $out .= $c; $q = "" if $c eq $q; $i++; next }
-    if ($c eq "\"" || $c eq "\x27") { $q = $c; $out .= $c; $i++; next }
-    if ($c eq "/" && substr($css, $i, 2) eq "/*") {
-      my $e = index($css, "*/", $i + 2); last if $e < 0; $i = $e + 2; next;
+# joins every `--pd-NAME: … ;` declaration to one line and strips whitespace outside
+# quoted strings, emitting `name=value` — the sheet wraps long values, cards do not,
+# and both must land on the same normalized form. The `--pd-` name charset below is
+# the same language as the name gate's grep in the loop — a change to what a token
+# name may contain must change both.
+EXTRACT='
+  { buf = buf $0 "\n" }
+  END {
+    while (match(buf, /--pd-[a-z0-9-]*[ \t]*:[^;]*;/)) {
+      d = substr(buf, RSTART, RLENGTH); buf = substr(buf, RSTART + RLENGTH)
+      out = ""; inq = 0; q = ""
+      for (i = 1; i <= length(d); i++) {
+        c = substr(d, i, 1)
+        if (inq) { out = out c; if (c == q) inq = 0; continue }
+        if (c == "\"" || c == "\047") { q = c; inq = 1; out = out c; continue }
+        if (c == " " || c == "\t" || c == "\n" || c == "\r") continue
+        out = out c
+      }
+      sub(/:/, "=", out); sub(/;$/, "", out)
+      print out
     }
-    $out .= $c; $i++;
   }
-  $css = $out;
-  my ($cand, $emit) = (0, 0);
-  while ($css =~ /(--pd-[a-z0-9-]*)[ \t]*:/g) {
-    my ($name, $j) = ($1, pos($css));
-    $cand++;
-    my ($val, $qq, $closed) = ("", "", 0);
-    while ($j < length $css) {
-      my $c = substr($css, $j, 1);
-      if ($qq) { $val .= $c; $qq = "" if $c eq $qq; $j++; next }
-      if ($c eq "\"" || $c eq "\x27") { $qq = $c; $val .= $c; $j++; next }
-      if ($c eq ";" || $c eq "}") { $closed = 1; last }
-      last if $c eq "{";
-      $val .= $c; $j++;
-    }
-    $closed = 1 if $j >= length $css;
-    pos($css) = $j;
-    next unless $closed;
-    my ($norm, $qn, $k) = ("", "", 0);
-    while ($k < length $val) {
-      my $c = substr($val, $k, 1);
-      if ($qn) { $norm .= $c; $qn = "" if $c eq $qn; $k++; next }
-      if ($c eq "\"" || $c eq "\x27") { $qn = $c; $norm .= $c; $k++; next }
-      if ($c =~ /\s/) { $k++; next }
-      $norm .= $c; $k++;
-    }
-    next unless length $norm;
-    print "$name=$norm\n";
-    $emit++;
-  }
-  print "!cand\t$cand\n!emit\t$emit\n";
 '
-# runs the reader on one file and refuses any declaration the walk could not close;
-# emits only the name=value lines on stdout
-extract_vals() {
-  _out=$(perl -e "$VEXTRACT" < "$1" 2>/dev/null) || {
-    echo "check-drift: value extraction failed on $1 (perl error)" >&2; return 1
-  }
-  _cand=$(printf '%s\n' "$_out" | awk -F '\t' '$1 == "!cand" { print $2 }')
-  _emit=$(printf '%s\n' "$_out" | awk -F '\t' '$1 == "!emit" { print $2 }')
-  if [ "${_cand:-0}" -ne "${_emit:-0}" ]; then
-    echo "check-drift: $1 writes ${_cand:-0} --pd- declarations but only ${_emit:-0} are readable — one is malformed (an unquoted brace in a value? a name with no value?)" >&2
-    return 1
+# The reader above stops at `;`, so a declaration written without its terminating
+# semicolon is read wrongly in one of two silent ways: with nothing after it the
+# reader never sees it at all (the sheet's last declaration), and with text after it
+# the walk runs on to the next `;` and swallows that text into the value. Rather than
+# teach a shell gate to parse CSS without semicolons — two attempts at that each
+# introduced a worse class of bug than the one they fixed (TASK-060121, #511 review) —
+# the convention is enforced: every declaration ends in a semicolon, and these two
+# counts make a missing one loud. A candidate that yields no record vanished; a value
+# carrying a brace ran past its own end.
+check_terminated() {
+  _cand=$(grep -oE -- '--pd-[a-z0-9-]+[ \t]*:' "$1" | grep -c . || true)
+  _read=$(awk "$EXTRACT" "$1" 2>/dev/null | grep -c . || true)
+  _rc=0
+  if [ "$_cand" -ne "$_read" ]; then
+    echo "check-drift: $1 writes $_cand --pd- declarations but $_read are readable — one is missing its terminating semicolon" >&2
+    _rc=1
   fi
-  printf '%s\n' "$_out" | grep -v '^!' || true
+  if awk "$EXTRACT" "$1" 2>/dev/null | grep -q '[{}]'; then
+    echo "check-drift: a --pd- value in $1 carries a brace — the declaration ran past its terminating semicolon" >&2
+    _rc=1
+  fi
+  return $_rc
 }
 # the one sheet-set loader kernel, spliced into both consumers below so the HTML
 # value gate and the SVG pair gate can never disagree about how the sheet parses
@@ -172,28 +146,28 @@ sweep_suits() {
 # || true keeps a hard awk death inside the comparison below, where the message says
 # what broke, instead of dying with awk usage noise under set -e. Scratch files are
 # left for the OS to purge, the trade-off this repo records in its gate tickets.
-# the probes cover both halves of what the reader must do — what it takes in and what
-# it leaves out — because a wrong reader that only widens passes a widening-only probe
-probe=$(printf -- '--pd-probe :  rgba(0, 0, 0, 0.4) ;\n' | perl -e "$VEXTRACT" 2>/dev/null | grep -v '^!' || true)
+probe=$(printf -- '--pd-probe :  rgba(0, 0, 0, 0.4) ;\n' | awk "$EXTRACT" 2>/dev/null || true)
 [ "$probe" = "--pd-probe=rgba(0,0,0,0.4)" ] \
-  || { echo "check-drift: self-test failed — value reader broke (perl?)" >&2; exit 1; }
-probe2=$(printf -- ':root { --pd-a: 1px; --pd-b: 2px }\n' | perl -e "$VEXTRACT" 2>/dev/null | grep -v '^!' || true)
-[ "$probe2" = "$(printf -- '--pd-a=1px\n--pd-b=2px')" ] \
-  || { echo "check-drift: self-test failed — a semicolon-less final declaration escaped" >&2; exit 1; }
-probe3=$(printf -- ':root { --pd-q: "a}b"; --pd-r: 2px }\n' | perl -e "$VEXTRACT" 2>/dev/null | grep -v '^!' || true)
-[ "$probe3" = "$(printf -- '--pd-q="a}b"\n--pd-r=2px')" ] \
-  || { echo "check-drift: self-test failed — a brace inside a quoted value terminated it" >&2; exit 1; }
-probe4=$(printf -- '<style>:root{--pd-a:1px;}</style>\n<!-- <div style="--pd-a: 9px;"></div> -->\n<pre>@media x { .t { --pd-a: 8px } }</pre>\n/* --pd-a: 7px */\n' | perl -e "$VEXTRACT" 2>/dev/null | grep -v '^!' || true)
-[ "$probe4" = "--pd-a=1px" ] \
-  || { echo "check-drift: self-test failed — parked markup, prose or a comment read as a live declaration" >&2; exit 1; }
+  || { echo "check-drift: self-test failed — value extractor broke (awk?)" >&2; exit 1; }
+# and prove the terminator guard sees both silences, not only the tree's silence
+tprobe=$(mktemp); printf -- ':root { --pd-a: 1px; --pd-b: 2px }\n' > "$tprobe"
+check_terminated "$tprobe" 2>/dev/null \
+  && { echo "check-drift: self-test failed — an unterminated final declaration passed" >&2; exit 1; }
+tprobe2=$(mktemp); printf -- ':root { --pd-a: 1px }\n.x { color: red; }\n' > "$tprobe2"
+check_terminated "$tprobe2" 2>/dev/null \
+  && { echo "check-drift: self-test failed — a declaration that swallowed its block passed" >&2; exit 1; }
+tprobe3=$(mktemp); printf -- ':root { --pd-a: 1px; --pd-b: 2px; }\n' > "$tprobe3"
+check_terminated "$tprobe3" \
+  || { echo "check-drift: self-test failed — terminated declarations were refused" >&2; exit 1; }
 probe_sheet=$(mktemp)
 printf -- '--pd-probe=1px\n' > "$probe_sheet"
 mism=$(printf -- '--pd-probe=2px\n' | awk -v f=self "$COMPARE" "$probe_sheet" - 2>/dev/null || true)
 [ -n "$mism" ] \
   || { echo "check-drift: self-test failed — a drifted value went undetected" >&2; exit 1; }
 
+check_terminated "$SHEET" || exit 1
 sheet_file=$(mktemp)
-extract_vals "$SHEET" > "$sheet_file" || exit 1
+awk "$EXTRACT" "$SHEET" > "$sheet_file"
 [ -s "$sheet_file" ] || { echo "check-drift: no declarations extracted from $SHEET" >&2; exit 1; }
 
 # pulls every <symbol id="pd-…">…</symbol> block, comments stripped and whitespace
@@ -337,7 +311,7 @@ done
 [ -s "$canon_syms" ] || { echo "check-drift: no pd- symbols extracted from any graphics SVG — the canonical set went invisible" >&2; exit 1; }
 dups=$(awk -F '\t' 'seen[$1]++ { print $1 }' "$canon_syms")
 [ -z "$dups" ] || { printf 'check-drift: two canonicals claim the same symbol id: %s\n' "$dups" >&2; exit 1; }
-# this BRE and VEXTRACT's name pattern describe the same language — change both or neither
+# this BRE and EXTRACT's awk ERE describe the same name language — change both or neither
 declared=$(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$SHEET" | sort -u)
 fail=0
 mentions=0
@@ -355,8 +329,13 @@ for f in $(find "$DIR" -name '*.html' | sort); do
   done
 
   # extraction failures fail as loudly as the st= sweeps below — an unreadable card
-  # must never read as a value-clean card
-  card_vals=$(extract_vals "$f") || { fail=1; card_vals=""; }
+  # must never read as a value-clean card (the || true softening is for the
+  # self-tests only, where the assert right after catches a dead awk)
+  check_terminated "$f" || fail=1
+  st=0; card_vals=$(awk "$EXTRACT" "$f" 2>/dev/null) || st=$?
+  if [ "$st" -ne 0 ]; then
+    echo "check-drift: awk error $st extracting values from $f" >&2; fail=1; card_vals=""
+  fi
   if [ -n "$card_vals" ]; then
     bad=$(printf '%s\n' "$card_vals" | awk -v f="$f" "$COMPARE" "$sheet_file" -) || {
       echo "check-drift: value comparison failed on $f (awk error)" >&2; fail=1; bad=""

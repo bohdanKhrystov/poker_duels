@@ -425,7 +425,7 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060118](tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) The gallery lede names every mirrored token | XS | **done** |
 | | [TASK-060119](tasks/TASK-060119-the-coin-face-is-born-on-the-sheet.md) The coin face is born on the sheet | XS | ready |
 | | [TASK-060120](tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) The lockup coins consume the face token | XS | backlog |
-| | [TASK-060121](tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) A final declaration without a semicolon still enters the gate | XS | **done** |
+| | [TASK-060121](tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) Every token declaration ends in a semicolon, and the gate says so | XS | **done** |
 | | [TASK-060122](tasks/TASK-060122-the-design-gate-runs-in-ci.md) The design gate runs in CI | XS | ready |
 | | [TASK-060123](tasks/TASK-060123-the-gates-remaining-silent-edges.md) The gate's remaining silent edges | XS | backlog |
 | **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |

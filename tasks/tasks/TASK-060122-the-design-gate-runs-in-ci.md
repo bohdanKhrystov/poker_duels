@@ -13,7 +13,7 @@ files_touched: 1
 labels: [design]
 depends_on: []
 verify:
-  - grep -q 'check-drift' .github/workflows/tickets.yml
+  - 'grep -qE "run:[^#]*design/check-drift\\.sh" .github/workflows/tickets.yml'
   - ./design/check-drift.sh
 ---
 
@@ -34,6 +34,8 @@ this ticket's own predecessor reached review with a silent-pass bug.
 
 ## Scope
 
+- The verify pins a `run:` line, not a mention: a comment naming the gate must not
+  satisfy the gate's own ticket (#511 review).
 - It joins the existing lightweight job (the one already running `lint_tickets.py`),
   not the Gradle or client jobs: the gate is stock shell and needs no toolchain.
 - The step runs on every PR, so the gate's own regressions surface at the PR that
