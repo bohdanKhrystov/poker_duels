@@ -58,7 +58,9 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060118](../tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) | The gallery lede names every mirrored token | done |
 | [TASK-060119](../tasks/TASK-060119-the-coin-face-is-born-on-the-sheet.md) | The coin face is born on the sheet | ready |
 | [TASK-060120](../tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) | The lockup coins consume the face token | backlog |
-| [TASK-060121](../tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) | A final declaration without a semicolon still enters the gate | ready |
+| [TASK-060121](../tasks/TASK-060121-semicolonless-declaration-enters-the-gate.md) | The value gate reads CSS values correctly | blocked |
+| [TASK-060122](../tasks/TASK-060122-the-design-gate-runs-in-ci.md) | The design gate runs in CI | ready |
+| [TASK-060123](../tasks/TASK-060123-the-gates-remaining-silent-edges.md) | The gate's remaining silent edges | backlog |
 
 ## Acceptance criteria
 
