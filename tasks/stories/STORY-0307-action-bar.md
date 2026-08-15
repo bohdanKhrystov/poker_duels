@@ -70,7 +70,30 @@ ticket.
 | [TASK-030709](../tasks/TASK-030709-the-bar-states-what-the-server-refused.md) | The bar states what the server refused, and retries nothing | backlog |
 | [TASK-030710](../tasks/TASK-030710-the-bar-shows-no-number-and-offers-no-action-the-turn-did-not-carry.md) | The bar shows no number and offers no action the turn did not carry | backlog |
 | [TASK-030711](../tasks/TASK-030711-the-duel-screen-puts-the-bar-under-the-table.md) | The duel screen puts the bar under the table and sends what it built | backlog |
-| [TASK-030712](../tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) | A rejection leaves the decision point open (store half) | backlog |
+| [TASK-030712](../tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) | A rejection leaves the decision point open (store half) | ready |
+
+### Four follow-ups, filed during the run
+
+Not a re-split: the twelve above stand as written. These four were named by `ADR-0043` itself or
+found by a review of the merged bar, and each is scope the split could not have seen.
+
+| ID | Title | Status |
+| --- | --- | --- |
+| [TASK-030713](../tasks/TASK-030713-the-bar-comes-back-after-a-rejection.md) | The bar comes back after a rejection, at the same decision point (bar half) | backlog |
+| [TASK-030714](../tasks/TASK-030714-the-refusal-sentence-stops-when-the-server-next-speaks.md) | The refusal sentence stops when the server next speaks | backlog |
+| [TASK-030715](../tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) | The derivation guards read the numbers that reach the DOM as attributes | backlog |
+| [TASK-030716](../tasks/TASK-030716-a-rejection-leaves-the-act-identity-valid.md) | The server proves a rejection leaves the client's `Act` identity valid | backlog |
+
+- **`TASK-030714`** — `refusal` is cleared by nothing but a `RoomJoined`, so `Failure{DUEL_PAUSED}`'s
+  sentence stays under the bar for the rest of the duel. `ADR-0043` names it *"the same lifetime bug
+  in a different field"* and deliberately leaves it one ticket.
+- **`TASK-030715`** — both whole-surface guards scan text nodes, `aria-label` and `title` only.
+  `max={actions.allInTo}` reaches the DOM with no echo in any of the three whenever `BET`/`RAISE` is
+  allowed and `ALL_IN` is withheld, and neither guard renders that combination, so a corrupted
+  ceiling ships green through both.
+- **`TASK-030716`** — the server side of `ADR-0043`. A rejection that appended an `ActionOn` or
+  advanced the hand number would turn every retry into a `STALE_FRAME` the server drops in silence;
+  the ADR records that `docs/protocol.md` states the invariant and nothing tests it.
 
 ### The one decision the split could not take, now answered
 
@@ -83,10 +106,9 @@ so that the bar's remount key — `TASK-030707`'s reset mechanism — lifts the 
 unmounting `Live`. **No server change and no protocol change.**
 
 The fix is five files, two more than a schema-2 ticket may touch, so it lands as two:
-`TASK-030712` is the **store half** (`duel-state.ts`, `duel-state.test.ts`), and the **bar half**
-(`ActionBar.tsx`, `ActionBar.test.tsx`, `Lobby.tsx`) is a sibling ticket the planner files from the
-ADR. This story's **fifth acceptance criterion closes when both land**; the other eleven tickets
-ship without either.
+`TASK-030712` is the **store half** (`duel-state.ts`, `duel-state.test.ts`) and `TASK-030713` the
+**bar half** (`ActionBar.tsx`, `ActionBar.test.tsx`, `Lobby.tsx`). This story's **fifth acceptance
+criterion closes when both land**; the other eleven tickets ship without either.
 
 ### Five decisions the split made, recorded as chosen rather than found
 
@@ -124,8 +146,7 @@ ship without either.
 - [ ] With no pending turn, every control is disabled and no frame is sent by any click.
 - [ ] `Rejected{AmountTooSmall}` renders the server's `minimum` and re-enables the bar; a second
       action can then be sent. *(Rendering: `TASK-030709`. Keeping the decision point open and
-      clearing the sentence: `TASK-030712`. Re-enabling the controls: the bar half `ADR-0043` names,
-      which the planner files.)*
+      clearing the sentence: `TASK-030712`. Re-enabling the controls: `TASK-030713`.)*
 - [ ] `Failure{DUEL_PAUSED}` sends nothing further and shows that the action was not applied.
 
 ## Out of scope
