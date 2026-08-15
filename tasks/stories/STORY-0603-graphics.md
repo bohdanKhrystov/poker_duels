@@ -2,7 +2,7 @@
 id: STORY-0603
 title: Draw the graphics — suit glyphs, the duel coin, the wordmark
 type: story
-status: ready
+status: done
 parent: EPIC-06
 module: design
 labels: [design]
@@ -51,7 +51,8 @@ favicon, victory screen — and `EPIC-03`/`EPIC-04` consume it.
 - [x] The gallery and wordmark cards render in the pane under **Graphics** and **Brand**.
 - [x] The human has seen them there and signed off.
       *(Sign-off recorded 2026-08-15, in-session, after the 14-card sync.)*
-- [ ] Both SVGs parse as XML and contain nothing golden.
+- [x] Both SVGs parse as XML and contain nothing golden.
+      *(Pinned by each graphics ticket's verify block, and clause 4 of the gate.)*
 
 ## Out of scope
 
