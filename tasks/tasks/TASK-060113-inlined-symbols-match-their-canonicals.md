@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060113
 title: The gallery's inlined symbols match their canonicals
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: S
@@ -63,3 +63,14 @@ left for the OS to purge, as recorded in the sibling gate tickets.
 ## Definition of done
 
 Standard, with `EPIC-06`'s recorded deviation: the review is visual, in claude.ai/design.
+
+## Deviations
+
+- "Render pixel-identical" measured honestly: the symbol/use restructure rasterizes
+  through a nested viewport, and headless Chrome rounds fractional edge coverage
+  differently there — 463 of 160,000 pixels (0.29%) differ at a maximum channel delta
+  of 11/255, all on antialiased edges; an explicitly sized `<use>` does not change it.
+  Recorded with numbers rather than rounded to "identical".
+- `gallery.html` needed no edit: it already carried the canonical block verbatim, and
+  the SVG restructure adopted the gallery's exact symbol form — the gate now proves
+  the equality both ways.

@@ -16,6 +16,10 @@
 #      name with exactly that value, the cited hex must still paint an attribute in
 #      the file, an SVG with no pairs fails, and so does finding no SVGs at all —
 #      the class must never go invisible again, vacuously or otherwise.
+#   5. Inlined symbols (TASK-060113): a card that inlines a `<symbol id="pd-…">` block
+#      carries a copy of canonical geometry; the copy must equal the same-id symbol in
+#      a graphics SVG, compared with XML comments stripped and whitespace runs
+#      collapsed, so an asset retune can never leave a card silently stale.
 # Stock macOS/Linux tools only (grep -o is a BSD/GNU extension both platforms ship;
 # strict POSIX omits it).
 set -eu
@@ -124,11 +128,58 @@ mism=$(printf -- '--pd-probe=2px\n' | awk -v f=self "$COMPARE" "$probe_sheet" - 
 sheet_file=$(mktemp)
 awk "$EXTRACT" "$SHEET" > "$sheet_file"
 [ -s "$sheet_file" ] || { echo "check-drift: no declarations extracted from $SHEET" >&2; exit 1; }
+
+# pulls every <symbol id="pd-…">…</symbol> block, comments stripped and whitespace
+# collapsed, as one `id<TAB>block` line, and a `!opens<TAB>N` trailer counting every
+# <symbol open tag — the caller compares N to the extracted lines, so a copy the
+# strict pattern cannot read (single quotes, a non-pd id, a nested symbol truncating
+# the walk) fails loudly instead of silently leaving enforcement. The lookbehind
+# keeps data-id= from mis-keying a block.
+SYMEXTRACT='
+  my $src = do { local $/; <STDIN> };
+  $src =~ s/<!--.*?-->//gs;
+  my $opens = () = $src =~ /<symbol\b/g;
+  while ($src =~ /(<symbol\b[^>]*(?<![-\w])id="(pd-[a-z0-9-]+)"[^>]*>.*?<\/symbol>)/gs) {
+    my ($blk, $id) = ($1, $2);
+    $blk =~ s/\s+/ /g;
+    print "$id\t$blk\n";
+  }
+  print "!opens\t$opens\n";
+'
+# runs the extractor on one file and refuses any open-tag the strict walk missed;
+# emits only the id lines on stdout
+extract_syms() {
+  _out=$(perl -e "$SYMEXTRACT" < "$1" 2>/dev/null) || {
+    echo "check-drift: symbol extraction failed on $1 (perl error)" >&2; return 1
+  }
+  _opens=$(printf '%s\n' "$_out" | awk -F '\t' '$1 == "!opens" { print $2 }')
+  _strict=$(printf '%s\n' "$_out" | grep -c '^pd-' || true)
+  if [ "${_opens:-0}" -ne "$_strict" ]; then
+    echo "check-drift: $1 has ${_opens:-0} <symbol> tags but $_strict readable pd- blocks — a symbol copy is malformed (quoting? id prefix? nesting?)" >&2
+    return 1
+  fi
+  printf '%s\n' "$_out" | grep '^pd-' || true
+}
+symprobe=$(printf '<symbol id="pd-x" a="1">\n  <p/> <!-- c -->\n</symbol>\n' | perl -e "$SYMEXTRACT" 2>/dev/null || true)
+[ "$symprobe" = "$(printf 'pd-x\t<symbol id="pd-x" a="1"> <p/> </symbol>\n!opens\t1')" ] \
+  || { echo "check-drift: self-test failed — symbol extractor broke (perl?)" >&2; exit 1; }
+canon_syms=$(mktemp)
+canon_fail=0
+for g in $(find "$DIR/graphics" -name '*.svg' 2>/dev/null | sort); do
+  extract_syms "$g" >> "$canon_syms" || canon_fail=1
+done
+[ "$canon_fail" -eq 0 ] || exit 1
+# an empty canonical set would make the NR==FNR comparison below swallow every card
+# block as a canonical — the same vacuous-invisibility clause 4 forbids
+[ -s "$canon_syms" ] || { echo "check-drift: no pd- symbols extracted from any graphics SVG — the canonical set went invisible" >&2; exit 1; }
+dups=$(awk -F '\t' 'seen[$1]++ { print $1 }' "$canon_syms")
+[ -z "$dups" ] || { printf 'check-drift: two canonicals claim the same symbol id: %s\n' "$dups" >&2; exit 1; }
 # this BRE and EXTRACT's awk ERE describe the same name language — change both or neither
 declared=$(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$SHEET" | sort -u)
 fail=0
 mentions=0
 files=0
+syms_total=0
 for f in $(find "$DIR" -name '*.html' | sort); do
   files=$((files + 1))
   for name in $(grep -o -- '--pd-[a-z0-9]*\(-[a-z0-9]*\)*' "$f" | sort -u); do
@@ -151,6 +202,20 @@ for f in $(find "$DIR" -name '*.html' | sort); do
       echo "check-drift: value comparison failed on $f (awk error)" >&2; fail=1; bad=""
     }
     if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
+  fi
+
+  # inlined pd- symbol blocks must equal their same-id canonicals
+  syms=$(extract_syms "$f") || { fail=1; syms=""; }
+  if [ -n "$syms" ]; then
+    bad=$(printf '%s\n' "$syms" | awk -F '\t' -v f="$f" '
+      NR == FNR { canon[$1] = $2; next }
+      $1 != "" {
+        if (!($1 in canon)) printf "check-drift: %s inlines symbol %s with no same-id canonical under graphics/\n", f, $1
+        else if (canon[$1] != $2) printf "check-drift: %s inlines symbol %s, which differs from its canonical\n", f, $1
+      }
+    ' "$canon_syms" -) || { echo "check-drift: symbol comparison failed on $f (awk error)" >&2; fail=1; bad=""; }
+    if [ -n "$bad" ]; then printf '%s\n' "$bad" >&2; fail=1; fi
+    syms_total=$((syms_total + $(printf '%s\n' "$syms" | grep -c .)))
   fi
 
   sweep_suits "$f"
@@ -198,4 +263,4 @@ done
 # an empty tree must fail as loudly as a missing sheet — a vacuous pass guards nothing
 [ "$files" -gt 0 ] || { echo "check-drift: no cards found under $DIR" >&2; exit 1; }
 if [ "$fail" -ne 0 ]; then exit 1; fi
-echo "check-drift: tokens resolve, values match the sheet, suits carry U+FE0E, and $pairs_total graphics pairs mirror truly ($mentions distinct mentions across $files cards)"
+echo "check-drift: tokens resolve, values match the sheet, suits carry U+FE0E, $pairs_total graphics pairs and $syms_total inlined symbols mirror truly ($mentions distinct mentions across $files cards)"
