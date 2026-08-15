@@ -605,7 +605,9 @@ every digit run from the DOM and asserts each is a field of the view, the other 
 `aria-label`s in document order — and ten enumerated violations were run against them.
 
 `STORY-0307` is next and is split: twelve tickets, cumulative counts **194 → 232** from the measured
-baseline of 190. `TASK-030701` is startable now; the chain is strictly linear. The bar it builds is
+baseline of 190, plus four follow-ups filed during the run (`TASK-030713`–`16`), which carry no
+count because they may land in any order. Eleven are merged and `TASK-030712` is startable now; the
+chain is strictly linear. The bar it builds is
 the **only place this client asserts anything**, so the same constraint appears one level sharper:
 it draws `legalActions.allowed` and no other control, clamps its amount control to bounds the server
 sent rather than working any out, copies `handNumber`, `actionSequence` and `seat` verbatim into the
@@ -622,9 +624,23 @@ pot-fraction sizing chips go, because they are the bet presets the story puts ou
 decision point, so the reducer keeps `pendingTurn`, clears `rejection` on the next `YourTurn`,
 `Snapshot` or `DuelFinished`, and counts refusals in a new `rejectionCount` that the bar's remount
 key consumes. No server or protocol change. The fix is five files, which is two files more than a
-schema-2 ticket may touch, so `TASK-030712` is now the **store half** and the **bar half** —
-`ActionBar.tsx`, `ActionBar.test.tsx`, `Lobby.tsx` — is a sibling ticket the planner files from the
-ADR. `STORY-0307`'s fifth acceptance criterion closes when both land.
+schema-2 ticket may touch, so `TASK-030712` is now the **store half** and `TASK-030713` the **bar
+half** — `ActionBar.tsx`, `ActionBar.test.tsx`, `Lobby.tsx`. `STORY-0307`'s fifth acceptance
+criterion closes when both land.
+
+**Three more follow-ups**, all named by the same ADR or by a review of the merged bar, none of them
+new scope:
+
+- `TASK-030714` — `refusal` is never cleared, so `Failure{DUEL_PAUSED}`'s sentence outlives the
+  attempt it describes by the rest of the duel. `ADR-0043` calls it *"the same lifetime bug in a
+  different field"* and leaves it one ticket; it applies the ADR's own rule to the second field.
+- `TASK-030715` — both whole-surface derivation guards scan text, `aria-label` and `title`, and no
+  numeric attribute. `max={actions.allInTo}` reaches the DOM with no printed or spoken echo whenever
+  `BET`/`RAISE` is allowed and `ALL_IN` is not, so a corrupted ceiling is invisible to both. Neither
+  guard renders that combination today; the ticket closes the hole and exercises it.
+- `TASK-030716` — `poker-server` proves the invariant the client now leans on. A rejection that
+  advanced the hand number would turn every retry into a `STALE_FRAME` the server drops in silence,
+  and `ADR-0043` records that nothing tests it.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -719,7 +735,11 @@ ADR. `STORY-0307`'s fifth acceptance criterion closes when both land.
 | | [TASK-030709](tasks/TASK-030709-the-bar-states-what-the-server-refused.md) The bar states what the server refused, and retries nothing | S | **done** |
 | | [TASK-030710](tasks/TASK-030710-the-bar-shows-no-number-and-offers-no-action-the-turn-did-not-carry.md) The bar shows no number and offers no action the turn did not carry | S | **done** |
 | | [TASK-030711](tasks/TASK-030711-the-duel-screen-puts-the-bar-under-the-table.md) The duel screen puts the bar under the table and sends what it built | S | **done** |
-| | [TASK-030712](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) A rejection leaves the decision point open (store half, `ADR-0043`) | S | backlog |
+| | [TASK-030712](tasks/TASK-030712-after-a-rejection-the-player-can-act-again.md) A rejection leaves the decision point open (store half, `ADR-0043`) | S | ready |
+| | [TASK-030713](tasks/TASK-030713-the-bar-comes-back-after-a-rejection.md) The bar comes back after a rejection, at the same decision point (bar half, `ADR-0043`) | S | backlog |
+| | [TASK-030714](tasks/TASK-030714-the-refusal-sentence-stops-when-the-server-next-speaks.md) The refusal sentence stops when the server next speaks | S | backlog |
+| | [TASK-030715](tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) The derivation guards read the numbers that reach the DOM as attributes | S | backlog |
+| | [TASK-030716](tasks/TASK-030716-a-rejection-leaves-the-act-identity-valid.md) The server proves a rejection leaves the client's Act identity valid | S | backlog |
 | [STORY-0308](stories/STORY-0308-result-screen.md) | The result screen — who won, and the coin | backlog |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen | **blocked** |
 | [STORY-0310](stories/STORY-0310-reconnect-and-resume.md) | Reconnect — the client resumes its seat | backlog |
