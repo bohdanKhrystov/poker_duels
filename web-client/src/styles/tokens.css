@@ -49,6 +49,7 @@
   --pd-card-back-stripes: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 2px, transparent 2px 7px);
   --pd-coin: #9fb2c4;
   --pd-coin-deep: #64788c;
+  --pd-coin-glint: #b8c6d6; /* the shared lighting of every coin rendering, SVG and CSS */
 
   /* Type — the system stack: instant, quiet, native everywhere. Sizes are rem so
    * the player's browser preference scales every screen; the px the design was

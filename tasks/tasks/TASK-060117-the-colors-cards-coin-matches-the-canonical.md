@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060117
 title: The Colors card's coin matches the canonical
 type: task
-status: backlog
+status: ready
 parent: STORY-0601
 module: design
 estimate: XS

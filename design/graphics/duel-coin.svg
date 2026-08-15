@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="One duel coin">
   <!-- Poker Duels, the duel coin. Steel, per the vision (docs/vision.md): it counts duels won.
        Colors are literal because SVG assets travel without the CSS custom-property scope;
-       they mirror the pd-coin (#9fb2c4), pd-coin-deep (#64788c) and pd-bg (#131211) tokens.
+       they mirror the pd-coin (#9fb2c4), pd-coin-deep (#64788c), pd-coin-glint (#b8c6d6)
+       and pd-bg (#131211) tokens.
        (Token names are spelled without their leading dashes here: XML forbids them in comments.)
        The artwork lives in one pd-coin symbol — the canonical block every card inlines
        verbatim (TASK-060113's gate compares them) — and the use below renders it here. -->
