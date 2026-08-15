@@ -347,21 +347,79 @@ describe("the action bar", () => {
   });
 
   it("states a rejection in the server's own numbers", () => {
-    const { getByText } = bar({
-      rejection: { type: "AmountTooSmall", attempted: 900, minimum: 1200 },
-    });
+    const send = vi.fn();
+    const { rerender, getByText, queryByText } = render(
+      <ActionBar
+        turn={aTurn()}
+        rejection={{ type: "AmountTooSmall", attempted: 900, minimum: 1200 }}
+        refusal={null}
+        send={send}
+      />,
+    );
 
-    const text = getByText("900 is under the minimum of 1,200.");
+    let text = getByText("900 is under the minimum of 1,200.");
+    expect(text).toBeDefined();
+
+    // Different amounts show different numbers
+    rerender(
+      <ActionBar
+        turn={aTurn()}
+        rejection={{ type: "AmountTooSmall", attempted: 500, minimum: 2500 }}
+        refusal={null}
+        send={send}
+      />,
+    );
+
+    text = getByText("500 is under the minimum of 2,500.");
+    expect(text).toBeDefined();
+    expect(queryByText("900 is under the minimum of 1,200.")).toBeNull();
+
+    // Different rejection type shows different message
+    rerender(
+      <ActionBar
+        turn={aTurn()}
+        rejection={{
+          type: "NotYourTurn",
+          seatToAct: 1,
+        }}
+        refusal={null}
+        send={send}
+      />,
+    );
+
+    text = getByText("The server says it is seat 1's turn.");
     expect(text).toBeDefined();
   });
 
   it("says a paused duel did not apply the action", () => {
-    const { getByText } = bar({
-      refusal: "DUEL_PAUSED",
-    });
+    const send = vi.fn();
+    const { rerender, getByText, queryByText } = render(
+      <ActionBar
+        turn={aTurn()}
+        rejection={null}
+        refusal="DUEL_PAUSED"
+        send={send}
+      />,
+    );
 
-    const text = getByText("The duel is paused. That action was not applied.");
+    let text = getByText("The duel is paused. That action was not applied.");
     expect(text).toBeDefined();
+
+    // Different refusal shows different message
+    rerender(
+      <ActionBar
+        turn={aTurn()}
+        rejection={null}
+        refusal="NOT_IN_DUEL"
+        send={send}
+      />,
+    );
+
+    text = getByText("The server did not apply that action.");
+    expect(text).toBeDefined();
+    expect(
+      queryByText("The duel is paused. That action was not applied."),
+    ).toBeNull();
   });
 
   it("has nothing to say when nothing was refused", () => {
