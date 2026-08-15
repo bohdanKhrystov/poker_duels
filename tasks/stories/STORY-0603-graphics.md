@@ -44,7 +44,7 @@ favicon, victory screen — and `EPIC-03`/`EPIC-04` consume it.
 | [TASK-060302](../tasks/TASK-060302-duel-coin.md) | The duel coin | done |
 | [TASK-060303](../tasks/TASK-060303-wordmark-card.md) | The wordmark card | done |
 | [TASK-060304](../tasks/TASK-060304-graphics-gallery-card.md) | The graphics gallery card | done |
-| [TASK-060305](../tasks/TASK-060305-wordmark-keeps-its-coin-in-forced-colors.md) | The wordmark keeps its coin in forced colors | ready |
+| [TASK-060305](../tasks/TASK-060305-wordmark-keeps-its-coin-in-forced-colors.md) | The wordmark keeps its coin in forced colors | done |
 
 ## Acceptance criteria
 
