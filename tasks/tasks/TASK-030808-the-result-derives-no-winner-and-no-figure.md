@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030808
 title: The result derives no winner and shows no figure the outcome did not carry
 type: task
-status: backlog
+status: ready
 parent: STORY-0308
 module: web-client
 estimate: S
