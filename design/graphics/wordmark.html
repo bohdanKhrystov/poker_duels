@@ -12,7 +12,7 @@
   :root {
     --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
-    --pd-coin: #9fb2c4; --pd-coin-deep: #64788c; --pd-coin-glint: #b8c6d6;
+    --pd-coin: #9fb2c4; --pd-coin-deep: #64788c; --pd-coin-glint: #b8c6d6; --pd-coin-face: radial-gradient(circle at 36% 30%, var(--pd-coin-glint), var(--pd-coin) 55%, var(--pd-coin-deep));
     --pd-card-face: #f3f0e9; --pd-text-inverse: #131211;
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
@@ -34,7 +34,7 @@
   /* One gradient for every coin on the card; the glint sits at 36% 30% because the
    * canonical duel-coin.svg lights from cx=.36 cy=.30 — the two renderings must match. */
   .coin { display: inline-block; border-radius: 999px;
-    background: radial-gradient(circle at 36% 30%, var(--pd-coin-glint), var(--pd-coin) 55%, var(--pd-coin-deep)); }
+    background: var(--pd-coin-face); }
   /* Contrast themes strip gradients and shadows, and the coin is painted by nothing
    * else — bare .coin, so every instance keeps a ring, the specimen included. */
   @media (forced-colors: active) { .coin { border: 1px solid CanvasText; } }
