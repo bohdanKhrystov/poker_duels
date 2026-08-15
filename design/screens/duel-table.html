@@ -17,6 +17,8 @@
     --pd-on-accent: #ffffff;
     --pd-card-face: #f3f0e9; --pd-suit-red: #bf3b30; --pd-suit-black: #26231f;
     --pd-card-back: #35567e;
+    --pd-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --pd-card-back-stripes: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 2px, transparent 2px 7px);
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
     --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
@@ -80,7 +82,7 @@
     border-radius: calc(var(--w, 96px) * 0.0625);
     display: inline-block; vertical-align: bottom; flex-shrink: 0; }
   .pc { background: var(--pd-card-face); position: relative; color: var(--pd-suit-black);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+    box-shadow: var(--pd-shadow-card); }
   .pc.red { color: var(--pd-suit-red); }
   .pc .ix { position: absolute; top: calc(var(--w, 96px) * 0.07);
     left: calc(var(--w, 96px) * 0.09); line-height: 1; font-weight: 700; }
@@ -92,8 +94,8 @@
     line-height: 1; }
   .slot { border: 1px dashed var(--pd-hairline); }
   .back { background-color: var(--pd-card-back);
-    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 7px);
-    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4); }
+    background-image: var(--pd-card-back-stripes);
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.14), var(--pd-shadow-card); }
   @media (forced-colors: active) { .back { border: 1px solid CanvasText; } }
 
   .hero { display: flex; flex-direction: column; gap: var(--pd-space-4); }
