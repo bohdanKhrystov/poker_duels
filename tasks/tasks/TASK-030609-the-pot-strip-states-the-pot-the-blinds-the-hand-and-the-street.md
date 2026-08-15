@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030609
 title: The pot strip states the pot, the blinds, the hand and the street
 type: task
-status: ready
+status: done
 parent: STORY-0306
 module: web-client
 estimate: S
