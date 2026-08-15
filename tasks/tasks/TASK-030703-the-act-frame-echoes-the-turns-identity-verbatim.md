@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030703
 title: The Act frame echoes the turn's identity verbatim
 type: task
-status: ready
+status: done
 parent: STORY-0307
 module: web-client
 estimate: S
