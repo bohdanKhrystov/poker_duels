@@ -55,7 +55,10 @@ runs now, in parallel with `EPIC-02`, so the look is settled before `EPIC-03` bu
 | [TASK-060115](../tasks/TASK-060115-the-coin-glint-is-born-on-the-sheet.md) | The coin glint is born on the sheet | done |
 | [TASK-060116](../tasks/TASK-060116-the-css-coins-consume-the-glint-token.md) | The CSS coins consume the glint token | done |
 | [TASK-060117](../tasks/TASK-060117-the-colors-cards-coin-matches-the-canonical.md) | The Colors card's coin matches the canonical | done |
-| [TASK-060118](../tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) | The gallery lede names every mirrored token | ready |
+| [TASK-060118](../tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) | The gallery lede names every mirrored token | done |
+| [TASK-060119](../tasks/TASK-060119-the-coin-face-is-born-on-the-sheet.md) | The coin face is born on the sheet | ready |
+| [TASK-060120](../tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) | The lockup coins consume the face token | backlog |
+| [TASK-060121](../tasks/TASK-060121-the-colors-swatch-consumes-the-face-token.md) | The Colors swatch consumes the face token | backlog |
 
 ## Acceptance criteria
 

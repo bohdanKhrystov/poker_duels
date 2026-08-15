@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060118
 title: The gallery lede names every mirrored token
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: XS

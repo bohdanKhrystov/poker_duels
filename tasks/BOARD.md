@@ -422,7 +422,10 @@ parallel with `EPIC-02`; no shared file.
 | | [TASK-060115](tasks/TASK-060115-the-coin-glint-is-born-on-the-sheet.md) The coin glint is born on the sheet | XS | **done** |
 | | [TASK-060116](tasks/TASK-060116-the-css-coins-consume-the-glint-token.md) The CSS coins consume the glint token | XS | **done** |
 | | [TASK-060117](tasks/TASK-060117-the-colors-cards-coin-matches-the-canonical.md) The Colors card's coin matches the canonical | XS | **done** |
-| | [TASK-060118](tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) The gallery lede names every mirrored token | XS | ready |
+| | [TASK-060118](tasks/TASK-060118-the-gallery-lede-names-every-mirrored-token.md) The gallery lede names every mirrored token | XS | **done** |
+| | [TASK-060119](tasks/TASK-060119-the-coin-face-is-born-on-the-sheet.md) The coin face is born on the sheet | XS | ready |
+| | [TASK-060120](tasks/TASK-060120-the-lockup-coins-consume-the-face-token.md) The lockup coins consume the face token | XS | backlog |
+| | [TASK-060121](tasks/TASK-060121-the-colors-swatch-consumes-the-face-token.md) The Colors swatch consumes the face token | XS | backlog |
 | **[STORY-0602](stories/STORY-0602-duel-table-screen.md)** Design the duel table — components and the screen — *schema 2* | | | ready |
 | | [TASK-060201](tasks/TASK-060201-playing-card-component.md) The playing-card component | S | **done** |
 | | [TASK-060202](tasks/TASK-060202-seat-plate-and-pot.md) The seat plate and pot strip | S | **done** |
