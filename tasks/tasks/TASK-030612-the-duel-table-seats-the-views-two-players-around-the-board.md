@@ -128,7 +128,7 @@ function plateFor(name: string): HTMLElement {
 
 | Test | Proves |
 | --- | --- |
-| `seats you and your rival from the view's viewerSeat` | with `viewerSeat: 1` and stacks `4150` (seat 0) and `13400` (seat 1), `within(plateFor("You")).getByText("13,400")` and `within(plateFor("Your rival")).getByText("4,150")` both resolve |
+| `seats you and your rival from the view's viewerSeat` | with `viewerSeat: 1` and stacks `4150` (seat 0) and `13400` (seat 1), `within(plateFor("You")).getByText("13,400")` and `within(plateFor("Your rival")).getByText("4,150")` both resolve — **and the rival's plate precedes yours in the document**. The scope says "rival above, board between, you below", and looking each plate up by name cannot see order: inverting the whole column ships `Tests 179 passed (179)` against the two `within` assertions alone. Verified, not predicted |
 | `gives the button to the seat the view names` | with `viewerSeat: 0, buttonSeat: 1`, the rival's plate has `the button` and yours does not |
 | `marks the seat to act and no other` | with `viewerSeat: 0, seatToAct: 1`, `Their turn` is on screen and `queryByText("Your turn")` is `null` |
 | `shows the pot and the board the view carries` | `pot: 2450` with a three-card board shows `Pot 2,450`, `ace of spades` and `turn card, not yet dealt` |
