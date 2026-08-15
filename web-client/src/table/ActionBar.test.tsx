@@ -346,6 +346,170 @@ describe("the action bar", () => {
     expect(send).toHaveBeenCalledTimes(2);
   });
 
+  it("comes back to life after a rejection at the same decision point", () => {
+    const send = vi.fn();
+    const turn = aTurn({ handNumber: 61, actionSequence: 103 });
+    const { rerender, getByRole } = render(
+      <ActionBar
+        turn={turn}
+        rejection={null}
+        refusal={null}
+        rejectionCount={0}
+        send={send}
+      />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+    expect(send).toHaveBeenCalledTimes(1);
+
+    // The very same turn object: the identity below survives on the object,
+    // not because a new one arrived.
+    rerender(
+      <ActionBar
+        turn={turn}
+        rejection={{ type: "AmountTooSmall", attempted: 900, minimum: 1200 }}
+        refusal={null}
+        rejectionCount={1}
+        send={send}
+      />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+
+    expect(send).toHaveBeenNthCalledWith(2, {
+      type: "Act",
+      handNumber: 61,
+      actionSequence: 103,
+      action: { type: "Fold", seat: 0 },
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it("stays locked when nothing was rejected", () => {
+    const send = vi.fn();
+    const turn = aTurn({ handNumber: 61, actionSequence: 103 });
+    const { rerender, getByRole } = render(
+      <ActionBar
+        turn={turn}
+        rejection={null}
+        refusal={null}
+        rejectionCount={0}
+        send={send}
+      />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+    expect(send).toHaveBeenCalledTimes(1);
+
+    // A plain rerender, count unmoved: a bar that remounted on every rerender
+    // would send a second time here too.
+    rerender(
+      <ActionBar
+        turn={turn}
+        rejection={null}
+        refusal={null}
+        rejectionCount={0}
+        send={send}
+      />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("comes back a second time when the second attempt is refused too", () => {
+    const send = vi.fn();
+    const turn = aTurn({ handNumber: 61, actionSequence: 103 });
+    // Deep-equal on both rejected rerenders: only the count moves, the way a
+    // second identical refusal actually arrives.
+    const rejection = {
+      type: "AmountTooSmall",
+      attempted: 900,
+      minimum: 1200,
+    } as const;
+    const expected = {
+      type: "Act",
+      handNumber: 61,
+      actionSequence: 103,
+      action: { type: "Fold", seat: 0 },
+    };
+    const { rerender, getByRole } = render(
+      <ActionBar
+        turn={turn}
+        rejection={null}
+        refusal={null}
+        rejectionCount={0}
+        send={send}
+      />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+
+    rerender(
+      <ActionBar
+        turn={turn}
+        rejection={rejection}
+        refusal={null}
+        rejectionCount={1}
+        send={send}
+      />,
+    );
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+
+    rerender(
+      <ActionBar
+        turn={turn}
+        rejection={rejection}
+        refusal={null}
+        rejectionCount={2}
+        send={send}
+      />,
+    );
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+
+    expect(send).toHaveBeenNthCalledWith(1, expected);
+    expect(send).toHaveBeenNthCalledWith(2, expected);
+    expect(send).toHaveBeenNthCalledWith(3, expected);
+    expect(send).toHaveBeenCalledTimes(3);
+  });
+
+  it("returns the amount control to the minimum the server sent after a rejection", () => {
+    const send = vi.fn();
+    const turn = aTurn({
+      legalActions: aLegalActions({
+        allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+      }),
+    });
+    const { rerender, getByRole } = render(
+      <ActionBar
+        turn={turn}
+        rejection={null}
+        refusal={null}
+        rejectionCount={0}
+        send={send}
+      />,
+    );
+
+    const slider = getByRole("slider", { name: "raise to" });
+    fireEvent.change(slider, { target: { value: "3250" } });
+    expect((slider as HTMLInputElement).value).toBe("3250");
+
+    rerender(
+      <ActionBar
+        turn={turn}
+        rejection={{ type: "AmountTooSmall", attempted: 900, minimum: 1200 }}
+        refusal={null}
+        rejectionCount={1}
+        send={send}
+      />,
+    );
+
+    expect(
+      (getByRole("slider", { name: "raise to" }) as HTMLInputElement).value,
+    ).toBe("1200");
+  });
+
   it("states a rejection in the server's own numbers", () => {
     const send = vi.fn();
     const { rerender, getByText, queryByText } = render(
