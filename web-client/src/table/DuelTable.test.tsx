@@ -142,4 +142,30 @@ describe("the duel table", () => {
     expect(screen.getByText("Folded")).toBeDefined();
     expect(screen.getByLabelText("your rival's hidden hand")).toBeDefined();
   });
+
+  it("states what your rival has committed on this street", () => {
+    const view = aView({
+      seats: [
+        aSeat({ index: 0 }),
+        aSeat({ index: 1, committedThisStreet: 400 }),
+      ],
+    });
+
+    render(<DuelTable view={view} />);
+
+    expect(screen.getByText(/committed/)).toBeDefined();
+    expect(screen.getByText("400")).toBeDefined();
+  });
+
+  it("leaves the committed line empty and present when nothing is out", () => {
+    const view = aView({
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    const { container } = render(<DuelTable view={view} />);
+
+    const commitLine = container.querySelector("p");
+    expect(commitLine).not.toBeNull();
+    expect(commitLine?.textContent).toBe("");
+  });
 });

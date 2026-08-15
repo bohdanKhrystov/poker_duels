@@ -4,6 +4,7 @@ import { BoardCards } from "./BoardCards";
 import { PotStrip } from "./PotStrip";
 import { SeatPlate } from "./SeatPlate";
 import { Hand } from "./Hand";
+import { formatChips } from "./chips";
 
 /**
  * The duel table: one column, rival above, board between, you below.
@@ -33,6 +34,7 @@ export function DuelTable(props: { view: PlayerView }): ReactElement {
               hiddenLabel="your rival's hidden hand"
             />
           </div>
+          <BetLine committed={rival.committedThisStreet} />
         </div>
       )}
       <div className="flex flex-col items-center gap-4">
@@ -54,5 +56,26 @@ export function DuelTable(props: { view: PlayerView }): ReactElement {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The chips a seat has out on this street. The word is the field's, not an
+ * action's: the view says how much is committed and never says whether it got
+ * there by a blind, a call, a bet or a raise. The line keeps its height when
+ * there is nothing to say, so nothing below it moves.
+ */
+function BetLine(props: { committed: number }): ReactElement {
+  return (
+    <p className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-center text-small text-text-faint">
+      {props.committed > 0 && (
+        <>
+          committed{" "}
+          <span className="font-mono text-text tabular-nums">
+            {formatChips(props.committed)}
+          </span>
+        </>
+      )}
+    </p>
   );
 }
