@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030611
 title: The seat plate shows the name, the button and the stack
 type: task
-status: backlog
+status: ready
 parent: STORY-0306
 module: web-client
 estimate: S
