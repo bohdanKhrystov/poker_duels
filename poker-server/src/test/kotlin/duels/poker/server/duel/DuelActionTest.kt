@@ -185,4 +185,31 @@ class DuelActionTest {
         assertTrue(retried.outbound.any { it.seat == 0 && it.message is ServerMessage.Snapshot })
         assertTrue(retried.outbound.any { it.seat == 1 && it.message is ServerMessage.Snapshot })
     }
+
+    @Test
+    fun aFrameFromAnEarlierHandIsDroppedThoughItsSequenceFits() {
+        val fold = current.copy(action = PlayerAction.Fold(seatToAct))
+        val afterFold = act(runner, seatToAct, fold, seeds).runner
+        val live = afterFold.hand!!
+        assertEquals(2, live.state.handNumber)
+
+        val seat = live.state.seatToAct!!
+        // Hand 1's number, hand 2's sequence: every check but the hand number's
+        // would let this frame through.
+        val stale = Act(
+            handNumber = 1,
+            actionSequence = decisionPointOf(live.log.events)!!.sequence,
+            action = PlayerAction.Call(seat),
+        )
+
+        assertEquals(ActRefusal.STALE_FRAME, guard(live.state, live.log.events, seat, stale))
+
+        val dropped = act(afterFold, seat, stale, seeds)
+        assertEquals(afterFold, dropped.runner)
+        assertTrue(dropped.outbound.isEmpty())
+
+        // The control: one field different, and the server acts on it.
+        val applied = act(afterFold, seat, stale.copy(handNumber = 2), seeds)
+        assertTrue(applied.outbound.isNotEmpty())
+    }
 }
