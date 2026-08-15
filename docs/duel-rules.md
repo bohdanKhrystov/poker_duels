@@ -83,16 +83,18 @@ entire hand. Every event that moves chips is checked against it.
 
 ## Part 2 — The duel format
 
-> ### ⚠ Open decision — DEC-001
+> ### Settled — `DEC-001` → [ADR-0035](adr/ADR-0035-a-duel-is-a-freezeout.md)
 >
-> The exact duel format is **not final**. It shapes how the game feels more than any UI choice,
-> and it should be decided by playing, not by argument. The engine therefore takes the format
-> as **configuration**, and the values below are the default the first playable build ships
-> with. Changing them must never require an engine change.
+> A duel is a **freezeout**. The shape below is decided; the *numbers* below are not. The engine
+> takes the format as **configuration**, and starting stack, blind levels and the escalation rate
+> stay tunable without an engine change — that was true before the decision and stays true after
+> it.
 >
-> Settle this before v0.2 and record the outcome as an ADR.
+> One constraint is load-bearing rather than a default: the **escalating blind schedule is what
+> guarantees a duel terminates**, and `TASK-010715`'s termination property depends on it. Tune the
+> levels freely; do not flatten the escalation.
 
-### Default: freezeout
+### The format: freezeout
 
 A duel is a **freezeout** — the two players start with equal stacks and play until one of them
 holds every chip.
@@ -118,12 +120,17 @@ Blind levels (chips):
 The escalating schedule is what guarantees a duel terminates. Without it a heads-up match can
 run indefinitely.
 
-### Alternative under consideration
+### Considered, not chosen
 
 **Fixed-length match** — a set number of hands (25 or 50), winner is whoever holds more chips
 at the end. Lower variance and a predictable duration, but the ending is an arithmetic
-comparison rather than a knockout, which suits a "duel" much less well. Recorded here so the
-decision is made deliberately.
+comparison rather than a knockout, which suits a "duel" much less well. It lost on that ending:
+a ladder gets its signal from many duels, so sharpening one duel's variance buys accuracy the
+season already provides, and pays for it with a victory you read off a number.
+
+It remains **implemented and tested** (`TASK-010716`) and is available as configuration — for an
+exhibition or tournament format later, without a new build. See
+[ADR-0035](adr/ADR-0035-a-duel-is-a-freezeout.md).
 
 ### Rejected
 
