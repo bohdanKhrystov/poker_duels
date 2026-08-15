@@ -21,6 +21,24 @@ Protocol version: **2**
 | `Rejected` | server → client | `rejection` | Server rejects an illegal action |
 | `DuelFinished` | server → client | `outcome` (DuelOutcome) | The duel has ended |
 
+### What a `Rejected` does not change
+
+A `Rejected` reports on an *attempt*, not on state. The engine returns a rejection with an empty
+event list and no state change, and `DuelAction.act` returns the duel verbatim in that branch, so
+after one:
+
+- `handNumber` is unchanged,
+- the hand's last `ActionOn` — where the `actionSequence` a client must echo comes from — is
+  unchanged,
+- the seat on turn is unchanged.
+
+**The decision point therefore stays open**, and the `handNumber`/`actionSequence` pair the client
+already holds stays valid: a second `Act` bearing it passes the server's guard and reaches the
+engine. The server does **not** re-prompt after a rejection, and a client must not treat a
+`Rejected` as closing its turn. A decision point closes only when a frame that reports state says so
+— a `Snapshot`, a `YourTurn` naming a different sequence, or a `DuelFinished`. See
+[ADR-0043](adr/ADR-0043-a-rejection-closes-no-decision-point.md).
+
 ## Generated TypeScript
 
 The TypeScript type definitions for this protocol are generated from the Kotlin schema. The committed output file is `web-client/src/protocol/protocol.gen.ts`.

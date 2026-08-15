@@ -126,9 +126,11 @@ No other test in the file changes, and the suite's count moves only by the three
 
 ## Out of scope
 
-- Clearing the line. The store sets `rejection` and never unsets it, so a rejection from hand 3 is
-  still in state at hand 40 — that is `DEC-037`, together with whether the bar may act again after
-  one, and `TASK-030712` owns both. This ticket renders the prop it is handed.
+- Clearing the line. The store sets `rejection` and, until `TASK-030712` lands, never unsets it, so
+  a rejection from hand 3 is still in state at hand 40.
+  [`ADR-0043`](../../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md) answered that (the
+  next `YourTurn`, `Snapshot` or `DuelFinished` clears it) and `TASK-030712` lands it. This ticket
+  renders the prop it is handed.
 - Retrying anything. There is no `useEffect` in this file and none is added.
 - The lobby's `refusalMessage`. That one answers `UNKNOWN_ROOM` and `ROOM_FULL` before a duel
   exists; these two sentences answer a refused action inside one. Neither should learn the other's

@@ -89,8 +89,12 @@ screen moves in the meantime.
 - Anything the store does with the frames that come back. `Snapshot`, `Rejected` and `DuelFinished`
   each already clear the pending turn (`STORY-0304`), and the bar simply follows.
 - Retrying, queueing or de-duplicating on the socket. One click, one frame, no memory.
-- Coming back to life after a `Rejected` — the server sends no fresh `YourTurn` after one, so the
-  pending turn is gone and this bar correctly shows nothing. That is `DEC-037` and `TASK-030712`.
+- Coming back to life after a `Rejected`. Until `TASK-030712` lands, the store clears `pendingTurn`
+  on one and this bar shows nothing.
+  [`ADR-0043`](../../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md) answered that: the
+  store will keep the turn and count refusals, and **this key gains a third segment**
+  (`` `${handNumber}:${actionSequence}:${rejectionCount}` ``) in the ADR's bar-side ticket, so the
+  lock still lifts by unmount and never by anything clearing it. Do not anticipate it here.
 
 ## Tests
 

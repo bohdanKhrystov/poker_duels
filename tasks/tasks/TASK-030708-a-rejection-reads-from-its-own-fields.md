@@ -82,9 +82,10 @@ the server's figures, printed, with no rule of the client's added around them.
 ## Out of scope
 
 - Rendering it. `TASK-030709` puts the line on the bar.
-- Deciding when a rejection stops being shown, or whether the bar can act again after one. The
-  store keeps `rejection` set and clears `pendingTurn` (`TASK-030404`), which is `DEC-037` — see
-  `TASK-030712`.
+- When a rejection stops being shown, and whether the bar can act again after one. Answered by
+  [`ADR-0043`](../../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md) — the store keeps
+  `pendingTurn` and clears `rejection` on the next `YourTurn`, `Snapshot` or `DuelFinished` — and
+  landed by `TASK-030712` and its bar-side sibling, not here. This ticket only words the sentence.
 - `ProtocolError`. A `Failure` is a refused *frame*, not a refused action, and its wording belongs
   with the component that shows it.
 
