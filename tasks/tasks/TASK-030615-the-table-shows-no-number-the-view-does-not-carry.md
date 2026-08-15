@@ -152,7 +152,7 @@ a red suite, not a code review someone has to notice.
 
 | Test | Proves |
 | --- | --- |
-| `shows no number the view does not carry` | `numbersOnScreen(container)` is non-empty, and every value in it is in `numbersIn(VIEW)` |
+| `shows no number the view does not carry` | the fixture's own arithmetic independence is asserted first — **no two of its numbers sum, differ, double or halve into a third** — and then `numbersOnScreen(container)` is non-empty and every value in it is in `numbersIn(VIEW)`, where "on screen" includes **`aria-label` and `title`, not only text nodes**. The independence is asserted rather than claimed in a comment because it had already rotted once: `950 x 2 = 1900` and `75 x 2 = 150` were in the fixture, so a client deriving `minRaiseTo` from the bet or the big blind from the small would have landed on a legitimate number and passed. Both reach the player: one is read aloud, the other shown on hover. A text-only scan ships `Tests 186 passed (186)` against a derived total planted in either. Verified in all three placements, not predicted |
 | `names the street the view names, not the one the board looks like` | `getByText(/· Turn$/)` resolves while `queryByText(/· Flop$/)` is `null`, on a view whose board holds three cards |
 
 Two tests. One hundred and eighty-four exist, so the suite reports **186**.
