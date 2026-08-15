@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030615
 title: The table shows no number the view does not carry
 type: task
-status: backlog
+status: ready
 parent: STORY-0306
 module: web-client
 estimate: S
