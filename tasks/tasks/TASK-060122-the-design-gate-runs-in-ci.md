@@ -3,7 +3,7 @@ schema: 2
 id: TASK-060122
 title: The design gate runs in CI
 type: task
-status: ready
+status: done
 parent: STORY-0601
 module: design
 estimate: XS
