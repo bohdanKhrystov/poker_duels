@@ -20,12 +20,13 @@
 #      carries a copy of canonical geometry; the copy must equal the same-id symbol in
 #      a graphics SVG, compared with XML comments stripped and whitespace runs
 #      collapsed, so an asset retune can never leave a card silently stale.
-#   6. Lockup anatomy (TASK-060114, per ADR-0033): the wordmark's four em constants —
-#      gap and letter-spacing on `.mark`, width and inset-ring on `.mark .coin` — are
-#      born in graphics/wordmark.html; any other card declaring `.mark .coin` must
-#      carry the same four values (values, deliberately not declaration blocks — a
-#      conformant copy folds shared-`.coin` properties in). A card copying only
-#      `.mark` stays outside the clause: the recorded residual gap.
+#   6. Lockup anatomy (TASK-060114, per ADR-0033): the wordmark's em constants —
+#      gap and letter-spacing on `.mark`; width, height and the inset ring on
+#      `.mark .coin` (the 0.92em coin constant pins both axes) — are born in
+#      graphics/wordmark.html; any other card whose rules target `.coin` under
+#      `.mark` must carry the same values (values, deliberately not declaration
+#      blocks — a conformant copy folds shared-`.coin` properties in). A card
+#      copying only `.mark` stays outside the clause: the recorded residual gap.
 # Stock macOS/Linux tools only (grep -o is a BSD/GNU extension both platforms ship;
 # strict POSIX omits it).
 set -eu
@@ -180,32 +181,38 @@ symprobe=$(printf '<symbol id="pd-x" a="1">\n  <p/> <!-- c -->\n</symbol>\n' | p
 ANATOMY='
   my $src = do { local $/; <STDIN> };
   $src =~ s/<!--.*?-->//gs;
+  # only style blocks are CSS — prose apostrophes must never flip the string tracker
+  my $css = join "", $src =~ /<style[^>]*>(.*?)<\/style>/gis;
+  $css = $src unless $src =~ /<style/i;
   my ($out, $q, $i) = ("", "", 0);
-  while ($i < length $src) {
-    my $c = substr($src, $i, 1);
+  while ($i < length $css) {
+    my $c = substr($css, $i, 1);
     if ($q) { $out .= $c; $q = "" if $c eq $q; $i++; next }
     if ($c eq "\"" || $c eq "\x27") { $q = $c; $out .= $c; $i++; next }
-    if ($c eq "/" && substr($src, $i, 2) eq "/*") {
-      my $e = index($src, "*/", $i + 2); last if $e < 0; $i = $e + 2; next;
+    if ($c eq "/" && substr($css, $i, 2) eq "/*") {
+      my $e = index($css, "*/", $i + 2); last if $e < 0; $i = $e + 2; next;
     }
     $out .= $c; $i++;
   }
-  $src = $out;
+  $css = $out;
   my ($markbody, $coinbody) = ("", "");
-  while ($src =~ /([^{}]+)\{([^{}]*)\}/gs) {
+  while ($css =~ /([^{}]+)\{([^{}]*)\}/gs) {
     my ($sels, $body) = ($1, $2);
     for my $s (split /,/, $sels) {
       $s =~ s/^\s+|\s+$//g;
       next if $s =~ /\@/;
       $markbody .= ";" . $body if $s =~ /(^|[\s>+~])\.mark(\.[-\w]+)*$/;
-      $coinbody .= ";" . $body if $s =~ /(^|[\s>+~])\.mark\b/ && $s =~ /\.coin(\.[-\w]+)*$/;
+      $coinbody .= ";" . $body if $s =~ /(^|[\s>+~])\.mark(?![-\w])/ && $s =~ /\.coin(\.[-\w]+)*$/;
     }
   }
   exit 0 if $coinbody eq "";
+  # quoted strings are opaque — a content string naming a property is not a declaration
+  for ($markbody, $coinbody) { s/"[^"]*"|\x27[^\x27]*\x27/__str__/g }
+  my $PAREN = qr/\((?:[^()]|\([^()]*\))*\)/;
   sub decls {
-    my ($body, $prop) = @_;
+    my ($body, $prop, $paren) = @_;
     my %seen;
-    while ($body =~ /(?<![-\w])$prop\s*:\s*((?:[^;{}()]|\([^()]*\))*)/gi) {
+    while ($body =~ /(?<![-\w])$prop\s*:\s*((?:[^;{}()]|$paren)*)/gi) {
       my $v = $1; $v =~ s/^\s+|\s+$//g; $v =~ s/\s+/ /g;
       $seen{$v} = 1 if length $v;
     }
@@ -215,19 +222,19 @@ ANATOMY='
   my %want = (gap => [$markbody, "gap"], track => [$markbody, "letter-spacing"],
               width => [$coinbody, "width"], height => [$coinbody, "height"]);
   for my $k (sort keys %want) {
-    my @d = decls(@{$want{$k}});
+    my @d = decls(@{$want{$k}}, $PAREN);
     if (@d > 1) { print "conflict=$k\n"; exit 0 }
     $v{$k} = $d[0] if @d;
   }
-  my @sh = decls($coinbody, "box-shadow");
+  my @sh = decls($coinbody, "box-shadow", $PAREN);
   if (@sh > 1) { print "conflict=ring\n"; exit 0 }
   if (@sh) {
+    # any inset layer may carry the ring — take the first that yields a 4th length
     for my $layer (split /,(?![^(]*\))/, $sh[0]) {
       next unless $layer =~ /\binset\b/i;
-      my @tok = $layer =~ /((?:[^\s()]|\([^()]*\))+)/g;
+      my @tok = $layer =~ /((?:[^\s()]|$PAREN)+)/g;
       my @len = grep { !/^inset$/i && !/^(#|rgba?\(|hsla?\(|var\()/i } @tok;
-      $v{ring} = $len[3] if @len >= 4;
-      last;
+      if (@len >= 4) { $v{ring} = $len[3]; last }
     }
   }
   my @missing = grep { !defined $v{$_} } qw(gap track width height ring);
@@ -243,6 +250,15 @@ anat_probe=$(printf '%s\n' \
   | perl -e "$ANATOMY" 2>/dev/null || true)
 [ "$anat_probe" = "$(printf 'anat-gap=1em\nanat-track=2em\nanat-width=3em\nanat-height=5em\nanat-ring=4em')" ] \
   || { echo "check-drift: self-test failed — anatomy extractor broke (perl?)" >&2; exit 1; }
+# the error arms are load-bearing too: prove conflict and missing still report
+cprobe=$(printf '.mark { gap: 1em; letter-spacing: 1em; }\n.mark .coin { width: 1em; width: 2em; }\n' | perl -e "$ANATOMY" 2>/dev/null || true)
+[ "$cprobe" = "conflict=width" ] \
+  || { echo "check-drift: self-test failed — a conflicting lockup copy went unreported" >&2; exit 1; }
+mprobe=$(printf '.mark .coin { width: 1em; }\n' | perl -e "$ANATOMY" 2>/dev/null || true)
+case "$mprobe" in
+  missing=*ring*) : ;;
+  *) echo "check-drift: self-test failed — an incomplete lockup copy went unreported" >&2; exit 1 ;;
+esac
 WORDMARK="$DIR/graphics/wordmark.html"
 canon_anat_file=$(mktemp)
 perl -e "$ANATOMY" < "$WORDMARK" > "$canon_anat_file" 2>/dev/null \
