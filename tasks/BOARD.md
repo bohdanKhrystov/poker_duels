@@ -877,8 +877,8 @@ writes no Kotlin. `DEC-038` asked who ships it and
 | | [TASK-031002](tasks/TASK-031002-the-retry-delay-doubles-to-a-ceiling-and-spends-the-jitter.md) The retry delay doubles to a ceiling and spends the jitter it is handed | XS | **done** |
 | | [TASK-031003](tasks/TASK-031003-a-closed-socket-is-reopened-on-virtual-time.md) A closed socket is reopened, on virtual time, when the backoff says so | S | **done** |
 | | [TASK-031004](tasks/TASK-031004-a-socket-the-tab-replaced-starts-no-retry-of-its-own.md) A socket the tab has replaced starts no retry of its own | S | **done** |
-| | [TASK-031005](tasks/TASK-031005-a-version-mismatch-ends-the-retry-loop-for-good.md) A version mismatch ends the retry loop for good | XS | ready |
-| | [TASK-031006](tasks/TASK-031006-the-tabs-one-connection-is-the-one-that-comes-back.md) The tab's one connection is the one that comes back | XS | backlog |
+| | [TASK-031005](tasks/TASK-031005-a-version-mismatch-ends-the-retry-loop-for-good.md) A version mismatch ends the retry loop for good | XS | **done** |
+| | [TASK-031006](tasks/TASK-031006-the-tabs-one-connection-is-the-one-that-comes-back.md) The tab's one connection is the one that comes back | XS | ready |
 | | [TASK-031007](tasks/TASK-031007-boot-remembers-each-room-the-server-seats-it-in.md) Boot remembers each room the server seats it in | S | backlog |
 | | [TASK-031008](tasks/TASK-031008-with-no-code-in-hand-boot-rejoins-the-room-it-remembers.md) With no code in hand, boot rejoins the room it remembers | S | backlog |
 | | [TASK-031009](tasks/TASK-031009-a-finished-duel-is-forgotten-so-the-lobby-stays-reachable.md) A finished duel is forgotten, so the way back to the lobby stays open | XS | backlog |
