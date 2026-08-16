@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031107
 title: The strip states the balance, or says there is no profile yet
 type: task
-status: backlog
+status: ready
 parent: STORY-0311
 module: web-client
 estimate: S
