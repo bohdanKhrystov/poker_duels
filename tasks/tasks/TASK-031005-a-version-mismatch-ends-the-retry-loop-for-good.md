@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031005
 title: A version mismatch ends the retry loop for good
 type: task
-status: backlog
+status: ready
 parent: STORY-0310
 module: web-client
 estimate: XS
