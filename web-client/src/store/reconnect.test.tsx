@@ -1,8 +1,12 @@
+import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bootDuelClient } from "./boot";
+import { DuelProvider } from "./duel-provider";
 import { FakeSocket } from "../protocol/fake-socket";
 import { openReconnectingConnection } from "../protocol/reconnecting";
 import { PROTOCOL_VERSION } from "../protocol";
+import { Lobby } from "../lobby/Lobby";
+import { aSeat, aView } from "../table/view-fixture";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -73,6 +77,19 @@ function reconnectingClient(joinRoomCode: string | null = null) {
 
 function sentFrames(socket: FakeSocket): unknown[] {
   return socket.sent.map((frame) => JSON.parse(frame));
+}
+
+/**
+ * Mounts the real `Lobby` over a `reconnectingClient`'s store and send, wired
+ * exactly as `main.tsx` wires the app, so these tests exercise the screen a
+ * player actually sees rather than a store in isolation.
+ */
+function renderDuelScreen(client: ReturnType<typeof bootDuelClient>): void {
+  render(
+    <DuelProvider store={client.store} send={client.send}>
+      <Lobby />
+    </DuelProvider>,
+  );
 }
 
 describe("a tab whose socket dropped", () => {
@@ -161,5 +178,84 @@ describe("a tab whose socket dropped", () => {
       { type: "Hello", deviceId: "d-1", protocolVersion: PROTOCOL_VERSION },
       { type: "JoinRoom", code: "ABCDEFGH" },
     ]);
+  });
+
+  it("repaints from the snapshot that followed the resume, not the one it held", () => {
+    const { sockets, client } = reconnectingClient("ABCDEFGH");
+    renderDuelScreen(client);
+
+    act(() => {
+      sockets[0].open();
+      sockets[0].receive(WELCOME);
+      sockets[0].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+      sockets[0].receive(JSON.stringify({ type: "Snapshot", view: aView() }));
+      sockets[0].close();
+    });
+
+    expect(screen.getByText("Pot 30")).toBeDefined();
+
+    act(() => {
+      vi.advanceTimersByTime(250);
+      sockets[1].open();
+      sockets[1].receive(WELCOME);
+      sockets[1].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+      sockets[1].receive(
+        JSON.stringify({
+          type: "Snapshot",
+          view: aView({
+            pot: 260,
+            handNumber: 4,
+            street: "FLOP",
+            seats: [
+              aSeat({ index: 0, stack: 640 }),
+              aSeat({ index: 1, stack: 360 }),
+            ],
+          }),
+        }),
+      );
+    });
+
+    // Several fields differ, not just pot: a reducer that carried one field
+    // forward (or a table wired to a constant) would still pass a check that
+    // named only the pot. Street and hand number come off PotStrip's one
+    // `view` prop; the stacks come off each seat's own SeatPlate — a reducer
+    // has to replace the whole view, not patch a field it happens to be
+    // asked about, to get all of these right at once.
+    expect(screen.getByText("Pot 260")).toBeDefined();
+    expect(screen.getByText(/· Flop$/)).toBeDefined();
+    expect(screen.getByText(/Hand 4 ·/)).toBeDefined();
+    expect(screen.getByText("640")).toBeDefined();
+    expect(screen.getByText("360")).toBeDefined();
+
+    expect(screen.queryByText("Pot 30")).toBeNull();
+    expect(screen.queryByText(/· Preflop$/)).toBeNull();
+    expect(screen.queryByText(/Hand 1 ·/)).toBeNull();
+    expect(screen.queryByText("500")).toBeNull();
+  });
+
+  it("shows the duel that ended while the socket was down", () => {
+    const { sockets, client } = reconnectingClient("ABCDEFGH");
+    renderDuelScreen(client);
+
+    act(() => {
+      sockets[0].open();
+      sockets[0].receive(WELCOME);
+      sockets[0].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+      sockets[0].receive(JSON.stringify({ type: "Snapshot", view: aView() }));
+      sockets[0].close();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(250);
+      sockets[1].open();
+      sockets[1].receive(WELCOME);
+      sockets[1].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+      sockets[1].receive(
+        '{"type":"DuelFinished","outcome":{"winner":0,"handsPlayed":9,"finalStacks":[1000,0]}}',
+      );
+    });
+
+    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
+    expect(screen.queryByText("Pot 30")).toBeNull();
   });
 });
