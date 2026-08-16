@@ -29,6 +29,12 @@ export function openReconnectingConnection(
   let stopped = false;
   let live = false;
   let failures = 0;
+  // Bumped only when a close is *accepted* (see `attach`), so the socket
+  // that just closed is history from that instant. ADR-0018 has the server
+  // close the socket a reconnect just replaced, and that close reaches this
+  // tab too — a generation mismatch is how it is told apart from a real drop.
+  let generation = 0;
+  let current: Connection;
 
   function forward(message: ServerMessage): void {
     // A handshake that completed is a connection that worked, so the next
@@ -39,28 +45,38 @@ export function openReconnectingConnection(
     options.onMessage(message);
   }
 
-  function attach(): Connection {
+  function scheduleRetry(): void {
+    // Stopping is deliberate; a close it caused schedules nothing.
+    if (stopped) return;
+    const delay = retryDelayMillis(failures, jitter());
+    failures += 1;
+    setTimeout(attach, delay);
+  }
+
+  function attach(): void {
+    const mine = generation;
     const socket = options.openSocket();
-    live = true;
-    // `openConnection` sets `onopen` and `onmessage` and nothing else, so
-    // there is no existing handler on `onclose` to preserve.
-    socket.onclose = (): void => {
-      live = false;
-      if (stopped) return;
-      const delay = retryDelayMillis(failures, jitter());
-      failures += 1;
-      setTimeout(() => {
-        current = attach();
-      }, delay);
-    };
-    return openConnection({
+    current = openConnection({
       socket,
       storage: options.storage,
       onMessage: forward,
     });
+    live = true;
+    // `openConnection` sets `onopen` and `onmessage` and nothing else, so
+    // there is no existing handler on `onclose` to preserve.
+    socket.onclose = (): void => {
+      // A socket this tab has already replaced. ADR-0018 has the server
+      // close the first socket when the second adopts the seat, so this
+      // close is this tab, one attempt earlier — not a drop, and not a
+      // reason to retry.
+      if (mine !== generation) return;
+      generation += 1;
+      live = false;
+      scheduleRetry();
+    };
   }
 
-  let current: Connection = attach();
+  attach();
 
   return {
     get status(): ConnectionStatus {
