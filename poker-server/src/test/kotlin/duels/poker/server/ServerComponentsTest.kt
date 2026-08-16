@@ -7,12 +7,14 @@ import duels.poker.server.db.DatabaseCoordinates
 import duels.poker.server.db.Migrations
 import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.duel.HandSeedSource
+import duels.poker.server.http.SetNameResult
 import duels.poker.server.room.RoomTimeouts
 import duels.poker.server.session.DeviceId
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -88,6 +90,29 @@ class ServerComponentsTest {
         )
 
         assertSame(seedSource, components.socket.rooms.handSeeds)
+    }
+
+    @Test
+    fun theWritesAndTheReadsShareOneDatabase() {
+        val config = buildServerConfig(coordinates)
+        val components = serverComponents(config, dataSource)
+
+        val player = runBlocking {
+            components.socket.directory.resolve(DeviceId("writes-test"))
+        }
+
+        val setResult = runBlocking {
+            components.writes.setDisplayName(player.id, "TestName")
+        }
+
+        assertTrue(setResult is SetNameResult.NameSet, "setDisplayName should succeed")
+
+        val profile = runBlocking {
+            components.reads.profileOf(DeviceId("writes-test"))
+        }
+
+        assertNotNull(profile, "Profile should exist after writes")
+        assertEquals("TestName", profile!!.displayName, "Display name should be what we wrote")
     }
 
     /**
