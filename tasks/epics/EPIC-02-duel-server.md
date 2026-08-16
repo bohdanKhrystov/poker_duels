@@ -2,7 +2,7 @@
 id: EPIC-02
 title: Duel server
 type: epic
-status: done
+status: in-progress
 module: poker-server
 labels: [server, ktor, websocket, persistence]
 ---
@@ -97,6 +97,16 @@ Stated here because they are cheap to violate at a transport boundary and expens
 | [STORY-0210](../stories/STORY-0210-profiles-results-and-coins.md) | Profiles, duel results and duel coins | 0207, 0209 | backlog |
 | [STORY-0211](../stories/STORY-0211-read-path-coins-and-recent-duels.md) | The read path: my coins and my recent duels | 0210 | backlog |
 | [STORY-0212](../stories/STORY-0212-end-to-end-duel-over-a-socket.md) | A real duel over a real socket, end to end | 0208, 0211 | backlog |
+| [STORY-0213](../stories/STORY-0213-the-wire-carries-a-rematch.md) | The wire carries a rematch | 0206, 0207 | ready |
+
+**This epic closed on 2026-08-14 and reopened on 2026-08-16 for `STORY-0213`.**
+[`ADR-0044`](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) answers
+`DEC-023`: the scope line above already promised *rematch*, and the epic shipped it as far as
+`RoomRegistry.offerRematch` and stopped one wire message short of anyone reaching it. The
+unfinished half returns to the epic that promised it and to the module that owns the code, rather
+than to `EPIC-03`, whose own rule is that a client needing a new frame raises a decision instead of
+editing Kotlin. The metrics below are as measured at the first close and are **not** re-measured for
+this story; the reopening is recorded rather than hidden.
 
 ## What can run in parallel
 
@@ -155,7 +165,8 @@ negative** — signed everywhere, floored nowhere.
 
 ## Metrics
 
-Filled in when the epic closes; feeds the Product B case study.
+Measured at the first close, 2026-08-14. `STORY-0213`, added when the epic reopened, is deliberately
+outside this ledger — see the note under the stories table. Feeds the Product B case study.
 
 | | |
 | --- | --- |

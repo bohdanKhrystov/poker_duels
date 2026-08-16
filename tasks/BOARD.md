@@ -2,10 +2,13 @@
 
 The index. Conventions live in [`README.md`](README.md).
 
-**Now:** `EPIC-01` and `EPIC-02` are **done** — the engine, and a duel server that plays a whole
-duel over two real sockets against PostgreSQL, pays the winner a coin, and survives a disconnect.
+**Now:** `EPIC-01` is **done**, and so was `EPIC-02` — the engine, and a duel server that plays a
+whole duel over two real sockets against PostgreSQL, pays the winner a coin, and survives a
+disconnect. `EPIC-02` **reopened on 2026-08-16** for one story:
+[`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) answers `DEC-023`
+and puts the rematch's wire half in `STORY-0213`, where the code lives, rather than in `EPIC-03`.
 `EPIC-06` (design) runs in parallel on disjoint files, see `ADR-0023`. `EPIC-03` (web client) is
-next and not yet written.
+in progress.
 
 `EPIC-11` (status notifications) is **ahead of `EPIC-03`, `EPIC-04` and `EPIC-05` in the
 queue**, by the human's instruction on 2026-08-15. Those three are the first epics long enough
@@ -23,7 +26,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | --- | --- | --- | --- |
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
-| [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **done** | v0.1 |
+| [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **backlog** | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
@@ -399,8 +402,20 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021213](tasks/TASK-021213-the-sweep-period-is-configuration.md) The sweep period is configuration, read once in ServerConfig | XS | **done** |
 | | [TASK-021214](tasks/TASK-021214-a-test-filter-names-one-class.md) A test filter names one class, so a green run cannot have run nothing | XS | **done** |
 | | [TASK-021215](tasks/TASK-021215-a-logging-backend-so-a-swallowed-failure-is-visible.md) A logging backend, so a swallowed sweep failure is visible | S | **done** |
+| [STORY-0213](stories/STORY-0213-the-wire-carries-a-rematch.md) | The wire carries a rematch | | **ready** |
 
 Stories are written; tickets come from `/plan-story` as each is reached.
+
+**`STORY-0213` reopened this epic on 2026-08-16.**
+[`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) answers `DEC-023`:
+`ClientMessage` gains `OfferRematch` (no fields — the socket's `RoomMembership` names the room),
+`ServerMessage` gains `RematchOffered(seat)` for **both** seats, and the rematch's start is the
+opening `Snapshot` it already produces rather than a frame of its own. Refusals collapse to
+`UNKNOWN_ROOM` and a new, transient `REMATCH_UNAVAILABLE`; `PROTOCOL_VERSION` takes the next number
+free when it lands, alongside `ADR-0027`'s and `ADR-0028`'s unlanded bumps. The epic's own scope
+line already promised *rematch* and shipped it as far as `RoomRegistry.offerRematch`; this is the
+wire message it stopped short of. The metrics below are as measured at the first close and are not
+re-measured for it.
 
 ---
 
@@ -485,6 +500,15 @@ the schema forbidden from foreclosing one). `DEC-009` →
 watched live, minus every hole card, through a third projection in the engine). `DEC-031` →
 [`ADR-0041`](../docs/adr/ADR-0041-a-handle-and-a-password-are-the-only-credential.md) (handle and
 password only, for now, and the account screens are designed for one credential).
+
+`DEC-023` → [`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md)
+(a rematch is one client intent and one room fact: `OfferRematch` in, `RematchOffered(seat)` out to
+both seats, idempotent on a repeat and restated after a reconnect's frames. No started frame — after
+a `DuelFinished`, a `Snapshot` **is** the rematch, which nothing else can produce. Two refusals:
+`UNKNOWN_ROOM` ends it, a new transient `REMATCH_UNAVAILABLE` does not. No deadline on the wire,
+because a countdown the client may not act on is cosmetic. `PROTOCOL_VERSION` moves one step, taking
+the next free number when it lands. **The server half is `EPIC-02`'s `STORY-0213`**, which reopens
+that epic; `STORY-0309` is `ready` and writes no Kotlin).
 
 `DEC-037` → [`ADR-0043`](../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md)
 (a `Rejected` closes no decision point: the reducer keeps `pendingTurn`, clears `rejection` on the
@@ -663,8 +687,10 @@ a loss (`ADR-0015`), and a client holding no seat says *Duel over* rather than g
 
 Three departures from the design, recorded in the story: no rival name on the defeat line, because
 none is on the wire (`ADR-0021`, `DEC-017`); no duration, because `DuelOutcome` carries no clock; and
-no rematch button, because `STORY-0309` owns it and it is blocked on `DEC-023` — `TASK-030807` has
-the test that stops a later coder adding a dead one. The way on is a plain `<a href="/">`: the
+no rematch button, because `STORY-0309` owns it and the wire could not carry one when `STORY-0308`
+was split — `TASK-030807` has the test that stops a later coder adding a dead one. `DEC-023` is now
+answered (`ADR-0044`), so the button arrives with `STORY-0309`, once `EPIC-02`'s `STORY-0213` has
+put `OfferRematch` and `RematchOffered` on the wire. The way on is a plain `<a href="/">`: the
 reducer clears nothing a frame established, so the lobby is reached by starting from an empty store.
 
 | Story | Title | Status |
@@ -776,7 +802,7 @@ reducer clears nothing a frame established, so the lobby is reached by starting 
 | | [TASK-030807](tasks/TASK-030807-the-way-on-from-the-result-is-back-to-the-lobby.md) The way on is back to the lobby, and there is no dead rematch | XS | **done** |
 | | [TASK-030808](tasks/TASK-030808-the-result-derives-no-winner-and-no-figure.md) The result derives no winner and shows no figure the outcome did not carry | S | **done** |
 | | [TASK-030809](tasks/TASK-030809-the-duel-screen-shows-the-result-when-the-duel-ends.md) The duel screen shows the result when the duel ends | S | **done** |
-| [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen | **blocked** |
+| [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen (needs `STORY-0213`) | **ready** |
 | [STORY-0310](stories/STORY-0310-reconnect-and-resume.md) | Reconnect — the client resumes its seat | backlog |
 | [STORY-0311](stories/STORY-0311-profile-strip.md) | The profile strip — my coins and my recent duels | backlog |
 | [STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | backlog |
