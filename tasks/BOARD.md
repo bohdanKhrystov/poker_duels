@@ -958,8 +958,8 @@ drops `opponentPlayerId` at the parse, so no component has anywhere to leak it f
 | | [TASK-031103](tasks/TASK-031103-the-recent-duels-read-drops-the-opponent.md) The recent-duels read keeps every field but the opponent's identifier | S | **done** |
 | | [TASK-031104](tasks/TASK-031104-every-outcome-every-sign-and-what-the-parse-refuses.md) Every outcome, every sign, and what the duel parse refuses | S | **done** |
 | | [TASK-031105](tasks/TASK-031105-the-words-a-duel-line-is-made-of.md) The words a profile line is made of | S | **done** |
-| | [TASK-031106](tasks/TASK-031106-one-read-answers-the-whole-strip.md) One read answers the whole strip, or none of it | S | ready |
-| | [TASK-031107](tasks/TASK-031107-the-strip-states-the-balance-or-says-there-is-none.md) The strip states the balance, or says there is no profile yet | S | backlog |
+| | [TASK-031106](tasks/TASK-031106-one-read-answers-the-whole-strip.md) One read answers the whole strip, or none of it | S | **done** |
+| | [TASK-031107](tasks/TASK-031107-the-strip-states-the-balance-or-says-there-is-none.md) The strip states the balance, or says there is no profile yet | S | ready |
 | | [TASK-031108](tasks/TASK-031108-one-line-per-recent-duel-and-a-word-when-there-are-none.md) One line per recent duel, and a word when there are none | S | backlog |
 | | [TASK-031109](tasks/TASK-031109-the-read-runs-once-above-the-tree-and-nowhere-else.md) The strip's read runs once above the tree | S | backlog |
 | | [TASK-031110](tasks/TASK-031110-the-lobby-shows-the-strip-and-the-duel-does-not.md) The lobby shows the strip, and a duel in progress does not | S | backlog |
