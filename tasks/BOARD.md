@@ -55,7 +55,7 @@ work (`ADR-0024`).
 | | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **done** |
 | | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | **done** |
 | | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
-| | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | ready |
+| | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | **done** |
 
 `TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
 Actions minutes free at once, and `develop` is now protected: a pull request and two green checks
