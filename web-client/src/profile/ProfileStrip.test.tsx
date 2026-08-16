@@ -105,4 +105,58 @@ describe("the profile strip", () => {
     expect(screen.getByText("No duels yet.")).toBeDefined();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   });
+
+  it("lists the duels in the order they arrived, not one it chose", () => {
+    render(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: { playerId: "p1", coinBalance: 5 },
+          duels: [
+            {
+              duelId: "duel-b",
+              outcome: "DREW",
+              coinDelta: 0,
+              handsPlayed: 12,
+              finishedAt: "2026-03-02T09:00:00Z",
+            },
+            {
+              duelId: "duel-a",
+              outcome: "WON",
+              coinDelta: 1,
+              handsPlayed: 41,
+              finishedAt: "2026-05-14T18:20:00Z",
+            },
+            {
+              duelId: "duel-c",
+              outcome: "LOST",
+              coinDelta: -1,
+              handsPlayed: 7,
+              finishedAt: "2026-01-09T22:05:00Z",
+            },
+          ],
+        }}
+      />,
+    );
+
+    const listItems = screen.getAllByRole("listitem");
+    expect(listItems).toHaveLength(3);
+
+    // Assert hands played appear in the correct order: 12, 41, 7
+    const handsPlayed = listItems.map((item) => {
+      const match = item.textContent?.match(/(\d+)\s+(hands?)/);
+      return match ? `${match[1]} ${match[2]}` : null;
+    });
+    expect(handsPlayed).toEqual(["12 hands", "41 hands", "7 hands"]);
+
+    // Assert outcomes appear in the correct order: Drew, Won, Lost
+    const outcomes = listItems.map((item) => {
+      const text = item.textContent || "";
+      if (text.startsWith("Drew")) return "Drew";
+      if (text.startsWith("Won")) return "Won";
+      if (text.startsWith("Lost")) return "Lost";
+      return null;
+    });
+    expect(outcomes).toEqual(["Drew", "Won", "Lost"]);
+  });
 });
