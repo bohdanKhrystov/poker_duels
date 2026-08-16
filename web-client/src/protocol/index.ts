@@ -5,6 +5,12 @@ import type { ServerMessage } from "./protocol.gen";
 export type * from "./protocol.gen";
 export { PROTOCOL_VERSION } from "./version";
 export { DEVICE_ID_STORAGE_KEY, readDeviceId } from "./device-id";
+export {
+  ROOM_CODE_STORAGE_KEY,
+  forgetRoomCode,
+  readRoomCode,
+  writeRoomCode,
+} from "./room-memory";
 export { socketUrl } from "./socket-url";
 export { openConnection } from "./connection";
 export type {
