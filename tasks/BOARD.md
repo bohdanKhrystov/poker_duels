@@ -693,6 +693,19 @@ answered (`ADR-0044`), so the button arrives with `STORY-0309`, once `EPIC-02`'s
 put `OfferRematch` and `RematchOffered` on the wire. The way on is a plain `<a href="/">`: the
 reducer clears nothing a frame established, so the lobby is reached by starting from an empty store.
 
+**`STORY-0310` is split into thirteen**, on a baseline of 275, and `TASK-031001` is startable now.
+It is the **client** half of a path the server already serves: `STORY-0208` shipped the grace
+period, `TASK-020810`/`TASK-020811` rebuild the frames a returning seat is entitled to through the
+projection layer, and `TASK-020814` proves a returning socket picks up where it left off. So no
+protocol is designed here — the recipe is reopen, `Hello`, `JoinRoom`, and the client's only new
+state is the room code, beside the device id, under a key `src/protocol/` owns. The reconnect loop
+lives in `src/protocol/reconnecting.ts` because `boundary.test.ts` forbids the word `WebSocket`
+anywhere else; the *rejoin* lives in `boot.ts` because `ADR-0032` puts every message-triggered send
+there. `VERSION_MISMATCH` ends the loop entirely and `UNKNOWN_ROOM` ends only the resume — different
+reasons, different reach — and `TASK-031013` turns *"no test sleeps on a real clock"* from a promise
+into a check. **No pause state**: `ADR-0028` answered `DEC-018`, but `OpponentPresence` exists in no
+Kotlin file and no generated type, and this epic writes no Kotlin — `DEC-038` asks who ships it.
+
 | Story | Title | Status |
 | --- | --- | --- |
 | **[STORY-0301](stories/STORY-0301-web-client-toolchain.md)** The web-client toolchain and its first green check — *schema 2* | | **done** |
@@ -803,7 +816,20 @@ reducer clears nothing a frame established, so the lobby is reached by starting 
 | | [TASK-030808](tasks/TASK-030808-the-result-derives-no-winner-and-no-figure.md) The result derives no winner and shows no figure the outcome did not carry | S | **done** |
 | | [TASK-030809](tasks/TASK-030809-the-duel-screen-shows-the-result-when-the-duel-ends.md) The duel screen shows the result when the duel ends | S | **done** |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen (needs `STORY-0213`) | **ready** |
-| [STORY-0310](stories/STORY-0310-reconnect-and-resume.md) | Reconnect — the client resumes its seat | backlog |
+| **[STORY-0310](stories/STORY-0310-reconnect-and-resume.md)** Reconnect — the client resumes its seat — *schema 2* | | **ready** |
+| | [TASK-031001](tasks/TASK-031001-the-room-code-lives-under-one-key-this-module-owns.md) The room code lives under one storage key this module owns | XS | **ready** |
+| | [TASK-031002](tasks/TASK-031002-the-retry-delay-doubles-to-a-ceiling-and-spends-the-jitter.md) The retry delay doubles to a ceiling and spends the jitter it is handed | XS | backlog |
+| | [TASK-031003](tasks/TASK-031003-a-closed-socket-is-reopened-on-virtual-time.md) A closed socket is reopened, on virtual time, when the backoff says so | S | backlog |
+| | [TASK-031004](tasks/TASK-031004-a-socket-the-tab-replaced-starts-no-retry-of-its-own.md) A socket the tab has replaced starts no retry of its own | S | backlog |
+| | [TASK-031005](tasks/TASK-031005-a-version-mismatch-ends-the-retry-loop-for-good.md) A version mismatch ends the retry loop for good | XS | backlog |
+| | [TASK-031006](tasks/TASK-031006-the-tabs-one-connection-is-the-one-that-comes-back.md) The tab's one connection is the one that comes back | XS | backlog |
+| | [TASK-031007](tasks/TASK-031007-boot-remembers-each-room-the-server-seats-it-in.md) Boot remembers each room the server seats it in | S | backlog |
+| | [TASK-031008](tasks/TASK-031008-with-no-code-in-hand-boot-rejoins-the-room-it-remembers.md) With no code in hand, boot rejoins the room it remembers | S | backlog |
+| | [TASK-031009](tasks/TASK-031009-a-finished-duel-is-forgotten-so-the-lobby-stays-reachable.md) A finished duel is forgotten, so the way back to the lobby stays open | XS | backlog |
+| | [TASK-031010](tasks/TASK-031010-a-room-that-is-gone-is-forgotten-and-no-socket-resumes-into-it.md) A room that is gone is forgotten, and no socket resumes into it | S | backlog |
+| | [TASK-031011](tasks/TASK-031011-the-reopened-socket-says-hello-then-rejoins-once-each.md) The reopened socket says Hello, then rejoins, once each | S | backlog |
+| | [TASK-031012](tasks/TASK-031012-the-table-repaints-from-the-snapshot-that-followed-the-resume.md) The table repaints from the snapshot that followed the resume | S | backlog |
+| | [TASK-031013](tasks/TASK-031013-no-client-test-sleeps-on-a-real-clock.md) No client test sleeps on a real clock | XS | backlog |
 | [STORY-0311](stories/STORY-0311-profile-strip.md) | The profile strip — my coins and my recent duels | backlog |
 | [STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | backlog |
 

@@ -2,7 +2,7 @@
 id: STORY-0310
 title: Reconnect — the client resumes its seat
 type: story
-status: backlog
+status: ready
 parent: EPIC-03
 module: web-client
 labels: [client, websocket, resilience]
@@ -35,10 +35,15 @@ close. A phone that locks its screen mid-hand is the normal case, not the edge c
   Reconnect logic must be idempotent per tab and must not loop against its own adoption.
 - `ADR-0013`/`ADR-0023`: while a seat is absent the server may check or fold it. The returning
   client is told nothing special about that today, so it renders the state it finds — including a
-  hand it lost while away. What a *present* player is shown during the pause is `DEC-018`, and this
-  story renders none of it.
-- Backoff is bounded and jittered. `VERSION_MISMATCH` ends the loop (the server will refuse
-  identically forever), and so does `UNKNOWN_ROOM` on resume — that room is gone.
+  hand it lost while away. What a *present* player is shown during the pause was `DEC-018`, and
+  `ADR-0028` has since answered it: `OpponentPresence` and `ActedForAbsentSeat`. **Neither exists on
+  today's wire** — no Kotlin type, no row in `protocol.gen.ts` — and `EPIC-03` may not add one, so
+  this story still renders none of it. `DEC-038` asks who ships that half and where its client half
+  lands; it blocks nothing here.
+- Backoff is bounded and jittered. `VERSION_MISMATCH` ends the loop entirely — the server will
+  refuse this client identically forever. `UNKNOWN_ROOM` answering a rejoin ends the *resume*: that
+  room is gone, so the tab forgets it, but the socket keeps coming back, because a player at the
+  lobby still needs one. The two clauses have different reasons and therefore different reach.
 - Tests drive a fake socket on virtual time. **No test sleeps on a real clock**, the same rule
   `EPIC-02` held itself to.
 
@@ -46,7 +51,22 @@ close. A phone that locks its screen mid-hand is the normal case, not the edge c
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0310`.* | — |
+| [TASK-031001](../tasks/TASK-031001-the-room-code-lives-under-one-key-this-module-owns.md) | The room code lives under one storage key this module owns | ready |
+| [TASK-031002](../tasks/TASK-031002-the-retry-delay-doubles-to-a-ceiling-and-spends-the-jitter.md) | The retry delay doubles to a ceiling and spends the jitter it is handed | backlog |
+| [TASK-031003](../tasks/TASK-031003-a-closed-socket-is-reopened-on-virtual-time.md) | A closed socket is reopened, on virtual time, when the backoff says so | backlog |
+| [TASK-031004](../tasks/TASK-031004-a-socket-the-tab-replaced-starts-no-retry-of-its-own.md) | A socket the tab has replaced starts no retry of its own | backlog |
+| [TASK-031005](../tasks/TASK-031005-a-version-mismatch-ends-the-retry-loop-for-good.md) | A version mismatch ends the retry loop for good | backlog |
+| [TASK-031006](../tasks/TASK-031006-the-tabs-one-connection-is-the-one-that-comes-back.md) | The tab's one connection is the one that comes back | backlog |
+| [TASK-031007](../tasks/TASK-031007-boot-remembers-each-room-the-server-seats-it-in.md) | Boot remembers each room the server seats it in | backlog |
+| [TASK-031008](../tasks/TASK-031008-with-no-code-in-hand-boot-rejoins-the-room-it-remembers.md) | With no code in hand, boot rejoins the room it remembers | backlog |
+| [TASK-031009](../tasks/TASK-031009-a-finished-duel-is-forgotten-so-the-lobby-stays-reachable.md) | A finished duel is forgotten, so the way back to the lobby stays open | backlog |
+| [TASK-031010](../tasks/TASK-031010-a-room-that-is-gone-is-forgotten-and-no-socket-resumes-into-it.md) | A room that is gone is forgotten, and no socket resumes into it | backlog |
+| [TASK-031011](../tasks/TASK-031011-the-reopened-socket-says-hello-then-rejoins-once-each.md) | The reopened socket says Hello, then rejoins, once each | backlog |
+| [TASK-031012](../tasks/TASK-031012-the-table-repaints-from-the-snapshot-that-followed-the-resume.md) | The table repaints from the snapshot that followed the resume | backlog |
+| [TASK-031013](../tasks/TASK-031013-no-client-test-sleeps-on-a-real-clock.md) | No client test sleeps on a real clock | backlog |
+
+The chain is deliberately linear: `031003`–`031005` share `reconnecting.ts`, `031007`–`031010`
+share `boot.ts`, and `031011`–`031012` share one test file, so no two are startable at once.
 
 ## Acceptance criteria
 
@@ -60,7 +80,9 @@ close. A phone that locks its screen mid-hand is the normal case, not the edge c
 
 ## Out of scope
 
-- Anything shown to the player whose opponent is away — `DEC-018`, unanswered.
+- Anything shown to the player whose opponent is away. `ADR-0028` answered `DEC-018`, but nothing
+  on today's wire carries `OpponentPresence` or `ActedForAbsentSeat` and `EPIC-03` may not add
+  them — `DEC-038`.
 - Surviving a **server** restart mid-duel: `ADR-0011` says in-flight duel state is not durable, so
   there is nothing to resume into.
 - Offline queueing of actions. An action taken while disconnected is not an action.
