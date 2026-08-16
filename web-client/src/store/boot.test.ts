@@ -174,6 +174,18 @@ describe("booting the duel client", () => {
       { type: "JoinRoom", code: "ZYXWVUTS" },
     ]);
 
+    // A refusal that answers this same rejoin but is not UNKNOWN_ROOM says
+    // nothing about the room being gone, so it must not be read as that —
+    // the room stays, and the next Welcome asks for it exactly as before.
+    socket.receive('{"type":"Failure","error":"NOT_IN_DUEL"}');
+    expect(readRoomCode(storage)).toBe("ZYXWVUTS");
+
+    socket.receive(WELCOME);
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ZYXWVUTS" },
+      { type: "JoinRoom", code: "ZYXWVUTS" },
+    ]);
+
     socket.receive('{"type":"Failure","error":"UNKNOWN_ROOM"}');
 
     expect(readRoomCode(storage)).toBeNull();
