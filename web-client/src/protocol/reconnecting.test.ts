@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Connection } from "./connection";
 import { FakeSocket } from "./fake-socket";
 import type { RoomJoined, ServerMessage, Welcome } from "./protocol.gen";
 import { openReconnectingConnection } from "./reconnecting";
@@ -48,6 +49,7 @@ function roomJoinedFrame(seat: number): string {
 interface Harness {
   readonly sockets: FakeSocket[];
   readonly messages: ServerMessage[];
+  readonly connection: Connection;
 }
 
 /**
@@ -59,7 +61,7 @@ function openOverFakeSockets(): Harness {
   const sockets: FakeSocket[] = [];
   const messages: ServerMessage[] = [];
 
-  openReconnectingConnection({
+  const connection = openReconnectingConnection({
     openSocket: (): WebSocket => {
       const socket = new FakeSocket();
       sockets.push(socket);
@@ -72,7 +74,7 @@ function openOverFakeSockets(): Harness {
     jitter: (): number => 0,
   });
 
-  return { sockets, messages };
+  return { sockets, messages, connection };
 }
 
 describe("the reconnecting connection", () => {
@@ -161,5 +163,87 @@ describe("the reconnecting connection", () => {
       { type: "RoomJoined", code: "ABC123", seat: 0 },
       { type: "RoomJoined", code: "ABC123", seat: 1 },
     ]);
+  });
+
+  it("ignores the close of a socket it has already replaced", () => {
+    const { sockets } = openOverFakeSockets();
+
+    sockets[0].close();
+    vi.advanceTimersByTime(250);
+    expect(sockets).toHaveLength(2);
+
+    // ADR-0018: the server closes the socket the new one adopted the seat from.
+    sockets[0].close();
+    vi.advanceTimersByTime(60_000);
+
+    expect(sockets).toHaveLength(2);
+
+    // The tab reconnects again, so socket 1 is now two generations behind —
+    // a 1-bit "was this the immediately-previous attempt" flag would wrap
+    // around and wrongly accept its echo below.
+    sockets[1].close();
+    vi.advanceTimersByTime(500);
+    expect(sockets).toHaveLength(3);
+
+    // The same stale echo as above, arriving after that second reconnect.
+    sockets[0].close();
+    vi.advanceTimersByTime(60_000);
+
+    expect(sockets).toHaveLength(3);
+  });
+
+  it("counts the failures of the live socket, not of the one it replaced", () => {
+    const { sockets } = openOverFakeSockets();
+
+    sockets[0].close();
+    vi.advanceTimersByTime(250);
+    expect(sockets).toHaveLength(2);
+
+    // The same stale echo as above — it must not spend a retry attempt that
+    // the live socket's own close will spend again.
+    sockets[0].close();
+
+    sockets[1].close();
+    vi.advanceTimersByTime(499);
+    expect(sockets).toHaveLength(2);
+    vi.advanceTimersByTime(1);
+    expect(sockets).toHaveLength(3);
+  });
+
+  it("writes to the socket it opened last", () => {
+    const { sockets, connection } = openOverFakeSockets();
+
+    sockets[0].open();
+    sockets[0].close();
+    vi.advanceTimersByTime(250);
+    expect(sockets).toHaveLength(2);
+
+    sockets[1].open();
+    connection.send({ type: "CreateRoom" });
+
+    expect(
+      sockets[1].sent.map(
+        (frame) => (JSON.parse(frame) as { type: string }).type,
+      ),
+    ).toEqual(["Hello", "CreateRoom"]);
+    expect(sockets[0].sent).toHaveLength(1);
+  });
+
+  it("drops a send made while no socket is open", () => {
+    const { sockets, connection } = openOverFakeSockets();
+
+    sockets[0].close();
+
+    expect(() => connection.send({ type: "CreateRoom" })).not.toThrow();
+
+    vi.advanceTimersByTime(250);
+    expect(sockets).toHaveLength(2);
+
+    sockets[1].open();
+    expect(
+      sockets[1].sent.map(
+        (frame) => (JSON.parse(frame) as { type: string }).type,
+      ),
+    ).toEqual(["Hello"]);
   });
 });
