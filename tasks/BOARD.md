@@ -1079,8 +1079,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040103](tasks/TASK-040103-one-name-whatever-case-it-is-typed-in.md) One name, whatever case it is typed in | S | **done** |
 | | [TASK-040104](tasks/TASK-040104-permanence-fires-and-only-on-the-column-it-names.md) Permanence fires, and only on the column it names | S | **done** |
 | | [TASK-040105](tasks/TASK-040105-the-canonical-name-is-trimmed-nfc-and-counted-in-code-points.md) The canonical name is trimmed, NFC, and counted in code points | S | **done** |
-| | [TASK-040106](tasks/TASK-040106-the-canonical-form-refuses-the-invisible-and-the-doubled-space.md) The canonical form refuses the invisible and the doubled space | S | ready |
-| | [TASK-040107](tasks/TASK-040107-one-builder-makes-every-profile-dto-a-test-uses.md) One builder makes every profile DTO a test uses | S | backlog |
+| | [TASK-040106](tasks/TASK-040106-the-canonical-form-refuses-the-invisible-and-the-doubled-space.md) The canonical form refuses the invisible and the doubled space | S | **done** |
+| | [TASK-040107](tasks/TASK-040107-one-builder-makes-every-profile-dto-a-test-uses.md) One builder makes every profile DTO a test uses | S | ready |
 | | [TASK-040108](tasks/TASK-040108-profile-response-carries-the-name-the-row-holds.md) `ProfileResponse` carries the name the row holds | XS | backlog |
 | | [TASK-040109](tasks/TASK-040109-the-name-is-on-the-wire-and-it-is-the-one-stored.md) The name is on the wire, and it is the one stored | S | backlog |
 | | [TASK-040110](tasks/TASK-040110-the-profile-writes-port-and-its-sealed-answer.md) The `ProfileWrites` port, its sealed answer, and no lookup by name | S | backlog |
