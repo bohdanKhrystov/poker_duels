@@ -47,6 +47,47 @@ internal class RunnerDuelTest {
         assertEquals(first.outbound, second.outbound)
         assertEquals(first.runner, second.runner)
         assertEquals(first.actions, second.actions)
+        assertEquals(first.acts, second.acts)
+    }
+
+    @Test
+    @Timeout(120)
+    fun everyActionSentIsRecorded() {
+        for (seed in seeds) {
+            val played = playDuel(seed)
+            assertEquals(played.acts.size, played.actions, "seed $seed")
+            assertTrue(played.acts.isNotEmpty(), "seed $seed")
+        }
+    }
+
+    @Test
+    @Timeout(120)
+    fun eachRecordedActAnswersItsOwnTurn() {
+        val testSeed = seeds.first()
+        val played = playDuel(testSeed)
+
+        val turns = played.outbound.filter { it.message is ServerMessage.YourTurn }
+        assertEquals(played.acts.size, turns.size)
+
+        for (i in played.acts.indices) {
+            val sentAct = played.acts[i]
+            val turn = turns[i].message as ServerMessage.YourTurn
+            val turnFrame = turns[i]
+
+            assertEquals(sentAct.seat, turnFrame.seat)
+            assertEquals(sentAct.act.handNumber, turn.handNumber)
+            assertEquals(sentAct.act.actionSequence, turn.actionSequence)
+        }
+    }
+
+    @Test
+    @Timeout(120)
+    fun bothSeatsAreRepresentedInTheActions() {
+        val testSeed = seeds.first()
+        val played = playDuel(testSeed)
+
+        val seats = played.acts.map { it.seat }.toSet()
+        assertEquals(setOf(0, 1), seats)
     }
 
     @Test

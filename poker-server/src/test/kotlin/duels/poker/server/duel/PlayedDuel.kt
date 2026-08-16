@@ -9,6 +9,11 @@ import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.ServerMessage
 
 /**
+ * A client action sent while playing a duel.
+ */
+internal data class SentAct(val seat: Int, val act: Act)
+
+/**
  * The whole record of one duel played to completion through the runner, as a real client would
  * play it: by answering every `YourTurn` frame and nothing else.
  *
@@ -16,12 +21,14 @@ import duels.poker.server.protocol.ServerMessage
  * @property runner the duel's final state: `hand == null`, `outcome` set.
  * @property outbound every [Addressed] frame the runner produced, in order, starting with
  *   `startDuel`'s.
+ * @property acts every [SentAct] frame sent while playing, in order.
  * @property actions the number of `Act` frames sent to reach that outcome.
  */
 internal data class PlayedDuel(
     val seed: Long,
     val runner: DuelRunner,
     val outbound: List<Addressed>,
+    val acts: List<SentAct>,
     val actions: Int,
 )
 
@@ -64,6 +71,7 @@ internal fun playDuel(
     var step = startDuel(format, buttonSeat, seed)
     val outbound = mutableListOf<Addressed>()
     outbound += step.outbound
+    val acts = mutableListOf<SentAct>()
     var actions = 0
 
     while (true) {
@@ -105,6 +113,7 @@ internal fun playDuel(
             }
 
         val message = Act(turn.handNumber, turn.actionSequence, action)
+        acts.add(SentAct(turnFrame.seat, message))
         step = act(step.runner, turnFrame.seat, message, seeds)
         outbound += step.outbound
         actions++
@@ -112,5 +121,5 @@ internal fun playDuel(
 
     check(step.runner.hand == null)
 
-    return PlayedDuel(seed, step.runner, outbound, actions)
+    return PlayedDuel(seed, step.runner, outbound, acts, actions)
 }
