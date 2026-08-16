@@ -55,7 +55,10 @@ describe("the client's tests", () => {
     // glob, broken pattern, or silent walk-failure would all fail this.
     expect(sources.size).toBeGreaterThan(40);
     const withAPlant = new Map(sources);
-    withAPlant.set("planted.test.ts", "it('x', () => { setTimeout(done, 10); });");
+    withAPlant.set(
+      "planted.test.ts",
+      "it('x', () => { setTimeout(done, 10); });",
+    );
     expect(sleepingTestFiles(withAPlant)).toEqual(["planted.test.ts"]);
   });
 
