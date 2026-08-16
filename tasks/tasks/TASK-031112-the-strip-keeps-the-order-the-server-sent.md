@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031112
 title: The strip lists recent duels in the order the server sent them
 type: task
-status: ready
+status: done
 parent: STORY-0311
 module: web-client
 estimate: XS
