@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031015
 title: The virtual-time guard exempts itself on purpose, not by accident
 type: task
-status: ready
+status: done
 parent: STORY-0310
 module: web-client
 estimate: XS
