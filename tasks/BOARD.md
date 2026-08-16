@@ -882,8 +882,8 @@ writes no Kotlin. `DEC-038` asked who ships it and
 | | [TASK-031007](tasks/TASK-031007-boot-remembers-each-room-the-server-seats-it-in.md) Boot remembers each room the server seats it in | S | **done** |
 | | [TASK-031008](tasks/TASK-031008-with-no-code-in-hand-boot-rejoins-the-room-it-remembers.md) With no code in hand, boot rejoins the room it remembers | S | **done** |
 | | [TASK-031009](tasks/TASK-031009-a-finished-duel-is-forgotten-so-the-lobby-stays-reachable.md) A finished duel is forgotten, so the way back to the lobby stays open | XS | **done** |
-| | [TASK-031010](tasks/TASK-031010-a-room-that-is-gone-is-forgotten-and-no-socket-resumes-into-it.md) A room that is gone is forgotten, and no socket resumes into it | S | ready |
-| | [TASK-031011](tasks/TASK-031011-the-reopened-socket-says-hello-then-rejoins-once-each.md) The reopened socket says Hello, then rejoins, once each | S | backlog |
+| | [TASK-031010](tasks/TASK-031010-a-room-that-is-gone-is-forgotten-and-no-socket-resumes-into-it.md) A room that is gone is forgotten, and no socket resumes into it | S | **done** |
+| | [TASK-031011](tasks/TASK-031011-the-reopened-socket-says-hello-then-rejoins-once-each.md) The reopened socket says Hello, then rejoins, once each | S | ready |
 | | [TASK-031012](tasks/TASK-031012-the-table-repaints-from-the-snapshot-that-followed-the-resume.md) The table repaints from the snapshot that followed the resume | S | backlog |
 | | [TASK-031013](tasks/TASK-031013-no-client-test-sleeps-on-a-real-clock.md) No client test sleeps on a real clock | XS | backlog |
 | [STORY-0311](stories/STORY-0311-profile-strip.md) | The profile strip — my coins and my recent duels | backlog |

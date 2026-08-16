@@ -28,6 +28,11 @@ export interface BootOptions {
  */
 export function bootDuelClient(options: BootOptions): DuelClient {
   const store = createDuelStore();
+  // Whether the JoinRoom this reaction sent is still unanswered. A refusal is
+  // only about our room when it is answering our rejoin — the same UNKNOWN_ROOM
+  // reaches a player who mistyped a code in the lobby, and that must not throw
+  // away a room this tab is seated in.
+  let rejoining = false;
   const connection = options.connect((message) => {
     store.apply(message);
     // A message-triggered send is a boot reaction, never a screen effect: one
@@ -40,10 +45,30 @@ export function bootDuelClient(options: BootOptions): DuelClient {
       // tab whose socket has been reopened under it.
       const remembered = options.storage ? readRoomCode(options.storage) : null;
       const code = options.joinRoomCode ?? remembered;
-      if (code !== null) connection.send({ type: "JoinRoom", code });
+      if (code !== null) {
+        rejoining = true;
+        connection.send({ type: "JoinRoom", code });
+      }
     }
-    if (message.type === "RoomJoined" && options.storage) {
-      writeRoomCode(options.storage, message.code);
+    if (message.type === "RoomJoined") {
+      rejoining = false;
+      if (options.storage) {
+        writeRoomCode(options.storage, message.code);
+      }
+    }
+    if (
+      message.type === "Failure" &&
+      message.error === "UNKNOWN_ROOM" &&
+      rejoining &&
+      options.storage
+    ) {
+      // UNKNOWN_ROOM in answer to our own rejoin means the room the tab
+      // remembered has been reaped: the resume ends here so no later socket
+      // asks for it again. The connection stays open — only VERSION_MISMATCH
+      // ends the retry loop, because that refusal repeats forever
+      // (TASK-030513, TASK-031005); this one just means the room is gone.
+      rejoining = false;
+      forgetRoomCode(options.storage);
     }
     if (message.type === "DuelFinished" && options.storage) {
       // The way on from the result is a reload (TASK-030807). A tab that still

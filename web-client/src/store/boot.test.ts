@@ -164,6 +164,68 @@ describe("booting the duel client", () => {
     expect(client.store.getState().refusal).toBe("UNKNOWN_ROOM");
   });
 
+  it("forgets the room the server says is gone", () => {
+    const { socket, storage } = bootOverFakeSocket(null);
+    writeRoomCode(storage, "ZYXWVUTS");
+
+    socket.open();
+    socket.receive(WELCOME);
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ZYXWVUTS" },
+    ]);
+
+    // A refusal that answers this same rejoin but is not UNKNOWN_ROOM says
+    // nothing about the room being gone, so it must not be read as that —
+    // the room stays, and the next Welcome asks for it exactly as before.
+    socket.receive('{"type":"Failure","error":"NOT_IN_DUEL"}');
+    expect(readRoomCode(storage)).toBe("ZYXWVUTS");
+
+    socket.receive(WELCOME);
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ZYXWVUTS" },
+      { type: "JoinRoom", code: "ZYXWVUTS" },
+    ]);
+
+    socket.receive('{"type":"Failure","error":"UNKNOWN_ROOM"}');
+
+    expect(readRoomCode(storage)).toBeNull();
+  });
+
+  it("sends no JoinRoom on the Welcome after the room is gone", () => {
+    const { socket, storage } = bootOverFakeSocket(null);
+    writeRoomCode(storage, "ZYXWVUTS");
+
+    socket.open();
+    socket.receive(WELCOME);
+    socket.receive('{"type":"Failure","error":"UNKNOWN_ROOM"}');
+
+    // Three more Welcomes stand for three more sockets the retry loop would
+    // open while backing off (TASK-031003–031005): a forgotten room must stay
+    // forgotten across every one of them, not just the next.
+    socket.receive(WELCOME);
+    socket.receive(WELCOME);
+    socket.receive(WELCOME);
+
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ZYXWVUTS" },
+    ]);
+  });
+
+  it("keeps the room when the refusal answered no rejoin of its own", () => {
+    // The rejoin this boot sent is answered here — RoomJoined clears
+    // `rejoining` — so the seat is settled before the Failure below arrives.
+    // That Failure is then the lobby's, not this rejoin's, the way a mistyped
+    // code would be while this tab is already seated.
+    const { socket, storage } = bootOverFakeSocket("ABCDEFGH");
+
+    socket.open();
+    socket.receive(WELCOME);
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+    socket.receive('{"type":"Failure","error":"UNKNOWN_ROOM"}');
+
+    expect(readRoomCode(storage)).toBe("ABCDEFGH");
+  });
+
   it("remembers each room the server seats it in", () => {
     const { socket, storage } = bootOverFakeSocket();
 
