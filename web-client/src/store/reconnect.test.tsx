@@ -6,7 +6,7 @@ import { FakeSocket } from "../protocol/fake-socket";
 import { openReconnectingConnection } from "../protocol/reconnecting";
 import { PROTOCOL_VERSION } from "../protocol";
 import { Lobby } from "../lobby/Lobby";
-import { aView } from "../table/view-fixture";
+import { aSeat, aView } from "../table/view-fixture";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -202,15 +202,35 @@ describe("a tab whose socket dropped", () => {
       sockets[1].receive(
         JSON.stringify({
           type: "Snapshot",
-          view: aView({ pot: 260, handNumber: 4 }),
+          view: aView({
+            pot: 260,
+            handNumber: 4,
+            street: "FLOP",
+            seats: [
+              aSeat({ index: 0, stack: 640 }),
+              aSeat({ index: 1, stack: 360 }),
+            ],
+          }),
         }),
       );
     });
 
-    // Two distinct pots: a table wired to a constant, or one that merged
-    // rather than replaced, would still show Pot 30 here.
+    // Several fields differ, not just pot: a reducer that carried one field
+    // forward (or a table wired to a constant) would still pass a check that
+    // named only the pot. Street and hand number come off PotStrip's one
+    // `view` prop; the stacks come off each seat's own SeatPlate — a reducer
+    // has to replace the whole view, not patch a field it happens to be
+    // asked about, to get all of these right at once.
     expect(screen.getByText("Pot 260")).toBeDefined();
+    expect(screen.getByText(/· Flop$/)).toBeDefined();
+    expect(screen.getByText(/Hand 4 ·/)).toBeDefined();
+    expect(screen.getByText("640")).toBeDefined();
+    expect(screen.getByText("360")).toBeDefined();
+
     expect(screen.queryByText("Pot 30")).toBeNull();
+    expect(screen.queryByText(/· Preflop$/)).toBeNull();
+    expect(screen.queryByText(/Hand 1 ·/)).toBeNull();
+    expect(screen.queryByText("500")).toBeNull();
   });
 
   it("shows the duel that ended while the socket was down", () => {
