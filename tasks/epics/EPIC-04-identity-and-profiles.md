@@ -126,7 +126,7 @@ recorded rather than quietly absorbed:
 | ID | Title | Depends on | Status |
 | --- | --- | --- | --- |
 | [STORY-0401](../stories/STORY-0401-display-name-and-the-write-path.md) | `player.display_name`, its canonical form, and the write path | — | **ready**, split into 18 tickets |
-| [STORY-0402](../stories/STORY-0402-the-read-path-carries-the-display-name.md) | The read path carries the display name | 0401 | backlog |
+| [STORY-0402](../stories/STORY-0402-the-read-path-carries-the-display-name.md) | The read path carries the display name | 0401 | **ready**, split into 5 tickets |
 | [STORY-0403](../stories/STORY-0403-credentials-storage-and-hashing.md) | Credentials — the schema, the hash, and a port that returns none | 0401 | backlog |
 | [STORY-0404](../stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | Sign-up — one endpoint, and it attaches an account to the profile already here | 0403 | backlog |
 | [STORY-0405](../stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) | Sign-in, the session, and what the socket presents | 0404, 0213, 0214 | backlog |
@@ -181,8 +181,10 @@ And the non-parallelism, recorded so nobody tries to break it:
 
 **Critical path:** `0401 → 0403 → 0404 → 0405 → 0406 → 0407 → 0412 → 0414`, with `0401` prepended
 for the migration reason above. It begins with a ticket now, not a decision — which is the single
-most useful thing that changed about scheduling this epic. The one startable story is `STORY-0401`,
-and `TASK-040101` is the one startable ticket.
+most useful thing that changed about scheduling this epic. `STORY-0401` merged in full on
+2026-08-17; `STORY-0402` and `STORY-0403` both became startable when it did, and `STORY-0402` was
+split first because `STORY-0408`, `0409`, `0411` and `0413` all queue behind it while `0403` has
+only the credential chain behind it. `TASK-040201` is the one startable ticket.
 
 Two answers add work inside stories already listed, rather than new stories:
 [`ADR-0037`](../../docs/adr/ADR-0037-the-device-is-a-credential-until-revoked.md) puts a revoke

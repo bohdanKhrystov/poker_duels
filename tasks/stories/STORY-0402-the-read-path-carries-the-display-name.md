@@ -2,7 +2,7 @@
 id: STORY-0402
 title: The read path carries the display name
 type: story
-status: backlog
+status: ready
 parent: EPIC-04
 module: poker-server
 labels: [server, http, profiles, read-path]
@@ -43,11 +43,54 @@ search both build on this query, and `STORY-0413`'s screen shows what it returns
   `HttpEndpointDocumentationTest.theDocumentDoesNotCallANonNullFieldNullable` already reflects over
   the DTO, so the document cannot claim the wrong nullability.
 
+## What `STORY-0401` already did, so this story does not redo it
+
+Split on 2026-08-17, after all eighteen `STORY-0401` tickets merged. Four of them shrank this story
+and one of them shaped it:
+
+- `TASK-040107` routed **every** test-side `DuelSummaryResponse` through `ProfileDtoFixtures`, and
+  said in its own comment that `STORY-0402` widens that DTO next. So the widening is the DTO, the
+  reader and the builder — three files — and no test file joins the budget. That is the move four
+  `STORY-0401` tickets needed a fourth file for, made once, in advance.
+- `TASK-040108` set the precedent for the field itself: nullable, **no default**, because
+  `ContentNegotiation { json() }` has `encodeDefaults = false` and a defaulted property would be
+  absent from the body rather than present as `null`.
+- `TASK-040109` set the precedent for its proof: two distinct inputs, the `null` one passed
+  explicitly, asserted on encoded text.
+- `V3`, `canonicalDisplayNameOrNull`, `PUT /api/me/name` and `ProfileResponse.displayName` all
+  shipped. Nothing here re-tests them.
+
+## Two constraints that bind this story, and what they turned out to mean
+
+**`TASK-031103` dropped `opponentPlayerId` at the client parse, and nothing here reopens it.** That
+ticket's stated reason was that *"no display name exists yet, so the only thing the client could
+print is a raw identifier in front of a player"* — it removed the id from the client's `RecentDuel`,
+not from the wire. `ADR-0021` keeps `opponentPlayerId` on the wire deliberately, and this story adds
+a second field the client parse also ignores, because that parse names five keys one by one and
+drops every other. So: no client file changes, no client test moves, and `STORY-0411` decides what a
+client does with the name. The one thing a ticket here must not do is "helpfully" tidy the client.
+
+**`ADR-0038` is not reopened either, and it anticipated this.** It settles that a name is screened
+by a blocklist *when it is set* — on the write path, in `STORY-0410` — and that an operator can take
+one away afterwards, at which point the read path reads the current column and the name simply stops
+appearing. It also states outright that homoglyph impersonation is **not** solved and that a
+restriction to close it "was on the table and was not chosen". A read path that shows a name someone
+chose is the accepted consequence of that decision, named in the ADR, not a new question. No
+`DEC-NNN` is raised by this story.
+
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0402` once `STORY-0401` has merged.* | — |
+| [TASK-040201](../tasks/TASK-040201-the-duel-line-joins-the-opponents-row-and-carries-their-name.md) | The duel line joins the opponent's row and carries their name | ready |
+| [TASK-040202](../tasks/TASK-040202-a-named-opponent-an-unnamed-one-and-a-name-set-afterwards.md) | A named opponent, an unnamed one, and a name set after the duel | backlog |
+| [TASK-040203](../tasks/TASK-040203-three-duels-three-opponents-one-prepared-statement.md) | Three duels, three opponents, one prepared statement | backlog |
+| [TASK-040204](../tasks/TASK-040204-present-as-null-not-absent-on-the-real-response.md) | Present as `null`, not absent, on the response the route actually writes | backlog |
+| [TASK-040205](../tasks/TASK-040205-the-document-names-the-field-and-the-test-agrees-with-the-dto.md) | The document names the field, and the test agrees with the DTO | backlog |
+
+One linear chain. `040202` and `040203` both edit `PostgresProfileReadsTest.kt` and are consecutive
+for that reason; `040205` is last because documenting a field before it exists fails
+`theDocumentedFieldNamesAllExist`.
 
 ## Acceptance criteria
 
