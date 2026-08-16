@@ -1074,8 +1074,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
 | **[STORY-0401](stories/STORY-0401-display-name-and-the-write-path.md)** `player.display_name`, its canonical form, and the write path — *schema 2* | | | **ready** |
-| | [TASK-040101](tasks/TASK-040101-the-third-migration-adds-the-name-and-its-guarantees.md) The third migration adds the name and its four guarantees | S | **ready** |
-| | [TASK-040102](tasks/TASK-040102-the-checks-refuse-what-they-were-written-to-refuse.md) The three checks refuse what they were written to refuse | S | backlog |
+| | [TASK-040101](tasks/TASK-040101-the-third-migration-adds-the-name-and-its-guarantees.md) The third migration adds the name and its four guarantees | S | **done** |
+| | [TASK-040102](tasks/TASK-040102-the-checks-refuse-what-they-were-written-to-refuse.md) The three checks refuse what they were written to refuse | S | ready |
 | | [TASK-040103](tasks/TASK-040103-one-name-whatever-case-it-is-typed-in.md) One name, whatever case it is typed in | S | backlog |
 | | [TASK-040104](tasks/TASK-040104-permanence-fires-and-only-on-the-column-it-names.md) Permanence fires, and only on the column it names | S | backlog |
 | | [TASK-040105](tasks/TASK-040105-the-canonical-name-is-trimmed-nfc-and-counted-in-code-points.md) The canonical name is trimmed, NFC, and counted in code points | S | backlog |

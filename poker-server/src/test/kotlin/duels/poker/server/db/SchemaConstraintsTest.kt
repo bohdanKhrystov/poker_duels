@@ -90,6 +90,134 @@ class SchemaConstraintsTest {
         assertEquals("23503", exception.sqlState)
     }
 
+    @Test
+    fun aDisplayNameLongerThan32CharactersIsRejected() {
+        val deviceId = "device-${UUID.randomUUID()}"
+        val playerId = insertPlayer(deviceId, 100)
+
+        val tooLongName = "a".repeat(33)
+
+        val exception = assertFailsWith<SQLException> {
+            setDisplayName(playerId, tooLongName)
+        }
+
+        assertEquals("23514", exception.sqlState)
+        assertTrue(
+            exception.message?.contains("player_display_name_length") ?: false,
+            "Exception message should contain constraint name 'player_display_name_length', got: ${exception.message}",
+        )
+    }
+
+    @Test
+    fun anEmptyDisplayNameIsRejected() {
+        val deviceId = "device-${UUID.randomUUID()}"
+        val playerId = insertPlayer(deviceId, 100)
+
+        val exception = assertFailsWith<SQLException> {
+            setDisplayName(playerId, "")
+        }
+
+        assertEquals("23514", exception.sqlState)
+        assertTrue(
+            exception.message?.contains("player_display_name_length") ?: false,
+            "Exception message should contain constraint name 'player_display_name_length', got: ${exception.message}",
+        )
+    }
+
+    @Test
+    fun aDisplayNameWithLeadingWhitespaceIsRejected() {
+        val deviceId = "device-${UUID.randomUUID()}"
+        val playerId = insertPlayer(deviceId, 100)
+
+        val exception = assertFailsWith<SQLException> {
+            setDisplayName(playerId, "  Bob")
+        }
+
+        assertEquals("23514", exception.sqlState)
+        assertTrue(
+            exception.message?.contains("player_display_name_trimmed") ?: false,
+            "Exception message should contain constraint name 'player_display_name_trimmed', got: ${exception.message}",
+        )
+    }
+
+    @Test
+    fun aDisplayNameWithTrailingWhitespaceIsRejected() {
+        val deviceId = "device-${UUID.randomUUID()}"
+        val playerId = insertPlayer(deviceId, 100)
+
+        val exception = assertFailsWith<SQLException> {
+            setDisplayName(playerId, "Bob  ")
+        }
+
+        assertEquals("23514", exception.sqlState)
+        assertTrue(
+            exception.message?.contains("player_display_name_trimmed") ?: false,
+            "Exception message should contain constraint name 'player_display_name_trimmed', got: ${exception.message}",
+        )
+    }
+
+    @Test
+    fun aNonNFCNormalizedDisplayNameIsRejected() {
+        val deviceId = "device-${UUID.randomUUID()}"
+        val playerId = insertPlayer(deviceId, 100)
+
+        // U+0065 (e) + U+0301 (combining acute accent) = decomposed form of é (NFD)
+        val nonNFCNormalizedName = "élodie"
+
+        val exception = assertFailsWith<SQLException> {
+            setDisplayName(playerId, nonNFCNormalizedName)
+        }
+
+        assertEquals("23514", exception.sqlState)
+        assertTrue(
+            exception.message?.contains("player_display_name_nfc") ?: false,
+            "Exception message should contain constraint name 'player_display_name_nfc', got: ${exception.message}",
+        )
+    }
+
+    @Test
+    fun twoDisplayNamesDifferingOnlyByCaseAreNotAllowed() {
+        val deviceId1 = "device-${UUID.randomUUID()}"
+        val deviceId2 = "device-${UUID.randomUUID()}"
+
+        val playerId1 = insertPlayer(deviceId1, 100)
+        val playerId2 = insertPlayer(deviceId2, 100)
+
+        // Insert first name
+        setDisplayName(playerId1, "Bob")
+
+        // Try to insert second name differing only by case — should be rejected by unique index
+        val exception = assertFailsWith<SQLException> {
+            setDisplayName(playerId2, "bob")
+        }
+
+        assertEquals("23505", exception.sqlState)
+        assertTrue(
+            exception.message?.contains("player_display_name_unique") ?: false,
+            "Exception message should contain constraint name 'player_display_name_unique', got: ${exception.message}",
+        )
+    }
+
+    @Test
+    fun anUpdateToAnAlreadySetDisplayNameIsRejected() {
+        val deviceId = "device-${UUID.randomUUID()}"
+        val playerId = insertPlayer(deviceId, 100)
+
+        // Set initial name
+        setDisplayName(playerId, "Bob")
+
+        // Try to update to a different name — should be rejected by trigger
+        val exception = assertFailsWith<SQLException> {
+            setDisplayName(playerId, "Alice")
+        }
+
+        assertEquals("23001", exception.sqlState)
+        assertTrue(
+            exception.message?.contains("display_name is permanent once set") ?: false,
+            "Exception message should contain trigger message 'display_name is permanent once set', got: ${exception.message}",
+        )
+    }
+
     private fun insertPlayer(deviceId: String, coinBalance: Int): UUID {
         val playerId = UUID.randomUUID()
         dataSource.connection.use { connection ->
@@ -126,6 +254,18 @@ class SchemaConstraintsTest {
                 statement.setObject(1, duelId)
                 statement.setObject(2, playerId)
                 statement.setInt(3, coinDelta)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    private fun setDisplayName(playerId: UUID, displayName: String) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "UPDATE player SET display_name = ? WHERE id = ?",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.setObject(2, playerId)
                 statement.executeUpdate()
             }
         }

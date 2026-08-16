@@ -3,13 +3,13 @@ schema: 2
 id: TASK-040101
 title: The third migration adds the name and its four guarantees
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: S
 tier: haiku
 review: standard
-files_touched: 2
+files_touched: 3
 labels: [server, schema, migration, identity]
 depends_on: []
 verify:
@@ -32,6 +32,7 @@ permanent once set.
 | --- | --- |
 | `poker-server/src/main/resources/db/migration/V3__player_display_name.sql` | create |
 | `poker-server/src/test/kotlin/duels/poker/server/db/MigrationsTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/db/SchemaConstraintsTest.kt` | modify — one attempted violation per guarantee, so the schema is proven to refuse rather than merely to declare |
 | `docs/adr/ADR-0029-a-display-name-is-unique-and-permanent.md` | read — §1, §2, §4 carry the SQL verbatim |
 | `poker-server/src/main/resources/db/migration/V2__duel_hands_played.sql` | read — the header comment every migration carries |
 
