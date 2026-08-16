@@ -1084,8 +1084,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040108](tasks/TASK-040108-profile-response-carries-the-name-the-row-holds.md) `ProfileResponse` carries the name the row holds | XS | **done** |
 | | [TASK-040109](tasks/TASK-040109-the-name-is-on-the-wire-and-it-is-the-one-stored.md) The name is on the wire, and it is the one stored | S | **done** |
 | | [TASK-040110](tasks/TASK-040110-the-profile-writes-port-and-its-sealed-answer.md) The `ProfileWrites` port, its sealed answer, and no lookup by name | S | **done** |
-| | [TASK-040111](tasks/TASK-040111-one-statement-three-answers.md) One statement, three answers | S | ready |
-| | [TASK-040112](tasks/TASK-040112-two-writers-one-name.md) Two writers, one name: the loser is refused and keeps its nothing | S | backlog |
+| | [TASK-040111](tasks/TASK-040111-one-statement-three-answers.md) One statement, three answers | S | **done** |
+| | [TASK-040112](tasks/TASK-040112-two-writers-one-name.md) Two writers, one name: the loser is refused and keeps its nothing | S | ready |
 | | [TASK-040113](tasks/TASK-040113-the-one-field-the-request-body-carries.md) The one field the request body carries | XS | backlog |
 | | [TASK-040114](tasks/TASK-040114-the-server-it-ships-with-can-write-a-name.md) The server it ships with can write a name | XS | backlog |
 | | [TASK-040115](tasks/TASK-040115-put-api-me-name-identity-first-then-the-name.md) `PUT /api/me/name`: identity first, then the name it accepts | S | backlog |

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040112
 title: "Two writers, one name: the loser is refused and keeps its nothing"
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S
