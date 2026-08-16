@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031007
 title: Boot remembers each room the server seats it in
 type: task
-status: ready
+status: done
 parent: STORY-0310
 module: web-client
 estimate: S
