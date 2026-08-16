@@ -11,6 +11,10 @@ import duels.poker.server.session.Player
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.lang.reflect.InvocationHandler
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Proxy
+import java.sql.Connection
 import java.time.Instant
 import java.util.UUID
 import javax.sql.DataSource
@@ -366,11 +370,35 @@ class PostgresProfileReadsTest {
         assertEquals("Torvald", duelsAfter.single().opponentDisplayName)
     }
 
+    @Test
+    fun everyDuelReturnsOneRowWhicheverOpponentsAreNamed() = runBlocking {
+        val expected = threeDuelsAgainstThreeOpponents()
+
+        val duels = profileReads.recentDuelsOf(alice.id, 10)
+
+        assertEquals(3, duels.size)
+        assertEquals(expected.keys.toList(), duels.map { it.duelId })
+        assertEquals(expected, duels.associate { it.duelId to it.opponentDisplayName })
+    }
+
+    @Test
+    fun aListOfThreeDuelsPreparesExactlyOneStatement() = runBlocking {
+        threeDuelsAgainstThreeOpponents()
+        val countingDataSource = CountingDataSource(dataSource)
+        val countingProfileReads = PostgresProfileReads(countingDataSource)
+
+        val duels = countingProfileReads.recentDuelsOf(alice.id, 10)
+
+        assertEquals(3, duels.size)
+        assertEquals(1, countingDataSource.statementsPrepared)
+    }
+
     private fun finishedDuel(
         winner: Int?,
         id: UUID = UUID.randomUUID(),
         finishedAt: Instant = Instant.parse("2026-08-13T10:05:00Z"),
         handsPlayed: Int = 1,
+        opponent: Player = bob,
     ): FinishedDuel {
         val outcome = when (winner) {
             0 -> DuelOutcome(winner = 0, handsPlayed = handsPlayed, finalStacks = listOf(11_000, 9_000))
@@ -383,8 +411,60 @@ class PostgresProfileReadsTest {
             format = formatLabel(DuelFormat.DEFAULT),
             startedAt = Instant.parse("2026-08-13T10:00:00Z"),
             finishedAt = finishedAt,
-            seats = listOf(alice.id, bob.id),
+            seats = listOf(alice.id, opponent.id),
             outcome = outcome,
+        )
+    }
+
+    /**
+     * Records three duels for alice against three distinct opponents — bob named Halvard, carol
+     * named Sigrid, dave left unnamed — and returns the newest-first map of duelId to the
+     * opponentDisplayName each line must carry. The finishedAt values are chosen so the correct
+     * (newest-first) order matches neither the alphabetical order of the opponents' names nor the
+     * order the three duels were just recorded in, so an accidental re-sort or a swapped binding
+     * would show up as a wrong answer rather than a coincidentally right one.
+     */
+    private suspend fun threeDuelsAgainstThreeOpponents(): Map<String, String?> {
+        val carol = playerDirectory.resolve(DeviceId("carol"))
+        val dave = playerDirectory.resolve(DeviceId("dave"))
+        setPlayerDisplayName(bob.id.value, "Halvard")
+        setPlayerDisplayName(carol.id.value, "Sigrid")
+
+        val bobDuelId = UUID.randomUUID()
+        val carolDuelId = UUID.randomUUID()
+        val daveDuelId = UUID.randomUUID()
+
+        // Recorded bob, carol, dave — but the newest-first order below is carol, bob, dave.
+        // finishedAt must be at or after finishedDuel's default startedAt (10:00:00Z).
+        duelResultStore.record(
+            finishedDuel(
+                winner = 0,
+                id = bobDuelId,
+                opponent = bob,
+                finishedAt = Instant.parse("2026-08-13T10:02:00Z"),
+            ),
+        )
+        duelResultStore.record(
+            finishedDuel(
+                winner = 0,
+                id = carolDuelId,
+                opponent = carol,
+                finishedAt = Instant.parse("2026-08-13T10:03:00Z"),
+            ),
+        )
+        duelResultStore.record(
+            finishedDuel(
+                winner = 0,
+                id = daveDuelId,
+                opponent = dave,
+                finishedAt = Instant.parse("2026-08-13T10:01:00Z"),
+            ),
+        )
+
+        return linkedMapOf(
+            carolDuelId.toString() to "Sigrid",
+            bobDuelId.toString() to "Halvard",
+            daveDuelId.toString() to null,
         )
     }
 
@@ -411,5 +491,32 @@ class PostgresProfileReadsTest {
                 statement.executeUpdate()
             }
         }
+    }
+}
+
+/**
+ * Counts the statements prepared on every connection it hands out, so a test can pin "one round
+ * trip" as behaviour rather than as prose about the SQL. Wraps [delegate]'s connections in a
+ * dynamic proxy rather than a hand-written decorator, so it tracks [java.sql.Connection] without
+ * having to implement every one of its methods.
+ */
+private class CountingDataSource(private val delegate: DataSource) : DataSource by delegate {
+    var statementsPrepared: Int = 0
+        private set
+
+    override fun getConnection(): Connection {
+        val connection = delegate.connection
+        return Proxy.newProxyInstance(
+            Connection::class.java.classLoader,
+            arrayOf(Connection::class.java),
+            InvocationHandler { _, method, args ->
+                if (method.name == "prepareStatement") statementsPrepared++
+                try {
+                    method.invoke(connection, *(args ?: emptyArray()))
+                } catch (failure: InvocationTargetException) {
+                    throw failure.targetException
+                }
+            },
+        ) as Connection
     }
 }
