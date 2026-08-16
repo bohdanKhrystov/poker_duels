@@ -8,14 +8,14 @@ import kotlin.test.assertTrue
 class ProfileDtosTest {
     @Test
     fun aProfileEncodesItsPlayerIdAndBalance() {
-        val profile = ProfileResponse("p-1", 3)
+        val profile = profileResponse("p-1", 3)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals("""{"playerId":"p-1","coinBalance":3}""", encoded)
     }
 
     @Test
     fun aNegativeBalanceSurvivesTheRoundTrip() {
-        val profile = ProfileResponse("p-1", -3)
+        val profile = profileResponse("p-1", -3)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertTrue(encoded.contains(""""coinBalance":-3"""))
 
@@ -26,14 +26,14 @@ class ProfileDtosTest {
 
     @Test
     fun aZeroCoinBalanceIsEncodedInTheJsonAndNotOmitted() {
-        val profile = ProfileResponse("p-1", 0)
+        val profile = profileResponse("p-1", 0)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertTrue(encoded.contains(""""coinBalance":0"""))
     }
 
     @Test
     fun aDuelSummaryRoundTripsEveryField() {
-        val summary = DuelSummaryResponse(
+        val summary = duelSummaryResponse(
             duelId = "d-1",
             opponentPlayerId = "p-2",
             outcome = DuelOutcomeLabel.WON,
@@ -48,7 +48,7 @@ class ProfileDtosTest {
 
     @Test
     fun aDrawnSummaryCarriesDrewAndAZeroDelta() {
-        val summary = DuelSummaryResponse(
+        val summary = duelSummaryResponse(
             duelId = "d-2",
             opponentPlayerId = "p-3",
             outcome = DuelOutcomeLabel.DREW,
@@ -65,7 +65,7 @@ class ProfileDtosTest {
 
     @Test
     fun aZeroCoinDeltaIsEncodedInTheJsonAndNotOmitted() {
-        val summary = DuelSummaryResponse(
+        val summary = duelSummaryResponse(
             duelId = "d-3",
             opponentPlayerId = "p-4",
             outcome = DuelOutcomeLabel.DREW,
@@ -79,7 +79,7 @@ class ProfileDtosTest {
 
     @Test
     fun theHandCountSurvivesEncoding() {
-        val summary = DuelSummaryResponse(
+        val summary = duelSummaryResponse(
             duelId = "d-4",
             opponentPlayerId = "p-5",
             outcome = DuelOutcomeLabel.WON,

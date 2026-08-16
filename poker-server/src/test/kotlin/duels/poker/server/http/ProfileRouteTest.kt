@@ -4,6 +4,8 @@ import duels.poker.server.module
 import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.duelSummaryResponse
+import duels.poker.server.protocol.http.profileResponse
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import io.ktor.client.request.get
@@ -20,7 +22,7 @@ class ProfileRouteTest {
     fun aKnownDeviceGetsItsProfile() = testApplication {
         val reads = FakeProfileReads(
             mapOf(
-                "alice" to ProfileResponse("p-alice", 4),
+                "alice" to profileResponse("p-alice", 4),
             ),
         )
         application {
@@ -41,7 +43,7 @@ class ProfileRouteTest {
     fun aNegativeBalanceIsReturnedUnclamped() = testApplication {
         val reads = FakeProfileReads(
             mapOf(
-                "bob" to ProfileResponse("p-bob", -3),
+                "bob" to profileResponse("p-bob", -3),
             ),
         )
         application {
@@ -98,7 +100,7 @@ class ProfileRouteTest {
 
     @Test
     fun aKnownDeviceGetsItsDuelsInTheOrderTheReaderReturnedThem() = testApplication {
-        val duel1 = DuelSummaryResponse(
+        val duel1 = duelSummaryResponse(
             duelId = "duel-1",
             opponentPlayerId = "p-bob",
             outcome = DuelOutcomeLabel.WON,
@@ -106,7 +108,7 @@ class ProfileRouteTest {
             handsPlayed = 10,
             finishedAt = "2026-08-12T10:00:00Z",
         )
-        val duel2 = DuelSummaryResponse(
+        val duel2 = duelSummaryResponse(
             duelId = "duel-2",
             opponentPlayerId = "p-charlie",
             outcome = DuelOutcomeLabel.LOST,
@@ -115,7 +117,7 @@ class ProfileRouteTest {
             finishedAt = "2026-08-12T09:00:00Z",
         )
         val reads = FakeProfileReads(
-            mapOf("alice" to ProfileResponse("p-alice", 0)),
+            mapOf("alice" to profileResponse("p-alice", 0)),
             mapOf("p-alice" to listOf(duel1, duel2)),
         )
         application {
@@ -135,7 +137,7 @@ class ProfileRouteTest {
     @Test
     fun anAbsentLimitAsksForTheDefault() = testApplication {
         val reads = FakeProfileReads(
-            mapOf("alice" to ProfileResponse("p-alice", 0)),
+            mapOf("alice" to profileResponse("p-alice", 0)),
             mapOf("p-alice" to emptyList()),
         )
         application {
@@ -152,7 +154,7 @@ class ProfileRouteTest {
     @Test
     fun aLimitAboveTheCapIsClamped() = testApplication {
         val reads = FakeProfileReads(
-            mapOf("alice" to ProfileResponse("p-alice", 0)),
+            mapOf("alice" to profileResponse("p-alice", 0)),
             mapOf("p-alice" to emptyList()),
         )
         application {
@@ -169,7 +171,7 @@ class ProfileRouteTest {
     @Test
     fun aNonNumericLimitIsABadRequest() = testApplication {
         val reads = FakeProfileReads(
-            mapOf("alice" to ProfileResponse("p-alice", 0)),
+            mapOf("alice" to profileResponse("p-alice", 0)),
             mapOf("p-alice" to emptyList()),
         )
         application {
@@ -186,7 +188,7 @@ class ProfileRouteTest {
     @Test
     fun aPlayerWithNoDuelsGetsAnEmptyListAndTwoHundred() = testApplication {
         val reads = FakeProfileReads(
-            mapOf("alice" to ProfileResponse("p-alice", 0)),
+            mapOf("alice" to profileResponse("p-alice", 0)),
             mapOf("p-alice" to emptyList()),
         )
         application {
