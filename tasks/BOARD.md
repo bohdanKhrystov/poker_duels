@@ -953,8 +953,8 @@ drops `opponentPlayerId` at the parse, so no component has anywhere to leak it f
 | | [TASK-031014](tasks/TASK-031014-the-reconnecting-connections-own-surface-is-proven.md) The reconnecting connection's own send, status and close are proven | S | **done** |
 | | [TASK-031015](tasks/TASK-031015-the-virtual-time-guard-exempts-itself-on-purpose.md) The virtual-time guard exempts itself on purpose, not by accident | XS | **done** |
 | **[STORY-0311](stories/STORY-0311-profile-strip.md)** The profile strip — my coins and my recent duels — *schema 2* | | ready |
-| | [TASK-031101](tasks/TASK-031101-one-get-carrying-the-device-id-the-server-reads.md) One GET, carrying the device id, with three answers | S | ready |
-| | [TASK-031102](tasks/TASK-031102-the-profile-read-states-the-balance-the-server-sent.md) The profile read states the balance the server sent, sign and all | S | backlog |
+| | [TASK-031101](tasks/TASK-031101-one-get-carrying-the-device-id-the-server-reads.md) One GET, carrying the device id, with three answers | S | **done** |
+| | [TASK-031102](tasks/TASK-031102-the-profile-read-states-the-balance-the-server-sent.md) The profile read states the balance the server sent, sign and all | S | ready |
 | | [TASK-031103](tasks/TASK-031103-the-recent-duels-read-drops-the-opponent.md) The recent-duels read keeps every field but the opponent's identifier | S | backlog |
 | | [TASK-031104](tasks/TASK-031104-every-outcome-every-sign-and-what-the-parse-refuses.md) Every outcome, every sign, and what the duel parse refuses | S | backlog |
 | | [TASK-031105](tasks/TASK-031105-the-words-a-duel-line-is-made-of.md) The words a profile line is made of | S | backlog |

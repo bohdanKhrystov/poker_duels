@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031101
 title: One GET, carrying the device id, with three answers and no network in the test
 type: task
-status: ready
+status: done
 parent: STORY-0311
 module: web-client
 estimate: S
