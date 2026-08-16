@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031201
 title: A played duel records the Act it sent, and the seat it sent it from
 type: task
-status: backlog
+status: ready
 parent: STORY-0312
 module: poker-server
 estimate: XS
