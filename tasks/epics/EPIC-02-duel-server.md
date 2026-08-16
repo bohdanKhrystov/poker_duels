@@ -98,15 +98,27 @@ Stated here because they are cheap to violate at a transport boundary and expens
 | [STORY-0211](../stories/STORY-0211-read-path-coins-and-recent-duels.md) | The read path: my coins and my recent duels | 0210 | backlog |
 | [STORY-0212](../stories/STORY-0212-end-to-end-duel-over-a-socket.md) | A real duel over a real socket, end to end | 0208, 0211 | backlog |
 | [STORY-0213](../stories/STORY-0213-the-wire-carries-a-rematch.md) | The wire carries a rematch | 0206, 0207 | ready |
+| [STORY-0214](../stories/STORY-0214-the-wire-names-an-absent-opponent.md) | The wire names an absent opponent | 0208 | ready |
 
-**This epic closed on 2026-08-14 and reopened on 2026-08-16 for `STORY-0213`.**
+**This epic closed on 2026-08-14 and reopened on 2026-08-16 for `STORY-0213`, then `STORY-0214`.**
 [`ADR-0044`](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) answers
 `DEC-023`: the scope line above already promised *rematch*, and the epic shipped it as far as
-`RoomRegistry.offerRematch` and stopped one wire message short of anyone reaching it. The
-unfinished half returns to the epic that promised it and to the module that owns the code, rather
-than to `EPIC-03`, whose own rule is that a client needing a new frame raises a decision instead of
-editing Kotlin. The metrics below are as measured at the first close and are **not** re-measured for
-this story; the reopening is recorded rather than hidden.
+`RoomRegistry.offerRematch` and stopped one wire message short of anyone reaching it.
+[`ADR-0045`](../../docs/adr/ADR-0045-presence-belongs-to-the-table.md) answers `DEC-038` the same
+way: the scope line also promised *the disconnect grace period of `ADR-0013`*, and the epic shipped
+a room that knows exactly who is gone without ever telling the player who stayed. Both unfinished
+halves return to the epic that promised them and to the module that owns the code, rather than to
+`EPIC-03`, whose own rule is that a client needing a new frame raises a decision instead of editing
+Kotlin. `STORY-0208` is **not** reopened for the second one — its criteria are what this epic's
+first close was measured against, and a sibling story extends the record where an edit would rewrite
+it. The metrics below are as measured at the first close and are **not** re-measured for either
+story; the reopening is recorded rather than hidden.
+
+**These two land one at a time.** Both edit the `ClientMessage`/`ServerMessage` hierarchies,
+`PROTOCOL_VERSION`, `docs/protocol.md`'s version line and the generated `protocol.gen.ts`, and each
+takes its own version step. `STORY-0213` goes first; `STORY-0214` rebases and takes the next number
+`develop` gives it. Two branches both moving 2 → 3 merge without a conflict and every gate stays
+green, which is why the order is written down — `ADR-0045` §§3–4.
 
 ## What can run in parallel
 
@@ -165,8 +177,10 @@ negative** — signed everywhere, floored nowhere.
 
 ## Metrics
 
-Measured at the first close, 2026-08-14. `STORY-0213`, added when the epic reopened, is deliberately
-outside this ledger — see the note under the stories table. Feeds the Product B case study.
+Measured at the first close, 2026-08-14. `STORY-0213` and `STORY-0214`, added when the epic
+reopened, are deliberately outside this ledger — see the note under the stories table. That gap is a
+recorded cost of `ADR-0044` and `ADR-0045`, not an oversight: the table describes the epic as it
+first closed, and covers less of it with each story added. Feeds the Product B case study.
 
 | | |
 | --- | --- |

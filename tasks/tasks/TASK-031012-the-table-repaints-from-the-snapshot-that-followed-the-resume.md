@@ -51,10 +51,11 @@ or a whole duel, that moved on while the socket was down.
 ## Out of scope
 
 - Anything shown *because* the socket was down — a banner, a spinner, a "reconnecting" line. The
-  wire carries nothing about it and this story invents nothing; see `DEC-038`.
-- Anything shown to the player whose **opponent** is away. `ADR-0028` settles what that is, but no
-  frame on today's wire carries it — `DEC-038` again.
-- Rematch across a reconnect — `STORY-0309`, blocked on `DEC-023`.
+  wire carries nothing about it and this story invents nothing.
+- Anything shown to the player whose **opponent** is away. `ADR-0028` settles what that is and
+  `ADR-0045` puts it in `STORY-0313`, on frames `EPIC-02`'s `STORY-0214` has yet to ship; no frame
+  on today's wire carries it.
+- Rematch across a reconnect — `STORY-0309`, on `ADR-0044`'s `STORY-0213`.
 
 ## Tests
 

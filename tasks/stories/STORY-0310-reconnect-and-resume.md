@@ -38,8 +38,11 @@ close. A phone that locks its screen mid-hand is the normal case, not the edge c
   hand it lost while away. What a *present* player is shown during the pause was `DEC-018`, and
   `ADR-0028` has since answered it: `OpponentPresence` and `ActedForAbsentSeat`. **Neither exists on
   today's wire** — no Kotlin type, no row in `protocol.gen.ts` — and `EPIC-03` may not add one, so
-  this story still renders none of it. `DEC-038` asks who ships that half and where its client half
-  lands; it blocks nothing here.
+  this story renders none of it and never will. `DEC-038` is answered by
+  [`ADR-0045`](../../docs/adr/ADR-0045-presence-belongs-to-the-table.md): the frames are `EPIC-02`'s
+  `STORY-0214` and the rendering is `STORY-0313`, a story of its own, because four of the five
+  presence frames reach the player who *stayed*. **This story is unchanged by that answer** — its
+  thirteen tickets stand and none is added.
 - Backoff is bounded and jittered. `VERSION_MISMATCH` ends the loop entirely — the server will
   refuse this client identically forever. `UNKNOWN_ROOM` answering a rejoin ends the *resume*: that
   room is gone, so the tab forgets it, but the socket keeps coming back, because a player at the
@@ -81,8 +84,8 @@ share `boot.ts`, and `031011`–`031012` share one test file, so no two are star
 ## Out of scope
 
 - Anything shown to the player whose opponent is away. `ADR-0028` answered `DEC-018`, but nothing
-  on today's wire carries `OpponentPresence` or `ActedForAbsentSeat` and `EPIC-03` may not add
-  them — `DEC-038`.
+  on today's wire carries `OpponentPresence` or `ActedForAbsentSeat` and `EPIC-03` may not add them.
+  `ADR-0045` answers `DEC-038` and puts the rendering in `STORY-0313`, on `EPIC-02`'s `STORY-0214`.
 - Surviving a **server** restart mid-duel: `ADR-0011` says in-flight duel state is not durable, so
   there is nothing to resume into.
 - Offline queueing of actions. An action taken while disconnected is not an action.
