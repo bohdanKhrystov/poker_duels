@@ -51,6 +51,15 @@ class DisplayNameTest {
     }
 
     @Test
+    fun oneCodePointIsAccepted() {
+        // The lower bound from the accepting side: aBlankInputIsRefused only pins 0 code
+        // points, so without this an off-by-one at the bottom (rejecting a single character)
+        // would pass every other test in this file.
+        assertEquals("a", canonicalDisplayNameOrNull("a"))
+        assertEquals("\uD835\uDD04", canonicalDisplayNameOrNull("\uD835\uDD04"))
+    }
+
+    @Test
     fun thirtyTwoCodePointsAreAccepted() {
         val name = "a".repeat(32)
         assertEquals(name, canonicalDisplayNameOrNull(name))
