@@ -541,6 +541,23 @@ merge clean and green, so the version lock has no CI gate; `EPIC-03` gains a sto
 unblock; `EPIC-02` gains a second story outside its metrics ledger; and `STORY-0214`'s first ticket
 must delete a passing `TASK-020806` test that `ADR-0028` deliberately retracted).
 
+`DEC-039` → [`ADR-0046`](../docs/adr/ADR-0046-the-table-says-away-timed-out-and-back.md)
+(the words a player reads for the three presence states and for an action the server took. Minted and
+answered in the same change — it had lived as `STORY-0313`'s open input, never as a numbered row. The
+seat plate says `Away` and `Timed out`, and nothing for `PRESENT`. The line that explains them says
+*Your rival is away. The duel is paused.*, *Your rival did not come back. The duel continues, and the
+server acts for them.* and *Your rival is back.* — the last **only** when this client previously held
+`AWAY` or `ABSENT`, because a resuming client is always sent `PRESENT` and its rival never left. The
+countdown carries no word of its own, and **nothing a player reads changes when it reaches zero**. An
+action the server took names the server as the subject — *The server folded for your rival.* — never
+the rival as actor, never `auto-fold`, never a cause the server cannot see, never the cash-game
+*sitting out*. Derived from the vision's *Positioning* sentence; `ADR-0028` had reserved these words
+to the human and the ADR says so rather than assuming. The costs recorded rather than discovered:
+`Timed out` collides with any future per-action turn clock; the mark has no home in a client that
+renders no action log; the return line needs the store to remember what it was last told; and *the
+server acts for them* teaches a player how to beat an absent seat. **`STORY-0313` is now
+splittable** the day `STORY-0214` merges).
+
 `DEC-037` → [`ADR-0043`](../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md)
 (a `Rejected` closes no decision point: the reducer keeps `pendingTurn`, clears `rejection` on the
 next `YourTurn`, `Snapshot` or `DuelFinished`, and counts refusals so the bar's existing remount key
@@ -740,7 +757,10 @@ writes no Kotlin. `DEC-038` asked who ships it and
 [`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md) answers — `EPIC-02`'s
 `STORY-0214`, behind `STORY-0213` in the version queue — with the rendering in a **new** story,
 `STORY-0313`, because four of the five presence frames reach the player who stayed, at the table.
-`STORY-0310` keeps all thirteen tickets and gains nothing.
+`STORY-0310` keeps all thirteen tickets and gains nothing. The copy that story renders is settled too
+— [`ADR-0046`](../docs/adr/ADR-0046-the-table-says-away-timed-out-and-back.md) answers `DEC-039` with
+`Away`, `Timed out`, *Your rival is back.* and a mark that names **the server** as the actor, so
+`STORY-0313` is splittable the day `STORY-0214` merges rather than stalling on a question.
 
 | Story | Title | Status |
 | --- | --- | --- |

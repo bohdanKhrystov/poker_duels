@@ -123,8 +123,10 @@ specification; nothing here goes beyond it, and `ADR-0045` adds no type, field o
 
 ## Out of scope
 
-- **Any rendering.** What a player sees is `STORY-0313` in `EPIC-03`, and the words they read are
-  reserved to the human by `ADR-0028`.
+- **Any rendering.** What a player sees is `STORY-0313` in `EPIC-03`; the words they read are settled
+  by [`ADR-0046`](../../docs/adr/ADR-0046-the-table-says-away-timed-out-and-back.md) (`DEC-039`), and
+  no string of it belongs in a Kotlin file. Nothing here changes because of that ADR — a frame's job
+  is to carry the fact, not the sentence.
 - **A per-seat journal of what the server did while a player was away.** `ADR-0028` §6 declines it
   explicitly: a returning player is told the state they come back to and no more. Strictly addable
   later.
