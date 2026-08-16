@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031203
 title: One Gradle task writes the duel script, another fails the build on drift
 type: task
-status: ready
+status: done
 parent: STORY-0312
 module: poker-server
 estimate: S
