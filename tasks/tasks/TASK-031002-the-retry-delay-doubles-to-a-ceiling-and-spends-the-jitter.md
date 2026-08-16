@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031002
 title: The retry delay doubles to a ceiling and spends the jitter it is handed
 type: task
-status: ready
+status: done
 parent: STORY-0310
 module: web-client
 estimate: XS

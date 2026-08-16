@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031003
 title: A closed socket is reopened, on virtual time, when the backoff says so
 type: task
-status: backlog
+status: ready
 parent: STORY-0310
 module: web-client
 estimate: S
