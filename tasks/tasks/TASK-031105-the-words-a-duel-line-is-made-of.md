@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031105
 title: The words a profile line is made of — outcome, coin, balance, and when
 type: task
-status: backlog
+status: ready
 parent: STORY-0311
 module: web-client
 estimate: S
