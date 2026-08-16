@@ -72,18 +72,67 @@ Three frames' worth, all server → client, all already specified:
   the `Connection`. The client asserts nothing — it renders three states and a number the server
   sent.
 
-## Open input this story does not settle
+## The words it renders
 
-**The words.** `ADR-0028` reserved every word a player actually reads — *"away"*, *"waiting"*,
-*"timed out"* — to the human, explicitly and by name, and this ADR does not take them. The rendering
-tickets are not written until that copy exists; `/plan-story` on this story should route the question
-to the `product-owner` agent first, not invent wording.
+Settled by [`ADR-0046`](../../docs/adr/ADR-0046-the-table-says-away-timed-out-and-back.md), which
+answers `DEC-039`. **Every string below is verbatim.** A rendering ticket quotes them; it does not
+paraphrase them, and it invents no sixth string.
+
+The other player is **your rival** in every string — never *opponent*, whatever the wire type is
+called.
+
+**The seat's status line**, joining `seat-status.ts`'s existing words:
+
+| `SeatPresence` | The word |
+| --- | --- |
+| `AWAY` | `Away` |
+| `ABSENT` | `Timed out` |
+| `PRESENT` | nothing of its own — the seat's ordinary status returns |
+
+The order is `Folded` → `All in` → `Away` / `Timed out` → `Your turn` / `Their turn` → nothing.
+Presence outranks the turn (`Their turn` on an empty seat blames a pause on thinking) and never
+outranks a fact about the hand.
+
+**The line that explains the state:**
+
+| State | The line |
+| --- | --- |
+| `AWAY` | `Your rival is away. The duel is paused.` |
+| `ABSENT` | `Your rival did not come back. The duel continues, and the server acts for them.` |
+| `PRESENT`, after this client held `AWAY` or `ABSENT` | `Your rival is back.` |
+| `PRESENT`, with no away or absent state held | nothing at all |
+
+That last row is the trap: a resuming client is **always** sent its rival's presence, `PRESENT`
+included, so a `PRESENT` arriving at a client that never held `AWAY` or `ABSENT` is a status quo, not
+a return, and renders nothing. `Your rival is back.` clears on the next `Snapshot` and on nothing
+else — never on a timer.
+
+**The countdown** carries no word of its own; `The duel is paused.` above it is its label. It counts
+down in whole seconds, reaches zero and stays there, and **nothing a player reads changes at zero** —
+no *time's up*, no error colour, no sound, no second string. Its numeral shape (`0:45`, `45s`) is the
+design's.
+
+**An action the server took** names the server as the subject:
+
+| The frame | The words |
+| --- | --- |
+| `FOLD` / `CHECK`, about the rival's seat | `The server folded for your rival.` / `The server checked for your rival.` |
+| `FOLD` / `CHECK`, about this client's own seat | `The server folded for you.` / `The server checked for you.` |
+| either, when the client holds no seat | `The server folded for an absent seat.` / `The server checked for an absent seat.` |
+
+Never the rival as the subject, never `(timed out)` appended to the rival's own action, never
+`auto-fold`. Showing the **most recent** mark satisfies this story; no action log, scrollback or
+replay view is designed here or required.
+
+**Refused words**, for the same reason each time — the server does not know why a socket closed, and
+this is Lichess, not a casino: *opponent*, *disconnected*, *offline*, *left*, *quit*, *abandoned*,
+*forfeited*, *sitting out*, and any exclamation mark, sympathy or celebration.
 
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split, and not splittable until `STORY-0214` merges and the copy is answered.* | — |
+| — | *Not yet split. Splittable the day `STORY-0214` merges — the copy is settled by `ADR-0046`.* | — |
 
 ## Acceptance criteria
 
@@ -102,6 +151,11 @@ to the `product-owner` agent first, not invent wording.
       as a `FOLD`, matched by `(handNumber, actionSequence)` and not by arrival order.
 - [ ] A client that reconnects mid-pause renders the pause from the presence frame the resume
       carried, not a normal table.
+- [ ] **A `PRESENT` frame arriving at a client that never held `AWAY` or `ABSENT` renders no return
+      line** — the resuming client is always sent one, and its rival never left (`ADR-0046` §2).
+- [ ] Every string on screen is one of `ADR-0046`'s, verbatim, and a test names each. No **rendered**
+      text says *opponent*, *disconnected*, *left* or *sitting out* — the rule is about copy, not
+      identifiers, and the wire type is still `OpponentPresence`.
 - [ ] No client module computes a presence, a deadline or an expiry; every value rendered came from a
       frame.
 - [ ] No test sleeps on a real clock.
@@ -110,7 +164,12 @@ to the `product-owner` agent first, not invent wording.
 
 - **Any Kotlin.** The frames are `EPIC-02`'s `STORY-0214`. A rendering that needs another field
   raises a decision; it does not edit the server.
-- **The words themselves** — see *Open input*, above.
+- **Any string `ADR-0046` did not write.** The words are settled and closed; a state that seems to
+  need a sixth string raises a decision rather than inventing one.
+- **Placement, layout, colour and the countdown's typography** — the design's, `EPIC-06`'s. No screen
+  under `design/` has an away state today.
+- **An action log.** Showing the most recent mark is enough (`ADR-0046` §4); scrollback and replay are
+  nobody's story yet.
 - A summary of what happened while *this* player was away. `ADR-0028` §6 declines it server-side, so
   there is nothing to render.
 - Any client-side timeout, forfeit or resumption. The server owns all three.
