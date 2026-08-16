@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040110
 title: The ProfileWrites port, its sealed answer, and no lookup by name
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S
