@@ -133,6 +133,77 @@ class DisplayNameTest {
         }
     }
 
+    @Test
+    fun aControlCharacterIsRefused() {
+        // U+0007 BELL, a C0 control character: Character.getType is CONTROL.
+        assertNull(canonicalDisplayNameOrNull("bo\u0007b"))
+        // U+001F UNIT SEPARATOR, the other end of the C0 control range: also CONTROL.
+        assertNull(canonicalDisplayNameOrNull("bo\u001Fb"))
+    }
+
+    @Test
+    fun aZeroWidthCharacterIsRefused() {
+        // U+200B ZERO WIDTH SPACE, U+200D ZERO WIDTH JOINER and U+FEFF ZERO WIDTH NO-BREAK
+        // SPACE (the byte-order mark): three distinct Cf characters, each asserted on its own
+        // so no single one stands in for the whole category.
+        assertNull(canonicalDisplayNameOrNull("bo\u200Bb"))
+        assertNull(canonicalDisplayNameOrNull("bo\u200Db"))
+        assertNull(canonicalDisplayNameOrNull("bo\uFEFFb"))
+    }
+
+    @Test
+    fun aBidirectionalOverrideIsRefused() {
+        // U+202E RIGHT-TO-LEFT OVERRIDE: the spoof the Cf rule is for — it can make one
+        // name render as another.
+        assertNull(canonicalDisplayNameOrNull("bo\u202Eb"))
+        // U+202A LEFT-TO-RIGHT EMBEDDING: a second, distinct bidi control, same category.
+        assertNull(canonicalDisplayNameOrNull("bo\u202Ab"))
+    }
+
+    @Test
+    fun aTabOrNewlineIsRefused() {
+        assertNull(canonicalDisplayNameOrNull("bo\tb"))
+        assertNull(canonicalDisplayNameOrNull("bo\nb"))
+    }
+
+    @Test
+    fun anExoticSpaceIsRefused() {
+        // U+00A0 NO-BREAK SPACE and U+2003 EM SPACE: neither is U+0020, and neither is
+        // Cc/Cf — both are category Zs, so this exercises the whitespace rule, not the
+        // control rule.
+        assertNull(canonicalDisplayNameOrNull("bo\u00A0b"))
+        assertNull(canonicalDisplayNameOrNull("bo\u2003b"))
+    }
+
+    @Test
+    fun twoSpacesInARowAreRefused() {
+        assertNull(canonicalDisplayNameOrNull("Bob  Smith"))
+        // A second, distinct pair in a different name — the rule is not one string's
+        // fluke.
+        assertNull(canonicalDisplayNameOrNull("Jean  Paul"))
+        // The single-space form of the same name is accepted in the same test run, so the
+        // rule is shown to discriminate rather than refuse every name that contains a space.
+        assertEquals("Bob Smith", canonicalDisplayNameOrNull("Bob Smith"))
+    }
+
+    @Test
+    fun aSingleInteriorSpaceIsKept() {
+        assertEquals("Bob Smith", canonicalDisplayNameOrNull("Bob Smith"))
+        assertEquals("Jean Paul", canonicalDisplayNameOrNull("Jean Paul"))
+    }
+
+    @Test
+    fun nonLatinScriptsAreAccepted() {
+        // Cyrillic "Ivan": none of these code points are Cc, Cf or whitespace — the
+        // refusal is of the invisible, not of the unfamiliar.
+        val cyrillic = "\u0418\u0432\u0430\u043D"
+        assertEquals(cyrillic, canonicalDisplayNameOrNull(cyrillic))
+
+        // CJK "Tanaka": a second, distinct script, same claim.
+        val cjk = "\u7530\u4E2D"
+        assertEquals(cjk, canonicalDisplayNameOrNull(cjk))
+    }
+
     private companion object {
         private const val MIN_CHECKED_CODE_POINTS = 1
         private const val MAX_CHECKED_CODE_POINTS = 32
