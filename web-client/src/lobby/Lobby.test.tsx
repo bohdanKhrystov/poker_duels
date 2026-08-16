@@ -1,4 +1,10 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
