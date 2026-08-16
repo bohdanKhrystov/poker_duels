@@ -6,6 +6,7 @@ import duels.poker.server.db.Migrations
 import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
 import duels.poker.server.db.PostgresProfileReads
+import duels.poker.server.db.PostgresProfileWrites
 import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
@@ -69,7 +70,7 @@ class ProfileEndpointsDatabaseTest {
     fun aDuelThatJustFinishedAppearsInTheList() = testApplication {
         application {
             module()
-            profileRoutes(profileReads)
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
         }
 
         val response = client.get("/api/me/duels") {
@@ -95,7 +96,7 @@ class ProfileEndpointsDatabaseTest {
     fun theLosersBalanceComesBackOverTheWireAsMinusOne() = testApplication {
         application {
             module()
-            profileRoutes(profileReads)
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
         }
 
         val response = client.get("/api/me") {
@@ -113,7 +114,7 @@ class ProfileEndpointsDatabaseTest {
     fun anUnknownDeviceIsRefusedAndCreatesNoProfile() = testApplication {
         application {
             module()
-            profileRoutes(profileReads)
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
         }
 
         val countBefore = playerRowCount()

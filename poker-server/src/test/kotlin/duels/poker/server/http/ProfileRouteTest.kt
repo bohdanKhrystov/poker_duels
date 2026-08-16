@@ -10,7 +10,10 @@ import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -27,7 +30,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "alice")
@@ -48,7 +51,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "bob")
@@ -63,7 +66,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me")
         assertEquals(HttpStatusCode.Unauthorized, response.status)
@@ -75,7 +78,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "  ")
@@ -89,7 +92,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "ghost")
@@ -122,7 +125,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -142,7 +145,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -159,7 +162,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me/duels?limit=999") {
             header(DEVICE_ID_HEADER, "alice")
@@ -176,7 +179,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me/duels?limit=abc") {
             header(DEVICE_ID_HEADER, "alice")
@@ -193,7 +196,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -208,12 +211,138 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads)
+            profileRoutes(reads, FakeProfileWrites())
         }
         val response = client.get("/api/me/duels?limit=abc") {
             header(DEVICE_ID_HEADER, "ghost")
         }
         assertEquals(HttpStatusCode.Unauthorized, response.status)
+    }
+
+    @Test
+    fun aKnownDeviceSetsItsName() = testApplication {
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 4)))
+        val writes = FakeProfileWrites(SetNameResult.NameSet(profileResponse("p-alice", 4, "Alice")))
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        val response = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alice"}""")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("\"playerId\":\"p-alice\""))
+        assertTrue(body.contains("\"coinBalance\":4"))
+        assertTrue(body.contains("\"displayName\":\"Alice\""))
+    }
+
+    @Test
+    fun theCanonicalNameIsWhatReachesThePort() = testApplication {
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+        val writes = FakeProfileWrites(SetNameResult.NameSet(profileResponse("p-alice", 0, "Bob")))
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        val response = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"  Bob  "}""")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("Bob", writes.received.single())
+    }
+
+    @Test
+    fun anAbsentDeviceIdIsRefusedBeforeTheBodyIsRead() = testApplication {
+        val reads = FakeProfileReads(emptyMap())
+        val writes = FakeProfileWrites()
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        // A valid body, so a wrong implementation that answered on the body would answer 200,
+        // not 401 — the identity refusal below, not the body one.
+        val response = client.put("/api/me/name") {
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Bob"}""")
+        }
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertTrue(writes.received.isEmpty())
+    }
+
+    @Test
+    fun anAbsentDeviceIdIsRefusedBeforeAMalformedBodyIsRead() = testApplication {
+        val reads = FakeProfileReads(emptyMap())
+        val writes = FakeProfileWrites()
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        // A body that cannot even decode: if identity were checked after the body were read,
+        // this would answer 400 — the same wrong answer the body's own defect would produce —
+        // instead of 401. This is what tells "identity first" apart from "identity checked
+        // before the port is called, but only after a harmless body is silently discarded".
+        val response = client.put("/api/me/name") {
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"nickname":"bob"}""")
+        }
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertTrue(writes.received.isEmpty())
+    }
+
+    @Test
+    fun anUnknownDeviceIdIsRefusedBeforeTheNameIsSet() = testApplication {
+        val reads = FakeProfileReads(emptyMap())
+        val writes = FakeProfileWrites()
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        val response = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "ghost")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Bob"}""")
+        }
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertTrue(writes.received.isEmpty())
+    }
+
+    @Test
+    fun aNameTheRulesRefuseIsABadRequest() = testApplication {
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+        val writes = FakeProfileWrites()
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        val response = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"  "}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertTrue(writes.received.isEmpty())
+    }
+
+    @Test
+    fun aBodyThatIsNotTheRequestShapeIsABadRequest() = testApplication {
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+        val writes = FakeProfileWrites()
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        val response = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"nickname":"bob"}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertTrue(writes.received.isEmpty())
     }
 
     private class FakeProfileReads(
@@ -231,6 +360,17 @@ class ProfileRouteTest {
         override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int): List<DuelSummaryResponse> {
             lastLimitRequested = limit
             return duels[playerId.value] ?: emptyList()
+        }
+    }
+
+    private class FakeProfileWrites(
+        private val result: SetNameResult = SetNameResult.NameTaken,
+    ) : ProfileWrites {
+        val received: MutableList<String> = mutableListOf()
+
+        override suspend fun setDisplayName(playerId: PlayerId, canonicalName: String): SetNameResult {
+            received.add(canonicalName)
+            return result
         }
     }
 }
