@@ -48,4 +48,61 @@ describe("the profile strip", () => {
 
     expect(container.innerHTML).toBe("");
   });
+
+  it("shows one line per duel, with its outcome, coin, hands and time", () => {
+    render(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: { playerId: "p1", coinBalance: 5 },
+          duels: [
+            {
+              duelId: "d1",
+              outcome: "WON",
+              coinDelta: 1,
+              handsPlayed: 1,
+              finishedAt: "2026-01-15T10:30:00Z",
+            },
+            {
+              duelId: "d2",
+              outcome: "LOST",
+              coinDelta: -1,
+              handsPlayed: 9,
+              finishedAt: "2025-12-20T14:45:00Z",
+            },
+          ],
+        }}
+      />,
+    );
+
+    const listItems = screen.getAllByRole("listitem");
+    expect(listItems).toHaveLength(2);
+
+    const firstItem = listItems[0].textContent;
+    expect(firstItem).toContain("Won");
+    expect(firstItem).toContain("+1");
+    expect(firstItem).toContain("1 hand");
+    expect(firstItem).toContain("2026");
+
+    const secondItem = listItems[1].textContent;
+    expect(secondItem).toContain("Lost");
+    expect(secondItem).toContain("−1");
+    expect(secondItem).toContain("9 hands");
+    expect(secondItem).toContain("2025");
+  });
+
+  it("says there are no duels yet when the list is empty", () => {
+    render(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: { playerId: "p1", coinBalance: 5 },
+          duels: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("No duels yet.")).toBeDefined();
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
 });
