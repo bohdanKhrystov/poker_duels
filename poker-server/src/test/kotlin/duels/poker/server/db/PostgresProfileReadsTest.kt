@@ -298,6 +298,26 @@ class PostgresProfileReadsTest {
         assertEquals(alice.id.value, bobEntry.opponentPlayerId)
     }
 
+    @Test
+    fun aProfileReadsBackTheNameItsRowHolds() = runBlocking {
+        val carol = playerDirectory.resolve(DeviceId("carol"))
+        setPlayerDisplayName(carol.id.value, "bob")
+
+        val profile = profileReads.profileOf(DeviceId("carol"))
+
+        assertEquals("bob", profile?.displayName)
+    }
+
+    @Test
+    fun aProfileWithNoNameReadsBackNull() = runBlocking {
+        val dave = playerDirectory.resolve(DeviceId("dave"))
+        setPlayerDisplayName(dave.id.value, null)
+
+        val profile = profileReads.profileOf(DeviceId("dave"))
+
+        assertNull(profile?.displayName)
+    }
+
     private fun finishedDuel(
         winner: Int?,
         id: UUID = UUID.randomUUID(),
@@ -327,6 +347,20 @@ class PostgresProfileReadsTest {
                     rows.next()
                     rows.getInt(1)
                 }
+            }
+        }
+    }
+
+    private fun setPlayerDisplayName(playerId: String, displayName: String?) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("UPDATE player SET display_name = ? WHERE id = ?::uuid").use { statement ->
+                if (displayName == null) {
+                    statement.setNull(1, java.sql.Types.VARCHAR)
+                } else {
+                    statement.setString(1, displayName)
+                }
+                statement.setString(2, playerId)
+                statement.executeUpdate()
             }
         }
     }

@@ -101,4 +101,18 @@ class ProfileDtosTest {
         val encoded = protocolJson.encodeToString(RecentDuelsResponse.serializer(), response)
         assertEquals("""{"duels":[]}""", encoded)
     }
+
+    @Test
+    fun aProfileEncodesTheNameItWasGiven() {
+        val profile = profileResponse("p-1", 0, displayName = "Élodie")
+        val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
+        assertTrue(encoded.contains(""""displayName":"Élodie"""))
+    }
+
+    @Test
+    fun anUnnamedProfileEncodesTheFieldAsNull() {
+        val profile = profileResponse("p-1", 0, displayName = null)
+        val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
+        assertTrue(encoded.contains(""""displayName":null"""))
+    }
 }
