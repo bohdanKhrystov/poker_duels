@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031110
 title: The lobby shows the strip, and a duel in progress does not
 type: task
-status: backlog
+status: ready
 parent: STORY-0311
 module: web-client
 estimate: S
