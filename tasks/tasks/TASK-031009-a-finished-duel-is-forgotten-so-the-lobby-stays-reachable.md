@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031009
 title: A finished duel is forgotten, so the way back to the lobby stays open
 type: task
-status: backlog
+status: ready
 parent: STORY-0310
 module: web-client
 estimate: XS

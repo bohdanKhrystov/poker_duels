@@ -5,6 +5,7 @@ import {
   openConnection,
   PROTOCOL_VERSION,
   readRoomCode,
+  writeRoomCode,
   type ServerMessage,
 } from "../protocol";
 
@@ -104,6 +105,44 @@ describe("booting the duel client", () => {
     socket.open();
     socket.receive(WELCOME);
     expect(sentJoinRooms(socket)).toEqual([]);
+  });
+
+  it("rejoins the remembered room when the tab carried no code", () => {
+    const { socket, storage } = bootOverFakeSocket(null);
+    writeRoomCode(storage, "ZYXWVUTS");
+
+    socket.open();
+    socket.receive(WELCOME);
+
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ZYXWVUTS" },
+    ]);
+  });
+
+  it("prefers the code the tab was opened with over the one it remembers", () => {
+    const { socket, storage } = bootOverFakeSocket("ABCDEFGH");
+    writeRoomCode(storage, "ZYXWVUTS");
+
+    socket.open();
+    socket.receive(WELCOME);
+
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ABCDEFGH" },
+    ]);
+  });
+
+  it("sends one JoinRoom on every Welcome, at the code it now holds", () => {
+    const { socket } = bootOverFakeSocket(null);
+    socket.open();
+    socket.receive(WELCOME);
+    expect(sentJoinRooms(socket)).toEqual([]);
+
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
+    socket.receive(WELCOME);
+
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ABCDEFGH" },
+    ]);
   });
 
   it("sends nothing but Hello before Welcome", () => {

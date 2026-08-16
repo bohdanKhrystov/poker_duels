@@ -1,4 +1,4 @@
-import { writeRoomCode } from "../protocol";
+import { readRoomCode, writeRoomCode } from "../protocol";
 import type { ClientMessage, Connection, ServerMessage } from "../protocol";
 import { createDuelStore, type DuelStore } from "./duel-store";
 
@@ -33,8 +33,14 @@ export function bootDuelClient(options: BootOptions): DuelClient {
     // A message-triggered send is a boot reaction, never a screen effect: one
     // boot per tab and one Welcome per socket is the whole of "exactly once",
     // with no ref, no guard and no cleanup anywhere (ADR-0032).
-    if (message.type === "Welcome" && options.joinRoomCode !== null) {
-      connection.send({ type: "JoinRoom", code: options.joinRoomCode });
+    if (message.type === "Welcome") {
+      // The invite wins over the memory: a player who has just followed a link to
+      // a new room means that room, whatever this browser was in last. The memory
+      // is what answers for the host, whose URL never carried a code, and for any
+      // tab whose socket has been reopened under it.
+      const remembered = options.storage ? readRoomCode(options.storage) : null;
+      const code = options.joinRoomCode ?? remembered;
+      if (code !== null) connection.send({ type: "JoinRoom", code });
     }
     if (message.type === "RoomJoined" && options.storage) {
       writeRoomCode(options.storage, message.code);
