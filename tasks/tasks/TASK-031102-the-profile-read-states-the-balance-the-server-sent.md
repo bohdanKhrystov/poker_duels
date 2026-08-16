@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031102
 title: The profile read states the balance the server sent, sign and all
 type: task
-status: ready
+status: done
 parent: STORY-0311
 module: web-client
 estimate: S
