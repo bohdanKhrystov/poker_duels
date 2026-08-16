@@ -125,6 +125,8 @@ When the client encounters a frame or version it cannot process, it behaves as f
 
   **Three bumps are outstanding and each takes its own step**, in this order: [ADR-0044](adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) (`STORY-0213`), [ADR-0028](adr/ADR-0028-the-wire-names-an-absent-opponent.md) (`STORY-0214`), [ADR-0027](adr/ADR-0027-the-session-outranks-the-device-id.md) (`STORY-0405`). One number names exactly one wire shape ([ADR-0028](adr/ADR-0028-the-wire-names-an-absent-opponent.md) §8), so no ADR, story or ticket names the integer: the branch making the bump is rebased on `develop` and takes what it finds **plus one**, and at most one bumping branch is open at a time ([ADR-0045](adr/ADR-0045-presence-belongs-to-the-table.md) §§3–4). Two branches that both move 2 → 3 merge without a conflict and every gate stays green, which is the failure the order exists to prevent.
 
+  **The claim itself is recorded, not just ordered.** [`docs/protocol-versions.md`](protocol-versions.md) is a ledger of one row per version naming the wire shape that number means ([ADR-0047](adr/ADR-0047-a-protocol-version-is-claimed-in-a-ledger.md)). A bump claims its number by appending a row, and two branches appending a row for the same number now conflict textually rather than merging silently. A bump commit therefore carries **five** artifacts, not four: `PROTOCOL_VERSION`, this document's version line, the new message rows, a regenerated `protocol.gen.ts`, and one new ledger row.
+
 ## Notes
 
 - Every message on the wire carries a `type` field whose value is the message discriminator (e.g., `"Hello"`, `"Act"`, `"Welcome"`).
