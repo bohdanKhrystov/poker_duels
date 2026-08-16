@@ -28,11 +28,14 @@ public enum class DuelOutcomeLabel {
  * A summary of a completed duel.
  *
  * @property duelId The unique identifier of the duel.
- * @property opponentPlayerId The player ID of the opponent. Note: this is the opponent's
+ * @property opponentPlayerId The stable identity a client correlates on. This is the opponent's
  *   `player.id`, never their device ID. A device ID is the sole authentication token in v0.1
  *   (see `DeviceIdSource`), so handing one to the other player would hand over their account.
- *   `DEC-016` asks whether a human-readable name is added later; adding one would be a new field,
- *   not a change to this one.
+ *   Per `ADR-0021`, the id is the stable identity and `opponentDisplayName` is the label; both
+ *   travel.
+ * @property opponentDisplayName The opponent's chosen display name, or `null` if never set. Null
+ *   means *never set*; the server fabricates no placeholder per `ADR-0029` §6. The name is read
+ *   at request time per `ADR-0021`, so a name set later relabels an older duel line.
  * @property outcome The outcome of the duel from the requesting player's perspective.
  * @property coinDelta The change in coins from this duel. A signed integer, never clamped: the
  *   winner gains one, the loser loses one, a draw changes nothing.
@@ -48,6 +51,7 @@ public data class DuelSummaryResponse(
     val coinDelta: Int,
     val handsPlayed: Int,
     val finishedAt: String,
+    val opponentDisplayName: String?,
 )
 
 /**
