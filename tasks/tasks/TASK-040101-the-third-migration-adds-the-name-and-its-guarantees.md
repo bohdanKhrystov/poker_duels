@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040101
 title: The third migration adds the name and its four guarantees
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: S
