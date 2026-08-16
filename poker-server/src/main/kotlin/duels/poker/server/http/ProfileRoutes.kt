@@ -104,6 +104,8 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites)
             when (val result = writes.setDisplayName(PlayerId(profile.playerId), canonicalName)) {
                 is SetNameResult.NameSet -> call.respond(result.profile)
                 SetNameResult.NameTaken -> call.respond(HttpStatusCode.Conflict)
+                // 403 rather than 409 for a name already owned: 409 invites a retry, but no state
+                // this client can reach makes the request succeed, so 403 is honest (ADR-0029 §5).
                 SetNameResult.AlreadyNamed -> call.respond(HttpStatusCode.Forbidden)
             }
         }

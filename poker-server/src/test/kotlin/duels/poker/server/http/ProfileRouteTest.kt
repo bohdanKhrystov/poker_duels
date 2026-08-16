@@ -345,6 +345,101 @@ class ProfileRouteTest {
         assertTrue(writes.received.isEmpty())
     }
 
+    @Test
+    fun aNameSomebodyElseHoldsIsAConflict() = testApplication {
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+        val writes = FakeProfileWrites(SetNameResult.NameTaken)
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        val response = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Bob"}""")
+        }
+        assertEquals(HttpStatusCode.Conflict, response.status)
+        assertEquals("", response.bodyAsText())
+    }
+
+    @Test
+    fun aPlayerWhoAlreadyHasANameIsForbidden() = testApplication {
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+        val writes = FakeProfileWrites(SetNameResult.AlreadyNamed)
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        val response = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Charlie"}""")
+        }
+        assertEquals(HttpStatusCode.Forbidden, response.status)
+        assertEquals("", response.bodyAsText())
+    }
+
+    @Test
+    fun theTwoRefusalsAreDifferentStatuses() {
+        // Test both result types and verify they produce different status codes.
+        // This catches a mapping that incorrectly treats them the same.
+        var takenStatus: HttpStatusCode? = null
+        testApplication {
+            val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites(SetNameResult.NameTaken))
+            }
+            val response = client.put("/api/me/name") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"name":"Bob"}""")
+            }
+            takenStatus = response.status
+        }
+
+        var alreadyNamedStatus: HttpStatusCode? = null
+        testApplication {
+            val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites(SetNameResult.AlreadyNamed))
+            }
+            val response = client.put("/api/me/name") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"name":"Bob"}""")
+            }
+            alreadyNamedStatus = response.status
+        }
+
+        assertEquals(HttpStatusCode.Conflict, takenStatus)
+        assertEquals(HttpStatusCode.Forbidden, alreadyNamedStatus)
+        // Verify they're different — a mapping collapsing both to one status fails here
+        assertTrue(takenStatus != alreadyNamedStatus)
+    }
+
+    @Test
+    fun aResentIdenticalNameIsStillTwoHundred() = testApplication {
+        val profile = profileResponse("p-alice", 2, "Alice")
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 2)))
+        val writes = FakeProfileWrites(SetNameResult.NameSet(profile))
+        application {
+            module()
+            profileRoutes(reads, writes)
+        }
+        val response = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alice"}""")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("\"playerId\":\"p-alice\""))
+        assertTrue(body.contains("\"coinBalance\":2"))
+        assertTrue(body.contains("\"displayName\":\"Alice\""))
+    }
+
     private class FakeProfileReads(
         private val profiles: Map<String, ProfileResponse>,
         private val duels: Map<String, List<DuelSummaryResponse>> = emptyMap(),
