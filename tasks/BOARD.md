@@ -55,11 +55,21 @@ work (`ADR-0024`).
 | | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **done** |
 | | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | **done** |
 | | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
+| | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | blocked |
 
 `TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
 Actions minutes free at once, and `develop` is now protected: a pull request and two green checks
 to land, no force pushes, no deletions. Required approvals are deliberately **0** — one would
 deadlock the agent run, since an agent cannot approve its own PR.
+
+`TASK-000104` is **blocked on `DEC-040`** and lives here rather than under any epic, because the
+rule it enforces spans three of them. [`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md)
+§3 accepted the hole knowingly: two branches that both move `PROTOCOL_VERSION` `2` → `3` **merge
+without a conflict** — a three-way merge sees the same edit on both sides — and
+`ProtocolDocumentationTest` still passes, because it compares the document to the constant and both
+moved together. One integer then names two wire shapes with every gate green. `STORY-0213`,
+`STORY-0214` and `STORY-0405` all hold unlanded bumps and share that rule today; the *mechanism* is
+`DEC-040`, the architect's, and the ADR that answers it writes the ticket's last `verify` command.
 
 ---
 
@@ -499,6 +509,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
+| DEC-040 | **The architect's** — what mechanism holds the `PROTOCOL_VERSION` lock, so two branches cannot both claim one number and both merge green? `ADR-0045` §3 accepted the hole and called enforcing it *"its own decision"*; three unlanded bumps share the rule today | [`TASK-000104`](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) | before the first of `STORY-0213` / `0214` / `0405` lands its bump |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -762,6 +773,39 @@ writes no Kotlin. `DEC-038` asked who ships it and
 `Away`, `Timed out`, *Your rival is back.* and a mark that names **the server** as the actor, so
 `STORY-0313` is splittable the day `STORY-0214` merges rather than stalling on a question.
 
+**Two follow-ups joined `STORY-0310` on 2026-08-16**, both found while splitting `STORY-0311` and
+both about a test that cannot fail. `TASK-031014`: `TASK-031003` shipped `send`, `status` and
+`close` and its test list named none of them — `drops a send made while no socket is open` reads
+only the socket the frame would *not* reach, so deleting the `live` gate leaves it green, and
+nothing anywhere calls `close()` or reads `status` on a reconnecting connection. `TASK-031015`:
+`virtual-time.test.ts` flags every test file that names a timer without installing fake ones, and
+does not flag **itself** only because one of its own fixture strings happens to spell
+`vi.useFakeTimers(` — delete that fixture and the guard starts reporting its own source. The
+exemption becomes explicit, and a test proves the exemption is what does the work.
+
+**`STORY-0311` is split into eleven**, on a baseline of 316, and it starts once those two land —
+cumulative counts **326 → 358**, with the follow-ups taking 316 to 320 first. It is the **client**
+half of a read path `EPIC-02` already serves (`STORY-0211`), so no server changes: `GET /api/me` and
+`GET /api/me/duels`, authenticated by the `X-Device-Id` the socket module already stores under one
+key. The client derives nothing — the balance, the deltas and the outcomes come off the response
+verbatim, and `TASK-031111` renders a balance of `5` beside duels summing to `0` so a client that
+added them up prints the wrong number. `−1` is a correct balance (`ADR-0014`) and is rendered as
+`−1`, in U+2212 as the result screen already prints it; a `401` is the ordinary first visit and
+renders *no profile yet* with no alert; an empty duel list is an answer, not a `404`.
+
+Two placement questions were settled rather than guessed. The fetch lives in a new
+`web-client/src/profile/` — *the HTTP module* the epic's non-negotiables already name — with the
+`fetch` and the `Storage` injected, and **not** in `src/protocol/`, which is exempt from the
+boundary guard by path. And the read runs above the tree in a provider whose context defaults to
+`null`: [`ADR-0032`](../docs/adr/ADR-0032-react-subscribes-to-a-store-it-does-not-own.md) already
+settled that this data *"is not a frame and does not enter this store"* and left *"how HTTP profile
+data reaches screens"* to this story, so the duel store and `bootDuelClient` are both out — a
+read-only `GET` needs neither one-per-tab nor a lifetime outside the tree. Defaulting to `null`
+rather than throwing is what keeps `Lobby.test.tsx` and `App.test.tsx` rendering exactly what they
+render today. Whether the client grows a *shared* HTTP data layer stays `EPIC-04`'s; this seam is
+one file and is meant to be replaced by it. **No opponent is named** — the client's `RecentDuel`
+drops `opponentPlayerId` at the parse, so no component has anywhere to leak it from.
+
 | Story | Title | Status |
 | --- | --- | --- |
 | **[STORY-0301](stories/STORY-0301-web-client-toolchain.md)** The web-client toolchain and its first green check — *schema 2* | | **done** |
@@ -886,7 +930,20 @@ writes no Kotlin. `DEC-038` asked who ships it and
 | | [TASK-031011](tasks/TASK-031011-the-reopened-socket-says-hello-then-rejoins-once-each.md) The reopened socket says Hello, then rejoins, once each | S | **done** |
 | | [TASK-031012](tasks/TASK-031012-the-table-repaints-from-the-snapshot-that-followed-the-resume.md) The table repaints from the snapshot that followed the resume | S | **done** |
 | | [TASK-031013](tasks/TASK-031013-no-client-test-sleeps-on-a-real-clock.md) No client test sleeps on a real clock | XS | **done** |
-| [STORY-0311](stories/STORY-0311-profile-strip.md) | The profile strip — my coins and my recent duels | backlog |
+| | [TASK-031014](tasks/TASK-031014-the-reconnecting-connections-own-surface-is-proven.md) The reconnecting connection's own send, status and close are proven | S | ready |
+| | [TASK-031015](tasks/TASK-031015-the-virtual-time-guard-exempts-itself-on-purpose.md) The virtual-time guard exempts itself on purpose, not by accident | XS | backlog |
+| **[STORY-0311](stories/STORY-0311-profile-strip.md)** The profile strip — my coins and my recent duels — *schema 2* | | ready |
+| | [TASK-031101](tasks/TASK-031101-one-get-carrying-the-device-id-the-server-reads.md) One GET, carrying the device id, with three answers | S | backlog |
+| | [TASK-031102](tasks/TASK-031102-the-profile-read-states-the-balance-the-server-sent.md) The profile read states the balance the server sent, sign and all | S | backlog |
+| | [TASK-031103](tasks/TASK-031103-the-recent-duels-read-drops-the-opponent.md) The recent-duels read keeps every field but the opponent's identifier | S | backlog |
+| | [TASK-031104](tasks/TASK-031104-every-outcome-every-sign-and-what-the-parse-refuses.md) Every outcome, every sign, and what the duel parse refuses | S | backlog |
+| | [TASK-031105](tasks/TASK-031105-the-words-a-duel-line-is-made-of.md) The words a profile line is made of | S | backlog |
+| | [TASK-031106](tasks/TASK-031106-one-read-answers-the-whole-strip.md) One read answers the whole strip, or none of it | S | backlog |
+| | [TASK-031107](tasks/TASK-031107-the-strip-states-the-balance-or-says-there-is-none.md) The strip states the balance, or says there is no profile yet | S | backlog |
+| | [TASK-031108](tasks/TASK-031108-one-line-per-recent-duel-and-a-word-when-there-are-none.md) One line per recent duel, and a word when there are none | S | backlog |
+| | [TASK-031109](tasks/TASK-031109-the-read-runs-once-above-the-tree-and-nowhere-else.md) The strip's read runs once above the tree | S | backlog |
+| | [TASK-031110](tasks/TASK-031110-the-lobby-shows-the-strip-and-the-duel-does-not.md) The lobby shows the strip, and a duel in progress does not | S | backlog |
+| | [TASK-031111](tasks/TASK-031111-the-strip-names-no-opponent-and-counts-no-coin.md) The strip names no opponent and counts no coin | S | backlog |
 | [STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | backlog |
 | [STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent (needs `STORY-0214`) | **blocked** |
 
