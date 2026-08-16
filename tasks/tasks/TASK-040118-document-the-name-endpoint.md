@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040118
 title: Document the name endpoint and what each answer means
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S
