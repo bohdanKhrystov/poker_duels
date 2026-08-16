@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040116
 title: The two refusals a client must tell apart
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: XS

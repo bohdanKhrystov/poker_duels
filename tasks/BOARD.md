@@ -1089,8 +1089,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040113](tasks/TASK-040113-the-one-field-the-request-body-carries.md) The one field the request body carries | XS | **done** |
 | | [TASK-040114](tasks/TASK-040114-the-server-it-ships-with-can-write-a-name.md) The server it ships with can write a name | XS | **done** |
 | | [TASK-040115](tasks/TASK-040115-put-api-me-name-identity-first-then-the-name.md) `PUT /api/me/name`: identity first, then the name it accepts | S | **done** |
-| | [TASK-040116](tasks/TASK-040116-the-two-refusals-a-client-must-tell-apart.md) The two refusals a client must tell apart | XS | ready |
-| | [TASK-040117](tasks/TASK-040117-a-name-set-over-http-comes-back-on-the-next-read.md) A name set over HTTP comes back on the next read | S | backlog |
+| | [TASK-040116](tasks/TASK-040116-the-two-refusals-a-client-must-tell-apart.md) The two refusals a client must tell apart | XS | **done** |
+| | [TASK-040117](tasks/TASK-040117-a-name-set-over-http-comes-back-on-the-next-read.md) A name set over HTTP comes back on the next read | S | ready |
 | | [TASK-040118](tasks/TASK-040118-document-the-name-endpoint.md) Document the name endpoint and what each answer means | S | backlog |
 | [STORY-0402](stories/STORY-0402-the-read-path-carries-the-display-name.md) The read path carries the display name | | | backlog |
 | [STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md) Credentials — the schema, the hash, and a port that returns none | | | backlog |
