@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031010
 title: A room that is gone is forgotten, and no socket resumes into it
 type: task
-status: backlog
+status: ready
 parent: STORY-0310
 module: web-client
 estimate: S
