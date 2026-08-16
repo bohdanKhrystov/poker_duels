@@ -50,11 +50,13 @@ describe("the client's tests", () => {
     expect(sleepingTestFiles(sources)).toEqual([]);
 
     // A walk that found no files, or only files with no timer in them, would
-    // satisfy the line above by saying nothing. We check the walk size.
-    // (The guard itself, which is the only file using timer APIs, is filtered
-    // out by name—the new test `flags its own source once the exemption is
-    // lifted` proves the guard can detect timers when applied to its own source.)
+    // satisfy the line above by saying nothing. We check the walk size and that
+    // the guard detects a planted offender, so the sweep is not vacuous: a broken
+    // glob, broken pattern, or silent walk-failure would all fail this.
     expect(sources.size).toBeGreaterThan(40);
+    const withAPlant = new Map(sources);
+    withAPlant.set("planted.test.ts", "it('x', () => { setTimeout(done, 10); });");
+    expect(sleepingTestFiles(withAPlant)).toEqual(["planted.test.ts"]);
   });
 
   it("sees the timer in a file that installs none", () => {
