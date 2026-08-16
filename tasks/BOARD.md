@@ -930,8 +930,8 @@ drops `opponentPlayerId` at the parse, so no component has anywhere to leak it f
 | | [TASK-031011](tasks/TASK-031011-the-reopened-socket-says-hello-then-rejoins-once-each.md) The reopened socket says Hello, then rejoins, once each | S | **done** |
 | | [TASK-031012](tasks/TASK-031012-the-table-repaints-from-the-snapshot-that-followed-the-resume.md) The table repaints from the snapshot that followed the resume | S | **done** |
 | | [TASK-031013](tasks/TASK-031013-no-client-test-sleeps-on-a-real-clock.md) No client test sleeps on a real clock | XS | **done** |
-| | [TASK-031014](tasks/TASK-031014-the-reconnecting-connections-own-surface-is-proven.md) The reconnecting connection's own send, status and close are proven | S | ready |
-| | [TASK-031015](tasks/TASK-031015-the-virtual-time-guard-exempts-itself-on-purpose.md) The virtual-time guard exempts itself on purpose, not by accident | XS | backlog |
+| | [TASK-031014](tasks/TASK-031014-the-reconnecting-connections-own-surface-is-proven.md) The reconnecting connection's own send, status and close are proven | S | **done** |
+| | [TASK-031015](tasks/TASK-031015-the-virtual-time-guard-exempts-itself-on-purpose.md) The virtual-time guard exempts itself on purpose, not by accident | XS | ready |
 | **[STORY-0311](stories/STORY-0311-profile-strip.md)** The profile strip — my coins and my recent duels — *schema 2* | | ready |
 | | [TASK-031101](tasks/TASK-031101-one-get-carrying-the-device-id-the-server-reads.md) One GET, carrying the device id, with three answers | S | backlog |
 | | [TASK-031102](tasks/TASK-031102-the-profile-read-states-the-balance-the-server-sent.md) The profile read states the balance the server sent, sign and all | S | backlog |
