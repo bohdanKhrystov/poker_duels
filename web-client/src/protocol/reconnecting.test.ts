@@ -263,6 +263,12 @@ describe("the reconnecting connection", () => {
     vi.advanceTimersByTime(60 * 60 * 1000);
 
     expect(sockets).toHaveLength(1);
+
+    // Even if the socket closes again after the long advance, no new socket opens.
+    sockets[0].close();
+    vi.advanceTimersByTime(250 + 500 + 1000);
+
+    expect(sockets).toHaveLength(1);
   });
 
   it("opens no further socket after a VERSION_MISMATCH failure", () => {
@@ -271,6 +277,12 @@ describe("the reconnecting connection", () => {
     sockets[0].receive('{"type":"Failure","error":"VERSION_MISMATCH"}');
     sockets[0].close();
     vi.advanceTimersByTime(60 * 60 * 1000);
+
+    expect(sockets).toHaveLength(1);
+
+    // Even if the socket closes again after the long advance, no new socket opens.
+    sockets[0].close();
+    vi.advanceTimersByTime(250 + 500 + 1000);
 
     expect(sockets).toHaveLength(1);
   });
