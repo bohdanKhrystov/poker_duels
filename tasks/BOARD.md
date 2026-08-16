@@ -1099,8 +1099,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | **[STORY-0402](stories/STORY-0402-the-read-path-carries-the-display-name.md)** The read path carries the display name — *schema 2* | | | **ready** |
 | | [TASK-040201](tasks/TASK-040201-the-duel-line-joins-the-opponents-row-and-carries-their-name.md) The duel line joins the opponent's row and carries their name | XS | **done** |
 | | [TASK-040202](tasks/TASK-040202-a-named-opponent-an-unnamed-one-and-a-name-set-afterwards.md) A named opponent, an unnamed one, and a name set after the duel | S | **done** |
-| | [TASK-040203](tasks/TASK-040203-three-duels-three-opponents-one-prepared-statement.md) Three duels, three opponents, one prepared statement | S | ready |
-| | [TASK-040204](tasks/TASK-040204-present-as-null-not-absent-on-the-real-response.md) Present as `null`, not absent, on the response the route actually writes | S | backlog |
+| | [TASK-040203](tasks/TASK-040203-three-duels-three-opponents-one-prepared-statement.md) Three duels, three opponents, one prepared statement | S | **done** |
+| | [TASK-040204](tasks/TASK-040204-present-as-null-not-absent-on-the-real-response.md) Present as `null`, not absent, on the response the route actually writes | S | ready |
 | | [TASK-040205](tasks/TASK-040205-the-document-names-the-field-and-the-test-agrees-with-the-dto.md) The document names the field, and the test agrees with the DTO | XS | backlog |
 | [STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md) Credentials — the schema, the hash, and a port that returns none | | | backlog |
 | [STORY-0404](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) Sign-up — one endpoint, attaching an account to the profile already here | | | backlog |
