@@ -88,4 +88,63 @@ describe("the duel server connection", () => {
     expect(connection.status).toEqual({ kind: "connecting" });
     expect(messages).toEqual([{ type: "RoomJoined", code: "ABCD", seat: 0 }]);
   });
+
+  it("opens the socket again, at the same url, after it closes", () => {
+    vi.useFakeTimers();
+    try {
+      const sockets: FakeSocket[] = [];
+      vi.stubGlobal(
+        "WebSocket",
+        vi.fn(() => {
+          const socket = new FakeSocket();
+          sockets.push(socket);
+          return socket.asWebSocket();
+        }),
+      );
+
+      connectToDuelServer(() => {});
+      sockets[0].close();
+      vi.advanceTimersByTime(500);
+
+      expect(vi.mocked(WebSocket)).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(WebSocket)).toHaveBeenNthCalledWith(
+        1,
+        `ws://${window.location.host}/ws`,
+      );
+      expect(vi.mocked(WebSocket)).toHaveBeenNthCalledWith(
+        2,
+        `ws://${window.location.host}/ws`,
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("says Hello on the socket it reopened, with the device id it holds", () => {
+    vi.useFakeTimers();
+    try {
+      localStorage.setItem("pd.deviceId", "d-9");
+      const sockets: FakeSocket[] = [];
+      vi.stubGlobal(
+        "WebSocket",
+        vi.fn(() => {
+          const socket = new FakeSocket();
+          sockets.push(socket);
+          return socket.asWebSocket();
+        }),
+      );
+
+      connectToDuelServer(() => {});
+      sockets[0].close();
+      vi.advanceTimersByTime(500);
+      sockets[1].open();
+
+      expect(JSON.parse(sockets[1].sent[0])).toMatchObject({
+        type: "Hello",
+        deviceId: "d-9",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
