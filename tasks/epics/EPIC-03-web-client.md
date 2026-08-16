@@ -138,11 +138,12 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
-**One remains, the architect's.** No decision here waits on a human.
+**Two remain, both the architect's.** No decision here waits on a human.
 
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
 | `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a thirteenth story exists — but it is due **before this epic closes** |
+| `DEC-038` | `ADR-0028` answered `DEC-018` — `OpponentPresence` and `ActedForAbsentSeat` — but neither type exists in Kotlin or in `protocol.gen.ts`, so this epic cannot render the pause state the row below promises. Which epic ships that server half, and does its client half re-open `STORY-0310` or become its own story? | architect | nothing today; `STORY-0310` ships reconnect without it. Due **before this epic closes**, since the row below is otherwise a promise nothing keeps |
 
 ### Answered since this epic was written
 
@@ -150,7 +151,7 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 | --- | --- | --- |
 | `DEC-023` | [ADR-0044](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) | `ClientMessage.OfferRematch` (no fields) and `ServerMessage.RematchOffered(seat)` to both seats, idempotent on a repeat, restated after a reconnect's frames. No started frame: after a `DuelFinished`, a `Snapshot` **is** the rematch. Two refusals — `UNKNOWN_ROOM` (the room is gone, go to the lobby) and a transient `REMATCH_UNAVAILABLE` (not yet; nothing recorded). No deadline on the wire, so no countdown is rendered. `PROTOCOL_VERSION` moves one step, taking the next free number when it lands. **The server half is `EPIC-02`'s `STORY-0213`** — this epic's no-Kotlin rule holds, and `STORY-0309` is `ready` and consumes it |
 | `DEC-022` | [ADR-0026](../../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md) | Vite + npm on Node 24, Vitest, ESLint + Prettier, and a parallel `client` CI job. `STORY-0301` shipped on it |
-| `DEC-018` | [ADR-0028](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) | `OpponentPresence` carries PRESENT/AWAY/ABSENT with a countdown the client renders but never acts on, and `ActedForAbsentSeat` marks every action taken for an absent seat. `STORY-0310` renders a pause state after all |
+| `DEC-018` | [ADR-0028](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) | `OpponentPresence` carries PRESENT/AWAY/ABSENT with a countdown the client renders but never acts on, and `ActedForAbsentSeat` marks every action taken for an absent seat — **once the server emits them.** Neither type exists yet, in Kotlin or in `protocol.gen.ts`, and this epic writes no Kotlin, so `STORY-0310` was split without a pause state and `DEC-038` asks who ships the other half |
 | `DEC-017` | [ADR-0038](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) | Still nothing here — the rules are set-time and operator-side, and `STORY-0311` renders whatever name the wire carries |
 | `DEC-009` | [ADR-0040](../../docs/adr/ADR-0040-a-duel-may-be-watched-without-hole-cards.md) | Spectating stays out of scope for this epic, but is no longer undecided: live, minus every hole card, through a third projection in the engine |
 | `DEC-037` | [ADR-0043](../../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md) | A `Rejected` closes no decision point. The reducer keeps `pendingTurn`, clears `rejection` on the next `YourTurn`, `Snapshot` or `DuelFinished`, and counts refusals in a new `rejectionCount` the bar's remount key consumes. **This epic's self-imposed "no server, no protocol change" holds** — `guard` already accepts the identity the client holds after a rejection, so nothing on the wire moves. The fix is five files, so `TASK-030712` is the store half and the bar half is a sibling ticket |
