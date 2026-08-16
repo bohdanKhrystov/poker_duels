@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031202
 title: A whole duel written down as each seat's own session of frames
 type: task
-status: backlog
+status: ready
 parent: STORY-0312
 module: poker-server
 estimate: S
