@@ -318,6 +318,54 @@ class PostgresProfileReadsTest {
         assertNull(profile?.displayName)
     }
 
+    @Test
+    fun aDuelAgainstANamedOpponentReadsBackThatName() = runBlocking {
+        setPlayerDisplayName(bob.id.value, "Ingrid")
+        val duelId = UUID.randomUUID()
+
+        duelResultStore.record(finishedDuel(winner = 0, id = duelId))
+
+        val duels = profileReads.recentDuelsOf(alice.id, 10)
+
+        assertEquals(1, duels.size)
+        assertEquals("Ingrid", duels.single().opponentDisplayName)
+    }
+
+    @Test
+    fun anUnnamedOpponentReadsBackNullEvenWhenTheReaderIsNamed() = runBlocking {
+        setPlayerDisplayName(alice.id.value, "Ingrid")
+        val duelId = UUID.randomUUID()
+
+        duelResultStore.record(finishedDuel(winner = 0, id = duelId))
+
+        val aliceDuels = profileReads.recentDuelsOf(alice.id, 10)
+        val bobDuels = profileReads.recentDuelsOf(bob.id, 10)
+
+        assertEquals(1, aliceDuels.size)
+        assertEquals(null, aliceDuels.single().opponentDisplayName)
+
+        assertEquals(1, bobDuels.size)
+        assertEquals("Ingrid", bobDuels.single().opponentDisplayName)
+    }
+
+    @Test
+    fun aNameSetAfterTheDuelFinishedAppearsOnItsLine() = runBlocking {
+        val duelId = UUID.randomUUID()
+        duelResultStore.record(finishedDuel(winner = 0, id = duelId))
+
+        val duelsBefore = profileReads.recentDuelsOf(alice.id, 10)
+        assertEquals(1, duelsBefore.size)
+        assertEquals(duelId.toString(), duelsBefore.single().duelId)
+        assertNull(duelsBefore.single().opponentDisplayName)
+
+        setPlayerDisplayName(bob.id.value, "Torvald")
+
+        val duelsAfter = profileReads.recentDuelsOf(alice.id, 10)
+        assertEquals(1, duelsAfter.size)
+        assertEquals(duelId.toString(), duelsAfter.single().duelId)
+        assertEquals("Torvald", duelsAfter.single().opponentDisplayName)
+    }
+
     private fun finishedDuel(
         winner: Int?,
         id: UUID = UUID.randomUUID(),
