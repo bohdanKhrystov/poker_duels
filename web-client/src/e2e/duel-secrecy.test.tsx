@@ -105,6 +105,8 @@ interface JudgedStep {
   readonly revealed: boolean;
   /** The step index at which `revealed` first turned true this hand, or `null` if it has not yet. */
   readonly revealedAtIndex: number | null;
+  /** Whether an `Events` frame this hand has named EITHER seat in a `HandRevealed`, as of this step. */
+  readonly anyRevealed: boolean;
   readonly shown: readonly string[];
 }
 
@@ -123,6 +125,7 @@ function judgeRivalCards(seat: ScriptedSeat): readonly JudgedStep[] {
   let handNumber: number | null = null;
   let revealed = false;
   let revealedAtIndex: number | null = null;
+  let anyRevealed = false;
   const judged: JudgedStep[] = [];
 
   driveScriptedDuel({
@@ -134,6 +137,7 @@ function judgeRivalCards(seat: ScriptedSeat): readonly JudgedStep[] {
             handNumber = step.message.view.handNumber;
             revealed = false;
             revealedAtIndex = null;
+            anyRevealed = false;
           }
         } else if (step.message.type === "Events") {
           const rivalRevealedHere = step.message.events.some(
@@ -143,6 +147,11 @@ function judgeRivalCards(seat: ScriptedSeat): readonly JudgedStep[] {
           if (rivalRevealedHere && !revealed) {
             revealed = true;
             revealedAtIndex = index;
+          }
+          if (
+            step.message.events.some((event) => event.type === "HandRevealed")
+          ) {
+            anyRevealed = true;
           }
         }
       }
@@ -166,6 +175,7 @@ function judgeRivalCards(seat: ScriptedSeat): readonly JudgedStep[] {
         handNumber,
         revealed,
         revealedAtIndex,
+        anyRevealed,
         shown: cardsShown(container, hand.cards),
       });
     },
@@ -393,6 +403,90 @@ describe("the rival's cards", () => {
         `seat ${seat.viewerSeat} step ${snapshotIndex} hand ${firstHand.handNumber}: ` +
           `doctored Snapshot did not surface ${firstHand.cards.join(", ")}`,
       ).toEqual(firstHand.cards);
+    }
+  });
+
+  it("stay hidden for a whole hand that never reached a showdown", () => {
+    const duel = scriptedDuel();
+
+    for (const seat of duel.seats) {
+      const judged = judgeRivalCards(seat);
+      const allHands = [...new Set(judged.map((step) => step.handNumber))];
+
+      // A hand this seat's frames never named either player in a HandRevealed
+      // for, whole — a fold-win, or a showdown the loser (and, per ADR-0008,
+      // possibly the winner too) mucked rather than tabled. See the ticket's
+      // "Out of scope": a showdown revealing only the *other* seat falls out
+      // of this set correctly, with no special case.
+      const foldWinHands = allHands.filter(
+        (handNumber) =>
+          !judged.some(
+            (step) => step.handNumber === handNumber && step.anyRevealed,
+          ),
+      );
+
+      expect(
+        foldWinHands.length,
+        `seat ${seat.viewerSeat}: no hand in the run ended with zero HandRevealed ` +
+          `events (fold-win hands found: ` +
+          `${foldWinHands.length === 0 ? "none" : foldWinHands.join(", ")}) — ` +
+          "there is no hand here to prove stays hidden",
+      ).toBeGreaterThan(0);
+
+      for (const step of judged) {
+        if (!foldWinHands.includes(step.handNumber)) {
+          continue;
+        }
+        expect(
+          step.shown,
+          `seat ${seat.viewerSeat} step ${step.index} hand ${step.handNumber} ` +
+            `(fold-win hands: ${foldWinHands.join(", ")}): rival cards on screen ` +
+            `in a hand that never reached a showdown: ${step.shown.join(", ")}`,
+        ).toEqual([]);
+      }
+    }
+  });
+
+  it("are shown in exactly the hands a reveal named, and no others", () => {
+    const duel = scriptedDuel();
+
+    for (const seat of duel.seats) {
+      const judged = judgeRivalCards(seat);
+      const allHands = [...new Set(judged.map((step) => step.handNumber))].sort(
+        (a, b) => a - b,
+      );
+
+      const revealedHands = allHands.filter((handNumber) =>
+        judged.some((step) => step.handNumber === handNumber && step.revealed),
+      );
+      const shownHands = allHands.filter((handNumber) =>
+        judged.some(
+          (step) => step.handNumber === handNumber && step.shown.length > 0,
+        ),
+      );
+
+      // Without these two, the equality below could pass vacuously — both
+      // sides empty, or both sides the whole run — and prove nothing.
+      expect(
+        revealedHands.length,
+        `seat ${seat.viewerSeat}: no hand ever carried a HandRevealed naming the rival`,
+      ).toBeGreaterThan(0);
+      expect(
+        revealedHands.length,
+        `seat ${seat.viewerSeat}: every hand in the run (${allHands.join(", ")}) named ` +
+          "the rival in a HandRevealed; the run is too short to prove anything was ever hidden",
+      ).toBeLessThan(allHands.length);
+      expect(
+        shownHands.length,
+        `seat ${seat.viewerSeat}: the rival's cards were never shown on screen in any hand`,
+      ).toBeGreaterThan(0);
+
+      expect(
+        shownHands,
+        `seat ${seat.viewerSeat}: hands the rival's cards were shown in ` +
+          `(${shownHands.join(", ")}) do not match hands a HandRevealed named ` +
+          `(${revealedHands.join(", ")})`,
+      ).toEqual(revealedHands);
     }
   });
 });
