@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040108
 title: ProfileResponse carries the name the row holds
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: XS
