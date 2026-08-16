@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031103
 title: The recent-duels read keeps every field but the opponent's identifier
 type: task
-status: ready
+status: done
 parent: STORY-0311
 module: web-client
 estimate: S
