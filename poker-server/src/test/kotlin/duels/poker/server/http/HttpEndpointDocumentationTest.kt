@@ -8,9 +8,13 @@ import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
+private const val DEVICE_ID_HEADER: String = "X-Device-Id"
+private const val DEFAULT_DUEL_LIMIT: Int = 10
+private const val MAX_DUEL_LIMIT: Int = 50
+
 /**
- * Verifies that `docs/protocol.md` documents the HTTP endpoints `GET /api/me` and
- * `GET /api/me/duels`, their authentication mechanism, and their behavior.
+ * Verifies that `docs/protocol.md` documents the HTTP endpoints `GET /api/me`, `GET /api/me/duels`,
+ * and `PUT /api/me/name`, their authentication mechanism, and their behavior.
  *
  * The tests below go further than substring matching: they reflect over the response DTOs so
  * that a claim in the document (a field is nullable, a field exists) can be checked against what
@@ -26,7 +30,9 @@ class HttpEndpointDocumentationTest {
     // Scoping to the section that documents each response keeps the checks below from matching a
     // field name that happens to recur in an unrelated table.
     private val profileSection: String =
-        sectionBetween("### Profile endpoint", "### Recent duels endpoint")
+        sectionBetween("### Profile endpoint", "### Set display name")
+    private val setNameSection: String =
+        sectionBetween("### Set display name", "### Recent duels endpoint")
     private val duelSummarySection: String =
         sectionBetween("Each duel summary in the array contains:", "## Protocol Errors")
 
@@ -151,5 +157,60 @@ class HttpEndpointDocumentationTest {
                 "Documented field '$field' does not exist on DuelSummaryResponse",
             )
         }
+    }
+
+    @Test
+    fun theDocumentDescribesTheSetNameEndpoint() {
+        assertTrue(
+            doc.contains("PUT /api/me/name"),
+            "Document must contain 'PUT /api/me/name'",
+        )
+        // Each status code must appear in the Set display name section, not just anywhere in the document
+        val statusCodes = listOf("400", "401", "403", "409")
+        for (statusCode in statusCodes) {
+            assertTrue(
+                setNameSection.contains(statusCode),
+                "The Set display name section must document status code '$statusCode'",
+            )
+        }
+    }
+
+    @Test
+    fun theDocumentMarksTheDisplayNameNullable() {
+        val displayNameProperty = ProfileResponse::class.memberProperties.firstOrNull { it.name == "displayName" }
+            ?: error("ProfileResponse must have a 'displayName' property")
+        assertTrue(
+            displayNameProperty.returnType.isMarkedNullable,
+            "ProfileResponse.displayName must be nullable (String or null), and the document must mark it as such",
+        )
+        val displayNameRow = rowFor(profileSection, "displayName")
+            ?: error("Profile section must document the 'displayName' field")
+        assertTrue(
+            displayNameRow.contains("null", ignoreCase = true),
+            "The displayName row must mention 'null' to indicate nullability: $displayNameRow",
+        )
+    }
+
+    @Test
+    fun theDocumentStatesTheCanonicalFormRules() {
+        // Verify the Set display name section documents the canonicalisation rules that
+        // DisplayName.kt enforces. If these claims drift from the code, clients cannot
+        // explain a 400 to players.
+        assertTrue(
+            setNameSection.contains("1–32 code point") || setNameSection.contains("1-32 code point"),
+            "The document must state the 1–32 code point bound that canonicalDisplayNameOrNull enforces",
+        )
+        assertTrue(
+            setNameSection.contains("NFC"),
+            "The document must mention NFC normalization that canonicalDisplayNameOrNull applies",
+        )
+        assertTrue(
+            setNameSection.contains("Cc") && setNameSection.contains("Cf"),
+            "The document must mention Unicode categories Cc (control) and Cf (format) that are refused",
+        )
+        assertTrue(
+            setNameSection.contains("consecutive") || setNameSection.contains("two or more"),
+            "The document must describe the rule refusing consecutive spaces that canonicalDisplayNameOrNull enforces",
+        )
     }
 }
