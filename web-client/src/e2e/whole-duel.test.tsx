@@ -88,7 +88,33 @@ describe("a whole duel through the client", () => {
     const duel = scriptedDuel();
 
     for (const seat of duel.seats) {
-      const run = driveScriptedDuel({ viewerSeat: seat.viewerSeat });
+      // A witness a driver cannot fake by pushing the recorded frame straight
+      // into `sent` instead of clicking: only a real click sets the real
+      // `ActionBar`'s own `sent` state, which disables every button on it
+      // (`TASK-030707`) until the next turn's key remounts it live again
+      // (`TASK-031013`). Content, order and count below would all still hold
+      // for that bypass — this would not, so it is captured independently of
+      // them, keyed by step index rather than folded into the assertions
+      // that already pass either way.
+      const barState: Array<{ hasButtons: boolean; allDisabled: boolean }> = [];
+
+      const run = driveScriptedDuel({
+        viewerSeat: seat.viewerSeat,
+        onStep: (_step, index, container) => {
+          // Nullable: the lobby's own early steps, before the table (and so
+          // the bar) ever mounts, are never among the indices read below —
+          // but `onStep` still fires for them, and a `get*` here would throw.
+          const bar = within(container).queryByLabelText("your move");
+          const buttons =
+            bar === null ? [] : within(bar).queryAllByRole("button");
+          barState[index] = {
+            hasButtons: buttons.length > 0,
+            allDisabled:
+              buttons.length > 0 &&
+              buttons.every((button) => button.hasAttribute("disabled")),
+          };
+        },
+      });
 
       // Independent of the recorded `"client"` steps below: if a turn ever
       // produced two `Act`s (or none), this count would drift from the
@@ -108,6 +134,32 @@ describe("a whole duel through the client", () => {
       // and `toEqual` on two arrays checks position as well as content, so
       // this is the "in order, one for one" claim too.
       expect(actsSent).toEqual(recordedActs);
+
+      seat.steps.forEach((step, index) => {
+        if (step.from !== "client") return;
+
+        // Right after this click, the bar it clicked on is quiet.
+        expect(barState[index]).toEqual({
+          hasButtons: true,
+          allDisabled: true,
+        });
+
+        // And live again exactly when this seat is next asked — if it is
+        // asked again at all; the seat's last action in the run has no next
+        // turn to check.
+        const nextYourTurn = seat.steps.findIndex(
+          (later, laterIndex) =>
+            laterIndex > index &&
+            later.from === "server" &&
+            later.message.type === "YourTurn",
+        );
+        if (nextYourTurn !== -1) {
+          expect(barState[nextYourTurn]).toEqual({
+            hasButtons: true,
+            allDisabled: false,
+          });
+        }
+      });
     }
   });
 
