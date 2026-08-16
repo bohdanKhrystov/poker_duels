@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031106
 title: One read answers the whole strip, or none of it
 type: task
-status: backlog
+status: ready
 parent: STORY-0311
 module: web-client
 estimate: S
