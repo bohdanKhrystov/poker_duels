@@ -9,6 +9,7 @@ import duels.poker.server.protocol.protocolJson
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
@@ -137,6 +138,22 @@ class ScriptedDuelTest {
             for ((stepA, stepB) in seatA.steps.zip(seatB.steps)) {
                 assertEquals(stepA.frame, stepB.frame)
             }
+        }
+
+        // The equality above only proves two calls agree; it cannot tell a script that truly
+        // derives from its seed apart from one that ignores the seed and always returns the same
+        // memorized answer. A different seed must therefore write a different script...
+        val differentlySeeded = scriptedDuel(SCRIPT_SEED + 1)
+        assertNotEquals(scripted, differentlySeeded, "a different seed should write a different script")
+
+        // ...and that different script must itself be a real session, not some degenerate value
+        // that only happens to satisfy "not equal to the default".
+        for (seat in differentlySeeded.seats) {
+            assertTrue(seat.steps.isNotEmpty(), "seat ${seat.viewerSeat} of the differently-seeded script had no steps")
+            assertTrue(
+                seat.steps.any { it.from == "client" },
+                "seat ${seat.viewerSeat} of the differently-seeded script sent no acts",
+            )
         }
     }
 
