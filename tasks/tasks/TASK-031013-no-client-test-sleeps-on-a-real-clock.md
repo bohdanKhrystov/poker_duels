@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031013
 title: No client test sleeps on a real clock
 type: task
-status: ready
+status: done
 parent: STORY-0310
 module: web-client
 estimate: XS
