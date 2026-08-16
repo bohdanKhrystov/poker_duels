@@ -177,6 +177,19 @@ describe("the reconnecting connection", () => {
     vi.advanceTimersByTime(60_000);
 
     expect(sockets).toHaveLength(2);
+
+    // The tab reconnects again, so socket 1 is now two generations behind —
+    // a 1-bit "was this the immediately-previous attempt" flag would wrap
+    // around and wrongly accept its echo below.
+    sockets[1].close();
+    vi.advanceTimersByTime(500);
+    expect(sockets).toHaveLength(3);
+
+    // The same stale echo as above, arriving after that second reconnect.
+    sockets[0].close();
+    vi.advanceTimersByTime(60_000);
+
+    expect(sockets).toHaveLength(3);
   });
 
   it("counts the failures of the live socket, not of the one it replaced", () => {
