@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { readProfile } from "./profile";
 import type { ApiFetch, ApiResponse } from "./api";
-import { writeDeviceId } from "../protocol/device-id";
+import { DEVICE_ID_STORAGE_KEY, writeDeviceId } from "../protocol/device-id";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -103,6 +103,8 @@ describe("the profile read", () => {
   it("asks /api/me with the device id from the key the socket module owns", async () => {
     // First call with device id "d-1"
     writeDeviceId(storage, "d-1");
+    // Verify device id is stored under the correct key
+    expect(storage.getItem(DEVICE_ID_STORAGE_KEY)).toBe("d-1");
     const mock1 = answering(ok({ playerId: "p-1", coinBalance: 5 }));
     const result1 = await readProfile({
       fetch: mock1.fetch,
@@ -120,6 +122,8 @@ describe("the profile read", () => {
     // Second call with device id "d-2" to ensure it's not hardcoded
     storage = inMemoryStorage();
     writeDeviceId(storage, "d-2");
+    // Verify device id is stored under the correct key
+    expect(storage.getItem(DEVICE_ID_STORAGE_KEY)).toBe("d-2");
     const mock2 = answering(ok({ playerId: "p-2", coinBalance: 10 }));
     const result2 = await readProfile({
       fetch: mock2.fetch,
