@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031209
 title: A hand won without a showdown shows no rival card at all
 type: task
-status: backlog
+status: ready
 parent: STORY-0312
 module: web-client
 estimate: S
