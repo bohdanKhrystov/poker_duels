@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031204
 title: The client reads the committed script, and proves it is a whole duel
 type: task
-status: ready
+status: done
 parent: STORY-0312
 module: web-client
 estimate: S

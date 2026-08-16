@@ -1009,8 +1009,8 @@ written and is still true.
 | | [TASK-031201](tasks/TASK-031201-played-duel-records-the-acts-it-sent.md) A played duel records the Act it sent, and the seat it sent it from | XS | **done** |
 | | [TASK-031202](tasks/TASK-031202-a-whole-duel-as-one-seats-session-of-frames.md) A whole duel written down as each seat's own session of frames | S | **done** |
 | | [TASK-031203](tasks/TASK-031203-one-task-writes-the-script-another-fails-on-drift.md) One Gradle task writes the duel script, another fails the build on drift | S | **done** |
-| | [TASK-031204](tasks/TASK-031204-the-client-reads-the-script-and-proves-it-is-a-duel.md) The client reads the committed script, and proves it is a whole duel | S | ready |
-| | [TASK-031205](tasks/TASK-031205-the-script-replays-through-the-real-client.md) The script replays through the real client, from either seat, to the result | S | backlog |
+| | [TASK-031204](tasks/TASK-031204-the-client-reads-the-script-and-proves-it-is-a-duel.md) The client reads the committed script, and proves it is a whole duel | S | **done** |
+| | [TASK-031205](tasks/TASK-031205-the-script-replays-through-the-real-client.md) The script replays through the real client, from either seat, to the result | S | ready |
 | | [TASK-031206](tasks/TASK-031206-one-act-per-turn-the-frame-the-server-recorded.md) The client answers each turn through the bar, with the frame the server recorded | S | backlog |
 | | [TASK-031207](tasks/TASK-031207-the-result-states-the-outcome-the-last-frame-carried.md) The result states the outcome the script's last frame carried, from either seat | S | backlog |
 | | [TASK-031208](tasks/TASK-031208-no-rival-card-reaches-the-screen-before-the-reveal.md) No rival card reaches the screen before the frame that reveals it | S | backlog |

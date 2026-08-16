@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031205
 title: The script replays through the real client, from either seat, to the result
 type: task
-status: backlog
+status: ready
 parent: STORY-0312
 module: web-client
 estimate: S
