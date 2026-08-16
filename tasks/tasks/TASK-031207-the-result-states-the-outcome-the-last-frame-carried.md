@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031207
 title: The result states the outcome the script's last frame carried, from either seat
 type: task
-status: backlog
+status: ready
 parent: STORY-0312
 module: web-client
 estimate: S
