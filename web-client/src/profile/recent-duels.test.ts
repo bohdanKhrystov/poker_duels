@@ -157,4 +157,237 @@ describe("the recent duels read", () => {
       duels: [],
     });
   });
+
+  it("reads every outcome the server can send", async () => {
+    const { fetch } = answering(
+      ok({
+        duels: [
+          {
+            duelId: "duel-w",
+            outcome: "WON",
+            coinDelta: 1,
+            handsPlayed: 5,
+            finishedAt: "2026-08-14T21:00:00Z",
+          },
+          {
+            duelId: "duel-l",
+            outcome: "LOST",
+            coinDelta: -1,
+            handsPlayed: 3,
+            finishedAt: "2026-08-14T20:00:00Z",
+          },
+          {
+            duelId: "duel-d",
+            outcome: "DREW",
+            coinDelta: 0,
+            handsPlayed: 7,
+            finishedAt: "2026-08-14T19:00:00Z",
+          },
+        ],
+      }),
+    );
+
+    const read = await readRecentDuels({
+      fetch,
+      storage: storageHolding("d-1"),
+    });
+
+    expect(read).toEqual({
+      kind: "duels",
+      duels: [
+        {
+          duelId: "duel-w",
+          outcome: "WON",
+          coinDelta: 1,
+          handsPlayed: 5,
+          finishedAt: "2026-08-14T21:00:00Z",
+        },
+        {
+          duelId: "duel-l",
+          outcome: "LOST",
+          coinDelta: -1,
+          handsPlayed: 3,
+          finishedAt: "2026-08-14T20:00:00Z",
+        },
+        {
+          duelId: "duel-d",
+          outcome: "DREW",
+          coinDelta: 0,
+          handsPlayed: 7,
+          finishedAt: "2026-08-14T19:00:00Z",
+        },
+      ],
+    });
+  });
+
+  it("takes the coin delta signed, including the zero of a draw", async () => {
+    const { fetch } = answering(
+      ok({
+        duels: [
+          {
+            duelId: "duel-1",
+            outcome: "WON",
+            coinDelta: 1,
+            handsPlayed: 5,
+            finishedAt: "2026-08-14T21:00:00Z",
+          },
+          {
+            duelId: "duel-2",
+            outcome: "LOST",
+            coinDelta: -1,
+            handsPlayed: 3,
+            finishedAt: "2026-08-14T20:00:00Z",
+          },
+          {
+            duelId: "duel-3",
+            outcome: "DREW",
+            coinDelta: 0,
+            handsPlayed: 7,
+            finishedAt: "2026-08-14T19:00:00Z",
+          },
+          {
+            duelId: "duel-discordant-won",
+            outcome: "WON",
+            coinDelta: 0,
+            handsPlayed: 4,
+            finishedAt: "2026-08-14T18:00:00Z",
+          },
+          {
+            duelId: "duel-discordant-drew",
+            outcome: "DREW",
+            coinDelta: 1,
+            handsPlayed: 6,
+            finishedAt: "2026-08-14T17:00:00Z",
+          },
+        ],
+      }),
+    );
+
+    const read = await readRecentDuels({
+      fetch,
+      storage: storageHolding("d-1"),
+    });
+
+    expect(read).toEqual({
+      kind: "duels",
+      duels: [
+        {
+          duelId: "duel-1",
+          outcome: "WON",
+          coinDelta: 1,
+          handsPlayed: 5,
+          finishedAt: "2026-08-14T21:00:00Z",
+        },
+        {
+          duelId: "duel-2",
+          outcome: "LOST",
+          coinDelta: -1,
+          handsPlayed: 3,
+          finishedAt: "2026-08-14T20:00:00Z",
+        },
+        {
+          duelId: "duel-3",
+          outcome: "DREW",
+          coinDelta: 0,
+          handsPlayed: 7,
+          finishedAt: "2026-08-14T19:00:00Z",
+        },
+        {
+          duelId: "duel-discordant-won",
+          outcome: "WON",
+          coinDelta: 0,
+          handsPlayed: 4,
+          finishedAt: "2026-08-14T18:00:00Z",
+        },
+        {
+          duelId: "duel-discordant-drew",
+          outcome: "DREW",
+          coinDelta: 1,
+          handsPlayed: 6,
+          finishedAt: "2026-08-14T17:00:00Z",
+        },
+      ],
+    });
+  });
+
+  it("answers unavailable when a row is not a duel", async () => {
+    // Test 1: missing outcome field
+    const { fetch: fetch1 } = answering(
+      ok({
+        duels: [
+          {
+            duelId: "duel-1",
+            coinDelta: 1,
+            handsPlayed: 5,
+            finishedAt: "2026-08-14T21:00:00Z",
+          },
+        ],
+      }),
+    );
+
+    const read1 = await readRecentDuels({
+      fetch: fetch1,
+      storage: storageHolding("d-1"),
+    });
+
+    expect(read1).toEqual({ kind: "unavailable" });
+
+    // Test 2: invalid outcome word
+    const { fetch: fetch2 } = answering(
+      ok({
+        duels: [
+          {
+            duelId: "duel-1",
+            outcome: "TIED",
+            coinDelta: 1,
+            handsPlayed: 5,
+            finishedAt: "2026-08-14T21:00:00Z",
+          },
+        ],
+      }),
+    );
+
+    const read2 = await readRecentDuels({
+      fetch: fetch2,
+      storage: storageHolding("d-2"),
+    });
+
+    expect(read2).toEqual({ kind: "unavailable" });
+
+    // Test 3: coinDelta is a string instead of number
+    const { fetch: fetch3 } = answering(
+      ok({
+        duels: [
+          {
+            duelId: "duel-1",
+            outcome: "WON",
+            coinDelta: "one",
+            handsPlayed: 5,
+            finishedAt: "2026-08-14T21:00:00Z",
+          },
+        ],
+      }),
+    );
+
+    const read3 = await readRecentDuels({
+      fetch: fetch3,
+      storage: storageHolding("d-3"),
+    });
+
+    expect(read3).toEqual({ kind: "unavailable" });
+
+    // Test 4: duels is not an array
+    const { fetch: fetch4 } = answering(
+      ok({
+        duels: "not-an-array",
+      }),
+    );
+
+    const read4 = await readRecentDuels({
+      fetch: fetch4,
+      storage: storageHolding("d-4"),
+    });
+
+    expect(read4).toEqual({ kind: "unavailable" });
+  });
 });
