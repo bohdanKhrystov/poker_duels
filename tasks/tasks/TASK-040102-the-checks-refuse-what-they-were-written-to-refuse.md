@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040102
 title: The three checks refuse what they were written to refuse
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: S
