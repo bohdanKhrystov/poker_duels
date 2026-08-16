@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031001
 title: The room code lives under one storage key this module owns
 type: task
-status: ready
+status: done
 parent: STORY-0310
 module: web-client
 estimate: XS
