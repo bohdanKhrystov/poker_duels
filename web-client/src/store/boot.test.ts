@@ -131,8 +131,12 @@ describe("booting the duel client", () => {
     socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
     expect(readRoomCode(storage)).toBe("ABCDEFGH");
 
-    socket.receive('{"type":"RoomJoined","code":"ZYXWVUTS","seat":0}');
-    expect(readRoomCode(storage)).toBe("ZYXWVUTS");
+    // Mixed case and padded with whitespace: the decoder validates nothing
+    // beyond the discriminator (`decodeServerMessage`), so this is a code the
+    // wire permits. Storing it byte-identical proves the write is verbatim —
+    // a `.trim()` or `.toUpperCase()` at the write site would corrupt it.
+    socket.receive('{"type":"RoomJoined","code":" zYxwVUts ","seat":0}');
+    expect(readRoomCode(storage)).toBe(" zYxwVUts ");
   });
 
   it("remembers no room until the server names one", () => {
