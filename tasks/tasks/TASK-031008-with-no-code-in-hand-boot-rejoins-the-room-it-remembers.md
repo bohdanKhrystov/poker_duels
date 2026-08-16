@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031008
 title: With no code in hand, boot rejoins the room it remembers
 type: task
-status: backlog
+status: ready
 parent: STORY-0310
 module: web-client
 estimate: S

@@ -16,6 +16,7 @@ if (!container) throw new Error("missing #root");
 const client = bootDuelClient({
   connect: connectToDuelServer,
   joinRoomCode: roomCodeFromSearch(window.location.search),
+  storage: localStorage,
 });
 
 ReactDOM.createRoot(container).render(

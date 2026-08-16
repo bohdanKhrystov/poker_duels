@@ -4,6 +4,7 @@ import { FakeSocket } from "../protocol/fake-socket";
 import {
   openConnection,
   PROTOCOL_VERSION,
+  readRoomCode,
   type ServerMessage,
 } from "../protocol";
 
@@ -46,15 +47,16 @@ const WELCOME = JSON.stringify({
 
 function bootOverFakeSocket(joinRoomCode: string | null = null) {
   const socket = new FakeSocket();
+  const storage = inMemoryStorage();
   const connect = vi.fn((onMessage: (message: ServerMessage) => void) =>
     openConnection({
       socket: socket.asWebSocket(),
-      storage: inMemoryStorage(),
+      storage,
       onMessage,
     }),
   );
-  const client = bootDuelClient({ connect, joinRoomCode });
-  return { socket, client, connect };
+  const client = bootDuelClient({ connect, joinRoomCode, storage });
+  return { socket, client, connect, storage };
 }
 
 function sentFrames(socket: FakeSocket): { type: string; code?: string }[] {
@@ -121,5 +123,46 @@ describe("booting the duel client", () => {
     ]);
     expect(socket.closed).toBe(false);
     expect(client.store.getState().refusal).toBe("UNKNOWN_ROOM");
+  });
+
+  it("remembers each room the server seats it in", () => {
+    const { socket, storage } = bootOverFakeSocket();
+
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
+    expect(readRoomCode(storage)).toBe("ABCDEFGH");
+
+    // Mixed case and padded with whitespace: the decoder validates nothing
+    // beyond the discriminator (`decodeServerMessage`), so this is a code the
+    // wire permits. Storing it byte-identical proves the write is verbatim —
+    // a `.trim()` or `.toUpperCase()` at the write site would corrupt it.
+    socket.receive('{"type":"RoomJoined","code":" zYxwVUts ","seat":0}');
+    expect(readRoomCode(storage)).toBe(" zYxwVUts ");
+  });
+
+  it("remembers no room until the server names one", () => {
+    const { socket, storage } = bootOverFakeSocket();
+    socket.open();
+    socket.receive(WELCOME);
+    expect(readRoomCode(storage)).toBeNull();
+  });
+
+  it("remembers nothing when it was given nowhere to remember it", () => {
+    const socket = new FakeSocket();
+    const client = bootDuelClient({
+      connect: (onMessage) =>
+        openConnection({
+          socket: socket.asWebSocket(),
+          storage: inMemoryStorage(),
+          onMessage,
+        }),
+      joinRoomCode: null,
+    });
+
+    expect(() =>
+      socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}'),
+    ).not.toThrow();
+    const state = client.store.getState();
+    expect(state.mySeat).toBe(1);
+    expect(state.roomCode).toBe("ABCDEFGH");
   });
 });

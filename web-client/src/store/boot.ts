@@ -1,3 +1,4 @@
+import { writeRoomCode } from "../protocol";
 import type { ClientMessage, Connection, ServerMessage } from "../protocol";
 import { createDuelStore, type DuelStore } from "./duel-store";
 
@@ -11,6 +12,13 @@ export interface BootOptions {
   readonly connect: (onMessage: (message: ServerMessage) => void) => Connection;
   /** The code this tab's URL carried, or `null` when it carried none. */
   readonly joinRoomCode: string | null;
+  /**
+   * Where this tab remembers the room it is seated in, so a reopened socket
+   * knows what to ask for. Optional because a client that cannot remember is
+   * still a working client — a test that is about something else need not
+   * invent a Storage — but `main.tsx` always passes one.
+   */
+  readonly storage?: Storage;
 }
 
 /**
@@ -27,6 +35,9 @@ export function bootDuelClient(options: BootOptions): DuelClient {
     // with no ref, no guard and no cleanup anywhere (ADR-0032).
     if (message.type === "Welcome" && options.joinRoomCode !== null) {
       connection.send({ type: "JoinRoom", code: options.joinRoomCode });
+    }
+    if (message.type === "RoomJoined" && options.storage) {
+      writeRoomCode(options.storage, message.code);
     }
   });
 
