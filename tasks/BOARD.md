@@ -963,7 +963,7 @@ drops `opponentPlayerId` at the parse, so no component has anywhere to leak it f
 | | [TASK-031108](tasks/TASK-031108-one-line-per-recent-duel-and-a-word-when-there-are-none.md) One line per recent duel, and a word when there are none | S | **done** |
 | | [TASK-031109](tasks/TASK-031109-the-read-runs-once-above-the-tree-and-nowhere-else.md) The strip's read runs once above the tree | S | **done** |
 | | [TASK-031110](tasks/TASK-031110-the-lobby-shows-the-strip-and-the-duel-does-not.md) The lobby shows the strip, and a duel in progress does not | S | **done** |
-| | [TASK-031111](tasks/TASK-031111-the-strip-names-no-opponent-and-counts-no-coin.md) The strip names no opponent and counts no coin | S | ready |
+| | [TASK-031111](tasks/TASK-031111-the-strip-names-no-opponent-and-counts-no-coin.md) The strip names no opponent and counts no coin | S | **done** |
 | [STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | backlog |
 | [STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent (needs `STORY-0214`) | **blocked** |
 
