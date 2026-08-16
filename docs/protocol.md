@@ -69,6 +69,41 @@ These endpoints are **plain HTTP** — they carry no `type` discriminator and ar
 | --- | --- | --- |
 | playerId | string | The unique identifier of the player |
 | coinBalance | number | The player's current coin balance, computed as wins minus losses. This is a signed integer and may be negative per `ADR-0014` — a balance of `−1` is a correct answer, not an error. |
+| displayName | string or null | The player's chosen display name, or `null` if never set. Null means *never set*, and the server fabricates no placeholder per `ADR-0029` §6. |
+
+### Set display name
+
+**Method and path:** `PUT /api/me/name`
+
+**Authentication:** The `X-Device-Id` header (same as `GET /api/me`). Identity is verified **before** the body is read — an absent, blank, or unknown device id answers `401 Unauthorized` with an empty body, and the write is never attempted. This order is critical: confirming name availability without confirming identity would turn the endpoint into an enumeration oracle.
+
+**Request body:** A JSON object with a single required field:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| name | string | The display name the player has chosen. No default value: a missing field, an empty body, or an unrecognised field is refused with `400 Bad Request`. |
+
+**Canonicalisation:** The server canonicalises the name before storing it. The write path applies the following transformations and validations and rejects a name with `400 Bad Request` if any fail:
+
+1. **Trim:** Remove all leading and trailing Unicode whitespace characters.
+2. **Normalise:** Apply NFC normalization (`java.text.Normalizer.Form.NFC`). A name that is the same string after a different normalisation form is accepted as-is and may render differently in different systems, so normalisation is the database's job too: `ADR-0029` §2 enforces it with a `CHECK`.
+3. **Length:** The canonical name must be 1–32 code points (counted as Unicode code points, not UTF-16 units), otherwise `400`.
+4. **Characters:** The server refuses:
+   - Any character in Unicode category `Cc` (control) or `Cf` (format) — these are invisible and spoofable.
+   - Any whitespace character other than `U+0020` (regular space).
+   - Two or more consecutive `U+0020` characters — names that render identically but are stored differently are permanent once set, so this is prevented at write time.
+
+A name that the player typed as, for example, `  Alice  ` becomes `Alice` (9 code points become 5). The database confirms all these rules via constraints; `ADR-0029` §2 lists them.
+
+**Responses:**
+
+| Status | Body | Meaning | Retryable? |
+| --- | --- | --- | --- |
+| `200 OK` | `ProfileResponse` with the canonical `displayName` | The name was set successfully. The response includes the exact string the player now owns (trimmed and normalised), because the server did both, and the client must be told what it received rather than assume it got what it sent. | No, the client already owns the name. Re-sending the identical name is idempotent and returns `200` again. |
+| `400 Bad Request` | Empty | The body was absent, empty, malformed JSON, or named an unrecognised field; **or** the name failed canonicalisation (empty after trim, over 32 code points, or contains a refused character). The write is never attempted. | Yes, the client may fix the name and retry. |
+| `401 Unauthorized` | Empty | No device id was provided, it was blank, or it is unknown. The write is never attempted. | No, the client must log in first. |
+| `403 Forbidden` | Empty | This player already has a different name set. A display name is permanent once set (`ADR-0029` §4); a player who has chosen a name may never change it. Sending the identical name (exact bytes match) returns `200`, not `403`, so a retry is safe if the client is uncertain. | No, the name cannot be changed. |
+| `409 Conflict` | Empty | The requested name (after canonicalisation) collides with another player's name. Names are unique case-insensitively (`ADR-0029` §1); `bob` and `Bob` cannot both exist. The write is never attempted. | Yes, the client may try a different name. |
 
 ### Recent duels endpoint
 
