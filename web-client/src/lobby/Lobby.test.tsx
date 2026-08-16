@@ -9,6 +9,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
+import { ProfileProvider } from "../profile/profile-provider";
+import type { ProfileStripState } from "../profile/profile-strip";
 import type { SeatView, ServerMessage } from "../protocol";
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
@@ -64,6 +66,20 @@ function renderLobby(store: DuelStore = createDuelStore()): {
     </DuelProvider>,
   );
   return { send };
+}
+
+function renderLobbyWithProfile(
+  state: ProfileStripState,
+  store: DuelStore = createDuelStore(),
+): void {
+  const read = (): Promise<ProfileStripState> => Promise.resolve(state);
+  render(
+    <ProfileProvider read={read}>
+      <DuelProvider store={store} send={vi.fn()}>
+        <Lobby />
+      </DuelProvider>
+    </ProfileProvider>,
+  );
 }
 
 function typeCode(value: string): void {
@@ -414,5 +430,41 @@ describe("the lobby", () => {
     expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
     expect(screen.queryByRole("region", { name: "your move" })).toBeNull();
     expect(screen.queryByText("Pot 30")).toBeNull();
+  });
+
+  it("shows the profile strip under the way into a duel", async () => {
+    const state: ProfileStripState = {
+      kind: "profile",
+      profile: {
+        playerId: "p-1",
+        coinBalance: 3,
+      },
+      duels: [],
+    };
+    renderLobbyWithProfile(state);
+
+    await screen.findByLabelText("your profile");
+    expect(screen.getByText("3 Duel coins")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Create a duel room" }),
+    ).toBeDefined();
+  });
+
+  it("keeps the strip off the screen once a table is on it", () => {
+    const state: ProfileStripState = {
+      kind: "profile",
+      profile: {
+        playerId: "p-1",
+        coinBalance: 3,
+      },
+      duels: [],
+    };
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+    renderLobbyWithProfile(state, store);
+
+    expect(screen.queryByLabelText("your profile")).toBeNull();
+    expect(screen.getByText("Pot 30")).toBeDefined();
   });
 });

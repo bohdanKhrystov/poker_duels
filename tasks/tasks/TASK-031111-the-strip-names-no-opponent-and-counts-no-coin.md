@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031111
 title: The strip names no opponent and counts no coin
 type: task
-status: backlog
+status: ready
 parent: STORY-0311
 module: web-client
 estimate: S
