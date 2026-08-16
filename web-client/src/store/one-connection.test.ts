@@ -8,13 +8,17 @@ const BOOTS_A_CLIENT = /\bbootDuelClient\s*\(/;
 const EVERY_BOOT = /\bbootDuelClient\s*\(/g;
 
 // Tests drive both by design — the boot tests open a connection over a
-// FakeSocket — and `boot.ts` is where `bootDuelClient` is declared. What
-// ADR-0032 forbids is a second one in shipped code: one boot per tab is where
-// "exactly once" lives, and a screen may never hold a connection of its own.
+// FakeSocket — and `boot.ts` is where `bootDuelClient` is declared. `src/e2e/`
+// is exempt for the same reason under a different name: an end-to-end harness
+// boots a real client on purpose, and it is reachable only from a test, never
+// from `main.tsx`. What ADR-0032 forbids is a second one in shipped code: one
+// boot per tab is where "exactly once" lives, and a screen may never hold a
+// connection of its own.
 function shippedFiles(): string[] {
   return guardedFiles().filter(
     (file) =>
       !/\.test\.tsx?$/.test(file) &&
+      !/[/\\]e2e[/\\]/.test(file) &&
       basename(file) !== "boot.ts" &&
       basename(file) !== "boundary.ts",
   );

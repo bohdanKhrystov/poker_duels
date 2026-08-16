@@ -9,7 +9,7 @@ module: web-client
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 2
+files_touched: 3
 labels: [client, test, end-to-end]
 depends_on: [TASK-031204]
 verify:
@@ -31,6 +31,7 @@ seat.
 | --- | --- |
 | `web-client/src/e2e/drive-duel.tsx` | create |
 | `web-client/src/e2e/whole-duel.test.tsx` | create |
+| `web-client/src/store/one-connection.test.ts` | modify — exempt `src/e2e/` from the one-boot-per-tab guard, since `drive-duel.tsx` boots a real client on purpose and is reachable only from a test |
 
 Read, do not modify: `web-client/src/store/reconnect.test.tsx` (the wiring to copy — `inMemoryStorage`,
 `bootDuelClient` over a `FakeSocket`, `DuelProvider` over `Lobby`), `web-client/src/store/boot.ts`,
