@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031011
 title: The reopened socket says Hello, then rejoins, once each
 type: task
-status: ready
+status: done
 parent: STORY-0310
 module: web-client
 estimate: S
