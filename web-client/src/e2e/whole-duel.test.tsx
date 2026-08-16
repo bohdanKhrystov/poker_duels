@@ -84,16 +84,106 @@ describe("a whole duel through the client", () => {
     }
   });
 
-  it("sends the handshake and nothing more, because nothing asked it to act", () => {
+  it("sends one Act for each YourTurn, and the frame the server recorded", () => {
     const duel = scriptedDuel();
 
     for (const seat of duel.seats) {
       const run = driveScriptedDuel({ viewerSeat: seat.viewerSeat });
 
-      expect(run.sent.map((frame) => JSON.parse(frame))).toEqual([
-        { type: "Hello", deviceId: null, protocolVersion: PROTOCOL_VERSION },
-        { type: "JoinRoom", code: duel.roomCode },
-      ]);
+      // Independent of the recorded `"client"` steps below: if a turn ever
+      // produced two `Act`s (or none), this count would drift from the
+      // server's own `YourTurn`s even if the driver still walked every step.
+      const yourTurnCount = seat.steps.filter(
+        (step) => step.from === "server" && step.message.type === "YourTurn",
+      ).length;
+      const recordedActs = seat.steps
+        .filter((step) => step.from === "client")
+        .map((step) => JSON.parse(step.frame));
+      const actsSent = run.sent
+        .map((frame) => JSON.parse(frame))
+        .filter((message) => message.type === "Act");
+
+      expect(actsSent).toHaveLength(yourTurnCount);
+      // The oracle is the server's own recording, not a frame rebuilt here —
+      // and `toEqual` on two arrays checks position as well as content, so
+      // this is the "in order, one for one" claim too.
+      expect(actsSent).toEqual(recordedActs);
+    }
+  });
+
+  it("echoes each turn's own handNumber and actionSequence, and its own seat", () => {
+    const duel = scriptedDuel();
+
+    for (const seat of duel.seats) {
+      const run = driveScriptedDuel({ viewerSeat: seat.viewerSeat });
+
+      const yourTurns = seat.steps
+        .filter((step) => step.from === "server")
+        .map((step) => JSON.parse(step.frame))
+        .filter((message) => message.type === "YourTurn");
+      const acts = run.sent
+        .map((frame) => JSON.parse(frame))
+        .filter((message) => message.type === "Act");
+
+      // One Act per YourTurn (proved on its own above) is what makes the
+      // i-th Act the answer to the i-th YourTurn.
+      expect(acts).toHaveLength(yourTurns.length);
+      acts.forEach((act, i) => {
+        expect(act.handNumber).toBe(yourTurns[i].handNumber);
+        expect(act.actionSequence).toBe(yourTurns[i].actionSequence);
+        expect(act.action.seat).toBe(seat.viewerSeat);
+      });
+
+      // A client that copied one identity everywhere would still satisfy
+      // every check above on a duel this short unless the run really does
+      // cross hands and turns. The recorded script gives each seat as few as
+      // two distinct `actionSequence`s across the whole run, so ">1" is the
+      // strongest claim true of both seats — still enough to catch a client
+      // that sent the same `actionSequence` for every turn.
+      expect(new Set(acts.map((act) => act.handNumber)).size).toBeGreaterThan(
+        1,
+      );
+      expect(
+        new Set(acts.map((act) => act.actionSequence)).size,
+      ).toBeGreaterThan(1);
+    }
+  });
+
+  it("sends the handshake before it acts, and never after the duel ends", () => {
+    const duel = scriptedDuel();
+
+    for (const seat of duel.seats) {
+      const run = driveScriptedDuel({ viewerSeat: seat.viewerSeat });
+      const sent = run.sent.map((frame) => JSON.parse(frame));
+
+      expect(sent[0]).toEqual({
+        type: "Hello",
+        deviceId: null,
+        protocolVersion: PROTOCOL_VERSION,
+      });
+      expect(sent[1]).toEqual({ type: "JoinRoom", code: duel.roomCode });
+
+      const clientStepCount = seat.steps.filter(
+        (step) => step.from === "client",
+      ).length;
+      // Nothing sent before the handshake's two frames, and nothing sent
+      // after the duel ends or twice for the same turn: the total is bounded
+      // exactly, not just "at least".
+      expect(sent).toHaveLength(2 + clientStepCount);
+    }
+  });
+
+  it("feeds the server's steps to the client in the order the script recorded them", () => {
+    const duel = scriptedDuel();
+
+    for (const seat of duel.seats) {
+      const run = driveScriptedDuel({ viewerSeat: seat.viewerSeat });
+
+      const scriptedServerFrames = seat.steps
+        .filter((step) => step.from === "server")
+        .map((step) => step.frame);
+
+      expect(run.receivedFrames).toEqual(scriptedServerFrames);
     }
   });
 });
