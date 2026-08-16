@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040115
 title: "PUT /api/me/name: identity first, then the name it accepts"
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: S
