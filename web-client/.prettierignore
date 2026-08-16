@@ -1,4 +1,5 @@
 dist
 package-lock.json
 src/protocol/protocol.gen.ts
+src/e2e/scripted-duel.gen.json
 src/styles/tokens.css
