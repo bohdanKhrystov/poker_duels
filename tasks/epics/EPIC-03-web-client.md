@@ -52,6 +52,11 @@ inventing colours ([`ADR-0024`](../../docs/adr/ADR-0024-design-follows-the-code-
   ([`ADR-0044`](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md)). The frames
   themselves are `EPIC-02`'s `STORY-0213`.
 - Reconnect: a dropped socket or a reloaded tab returns to the same seat.
+- The pause state: `OpponentPresence` rendered as away, timed out or back, with a countdown the
+  client shows and never acts on, and `ActedForAbsentSeat` labelling what the server did
+  ([`ADR-0028`](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md), placed by
+  [`ADR-0045`](../../docs/adr/ADR-0045-presence-belongs-to-the-table.md)). The frames themselves are
+  `EPIC-02`'s `STORY-0214`.
 - The profile strip: the coin balance and the recent duels, read over HTTP, signed and unclamped.
 - One test that plays a whole scripted duel through the client and asserts the secrecy property from
   the client side.
@@ -60,7 +65,7 @@ inventing colours ([`ADR-0024`](../../docs/adr/ADR-0024-design-follows-the-code-
 
 | Not here | Where |
 | --- | --- |
-| Any change to the server, the protocol, or the rules | Nowhere in this epic. A client that needs a new frame raises a decision rather than editing Kotlin — `DEC-023` did exactly that, and [`ADR-0044`](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) put the rematch's server half in `EPIC-02` as `STORY-0213`, which `STORY-0309` consumes |
+| Any change to the server, the protocol, or the rules | Nowhere in this epic. A client that needs a new frame raises a decision rather than editing Kotlin — `DEC-023` and `DEC-038` both did exactly that, and [`ADR-0044`](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) and [`ADR-0045`](../../docs/adr/ADR-0045-presence-belongs-to-the-table.md) put both server halves in `EPIC-02`, as `STORY-0213` and `STORY-0214`, which `STORY-0309` and `STORY-0313` consume |
 | Deciding the visual language — palette, type, the table's composition | EPIC-06. This epic consumes `design/tokens/tokens.css` and the screen designs; it authors none |
 | Accounts, the claim flow, display names | EPIC-04. No name is on the wire today, so no name is rendered — see [`ADR-0038`](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) |
 | Leaderboard, seasons, ratings | EPIC-05 |
@@ -68,7 +73,7 @@ inventing colours ([`ADR-0024`](../../docs/adr/ADR-0024-design-follows-the-code-
 | Hosting, TLS, serving the built assets in production, Docker | EPIC-07. This epic builds a bundle and runs a dev server; delivering it is not its problem |
 | A bot driving the client | EPIC-09 |
 | Spectating | [`ADR-0040`](../../docs/adr/ADR-0040-a-duel-may-be-watched-without-hole-cards.md) settles the shape — live, minus every hole card — but no `PlayerView` exists for a third party and no epic owns building one |
-| What a player is shown while the opponent is away | Answered by [`ADR-0028`](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) after this epic was written; `STORY-0310` renders the pause state |
+| What a player is shown while the opponent is away | In scope, and it is not `STORY-0310`'s. [`ADR-0028`](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) answered it after this epic was written, and [`ADR-0045`](../../docs/adr/ADR-0045-presence-belongs-to-the-table.md) puts the rendering in `STORY-0313` — four of the five presence frames reach the player who *stayed*, at the table. The **words** a player reads stay the human's, reserved by `ADR-0028` |
 | Sound, chip animation, celebration | Later. The event log lands in the store here and drives nothing yet |
 | Internationalisation, an accessibility audit, a native mobile app | Later. The client is English, dark, and follows whatever responsive layout EPIC-06's designs give it |
 
@@ -112,6 +117,7 @@ Every one of these is cheap to violate in a component and expensive to notice in
 | [STORY-0310](../stories/STORY-0310-reconnect-and-resume.md) | Reconnect: the client resumes its seat | 0306 | backlog |
 | [STORY-0311](../stories/STORY-0311-profile-strip.md) | The profile strip: my coins and my recent duels | 0302, 0303 | backlog |
 | [STORY-0312](../stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | 0308, 0310 | backlog |
+| [STORY-0313](../stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent | 0307, 0310, `STORY-0214` | blocked |
 
 ## What can run in parallel
 
@@ -133,17 +139,20 @@ And the honest non-parallelism, recorded so nobody tries to break it:
   the same store selectors, and two of them open at once would conflict on every ticket.
 - Everything waits on `0301`. There is no useful client work before the build exists, which is why
   `DEC-022` is the most urgent thing in this epic.
+- **`0309` and `0313` are not this epic's to start.** Each waits on a `poker-server` story in
+  `EPIC-02` — `STORY-0213` and `STORY-0214` — and those two land one at a time, because both move
+  `PROTOCOL_VERSION` ([`ADR-0045`](../../docs/adr/ADR-0045-presence-belongs-to-the-table.md) §3).
+  This epic's close date is therefore partly `EPIC-02`'s, and no client agent can move it.
 
 **Critical path:** `0301 → 0303 → 0304 → 0305 → 0306 → 0307 → 0308 → 0312`.
 
 ## Open decisions
 
-**Two remain, both the architect's.** No decision here waits on a human.
+**One remains, the architect's.** No decision here waits on a human.
 
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
-| `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a thirteenth story exists — but it is due **before this epic closes** |
-| `DEC-038` | `ADR-0028` answered `DEC-018` — `OpponentPresence` and `ActedForAbsentSeat` — but neither type exists in Kotlin or in `protocol.gen.ts`, so this epic cannot render the pause state the row below promises. Which epic ships that server half, and does its client half re-open `STORY-0310` or become its own story? | architect | nothing today; `STORY-0310` ships reconnect without it. Due **before this epic closes**, since the row below is otherwise a promise nothing keeps |
+| `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a fourteenth story exists — but it is due **before this epic closes** |
 
 ### Answered since this epic was written
 
@@ -151,7 +160,8 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 | --- | --- | --- |
 | `DEC-023` | [ADR-0044](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) | `ClientMessage.OfferRematch` (no fields) and `ServerMessage.RematchOffered(seat)` to both seats, idempotent on a repeat, restated after a reconnect's frames. No started frame: after a `DuelFinished`, a `Snapshot` **is** the rematch. Two refusals — `UNKNOWN_ROOM` (the room is gone, go to the lobby) and a transient `REMATCH_UNAVAILABLE` (not yet; nothing recorded). No deadline on the wire, so no countdown is rendered. `PROTOCOL_VERSION` moves one step, taking the next free number when it lands. **The server half is `EPIC-02`'s `STORY-0213`** — this epic's no-Kotlin rule holds, and `STORY-0309` is `ready` and consumes it |
 | `DEC-022` | [ADR-0026](../../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md) | Vite + npm on Node 24, Vitest, ESLint + Prettier, and a parallel `client` CI job. `STORY-0301` shipped on it |
-| `DEC-018` | [ADR-0028](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) | `OpponentPresence` carries PRESENT/AWAY/ABSENT with a countdown the client renders but never acts on, and `ActedForAbsentSeat` marks every action taken for an absent seat — **once the server emits them.** Neither type exists yet, in Kotlin or in `protocol.gen.ts`, and this epic writes no Kotlin, so `STORY-0310` was split without a pause state and `DEC-038` asks who ships the other half |
+| `DEC-018` | [ADR-0028](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) | `OpponentPresence` carries PRESENT/AWAY/ABSENT with a countdown the client renders but never acts on, and `ActedForAbsentSeat` marks every action taken for an absent seat — **once the server emits them.** Neither type exists yet, in Kotlin or in `protocol.gen.ts`, and this epic writes no Kotlin, so `STORY-0310` was split without a pause state. `DEC-038` asked who ships the other half and `ADR-0045` answers it — see the row below |
+| `DEC-038` | [ADR-0045](../../docs/adr/ADR-0045-presence-belongs-to-the-table.md) | The server half is **`EPIC-02`'s `STORY-0214`**, on `ADR-0044`'s argument; `STORY-0208` stays `done`. It takes its **own** `PROTOCOL_VERSION` step, and only one protocol-bumping branch may be open at a time — `STORY-0213` is in front of it. The client half is **`STORY-0313`**, not a reopened `STORY-0310`: four of the five presence frames reach the player who stayed, at the table. `STORY-0310` keeps its thirteen tickets untouched, and `STORY-0313` is `blocked` until `STORY-0214` merges — this epic now has a story only `EPIC-02` can unblock. The **copy** stays reserved to the human by `ADR-0028`, so `STORY-0313` is not splittable on the day it unblocks |
 | `DEC-017` | [ADR-0038](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) | Still nothing here — the rules are set-time and operator-side, and `STORY-0311` renders whatever name the wire carries |
 | `DEC-009` | [ADR-0040](../../docs/adr/ADR-0040-a-duel-may-be-watched-without-hole-cards.md) | Spectating stays out of scope for this epic, but is no longer undecided: live, minus every hole card, through a third projection in the engine |
 | `DEC-037` | [ADR-0043](../../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md) | A `Rejected` closes no decision point. The reducer keeps `pendingTurn`, clears `rejection` on the next `YourTurn`, `Snapshot` or `DuelFinished`, and counts refusals in a new `rejectionCount` the bar's remount key consumes. **This epic's self-imposed "no server, no protocol change" holds** — `guard` already accepts the identity the client holds after a rejection, so nothing on the wire moves. The fix is five files, so `TASK-030712` is the store half and the bar half is a sibling ticket |

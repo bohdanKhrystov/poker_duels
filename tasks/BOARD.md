@@ -4,9 +4,12 @@ The index. Conventions live in [`README.md`](README.md).
 
 **Now:** `EPIC-01` is **done**, and so was `EPIC-02` — the engine, and a duel server that plays a
 whole duel over two real sockets against PostgreSQL, pays the winner a coin, and survives a
-disconnect. `EPIC-02` **reopened on 2026-08-16** for one story:
+disconnect. `EPIC-02` **reopened on 2026-08-16** for two stories:
 [`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) answers `DEC-023`
-and puts the rematch's wire half in `STORY-0213`, where the code lives, rather than in `EPIC-03`.
+and puts the rematch's wire half in `STORY-0213`, and
+[`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md) answers `DEC-038` and puts the
+pause state's wire half in `STORY-0214` — both where the code lives, rather than in `EPIC-03`. They
+land one at a time, `0213` first, because each moves `PROTOCOL_VERSION`.
 `EPIC-06` (design) runs in parallel on disjoint files, see `ADR-0023`. `EPIC-03` (web client) is
 in progress.
 
@@ -403,6 +406,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021214](tasks/TASK-021214-a-test-filter-names-one-class.md) A test filter names one class, so a green run cannot have run nothing | XS | **done** |
 | | [TASK-021215](tasks/TASK-021215-a-logging-backend-so-a-swallowed-failure-is-visible.md) A logging backend, so a swallowed sweep failure is visible | S | **done** |
 | [STORY-0213](stories/STORY-0213-the-wire-carries-a-rematch.md) | The wire carries a rematch | | **ready** |
+| [STORY-0214](stories/STORY-0214-the-wire-names-an-absent-opponent.md) | The wire names an absent opponent | | **ready** |
 
 Stories are written; tickets come from `/plan-story` as each is reached.
 
@@ -416,6 +420,19 @@ free when it lands, alongside `ADR-0027`'s and `ADR-0028`'s unlanded bumps. The 
 line already promised *rematch* and shipped it as far as `RoomRegistry.offerRematch`; this is the
 wire message it stopped short of. The metrics below are as measured at the first close and are not
 re-measured for it.
+
+**`STORY-0214` followed it on the same argument.**
+[`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md) answers `DEC-038`: `ADR-0028`
+specified `SeatPresence`, `OpponentPresence`, `ActedForAbsentSeat` and `Room.presenceOf` two days
+after `STORY-0208` closed, and none of it was ever ticketed — no Kotlin type, no `docs/protocol.md`
+row, nothing in `protocol.gen.ts`. The scope line promised *the disconnect grace period of
+`ADR-0013`* and the epic shipped a room that knows exactly who is gone without telling the player
+who stayed. `STORY-0208` is **not** reopened; this is a sibling, so the closed story's ledger is
+extended rather than rewritten, and `STORY-0214` is outside the metrics table too. **The two wire
+stories land one at a time** — both move `PROTOCOL_VERSION` and both edit the same four files;
+`STORY-0213` is in front, and two branches each moving 2 → 3 would merge clean and green, which is
+the failure the order exists to prevent. The client half is `EPIC-03`'s `STORY-0313`, not a reopened
+`STORY-0310`.
 
 ---
 
@@ -509,6 +526,20 @@ a `DuelFinished`, a `Snapshot` **is** the rematch, which nothing else can produc
 because a countdown the client may not act on is cosmetic. `PROTOCOL_VERSION` moves one step, taking
 the next free number when it lands. **The server half is `EPIC-02`'s `STORY-0213`**, which reopens
 that epic; `STORY-0309` is `ready` and writes no Kotlin).
+
+`DEC-038` → [`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md)
+(`ADR-0028`'s server half ships from `EPIC-02` as `STORY-0214`, on `ADR-0044`'s argument applied to
+the case that ADR named and declined to file. `STORY-0208` stays `done` — a sibling extends a closed
+ledger where an edit would rewrite it. Presence takes its **own** `PROTOCOL_VERSION` step, and
+`ADR-0028` §8's rule gains mechanics: the bump is the story's last ticket, the number is read from
+`develop` plus one at that moment and never written down in advance, and **at most one
+protocol-bumping branch is open at a time** — `STORY-0213`, then `STORY-0214`, then `STORY-0405`. The
+client half is a **new** story, `STORY-0313`, not a reopened `STORY-0310`: four of `ADR-0028` §5's
+five emission points reach the player who *stayed*, at the table, so presence is a table feature
+reconnect observes once. The costs recorded rather than discovered: two branches both moving 2 → 3
+merge clean and green, so the version lock has no CI gate; `EPIC-03` gains a story only `EPIC-02` can
+unblock; `EPIC-02` gains a second story outside its metrics ledger; and `STORY-0214`'s first ticket
+must delete a passing `TASK-020806` test that `ADR-0028` deliberately retracted).
 
 `DEC-037` → [`ADR-0043`](../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md)
 (a `Rejected` closes no decision point: the reducer keeps `pendingTurn`, clears `rejection` on the
@@ -703,8 +734,13 @@ lives in `src/protocol/reconnecting.ts` because `boundary.test.ts` forbids the w
 anywhere else; the *rejoin* lives in `boot.ts` because `ADR-0032` puts every message-triggered send
 there. `VERSION_MISMATCH` ends the loop entirely and `UNKNOWN_ROOM` ends only the resume — different
 reasons, different reach — and `TASK-031013` turns *"no test sleeps on a real clock"* from a promise
-into a check. **No pause state**: `ADR-0028` answered `DEC-018`, but `OpponentPresence` exists in no
-Kotlin file and no generated type, and this epic writes no Kotlin — `DEC-038` asks who ships it.
+into a check. **No pause state, and that is now settled rather than pending**: `ADR-0028` answered
+`DEC-018`, but `OpponentPresence` exists in no Kotlin file and no generated type, and this epic
+writes no Kotlin. `DEC-038` asked who ships it and
+[`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md) answers — `EPIC-02`'s
+`STORY-0214`, behind `STORY-0213` in the version queue — with the rendering in a **new** story,
+`STORY-0313`, because four of the five presence frames reach the player who stayed, at the table.
+`STORY-0310` keeps all thirteen tickets and gains nothing.
 
 | Story | Title | Status |
 | --- | --- | --- |
@@ -832,6 +868,7 @@ Kotlin file and no generated type, and this epic writes no Kotlin — `DEC-038` 
 | | [TASK-031013](tasks/TASK-031013-no-client-test-sleeps-on-a-real-clock.md) No client test sleeps on a real clock | XS | backlog |
 | [STORY-0311](stories/STORY-0311-profile-strip.md) | The profile strip — my coins and my recent duels | backlog |
 | [STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | backlog |
+| [STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent (needs `STORY-0214`) | **blocked** |
 
 ---
 
