@@ -296,4 +296,51 @@ describe("the reconnecting connection", () => {
 
     expect(sockets).toHaveLength(2);
   });
+
+  it("writes nothing to the socket that has closed", () => {
+    const { sockets, connection } = openOverFakeSockets();
+
+    sockets[0].open(); // the Hello goes out
+    sockets[0].close(); // and the connection is no longer live
+
+    connection.send({ type: "CreateRoom" });
+
+    // The socket that just closed is the one an ungated send reaches, so it is
+    // the one that has to be read. Nothing has been retried yet, so it is still
+    // the only socket there is.
+    expect(
+      sockets[0].sent.map(
+        (frame) => (JSON.parse(frame) as { type: string }).type,
+      ),
+    ).toEqual(["Hello"]);
+    expect(sockets).toHaveLength(1);
+  });
+
+  it("closes the socket it is holding and opens no other", () => {
+    const { sockets, connection } = openOverFakeSockets();
+
+    sockets[0].open();
+    connection.close();
+
+    expect(sockets[0].closed).toBe(true);
+
+    vi.advanceTimersByTime(60 * 60 * 1000);
+    expect(sockets).toHaveLength(1);
+  });
+
+  it("reports the status of the socket it opened last", () => {
+    const { sockets, connection } = openOverFakeSockets();
+
+    sockets[0].open();
+    sockets[0].receive(welcomeFrame("device-1"));
+    expect(connection.status).toEqual({ kind: "ready", deviceId: "device-1" });
+
+    sockets[0].close();
+    vi.advanceTimersByTime(250);
+    expect(sockets).toHaveLength(2);
+
+    sockets[1].open();
+    sockets[1].receive(welcomeFrame("device-2"));
+    expect(connection.status).toEqual({ kind: "ready", deviceId: "device-2" });
+  });
 });
