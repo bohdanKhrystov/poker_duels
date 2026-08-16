@@ -5,9 +5,11 @@ import duels.poker.server.db.PostgresDuelResultSink
 import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
 import duels.poker.server.db.PostgresProfileReads
+import duels.poker.server.db.PostgresProfileWrites
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.SecureHandSeedSource
 import duels.poker.server.http.ProfileReads
+import duels.poker.server.http.ProfileWrites
 import duels.poker.server.room.RandomRoomCodeSource
 import duels.poker.server.room.RoomRegistry
 import duels.poker.server.session.ConnectionDirectory
@@ -26,6 +28,7 @@ import javax.sql.DataSource
 public data class ServerComponents(
     val socket: SocketDependencies,
     val reads: ProfileReads,
+    val writes: ProfileWrites,
 )
 
 /**
@@ -52,6 +55,7 @@ public fun serverComponents(
 ): ServerComponents {
     val directory = PostgresPlayerDirectory(dataSource)
     val reads = PostgresProfileReads(dataSource)
+    val writes = PostgresProfileWrites(dataSource)
     val deviceIds: DeviceIdSource = RandomDeviceIdSource()
     val sessions = SessionRegistry()
     val connections = ConnectionDirectory()
@@ -73,5 +77,5 @@ public fun serverComponents(
         maxFrameNestingDepth = config.maxFrameNestingDepth,
     )
 
-    return ServerComponents(socket = socket, reads = reads)
+    return ServerComponents(socket = socket, reads = reads, writes = writes)
 }
