@@ -19,6 +19,12 @@ for a silent stall to cost a night, so the run learns to report itself before it
 rather than after the first one goes quiet. It touches no file any of them touch —
 `scripts/notify/`, `docs/notifications.md` and the skill.
 
+`EPIC-04` (identity and profiles) **opened on 2026-08-16**: seventeen stories written from the
+vision and the shipped ADRs, and `STORY-0401` — the display name, its canonical form and its write
+path — split into eighteen tickets. It starts with a migration rather than with the credential
+chain, because all three schema ADRs number their migration *at merge time* and one of them has to
+go first.
+
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
 ---
@@ -31,7 +37,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
-| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **backlog** | v0.2 |
+| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **ready** — 17 stories written 2026-08-16, `STORY-0401` split | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
@@ -512,6 +518,8 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
+| DEC-041 | **The architect's** — what shape does revoking the device binding take in the schema? `ADR-0037` hands the question to `STORY-0406` by name; `ADR-0030` §2 says `player.device_id` is never rewritten by an identity operation and makes that the structural reason the coin invariant holds | [`STORY-0406`](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) | before STORY-0406 |
+| DEC-042 | **The architect's** — by what path does an operator force-rename a profile, and where do the blocklist and the retired-name set live? `ADR-0038` fixes that the path exists and refuses to grow a role system; `ADR-0029` §4's trigger refuses `name → NULL` for everybody today | [`STORY-0410`](stories/STORY-0410-the-display-name-product-rules.md) | before STORY-0410 |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1047,3 +1055,61 @@ missing report, an in-session two-hourly cron, and the stop report carried by a 
 `STORY-1104` is written and deliberately unstarted — the launchd option the human declined on
 2026-08-15. It is kept so that reversing that judgement costs one command rather than one
 rediscovery, and its tickets are written only if it is ever started.
+
+---
+
+## EPIC-04 — Identity and profiles
+
+Opened 2026-08-16: seventeen stories written, `STORY-0401` split into eighteen tickets. Two more
+stories than the epic's scoping table named — [`ADR-0031`](../docs/adr/ADR-0031-an-optional-verified-recovery-email.md)
+was accepted after that table was written and its recovery email, verification and reset need a home
+(`STORY-0416`, `STORY-0417`). `STORY-0404` and `STORY-0406` are re-cut because
+[`ADR-0030`](../docs/adr/ADR-0030-a-claim-adds-a-credential-and-moves-nothing.md) §1 collapses
+sign-up and the claim into one endpoint.
+
+`STORY-0401` goes first, ahead of the credential chain the epic called its critical path, for a
+reason all three schema ADRs state: each says its migration takes *the next free `V<n>` at merge
+time*. Landing the display name first makes it `V3` and leaves the rest nothing to race over.
+
+| Story | Task | Est | Status |
+| --- | --- | --- | --- |
+| **[STORY-0401](stories/STORY-0401-display-name-and-the-write-path.md)** `player.display_name`, its canonical form, and the write path — *schema 2* | | | **ready** |
+| | [TASK-040101](tasks/TASK-040101-the-third-migration-adds-the-name-and-its-guarantees.md) The third migration adds the name and its four guarantees | S | **ready** |
+| | [TASK-040102](tasks/TASK-040102-the-checks-refuse-what-they-were-written-to-refuse.md) The three checks refuse what they were written to refuse | S | backlog |
+| | [TASK-040103](tasks/TASK-040103-one-name-whatever-case-it-is-typed-in.md) One name, whatever case it is typed in | S | backlog |
+| | [TASK-040104](tasks/TASK-040104-permanence-fires-and-only-on-the-column-it-names.md) Permanence fires, and only on the column it names | S | backlog |
+| | [TASK-040105](tasks/TASK-040105-the-canonical-name-is-trimmed-nfc-and-counted-in-code-points.md) The canonical name is trimmed, NFC, and counted in code points | S | backlog |
+| | [TASK-040106](tasks/TASK-040106-the-canonical-form-refuses-the-invisible-and-the-doubled-space.md) The canonical form refuses the invisible and the doubled space | S | backlog |
+| | [TASK-040107](tasks/TASK-040107-one-builder-makes-every-profile-dto-a-test-uses.md) One builder makes every profile DTO a test uses | S | backlog |
+| | [TASK-040108](tasks/TASK-040108-profile-response-carries-the-name-the-row-holds.md) `ProfileResponse` carries the name the row holds | XS | backlog |
+| | [TASK-040109](tasks/TASK-040109-the-name-is-on-the-wire-and-it-is-the-one-stored.md) The name is on the wire, and it is the one stored | S | backlog |
+| | [TASK-040110](tasks/TASK-040110-the-profile-writes-port-and-its-sealed-answer.md) The `ProfileWrites` port, its sealed answer, and no lookup by name | S | backlog |
+| | [TASK-040111](tasks/TASK-040111-one-statement-three-answers.md) One statement, three answers | S | backlog |
+| | [TASK-040112](tasks/TASK-040112-two-writers-one-name.md) Two writers, one name: the loser is refused and keeps its nothing | S | backlog |
+| | [TASK-040113](tasks/TASK-040113-the-one-field-the-request-body-carries.md) The one field the request body carries | XS | backlog |
+| | [TASK-040114](tasks/TASK-040114-the-server-it-ships-with-can-write-a-name.md) The server it ships with can write a name | XS | backlog |
+| | [TASK-040115](tasks/TASK-040115-put-api-me-name-identity-first-then-the-name.md) `PUT /api/me/name`: identity first, then the name it accepts | S | backlog |
+| | [TASK-040116](tasks/TASK-040116-the-two-refusals-a-client-must-tell-apart.md) The two refusals a client must tell apart | XS | backlog |
+| | [TASK-040117](tasks/TASK-040117-a-name-set-over-http-comes-back-on-the-next-read.md) A name set over HTTP comes back on the next read | S | backlog |
+| | [TASK-040118](tasks/TASK-040118-document-the-name-endpoint.md) Document the name endpoint and what each answer means | S | backlog |
+| [STORY-0402](stories/STORY-0402-the-read-path-carries-the-display-name.md) The read path carries the display name | | | backlog |
+| [STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md) Credentials — the schema, the hash, and a port that returns none | | | backlog |
+| [STORY-0404](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) Sign-up — one endpoint, attaching an account to the profile already here | | | backlog |
+| [STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) Sign-in, the session, and what the socket presents (needs `STORY-0213`, `STORY-0214`) | | | backlog |
+| [STORY-0406](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) The claim proven, and the device binding revoked | | | **blocked** — `DEC-041` |
+| [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
+| [STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md) Duel history, paged over the whole record | | | backlog |
+| [STORY-0409](stories/STORY-0409-history-filters-and-search.md) History filters and search | | | backlog |
+| [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | **blocked** — `DEC-042` |
+| [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
+| [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
+| [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
+| [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
+| [STORY-0415](stories/STORY-0415-the-offer-after-a-first-win.md) The offer — an account after a first win, dismissed for good | | | backlog |
+| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | backlog |
+| [STORY-0417](stories/STORY-0417-the-recovery-screens.md) The recovery screens — attach an address, and reset a password | | | backlog |
+
+Two decisions were raised while splitting, both the architect's, both blocking exactly one story:
+`DEC-041` (the shape of device revocation, which `ADR-0037` hands to `STORY-0406` by name) and
+`DEC-042` (the operator's force-rename path, which `ADR-0038` leaves unstated). Neither blocks the
+epic, and neither is the human's — every product question this epic had was answered on 2026-08-15.
