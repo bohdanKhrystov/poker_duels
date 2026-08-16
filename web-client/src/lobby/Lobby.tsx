@@ -2,6 +2,7 @@ import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useSend } from "../store/duel-provider";
 import { ActionBar } from "../table/ActionBar";
+import { DuelResult } from "../result/DuelResult";
 import { DuelTable } from "../table/DuelTable";
 import { normalizeRoomCode, roomLink } from "./room-link";
 
@@ -11,6 +12,13 @@ export function Lobby(): ReactElement {
   const send = useSend();
   const [typedCode, setTypedCode] = useState("");
   const code = normalizeRoomCode(typedCode);
+
+  // The duel is over. This comes first because the reducer clears nothing a
+  // frame established: `view` and `roomCode` both outlive the duel, so a result
+  // branch placed after either is a branch that never runs.
+  if (state.outcome !== null) {
+    return <DuelResult outcome={state.outcome} mySeat={state.mySeat} />;
+  }
 
   // The first Snapshot is how the host learns the guest arrived: seating the
   // guest starts the duel, and there is no "opponent joined" frame to wait for.
