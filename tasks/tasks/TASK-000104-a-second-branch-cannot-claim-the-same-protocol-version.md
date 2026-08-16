@@ -3,7 +3,7 @@ schema: 2
 id: TASK-000104
 title: A second branch cannot claim the same PROTOCOL_VERSION
 type: task
-status: ready
+status: done
 parent: STORY-0001
 module: poker-server
 estimate: S
