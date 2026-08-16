@@ -817,8 +817,8 @@ Kotlin file and no generated type, and this epic writes no Kotlin — `DEC-038` 
 | | [TASK-030809](tasks/TASK-030809-the-duel-screen-shows-the-result-when-the-duel-ends.md) The duel screen shows the result when the duel ends | S | **done** |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen (needs `STORY-0213`) | **ready** |
 | **[STORY-0310](stories/STORY-0310-reconnect-and-resume.md)** Reconnect — the client resumes its seat — *schema 2* | | **ready** |
-| | [TASK-031001](tasks/TASK-031001-the-room-code-lives-under-one-key-this-module-owns.md) The room code lives under one storage key this module owns | XS | **ready** |
-| | [TASK-031002](tasks/TASK-031002-the-retry-delay-doubles-to-a-ceiling-and-spends-the-jitter.md) The retry delay doubles to a ceiling and spends the jitter it is handed | XS | backlog |
+| | [TASK-031001](tasks/TASK-031001-the-room-code-lives-under-one-key-this-module-owns.md) The room code lives under one storage key this module owns | XS | **done** |
+| | [TASK-031002](tasks/TASK-031002-the-retry-delay-doubles-to-a-ceiling-and-spends-the-jitter.md) The retry delay doubles to a ceiling and spends the jitter it is handed | XS | ready |
 | | [TASK-031003](tasks/TASK-031003-a-closed-socket-is-reopened-on-virtual-time.md) A closed socket is reopened, on virtual time, when the backoff says so | S | backlog |
 | | [TASK-031004](tasks/TASK-031004-a-socket-the-tab-replaced-starts-no-retry-of-its-own.md) A socket the tab has replaced starts no retry of its own | S | backlog |
 | | [TASK-031005](tasks/TASK-031005-a-version-mismatch-ends-the-retry-loop-for-good.md) A version mismatch ends the retry loop for good | XS | backlog |
