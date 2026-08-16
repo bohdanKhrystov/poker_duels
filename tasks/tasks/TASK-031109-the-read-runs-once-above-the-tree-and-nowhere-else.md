@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031109
 title: The strip's read runs once above the tree, and a tree without one asks nothing
 type: task
-status: ready
+status: done
 parent: STORY-0311
 module: web-client
 estimate: S
