@@ -1,6 +1,8 @@
 import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useSend } from "../store/duel-provider";
+import { useProfileStrip } from "../profile/profile-provider";
+import { ProfileStrip } from "../profile/ProfileStrip";
 import { ActionBar } from "../table/ActionBar";
 import { DuelResult } from "../result/DuelResult";
 import { DuelTable } from "../table/DuelTable";
@@ -10,6 +12,7 @@ import { normalizeRoomCode, roomLink } from "./room-link";
 export function Lobby(): ReactElement {
   const state = useDuelState();
   const send = useSend();
+  const profile = useProfileStrip();
   const [typedCode, setTypedCode] = useState("");
   const code = normalizeRoomCode(typedCode);
 
@@ -64,6 +67,7 @@ export function Lobby(): ReactElement {
         />
         <button type="submit">Join the duel</button>
       </form>
+      {profile !== null && <ProfileStrip state={profile} />}
     </section>
   );
 }
