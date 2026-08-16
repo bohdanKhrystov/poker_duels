@@ -8,9 +8,11 @@ import kotlinx.serialization.Serializable
  * @property playerId The unique identifier of the player.
  * @property coinBalance The player's current coin balance, computed as wins minus losses. May be
  *   negative per `ADR-0014`.
+ * @property displayName The player's chosen display name, or `null` if never set. Null means
+ *   *never set*, and the server fabricates no placeholder per `ADR-0029` §6.
  */
 @Serializable
-public data class ProfileResponse(val playerId: String, val coinBalance: Int)
+public data class ProfileResponse(val playerId: String, val coinBalance: Int, val displayName: String?)
 
 /**
  * The outcome of a duel from the requesting player's perspective.

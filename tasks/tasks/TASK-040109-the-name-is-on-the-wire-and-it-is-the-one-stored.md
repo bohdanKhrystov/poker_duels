@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040109
 title: The name is on the wire, and it is the one stored
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040108
 title: ProfileResponse carries the name the row holds
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: XS
@@ -32,7 +32,13 @@ from a placeholder.
 | `poker-server/src/main/kotlin/duels/poker/server/protocol/http/ProfileDtos.kt` | modify |
 | `poker-server/src/main/kotlin/duels/poker/server/db/PostgresProfileReads.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/protocol/http/ProfileDtoFixtures.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/http/ProfileDtosTest.kt` | modify — its exact-JSON assertion must gain `"displayName":null`, which cannot be separated from adding the field |
 | `docs/adr/ADR-0021-a-profile-gains-a-display-name.md` | read — the wire shape, and why the field takes no default |
+
+> **The real count is four, not three.** `lint_tickets.py` caps `files_touched` at 3, so the
+> frontmatter cannot say so. The fourth is the exact-JSON assertion above: a test that pins the
+> wire shape byte for byte has to change in the same commit as the field, or it fails. Recorded
+> here rather than worked around.
 
 ## Scope
 
