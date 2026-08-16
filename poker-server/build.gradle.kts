@@ -64,6 +64,42 @@ tasks.register<JavaExec>("verifyProtocolTypes") {
     }
 }
 
+tasks.register<JavaExec>("generateDuelScript") {
+    group = "protocol"
+    description = "Emits web-client/src/e2e/scripted-duel.gen.json from ScriptedDuel (TASK-031203). " +
+        "Classpath is the test runtime, not main: playDuel and scriptedDuel are test scaffolding " +
+        "and must never reach the production jar."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("duels.poker.server.duel.GenerateDuelScriptKt")
+    args(rootProject.file("web-client/src/e2e/scripted-duel.gen.json").absolutePath)
+}
+
+tasks.register<JavaExec>("verifyDuelScript") {
+    group = "protocol"
+    description = "Fails the build if web-client/src/e2e/scripted-duel.gen.json drifts from ScriptedDuel " +
+        "(TASK-031203). Classpath is the test runtime, not main, for the same reason generateDuelScript's is."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("duels.poker.server.duel.GenerateDuelScriptKt")
+
+    // Plain File locals, resolved at configuration time, so the doLast action below
+    // reaches back into neither Project nor this task — required for the configuration
+    // cache, and so this task regenerates into the build directory rather than touching
+    // the committed file it is comparing against.
+    val generatedFile = layout.buildDirectory.file("e2e/scripted-duel.gen.json").get().asFile
+    val committedFile = rootProject.file("web-client/src/e2e/scripted-duel.gen.json")
+    args(generatedFile.absolutePath)
+
+    doLast {
+        if (!generatedFile.readBytes().contentEquals(committedFile.readBytes())) {
+            throw GradleException(
+                "web-client/src/e2e/scripted-duel.gen.json is out of date. " +
+                    "Run ./gradlew :poker-server:generateDuelScript and commit the result.",
+            )
+        }
+    }
+}
+
 tasks.named("check") {
     dependsOn("verifyProtocolTypes")
+    dependsOn("verifyDuelScript")
 }
