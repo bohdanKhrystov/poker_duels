@@ -1,4 +1,4 @@
-import { readRoomCode, writeRoomCode } from "../protocol";
+import { forgetRoomCode, readRoomCode, writeRoomCode } from "../protocol";
 import type { ClientMessage, Connection, ServerMessage } from "../protocol";
 import { createDuelStore, type DuelStore } from "./duel-store";
 
@@ -44,6 +44,12 @@ export function bootDuelClient(options: BootOptions): DuelClient {
     }
     if (message.type === "RoomJoined" && options.storage) {
       writeRoomCode(options.storage, message.code);
+    }
+    if (message.type === "DuelFinished" && options.storage) {
+      // The way on from the result is a reload (TASK-030807). A tab that still
+      // remembered this room would rejoin it and be handed the same DuelFinished
+      // back, and the lobby would be unreachable.
+      forgetRoomCode(options.storage);
     }
   });
 

@@ -204,4 +204,30 @@ describe("booting the duel client", () => {
     expect(state.mySeat).toBe(1);
     expect(state.roomCode).toBe("ABCDEFGH");
   });
+
+  it("forgets the room once the duel has finished", () => {
+    const { socket, storage } = bootOverFakeSocket();
+
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+    expect(readRoomCode(storage)).toBe("ABCDEFGH");
+
+    socket.receive(
+      '{"type":"DuelFinished","outcome":{"winner":0,"handsPlayed":3,"finalStacks":[2000,0]}}',
+    );
+    expect(readRoomCode(storage)).toBeNull();
+  });
+
+  it("sends no JoinRoom on the Welcome after a duel has finished", () => {
+    const { socket } = bootOverFakeSocket(null);
+
+    socket.open();
+    socket.receive(WELCOME);
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+    socket.receive(
+      '{"type":"DuelFinished","outcome":{"winner":0,"handsPlayed":3,"finalStacks":[2000,0]}}',
+    );
+    socket.receive(WELCOME);
+
+    expect(sentJoinRooms(socket)).toEqual([]);
+  });
 });
