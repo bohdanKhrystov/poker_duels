@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040202
 title: A named opponent, an unnamed one, and a name set after the duel
 type: task
-status: ready
+status: done
 parent: STORY-0402
 module: poker-server
 estimate: S
