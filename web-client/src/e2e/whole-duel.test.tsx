@@ -2,7 +2,10 @@ import { within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { driveScriptedDuel } from "./drive-duel";
 import { scriptedDuel } from "./scripted-duel";
+import type { ServerStep } from "./scripted-duel";
 import { PROTOCOL_VERSION } from "../protocol";
+import { formatChips } from "../table/chips";
+import type { DuelFinished } from "../protocol/protocol.gen";
 
 describe("a whole duel through the client", () => {
   it("plays every frame of the script and ends on the result screen", () => {
@@ -237,5 +240,93 @@ describe("a whole duel through the client", () => {
 
       expect(run.receivedFrames).toEqual(scriptedServerFrames);
     }
+  });
+
+  it("states the hand count and every final stack the last frame carried", () => {
+    const duel = scriptedDuel();
+
+    for (const seat of duel.seats) {
+      // Get the last server step which should be DuelFinished
+      const lastServerStep = [...seat.steps]
+        .reverse()
+        .find((step) => step.from === "server") as ServerStep | undefined;
+      expect(lastServerStep).toBeDefined();
+      expect(lastServerStep?.from).toBe("server");
+
+      const lastMessage = lastServerStep!.message as DuelFinished;
+      expect(lastMessage.type).toBe("DuelFinished");
+
+      const { outcome } = lastMessage;
+      const { handsPlayed, finalStacks } = outcome;
+
+      const run = driveScriptedDuel({ viewerSeat: seat.viewerSeat });
+      const resultText = within(run.container).getByRole("region", {
+        name: "the result",
+      }).textContent;
+
+      // Should contain the correct hand count
+      const handWord = handsPlayed === 1 ? "hand" : "hands";
+      expect(resultText).toContain(`${handsPlayed} ${handWord}`);
+
+      // Should contain the correct final stacks with the correct labels
+      expect(resultText).toContain(
+        `You ${formatChips(finalStacks[seat.viewerSeat])}`,
+      );
+      expect(resultText).toContain(
+        `Your rival ${formatChips(finalStacks[1 - seat.viewerSeat])}`,
+      );
+
+      // Should NOT contain incorrect hand count
+      expect(resultText).not.toContain(`${handsPlayed + 1} hand`);
+
+      // Should NOT contain swapped stack labels
+      expect(resultText).not.toContain(
+        `You ${formatChips(finalStacks[1 - seat.viewerSeat])}`,
+      );
+    }
+  });
+
+  it("gives the two seats opposite verdicts, off the winner and the seat alone", () => {
+    const duel = scriptedDuel();
+    const verdictsByRun: string[] = [];
+
+    for (const seat of duel.seats) {
+      // Get the last server step which should be DuelFinished
+      const lastServerStep = [...seat.steps]
+        .reverse()
+        .find((step) => step.from === "server") as ServerStep | undefined;
+      expect(lastServerStep).toBeDefined();
+
+      const lastMessage = lastServerStep!.message as DuelFinished;
+      expect(lastMessage.type).toBe("DuelFinished");
+
+      const { outcome } = lastMessage;
+      const { winner } = outcome;
+
+      const run = driveScriptedDuel({ viewerSeat: seat.viewerSeat });
+      const resultText = within(run.container).getByRole("region", {
+        name: "the result",
+      }).textContent;
+
+      // Determine expected verdict based on winner and seat
+      const isWinner = winner === seat.viewerSeat;
+
+      if (isWinner) {
+        expect(resultText).toContain("Victory");
+        expect(resultText).toContain("+1 duel coin");
+        verdictsByRun.push("Victory");
+      } else {
+        expect(resultText).toContain("Defeat");
+        expect(resultText).toContain("−1 duel coin");
+        verdictsByRun.push("Defeat");
+      }
+    }
+
+    // Verify that each verdict appears in exactly one of the two runs
+    const victoryCount = verdictsByRun.filter((v) => v === "Victory").length;
+    const defeatCount = verdictsByRun.filter((v) => v === "Defeat").length;
+
+    expect(victoryCount).toBe(1);
+    expect(defeatCount).toBe(1);
   });
 });
