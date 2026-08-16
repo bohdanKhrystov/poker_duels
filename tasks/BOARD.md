@@ -55,21 +55,24 @@ work (`ADR-0024`).
 | | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **done** |
 | | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | **done** |
 | | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
-| | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | blocked |
+| | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | ready |
 
 `TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
 Actions minutes free at once, and `develop` is now protected: a pull request and two green checks
 to land, no force pushes, no deletions. Required approvals are deliberately **0** — one would
 deadlock the agent run, since an agent cannot approve its own PR.
 
-`TASK-000104` is **blocked on `DEC-040`** and lives here rather than under any epic, because the
-rule it enforces spans three of them. [`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md)
-§3 accepted the hole knowingly: two branches that both move `PROTOCOL_VERSION` `2` → `3` **merge
-without a conflict** — a three-way merge sees the same edit on both sides — and
-`ProtocolDocumentationTest` still passes, because it compares the document to the constant and both
-moved together. One integer then names two wire shapes with every gate green. `STORY-0213`,
-`STORY-0214` and `STORY-0405` all hold unlanded bumps and share that rule today; the *mechanism* is
-`DEC-040`, the architect's, and the ADR that answers it writes the ticket's last `verify` command.
+`TASK-000104` is **startable**, and lives here rather than under any epic because the rule it
+enforces spans three of them. `DEC-040` is answered by
+[`ADR-0047`](../docs/adr/ADR-0047-a-protocol-version-is-claimed-in-a-ledger.md): the lock is a
+**claim ledger**, `docs/protocol-versions.md`, one row per version naming a fingerprint of the wire
+shape that number means. Two branches appending a row for the same number **conflict textually**, so
+git refuses the second merge before a check runs — where the constant itself merges clean, because
+both sides made the identical `2` → `3` edit. One JUnit test on `:poker-server:check` proves the
+last row is `PROTOCOL_VERSION` and its fingerprint is the live wire's, which fails every wrong way
+of resolving that conflict and, for free, an unversioned wire change. `STORY-0213`, `STORY-0214` and
+`STORY-0405` all hold unlanded bumps and share the lock today; each now also pays a hand-written
+ledger row, and no wire-shape change can skip a version bump.
 
 ---
 
@@ -509,7 +512,6 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-040 | **The architect's** — what mechanism holds the `PROTOCOL_VERSION` lock, so two branches cannot both claim one number and both merge green? `ADR-0045` §3 accepted the hole and called enforcing it *"its own decision"*; three unlanded bumps share the rule today | [`TASK-000104`](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) | before the first of `STORY-0213` / `0214` / `0405` lands its bump |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -568,6 +570,24 @@ to the human and the ADR says so rather than assuming. The costs recorded rather
 renders no action log; the return line needs the store to remember what it was last told; and *the
 server acts for them* teaches a player how to beat an absent seat. **`STORY-0313` is now
 splittable** the day `STORY-0214` merges).
+
+`DEC-040` → [`ADR-0047`](../docs/adr/ADR-0047-a-protocol-version-is-claimed-in-a-ledger.md)
+(the `PROTOCOL_VERSION` lock is a **claim ledger**, `docs/protocol-versions.md`: one row per version
+naming a 16-hex fingerprint of the wire shape that number means. Two branches appending a row for the
+same number **conflict textually**, so git refuses the second merge before any check runs — verified
+with `git merge-file`, where the constant merges clean at exit 0 and the ledger exits 1 with both
+claims in the markers. One JUnit test on `:poker-server:check` — no new CI job, no Gradle task, no
+network, no production code — asserts versions ascend by one, the last row is `PROTOCOL_VERSION`, and
+its fingerprint equals the live descriptors', so every wrong way of resolving that conflict fails and
+an unversioned wire change fails too. There is deliberately **no** command that writes the row: one
+that regenerates the ledger is one that overwrites another branch's claim. Rejected: a CI check
+against `origin/develop`, which is unsound without `strict = true` because GitHub does not re-run a
+PR when its base moves, and unrunnable in an agent worktree with no `origin/develop`; and branch
+protection, which `TASK-000102` already measured and decided the other way. The costs recorded rather
+than discovered: a bump now costs a hand-written row and a deliberate red-then-green cycle; every
+wire-shape change now forces a version bump with no escape hatch; only the last row is verifiable;
+and `Int` and `Long` both project to `number`, so what escapes the fingerprint is exactly what
+escapes `verifyProtocolTypes`).
 
 `DEC-037` → [`ADR-0043`](../docs/adr/ADR-0043-a-rejection-closes-no-decision-point.md)
 (a `Rejected` closes no decision point: the reducer keeps `pendingTurn`, clears `rejection` on the
