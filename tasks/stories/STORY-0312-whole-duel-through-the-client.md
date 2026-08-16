@@ -2,7 +2,7 @@
 id: STORY-0312
 title: A whole duel through the client, frame by frame
 type: story
-status: backlog
+status: ready
 parent: EPIC-03
 module: web-client
 labels: [client, test, secrecy]
@@ -44,7 +44,31 @@ for the socket; this is its mirror on the other side of the wire.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0312`.* | — |
+| [TASK-031201](../tasks/TASK-031201-played-duel-records-the-acts-it-sent.md) | A played duel records the Act it sent, and the seat it sent it from | backlog |
+| [TASK-031202](../tasks/TASK-031202-a-whole-duel-as-one-seats-session-of-frames.md) | A whole duel written down as each seat's own session of frames | backlog |
+| [TASK-031203](../tasks/TASK-031203-one-task-writes-the-script-another-fails-on-drift.md) | One Gradle task writes the duel script, another fails the build on drift | backlog |
+| [TASK-031204](../tasks/TASK-031204-the-client-reads-the-script-and-proves-it-is-a-duel.md) | The client reads the committed script, and proves it is a whole duel | backlog |
+| [TASK-031205](../tasks/TASK-031205-the-script-replays-through-the-real-client.md) | The script replays through the real client, from either seat, to the result | backlog |
+| [TASK-031206](../tasks/TASK-031206-one-act-per-turn-the-frame-the-server-recorded.md) | The client answers each turn through the bar, with the frame the server recorded | backlog |
+| [TASK-031207](../tasks/TASK-031207-the-result-states-the-outcome-the-last-frame-carried.md) | The result states the outcome the script's last frame carried, from either seat | backlog |
+| [TASK-031208](../tasks/TASK-031208-no-rival-card-reaches-the-screen-before-the-reveal.md) | No rival card reaches the screen before the frame that reveals it | backlog |
+| [TASK-031209](../tasks/TASK-031209-a-hand-won-without-a-showdown-shows-no-rival-card.md) | A hand won without a showdown shows no rival card at all | backlog |
+
+The chain is strictly linear. It starts once `TASK-031112` — a `STORY-0311` follow-up filed by this
+split — has merged; that ticket is `ready` and this story's first is not.
+
+## How the fixture is obtained
+
+`DEC-022`'s toolchain leaves this a ticket-level choice, and the split takes `ADR-0020`'s existing
+answer for `protocol.gen.ts` rather than inventing a second mechanism: one Gradle task writes
+`web-client/src/e2e/scripted-duel.gen.json` from the server's own `ProtocolCodec`, a second
+regenerates into `build/` and fails `:poker-server:check` on any byte of drift. So the frames are
+real *and* cannot rot, and the client's replay needs no JVM, no server and no database — only the
+committed file.
+
+The script holds **both** seats' sessions, not one. That is what lets every client-side claim be made
+twice from two genuinely different inputs: two hole-card sets, two verdicts, two `Act` sequences —
+the discipline that stops an assertion passing because it happened to be true of a fixture default.
 
 ## Acceptance criteria
 
@@ -59,8 +83,21 @@ for the socket; this is its mirror on the other side of the wire.
 
 ## Out of scope
 
-- A browser end-to-end test against a running server — `DEC-024`; if the answer is yes it becomes
-  `STORY-0313`.
+- A browser end-to-end test against a running server — `DEC-024`, still open and still the
+  architect's. When this story was written it reserved `STORY-0313` for that answer; `ADR-0045` has
+  since taken that number for the presence story, so if `DEC-024` says yes it becomes `STORY-0314`.
+  Corrected at the split rather than left as a dangling reference.
 - Performance, bundle size and rendering budgets — nobody has set one.
 - Visual regression or screenshot testing — the design review is visual and human (`ADR-0024`).
-- Rematch in the scripted duel — `STORY-0309` is blocked, and this test does not wait on it.
+- Rematch in the scripted duel — `STORY-0309` is blocked on `EPIC-02`'s `STORY-0213` (`ADR-0044`),
+  and this test does not wait on it. `OfferRematch` and `RematchOffered` exist in no Kotlin file and
+  no generated type, so a script the server's own encoder produced cannot contain one; no ticket here
+  depends on a rematch frame.
+- Presence in the scripted duel — `OpponentPresence`, `SeatPresence` and `ActedForAbsentSeat` are
+  `EPIC-02`'s `STORY-0214` and this epic's `STORY-0313` (`ADR-0045`), and are on the wire nowhere
+  yet. Same reason, same consequence: no ticket here depends on a presence frame, and this story does
+  not wait on either. Added explicitly at the split rather than left implied, because the phrase
+  *"a whole duel, frame by frame"* invites a reader to assume every frame the wire will one day carry.
+- Reconnection inside the scripted duel. The driver uses `openConnection`, not
+  `openReconnectingConnection`: `STORY-0310` proved the resume, and a retry loop would put a timer in
+  a file that has no business owning one.

@@ -826,6 +826,46 @@ render today. Whether the client grows a *shared* HTTP data layer stays `EPIC-04
 one file and is meant to be replaced by it. **No opponent is named** — the client's `RecentDuel`
 drops `opponentPlayerId` at the parse, so no component has anywhere to leak it from.
 
+**One follow-up joined `STORY-0311` on 2026-08-16**, found while splitting `STORY-0312` and deferred
+twice before that. `TASK-031112`: nothing pins that the strip keeps the server's order of recent
+duels. `TASK-031108`'s fixture is two rows already sorted descending by date — and ascending by hand
+count, and ascending by id — so a client-side `sort` on any of the three ships green, and
+`TASK-031111`'s guard reads the surface for leaks and takes no position on order. Three rows in an
+order monotone in **no** field close it; `TASK-021107` already proved the server returns them newest
+first and capped, so the client's whole job is to not touch them.
+
+**`STORY-0312` is split into nine**, on a baseline of 358, and it starts once that follow-up lands —
+cumulative counts **364 → 377**, with `TASK-031112` taking 358 to 359 first. Three of the nine are
+`poker-server` and add no client test. It is the epic's **end-to-end** proof and `TASK-021206`'s
+mirror on the other side of the wire: a whole duel, frame by frame, through the real boot, the real
+store and the real screens over a `FakeSocket`.
+
+Two things were settled rather than guessed. **How the fixture is obtained** — `DEC-022` left it a
+ticket-level choice, and the split takes [`ADR-0020`](../docs/adr/ADR-0020-typescript-protocol-from-serial-descriptors.md)'s
+existing answer instead of inventing a second mechanism: `generateDuelScript` writes
+`web-client/src/e2e/scripted-duel.gen.json` from the server's own `ProtocolCodec`, `verifyDuelScript`
+regenerates into `build/` and fails `:poker-server:check` on any byte of drift, and the generator
+runs off the **test** runtime classpath so no fixture builder reaches the production jar. The frames
+are therefore real *and* cannot rot, while the client's replay needs no JVM, server or database.
+And **the script holds both seats' sessions, not one**, so every client-side claim is made twice from
+two genuinely different inputs — two hole-card sets, two verdicts, two `Act` sequences. That is the
+answer to the hazard that a value asserted only at a fixture default cannot be told from a constant.
+
+The secrecy claim is over the **rendered DOM at every step**, never over the store, and it names the
+secret rather than inferring it: `TASK-031202` reads the rival's real hole cards out of the *rival's*
+own frames, and `TASK-031208` sweeps for them by three routes — a card element's `aria-label`, the
+spoken name anywhere, and the raw `"Ah"` string — with four planted violations, the last of which
+doctors a `Snapshot` frame before it reaches the decoder, exactly as `TASK-021207` doctored one a
+layer down. `TASK-031209` then closes both directions: the hands in which the rival's cards appeared
+must equal, set for set, the hands a `HandRevealed` named.
+
+**Neither rematch nor presence is in it**, and the story now says so rather than leaving it implied:
+`OfferRematch`/`RematchOffered` (`ADR-0044`) and `OpponentPresence`/`ActedForAbsentSeat`
+(`ADR-0045`) exist in no Kotlin file and no generated type, so a script the server's own encoder
+produced cannot contain one. `DEC-024` — whether a two-browser run exists at all — stays open and
+stays the architect's; its answer changes nothing here, which is what the story said when it was
+written and is still true.
+
 | Story | Title | Status |
 | --- | --- | --- |
 | **[STORY-0301](stories/STORY-0301-web-client-toolchain.md)** The web-client toolchain and its first green check — *schema 2* | | **done** |
@@ -964,7 +1004,17 @@ drops `opponentPlayerId` at the parse, so no component has anywhere to leak it f
 | | [TASK-031109](tasks/TASK-031109-the-read-runs-once-above-the-tree-and-nowhere-else.md) The strip's read runs once above the tree | S | **done** |
 | | [TASK-031110](tasks/TASK-031110-the-lobby-shows-the-strip-and-the-duel-does-not.md) The lobby shows the strip, and a duel in progress does not | S | **done** |
 | | [TASK-031111](tasks/TASK-031111-the-strip-names-no-opponent-and-counts-no-coin.md) The strip names no opponent and counts no coin | S | **done** |
-| [STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | backlog |
+| | [TASK-031112](tasks/TASK-031112-the-strip-keeps-the-order-the-server-sent.md) The strip lists recent duels in the order the server sent them | XS | ready |
+| **[STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md)** A whole duel through the client, frame by frame — *schema 2* | | ready |
+| | [TASK-031201](tasks/TASK-031201-played-duel-records-the-acts-it-sent.md) A played duel records the Act it sent, and the seat it sent it from | XS | backlog |
+| | [TASK-031202](tasks/TASK-031202-a-whole-duel-as-one-seats-session-of-frames.md) A whole duel written down as each seat's own session of frames | S | backlog |
+| | [TASK-031203](tasks/TASK-031203-one-task-writes-the-script-another-fails-on-drift.md) One Gradle task writes the duel script, another fails the build on drift | S | backlog |
+| | [TASK-031204](tasks/TASK-031204-the-client-reads-the-script-and-proves-it-is-a-duel.md) The client reads the committed script, and proves it is a whole duel | S | backlog |
+| | [TASK-031205](tasks/TASK-031205-the-script-replays-through-the-real-client.md) The script replays through the real client, from either seat, to the result | S | backlog |
+| | [TASK-031206](tasks/TASK-031206-one-act-per-turn-the-frame-the-server-recorded.md) The client answers each turn through the bar, with the frame the server recorded | S | backlog |
+| | [TASK-031207](tasks/TASK-031207-the-result-states-the-outcome-the-last-frame-carried.md) The result states the outcome the script's last frame carried, from either seat | S | backlog |
+| | [TASK-031208](tasks/TASK-031208-no-rival-card-reaches-the-screen-before-the-reveal.md) No rival card reaches the screen before the frame that reveals it | S | backlog |
+| | [TASK-031209](tasks/TASK-031209-a-hand-won-without-a-showdown-shows-no-rival-card.md) A hand won without a showdown shows no rival card at all | S | backlog |
 | [STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent (needs `STORY-0214`) | **blocked** |
 
 ---
