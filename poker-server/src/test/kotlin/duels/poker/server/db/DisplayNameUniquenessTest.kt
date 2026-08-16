@@ -19,7 +19,7 @@ class DisplayNameUniquenessTest {
     }
 
     @Test
-    fun aSecondPlayerCannotTakeAHeldName(): Unit {
+    fun aSecondPlayerCannotTakeAHeldName() {
         val name = "alice"
         val firstPlayerId = insertPlayerWithName(name)
 
@@ -33,7 +33,7 @@ class DisplayNameUniquenessTest {
     }
 
     @Test
-    fun theFoldIsCaseInsensitive(): Unit {
+    fun theFoldIsCaseInsensitive() {
         val name1 = "Bob"
         val firstPlayerId = insertPlayerWithName(name1)
 
@@ -47,7 +47,7 @@ class DisplayNameUniquenessTest {
     }
 
     @Test
-    fun theFoldReachesBeyondAscii(): Unit {
+    fun theFoldReachesBeyondAscii() {
         // Using Élodie (composed form with accented e) and élodie
         // A naive lower() without proper Unicode collation would not catch this collision
         val name1 = "Élodie"
@@ -63,7 +63,7 @@ class DisplayNameUniquenessTest {
     }
 
     @Test
-    fun aDifferentNameIsAccepted(): Unit {
+    fun aDifferentNameIsAccepted() {
         val name1 = "Bob"
         val firstPlayerId = insertPlayerWithName(name1)
 
@@ -78,7 +78,7 @@ class DisplayNameUniquenessTest {
     }
 
     @Test
-    fun aHomoglyphIsADifferentName(): Unit {
+    fun aHomoglyphIsADifferentName() {
         // Cyrillic 'а' (U+0430) versus Latin 'a' (U+0061) in names
         // These are visually similar but different characters and do not collide
         // See ADR-0038 — homoglyph impersonation is accepted as a residual,
@@ -86,7 +86,7 @@ class DisplayNameUniquenessTest {
         val latinName = "ace"
         val firstPlayerId = insertPlayerWithName(latinName)
 
-        val cyrillicName = "асе"  // Cyrillic а, Latin s and e
+        val cyrillicName = "асе" // Cyrillic а, Latin s and e
         val secondPlayerId = insertPlayerWithName(cyrillicName)
 
         val storedLatinName = readDisplayName(firstPlayerId)
@@ -97,7 +97,7 @@ class DisplayNameUniquenessTest {
     }
 
     @Test
-    fun anyNumberOfProfilesHaveNoName(): Unit {
+    fun anyNumberOfProfilesHaveNoName() {
         val firstPlayerId = insertPlayerWithoutName()
         val secondPlayerId = insertPlayerWithoutName()
         val thirdPlayerId = insertPlayerWithoutName()
@@ -112,7 +112,7 @@ class DisplayNameUniquenessTest {
     }
 
     @Test
-    fun aRefusedNameLeavesTheLoserUnnamed(): Unit {
+    fun aRefusedNameLeavesTheLoserUnnamed() {
         val name = "champion"
         val firstPlayerId = insertPlayerWithName(name)
 
@@ -166,7 +166,7 @@ class DisplayNameUniquenessTest {
         return playerId
     }
 
-    private fun updatePlayerName(playerId: UUID, displayName: String): Unit {
+    private fun updatePlayerName(playerId: UUID, displayName: String) {
         dataSource.connection.use { connection ->
             connection.prepareStatement(
                 "UPDATE player SET display_name = ? WHERE id = ?",
