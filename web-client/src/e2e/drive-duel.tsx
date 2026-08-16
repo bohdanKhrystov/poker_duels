@@ -1,11 +1,13 @@
-import { act, render } from "@testing-library/react";
+import { act, fireEvent, render, within } from "@testing-library/react";
 import { openConnection } from "../protocol";
+import type { ActionType, PlayerAction } from "../protocol";
 import { FakeSocket } from "../protocol/fake-socket";
 import { bootDuelClient } from "../store/boot";
 import { DuelProvider } from "../store/duel-provider";
 import { Lobby } from "../lobby/Lobby";
+import { actionVerb } from "../table/action-text";
 import { scriptedDuel } from "./scripted-duel";
-import type { ScriptedSeat, ScriptStep } from "./scripted-duel";
+import type { ClientStep, ScriptedSeat, ScriptStep } from "./scripted-duel";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -39,17 +41,19 @@ function inMemoryStorage(): Storage {
 }
 
 /**
- * A `FakeSocket` that counts how many frames actually reached `receive`. The
- * count lives on the double itself, not on the replay loop below, so a bug
- * that fed the double a `"client"` step's frame would show up here even if
- * the loop's own bookkeeping insisted otherwise — the decoder silently
- * dropping an undecodable frame is not the same as it never having arrived.
+ * A `FakeSocket` that records every frame that actually reached `receive`, in
+ * the order it arrived. Both the count and the order live on the double
+ * itself, not on the replay loop below, so a bug that fed the double a
+ * `"client"` step's frame, or fed two `"server"` steps out of sequence, would
+ * show up here even if the loop's own bookkeeping insisted otherwise — the
+ * decoder silently dropping an undecodable frame is not the same as it never
+ * having arrived.
  */
 class CountingSocket extends FakeSocket {
-  received = 0;
+  readonly receivedFrames: string[] = [];
 
   override receive(data: unknown): void {
-    this.received += 1;
+    this.receivedFrames.push(data as string);
     super.receive(data);
   }
 }
@@ -61,6 +65,67 @@ export interface DuelRun {
   readonly sent: readonly string[];
   /** How many frames the double's `receive` actually saw. */
   readonly receivedCount: number;
+  /** Every frame the double's `receive` actually saw, in the order it saw them. */
+  readonly receivedFrames: readonly string[];
+}
+
+/**
+ * The `ActionType` `actionVerb` prints, keyed by the discriminator the
+ * server's own recording gives a `PlayerAction`. The two vocabularies name the
+ * same six actions, spelled differently — this is the one place that bridges
+ * them, so the driver can ask the production code for the word a player would
+ * read on the button rather than guessing it again.
+ */
+const ACTION_TYPE_OF: Record<PlayerAction["type"], ActionType> = {
+  Fold: "FOLD",
+  Check: "CHECK",
+  Call: "CALL",
+  Bet: "BET",
+  Raise: "RAISE",
+  AllIn: "ALL_IN",
+};
+
+/**
+ * Answers one recorded `"client"` step through the real action bar: finds the
+ * button the server's own recorded action names, dials in the amount first
+ * when the action carries one, then clicks. Never `send`, `actFrame` or
+ * `socket.send` — the frame that reaches the double is whatever the real bar
+ * built from a real click, not one handed to it.
+ *
+ * @throws If no button's accessible name starts with the recorded action's
+ *   verb, naming the step, the hand and what was on screen instead — a driver
+ *   that silently did nothing here would make every downstream assertion pass
+ *   by having skipped the turn.
+ */
+function actThroughTheBar(
+  container: HTMLElement,
+  step: ClientStep,
+  index: number,
+): void {
+  const { action } = step.act;
+  const verb = actionVerb(ACTION_TYPE_OF[action.type]);
+  const button = within(container).queryByRole("button", {
+    name: (name) => name.startsWith(verb),
+  });
+
+  if (button === null) {
+    const onScreen = within(container)
+      .queryAllByRole("button")
+      .map((element) => element.textContent);
+    throw new Error(
+      `driveScriptedDuel: step ${index} (hand ${step.act.handNumber}) recorded ` +
+        `"${action.type}", which needs a button starting with "${verb}", but the ` +
+        `screen shows: ${onScreen.length > 0 ? onScreen.join(", ") : "(no buttons)"}`,
+    );
+  }
+
+  if (action.type === "Bet" || action.type === "Raise") {
+    fireEvent.change(within(container).getByRole("slider"), {
+      target: { value: String(action.to) },
+    });
+  }
+
+  fireEvent.click(button);
 }
 
 /**
@@ -73,8 +138,9 @@ export interface DuelRun {
  *
  * Every `"server"` step reaches the client through `socket.receive`, the frame
  * string unmodified, so the client's own `decodeServerMessage` runs it exactly
- * as it would over a live connection. A `"client"` step is not replayed —
- * `TASK-031206` teaches the driver to act instead. `onStep` fires after both.
+ * as it would over a live connection. Every `"client"` step is answered
+ * through the real action bar instead of being replayed: see
+ * `actThroughTheBar`. `onStep` fires after both.
  */
 export function driveScriptedDuel(options: {
   readonly viewerSeat: number;
@@ -116,6 +182,10 @@ export function driveScriptedDuel(options: {
       act(() => {
         socket.receive(step.frame);
       });
+    } else {
+      act(() => {
+        actThroughTheBar(container, step, index);
+      });
     }
     options.onStep?.(step, index, container);
   });
@@ -124,6 +194,7 @@ export function driveScriptedDuel(options: {
     seat,
     container,
     sent: socket.sent,
-    receivedCount: socket.received,
+    receivedCount: socket.receivedFrames.length,
+    receivedFrames: socket.receivedFrames,
   };
 }

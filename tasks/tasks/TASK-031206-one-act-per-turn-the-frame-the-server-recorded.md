@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031206
 title: The client answers each turn through the bar, with the frame the server recorded
 type: task
-status: ready
+status: done
 parent: STORY-0312
 module: web-client
 estimate: S
