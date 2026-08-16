@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040103
 title: One name, whatever case it is typed in
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S
