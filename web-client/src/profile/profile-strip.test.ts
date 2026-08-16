@@ -249,5 +249,33 @@ describe("the profile strip read", () => {
 
     expect(result2).toEqual({ kind: "unavailable" });
     expect(mock2.calls).toHaveLength(2);
+
+    // Mixed: profile says no-profile (401), duels says unavailable (500)
+    // Precedence: no-profile > unavailable
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-3");
+    const mock3 = answering(refusedWith(401), refusedWith(500));
+
+    const result3 = await readProfileStrip({
+      fetch: mock3.fetch,
+      storage,
+    });
+
+    expect(result3).toEqual({ kind: "no-profile" });
+    expect(mock3.calls).toHaveLength(2);
+
+    // Mixed: profile says unavailable (500), duels says no-profile (401)
+    // Precedence: no-profile > unavailable
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-4");
+    const mock4 = answering(refusedWith(500), refusedWith(401));
+
+    const result4 = await readProfileStrip({
+      fetch: mock4.fetch,
+      storage,
+    });
+
+    expect(result4).toEqual({ kind: "no-profile" });
+    expect(mock4.calls).toHaveLength(2);
   });
 });
