@@ -1,6 +1,11 @@
 import type { ReactElement } from "react";
 import type { ProfileStripState } from "./profile-strip";
-import { coinBalanceText } from "./profile-text";
+import {
+  coinBalanceText,
+  coinDeltaText,
+  finishedAtText,
+  outcomeWord,
+} from "./profile-text";
 
 /**
  * The profile strip: states the duel coin balance, or announces no profile yet,
@@ -40,6 +45,25 @@ export function ProfileStrip(props: {
           <p className="font-mono text-small">
             {coinBalanceText(state.profile.coinBalance)} Duel coins
           </p>
+          {state.duels.length === 0 ? (
+            <p className="text-small">No duels yet.</p>
+          ) : (
+            <ul className="w-full text-small">
+              {state.duels.map((duel) => (
+                <li
+                  key={duel.duelId}
+                  className="border-t border-hairline py-3 first:border-t-0"
+                >
+                  <p>
+                    {outcomeWord(duel.outcome)} {coinDeltaText(duel.coinDelta)}{" "}
+                    {duel.handsPlayed}{" "}
+                    {duel.handsPlayed === 1 ? "hand" : "hands"}{" "}
+                    {finishedAtText(duel.finishedAt)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       );
   }
