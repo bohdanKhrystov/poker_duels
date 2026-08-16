@@ -100,6 +100,20 @@ describe("a tab whose socket dropped", () => {
       { type: "Hello", deviceId: "d-1", protocolVersion: PROTOCOL_VERSION },
       { type: "JoinRoom", code: "ABCDEFGH" },
     ]);
+
+    // A second drop, one generation further on: "once each" is a claim about
+    // the loop, not just the first reconnect, so it must hold again on the
+    // socket that replaces the one just asserted on above.
+    sockets[1].close();
+
+    vi.advanceTimersByTime(250);
+    sockets[2].open();
+    sockets[2].receive(WELCOME);
+
+    expect(sockets[2].sent.map((frame) => JSON.parse(frame))).toEqual([
+      { type: "Hello", deviceId: "d-1", protocolVersion: PROTOCOL_VERSION },
+      { type: "JoinRoom", code: "ABCDEFGH" },
+    ]);
   });
 
   it("carries the device id the first Welcome issued into the second Hello", () => {
