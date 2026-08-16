@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031012
 title: The table repaints from the snapshot that followed the resume
 type: task
-status: ready
+status: done
 parent: STORY-0310
 module: web-client
 estimate: S
