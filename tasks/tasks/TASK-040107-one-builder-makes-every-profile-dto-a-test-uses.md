@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040107
 title: One builder makes every profile DTO a test uses
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S

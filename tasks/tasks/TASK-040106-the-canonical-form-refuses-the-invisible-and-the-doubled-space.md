@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040106
 title: The canonical form refuses the invisible and the doubled space
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: S
