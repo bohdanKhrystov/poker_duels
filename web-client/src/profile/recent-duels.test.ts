@@ -245,6 +245,20 @@ describe("the recent duels read", () => {
             handsPlayed: 7,
             finishedAt: "2026-08-14T19:00:00Z",
           },
+          {
+            duelId: "duel-discordant-won",
+            outcome: "WON",
+            coinDelta: 0,
+            handsPlayed: 4,
+            finishedAt: "2026-08-14T18:00:00Z",
+          },
+          {
+            duelId: "duel-discordant-drew",
+            outcome: "DREW",
+            coinDelta: 1,
+            handsPlayed: 6,
+            finishedAt: "2026-08-14T17:00:00Z",
+          },
         ],
       }),
     );
@@ -277,6 +291,20 @@ describe("the recent duels read", () => {
           coinDelta: 0,
           handsPlayed: 7,
           finishedAt: "2026-08-14T19:00:00Z",
+        },
+        {
+          duelId: "duel-discordant-won",
+          outcome: "WON",
+          coinDelta: 0,
+          handsPlayed: 4,
+          finishedAt: "2026-08-14T18:00:00Z",
+        },
+        {
+          duelId: "duel-discordant-drew",
+          outcome: "DREW",
+          coinDelta: 1,
+          handsPlayed: 6,
+          finishedAt: "2026-08-14T17:00:00Z",
         },
       ],
     });
