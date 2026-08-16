@@ -22,11 +22,11 @@ import javax.sql.DataSource
 public class PostgresProfileReads(private val dataSource: DataSource) : ProfileReads {
     override suspend fun profileOf(deviceId: DeviceId): ProfileResponse? = withContext(Dispatchers.IO) {
         dataSource.connection.use { connection ->
-            connection.prepareStatement("SELECT id, coin_balance FROM player WHERE device_id = ?")
+            connection.prepareStatement("SELECT id, coin_balance, display_name FROM player WHERE device_id = ?")
                 .use { statement ->
                     statement.setString(1, deviceId.value)
                     statement.executeQuery().use { rows ->
-                        if (rows.next()) ProfileResponse(rows.getString(1), rows.getInt(2)) else null
+                        if (rows.next()) ProfileResponse(rows.getString(1), rows.getInt(2), rows.getString(3)) else null
                     }
                 }
         }

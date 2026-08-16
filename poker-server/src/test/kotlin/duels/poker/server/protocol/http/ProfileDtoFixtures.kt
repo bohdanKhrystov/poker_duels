@@ -12,7 +12,8 @@ package duels.poker.server.protocol.http
 internal fun profileResponse(
     playerId: String,
     coinBalance: Int,
-): ProfileResponse = ProfileResponse(playerId, coinBalance)
+    displayName: String? = null,
+): ProfileResponse = ProfileResponse(playerId, coinBalance, displayName)
 
 internal fun duelSummaryResponse(
     duelId: String,

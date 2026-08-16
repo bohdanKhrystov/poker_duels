@@ -10,7 +10,7 @@ class ProfileDtosTest {
     fun aProfileEncodesItsPlayerIdAndBalance() {
         val profile = profileResponse("p-1", 3)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
-        assertEquals("""{"playerId":"p-1","coinBalance":3}""", encoded)
+        assertEquals("""{"playerId":"p-1","coinBalance":3,"displayName":null}""", encoded)
     }
 
     @Test
