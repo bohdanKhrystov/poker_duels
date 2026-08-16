@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030809
 title: The duel screen shows the result when the duel ends
 type: task
-status: backlog
+status: ready
 parent: STORY-0308
 module: web-client
 estimate: S
