@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040111
 title: One statement, three answers
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S
