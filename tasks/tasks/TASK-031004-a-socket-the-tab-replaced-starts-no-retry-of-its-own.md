@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031004
 title: A socket the tab has replaced starts no retry of its own
 type: task
-status: backlog
+status: ready
 parent: STORY-0310
 module: web-client
 estimate: S
