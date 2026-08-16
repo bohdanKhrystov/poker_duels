@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040105
 title: The canonical name is trimmed, NFC, and counted in code points
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S
