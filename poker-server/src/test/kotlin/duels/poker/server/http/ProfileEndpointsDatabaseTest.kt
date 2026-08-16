@@ -14,13 +14,18 @@ import duels.poker.server.module
 import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
+import duels.poker.server.protocol.http.SetNameRequest
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
@@ -137,5 +142,140 @@ class ProfileEndpointsDatabaseTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun aNameSetOverHttpIsReadBackOnTheProfile() = testApplication {
+        application {
+            module()
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+        }
+
+        // PUT a name for alice
+        val putResponse = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            contentType(ContentType.Application.Json)
+            setBody(protocolJson.encodeToString(SetNameRequest.serializer(), SetNameRequest("Alice Smith")))
+        }
+
+        assertEquals(HttpStatusCode.OK, putResponse.status)
+
+        // GET the profile and verify the name is persisted
+        val getResponse = client.get("/api/me") {
+            header(DEVICE_ID_HEADER, "alice")
+        }
+
+        assertEquals(HttpStatusCode.OK, getResponse.status)
+        val body = getResponse.bodyAsText()
+        val profile = protocolJson.decodeFromString<ProfileResponse>(body)
+
+        assertEquals("Alice Smith", profile.displayName)
+    }
+
+    @Test
+    fun theStoredNameIsTheCanonicalOne() = testApplication {
+        application {
+            module()
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+        }
+
+        // Create a decomposed version of "Élodie" with surrounding spaces
+        // é as e + combining acute (U+0301)
+        val decomposedName = "  Élodie  "
+
+        // PUT the decomposed, spaced name for alice
+        val putResponse = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            contentType(ContentType.Application.Json)
+            setBody(protocolJson.encodeToString(SetNameRequest.serializer(), SetNameRequest(decomposedName)))
+        }
+
+        assertEquals(HttpStatusCode.OK, putResponse.status)
+
+        // GET the profile and verify the canonical form is returned
+        val getResponse = client.get("/api/me") {
+            header(DEVICE_ID_HEADER, "alice")
+        }
+
+        assertEquals(HttpStatusCode.OK, getResponse.status)
+        val body = getResponse.bodyAsText()
+        val profile = protocolJson.decodeFromString<ProfileResponse>(body)
+
+        // The canonical form should be trimmed and NFC normalized
+        assertEquals("Élodie", profile.displayName)
+    }
+
+    @Test
+    fun aSecondDeviceCannotTakeTheSameName() = testApplication {
+        application {
+            module()
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+        }
+
+        // Alice sets her name
+        val alicePutResponse = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            contentType(ContentType.Application.Json)
+            setBody(protocolJson.encodeToString(SetNameRequest.serializer(), SetNameRequest("Charlie")))
+        }
+
+        assertEquals(HttpStatusCode.OK, alicePutResponse.status)
+
+        // Bob tries to take the same name, should get 409 Conflict
+        val bobPutResponse = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "bob")
+            contentType(ContentType.Application.Json)
+            setBody(protocolJson.encodeToString(SetNameRequest.serializer(), SetNameRequest("Charlie")))
+        }
+
+        assertEquals(HttpStatusCode.Conflict, bobPutResponse.status)
+
+        // Verify that Bob's profile still has no name
+        val bobGetResponse = client.get("/api/me") {
+            header(DEVICE_ID_HEADER, "bob")
+        }
+
+        assertEquals(HttpStatusCode.OK, bobGetResponse.status)
+        val bobBody = bobGetResponse.bodyAsText()
+        val bobProfile = protocolJson.decodeFromString<ProfileResponse>(bobBody)
+
+        assertEquals(null, bobProfile.displayName)
+    }
+
+    @Test
+    fun aSecondNameForTheSameProfileIsForbidden() = testApplication {
+        application {
+            module()
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+        }
+
+        // Alice sets her name
+        val firstPutResponse = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            contentType(ContentType.Application.Json)
+            setBody(protocolJson.encodeToString(SetNameRequest.serializer(), SetNameRequest("Diana")))
+        }
+
+        assertEquals(HttpStatusCode.OK, firstPutResponse.status)
+
+        // Alice tries to change her name, should get 403 Forbidden
+        val secondPutResponse = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            contentType(ContentType.Application.Json)
+            setBody(protocolJson.encodeToString(SetNameRequest.serializer(), SetNameRequest("Eleanor")))
+        }
+
+        assertEquals(HttpStatusCode.Forbidden, secondPutResponse.status)
+
+        // Verify that Alice's profile still has the original name
+        val getResponse = client.get("/api/me") {
+            header(DEVICE_ID_HEADER, "alice")
+        }
+
+        assertEquals(HttpStatusCode.OK, getResponse.status)
+        val body = getResponse.bodyAsText()
+        val profile = protocolJson.decodeFromString<ProfileResponse>(body)
+
+        assertEquals("Diana", profile.displayName)
     }
 }
