@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031108
 title: One line per recent duel, and a word when there are none
 type: task
-status: ready
+status: done
 parent: STORY-0311
 module: web-client
 estimate: S
