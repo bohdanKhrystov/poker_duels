@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031014
 title: The reconnecting connection's own send, status and close are proven
 type: task
-status: ready
+status: done
 parent: STORY-0310
 module: web-client
 estimate: S
