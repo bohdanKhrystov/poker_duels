@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040201
 title: The duel line joins the opponent's row and carries their name
 type: task
-status: ready
+status: done
 parent: STORY-0402
 module: poker-server
 estimate: XS

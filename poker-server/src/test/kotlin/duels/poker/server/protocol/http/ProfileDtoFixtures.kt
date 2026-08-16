@@ -22,6 +22,7 @@ internal fun duelSummaryResponse(
     coinDelta: Int,
     handsPlayed: Int,
     finishedAt: String,
+    opponentDisplayName: String? = null,
 ): DuelSummaryResponse = DuelSummaryResponse(
     duelId = duelId,
     opponentPlayerId = opponentPlayerId,
@@ -29,4 +30,5 @@ internal fun duelSummaryResponse(
     coinDelta = coinDelta,
     handsPlayed = handsPlayed,
     finishedAt = finishedAt,
+    opponentDisplayName = opponentDisplayName,
 )

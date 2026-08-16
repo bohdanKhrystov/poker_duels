@@ -52,6 +52,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                                     finishedAt = rows.getObject("finished_at", OffsetDateTime::class.java)
                                         .toInstant()
                                         .toString(),
+                                    opponentDisplayName = rows.getString("opponent_display_name"),
                                 )
                         }
                         duels
@@ -65,16 +66,21 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         // row, including both rows of a draw (`coin_delta = 0`). That is what makes this
         // self-join safe: the opponent's row always exists, so a drawn duel is not a special
         // case and needs no `coin_delta <> 0` filter that would silently drop it.
+        // duel_result.player_id is NOT NULL REFERENCES player (id) in V1, so exactly one
+        // `player` row matches every opponent result row. The inner join can neither drop a
+        // duel nor duplicate one.
         private const val RECENT_DUELS_SQL =
             """
             SELECT d.id AS duel_id,
                    o.player_id AS opponent_id,
+                   p.display_name AS opponent_display_name,
                    r.coin_delta AS coin_delta,
                    d.finished_at AS finished_at,
                    d.hands_played AS hands_played
             FROM duel_result r
             JOIN duel d ON d.id = r.duel_id
             JOIN duel_result o ON o.duel_id = r.duel_id AND o.player_id <> r.player_id
+            JOIN player p ON p.id = o.player_id
             WHERE r.player_id = ?
             ORDER BY d.finished_at DESC, d.id DESC
             LIMIT ?
