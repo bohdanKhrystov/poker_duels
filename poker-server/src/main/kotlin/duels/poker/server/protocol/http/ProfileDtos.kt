@@ -61,3 +61,16 @@ public data class DuelSummaryResponse(
  */
 @Serializable
 public data class RecentDuelsResponse(val duels: List<DuelSummaryResponse>)
+
+/**
+ * The body of `PUT /api/me/name`, carrying a display name the player has chosen.
+ *
+ * The server canonicalises what it receives via `canonicalDisplayNameOrNull`, which may reject
+ * the name, trim it, or normalise its casing. The DTO is a shape, not a rule.
+ *
+ * @property name The display name the player has chosen. No default value: a missing field must
+ *   be refused rather than silently becoming `null` or `""`, and an empty body should not
+ *   succeed in setting the empty string.
+ */
+@Serializable
+public data class SetNameRequest(val name: String)

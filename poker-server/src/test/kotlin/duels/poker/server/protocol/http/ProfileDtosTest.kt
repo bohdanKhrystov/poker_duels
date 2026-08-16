@@ -2,6 +2,7 @@ package duels.poker.server.protocol.http
 
 import duels.poker.server.protocol.protocolJson
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -114,5 +115,31 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 0, displayName = null)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertTrue(encoded.contains(""""displayName":null"""))
+    }
+
+    @Test
+    fun aSetNameRequestDecodesItsName() {
+        val decoded = protocolJson.decodeFromString(SetNameRequest.serializer(), """{"name":"bob"}""")
+        assertEquals(SetNameRequest("bob"), decoded)
+    }
+
+    @Test
+    fun aSetNameRequestDecodesAnotherName() {
+        val decoded = protocolJson.decodeFromString(SetNameRequest.serializer(), """{"name":"alice"}""")
+        assertEquals(SetNameRequest("alice"), decoded)
+    }
+
+    @Test
+    fun aBodyWithNoNameIsRefused() {
+        assertThrows<IllegalArgumentException> {
+            protocolJson.decodeFromString(SetNameRequest.serializer(), "{}")
+        }
+    }
+
+    @Test
+    fun aBodyWithAnUnknownFieldIsRefused() {
+        assertThrows<IllegalArgumentException> {
+            protocolJson.decodeFromString(SetNameRequest.serializer(), """{"name":"bob","playerId":"p-1"}""")
+        }
     }
 }
