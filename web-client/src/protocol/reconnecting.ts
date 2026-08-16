@@ -42,6 +42,13 @@ export function openReconnectingConnection(
     if (message.type === "Welcome") {
       failures = 0;
     }
+    // openConnection has already refused to send on this socket. Reopening
+    // would only reach the same refusal, more slowly. It reads the status
+    // rather than re-testing the version, so there is one definition of
+    // "outdated" in the client.
+    if (current !== null && current.status.kind === "outdated") {
+      stopped = true;
+    }
     options.onMessage(message);
   }
 

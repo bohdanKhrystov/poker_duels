@@ -38,6 +38,14 @@ function welcomeFrame(deviceId: string): string {
   } satisfies Welcome);
 }
 
+function welcomeFrameWithDifferentVersion(deviceId: string): string {
+  return JSON.stringify({
+    type: "Welcome",
+    deviceId,
+    protocolVersion: PROTOCOL_VERSION + 1,
+  } satisfies Welcome);
+}
+
 function roomJoinedFrame(seat: number): string {
   return JSON.stringify({
     type: "RoomJoined",
@@ -245,5 +253,47 @@ describe("the reconnecting connection", () => {
         (frame) => (JSON.parse(frame) as { type: string }).type,
       ),
     ).toEqual(["Hello"]);
+  });
+
+  it("opens no further socket once the Welcome named another protocol version", () => {
+    const { sockets } = openOverFakeSockets();
+
+    sockets[0].receive(welcomeFrameWithDifferentVersion("device-1"));
+    sockets[0].close();
+    vi.advanceTimersByTime(60 * 60 * 1000);
+
+    expect(sockets).toHaveLength(1);
+
+    // Even if the socket closes again after the long advance, no new socket opens.
+    sockets[0].close();
+    vi.advanceTimersByTime(250 + 500 + 1000);
+
+    expect(sockets).toHaveLength(1);
+  });
+
+  it("opens no further socket after a VERSION_MISMATCH failure", () => {
+    const { sockets } = openOverFakeSockets();
+
+    sockets[0].receive('{"type":"Failure","error":"VERSION_MISMATCH"}');
+    sockets[0].close();
+    vi.advanceTimersByTime(60 * 60 * 1000);
+
+    expect(sockets).toHaveLength(1);
+
+    // Even if the socket closes again after the long advance, no new socket opens.
+    sockets[0].close();
+    vi.advanceTimersByTime(250 + 500 + 1000);
+
+    expect(sockets).toHaveLength(1);
+  });
+
+  it("keeps retrying after a failure that is not a version mismatch", () => {
+    const { sockets } = openOverFakeSockets();
+
+    sockets[0].receive('{"type":"Failure","error":"UNKNOWN_ROOM"}');
+    sockets[0].close();
+    vi.advanceTimersByTime(250);
+
+    expect(sockets).toHaveLength(2);
   });
 });

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031006
 title: The tab's one connection is the one that comes back
 type: task
-status: backlog
+status: ready
 parent: STORY-0310
 module: web-client
 estimate: XS
