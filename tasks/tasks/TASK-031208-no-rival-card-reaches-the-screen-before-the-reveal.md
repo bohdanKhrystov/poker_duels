@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031208
 title: No rival card reaches the screen before the frame that reveals it
 type: task
-status: ready
+status: done
 parent: STORY-0312
 module: web-client
 estimate: S
