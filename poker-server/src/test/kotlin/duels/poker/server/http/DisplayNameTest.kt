@@ -139,6 +139,9 @@ class DisplayNameTest {
         assertNull(canonicalDisplayNameOrNull("bo\u0007b"))
         // U+001F UNIT SEPARATOR, the other end of the C0 control range: also CONTROL.
         assertNull(canonicalDisplayNameOrNull("bo\u001Fb"))
+        // U+0085 NEXT LINE (NEL), a C1 control outside the two above: still CONTROL,
+        // so a blocklist of only U+0007/U+001F would miss it.
+        assertNull(canonicalDisplayNameOrNull("bo\u0085b"))
     }
 
     @Test
@@ -149,6 +152,9 @@ class DisplayNameTest {
         assertNull(canonicalDisplayNameOrNull("bo\u200Bb"))
         assertNull(canonicalDisplayNameOrNull("bo\u200Db"))
         assertNull(canonicalDisplayNameOrNull("bo\uFEFFb"))
+        // U+2060 WORD JOINER, a Cf character none of the three above stands in for:
+        // still refused by the category rule, not by an enumerated list.
+        assertNull(canonicalDisplayNameOrNull("bo\u2060b"))
     }
 
     @Test
@@ -173,6 +179,9 @@ class DisplayNameTest {
         // control rule.
         assertNull(canonicalDisplayNameOrNull("bo\u00A0b"))
         assertNull(canonicalDisplayNameOrNull("bo\u2003b"))
+        // U+3000 IDEOGRAPHIC SPACE, a Zs character neither of the two above stands in
+        // for: still caught by isSpaceChar.
+        assertNull(canonicalDisplayNameOrNull("bo\u3000b"))
     }
 
     @Test
