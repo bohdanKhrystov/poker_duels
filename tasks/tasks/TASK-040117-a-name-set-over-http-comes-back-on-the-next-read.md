@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040117
 title: A name set over HTTP comes back on the next read
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: S
