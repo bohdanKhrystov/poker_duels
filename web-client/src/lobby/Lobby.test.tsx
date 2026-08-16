@@ -283,7 +283,7 @@ describe("the lobby", () => {
     });
   });
 
-  it("keeps waiting through every frame that is not a Snapshot", () => {
+  it("keeps waiting through every frame that neither seats a table nor ends the duel", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
     renderLobby(store);
@@ -294,7 +294,8 @@ describe("the lobby", () => {
     // The claim is universal and the cost of getting it wrong is exact: a
     // reducer that leaks a `view` on DuelFinished shipped `189 passed` while the
     // identical leak on Events failed — same bug, caught only by luck of which
-    // frame the test happened to name.
+    // frame the test happened to name. DuelFinished and Failure are covered
+    // separately by the two tests below.
     const NOT_A_SNAPSHOT: readonly ServerMessage[] = [
       { type: "Welcome", deviceId: "d-1", protocolVersion: 2 },
       { type: "RoomJoined", code: "ABCDEFGH", seat: 0 },
@@ -320,10 +321,6 @@ describe("the lobby", () => {
           allowed: ["CHECK"],
         },
       },
-      {
-        type: "DuelFinished",
-        outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
-      },
       { type: "Failure", error: "NOT_YOUR_TURN" },
     ];
 
@@ -333,5 +330,42 @@ describe("the lobby", () => {
       });
       expect(screen.getByText("Waiting for your rival")).toBeDefined();
     }
+  });
+
+  it("shows the result when the duel finishes", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 1, handsPlayed: 3, finalStacks: [0, 1000] },
+      });
+    });
+
+    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
+    expect(screen.getByText("Victory")).toBeDefined();
+    expect(
+      screen.queryByRole("heading", { name: "Waiting for your rival" }),
+    ).toBeNull();
+  });
+
+  it("puts the result over the table it replaces", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+      });
+    });
+
+    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
+    expect(screen.queryByRole("region", { name: "your move" })).toBeNull();
+    expect(screen.queryByText("Pot 30")).toBeNull();
   });
 });
