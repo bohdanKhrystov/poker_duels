@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040114
 title: The server it ships with can write a name
 type: task
-status: backlog
+status: ready
 parent: STORY-0401
 module: poker-server
 estimate: XS

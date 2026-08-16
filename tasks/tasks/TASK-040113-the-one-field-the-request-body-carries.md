@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040113
 title: The one field the request body carries
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: XS
