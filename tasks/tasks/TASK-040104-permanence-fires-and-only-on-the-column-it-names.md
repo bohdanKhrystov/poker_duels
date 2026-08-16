@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040104
 title: Permanence fires, and only on the column it names
 type: task
-status: ready
+status: done
 parent: STORY-0401
 module: poker-server
 estimate: S
