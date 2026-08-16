@@ -34,7 +34,8 @@ wins"*.
 - Vocabulary and look per `docs/vision.md` and `STORY-0601`: *duel, rival, rematch*. The coin is
   steel (`--pd-coin`), never gold. Win and loss use `--pd-win` / `--pd-loss`. No confetti, no
   jackpot, no "you're on fire".
-- Rematch belongs to `STORY-0309` and is blocked on `DEC-023`. **Do not stub a rematch button here**
+- Rematch belongs to `STORY-0309`, which waits on `EPIC-02`'s `STORY-0213` for the frames
+  (`DEC-023`, answered by `ADR-0044`). **Do not stub a rematch button here**
   — a dead control that silently does nothing is worse than an absent one, and a control that fakes
   it with `CreateRoom` loses the button-seat alternation the room owns.
 - Until rematch exists, the way on from this screen is back to the lobby, where a new room can be
@@ -73,8 +74,8 @@ Recorded here rather than argued in a review, in the shape `STORY-0307` used:
   `DuelOutcome` is `{winner, handsPlayed, finalStacks}`: a minute count would have to be timed by the
   client, and how the last pot was won is not on the wire at all. The hand count and both final
   stacks stay; the rest goes.
-- **No rematch button.** The design draws one. `STORY-0309` owns it, blocked on `DEC-023`, and this
-  story says plainly not to stub it — `TASK-030807` has a test that keeps it from being added by
+- **No rematch button.** The design draws one. `STORY-0309` owns it and waits on `EPIC-02`'s
+  `STORY-0213` for the frames (`DEC-023` → `ADR-0044`), and this story says plainly not to stub it — `TASK-030807` has a test that keeps it from being added by
   kindness.
 
 The way on is a plain `<a href="/">`, not a store reset: the reducer clears nothing a frame
@@ -99,7 +100,7 @@ counter this screen incremented.
 
 ## Out of scope
 
-- Rematch — `STORY-0309`, blocked on `DEC-023`.
+- Rematch — `STORY-0309`, which consumes `EPIC-02`'s `STORY-0213` (`DEC-023` → `ADR-0044`).
 - Hand history, replay, "you should have called" — `EPIC-08`.
 - Rating changes, leaderboard position — `EPIC-05`.
 - Sharing a result, screenshots, social anything.

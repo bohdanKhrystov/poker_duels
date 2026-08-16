@@ -48,7 +48,9 @@ inventing colours ([`ADR-0024`](../../docs/adr/ADR-0024-design-follows-the-code-
 - The action bar: `YourTurn.legalActions` rendered as buttons, `Act` echoing the turn's identity,
   `Rejected` shown as sent.
 - The result screen: `DuelOutcome` — win, loss, or the draw that `ADR-0015` says is a real result.
-- Rematch, once the wire can carry one (`DEC-023`).
+- Rematch: `OfferRematch` sent, `RematchOffered` rendered, the opening `Snapshot` taken as the start
+  ([`ADR-0044`](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md)). The frames
+  themselves are `EPIC-02`'s `STORY-0213`.
 - Reconnect: a dropped socket or a reloaded tab returns to the same seat.
 - The profile strip: the coin balance and the recent duels, read over HTTP, signed and unclamped.
 - One test that plays a whole scripted duel through the client and asserts the secrecy property from
@@ -58,7 +60,7 @@ inventing colours ([`ADR-0024`](../../docs/adr/ADR-0024-design-follows-the-code-
 
 | Not here | Where |
 | --- | --- |
-| Any change to the server, the protocol, or the rules | Nowhere in this epic. A client that needs a new frame raises a decision (`DEC-023`) rather than editing Kotlin |
+| Any change to the server, the protocol, or the rules | Nowhere in this epic. A client that needs a new frame raises a decision rather than editing Kotlin — `DEC-023` did exactly that, and [`ADR-0044`](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) put the rematch's server half in `EPIC-02` as `STORY-0213`, which `STORY-0309` consumes |
 | Deciding the visual language — palette, type, the table's composition | EPIC-06. This epic consumes `design/tokens/tokens.css` and the screen designs; it authors none |
 | Accounts, the claim flow, display names | EPIC-04. No name is on the wire today, so no name is rendered — see [`ADR-0038`](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) |
 | Leaderboard, seasons, ratings | EPIC-05 |
@@ -106,7 +108,7 @@ Every one of these is cheap to violate in a component and expensive to notice in
 | [STORY-0306](../stories/STORY-0306-duel-table-screen.md) | The duel table renders a `PlayerView` | 0305 | done |
 | [STORY-0307](../stories/STORY-0307-action-bar.md) | The action bar: acting on your turn | 0306 | ready |
 | [STORY-0308](../stories/STORY-0308-result-screen.md) | The result screen: who won, and the coin | 0307 | backlog |
-| [STORY-0309](../stories/STORY-0309-rematch.md) | Rematch from the result screen | 0308 | blocked (`DEC-023`) |
+| [STORY-0309](../stories/STORY-0309-rematch.md) | Rematch from the result screen | 0308, `STORY-0213` | ready |
 | [STORY-0310](../stories/STORY-0310-reconnect-and-resume.md) | Reconnect: the client resumes its seat | 0306 | backlog |
 | [STORY-0311](../stories/STORY-0311-profile-strip.md) | The profile strip: my coins and my recent duels | 0302, 0303 | backlog |
 | [STORY-0312](../stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | 0308, 0310 | backlog |
@@ -136,17 +138,17 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
-**Two remain, both the architect's.** No decision here waits on a human.
+**One remains, the architect's.** No decision here waits on a human.
 
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
-| `DEC-023` | How does a rematch reach the server, given the wire carries no rematch message? | architect | `STORY-0309` only |
 | `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a thirteenth story exists — but it is due **before this epic closes** |
 
 ### Answered since this epic was written
 
 | ID | Answered by | What it means here |
 | --- | --- | --- |
+| `DEC-023` | [ADR-0044](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) | `ClientMessage.OfferRematch` (no fields) and `ServerMessage.RematchOffered(seat)` to both seats, idempotent on a repeat, restated after a reconnect's frames. No started frame: after a `DuelFinished`, a `Snapshot` **is** the rematch. Two refusals — `UNKNOWN_ROOM` (the room is gone, go to the lobby) and a transient `REMATCH_UNAVAILABLE` (not yet; nothing recorded). No deadline on the wire, so no countdown is rendered. `PROTOCOL_VERSION` moves one step, taking the next free number when it lands. **The server half is `EPIC-02`'s `STORY-0213`** — this epic's no-Kotlin rule holds, and `STORY-0309` is `ready` and consumes it |
 | `DEC-022` | [ADR-0026](../../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md) | Vite + npm on Node 24, Vitest, ESLint + Prettier, and a parallel `client` CI job. `STORY-0301` shipped on it |
 | `DEC-018` | [ADR-0028](../../docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md) | `OpponentPresence` carries PRESENT/AWAY/ABSENT with a countdown the client renders but never acts on, and `ActedForAbsentSeat` marks every action taken for an absent seat. `STORY-0310` renders a pause state after all |
 | `DEC-017` | [ADR-0038](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) | Still nothing here — the rules are set-time and operator-side, and `STORY-0311` renders whatever name the wire carries |
