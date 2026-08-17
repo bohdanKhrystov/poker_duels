@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040414
 title: The document names the sign-up endpoint, and a test agrees with the code
 type: task
-status: backlog
+status: ready
 parent: STORY-0404
 module: poker-server
 estimate: S
