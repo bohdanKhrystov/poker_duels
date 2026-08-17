@@ -10,6 +10,7 @@ import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
+import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -24,6 +25,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * Tests for reading a player's profile and recent duels list.
@@ -460,6 +462,42 @@ class PostgresProfileReadsTest {
     }
 
     /**
+     * Seven duels paged three at a time land on `[3, 3, 1]` — a page size that does not divide
+     * the record evenly, so a final page that silently dropped the remainder, or a
+     * `LIMIT`/`OFFSET` reader that returned all seven on the first request, would both show up
+     * as a wrong shape rather than hiding behind a correct total.
+     */
+    @Test
+    fun everyDuelIsReadExactlyOnceInPagesOfThree() {
+        runBlocking {
+            val expected = sevenDuelsAMinuteApart()
+
+            val pages = everyPage(alice.id, pageSize = 3)
+
+            assertEquals(listOf(3, 3, 1), pages.map { it.size })
+            val flattened = pages.flatten()
+            assertEquals(expected.map { it.duelId }, flattened.map { it.duelId })
+            assertEquals(7, flattened.size)
+            assertEquals(7, flattened.map { it.duelId }.distinct().size)
+        }
+    }
+
+    @Test
+    fun theCursorOfTheLastRowReadsAnEmptyPage() {
+        runBlocking {
+            val expected = sevenDuelsAMinuteApart()
+            val lastRow = expected.last()
+            val cursor = DuelCursor(Instant.parse(lastRow.finishedAt), UUID.fromString(lastRow.duelId))
+
+            val firstAttempt = profileReads.recentDuelsOf(alice.id, 3, cursor)
+            val secondAttempt = profileReads.recentDuelsOf(alice.id, 3, cursor)
+
+            assertTrue(firstAttempt.isEmpty())
+            assertTrue(secondAttempt.isEmpty())
+        }
+    }
+
+    /**
      * `RECENT_DUELS_SQL` and `DUELS_AFTER_SQL` are both built from `DUEL_LINES`
      * (`"$DUEL_LINES $DUEL_ORDER"` and `"$DUEL_LINES AND (...) $DUEL_ORDER"`), so the join the two
      * queries share is one source text rather than two copies that could drift. Reflection is the
@@ -518,6 +556,53 @@ class PostgresProfileReadsTest {
             )
         }
         return profileReads.recentDuelsOf(alice.id, 10)
+    }
+
+    /**
+     * Records seven duels for alice against bob, finishing a minute apart from 10:01 to 10:07
+     * (`finishedDuel`'s default startedAt is 10:00:00Z, so every one of these finishes at or
+     * after it), and returns them exactly as [PostgresProfileReads.recentDuelsOf] already does:
+     * newest first. Seven is chosen so a page size of three lands on an uneven final page.
+     */
+    private suspend fun sevenDuelsAMinuteApart(): List<DuelSummaryResponse> {
+        (1..7).forEach { minute ->
+            duelResultStore.record(
+                finishedDuel(winner = 0, finishedAt = Instant.parse("2026-08-13T10:0$minute:00Z")),
+            )
+        }
+        return profileReads.recentDuelsOf(alice.id, 10)
+    }
+
+    /**
+     * Walks [playerId]'s whole duel history a page of [pageSize] rows at a time, starting from
+     * [from], returning each page as its own list so a caller can assert page *shape* — sizes,
+     * count — as well as the flattened order. Every next cursor is built from the previous
+     * page's **last** row via [Instant.parse] and [UUID.fromString], the same round trip through
+     * the wire's string form that a real client makes.
+     *
+     * Stops the moment a page comes back empty; that empty page is not appended, so seven duels
+     * in pages of three take four requests to answer three pages. It stops on empty, never on
+     * *shorter than [pageSize]* — the short-page shortcut is the same guess the route's probe row
+     * exists to avoid, and would hide the bug this helper exists to catch.
+     *
+     * Capped at 20 requests: a cursor that never advances must fail this suite in seconds, not
+     * hang it until CI's own job timeout does the failing instead.
+     */
+    private suspend fun everyPage(
+        playerId: PlayerId,
+        pageSize: Int,
+        from: DuelCursor? = null,
+    ): List<List<DuelSummaryResponse>> {
+        val pages = mutableListOf<List<DuelSummaryResponse>>()
+        var cursor = from
+        repeat(20) {
+            val page = profileReads.recentDuelsOf(playerId, pageSize, cursor)
+            if (page.isEmpty()) return pages
+            pages += page
+            val lastRow = page.last()
+            cursor = DuelCursor(Instant.parse(lastRow.finishedAt), UUID.fromString(lastRow.duelId))
+        }
+        fail("everyPage did not terminate within 20 requests — the cursor is not advancing")
     }
 
     /**
