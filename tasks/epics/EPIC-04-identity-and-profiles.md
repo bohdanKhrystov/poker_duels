@@ -128,7 +128,7 @@ recorded rather than quietly absorbed:
 | [STORY-0401](../stories/STORY-0401-display-name-and-the-write-path.md) | `player.display_name`, its canonical form, and the write path | — | **ready**, split into 18 tickets |
 | [STORY-0402](../stories/STORY-0402-the-read-path-carries-the-display-name.md) | The read path carries the display name | 0401 | **ready**, split into 5 tickets |
 | [STORY-0403](../stories/STORY-0403-credentials-storage-and-hashing.md) | Credentials — the schema, the hash, and a port that returns none | 0401 | **ready**, split into 14 tickets |
-| [STORY-0404](../stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | Sign-up — one endpoint, and it attaches an account to the profile already here | 0403 | backlog |
+| [STORY-0404](../stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | Sign-up — one endpoint, and it attaches an account to the profile already here | 0403 | **ready**, split into 14 tickets — raised `DEC-048`, which blocks none of them |
 | [STORY-0405](../stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) | Sign-in, the session, and what the socket presents | 0404, 0213, 0214 | backlog |
 | [STORY-0406](../stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) | The claim proven, and the device binding revoked | 0405 | backlog — `DEC-041` answered by `ADR-0049`, not yet split |
 | [STORY-0407](../stories/STORY-0407-recovery-from-a-device-never-seen.md) | Recovery — signing in from a device that has never been seen | 0406 | backlog |
@@ -198,7 +198,13 @@ without adding a story.
 
 ## Open decisions
 
-**None.** Five were raised and answered on 2026-08-17: `DEC-045` by
+**One**, raised on 2026-08-17 when `STORY-0404` was split. It blocks no ticket and no story.
+
+| ID | Question | Whose | Due |
+| --- | --- | --- | --- |
+| `DEC-048` | Is `POST /api/auth/sign-up` budgeted by remote address, and what does over budget answer? `ADR-0027` §6 budgets failed **sign-ins** by address and is silent about sign-up; `ADR-0048` §6's response table has six rows and no seventh. Sign-up is the first endpoint that runs Argon2, one hash per request against the four verification slots `ADR-0027` §1 allows, so a caller holding a single device id can saturate the server's hashing capacity — and every device id is free, over a socket. The sub-question is the harder half: `ADR-0027` §6 and `ADR-0031` §5 both keep a limiter non-oracular by answering **exactly as the ordinary refusal does**, and sign-up's four ordinary refusals (`400`, `401`, `409`, `422`) are each a lie about a budget. `STORY-0404` ships the six tabulated answers and no limiter, so nothing waits | the **architect's** | before `STORY-0405` merges — that story must build §6's sign-in budget regardless, and one mechanism serving both endpoints is the cheap outcome |
+
+Five decisions were raised and answered on 2026-08-17: `DEC-045` by
 [`ADR-0050`](../../docs/adr/ADR-0050-revoking-the-device-signs-out-everywhere-but-here.md),
 `DEC-042` — open since 2026-08-16 and the only thing blocking `STORY-0410` — by
 [`ADR-0051`](../../docs/adr/ADR-0051-a-name-is-registered-before-it-is-held.md), `DEC-046`,
@@ -209,7 +215,8 @@ raised by `ADR-0051` the same day, by
 which came out of splitting `STORY-0403` and blocked nothing — by
 [`ADR-0054`](../../docs/adr/ADR-0054-a-raised-argon2-cost-is-a-ledger-entry-and-a-rehash.md). All
 five have moved to the table below. **Nothing in this epic is blocked on a decision, and no story
-waits on a human.**
+waits on a human** — `DEC-048` above is the architect's and is due before a story that has not been
+split yet.
 
 The fifteen answered ones are kept here with their answers because the story table still cites them,
 and because what each ADR *constrains* is this epic's work.

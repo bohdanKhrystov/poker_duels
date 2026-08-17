@@ -518,6 +518,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
+| DEC-048 | **The architect's** — is `POST /api/auth/sign-up` budgeted by remote address, and what does over budget answer? `ADR-0027` §6 budgets failed **sign-ins** and is silent about sign-up. It bites because sign-up is the first endpoint to run Argon2 — one hash per request against four verification slots, and a device id is free over a socket. The harder half is the response code: `ADR-0027` §6 and `ADR-0031` §5 both keep a limiter non-oracular by answering *exactly as the ordinary refusal does*, and sign-up's four ordinary refusals (`400`/`401`/`409`/`422`) are each a lie about a budget | [`STORY-0404`](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | before STORY-0405 merges |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1119,7 +1120,21 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040312](tasks/TASK-040312-postgres-credentials-writes-one-row-and-reads-no-hash-back.md) `PostgresCredentials` writes one row and reads no hash back | S | **done** |
 | | [TASK-040313](tasks/TASK-040313-an-unknown-identifier-costs-what-a-wrong-secret-costs.md) An unknown identifier costs exactly what a wrong secret costs | S | **done** |
 | | [TASK-040314](tasks/TASK-040314-nothing-public-returns-a-hash.md) Nothing public returns a hash, and the sweep proves it can tell | S | **done** |
-| [STORY-0404](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) Sign-up — one endpoint, attaching an account to the profile already here | | | backlog |
+| [STORY-0404](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) Sign-up — one endpoint, attaching an account to the profile already here | | | ready |
+| | [TASK-040401](tasks/TASK-040401-one-rule-for-a-password-and-it-is-length.md) One rule for a password, and it is length | S | ready |
+| | [TASK-040402](tasks/TASK-040402-the-hasher-hashes-the-nfc-form.md) The hasher hashes the NFC form, in the one place a secret becomes bytes | XS | backlog |
+| | [TASK-040403](tasks/TASK-040403-the-port-can-ask-what-a-player-already-holds.md) The port can ask whether a player already holds a kind of credential | XS | backlog |
+| | [TASK-040404](tasks/TASK-040404-one-select-for-that-player-and-that-kind.md) One SELECT, and it answers for that player and that kind only | S | backlog |
+| | [TASK-040405](tasks/TASK-040405-the-sign-up-body-is-two-fields-and-it-prints-neither.md) The sign-up body is two fields, and it prints neither | S | backlog |
+| | [TASK-040406](tasks/TASK-040406-the-doubles-a-sign-up-route-test-records-against.md) The doubles every sign-up route test records against | S | backlog |
+| | [TASK-040407](tasks/TASK-040407-the-handle-is-judged-first-then-the-password.md) The handle is judged first, then the password | S | backlog |
+| | [TASK-040408](tasks/TASK-040408-sign-up-identity-first-then-the-body.md) POST /api/auth/sign-up — identity first, then the body | S | backlog |
+| | [TASK-040409](tasks/TASK-040409-one-create-with-the-player-the-server-resolved.md) One create, with the player the server resolved | S | backlog |
+| | [TASK-040410](tasks/TASK-040410-no-outcome-carries-a-body-and-nothing-prints-a-secret.md) No outcome carries a body, and nothing on the path can print a secret | S | backlog |
+| | [TASK-040411](tasks/TASK-040411-the-server-it-ships-with-can-sign-up.md) The server it ships with can sign up | S | backlog |
+| | [TASK-040412](tasks/TASK-040412-one-credential-row-and-the-player-table-untouched.md) One credential row, and the player table untouched across it | S | backlog |
+| | [TASK-040413](tasks/TASK-040413-the-coin-a-duel-paid-survives-the-sign-up.md) The coin a duel paid is still there after the sign-up | S | backlog |
+| | [TASK-040414](tasks/TASK-040414-the-document-names-the-sign-up-endpoint.md) The document names the sign-up endpoint, and a test agrees with the code | S | backlog |
 | [STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) Sign-in, the session, and what the socket presents (needs `STORY-0213`, `STORY-0214`) | | | backlog |
 | [STORY-0406](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) The claim proven, and the device binding revoked (needs `STORY-0405`) | | | backlog |
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
