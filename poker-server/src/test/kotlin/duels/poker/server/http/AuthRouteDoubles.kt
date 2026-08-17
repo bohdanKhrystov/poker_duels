@@ -1,5 +1,3 @@
-@file:Suppress("ktlint:standard:filename")
-
 package duels.poker.server.http
 
 import duels.poker.server.auth.CreateCredentialResult
