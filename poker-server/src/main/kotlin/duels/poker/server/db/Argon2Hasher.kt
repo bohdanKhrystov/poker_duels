@@ -1,12 +1,22 @@
 package duels.poker.server.db
 
 import duels.poker.server.auth.PresentedSecret
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import java.security.MessageDigest
 import java.security.SecureRandom
+
+// Bounds peak Argon2 memory to roughly ARGON2_MAX_PARALLEL * 19 MiB rather than 19 MiB times
+// however many sign-in attempts happen to arrive at once — unbounded concurrency turns a
+// memory-hard hash into a self-service denial of service (`ADR-0027` §1).
+internal const val ARGON2_MAX_PARALLEL = 4
+
+// One instance for the process, at file scope: a dispatcher built inside hash or matches would
+// start counting from zero on every call and bound nothing.
+internal val argon2Dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(ARGON2_MAX_PARALLEL)
 
 /**
  * Hashes a [PresentedSecret] to a PHC string and verifies one against a stored PHC string.
@@ -39,7 +49,7 @@ internal interface SecretHasher {
 internal class Argon2Hasher(private val random: SecureRandom = SecureRandom()) : SecretHasher {
 
     override suspend fun hash(secret: PresentedSecret): String =
-        withContext(Dispatchers.IO) {
+        withContext(argon2Dispatcher) {
             val salt = ByteArray(ARGON2_SALT_BYTES)
             random.nextBytes(salt)
             val tag = tagFor(secret, salt)
@@ -47,7 +57,7 @@ internal class Argon2Hasher(private val random: SecureRandom = SecureRandom()) :
         }
 
     override suspend fun matches(secret: PresentedSecret, storedPhc: String): Boolean =
-        withContext(Dispatchers.IO) {
+        withContext(argon2Dispatcher) {
             val parsed = parseArgon2PhcOrNull(storedPhc) ?: return@withContext false
             // The salt below is the one this call parsed out of storedPhc, never a fresh one — a
             // fresh salt would make every call answer false, right secret or not.
