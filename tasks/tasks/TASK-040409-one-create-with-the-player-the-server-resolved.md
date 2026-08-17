@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040409
 title: One create, with the player the server resolved
 type: task
-status: backlog
+status: ready
 parent: STORY-0404
 module: poker-server
 estimate: S

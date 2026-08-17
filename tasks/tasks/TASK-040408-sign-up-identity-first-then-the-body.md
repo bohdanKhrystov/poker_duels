@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040408
 title: POST /api/auth/sign-up — identity first, then the body
 type: task
-status: ready
+status: done
 parent: STORY-0404
 module: poker-server
 estimate: S
