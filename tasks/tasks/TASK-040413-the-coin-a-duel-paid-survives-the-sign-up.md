@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040413
 title: The coin a duel paid is still there after the sign-up
 type: task
-status: backlog
+status: ready
 parent: STORY-0404
 module: poker-server
 estimate: S
