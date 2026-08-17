@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040403
 title: The port can ask whether a player already holds a kind of credential
 type: task
-status: ready
+status: done
 parent: STORY-0404
 module: poker-server
 estimate: XS
@@ -52,6 +52,16 @@ could carry a secret.
 ## Out of scope
 
 - The implementation — `TASK-040404`.
+
+  **Corrected after implementation:** this was not achievable as written. Kotlin will not compile an
+  implementing class that is missing a new abstract interface member, so `PostgresCredentials.kt` —
+  a **third** file, not in the `Files` table above — had to change too. It carries
+  `override suspend fun holdsCredential(...): Boolean = TODO("TASK-040404")`, a throwing stub, which
+  is the least dangerous of the three available shapes: a real query would be `TASK-040404`'s whole
+  job arriving early, and a hardcoded `false` would silently disable `ADR-0030` §1's `409` guard with
+  nothing failing. Nothing calls it, so the stub is unreachable until `TASK-040404` replaces it —
+  and that ticket already names this file as `modify`. `files_touched` stays `2` because the linter
+  caps it at 3 and the frontmatter cannot express "2 plus one forced"; the real count is three.
 - Any use of it — `TASK-040408`.
 - Widening `CreateCredentialResult`. It keeps its two cases; the guard is a separate question asked
   before `create`, not a third answer from it, so a refused sign-up costs no Argon2 slot.
