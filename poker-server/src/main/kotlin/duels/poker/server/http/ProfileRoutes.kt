@@ -1,5 +1,6 @@
 package duels.poker.server.http
 
+import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.SetNameRequest
 import duels.poker.server.session.DeviceId
@@ -13,6 +14,8 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.put
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.CancellationException
+import java.time.Instant
+import java.util.UUID
 
 public const val DEVICE_ID_HEADER: String = "X-Device-Id"
 
@@ -131,7 +134,33 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(
         respond(HttpStatusCode.BadRequest)
         return
     }
-    respond(RecentDuelsResponse(reads.recentDuelsOf(PlayerId(profile.playerId), limit, cursor), nextCursor = null))
+    // Ask for one row more than the page: a probe that answers "is there another page?" without a
+    // second query. duelLimitOrNull already clamped limit to MAX_DUEL_LIMIT, so this never reads
+    // more than MAX_DUEL_LIMIT + 1 rows.
+    val rows = reads.recentDuelsOf(PlayerId(profile.playerId), limit + 1, cursor)
+    respond(rows.recentDuelsPage(limit))
+}
+
+/**
+ * Trims [this] — up to `limit + 1` rows from [respondWithDuels]'s probing read — down to a page
+ * of at most [limit], and reports whether another page follows. Extracted out of
+ * [respondWithDuels] to keep that function, in turn, well inside detekt's `LongMethod` budget.
+ *
+ * The `(limit + 1)`th row, when present, is the probe: proof that another page exists and nothing
+ * more. It is dropped here and never serialised — `duels.size` never exceeds [limit] — and
+ * `nextCursor` is built from the row actually returned last, at index `limit - 1`, using that
+ * row's own text. A cursor built from the probe instead would name a row one past the page just
+ * served; the next request would start there, and the row between the two would never be
+ * returned — silently, and forever. Both `finishedAt` and `duelId` were produced by this server
+ * (`Instant.toString()`, `UUID.toString()`), so parsing them back here is never a place for a
+ * `try`.
+ */
+private fun List<DuelSummaryResponse>.recentDuelsPage(limit: Int): RecentDuelsResponse {
+    if (size <= limit) return RecentDuelsResponse(this, nextCursor = null)
+    val page = subList(0, limit)
+    val lastRow = page.last()
+    val cursor = DuelCursor(Instant.parse(lastRow.finishedAt), UUID.fromString(lastRow.duelId))
+    return RecentDuelsResponse(page, nextCursor = cursor.encoded())
 }
 
 /**

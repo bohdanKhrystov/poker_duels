@@ -4,8 +4,10 @@ import duels.poker.server.module
 import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.duelSummaryResponse
 import duels.poker.server.protocol.http.profileResponse
+import duels.poker.server.protocol.protocolJson
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import io.ktor.client.request.get
@@ -205,7 +207,9 @@ class ProfileRouteTest {
             header(DEVICE_ID_HEADER, "alice")
         }
         assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals(DEFAULT_DUEL_LIMIT, reads.lastLimitRequested)
+        // The probe: one row more than the client-facing default, so the route can tell whether a
+        // following page exists without a second round trip.
+        assertEquals(DEFAULT_DUEL_LIMIT + 1, reads.lastLimitRequested)
     }
 
     @Test
@@ -241,7 +245,9 @@ class ProfileRouteTest {
             header(DEVICE_ID_HEADER, "alice")
         }
         assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals(MAX_DUEL_LIMIT, reads.lastLimitRequested)
+        // The cap still governs what is returned; the probe asks for one more than the clamped
+        // value, so the port sees the cap plus one, not the cap itself.
+        assertEquals(MAX_DUEL_LIMIT + 1, reads.lastLimitRequested)
     }
 
     @Test
@@ -368,6 +374,239 @@ class ProfileRouteTest {
             }
             assertEquals(HttpStatusCode.Unauthorized, response.status)
             assertTrue(reads.cursorsRequested.isEmpty())
+        }
+    }
+
+    @Test
+    fun aFullPageReportsTheCursorOfItsLastRow() {
+        testApplication {
+            val duel1 = duelSummaryResponse(
+                duelId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.WON,
+                coinDelta = 1,
+                handsPlayed = 10,
+                finishedAt = "2026-08-15T13:00:00Z",
+            )
+            val duel2 = duelSummaryResponse(
+                duelId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.LOST,
+                coinDelta = -1,
+                handsPlayed = 8,
+                finishedAt = "2026-08-15T12:00:00Z",
+            )
+            val duel3 = duelSummaryResponse(
+                duelId = "cccccccc-cccc-cccc-cccc-cccccccccccc",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.WON,
+                coinDelta = 1,
+                handsPlayed = 6,
+                finishedAt = "2026-08-15T11:00:00Z",
+            )
+            // The probe: index `limit`, present in the fixture so a naive implementation that
+            // cursors off it — instead of duel3 — would be caught by the assertion below.
+            val duel4 = duelSummaryResponse(
+                duelId = "dddddddd-dddd-dddd-dddd-dddddddddddd",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.LOST,
+                coinDelta = -1,
+                handsPlayed = 4,
+                finishedAt = "2026-08-15T10:00:00Z",
+            )
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to listOf(duel1, duel2, duel3, duel4)),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?limit=3") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            val decoded = protocolJson.decodeFromString(RecentDuelsResponse.serializer(), response.bodyAsText())
+            assertEquals(listOf(duel1.duelId, duel2.duelId, duel3.duelId), decoded.duels.map { it.duelId })
+            // This is the off-by-one that silently loses a duel: a cursor built from duel4 (the
+            // probe) instead of duel3 (the page's real last row) would still look like a cursor
+            // here — only decoding it and comparing the value catches the difference.
+            val expectedCursor = DuelCursor(Instant.parse(duel3.finishedAt), UUID.fromString(duel3.duelId))
+            assertEquals(expectedCursor, decoded.nextCursor?.let(::duelCursorOrNull))
+        }
+    }
+
+    @Test
+    fun anExactlyFullRecordReportsNoNextPage() {
+        testApplication {
+            val duel1 = duelSummaryResponse(
+                duelId = "duel-1",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.WON,
+                coinDelta = 1,
+                handsPlayed = 10,
+                finishedAt = "2026-08-15T13:00:00Z",
+            )
+            val duel2 = duelSummaryResponse(
+                duelId = "duel-2",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.LOST,
+                coinDelta = -1,
+                handsPlayed = 8,
+                finishedAt = "2026-08-15T12:00:00Z",
+            )
+            val duel3 = duelSummaryResponse(
+                duelId = "duel-3",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.WON,
+                coinDelta = 1,
+                handsPlayed = 6,
+                finishedAt = "2026-08-15T11:00:00Z",
+            )
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to listOf(duel1, duel2, duel3)),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            // The fake holds exactly `limit` rows: the probe finds nothing. A naive
+            // returned == limit ⇒ there is more would get this wrong.
+            val response = client.get("/api/me/duels?limit=3") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            val decoded = protocolJson.decodeFromString(RecentDuelsResponse.serializer(), response.bodyAsText())
+            assertEquals(listOf(duel1.duelId, duel2.duelId, duel3.duelId), decoded.duels.map { it.duelId })
+            assertEquals(null, decoded.nextCursor)
+        }
+    }
+
+    @Test
+    fun aShortPageReportsNoNextPage() {
+        testApplication {
+            val duel1 = duelSummaryResponse(
+                duelId = "duel-1",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.WON,
+                coinDelta = 1,
+                handsPlayed = 10,
+                finishedAt = "2026-08-15T13:00:00Z",
+            )
+            val duel2 = duelSummaryResponse(
+                duelId = "duel-2",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.LOST,
+                coinDelta = -1,
+                handsPlayed = 8,
+                finishedAt = "2026-08-15T12:00:00Z",
+            )
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to listOf(duel1, duel2)),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?limit=3") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            val decoded = protocolJson.decodeFromString(RecentDuelsResponse.serializer(), response.bodyAsText())
+            assertEquals(listOf(duel1.duelId, duel2.duelId), decoded.duels.map { it.duelId })
+            assertEquals(null, decoded.nextCursor)
+        }
+    }
+
+    @Test
+    fun anEmptyRecordReportsNoNextPage() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?limit=3") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals("""{"duels":[],"nextCursor":null}""", response.bodyAsText())
+        }
+    }
+
+    @Test
+    fun followingTheReturnedCursorBeginsAtTheRowThatWasTheProbe() {
+        testApplication {
+            // The route asks for limit + 1 rows to learn, without a second query, whether another
+            // page exists. If nextCursor were built from that extra probe row instead of from the
+            // page's real last row, every following request would start one row too late: a duel
+            // silently skipped on every page boundary, forever, with nothing about either response
+            // looking wrong on its own. This test is the one that would catch it — by actually
+            // following the cursor.
+            val duel1 = duelSummaryResponse(
+                duelId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.WON,
+                coinDelta = 1,
+                handsPlayed = 10,
+                finishedAt = "2026-08-15T13:00:00Z",
+            )
+            val duel2 = duelSummaryResponse(
+                duelId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.LOST,
+                coinDelta = -1,
+                handsPlayed = 8,
+                finishedAt = "2026-08-15T12:00:00Z",
+            )
+            val duel3 = duelSummaryResponse(
+                duelId = "cccccccc-cccc-cccc-cccc-cccccccccccc",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.WON,
+                coinDelta = 1,
+                handsPlayed = 6,
+                finishedAt = "2026-08-15T11:00:00Z",
+            )
+            // The probe on the first request. It must never be skipped by the second request.
+            val duel4 = duelSummaryResponse(
+                duelId = "dddddddd-dddd-dddd-dddd-dddddddddddd",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.LOST,
+                coinDelta = -1,
+                handsPlayed = 4,
+                finishedAt = "2026-08-15T10:00:00Z",
+            )
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to listOf(duel1, duel2, duel3, duel4)),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val firstPage = client.get("/api/me/duels?limit=3") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, firstPage.status)
+            val firstDecoded = protocolJson.decodeFromString(RecentDuelsResponse.serializer(), firstPage.bodyAsText())
+            val nextCursor = requireNotNull(firstDecoded.nextCursor) { "a page smaller than the fixture must carry a cursor" }
+
+            val secondPage = client.get("/api/me/duels?limit=3&after=$nextCursor") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, secondPage.status)
+            val secondDecoded = protocolJson.decodeFromString(RecentDuelsResponse.serializer(), secondPage.bodyAsText())
+            // If nextCursor had named duel4 (the probe) instead of duel3 (the real last row), the
+            // fake's cursor filtering — which mirrors "give me rows after this one" — would find
+            // nothing past duel4, and this page would come back empty: duel4 missing, permanently.
+            // Its presence here, first, is exactly what proves the cursor named duel3.
+            assertEquals(listOf(duel4.duelId), secondDecoded.duels.map { it.duelId })
+            assertEquals(null, secondDecoded.nextCursor)
         }
     }
 
@@ -608,7 +847,17 @@ class ProfileRouteTest {
         override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> {
             lastLimitRequested = limit
             cursorsRequested.add(after)
-            return duels[playerId.value] ?: emptyList()
+            val all = duels[playerId.value] ?: emptyList()
+            if (after == null) return all
+            // Mirrors the real port's "rows after this cursor" contract closely enough for a
+            // route-level test: find the fixture's own row named by the cursor, and return what
+            // comes after it in the fixture's order. This is what lets
+            // followingTheReturnedCursorBeginsAtTheRowThatWasTheProbe actually catch a cursor
+            // built from the wrong row — a fake that ignored the cursor's value could not.
+            val cursorRowIndex = all.indexOfFirst { row ->
+                Instant.parse(row.finishedAt) == after.finishedAt && UUID.fromString(row.duelId) == after.duelId
+            }
+            return if (cursorRowIndex == -1) all else all.drop(cursorRowIndex + 1)
         }
     }
 
