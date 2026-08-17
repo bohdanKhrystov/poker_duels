@@ -110,5 +110,6 @@ day the cost is raised — the architect's, due before anyone raises it, still o
 - The recovery email, the verification token and the password reset — `STORY-0416`; its three tables
   are their own migration.
 - Rate limiting and the enumeration defences, which belong with the endpoints that need them.
-- The device-binding revocation column or row, whatever shape it takes — `STORY-0406`, and `DEC-041`
-  first.
+- The `device_binding` table and its revocation — `STORY-0406`, which owns the migration `ADR-0049`
+  specifies. `DEC-041` is answered; this story's migration stays `V4` and touches neither `player`
+  nor any binding.

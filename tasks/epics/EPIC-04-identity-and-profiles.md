@@ -130,7 +130,7 @@ recorded rather than quietly absorbed:
 | [STORY-0403](../stories/STORY-0403-credentials-storage-and-hashing.md) | Credentials — the schema, the hash, and a port that returns none | 0401 | **ready**, split into 14 tickets |
 | [STORY-0404](../stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | Sign-up — one endpoint, and it attaches an account to the profile already here | 0403 | backlog |
 | [STORY-0405](../stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) | Sign-in, the session, and what the socket presents | 0404, 0213, 0214 | backlog |
-| [STORY-0406](../stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) | The claim proven, and the device binding revoked | 0405 | **blocked** — `DEC-041` |
+| [STORY-0406](../stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) | The claim proven, and the device binding revoked | 0405 | backlog — `DEC-041` answered by `ADR-0049`, not yet split |
 | [STORY-0407](../stories/STORY-0407-recovery-from-a-device-never-seen.md) | Recovery — signing in from a device that has never been seen | 0406 | backlog |
 | [STORY-0408](../stories/STORY-0408-duel-history-paged-over-the-whole-record.md) | Duel history, paged over the whole record | 0402 | backlog |
 | [STORY-0409](../stories/STORY-0409-history-filters-and-search.md) | History filters and search | 0408 | backlog |
@@ -194,18 +194,18 @@ without adding a story.
 
 ## Open decisions
 
-**Three, and all three are the architect's.** Two were raised on 2026-08-16 while the stories were
-written and block one story each; one came out of splitting `STORY-0403` on 2026-08-17 and blocks
-nothing at all. None is the human's, and no story below waits on a human. Every *product* decision
-this epic was blocked on has been answered — the last of them, `DEC-043`, on 2026-08-17.
+**Three: two the architect's, one the product owner's, and none the human's.** One was raised on
+2026-08-16 while the stories were written and blocks one story; one came out of splitting
+`STORY-0403` on 2026-08-17 and blocks nothing at all; the third was raised on 2026-08-17 by
+`ADR-0049`, which split `DEC-041` and answered its technical half. No story below waits on a human.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
-| `DEC-041` | **The architect's** — what does revoking the device binding look like in the schema? `ADR-0037` says the answer is *"a technical question with more than one defensible answer and no reason to guess it here"* and hands it to `STORY-0406`; `ADR-0030` §2 says `player.device_id` is **never rewritten by any identity operation** and makes that the structural reason the coin invariant holds, so nulling the column is not obviously available | `STORY-0406`, and through it `0407`, `0412`, `0414` |
+| `DEC-045` | **The product owner's** — does revoking a device also end every other session that player holds ("sign out everywhere"), or are the two separate affordances on the account screen? `ADR-0049` §6 takes the reversible default — revocation writes nothing to `auth_session`, so a token already on the revoked device stays valid up to `ADR-0027`'s thirty days — and records that the schema is indifferent: the other answer is one `DELETE` on the same endpoint, served by an index that already exists. What it turns on is what a player is promised when they press the button | nothing — `STORY-0406` ships under either answer; due before `STORY-0412` designs the screen |
 | `DEC-042` | **The architect's** — by what path does an operator force-rename a profile and retire the name? `ADR-0038` fixes that the path exists and says it *"will not grow a role system speculatively"*, and does not say whether it is an authenticated admin endpoint, a CLI or Gradle task, or a documented procedure. The trigger `ADR-0029` §4 installs refuses `name → NULL`, so the answer must also say how the operator gets through it | `STORY-0410` only |
 | `DEC-044` | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"a constant change plus a rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403` says the parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack in a helper function. `TASK-040306` takes the conservative side because loosening a refusal is additive | nothing — due before anyone raises the cost |
 
-The nine answered ones are kept here with their answers because the story table still cites them,
+The ten answered ones are kept here with their answers because the story table still cites them,
 and because what each ADR *constrains* is this epic's work.
 
 | ID | Answered by | What it means here |
@@ -218,6 +218,7 @@ and because what each ADR *constrains* is this epic's work.
 | `DEC-030` | [ADR-0037](../../docs/adr/ADR-0037-the-device-is-a-credential-until-revoked.md) | The device signs in until the player revokes it. Adds a revoke path, a settings affordance and a session rule to `STORY-0406`/`STORY-0412`; the account screens must state which routes are live |
 | `DEC-031` | [ADR-0041](../../docs/adr/ADR-0041-a-handle-and-a-password-are-the-only-credential.md) | Handle and password only. `STORY-0412`'s screens are designed for one credential — no provider row |
 | `DEC-017` | [ADR-0038](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) | A blocklist screens at set time, an operator may force-rename, and a taken name is **retired forever**. Uniqueness gains two more sources of truth. Unblocks `STORY-0410` |
+| `DEC-041` | [ADR-0049](../../docs/adr/ADR-0049-a-device-binding-is-a-row-and-revoking-is-final.md) | The device→profile edge **leaves `player`** for its own `device_binding(device_id, player_id, bound_at, revoked_at)` table, keyed by the natural pair, with two partial unique indexes on `WHERE revoked_at IS NULL` — one live binding per device, one per player. Revocation is one `UPDATE ... SET revoked_at` against a table that is not the ledger, so `player` is byte-identical across it and `ADR-0030` §2 gains no fourth writer; the column it protected no longer exists. Revoking is **final** (an `ADR-0029`-shaped trigger refuses `revoked_at → NULL`; the composite key refuses the old pair), and a revoked device may still mint a **fresh** profile. `STORY-0406` gains the migration, `DELETE /api/me/device` (session required — `401`; `409` with no credential; `204` either way otherwise), a rewritten `PlayerDirectory.resolve`, and the orphan-profile assertion on its concurrency test. `STORY-0412` gets `ProfileResponse.deviceRouteLive`. Sessions and sockets are untouched, which raised **`DEC-045`** above |
 | `DEC-043` | [ADR-0048](../../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md) | One rule — **8 to 128 code points**, counted after NFC normalisation — and nothing else: no composition rule, no character rule, no breach corpus, no strength meter, and nothing is trimmed. `STORY-0404` enforces the minimum at sign-up and answers **`422`** with an empty body, distinct from the handle's `400` and `409`; `STORY-0405` applies only the **maximum**, before Argon2 and before the identifier lookup, answering exactly as a wrong password does. `STORY-0416`'s reset uses the identical rule. **NFC is applied in the one place a secret becomes bytes**, so sign-up and sign-in cannot disagree — permanent from the first stored hash. `STORY-0403` is unaffected: `TASK-040307`'s *"no `init`, no `require`"* stands and ASCII is NFC-invariant, so the published-vector tests do not move. `STORY-0412` states the rule before the field is filled and shows no meter |
 
 `ADR-0012` is **not** open: anonymous device-bound profiles stay, and this epic adds identity on
