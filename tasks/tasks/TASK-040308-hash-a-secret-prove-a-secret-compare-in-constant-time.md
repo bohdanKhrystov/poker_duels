@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040308
 title: Hash a secret, prove a secret, and compare the tags in constant time
 type: task
-status: backlog
+status: ready
 parent: STORY-0403
 module: poker-server
 estimate: S
