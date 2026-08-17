@@ -75,7 +75,7 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites)
                 call.respond(HttpStatusCode.BadRequest)
                 return@get
             }
-            call.respond(RecentDuelsResponse(reads.recentDuelsOf(PlayerId(profile.playerId), limit)))
+            call.respond(RecentDuelsResponse(reads.recentDuelsOf(PlayerId(profile.playerId), limit), nextCursor = null))
         }
         put("/api/me/name") {
             // Identity first: an unauthenticated request is refused before the body is read, so a

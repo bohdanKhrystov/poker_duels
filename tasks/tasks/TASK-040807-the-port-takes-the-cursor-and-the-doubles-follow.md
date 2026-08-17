@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040807
 title: The port's duel read takes the cursor, and both doubles follow
 type: task
-status: backlog
+status: ready
 parent: STORY-0408
 module: poker-server
 estimate: XS

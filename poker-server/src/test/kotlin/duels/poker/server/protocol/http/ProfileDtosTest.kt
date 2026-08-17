@@ -1,6 +1,7 @@
 package duels.poker.server.protocol.http
 
 import duels.poker.server.protocol.protocolJson
+import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -98,9 +99,24 @@ class ProfileDtosTest {
 
     @Test
     fun anEmptyRecentDuelsListEncodesAsAnEmptyArray() {
-        val response = RecentDuelsResponse(emptyList())
+        val response = RecentDuelsResponse(emptyList(), nextCursor = null)
         val encoded = protocolJson.encodeToString(RecentDuelsResponse.serializer(), response)
-        assertEquals("""{"duels":[]}""", encoded)
+        assertEquals("""{"duels":[],"nextCursor":null}""", encoded)
+    }
+
+    @Test
+    fun aNextCursorEncodesAsTheStringItWasGiven() {
+        val response = RecentDuelsResponse(emptyList(), nextCursor = "abc")
+        val encoded = protocolJson.encodeToString(RecentDuelsResponse.serializer(), response)
+        assertTrue(encoded.contains(""""nextCursor":"abc"""))
+    }
+
+    @Test
+    fun theNextCursorIsOnTheWireAsNullWithoutEncodeDefaults() {
+        val response = RecentDuelsResponse(emptyList(), nextCursor = null)
+        val wireJson = Json { encodeDefaults = false }
+        val encoded = wireJson.encodeToString(RecentDuelsResponse.serializer(), response)
+        assertTrue(encoded.contains(""""nextCursor":null"""))
     }
 
     @Test

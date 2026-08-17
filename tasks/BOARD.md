@@ -1143,8 +1143,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040803](tasks/TASK-040803-seven-duels-in-pages-of-three-each-exactly-once.md) Seven duels in pages of three, each exactly once | S | **done** |
 | | [TASK-040804](tasks/TASK-040804-a-duel-that-finishes-between-two-pages.md) A duel that finishes between two pages repeats nothing and skips nothing | S | **done** |
 | | [TASK-040805](tasks/TASK-040805-two-duels-in-the-same-instant-still-page.md) Two duels that finished in the same instant still page | XS | **done** |
-| | [TASK-040806](tasks/TASK-040806-the-response-says-whether-there-is-a-next-page.md) The response says whether there is a next page, as null and not as absent | XS | ready |
-| | [TASK-040807](tasks/TASK-040807-the-port-takes-the-cursor-and-the-doubles-follow.md) The port's duel read takes the cursor, and both doubles follow | XS | backlog |
+| | [TASK-040806](tasks/TASK-040806-the-response-says-whether-there-is-a-next-page.md) The response says whether there is a next page, as null and not as absent | XS | **done** |
+| | [TASK-040807](tasks/TASK-040807-the-port-takes-the-cursor-and-the-doubles-follow.md) The port's duel read takes the cursor, and both doubles follow | XS | ready |
 | | [TASK-040808](tasks/TASK-040808-the-endpoint-accepts-a-cursor-and-refuses-a-malformed-one.md) The endpoint accepts a cursor, and a malformed one is a 400 that reads nothing | S | backlog |
 | | [TASK-040809](tasks/TASK-040809-one-row-more-than-the-page.md) One row more than the page, and the last page says there is no next | S | backlog |
 | | [TASK-040810](tasks/TASK-040810-over-http-against-the-database-every-duel-once.md) Over HTTP, against the database — every duel exactly once, and one player's cursor | S | backlog |
