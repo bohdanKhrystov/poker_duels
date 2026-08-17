@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040411
 title: The server it ships with can sign up
 type: task
-status: ready
+status: done
 parent: STORY-0404
 module: poker-server
 estimate: S

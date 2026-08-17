@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040412
 title: One credential row, and the player table untouched across it
 type: task
-status: backlog
+status: ready
 parent: STORY-0404
 module: poker-server
 estimate: S
