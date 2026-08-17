@@ -518,7 +518,6 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-049 | **The product owner's** — when sign-up answers `429` (`ADR-0055` §3), what is the player told and what does the form do? It is the one refusal on this endpoint that names no field and that the player cannot act on except by waiting, and it can land on somebody who did nothing wrong — a second player behind the same NAT or shared address | [`ADR-0055`](../docs/adr/ADR-0055-sign-up-is-budgeted-by-address.md) | before STORY-0405 ships the limiter |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
