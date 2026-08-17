@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040806
 title: The response says whether there is a next page, as null and not as absent
 type: task
-status: ready
+status: done
 parent: STORY-0408
 module: poker-server
 estimate: XS
