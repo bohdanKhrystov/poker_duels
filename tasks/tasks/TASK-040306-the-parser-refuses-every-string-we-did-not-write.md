@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040306
 title: The parser accepts what we wrote and refuses everything else
 type: task
-status: backlog
+status: ready
 parent: STORY-0403
 module: poker-server
 estimate: S
