@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040402
 title: The hasher hashes the NFC form, in the one place a secret becomes bytes
 type: task
-status: ready
+status: done
 parent: STORY-0404
 module: poker-server
 estimate: XS

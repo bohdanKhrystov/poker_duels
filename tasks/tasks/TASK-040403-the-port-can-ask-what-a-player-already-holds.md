@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040403
 title: The port can ask whether a player already holds a kind of credential
 type: task
-status: backlog
+status: ready
 parent: STORY-0404
 module: poker-server
 estimate: XS
