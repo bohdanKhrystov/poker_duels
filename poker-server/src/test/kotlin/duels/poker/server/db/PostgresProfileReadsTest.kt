@@ -561,6 +561,48 @@ class PostgresProfileReadsTest {
     }
 
     /**
+     * Two duels tied on the exact same `finished_at` is the one fixture that can prove the
+     * tie-break column is real rather than assumed. The chosen ids differ above bit 63 —
+     * `UUID.compareTo` compares two **signed** 64-bit halves while PostgreSQL's `uuid` type
+     * compares **unsigned** bytes, and the two disagree for any such pair — so the reference
+     * order below is deliberately never predicted in Kotlin. It comes only from the database's
+     * own two-row read; the two single-row pages are then compared against that reference, not
+     * against a guess.
+     */
+    @Test
+    fun twoDuelsInTheSameInstantPageWithoutADuplicate() {
+        runBlocking {
+            val tiedInstant = Instant.parse("2026-08-13T10:05:00Z")
+            val carol = playerDirectory.resolve(DeviceId("carol"))
+            val firstDuelId = UUID.fromString("00000000-0000-0000-0000-0000000000aa")
+            val secondDuelId = UUID.fromString("ffffffff-ffff-ffff-0000-0000000000bb")
+
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = firstDuelId, finishedAt = tiedInstant, opponent = bob),
+            )
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = secondDuelId, finishedAt = tiedInstant, opponent = carol),
+            )
+
+            val reference = profileReads.recentDuelsOf(alice.id, 2)
+            assertEquals(2, reference.size)
+
+            val pages = everyPage(alice.id, pageSize = 1)
+
+            assertEquals(listOf(1, 1), pages.map { it.size })
+            assertEquals(reference.map { it.duelId }, pages.flatten().map { it.duelId })
+
+            val lastRow = pages.last().single()
+            val thirdPage = profileReads.recentDuelsOf(
+                alice.id,
+                1,
+                DuelCursor(Instant.parse(lastRow.finishedAt), UUID.fromString(lastRow.duelId)),
+            )
+            assertTrue(thirdPage.isEmpty())
+        }
+    }
+
+    /**
      * `RECENT_DUELS_SQL` and `DUELS_AFTER_SQL` are both built from `DUEL_LINES`
      * (`"$DUEL_LINES $DUEL_ORDER"` and `"$DUEL_LINES AND (...) $DUEL_ORDER"`), so the join the two
      * queries share is one source text rather than two copies that could drift. Reflection is the

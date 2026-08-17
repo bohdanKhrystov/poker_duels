@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040805
 title: Two duels that finished in the same instant still page
 type: task
-status: ready
+status: done
 parent: STORY-0408
 module: poker-server
 estimate: XS
