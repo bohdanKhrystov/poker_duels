@@ -22,6 +22,7 @@ import java.time.Instant
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -494,6 +495,68 @@ class PostgresProfileReadsTest {
 
             assertTrue(firstAttempt.isEmpty())
             assertTrue(secondAttempt.isEmpty())
+        }
+    }
+
+    /**
+     * The test that justifies keyset paging over `LIMIT`/`OFFSET`: a duel finishing *between* two
+     * page requests must not shift any already-read row back into view, and must not withhold a
+     * row from a page not yet read. Reads page one (`10:07, 10:06, 10:05`), records an eighth
+     * duel at `10:08` — newer than everything read so far — only after that read, then walks
+     * every remaining page from page one's cursor: the exact sequence a client on a live server
+     * produces between two requests.
+     *
+     * Worked through with `LIMIT`/`OFFSET` instead: after the insert the newest-first order is
+     * `8, 7, 6, 5, 4, 3, 2, 1`; page one (`7, 6, 5`) was already read; `OFFSET 3` into the new
+     * order is `5, 4, 3` — duel `5` a second time, and duel `1` never read at all. The multiset
+     * assertion below, not a size, is what catches that.
+     */
+    @Test
+    fun aDuelRecordedBetweenTwoPagesRepeatsNothingAndSkipsNothing() {
+        runBlocking {
+            val originalSeven = sevenDuelsAMinuteApart()
+
+            val pageOne = profileReads.recentDuelsOf(alice.id, 3)
+            assertEquals(3, pageOne.size)
+            val pageOneLastRow = pageOne.last()
+
+            val eighthDuelId = UUID.randomUUID()
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = eighthDuelId, finishedAt = Instant.parse("2026-08-13T10:08:00Z")),
+            )
+
+            val cursorAfterPageOne = DuelCursor(
+                Instant.parse(pageOneLastRow.finishedAt),
+                UUID.fromString(pageOneLastRow.duelId),
+            )
+            val laterPages = everyPage(alice.id, pageSize = 3, from = cursorAfterPageOne)
+            val laterDuels = laterPages.flatten()
+
+            // The single most informative check in this test: page one's last row (10:05) must
+            // never come back. This is exactly the row a LIMIT/OFFSET reader duplicates once the
+            // eighth duel lands at the head of the order.
+            assertFalse(
+                laterDuels.any { it.duelId == pageOneLastRow.duelId },
+                "page one's last row (${pageOneLastRow.duelId}) reappeared: ${laterDuels.map { it.duelId }}",
+            )
+
+            // 10:08 finishes after the cursor was cut from 10:05, so it sits on the
+            // already-passed side of that cursor — a reader who scrolled past page one must
+            // never see it surface beneath them.
+            assertFalse(
+                laterDuels.any { it.duelId == eighthDuelId.toString() },
+                "the eighth duel appeared after a cursor cut before it existed: ${laterDuels.map { it.duelId }}",
+            )
+
+            // The remaining pages are exactly the four unread originals, in their original order.
+            assertEquals(originalSeven.drop(3).map { it.duelId }, laterDuels.map { it.duelId })
+
+            // Every one of the seven original duels was read exactly once across both reads — a
+            // multiset over ids, not a size, so a repeat-for-a-gap swap cannot hide behind a
+            // total that happens to still add up.
+            val allReadDuels = pageOne + laterDuels
+            val expectedCounts = originalSeven.associate { it.duelId to 1 }
+            assertEquals(expectedCounts, allReadDuels.groupingBy { it.duelId }.eachCount())
         }
     }
 

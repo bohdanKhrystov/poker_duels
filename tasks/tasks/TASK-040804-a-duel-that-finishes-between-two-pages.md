@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040804
 title: A duel that finishes between two pages repeats nothing and skips nothing
 type: task
-status: ready
+status: done
 parent: STORY-0408
 module: poker-server
 estimate: S
