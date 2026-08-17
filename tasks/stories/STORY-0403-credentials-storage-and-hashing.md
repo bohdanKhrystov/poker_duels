@@ -86,7 +86,13 @@ a password be), since answered by
 [`ADR-0048`](../../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md) — 8 to 128 code
 points after NFC and nothing else examined, which upholds this story's refusal to put a rule in
 `PresentedSecret` — and `DEC-044` (what happens to rows written under older Argon2 parameters the
-day the cost is raised — the architect's, due before anyone raises it, still open).
+day the cost is raised), since answered by
+[`ADR-0054`](../../docs/adr/ADR-0054-a-raised-argon2-cost-is-a-ledger-entry-and-a-rehash.md): a
+closed, append-only ledger of shipped cost parameters plus a rehash in `PostgresCredentials.verify`
+on the next successful sign-in — **built on the day the cost is raised and not before**, because
+with one ledger entry every test guarding it is vacuous. **Nothing in this story changes.**
+`TASK-040306`'s strict parser, `TASK-040308`'s `matches`, `TASK-040309`'s bound and `TASK-040312`'s
+`verify` ship exactly as written.
 
 ## Acceptance criteria
 
