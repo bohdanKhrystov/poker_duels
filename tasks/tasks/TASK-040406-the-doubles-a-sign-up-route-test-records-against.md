@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040406
 title: The doubles every sign-up route test records against
 type: task
-status: backlog
+status: ready
 parent: STORY-0404
 module: poker-server
 estimate: S

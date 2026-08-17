@@ -1124,8 +1124,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040402](tasks/TASK-040402-the-hasher-hashes-the-nfc-form.md) The hasher hashes the NFC form, in the one place a secret becomes bytes | XS | **done** |
 | | [TASK-040403](tasks/TASK-040403-the-port-can-ask-what-a-player-already-holds.md) The port can ask whether a player already holds a kind of credential | XS | **done** |
 | | [TASK-040404](tasks/TASK-040404-one-select-for-that-player-and-that-kind.md) One SELECT, and it answers for that player and that kind only | S | **done** |
-| | [TASK-040405](tasks/TASK-040405-the-sign-up-body-is-two-fields-and-it-prints-neither.md) The sign-up body is two fields, and it prints neither | S | ready |
-| | [TASK-040406](tasks/TASK-040406-the-doubles-a-sign-up-route-test-records-against.md) The doubles every sign-up route test records against | S | backlog |
+| | [TASK-040405](tasks/TASK-040405-the-sign-up-body-is-two-fields-and-it-prints-neither.md) The sign-up body is two fields, and it prints neither | S | **done** |
+| | [TASK-040406](tasks/TASK-040406-the-doubles-a-sign-up-route-test-records-against.md) The doubles every sign-up route test records against | S | ready |
 | | [TASK-040407](tasks/TASK-040407-the-handle-is-judged-first-then-the-password.md) The handle is judged first, then the password | S | backlog |
 | | [TASK-040408](tasks/TASK-040408-sign-up-identity-first-then-the-body.md) POST /api/auth/sign-up — identity first, then the body | S | backlog |
 | | [TASK-040409](tasks/TASK-040409-one-create-with-the-player-the-server-resolved.md) One create, with the player the server resolved | S | backlog |
