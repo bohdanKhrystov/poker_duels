@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040309
 title: Four verifications at a time, and no more
 type: task
-status: ready
+status: done
 parent: STORY-0403
 module: poker-server
 estimate: S
@@ -61,7 +61,18 @@ time**, which is how a concurrency test becomes a flaky test.
 
 | Test | Proves |
 | --- | --- |
-| `exactlyFourCoroutinesRunAtOnceOnTheArgon2Dispatcher` | eight coroutines launched on `argon2Dispatcher` each increment an `AtomicInteger`, record the running peak, count down a `CountDownLatch(4)` and then await it with a five-second timeout. With a bound of four the latch reaches zero and every task proceeds; with a smaller bound the await times out and the test fails; with a larger one the recorded peak exceeds four. The assertion is `assertEquals(4, peak)` |
+| `exactlyFourCoroutinesRunAtOnceOnTheArgon2Dispatcher` | **twelve** coroutines launched on `argon2Dispatcher` each increment an `AtomicInteger`, record the running peak, count down a `CountDownLatch(12)` — sized to the whole generation — and await it with a 300 ms hold, so a slower peer has time to join before an earlier one exits. The assertion is `assertEquals(ARGON2_MAX_PARALLEL, peak)`, an equality rather than a bound: `peak <= 4` also passes when peak is 1, which is what nothing-ran-concurrently measures |
+
+> **This table was corrected after implementation, and the correction is the interesting part.**
+> It originally specified eight probes and a `CountDownLatch(4)`, reasoning that a larger bound
+> would push the recorded peak above four. That design was **vacuous**: releasing the gate after
+> only four arrivals opens it in nanoseconds, so the coroutines scheduled a moment later race an
+> already-open gate and never overlap. Raising `ARGON2_MAX_PARALLEL` to 16 left it passing with
+> `peak == 4`, reproduced three times — the test could not tell a bound of 4 from 16, or from no
+> bound at all. Sizing the latch to the whole generation fixes it: at 16 the corrected test fails
+> with `Expected <16>, actual <12>`. A first repair used `Thread.sleep` as the hold and tripped
+> `GraceWindowConfigTest.noServerTestWaitsOnRealTime`, the repo-wide ban on real-time waits in
+> server tests — the latch timeout is what replaced it.
 | `eightConcurrentVerificationsAllSucceed` | eight real `matches` calls against one hashed secret, launched together, all return `true` — the bound queues work rather than starving or deadlocking it, which a blocking call inside a limited dispatcher can do |
 
 ## Acceptance criteria
