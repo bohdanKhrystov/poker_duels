@@ -72,7 +72,8 @@ worth; this is one.
   a later ticket does, and the tests install it directly.
 - The write-path assertions — `TASK-040409`. This ticket writes branches 4 and 5; that ticket pins
   them. Say so in the PR description so a reviewer is not surprised by an unasserted branch.
-- Any rate limiting. `DEC-048` is open: no ADR says whether sign-up is budgeted by remote address or
+- Any rate limiting. `ADR-0055` answers `DEC-048` — budgeted by remote address, `429` — and puts the
+  work in `STORY-0405`, not here. Formerly phrased as: no ADR says whether sign-up is budgeted or
   what over budget answers, and `ADR-0048` §6's response table has six rows and no seventh.
 - Issuing a session. Sign-up issues none; a client signs in afterwards like anybody else
   (`STORY-0405`).

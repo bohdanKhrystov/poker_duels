@@ -46,7 +46,8 @@ be split rather than silently taking a fourth file.
 
 ## Out of scope
 
-- Rate limiting and any configuration for it — `DEC-048`, open.
+- Rate limiting and any configuration for it — `DEC-048`, answered by `ADR-0055`, built in
+  `STORY-0405`.
 - `PostgresCredentials` itself, which is finished and merged.
 - Anything about sessions. `serverComponents` gains one collaborator, not two; `auth_session` has no
   reader until `STORY-0405`.
