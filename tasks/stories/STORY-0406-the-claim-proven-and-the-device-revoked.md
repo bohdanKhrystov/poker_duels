@@ -2,7 +2,7 @@
 id: STORY-0406
 title: The claim proven, and the device binding revoked
 type: story
-status: blocked
+status: backlog
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, coins, security]
@@ -27,15 +27,19 @@ attaching a password *adds* a sign-in route and removes none, so an unattended b
 in as you until you say otherwise. The human accepted that risk on the condition that the player can
 end it and that the screens say which routes are live.
 
-## Blocked on
+## Unblocked
 
-**`DEC-041` — the architect's.** `ADR-0037` says outright that what revocation looks like in the
-schema is left to this story: *"whether revocation nulls the column, moves the binding to its own
-row, or marks it revoked beside the credential is a technical question with more than one defensible
-answer and no reason to guess it here."* `ADR-0030` §2 says `player.device_id` is **never rewritten
-by any identity operation** and makes that the structural reason the coin invariant holds, so nulling
-the column is not obviously available. This story cannot be split until that is answered, and it must
-be answered once, in an ADR, rather than in a ticket.
+**`DEC-041` is answered** by
+[`ADR-0049`](../../docs/adr/ADR-0049-a-device-binding-is-a-row-and-revoking-is-final.md), which the
+split must follow: the device→profile edge moves out of `player` into a `device_binding` table with
+two partial unique indexes, revocation is one `UPDATE ... SET revoked_at` plus a finality trigger,
+`player.device_id` is dropped in the same PR as the code that read it, and the endpoint is
+`DELETE /api/me/device`. Its §4 names the orphan-profile defect the rewritten `resolve` will ship if
+the mint is not rolled back whole, and §8 lists everything that moves with the migration.
+
+`DEC-045` (does revoking also end every other session?) came out of the same ADR and is the product
+owner's. **It does not block this story** — `ADR-0049` §6 ships revocation touching no session, and
+the other answer is one additional `DELETE` on the same endpoint.
 
 ## Design notes
 
@@ -60,7 +64,7 @@ be answered once, in an ADR, rather than in a ticket.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Blocked on `DEC-041`. Not split.* | — |
+| — | *Not split yet. `DEC-041` is answered; the split follows `ADR-0049`.* | — |
 
 ## Acceptance criteria
 
