@@ -37,8 +37,14 @@ exception: `name → NULL`, and only when that name is already `RETIRED`. The op
 `retire_display_name(player_id, expected_name)` — a function in the migration, called from `psql`,
 never an endpoint and never a Gradle task — documented in a new `docs/operations.md`.
 
-`DEC-046` (is the player *told*?) came out of that ADR and is the product owner's. It blocks nothing
-here: the technical default is silence, and telling them later is additive.
+**`DEC-046` (is the player *told*?) is answered too**, by
+[`ADR-0052`](../../docs/adr/ADR-0052-a-takedown-is-told-to-the-player-it-happened-to.md): **yes**, so
+silence is no longer the default this story ships under. It adds no column and nothing to the write
+path — `SetNameResult`, the endpoint's four codes, `retire_display_name` and `docs/operations.md` are
+exactly as `ADR-0051` left them — and **one** thing to the read path: `profileOf` answers whether a
+name has been retired from the requesting player, which `ADR-0051` §1's `retired_from` already
+records. The wire shape of that one fact is `DEC-047`, the architect's, due before this story is
+split. The client half is `STORY-0411`'s.
 
 ## Design notes
 

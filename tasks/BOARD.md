@@ -518,7 +518,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-046 | **The product owner's** — is a player told that their display name was taken away, and if so by what and in what words? `ADR-0051` §6 fixes the mechanics (the profile returns to *unset*, `GET /api/me` answers `displayName: null`, the old name is refused like any taken one, and nothing is pushed because the server has no asynchronous channel to a player outside a duel socket) and takes **silence** as the reversible technical default. Any other answer is a screen and a piece of copy, not a column, so `STORY-0410` ships the takedown either way | [`ADR-0051`](../docs/adr/ADR-0051-a-name-is-registered-before-it-is-held.md) | before STORY-0411 |
+| DEC-047 | **The architect's** — by what shape does `GET /api/me` carry the fact that a name has been retired from the requesting player? `ADR-0052` §6 requires the profile read to answer it and **adds no column** — `ADR-0051` §1's `name_registry(reason = 'RETIRED', retired_from)` already records it, and what crosses the wire is one boolean about the caller and no string. Open: whether it is a field on `ProfileResponse` (as `ADR-0049` §5's `deviceRouteLive` is), whether the profile query joins or subqueries `name_registry`, and whether `ADR-0051` §1's *"nothing in production reads it"* needs a formal amendment | [`ADR-0052`](../docs/adr/ADR-0052-a-takedown-is-told-to-the-player-it-happened-to.md) | before STORY-0410 is split |
 | DEC-044 | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403`'s parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack. `TASK-040306` takes the conservative side; the answer decides what the raise actually costs | [`TASK-040306`](tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) | before the Argon2 parameters are raised |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
@@ -1152,7 +1152,13 @@ values of one column, a string never leaves it, and the operator's path is
 `retire_display_name(player_id, expected_name)` called from `psql` rather than an endpoint nobody
 could authenticate without the role system `ADR-0038` refused. It collapses `ADR-0038`'s three
 sources of truth into one `INSERT` — which, read literally, had been a `READ COMMITTED` race rather
-than a checklist. It unblocks `STORY-0410` and raised `DEC-046`, the product owner's, above.
+than a checklist. It unblocks `STORY-0410` and raised `DEC-046`, since answered by
+[`ADR-0052`](../docs/adr/ADR-0052-a-takedown-is-told-to-the-player-it-happened-to.md): the player it
+happened to **is told**, on the surface where a name is set, and nobody else is told anything.
+Silence lost on a defect rather than on taste — the affected player's obvious next move is to retype
+their own name, `ADR-0051` §2 answers `409`, and `STORY-0411` was on course to render that as
+*taken*, which the server knows to be false about a string nobody holds and nobody ever can. That
+ADR in turn raised `DEC-047`, the architect's, above.
 Neither blocks the epic, and neither is the human's — every product question this epic had was
 answered on 2026-08-15.
 
