@@ -1,6 +1,8 @@
 package duels.poker.server
 
+import duels.poker.server.auth.Credentials
 import duels.poker.server.config.ServerConfig
+import duels.poker.server.db.PostgresCredentials
 import duels.poker.server.db.PostgresDuelResultSink
 import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
@@ -29,6 +31,7 @@ public data class ServerComponents(
     val socket: SocketDependencies,
     val reads: ProfileReads,
     val writes: ProfileWrites,
+    val credentials: Credentials,
 )
 
 /**
@@ -77,5 +80,7 @@ public fun serverComponents(
         maxFrameNestingDepth = config.maxFrameNestingDepth,
     )
 
-    return ServerComponents(socket = socket, reads = reads, writes = writes)
+    val credentials = PostgresCredentials(dataSource)
+
+    return ServerComponents(socket = socket, reads = reads, writes = writes, credentials = credentials)
 }

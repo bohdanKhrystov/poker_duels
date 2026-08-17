@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.db.Database
 import duels.poker.server.db.Migrations
+import duels.poker.server.http.authRoutes
 import duels.poker.server.http.profileRoutes
 import duels.poker.server.room.GraceExpiry
 import duels.poker.server.room.RoomRegistry
@@ -80,6 +81,7 @@ public fun Application.duelServer(
 ) {
     module()
     duelSocket(components.socket)
+    authRoutes(components.reads, components.credentials)
     profileRoutes(components.reads, components.writes)
     scheduleSweeps(components.socket.rooms, components.socket.connections, sweepPeriodMillis)
 }
