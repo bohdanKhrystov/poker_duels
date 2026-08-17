@@ -23,6 +23,18 @@ class CredentialsPortTest {
     }
 
     @Test
+    fun theHoldsQueryAnswersANonNullBoolean() {
+        val function = Credentials::class.memberFunctions.first { it.name == "holdsCredential" }
+        val returnType = function.returnType
+
+        // Assert the return type has classifier Boolean
+        assertEquals(Boolean::class, returnType.classifier)
+
+        // Assert the return type is not nullable
+        assertTrue(!returnType.isMarkedNullable, "holdsCredential must return Boolean, not Boolean?")
+    }
+
+    @Test
     fun noFunctionOnThePortReturnsAString() {
         val allPublicFunctions = Credentials::class.memberFunctions
             .filter { it.name !in setOf("equals", "hashCode", "toString") }
@@ -30,9 +42,9 @@ class CredentialsPortTest {
         // Assert the sweep is non-empty by checking we found the expected functions
         val functionNames = allPublicFunctions.map { it.name }.toSet()
         assertEquals(
-            setOf("verify", "create"),
+            setOf("verify", "create", "holdsCredential"),
             functionNames,
-            "Expected exactly verify and create functions",
+            "Expected exactly verify, create, and holdsCredential functions",
         )
 
         // Collect offenders that return String or ByteArray from functions
@@ -87,6 +99,26 @@ class CredentialsPortTest {
     }
 
     @Test
+    fun aTestDoubleAnswersWhetherItHoldsOne() {
+        val testDoubleWithTrue = TestDoubleCredentials(PlayerId("7"), holds = true)
+        val testDoubleWithFalse = TestDoubleCredentials(PlayerId("8"), holds = false)
+
+        runBlocking {
+            val resultTrue = testDoubleWithTrue.holdsCredential(
+                PlayerId("7"),
+                CredentialKind.PASSWORD,
+            )
+            assertEquals(true, resultTrue)
+
+            val resultFalse = testDoubleWithFalse.holdsCredential(
+                PlayerId("8"),
+                CredentialKind.PASSWORD,
+            )
+            assertEquals(false, resultFalse)
+        }
+    }
+
+    @Test
     fun anotherKindIsStillConstructible() {
         val passkeyKind = CredentialKind("passkey")
         assertEquals("passkey", passkeyKind.value)
@@ -98,7 +130,10 @@ class CredentialsPortTest {
     /**
      * A test double that returns a fixed PlayerId for any verify call.
      */
-    private class TestDoubleCredentials(val playerId: PlayerId) : Credentials {
+    private class TestDoubleCredentials(
+        val playerId: PlayerId,
+        val holds: Boolean = false,
+    ) : Credentials {
         override suspend fun verify(
             kind: CredentialKind,
             identifier: String,
@@ -111,5 +146,10 @@ class CredentialsPortTest {
             identifier: String,
             secret: PresentedSecret,
         ): CreateCredentialResult = CreateCredentialResult.Created
+
+        override suspend fun holdsCredential(
+            playerId: PlayerId,
+            kind: CredentialKind,
+        ): Boolean = holds
     }
 }
