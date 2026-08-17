@@ -119,5 +119,5 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites)
  * so without the `takeIf { it.isNotBlank() }` guard a header of spaces would throw and answer
  * `500` instead of `401`.
  */
-private fun io.ktor.server.application.ApplicationCall.deviceIdOrNull(): DeviceId? =
+internal fun io.ktor.server.application.ApplicationCall.deviceIdOrNull(): DeviceId? =
     request.headers[DEVICE_ID_HEADER]?.takeIf { it.isNotBlank() }?.let(::DeviceId)
