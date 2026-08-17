@@ -43,9 +43,12 @@ takes intent rather than a careless `"$it"`.
 - KDoc on both saying what the redaction is for: a bearer secret in a log line is the leak that no
   amount of endpoint care repairs, and `value` is the deliberate, named way to read one.
 - **Neither class validates anything.** No `init`, no `require`, no length rule, no character rule.
-  What a password may be is `DEC-043`, the product owner's, due before `STORY-0404` — a minimum
-  length invented in a value class here would answer it silently and be enforced in the one place
-  nobody thinks to look.
+  What a password may be is answered by
+  [`ADR-0048`](../../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md) — and it
+  **confirms this instruction rather than retracting it**: the 8-code-point minimum is a
+  sign-up/reset rule that never runs at sign-in, and this value class is constructed at sign-in
+  too, so a `require` here would refuse a legitimate sign-in by an account created before the
+  rule. The 128 maximum belongs wherever a secret is hashed, not here.
 
 ## Out of scope
 

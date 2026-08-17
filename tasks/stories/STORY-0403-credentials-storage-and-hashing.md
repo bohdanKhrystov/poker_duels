@@ -82,9 +82,11 @@ then the fold, the port, its implementation, and last the two tests that can onl
 the whole surface exists — the enumeration parity and the sweep.
 
 Two decisions were raised while splitting and **neither blocks a ticket here**: `DEC-043` (what may
-a password be — the product owner's, due before `STORY-0404`) and `DEC-044` (what happens to rows
-written under older Argon2 parameters the day the cost is raised — the architect's, due before
-anyone raises it).
+a password be), since answered by
+[`ADR-0048`](../../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md) — 8 to 128 code
+points after NFC and nothing else examined, which upholds this story's refusal to put a rule in
+`PresentedSecret` — and `DEC-044` (what happens to rows written under older Argon2 parameters the
+day the cost is raised — the architect's, due before anyone raises it, still open).
 
 ## Acceptance criteria
 
