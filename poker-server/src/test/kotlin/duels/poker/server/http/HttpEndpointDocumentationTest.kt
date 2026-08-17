@@ -2,6 +2,7 @@ package duels.poker.server.http
 
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.SignUpRequest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -13,8 +14,9 @@ private const val DEFAULT_DUEL_LIMIT: Int = 10
 private const val MAX_DUEL_LIMIT: Int = 50
 
 /**
- * Verifies that `docs/protocol.md` documents the HTTP endpoints `GET /api/me`, `GET /api/me/duels`,
- * and `PUT /api/me/name`, their authentication mechanism, and their behavior.
+ * Verifies that `docs/protocol.md` documents the HTTP endpoints `POST /api/auth/sign-up`,
+ * `GET /api/me`, `GET /api/me/duels`, and `PUT /api/me/name`, their authentication mechanism,
+ * and their behavior.
  *
  * The tests below go further than substring matching: they reflect over the response DTOs so
  * that a claim in the document (a field is nullable, a field exists) can be checked against what
@@ -29,6 +31,14 @@ class HttpEndpointDocumentationTest {
 
     // Scoping to the section that documents each response keeps the checks below from matching a
     // field name that happens to recur in an unrelated table.
+    // Each section is bounded by the heading that *follows* it, so moving `### Sign up` away from
+    // its position before `### Profile endpoint` breaks this pairing. That failure is **loud**, not
+    // silent: `sectionBetween` requires its end marker and throws when it is missing — measured by
+    // moving the section to the end of the document, which failed all fourteen tests here with
+    // `IllegalArgumentException` rather than quietly reading a different span. So this is a comment
+    // about why the ordering is coupled to the document, not a warning about undetectable drift.
+    private val signUpSection: String =
+        sectionBetween("### Sign up", "### Profile endpoint")
     private val profileSection: String =
         sectionBetween("### Profile endpoint", "### Set display name")
     private val setNameSection: String =
@@ -228,5 +238,50 @@ class HttpEndpointDocumentationTest {
             setNameSection.contains("consecutive") || setNameSection.contains("two or more"),
             "The document must describe the rule refusing consecutive spaces that canonicalDisplayNameOrNull enforces",
         )
+    }
+
+    @Test
+    fun theDocumentDescribesTheSignUpEndpoint() {
+        assertTrue(
+            doc.contains("POST /api/auth/sign-up"),
+            "Document must contain 'POST /api/auth/sign-up'",
+        )
+    }
+
+    @Test
+    fun theSignUpSectionNamesEveryFieldTheRequestHas() {
+        val reflectedProperties = SignUpRequest::class.memberProperties.map { it.name }.toSet()
+        assertTrue(
+            reflectedProperties.isNotEmpty(),
+            "SignUpRequest must expose at least one property to check",
+        )
+        // Assert the exact set to catch if a field is added to the DTO but not documented
+        assertTrue(
+            reflectedProperties == setOf("handle", "password"),
+            "SignUpRequest must have exactly the fields 'handle' and 'password', but found: $reflectedProperties",
+        )
+
+        val documentedFields = documentedFieldNames(signUpSection)
+        for (field in reflectedProperties) {
+            assertTrue(
+                field in documentedFields,
+                "Documented field '$field' must appear in the Sign up section's request body table",
+            )
+        }
+    }
+
+    @Test
+    fun theSignUpSectionNamesEveryStatusTheRouteCanAnswer() {
+        val statusCodes = listOf("201", "400", "401", "409", "422")
+        assertTrue(
+            statusCodes.isNotEmpty(),
+            "Status code list must not be empty",
+        )
+        for (statusCode in statusCodes) {
+            assertTrue(
+                signUpSection.contains(statusCode),
+                "The Sign up section must document status code '$statusCode'",
+            )
+        }
     }
 }

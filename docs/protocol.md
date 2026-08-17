@@ -57,6 +57,31 @@ The generated file contains types only. If you encounter a merge conflict in `pr
 
 These endpoints are **plain HTTP** — they carry no `type` discriminator and are not `ServerMessage`s. The lobby reads them before any socket exists.
 
+### Sign up
+
+**Method and path:** `POST /api/auth/sign-up`
+
+**Authentication:** The `X-Device-Id` header (same authentication as the socket handshake, see `ADR-0012`). An absent, blank, or unknown value answers `401 Unauthorized` with an empty body.
+
+**Request body:** A JSON object with two required fields. The handle is stored folded (see `ADR-0031` §1: 3–32 of `[a-z0-9._-]`, first character `[a-z0-9]`), and the password is stored as-is in NFC form (`ADR-0048` §1: 8–128 code points, nothing trimmed, every code point permitted). No default values: a missing field is refused with `400 Bad Request`.
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| handle | string | The player's chosen handle for sign-up. |
+| password | string | The player's chosen password for sign-up. |
+
+**Note:** No address field exists on this endpoint. The recovery email (if needed) is its own endpoint and costs the current password (see `ADR-0031` §5). The body carries no player id, because the server resolves identity from the device id and a client may not assert it.
+
+**Responses:** Every response body is empty.
+
+| Status | Meaning |
+| --- | --- |
+| `201 Created` | One `credential` row now points at the profile this request resolved to; **no session is issued** and the client signs in afterwards. |
+| `400 Bad Request` | The body could not be decoded, or the handle fails the fold. |
+| `401 Unauthorized` | No resolvable identity; nothing is written, and sign-up creates no profile. |
+| `409 Conflict` | The handle is taken, **or** this player already holds a `password` credential. |
+| `422 Unprocessable Entity` | The password is under 8 or over 128 code points. |
+
 ### Profile endpoint
 
 **Method and path:** `GET /api/me`
