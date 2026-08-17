@@ -192,6 +192,22 @@ class HttpEndpointDocumentationTest {
     }
 
     @Test
+    fun theDocumentMarksTheOpponentDisplayNameNullable() {
+        val opponentDisplayNameProperty = DuelSummaryResponse::class.memberProperties.firstOrNull { it.name == "opponentDisplayName" }
+            ?: error("DuelSummaryResponse must have an 'opponentDisplayName' property")
+        assertTrue(
+            opponentDisplayNameProperty.returnType.isMarkedNullable,
+            "DuelSummaryResponse.opponentDisplayName must be nullable (String or null), and the document must mark it as such",
+        )
+        val opponentDisplayNameRow = rowFor(duelSummarySection, "opponentDisplayName")
+            ?: error("Duel summary section must document the 'opponentDisplayName' field")
+        assertTrue(
+            opponentDisplayNameRow.contains("null", ignoreCase = true),
+            "The opponentDisplayName row must mention 'null' to indicate nullability: $opponentDisplayNameRow",
+        )
+    }
+
+    @Test
     fun theDocumentStatesTheCanonicalFormRules() {
         // Verify the Set display name section documents the canonicalisation rules that
         // DisplayName.kt enforces. If these claims drift from the code, clients cannot
