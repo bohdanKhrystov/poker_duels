@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":poker-engine"))
+    implementation(libs.bouncycastle.provider)
     implementation(libs.bundles.ktor.server)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
