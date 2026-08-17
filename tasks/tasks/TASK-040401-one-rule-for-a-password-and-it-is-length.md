@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040401
 title: One rule for a password, and it is length
 type: task
-status: ready
+status: done
 parent: STORY-0404
 module: poker-server
 estimate: S
