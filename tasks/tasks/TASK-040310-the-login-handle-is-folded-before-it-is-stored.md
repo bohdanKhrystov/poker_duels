@@ -58,7 +58,9 @@ ASCII, 3 to 32 characters of `[a-z0-9._-]` beginning with `[a-z0-9]` — or retu
 - Any endpoint that calls this — `STORY-0404` and `STORY-0405`.
 - Any `CHECK` constraint. `ADR-0031` §1 is explicit that the rule lives in the write path, because
   `credential` is generic across kinds and a character rule is the part most likely to move.
-- A rule about what a *password* may be. That is `DEC-043`, the product owner's.
+- A rule about what a *password* may be. That is
+  [`ADR-0048`](../../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md), enforced at
+  sign-up — it adds nothing to the handle and nothing to this ticket.
 - Changing a handle after sign-up. `ADR-0031` §1: no endpoint updates `credential.identifier`.
 
 ## Tests
