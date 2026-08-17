@@ -518,7 +518,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-042 | **The architect's** — by what path does an operator force-rename a profile, and where do the blocklist and the retired-name set live? `ADR-0038` fixes that the path exists and refuses to grow a role system; `ADR-0029` §4's trigger refuses `name → NULL` for everybody today | [`STORY-0410`](stories/STORY-0410-the-display-name-product-rules.md) | before STORY-0410 |
+| DEC-046 | **The product owner's** — is a player told that their display name was taken away, and if so by what and in what words? `ADR-0051` §6 fixes the mechanics (the profile returns to *unset*, `GET /api/me` answers `displayName: null`, the old name is refused like any taken one, and nothing is pushed because the server has no asynchronous channel to a player outside a duel socket) and takes **silence** as the reversible technical default. Any other answer is a screen and a piece of copy, not a column, so `STORY-0410` ships the takedown either way | [`ADR-0051`](../docs/adr/ADR-0051-a-name-is-registered-before-it-is-held.md) | before STORY-0411 |
 | DEC-044 | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403`'s parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack. `TASK-040306` takes the conservative side; the answer decides what the raise actually costs | [`TASK-040306`](tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) | before the Argon2 parameters are raised |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
@@ -1127,7 +1127,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
 | [STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md) Duel history, paged over the whole record | | | backlog |
 | [STORY-0409](stories/STORY-0409-history-filters-and-search.md) History filters and search | | | backlog |
-| [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | **blocked** — `DEC-042` |
+| [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | backlog |
 | [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
@@ -1145,7 +1145,14 @@ convention. It unblocks `STORY-0406` and raised `DEC-045`, since answered by
 [`ADR-0050`](../docs/adr/ADR-0050-revoking-the-device-signs-the-player-out-everywhere-but-here.md):
 **one button** — revoking ends every other session and keeps the revoking one, so `STORY-0406`
 ships the `auth_session` `DELETE` with the endpoint rather than as a later PR.
-`DEC-042` (the operator's force-rename path, which `ADR-0038` leaves unstated) is still open.
+`DEC-042` (the operator's force-rename path) is answered by
+[`ADR-0051`](../docs/adr/ADR-0051-a-name-is-registered-before-it-is-held.md) — **one table is the
+whole namespace**: `name_registry` holds names in use, blocked names and retired names as three
+values of one column, a string never leaves it, and the operator's path is
+`retire_display_name(player_id, expected_name)` called from `psql` rather than an endpoint nobody
+could authenticate without the role system `ADR-0038` refused. It collapses `ADR-0038`'s three
+sources of truth into one `INSERT` — which, read literally, had been a `READ COMMITTED` race rather
+than a checklist. It unblocks `STORY-0410` and raised `DEC-046`, the product owner's, above.
 Neither blocks the epic, and neither is the human's — every product question this epic had was
 answered on 2026-08-15.
 
