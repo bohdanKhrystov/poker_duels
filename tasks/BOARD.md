@@ -1129,8 +1129,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040407](tasks/TASK-040407-the-handle-is-judged-first-then-the-password.md) The handle is judged first, then the password | S | **done** |
 | | [TASK-040408](tasks/TASK-040408-sign-up-identity-first-then-the-body.md) POST /api/auth/sign-up — identity first, then the body | S | **done** |
 | | [TASK-040409](tasks/TASK-040409-one-create-with-the-player-the-server-resolved.md) One create, with the player the server resolved | S | **done** |
-| | [TASK-040410](tasks/TASK-040410-no-outcome-carries-a-body-and-nothing-prints-a-secret.md) No outcome carries a body, and nothing on the path can print a secret | S | ready |
-| | [TASK-040411](tasks/TASK-040411-the-server-it-ships-with-can-sign-up.md) The server it ships with can sign up | S | backlog |
+| | [TASK-040410](tasks/TASK-040410-no-outcome-carries-a-body-and-nothing-prints-a-secret.md) No outcome carries a body, and nothing on the path can print a secret | S | **done** |
+| | [TASK-040411](tasks/TASK-040411-the-server-it-ships-with-can-sign-up.md) The server it ships with can sign up | S | ready |
 | | [TASK-040412](tasks/TASK-040412-one-credential-row-and-the-player-table-untouched.md) One credential row, and the player table untouched across it | S | backlog |
 | | [TASK-040413](tasks/TASK-040413-the-coin-a-duel-paid-survives-the-sign-up.md) The coin a duel paid is still there after the sign-up | S | backlog |
 | | [TASK-040414](tasks/TASK-040414-the-document-names-the-sign-up-endpoint.md) The document names the sign-up endpoint, and a test agrees with the code | S | backlog |
