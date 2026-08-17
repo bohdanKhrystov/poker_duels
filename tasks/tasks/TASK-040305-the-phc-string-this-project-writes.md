@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040305
 title: The PHC string this project writes, and the one function that writes it
 type: task
-status: ready
+status: done
 parent: STORY-0403
 module: poker-server
 estimate: S
