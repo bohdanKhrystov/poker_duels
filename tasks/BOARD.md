@@ -1122,8 +1122,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | [STORY-0404](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) Sign-up — one endpoint, attaching an account to the profile already here | | | ready |
 | | [TASK-040401](tasks/TASK-040401-one-rule-for-a-password-and-it-is-length.md) One rule for a password, and it is length | S | **done** |
 | | [TASK-040402](tasks/TASK-040402-the-hasher-hashes-the-nfc-form.md) The hasher hashes the NFC form, in the one place a secret becomes bytes | XS | **done** |
-| | [TASK-040403](tasks/TASK-040403-the-port-can-ask-what-a-player-already-holds.md) The port can ask whether a player already holds a kind of credential | XS | ready |
-| | [TASK-040404](tasks/TASK-040404-one-select-for-that-player-and-that-kind.md) One SELECT, and it answers for that player and that kind only | S | backlog |
+| | [TASK-040403](tasks/TASK-040403-the-port-can-ask-what-a-player-already-holds.md) The port can ask whether a player already holds a kind of credential | XS | **done** |
+| | [TASK-040404](tasks/TASK-040404-one-select-for-that-player-and-that-kind.md) One SELECT, and it answers for that player and that kind only | S | ready |
 | | [TASK-040405](tasks/TASK-040405-the-sign-up-body-is-two-fields-and-it-prints-neither.md) The sign-up body is two fields, and it prints neither | S | backlog |
 | | [TASK-040406](tasks/TASK-040406-the-doubles-a-sign-up-route-test-records-against.md) The doubles every sign-up route test records against | S | backlog |
 | | [TASK-040407](tasks/TASK-040407-the-handle-is-judged-first-then-the-password.md) The handle is judged first, then the password | S | backlog |

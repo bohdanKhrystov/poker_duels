@@ -71,6 +71,27 @@ public interface Credentials {
         identifier: String,
         secret: PresentedSecret,
     ): CreateCredentialResult
+
+    /**
+     * Ask whether a player already holds a credential of a given kind.
+     *
+     * This is a port read, not a unique index, because `ADR-0030` §7 imposes no constraint on
+     * the schema and no index. A `UNIQUE (player_id, kind)` constraint would freeze `DEC-027`
+     * — *may one player hold several credentials?* — into the database schema. `ADR-0030` §1
+     * explicitly calls the `409` guard *"a guard, not a rule about what an account is"*, so the
+     * decision is deferred to the application layer, not encoded as schema.
+     *
+     * Under `READ COMMITTED` isolation, two concurrent sign-ups for the same player can both
+     * pass this read and both insert, creating a duplicate. The realistic client failure —
+     * a double-clicked form — sends the identical handle twice, and is caught by the
+     * `UNIQUE (kind, identifier)` constraint as `IdentifierTaken`, avoiding the creation of a
+     * second row.
+     *
+     * @param playerId The player to check.
+     * @param kind The kind of credential to check for.
+     * @return `true` if the player holds a credential of this kind, `false` otherwise.
+     */
+    public suspend fun holdsCredential(playerId: PlayerId, kind: CredentialKind): Boolean
 }
 
 /**

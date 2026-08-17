@@ -88,6 +88,11 @@ public class PostgresCredentials internal constructor(
             }
         }
 
+    override suspend fun holdsCredential(
+        playerId: PlayerId,
+        kind: CredentialKind,
+    ): Boolean = TODO("TASK-040404")
+
     private fun insertCredential(
         connection: Connection,
         playerId: PlayerId,
