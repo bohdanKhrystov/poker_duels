@@ -37,7 +37,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
-| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **ready** — 17 stories written 2026-08-16, `STORY-0401` done, `STORY-0402` split | v0.2 |
+| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **ready** — 17 stories written 2026-08-16, `STORY-0401` and `STORY-0402` done | v0.2 |
 | EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
@@ -1096,7 +1096,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040116](tasks/TASK-040116-the-two-refusals-a-client-must-tell-apart.md) The two refusals a client must tell apart | XS | **done** |
 | | [TASK-040117](tasks/TASK-040117-a-name-set-over-http-comes-back-on-the-next-read.md) A name set over HTTP comes back on the next read | S | **done** |
 | | [TASK-040118](tasks/TASK-040118-document-the-name-endpoint.md) Document the name endpoint and what each answer means | S | **done** |
-| **[STORY-0402](stories/STORY-0402-the-read-path-carries-the-display-name.md)** The read path carries the display name — *schema 2* | | | **ready** |
+| **[STORY-0402](stories/STORY-0402-the-read-path-carries-the-display-name.md)** The read path carries the display name — *schema 2* | | | **done** |
 | | [TASK-040201](tasks/TASK-040201-the-duel-line-joins-the-opponents-row-and-carries-their-name.md) The duel line joins the opponent's row and carries their name | XS | **done** |
 | | [TASK-040202](tasks/TASK-040202-a-named-opponent-an-unnamed-one-and-a-name-set-afterwards.md) A named opponent, an unnamed one, and a name set after the duel | S | **done** |
 | | [TASK-040203](tasks/TASK-040203-three-duels-three-opponents-one-prepared-statement.md) Three duels, three opponents, one prepared statement | S | **done** |
