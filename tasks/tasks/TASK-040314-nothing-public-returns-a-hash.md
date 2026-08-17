@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040314
 title: Nothing public returns a hash, and the sweep proves it can tell
 type: task
-status: backlog
+status: ready
 parent: STORY-0403
 module: poker-server
 estimate: S
