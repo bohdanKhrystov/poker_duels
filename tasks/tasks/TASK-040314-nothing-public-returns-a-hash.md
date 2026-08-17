@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040314
 title: Nothing public returns a hash, and the sweep proves it can tell
 type: task
-status: ready
+status: done
 parent: STORY-0403
 module: poker-server
 estimate: S
@@ -39,8 +39,20 @@ future author who adds one fails the build rather than having to remember the ru
   test source set — and `Class.forName` every `.class` file found, nested classes included.
 - Keep only classes whose `KClass.visibility` is `PUBLIC`, then their members whose
   `visibility` is `PUBLIC`, taken from `declaredFunctions` and `declaredMemberProperties`.
-  `declaredFunctions` is the one that also reaches top-level functions on a file facade class such
-  as `LoginHandleKt`; `declaredMemberFunctions` alone silently returns none of them.
+  ~~`declaredFunctions` is the one that also reaches top-level functions on a file facade class such
+  as `LoginHandleKt`.~~ **False in this toolchain, and corrected after implementation:** on Kotlin
+  2.0.21's `kotlin-reflect`, `declaredFunctions` returns nothing for a file facade — verified
+  empirically against kotlin-stdlib's own `StringsKt`, not only against `LoginHandleKt`. The bridge
+  is `Method.kotlinFunction` / `Field.kotlinProperty`, applied only when the class-based view comes
+  back empty. The assertion that `loginHandleOrNull` appears among the enumerated members is what
+  makes the difference visible rather than silent — without it, this sweep would have covered the
+  two packages' classes and none of their top-level functions, and passed.
+
+- A second correction, found the same way: **every `data class` and `value class` declares a public
+  `hashCode(): Int`**, which the literal "name contains `hash`" rule flags. `PresentedSecret`,
+  `SessionToken` and `CredentialKind` all trip it. The exclusion is by exact signature — name
+  `hashCode`, zero value parameters, returning `Int` — deliberately narrow, so `secretHash`,
+  `passwordHash` and `tagBytes` stay caught.
 - **A member offends if** its return type classifier is `ByteArray`, **or** its name contains
   `hash`, `digest`, `phc` or `tag`, case-insensitively. The second half is why `SecretHasher`,
   `Argon2Hasher` and `Argon2Phc` are `internal` and stay that way.

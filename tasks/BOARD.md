@@ -1104,7 +1104,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040203](tasks/TASK-040203-three-duels-three-opponents-one-prepared-statement.md) Three duels, three opponents, one prepared statement | S | **done** |
 | | [TASK-040204](tasks/TASK-040204-present-as-null-not-absent-on-the-real-response.md) Present as `null`, not absent, on the response the route actually writes | S | **done** |
 | | [TASK-040205](tasks/TASK-040205-the-document-names-the-field-and-the-test-agrees-with-the-dto.md) The document names the field, and the test agrees with the DTO | XS | **done** |
-| **[STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md)** Credentials — the schema, the hash, and a port that returns none — *schema 2* | | | **ready** |
+| **[STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md)** Credentials — the schema, the hash, and a port that returns none — *schema 2* | | | **done** |
 | | [TASK-040301](tasks/TASK-040301-the-fourth-migration-adds-the-credential-and-the-session.md) The fourth migration adds the credential and the auth session | S | **done** |
 | | [TASK-040302](tasks/TASK-040302-one-identifier-one-kind-one-row.md) One identifier, one kind, one row — and the player it points at must exist | S | **done** |
 | | [TASK-040303](tasks/TASK-040303-one-token-hash-one-row-and-nothing-cascades.md) One token hash, one row — and no foreign key cascades | S | **done** |
@@ -1118,7 +1118,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040311](tasks/TASK-040311-the-credentials-port-answers-a-player-id-or-nothing.md) The `Credentials` port answers a `PlayerId` or nothing | S | **done** |
 | | [TASK-040312](tasks/TASK-040312-postgres-credentials-writes-one-row-and-reads-no-hash-back.md) `PostgresCredentials` writes one row and reads no hash back | S | **done** |
 | | [TASK-040313](tasks/TASK-040313-an-unknown-identifier-costs-what-a-wrong-secret-costs.md) An unknown identifier costs exactly what a wrong secret costs | S | **done** |
-| | [TASK-040314](tasks/TASK-040314-nothing-public-returns-a-hash.md) Nothing public returns a hash, and the sweep proves it can tell | S | ready |
+| | [TASK-040314](tasks/TASK-040314-nothing-public-returns-a-hash.md) Nothing public returns a hash, and the sweep proves it can tell | S | **done** |
 | [STORY-0404](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) Sign-up — one endpoint, attaching an account to the profile already here | | | backlog |
 | [STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) Sign-in, the session, and what the socket presents (needs `STORY-0213`, `STORY-0214`) | | | backlog |
 | [STORY-0406](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) The claim proven, and the device binding revoked (needs `STORY-0405`) | | | backlog |
