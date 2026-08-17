@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040809
 title: One row more than the page, and the last page says there is no next
 type: task
-status: backlog
+status: ready
 parent: STORY-0408
 module: poker-server
 estimate: S
