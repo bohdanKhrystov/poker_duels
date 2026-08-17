@@ -3,7 +3,7 @@ package duels.poker.server.db
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 
 /**
@@ -91,7 +91,7 @@ internal class Argon2VectorTest {
             0xd0.toByte(), 0x1e.toByte(), 0xf0.toByte(), 0x45.toByte(), 0x2d, 0x75.toByte(), 0xb6.toByte(), 0x5e.toByte(),
             0xb5.toByte(), 0x25, 0x20, 0xe9.toByte(), 0x6b.toByte(), 0x01.toByte(), 0xe6.toByte(), 0x59.toByte(),
         )
-        assertNotEquals(rfcVector.contentToString(), tag.contentToString())
+        assertFalse(tag.contentEquals(rfcVector))
     }
 
     /**
