@@ -1,3 +1,6 @@
+// File named for its intended contents; STORY-0405 adds the second DTO and can delete this suppression.
+@file:Suppress("ktlint:standard:filename")
+
 package duels.poker.server.protocol.http
 
 import kotlinx.serialization.Serializable
@@ -29,6 +32,3 @@ public data class SignUpRequest(val handle: String, val password: String) {
         public const val REDACTION: String = "SignUpRequest(redacted)"
     }
 }
-
-// Placeholder for future auth DTOs (e.g., SignInRequest, LogOutRequest) per STORY-0405
-internal object AuthDtosPlaceholder
