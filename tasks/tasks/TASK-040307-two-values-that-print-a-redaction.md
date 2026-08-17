@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040307
 title: Two values that print a redaction, in every form a string can take
 type: task
-status: backlog
+status: ready
 parent: STORY-0403
 module: poker-server
 estimate: S
