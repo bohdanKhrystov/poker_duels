@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040312
 title: PostgresCredentials writes one row and reads no hash back
 type: task
-status: backlog
+status: ready
 parent: STORY-0403
 module: poker-server
 estimate: S
