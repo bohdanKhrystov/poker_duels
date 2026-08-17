@@ -1,7 +1,10 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.CreateCredentialResult
+import duels.poker.server.auth.CredentialKind
 import duels.poker.server.module
 import duels.poker.server.protocol.http.profileResponse
+import duels.poker.server.session.PlayerId
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -193,6 +196,182 @@ class AuthRouteTest {
             assertEquals("", response.bodyAsText())
             assertTrue(credentials.createCalls.isEmpty())
             assertTrue(credentials.holdsCalls.isEmpty())
+        }
+    }
+
+    @Test
+    fun aSignUpAnswersCreated() {
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials = RecordingCredentials()
+            application {
+                module()
+                authRoutes(reads, credentials)
+            }
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.Created, response.status)
+            assertEquals("", response.bodyAsText())
+        }
+    }
+
+    @Test
+    fun theCreateCallCarriesTheResolvedPlayerAndTheFoldedHandle() {
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials = RecordingCredentials()
+            application {
+                module()
+                authRoutes(reads, credentials)
+            }
+            // Bob_1 changes under the fold, so a handler that skipped folding would fail here even
+            // though it would pass with an already-lowercase handle. The player id must be the
+            // server's own p-alice — never the device id alice, and never a body field, because
+            // SignUpRequest has none to carry one.
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"Bob_1","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.Created, response.status)
+            assertEquals(1, credentials.createCalls.size)
+            val call = credentials.createCalls[0]
+            assertEquals(PlayerId("p-alice"), call.playerId)
+            assertEquals(CredentialKind.PASSWORD, call.kind)
+            assertEquals("bob_1", call.identifier)
+            // PresentedSecret redacts toString, so the secret is compared by its value directly.
+            assertEquals("hunter2222", call.secret.value)
+        }
+    }
+
+    @Test
+    fun aPlayerWhoAlreadyHoldsAPasswordIsRefused() {
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials = RecordingCredentials(holds = true)
+            application {
+                module()
+                authRoutes(reads, credentials)
+            }
+            // holds = true: the guard alone must stop the write. createCalls staying empty proves
+            // no Argon2 work was spent (ADR-0030 §1); holdsCalls being non-empty proves the guard
+            // was actually the thing that answered, not skipped in favour of some other check.
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.Conflict, response.status)
+            assertTrue(credentials.holdsCalls.isNotEmpty())
+            assertTrue(credentials.createCalls.isEmpty())
+        }
+    }
+
+    @Test
+    fun aTakenHandleIsRefused() {
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials =
+                RecordingCredentials(createResult = CreateCredentialResult.IdentifierTaken)
+            application {
+                module()
+                authRoutes(reads, credentials)
+            }
+            // The guard passes (holds = false, the default) but the write itself reports the
+            // identifier taken — the same 409 as the case above, reached by a different branch.
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.Conflict, response.status)
+        }
+    }
+
+    @Test
+    fun aRefusedHandleReachesNeitherPortFunction() {
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials = RecordingCredentials()
+            application {
+                module()
+                authRoutes(reads, credentials)
+            }
+            // "ab" fails signUpFieldsOf's own rule, after identity and decoding both already
+            // succeeded. A refusal that still costs a round trip to either port is a refusal that
+            // leaks work.
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"ab","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertTrue(credentials.createCalls.isEmpty())
+            assertTrue(credentials.holdsCalls.isEmpty())
+        }
+    }
+
+    @Test
+    fun aPasswordOutsideTheBoundsReachesNeitherPortFunction() {
+        // Two inputs, one per bound: a password one code point under the floor, and one code
+        // point over the ceiling.
+        val tooShort = "a".repeat(7)
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials = RecordingCredentials()
+            application {
+                module()
+                authRoutes(reads, credentials)
+            }
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"$tooShort"}""")
+            }
+            assertEquals(HttpStatusCode.UnprocessableEntity, response.status)
+            assertTrue(credentials.createCalls.isEmpty())
+            assertTrue(credentials.holdsCalls.isEmpty())
+        }
+
+        val tooLong = "a".repeat(129)
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials = RecordingCredentials()
+            application {
+                module()
+                authRoutes(reads, credentials)
+            }
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"$tooLong"}""")
+            }
+            assertEquals(HttpStatusCode.UnprocessableEntity, response.status)
+            assertTrue(credentials.createCalls.isEmpty())
+            assertTrue(credentials.holdsCalls.isEmpty())
+        }
+    }
+
+    @Test
+    fun theGuardIsAskedBeforeCreate() {
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials = RecordingCredentials()
+            application {
+                module()
+                authRoutes(reads, credentials)
+            }
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.Created, response.status)
+            assertEquals(1, credentials.holdsCalls.size)
+            assertEquals(PlayerId("p-alice") to CredentialKind.PASSWORD, credentials.holdsCalls[0])
         }
     }
 }
