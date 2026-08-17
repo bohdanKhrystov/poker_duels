@@ -1101,7 +1101,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040202](tasks/TASK-040202-a-named-opponent-an-unnamed-one-and-a-name-set-afterwards.md) A named opponent, an unnamed one, and a name set after the duel | S | **done** |
 | | [TASK-040203](tasks/TASK-040203-three-duels-three-opponents-one-prepared-statement.md) Three duels, three opponents, one prepared statement | S | **done** |
 | | [TASK-040204](tasks/TASK-040204-present-as-null-not-absent-on-the-real-response.md) Present as `null`, not absent, on the response the route actually writes | S | **done** |
-| | [TASK-040205](tasks/TASK-040205-the-document-names-the-field-and-the-test-agrees-with-the-dto.md) The document names the field, and the test agrees with the DTO | XS | ready |
+| | [TASK-040205](tasks/TASK-040205-the-document-names-the-field-and-the-test-agrees-with-the-dto.md) The document names the field, and the test agrees with the DTO | XS | **done** |
 | [STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md) Credentials — the schema, the hash, and a port that returns none | | | backlog |
 | [STORY-0404](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) Sign-up — one endpoint, attaching an account to the profile already here | | | backlog |
 | [STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) Sign-in, the session, and what the socket presents (needs `STORY-0213`, `STORY-0214`) | | | backlog |

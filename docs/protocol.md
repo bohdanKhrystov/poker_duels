@@ -126,7 +126,8 @@ Each duel summary in the array contains:
 | Field | Type | Semantics |
 | --- | --- | --- |
 | duelId | string | The unique identifier of the duel |
-| opponentPlayerId | string | The player ID of the opponent (not the device ID — see `DEC-016` for the question of displaying opponent names) |
+| opponentPlayerId | string | The stable identity a client correlates on. This is the opponent's `player.id`, never their device ID. A device ID is the sole authentication token in v0.1, so handing one to the other player would hand over their account. Per `ADR-0021`, the id is the stable identity and `opponentDisplayName` is the label; both travel. |
+| opponentDisplayName | string or null | The opponent's chosen display name, or `null` if never set. Null means *never set*; the server fabricates no placeholder per `ADR-0029` §6. The name is read at request time per `ADR-0021`, so a name set later relabels an older duel line. |
 | outcome | string | Outcome from the requesting player's perspective: `"WON"`, `"LOST"`, or `"DREW"`. A drawn duel appears in the list with `coinDelta` 0 and outcome `DREW` per `ADR-0015`. |
 | coinDelta | number | The change in coins from this duel. A signed integer: the winner gains one, the loser loses one, a draw changes nothing. |
 | handsPlayed | number | The number of hands played in the duel. |

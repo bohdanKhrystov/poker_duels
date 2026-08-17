@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040205
 title: The document names the field, and the test agrees with the DTO
 type: task
-status: ready
+status: done
 parent: STORY-0402
 module: poker-server
 estimate: XS
