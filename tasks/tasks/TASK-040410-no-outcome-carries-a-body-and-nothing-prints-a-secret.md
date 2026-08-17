@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040410
 title: No outcome carries a body, and nothing on the path can print a secret
 type: task
-status: ready
+status: done
 parent: STORY-0404
 module: poker-server
 estimate: S
