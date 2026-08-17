@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040407
 title: The handle is judged first, then the password
 type: task
-status: backlog
+status: ready
 parent: STORY-0404
 module: poker-server
 estimate: S
