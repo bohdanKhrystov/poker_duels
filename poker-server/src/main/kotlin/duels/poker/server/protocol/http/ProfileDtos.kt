@@ -62,9 +62,13 @@ public data class DuelSummaryResponse(
  *   `ContentNegotiation { json() }`, whose `Json` has `encodeDefaults = false`. These DTOs are
  *   serialised by `protocolJson`, which sets `encodeDefaults = true`, but a defaulted property
  *   would be present in the tests' JSON and absent on the wire.
+ * @property nextCursor The cursor for the next page of results, or `null` if this is the last
+ *   page. Why no default: same as `duels` above — a default `null` would hide the `encodeDefaults`
+ *   trap at the last page of every real request, where a test with `protocolJson` would show the
+ *   field and the wire would omit it. The field is declared last in declaration order.
  */
 @Serializable
-public data class RecentDuelsResponse(val duels: List<DuelSummaryResponse>)
+public data class RecentDuelsResponse(val duels: List<DuelSummaryResponse>, val nextCursor: String?)
 
 /**
  * The body of `PUT /api/me/name`, carrying a display name the player has chosen.
