@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040302
 title: One identifier, one kind, one row — and the player it points at must exist
 type: task
-status: ready
+status: done
 parent: STORY-0403
 module: poker-server
 estimate: S

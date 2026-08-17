@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040303
 title: One token hash, one row — and no foreign key cascades
 type: task
-status: backlog
+status: ready
 parent: STORY-0403
 module: poker-server
 estimate: S
