@@ -8,6 +8,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -55,8 +56,9 @@ class AuthSessionSchemaTest {
         // Insert second session with the same player_id but different token_hash
         insertAuthSession(tokenHash2, playerId, issuedAt, expiresAt)
 
-        // Verify both rows with same player_id exist
+        // Verify both rows with same player_id exist and have correct token hashes
         dataSource.connection.use { connection ->
+            // First verify the count
             connection.prepareStatement(
                 "SELECT COUNT(*) FROM auth_session WHERE player_id = ?",
             ).use { statement ->
@@ -64,6 +66,30 @@ class AuthSessionSchemaTest {
                 statement.executeQuery().use { resultSet ->
                     resultSet.next()
                     assertEquals(2, resultSet.getInt(1), "Expected 2 sessions for the same player")
+                }
+            }
+
+            // Then verify the token hashes are correctly stored
+            connection.prepareStatement(
+                "SELECT token_hash FROM auth_session WHERE player_id = ? ORDER BY issued_at",
+            ).use { statement ->
+                statement.setObject(1, playerId)
+                statement.executeQuery().use { resultSet ->
+                    assertTrue(resultSet.next(), "First session should exist")
+                    val retrievedHash1 = resultSet.getBytes(1)
+                    assertContentEquals(
+                        tokenHash1,
+                        retrievedHash1,
+                        "First session's token_hash should match what was written",
+                    )
+
+                    assertTrue(resultSet.next(), "Second session should exist")
+                    val retrievedHash2 = resultSet.getBytes(1)
+                    assertContentEquals(
+                        tokenHash2,
+                        retrievedHash2,
+                        "Second session's token_hash should match what was written",
+                    )
                 }
             }
         }
