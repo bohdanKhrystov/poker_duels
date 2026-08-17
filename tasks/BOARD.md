@@ -518,7 +518,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-048 | **The architect's** — is `POST /api/auth/sign-up` budgeted by remote address, and what does over budget answer? `ADR-0027` §6 budgets failed **sign-ins** and is silent about sign-up. It bites because sign-up is the first endpoint to run Argon2 — one hash per request against four verification slots, and a device id is free over a socket. The harder half is the response code: `ADR-0027` §6 and `ADR-0031` §5 both keep a limiter non-oracular by answering *exactly as the ordinary refusal does*, and sign-up's four ordinary refusals (`400`/`401`/`409`/`422`) are each a lie about a budget | [`STORY-0404`](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | before STORY-0405 merges |
+| DEC-049 | **The product owner's** — when sign-up answers `429` (`ADR-0055` §3), what is the player told and what does the form do? It is the one refusal on this endpoint that names no field and that the player cannot act on except by waiting, and it can land on somebody who did nothing wrong — a second player behind the same NAT or shared address | [`ADR-0055`](../docs/adr/ADR-0055-sign-up-is-budgeted-by-address.md) | before STORY-0405 ships the limiter |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →

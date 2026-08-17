@@ -127,7 +127,8 @@ two tickets editing one file.
 ## Out of scope
 
 - Sign-in, the session token, and the socket handshake — `STORY-0405`.
-- **A rate-limit budget on this endpoint** — `DEC-048`, open, the architect's. Nothing here is
+- **A rate-limit budget on this endpoint** — `DEC-048`, answered by `ADR-0055`: 5 requests per
+  remote address per 15 minutes, `429` with an empty body, built in `STORY-0405`. Nothing here is
   blocked on it; the six answers `ADR-0048` §6 tabulates are complete without one.
 - The reusable P1/P2 fixture and the whole-flow scenario test `ADR-0030` §5 describes —
   `STORY-0406`, per `EPIC-04`'s story table. This story asserts both properties for sign-up only.

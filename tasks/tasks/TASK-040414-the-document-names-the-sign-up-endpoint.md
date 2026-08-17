@@ -61,7 +61,8 @@ all six of its answers — and a test reflects over the DTO so the document cann
 ## Out of scope
 
 - Documenting sign-in, sign-out or the session. `STORY-0405` writes those rows.
-- Any rate-limit or `429` row — `DEC-048` is open and no ADR states one.
+- Any rate-limit or `429` row. `ADR-0055` answers `DEC-048` and states one, but `STORY-0405` builds
+  it; documenting a route this server does not yet enforce would make the document lie.
 - Changing the three existing `sectionBetween` slices. The insertion point is chosen so that none of
   them moves.
 
