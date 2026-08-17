@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040310
 title: The login handle is folded before it is stored, and the fold is ASCII
 type: task
-status: ready
+status: done
 parent: STORY-0403
 module: poker-server
 estimate: S
