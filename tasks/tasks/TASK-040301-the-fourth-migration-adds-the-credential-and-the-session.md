@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040301
 title: The fourth migration adds the credential and the auth session
 type: task
-status: ready
+status: done
 parent: STORY-0403
 module: poker-server
 estimate: S
