@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040204
 title: Present as null, not absent, on the response the route actually writes
 type: task
-status: ready
+status: done
 parent: STORY-0402
 module: poker-server
 estimate: S
