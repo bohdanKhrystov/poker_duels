@@ -138,6 +138,58 @@ class ProfileRouteTest {
     }
 
     @Test
+    fun aDuelLineOnTheWireCarriesTheOpponentsName() = testApplication {
+        val duel = duelSummaryResponse(
+            duelId = "duel-3",
+            opponentPlayerId = "p-torvald",
+            outcome = DuelOutcomeLabel.WON,
+            coinDelta = 1,
+            handsPlayed = 8,
+            finishedAt = "2026-08-14T15:00:00Z",
+            opponentDisplayName = "Torvald",
+        )
+        val reads = FakeProfileReads(
+            mapOf("alice" to profileResponse("p-alice", 0)),
+            mapOf("p-alice" to listOf(duel)),
+        )
+        application {
+            module()
+            profileRoutes(reads, FakeProfileWrites())
+        }
+        val response = client.get("/api/me/duels") {
+            header(DEVICE_ID_HEADER, "alice")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertTrue(response.bodyAsText().contains(""""opponentDisplayName":"Torvald"""))
+    }
+
+    @Test
+    fun aDuelLineForAnUnnamedOpponentCarriesTheFieldAsNull() = testApplication {
+        val duel = duelSummaryResponse(
+            duelId = "duel-4",
+            opponentPlayerId = "p-unnamed",
+            outcome = DuelOutcomeLabel.DREW,
+            coinDelta = 0,
+            handsPlayed = 6,
+            finishedAt = "2026-08-14T16:00:00Z",
+            opponentDisplayName = null,
+        )
+        val reads = FakeProfileReads(
+            mapOf("alice" to profileResponse("p-alice", 0)),
+            mapOf("p-alice" to listOf(duel)),
+        )
+        application {
+            module()
+            profileRoutes(reads, FakeProfileWrites())
+        }
+        val response = client.get("/api/me/duels") {
+            header(DEVICE_ID_HEADER, "alice")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertTrue(response.bodyAsText().contains(""""opponentDisplayName":null"""))
+    }
+
+    @Test
     fun anAbsentLimitAsksForTheDefault() = testApplication {
         val reads = FakeProfileReads(
             mapOf("alice" to profileResponse("p-alice", 0)),
