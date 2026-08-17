@@ -1104,7 +1104,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040203](tasks/TASK-040203-three-duels-three-opponents-one-prepared-statement.md) Three duels, three opponents, one prepared statement | S | **done** |
 | | [TASK-040204](tasks/TASK-040204-present-as-null-not-absent-on-the-real-response.md) Present as `null`, not absent, on the response the route actually writes | S | **done** |
 | | [TASK-040205](tasks/TASK-040205-the-document-names-the-field-and-the-test-agrees-with-the-dto.md) The document names the field, and the test agrees with the DTO | XS | **done** |
-| **[STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md)** Credentials — the schema, the hash, and a port that returns none — *schema 2* | | | **ready** |
+| **[STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md)** Credentials — the schema, the hash, and a port that returns none — *schema 2* | | | **done** |
 | | [TASK-040301](tasks/TASK-040301-the-fourth-migration-adds-the-credential-and-the-session.md) The fourth migration adds the credential and the auth session | S | **done** |
 | | [TASK-040302](tasks/TASK-040302-one-identifier-one-kind-one-row.md) One identifier, one kind, one row — and the player it points at must exist | S | **done** |
 | | [TASK-040303](tasks/TASK-040303-one-token-hash-one-row-and-nothing-cascades.md) One token hash, one row — and no foreign key cascades | S | **done** |
