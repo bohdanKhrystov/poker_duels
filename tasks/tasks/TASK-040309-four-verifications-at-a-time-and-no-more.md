@@ -38,9 +38,10 @@ of service.
   `internal val argon2Dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(ARGON2_MAX_PARALLEL)`,
   declared once at file scope in `Argon2Hasher.kt`. One instance for the process: a dispatcher built
   per call bounds nothing.
-- `limitedParallelism` is `@ExperimentalCoroutinesApi` in the coroutines version this project pins,
-  so the declaration carries `@OptIn(ExperimentalCoroutinesApi::class)`. That opt-in is the whole
-  extent of the experimental surface used.
+- ~~`limitedParallelism` is `@ExperimentalCoroutinesApi` in the coroutines version this project
+  pins, so the declaration carries `@OptIn(ExperimentalCoroutinesApi::class)`.~~ **Not true of the
+  pinned version** — verified by compiling both ways, with zero warnings either way, so the
+  annotation and its import are omitted rather than added speculatively.
 - Both `hash` and `matches` change from `withContext(Dispatchers.IO)` to
   `withContext(argon2Dispatcher)`. **No `Dispatchers.IO` remains in the file** except inside the
   `limitedParallelism` call that derives from it.
@@ -62,8 +63,9 @@ time**, which is how a concurrency test becomes a flaky test.
 | Test | Proves |
 | --- | --- |
 | `exactlyFourCoroutinesRunAtOnceOnTheArgon2Dispatcher` | **twelve** coroutines launched on `argon2Dispatcher` each increment an `AtomicInteger`, record the running peak, count down a `CountDownLatch(12)` — sized to the whole generation — and await it with a 300 ms hold, so a slower peer has time to join before an earlier one exits. The assertion is `assertEquals(ARGON2_MAX_PARALLEL, peak)`, an equality rather than a bound: `peak <= 4` also passes when peak is 1, which is what nothing-ran-concurrently measures |
+| `eightConcurrentVerificationsAllSucceed` | eight real `matches` calls against one hashed secret, launched together, all return `true` — the bound queues work rather than starving or deadlocking it, which a blocking call inside a limited dispatcher can do |
 
-> **This table was corrected after implementation, and the correction is the interesting part.**
+> **The first row was corrected after implementation, and the correction is the interesting part.**
 > It originally specified eight probes and a `CountDownLatch(4)`, reasoning that a larger bound
 > would push the recorded peak above four. That design was **vacuous**: releasing the gate after
 > only four arrivals opens it in nanoseconds, so the coroutines scheduled a moment later race an
@@ -73,7 +75,6 @@ time**, which is how a concurrency test becomes a flaky test.
 > with `Expected <16>, actual <12>`. A first repair used `Thread.sleep` as the hold and tripped
 > `GraceWindowConfigTest.noServerTestWaitsOnRealTime`, the repo-wide ban on real-time waits in
 > server tests — the latch timeout is what replaced it.
-| `eightConcurrentVerificationsAllSucceed` | eight real `matches` calls against one hashed secret, launched together, all return `true` — the bound queues work rather than starving or deadlocking it, which a blocking call inside a limited dispatcher can do |
 
 ## Acceptance criteria
 
@@ -87,8 +88,9 @@ time**, which is how a concurrency test becomes a flaky test.
 - [ ] `Argon2Hasher.kt` mentions `argon2Dispatcher` and no longer contains
       `withContext(Dispatchers.IO)` — the second `verify` command checks both
 - [ ] The dispatcher is a single file-scope `val`, not built inside `hash` or `matches`
-- [ ] `Argon2HasherTest`'s eight tests still pass unchanged — the dispatcher swap changes where the
-      work runs, never what it computes
+- [ ] `Argon2HasherTest`'s **nine** tests still pass unchanged — `TASK-040308` shipped one beyond
+      its own table, pinning the exact PHC string under a fixed salt. The dispatcher swap changes
+      where the work runs, never what it computes
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
