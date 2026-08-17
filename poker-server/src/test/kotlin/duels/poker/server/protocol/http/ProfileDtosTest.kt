@@ -142,4 +142,37 @@ class ProfileDtosTest {
             protocolJson.decodeFromString(SetNameRequest.serializer(), """{"name":"bob","playerId":"p-1"}""")
         }
     }
+
+    @Test
+    fun aDuelSummaryEncodesTheOpponentNameItWasGiven() {
+        val summary = duelSummaryResponse(
+            duelId = "d-5",
+            opponentPlayerId = "p-6",
+            outcome = DuelOutcomeLabel.WON,
+            coinDelta = 1,
+            handsPlayed = 7,
+            finishedAt = "2026-08-14T10:00:00Z",
+            opponentDisplayName = "Ingrid",
+        )
+        val encoded = protocolJson.encodeToString(DuelSummaryResponse.serializer(), summary)
+        assertTrue(encoded.contains(""""opponentDisplayName":"Ingrid"""))
+
+        val decoded = protocolJson.decodeFromString(DuelSummaryResponse.serializer(), encoded)
+        assertEquals(summary, decoded)
+    }
+
+    @Test
+    fun aDuelSummaryWithNoOpponentNameEncodesTheFieldAsNull() {
+        val summary = duelSummaryResponse(
+            duelId = "d-6",
+            opponentPlayerId = "p-7",
+            outcome = DuelOutcomeLabel.LOST,
+            coinDelta = -1,
+            handsPlayed = 3,
+            finishedAt = "2026-08-14T11:00:00Z",
+            opponentDisplayName = null,
+        )
+        val encoded = protocolJson.encodeToString(DuelSummaryResponse.serializer(), summary)
+        assertTrue(encoded.contains(""""opponentDisplayName":null"""))
+    }
 }
