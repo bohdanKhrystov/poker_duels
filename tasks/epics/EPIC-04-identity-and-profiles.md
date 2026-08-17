@@ -194,19 +194,18 @@ without adding a story.
 
 ## Open decisions
 
-**Four. Two were raised on 2026-08-16 while the stories were written and block one story each; two
-came out of splitting `STORY-0403` on 2026-08-17 and block nothing at all.** Three are the
-architect's and one is the product owner's; none is the human's, and no story below waits on a
-human. Every *product* decision this epic was blocked on was answered on 2026-08-15.
+**Three, and all three are the architect's.** Two were raised on 2026-08-16 while the stories were
+written and block one story each; one came out of splitting `STORY-0403` on 2026-08-17 and blocks
+nothing at all. None is the human's, and no story below waits on a human. Every *product* decision
+this epic was blocked on has been answered — the last of them, `DEC-043`, on 2026-08-17.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
 | `DEC-041` | **The architect's** — what does revoking the device binding look like in the schema? `ADR-0037` says the answer is *"a technical question with more than one defensible answer and no reason to guess it here"* and hands it to `STORY-0406`; `ADR-0030` §2 says `player.device_id` is **never rewritten by any identity operation** and makes that the structural reason the coin invariant holds, so nulling the column is not obviously available | `STORY-0406`, and through it `0407`, `0412`, `0414` |
 | `DEC-042` | **The architect's** — by what path does an operator force-rename a profile and retire the name? `ADR-0038` fixes that the path exists and says it *"will not grow a role system speculatively"*, and does not say whether it is an authenticated admin endpoint, a CLI or Gradle task, or a documented procedure. The trigger `ADR-0029` §4 installs refuses `name → NULL`, so the answer must also say how the operator gets through it | `STORY-0410` only |
-| `DEC-043` | **The product owner's** — what may a password be? No ADR states a minimum length, a maximum, a composition rule or a breach check, and `ADR-0031` §5's sign-up endpoint is where one would be enforced. The risk half is the same question: is v0.1 shippable with **no** strength rule, given there is no money and an account holds a coin balance and a ladder place? `STORY-0403` puts no rule in `PresentedSecret` rather than answer it in a value class | nothing — due before `STORY-0404` builds the endpoint |
 | `DEC-044` | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"a constant change plus a rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403` says the parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack in a helper function. `TASK-040306` takes the conservative side because loosening a refusal is additive | nothing — due before anyone raises the cost |
 
-The seven answered ones are kept here with their answers because the story table still cites them,
+The nine answered ones are kept here with their answers because the story table still cites them,
 and because what each ADR *constrains* is this epic's work.
 
 | ID | Answered by | What it means here |
@@ -219,6 +218,7 @@ and because what each ADR *constrains* is this epic's work.
 | `DEC-030` | [ADR-0037](../../docs/adr/ADR-0037-the-device-is-a-credential-until-revoked.md) | The device signs in until the player revokes it. Adds a revoke path, a settings affordance and a session rule to `STORY-0406`/`STORY-0412`; the account screens must state which routes are live |
 | `DEC-031` | [ADR-0041](../../docs/adr/ADR-0041-a-handle-and-a-password-are-the-only-credential.md) | Handle and password only. `STORY-0412`'s screens are designed for one credential — no provider row |
 | `DEC-017` | [ADR-0038](../../docs/adr/ADR-0038-a-name-is-screened-when-set-and-can-be-taken-away.md) | A blocklist screens at set time, an operator may force-rename, and a taken name is **retired forever**. Uniqueness gains two more sources of truth. Unblocks `STORY-0410` |
+| `DEC-043` | [ADR-0048](../../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md) | One rule — **8 to 128 code points**, counted after NFC normalisation — and nothing else: no composition rule, no character rule, no breach corpus, no strength meter, and nothing is trimmed. `STORY-0404` enforces the minimum at sign-up and answers **`422`** with an empty body, distinct from the handle's `400` and `409`; `STORY-0405` applies only the **maximum**, before Argon2 and before the identifier lookup, answering exactly as a wrong password does. `STORY-0416`'s reset uses the identical rule. **NFC is applied in the one place a secret becomes bytes**, so sign-up and sign-in cannot disagree — permanent from the first stored hash. `STORY-0403` is unaffected: `TASK-040307`'s *"no `init`, no `require`"* stands and ASCII is NFC-invariant, so the published-vector tests do not move. `STORY-0412` states the rule before the field is filled and shows no meter |
 
 `ADR-0012` is **not** open: anonymous device-bound profiles stay, and this epic adds identity on
 top of them rather than replacing them. `ADR-0021` is **not** open either — the display name's
