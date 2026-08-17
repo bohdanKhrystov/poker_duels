@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040304
 title: Bouncy Castle on the classpath, pinned to the published Argon2id vector
 type: task
-status: ready
+status: done
 parent: STORY-0403
 module: poker-server
 estimate: S
