@@ -183,6 +183,58 @@ class PostgresCredentialsTest {
         }
     }
 
+    @Test
+    fun aPlayerWithNoCredentialHoldsNone() {
+        runBlocking {
+            val playerId = insertPlayer()
+
+            val holds = credentials.holdsCredential(playerId, CredentialKind.PASSWORD)
+
+            assertFalse(holds, "a freshly inserted player row must answer false")
+        }
+    }
+
+    @Test
+    fun aPlayerHoldsThePasswordItJustCreated() {
+        runBlocking {
+            val playerId = insertPlayer()
+            credentials.create(playerId, CredentialKind.PASSWORD, "alice@example.com", PresentedSecret("correct horse"))
+
+            val holds = credentials.holdsCredential(playerId, CredentialKind.PASSWORD)
+
+            assertEquals(true, holds, "after create succeeds, the same query must answer true")
+        }
+    }
+
+    @Test
+    fun aCredentialOfAnotherKindIsNotHeld() {
+        runBlocking {
+            val playerId = insertPlayer()
+            credentials.create(playerId, CredentialKind.PASSWORD, "alice@example.com", PresentedSecret("correct horse"))
+
+            val holdsPassword = credentials.holdsCredential(playerId, CredentialKind.PASSWORD)
+            val holdsPasskey = credentials.holdsCredential(playerId, CredentialKind("passkey"))
+
+            assertEquals(true, holdsPassword, "player holds password")
+            assertEquals(false, holdsPasskey, "player does not hold passkey, so query for passkey must answer false")
+        }
+    }
+
+    @Test
+    fun onePlayersCredentialIsNotAnothers() {
+        runBlocking {
+            val firstPlayer = insertPlayer()
+            val secondPlayer = insertPlayer()
+            credentials.create(firstPlayer, CredentialKind.PASSWORD, "alice@example.com", PresentedSecret("correct horse"))
+
+            val firstPlayerHolds = credentials.holdsCredential(firstPlayer, CredentialKind.PASSWORD)
+            val secondPlayerHolds = credentials.holdsCredential(secondPlayer, CredentialKind.PASSWORD)
+
+            assertEquals(true, firstPlayerHolds, "first player holds password")
+            assertEquals(false, secondPlayerHolds, "second player holds nothing, so answer must be false even though first player has a password credential")
+        }
+    }
+
     private fun insertPlayer(): PlayerId {
         val id = UUID.randomUUID()
         dataSource.connection.use { connection ->
