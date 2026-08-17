@@ -207,6 +207,25 @@ class ProfileRouteTest {
     }
 
     @Test
+    fun aRequestWithNoCursorAsksForNone() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals(listOf(null), reads.cursorsRequested)
+        }
+    }
+
+    @Test
     fun aLimitAboveTheCapIsClamped() = testApplication {
         val reads = FakeProfileReads(
             mapOf("alice" to profileResponse("p-alice", 0)),
@@ -497,6 +516,7 @@ class ProfileRouteTest {
         private val duels: Map<String, List<DuelSummaryResponse>> = emptyMap(),
     ) : ProfileReads {
         val queried: MutableList<String> = mutableListOf()
+        val cursorsRequested: MutableList<DuelCursor?> = mutableListOf()
         var lastLimitRequested: Int = 0
 
         override suspend fun profileOf(deviceId: DeviceId): ProfileResponse? {
@@ -504,8 +524,9 @@ class ProfileRouteTest {
             return profiles[deviceId.value]
         }
 
-        override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int): List<DuelSummaryResponse> {
+        override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> {
             lastLimitRequested = limit
+            cursorsRequested.add(after)
             return duels[playerId.value] ?: emptyList()
         }
     }

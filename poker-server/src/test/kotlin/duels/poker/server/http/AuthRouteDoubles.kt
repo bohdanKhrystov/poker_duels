@@ -70,7 +70,7 @@ internal class FixedProfileReads(
         return profiles[deviceId.value]
     }
 
-    override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int): List<DuelSummaryResponse> {
+    override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> {
         return emptyList()
     }
 }
