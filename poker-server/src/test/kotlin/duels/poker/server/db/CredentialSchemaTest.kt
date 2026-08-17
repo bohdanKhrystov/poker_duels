@@ -46,7 +46,7 @@ class CredentialSchemaTest {
         // Second insert with the same identifier but different kind = 'email' should succeed
         insertCredential(playerId, "email", identifier, "hash456")
 
-        // Verify both rows exist
+        // Verify both rows with same identifier exist
         dataSource.connection.use { connection ->
             connection.prepareStatement(
                 "SELECT COUNT(*) FROM credential WHERE player_id = ? AND identifier = ?",
@@ -56,6 +56,24 @@ class CredentialSchemaTest {
                 statement.executeQuery().use { resultSet ->
                     resultSet.next()
                     assertEquals(2, resultSet.getInt(1), "Expected 2 credentials with the same identifier")
+                }
+            }
+        }
+
+        // Also verify that the same kind can hold different identifiers
+        val email1 = "alice@example.com"
+        val email2 = "bob@example.com"
+        insertCredential(playerId, "email", email1, "hash789")
+        insertCredential(playerId, "email", email2, "hash999")
+
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT COUNT(*) FROM credential WHERE player_id = ? AND kind = 'email'",
+            ).use { statement ->
+                statement.setObject(1, playerId)
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    assertEquals(3, resultSet.getInt(1), "Expected 3 credentials with kind 'email'")
                 }
             }
         }
