@@ -1,7 +1,6 @@
 package duels.poker.server.auth
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -41,17 +40,22 @@ class RedactedValuesTest {
             "exception message" to (IllegalStateException("secret was $secret").message ?: ""),
         )
 
-        // Assert no route contains raw value and all contain redaction
+        // Collect all failures: each route can have two failures (leaked raw value, missing redaction)
+        val failures: MutableList<String> = mutableListOf()
         for ((routeName, result) in routes) {
-            assertFalse(
-                result.contains(rawValue),
-                "Route '$routeName' leaked the raw value:\n$result",
-            )
-            assertTrue(
-                result.contains(PresentedSecret.REDACTION),
-                "Route '$routeName' did not contain redaction:\n$result",
-            )
+            if (result.contains(rawValue)) {
+                failures.add("Route '$routeName' leaked the raw value: $result")
+            }
+            if (!result.contains(PresentedSecret.REDACTION)) {
+                failures.add("Route '$routeName' did not contain redaction: $result")
+            }
         }
+
+        // Assert all routes passed, reporting all failures together
+        assertTrue(
+            failures.isEmpty(),
+            "Redaction failures:\n${failures.joinToString("\n")}",
+        )
     }
 
     @Test
