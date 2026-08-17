@@ -6,6 +6,7 @@ import duels.poker.server.auth.PresentedSecret
 import duels.poker.server.protocol.http.profileResponse
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -222,9 +223,4 @@ class AuthRouteDoublesTest {
         assertTrue(duels.isEmpty())
     }
 
-    private fun <T> runBlocking(block: suspend () -> T): T {
-        return kotlinx.coroutines.runBlocking {
-            block()
-        }
-    }
 }
