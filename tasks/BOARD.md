@@ -518,7 +518,6 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-047 | **The architect's** — by what shape does `GET /api/me` carry the fact that a name has been retired from the requesting player? `ADR-0052` §6 requires the profile read to answer it and **adds no column** — `ADR-0051` §1's `name_registry(reason = 'RETIRED', retired_from)` already records it, and what crosses the wire is one boolean about the caller and no string. Open: whether it is a field on `ProfileResponse` (as `ADR-0049` §5's `deviceRouteLive` is), whether the profile query joins or subqueries `name_registry`, and whether `ADR-0051` §1's *"nothing in production reads it"* needs a formal amendment | [`ADR-0052`](../docs/adr/ADR-0052-a-takedown-is-told-to-the-player-it-happened-to.md) | before STORY-0410 is split |
 | DEC-044 | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403`'s parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack. `TASK-040306` takes the conservative side; the answer decides what the raise actually costs | [`TASK-040306`](tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) | before the Argon2 parameters are raised |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
@@ -1158,7 +1157,15 @@ happened to **is told**, on the surface where a name is set, and nobody else is 
 Silence lost on a defect rather than on taste — the affected player's obvious next move is to retype
 their own name, `ADR-0051` §2 answers `409`, and `STORY-0411` was on course to render that as
 *taken*, which the server knows to be false about a string nobody holds and nobody ever can. That
-ADR in turn raised `DEC-047`, the architect's, above.
+ADR in turn raised `DEC-047`, since answered by
+[`ADR-0053`](../docs/adr/ADR-0053-the-profile-says-the-name-was-removed.md): `ProfileResponse` gains
+`displayNameRemoved: Boolean`, **with no default value** — the route's `Json` has
+`encodeDefaults = false` while `protocolJson` has it `true`, so a defaulted field would be present
+in every test's JSON and absent from the wire for almost every player. It is computed by one
+correlated `EXISTS`, never a `LEFT JOIN`: a player may hold two retired names, and a join returns
+two rows for one profile — a bug that needs a second takedown before it appears.
+`PROTOCOL_VERSION` does not move; `ProfileResponse` is reachable from neither `ClientMessage` nor
+`ServerMessage`, so the fingerprint does not see it.
 Neither blocks the epic, and neither is the human's — every product question this epic had was
 answered on 2026-08-15.
 
