@@ -19,6 +19,8 @@ import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.time.Instant
+import java.util.UUID
 
 class ProfileRouteTest {
     @Test
@@ -288,6 +290,85 @@ class ProfileRouteTest {
             header(DEVICE_ID_HEADER, "ghost")
         }
         assertEquals(HttpStatusCode.Unauthorized, response.status)
+    }
+
+    @Test
+    fun aCursorFromTheQueryReachesThePort() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val cursor =
+                DuelCursor(
+                    Instant.parse("2026-08-12T09:00:00Z"),
+                    UUID.fromString("11111111-1111-1111-1111-111111111111"),
+                )
+            val response = client.get("/api/me/duels?after=${cursor.encoded()}") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals(listOf(cursor), reads.cursorsRequested)
+        }
+    }
+
+    @Test
+    fun aMalformedCursorIsABadRequestAndReadsNothing() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?after=not-a-cursor") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertEquals("", response.bodyAsText())
+            assertTrue(reads.cursorsRequested.isEmpty())
+        }
+    }
+
+    @Test
+    fun anEmptyCursorValueIsABadRequest() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?after=") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertTrue(reads.cursorsRequested.isEmpty())
+        }
+    }
+
+    @Test
+    fun anUnknownDeviceIsRefusedBeforeTheCursorIsParsed() {
+        testApplication {
+            val reads = FakeProfileReads(emptyMap())
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?after=not-a-cursor") {
+                header(DEVICE_ID_HEADER, "ghost")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            assertTrue(reads.cursorsRequested.isEmpty())
+        }
     }
 
     @Test

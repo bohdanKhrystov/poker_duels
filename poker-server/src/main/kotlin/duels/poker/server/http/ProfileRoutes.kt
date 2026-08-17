@@ -26,12 +26,16 @@ public const val DEVICE_ID_HEADER: String = "X-Device-Id"
  * only credential v0.1 has, an unknown one is an invalid credential, and answering `404` for
  * unknown would tell a caller which device ids exist.
  *
- * `GET /api/me/duels?limit=N` returns the device's recent duels as a JSON array. The limit defaults
- * to [DEFAULT_DUEL_LIMIT] when absent, is clamped to [MAX_DUEL_LIMIT] when above the cap, and is
- * rejected with `400 Bad Request` when non-numeric, negative, or zero. An unauthenticated request
- * is refused with `401 Unauthorized` before the limit is parsed, so a bad limit never tells a
- * stranger that their device id was the problem. A device with no duels receives `200 OK` and an
- * empty array, not `404`.
+ * `GET /api/me/duels?limit=N&after=C` returns the device's recent duels as a JSON array. The limit
+ * defaults to [DEFAULT_DUEL_LIMIT] when absent, is clamped to [MAX_DUEL_LIMIT] when above the cap,
+ * and is rejected with `400 Bad Request` when non-numeric, negative, or zero. The `after` cursor is
+ * optional: absent, it asks for the newest page and `null` reaches `ProfileReads.recentDuelsOf`;
+ * present, it is decoded with [duelCursorOrNull], and anything that function refuses — including an
+ * empty value, which is present and unparseable, not absent — answers `400 Bad Request` before
+ * `ProfileReads.recentDuelsOf` is ever called. An unauthenticated request is refused with
+ * `401 Unauthorized` before the query string is looked at, so neither the limit nor the cursor ever
+ * tells a stranger that their device id was the problem; between the two, the limit is checked
+ * first. A device with no duels receives `200 OK` and an empty array, not `404`.
  *
  * `PUT /api/me/name` sets the device's display name. Identity is resolved first — exactly as the
  * other two routes resolve it, and **before the body is even read**: an absent, blank or unknown
@@ -62,21 +66,7 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites)
             val profile = call.deviceIdOrNull()?.let { reads.profileOf(it) }
             if (profile == null) call.respond(HttpStatusCode.Unauthorized) else call.respond(profile)
         }
-        get("/api/me/duels") {
-            // Identity first: an unauthenticated request is refused before its query string is
-            // parsed, so a bad limit never tells a stranger that their device id was the problem.
-            val profile = call.deviceIdOrNull()?.let { reads.profileOf(it) }
-            if (profile == null) {
-                call.respond(HttpStatusCode.Unauthorized)
-                return@get
-            }
-            val limit = duelLimitOrNull(call.request.queryParameters["limit"])
-            if (limit == null) {
-                call.respond(HttpStatusCode.BadRequest)
-                return@get
-            }
-            call.respond(RecentDuelsResponse(reads.recentDuelsOf(PlayerId(profile.playerId), limit), nextCursor = null))
-        }
+        get("/api/me/duels") { call.respondWithDuels(reads) }
         put("/api/me/name") {
             // Identity first: an unauthenticated request is refused before the body is read, so a
             // stranger never reaches the 409/403 that would tell them whether a name is taken.
@@ -110,6 +100,38 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites)
             }
         }
     }
+}
+
+/**
+ * Handles `GET /api/me/duels`, extracted out of [profileRoutes] to keep that function inside
+ * detekt's `LongMethod` line budget. See the `GET /api/me/duels` paragraph on [profileRoutes]'s
+ * KDoc for the endpoint's documented behaviour; this function is its implementation, not a second
+ * source of truth for it.
+ */
+private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(reads: ProfileReads) {
+    // Identity first: an unauthenticated request is refused before its query string is parsed, so
+    // a bad limit or a bad cursor never tells a stranger that their device id was the problem.
+    val profile = deviceIdOrNull()?.let { reads.profileOf(it) }
+    if (profile == null) {
+        respond(HttpStatusCode.Unauthorized)
+        return
+    }
+    val limit = duelLimitOrNull(request.queryParameters["limit"])
+    if (limit == null) {
+        respond(HttpStatusCode.BadRequest)
+        return
+    }
+    // Absent `after` means the newest page, so `null` reaches the port. Present, it is decoded
+    // with duelCursorOrNull; anything that refuses — including an empty value — is `400` before
+    // reads.recentDuelsOf runs. No `takeIf { it.isNotBlank() }` here: that would turn a broken
+    // cursor into a silent first page, the one behaviour this endpoint exists to refuse.
+    val rawCursor = request.queryParameters["after"]
+    val cursor = if (rawCursor == null) null else duelCursorOrNull(rawCursor)
+    if (rawCursor != null && cursor == null) {
+        respond(HttpStatusCode.BadRequest)
+        return
+    }
+    respond(RecentDuelsResponse(reads.recentDuelsOf(PlayerId(profile.playerId), limit, cursor), nextCursor = null))
 }
 
 /**

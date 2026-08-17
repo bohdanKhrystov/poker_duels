@@ -1145,8 +1145,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040805](tasks/TASK-040805-two-duels-in-the-same-instant-still-page.md) Two duels that finished in the same instant still page | XS | **done** |
 | | [TASK-040806](tasks/TASK-040806-the-response-says-whether-there-is-a-next-page.md) The response says whether there is a next page, as null and not as absent | XS | **done** |
 | | [TASK-040807](tasks/TASK-040807-the-port-takes-the-cursor-and-the-doubles-follow.md) The port's duel read takes the cursor, and both doubles follow | XS | **done** |
-| | [TASK-040808](tasks/TASK-040808-the-endpoint-accepts-a-cursor-and-refuses-a-malformed-one.md) The endpoint accepts a cursor, and a malformed one is a 400 that reads nothing | S | ready |
-| | [TASK-040809](tasks/TASK-040809-one-row-more-than-the-page.md) One row more than the page, and the last page says there is no next | S | backlog |
+| | [TASK-040808](tasks/TASK-040808-the-endpoint-accepts-a-cursor-and-refuses-a-malformed-one.md) The endpoint accepts a cursor, and a malformed one is a 400 that reads nothing | S | **done** |
+| | [TASK-040809](tasks/TASK-040809-one-row-more-than-the-page.md) One row more than the page, and the last page says there is no next | S | ready |
 | | [TASK-040810](tasks/TASK-040810-over-http-against-the-database-every-duel-once.md) Over HTTP, against the database — every duel exactly once, and one player's cursor | S | backlog |
 | | [TASK-040811](tasks/TASK-040811-the-document-contracts-the-cursor.md) The document contracts the cursor and the paging rule, and a test agrees with the DTO | S | backlog |
 | [STORY-0409](stories/STORY-0409-history-filters-and-search.md) History filters and search | | | backlog |
