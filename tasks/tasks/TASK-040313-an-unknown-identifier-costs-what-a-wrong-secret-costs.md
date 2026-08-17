@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040313
 title: An unknown identifier costs exactly what a wrong secret costs
 type: task
-status: backlog
+status: ready
 parent: STORY-0403
 module: poker-server
 estimate: S
