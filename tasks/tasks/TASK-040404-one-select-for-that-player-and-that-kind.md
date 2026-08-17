@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040404
 title: One SELECT, and it answers for that player and that kind only
 type: task
-status: ready
+status: done
 parent: STORY-0404
 module: poker-server
 estimate: S

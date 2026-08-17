@@ -91,7 +91,19 @@ public class PostgresCredentials internal constructor(
     override suspend fun holdsCredential(
         playerId: PlayerId,
         kind: CredentialKind,
-    ): Boolean = TODO("TASK-040404")
+    ): Boolean =
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(HOLDS_CREDENTIAL_SQL).use { statement ->
+                    statement.setObject(1, UUID.fromString(playerId.value))
+                    statement.setString(2, kind.value)
+                    statement.executeQuery().use { rows ->
+                        rows.next()
+                        rows.getBoolean(1)
+                    }
+                }
+            }
+        }
 
     private fun insertCredential(
         connection: Connection,
@@ -133,5 +145,8 @@ public class PostgresCredentials internal constructor(
 
         private const val CREATE_SQL =
             "INSERT INTO credential (id, player_id, kind, identifier, secret_hash) VALUES (?, ?, ?, ?, ?)"
+
+        private const val HOLDS_CREDENTIAL_SQL =
+            "SELECT EXISTS (SELECT 1 FROM credential WHERE player_id = ? AND kind = ?)"
     }
 }

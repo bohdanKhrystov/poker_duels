@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040405
 title: The sign-up body is two fields, and it prints neither
 type: task
-status: backlog
+status: ready
 parent: STORY-0404
 module: poker-server
 estimate: S
