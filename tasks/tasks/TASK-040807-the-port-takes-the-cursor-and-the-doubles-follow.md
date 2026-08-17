@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040807
 title: The port's duel read takes the cursor, and both doubles follow
 type: task
-status: ready
+status: done
 parent: STORY-0408
 module: poker-server
 estimate: XS
@@ -68,6 +68,14 @@ honest rather than hidden.
   the composition root is untouched — that is why the parameter goes on the existing method rather
   than into a second port.
 - Deleting or renaming anything in `PostgresProfileReadsTest.kt` or `AuthRouteDoublesTest.kt`.
+- **Making `FixedProfileReads` observe the cursor.** Recorded because it is a real limitation, not
+  an oversight: `FakeProfileReads` in `ProfileRouteTest` gained `cursorsRequested` and does record
+  it, which is what makes this ticket's new test non-vacuous — but `FixedProfileReads` in
+  `AuthRouteDoubles.kt` accepts `after` and returns `emptyList()` regardless. **Any future test that
+  passes a cursor through `FixedProfileReads` proves nothing about cursor handling**, and would need
+  that double to gain a `cursorsRequested` list of its own, or a fixture whose page varies with the
+  cursor, before it could mean anything. No test in `STORY-0408` does so; the sign-up tests that use
+  this double never page.
 
 ## Tests
 

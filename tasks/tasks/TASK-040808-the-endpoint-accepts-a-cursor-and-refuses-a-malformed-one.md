@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040808
 title: The endpoint accepts a cursor, and a malformed one is a 400 that reads nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0408
 module: poker-server
 estimate: S
