@@ -127,7 +127,7 @@ recorded rather than quietly absorbed:
 | --- | --- | --- | --- |
 | [STORY-0401](../stories/STORY-0401-display-name-and-the-write-path.md) | `player.display_name`, its canonical form, and the write path | — | **ready**, split into 18 tickets |
 | [STORY-0402](../stories/STORY-0402-the-read-path-carries-the-display-name.md) | The read path carries the display name | 0401 | **ready**, split into 5 tickets |
-| [STORY-0403](../stories/STORY-0403-credentials-storage-and-hashing.md) | Credentials — the schema, the hash, and a port that returns none | 0401 | backlog |
+| [STORY-0403](../stories/STORY-0403-credentials-storage-and-hashing.md) | Credentials — the schema, the hash, and a port that returns none | 0401 | **ready**, split into 14 tickets |
 | [STORY-0404](../stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | Sign-up — one endpoint, and it attaches an account to the profile already here | 0403 | backlog |
 | [STORY-0405](../stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) | Sign-in, the session, and what the socket presents | 0404, 0213, 0214 | backlog |
 | [STORY-0406](../stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) | The claim proven, and the device binding revoked | 0405 | **blocked** — `DEC-041` |
@@ -194,14 +194,17 @@ without adding a story.
 
 ## Open decisions
 
-**Two, raised on 2026-08-16 while the stories were written. Both are the architect's, both block one
-story each, and neither blocks the epic.** Every *product* decision this epic was blocked on is
-answered, and no story below waits on a human.
+**Four. Two were raised on 2026-08-16 while the stories were written and block one story each; two
+came out of splitting `STORY-0403` on 2026-08-17 and block nothing at all.** Three are the
+architect's and one is the product owner's; none is the human's, and no story below waits on a
+human. Every *product* decision this epic was blocked on was answered on 2026-08-15.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
 | `DEC-041` | **The architect's** — what does revoking the device binding look like in the schema? `ADR-0037` says the answer is *"a technical question with more than one defensible answer and no reason to guess it here"* and hands it to `STORY-0406`; `ADR-0030` §2 says `player.device_id` is **never rewritten by any identity operation** and makes that the structural reason the coin invariant holds, so nulling the column is not obviously available | `STORY-0406`, and through it `0407`, `0412`, `0414` |
 | `DEC-042` | **The architect's** — by what path does an operator force-rename a profile and retire the name? `ADR-0038` fixes that the path exists and says it *"will not grow a role system speculatively"*, and does not say whether it is an authenticated admin endpoint, a CLI or Gradle task, or a documented procedure. The trigger `ADR-0029` §4 installs refuses `name → NULL`, so the answer must also say how the operator gets through it | `STORY-0410` only |
+| `DEC-043` | **The product owner's** — what may a password be? No ADR states a minimum length, a maximum, a composition rule or a breach check, and `ADR-0031` §5's sign-up endpoint is where one would be enforced. The risk half is the same question: is v0.1 shippable with **no** strength rule, given there is no money and an account holds a coin balance and a ladder place? `STORY-0403` puts no rule in `PresentedSecret` rather than answer it in a value class | nothing — due before `STORY-0404` builds the endpoint |
+| `DEC-044` | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"a constant change plus a rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403` says the parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack in a helper function. `TASK-040306` takes the conservative side because loosening a refusal is additive | nothing — due before anyone raises the cost |
 
 The seven answered ones are kept here with their answers because the story table still cites them,
 and because what each ADR *constrains* is this epic's work.

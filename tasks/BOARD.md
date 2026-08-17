@@ -520,6 +520,8 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-041 | **The architect's** — what shape does revoking the device binding take in the schema? `ADR-0037` hands the question to `STORY-0406` by name; `ADR-0030` §2 says `player.device_id` is never rewritten by an identity operation and makes that the structural reason the coin invariant holds | [`STORY-0406`](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) | before STORY-0406 |
 | DEC-042 | **The architect's** — by what path does an operator force-rename a profile, and where do the blocklist and the retired-name set live? `ADR-0038` fixes that the path exists and refuses to grow a role system; `ADR-0029` §4's trigger refuses `name → NULL` for everybody today | [`STORY-0410`](stories/STORY-0410-the-display-name-product-rules.md) | before STORY-0410 |
+| DEC-043 | **The product owner's** — what may a password be, and is shipping v0.1 with no strength rule acceptable? No ADR states a length, a composition rule or a breach check; `STORY-0403` deliberately puts no rule in `PresentedSecret` rather than guess one into a value class | [`STORY-0404`](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | before STORY-0404 |
+| DEC-044 | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403`'s parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack. `TASK-040306` takes the conservative side; the answer decides what the raise actually costs | [`TASK-040306`](tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) | before the Argon2 parameters are raised |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1102,7 +1104,21 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040203](tasks/TASK-040203-three-duels-three-opponents-one-prepared-statement.md) Three duels, three opponents, one prepared statement | S | **done** |
 | | [TASK-040204](tasks/TASK-040204-present-as-null-not-absent-on-the-real-response.md) Present as `null`, not absent, on the response the route actually writes | S | **done** |
 | | [TASK-040205](tasks/TASK-040205-the-document-names-the-field-and-the-test-agrees-with-the-dto.md) The document names the field, and the test agrees with the DTO | XS | **done** |
-| [STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md) Credentials — the schema, the hash, and a port that returns none | | | backlog |
+| **[STORY-0403](stories/STORY-0403-credentials-storage-and-hashing.md)** Credentials — the schema, the hash, and a port that returns none — *schema 2* | | | **ready** |
+| | [TASK-040301](tasks/TASK-040301-the-fourth-migration-adds-the-credential-and-the-session.md) The fourth migration adds the credential and the auth session | S | ready |
+| | [TASK-040302](tasks/TASK-040302-one-identifier-one-kind-one-row.md) One identifier, one kind, one row — and the player it points at must exist | S | backlog |
+| | [TASK-040303](tasks/TASK-040303-one-token-hash-one-row-and-nothing-cascades.md) One token hash, one row — and no foreign key cascades | S | backlog |
+| | [TASK-040304](tasks/TASK-040304-bouncy-castle-argon2id-against-the-published-vector.md) Bouncy Castle on the classpath, pinned to the published Argon2id vector | S | backlog |
+| | [TASK-040305](tasks/TASK-040305-the-phc-string-this-project-writes.md) The PHC string this project writes, and the one function that writes it | S | backlog |
+| | [TASK-040306](tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) The parser accepts what we wrote and refuses everything else | S | backlog |
+| | [TASK-040307](tasks/TASK-040307-two-values-that-print-a-redaction.md) Two values that print a redaction, in every form a string can take | S | backlog |
+| | [TASK-040308](tasks/TASK-040308-hash-a-secret-prove-a-secret-compare-in-constant-time.md) Hash a secret, prove a secret, and compare the tags in constant time | S | backlog |
+| | [TASK-040309](tasks/TASK-040309-four-verifications-at-a-time-and-no-more.md) Four verifications at a time, and no more | S | backlog |
+| | [TASK-040310](tasks/TASK-040310-the-login-handle-is-folded-before-it-is-stored.md) The login handle is folded before it is stored, and the fold is ASCII | S | backlog |
+| | [TASK-040311](tasks/TASK-040311-the-credentials-port-answers-a-player-id-or-nothing.md) The `Credentials` port answers a `PlayerId` or nothing | S | backlog |
+| | [TASK-040312](tasks/TASK-040312-postgres-credentials-writes-one-row-and-reads-no-hash-back.md) `PostgresCredentials` writes one row and reads no hash back | S | backlog |
+| | [TASK-040313](tasks/TASK-040313-an-unknown-identifier-costs-what-a-wrong-secret-costs.md) An unknown identifier costs exactly what a wrong secret costs | S | backlog |
+| | [TASK-040314](tasks/TASK-040314-nothing-public-returns-a-hash.md) Nothing public returns a hash, and the sweep proves it can tell | S | backlog |
 | [STORY-0404](stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) Sign-up — one endpoint, attaching an account to the profile already here | | | backlog |
 | [STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) Sign-in, the session, and what the socket presents (needs `STORY-0213`, `STORY-0214`) | | | backlog |
 | [STORY-0406](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) The claim proven, and the device binding revoked | | | **blocked** — `DEC-041` |
@@ -1122,3 +1138,9 @@ Two decisions were raised while splitting, both the architect's, both blocking e
 `DEC-041` (the shape of device revocation, which `ADR-0037` hands to `STORY-0406` by name) and
 `DEC-042` (the operator's force-rename path, which `ADR-0038` leaves unstated). Neither blocks the
 epic, and neither is the human's — every product question this epic had was answered on 2026-08-15.
+
+`STORY-0403` was split on 2026-08-17 into **fourteen**, and it is the longest chain in the epic for
+the reason its title carries: everything from sign-up to recovery stands on it, and the whole story
+lands with no endpoint, so every guarantee has to be structural. Two more decisions came out of the
+split and **neither blocks a ticket** — `DEC-043` (what may a password be, the product owner's, due
+before `STORY-0404`) and `DEC-044` (what the day the Argon2 cost is raised costs, the architect's).

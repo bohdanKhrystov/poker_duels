@@ -2,7 +2,7 @@
 id: STORY-0403
 title: Credentials — the schema, the hash, and a port that returns none
 type: story
-status: backlog
+status: ready
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, schema, security]
@@ -61,7 +61,30 @@ yet — is what lets that be asserted structurally before anything calls it.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0403` when it comes up.* | — |
+| [TASK-040301](../tasks/TASK-040301-the-fourth-migration-adds-the-credential-and-the-session.md) | The fourth migration adds the credential and the auth session | ready |
+| [TASK-040302](../tasks/TASK-040302-one-identifier-one-kind-one-row.md) | One identifier, one kind, one row — and the player it points at must exist | backlog |
+| [TASK-040303](../tasks/TASK-040303-one-token-hash-one-row-and-nothing-cascades.md) | One token hash, one row — and no foreign key cascades | backlog |
+| [TASK-040304](../tasks/TASK-040304-bouncy-castle-argon2id-against-the-published-vector.md) | Bouncy Castle on the classpath, pinned to the published Argon2id vector | backlog |
+| [TASK-040305](../tasks/TASK-040305-the-phc-string-this-project-writes.md) | The PHC string this project writes, and the one function that writes it | backlog |
+| [TASK-040306](../tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) | The parser accepts what we wrote and refuses everything else | backlog |
+| [TASK-040307](../tasks/TASK-040307-two-values-that-print-a-redaction.md) | Two values that print a redaction, in every form a string can take | backlog |
+| [TASK-040308](../tasks/TASK-040308-hash-a-secret-prove-a-secret-compare-in-constant-time.md) | Hash a secret, prove a secret, and compare the tags in constant time | backlog |
+| [TASK-040309](../tasks/TASK-040309-four-verifications-at-a-time-and-no-more.md) | Four verifications at a time, and no more | backlog |
+| [TASK-040310](../tasks/TASK-040310-the-login-handle-is-folded-before-it-is-stored.md) | The login handle is folded before it is stored, and the fold is ASCII | backlog |
+| [TASK-040311](../tasks/TASK-040311-the-credentials-port-answers-a-player-id-or-nothing.md) | The `Credentials` port answers a `PlayerId` or nothing | backlog |
+| [TASK-040312](../tasks/TASK-040312-postgres-credentials-writes-one-row-and-reads-no-hash-back.md) | `PostgresCredentials` writes one row and reads no hash back | backlog |
+| [TASK-040313](../tasks/TASK-040313-an-unknown-identifier-costs-what-a-wrong-secret-costs.md) | An unknown identifier costs exactly what a wrong secret costs | backlog |
+| [TASK-040314](../tasks/TASK-040314-nothing-public-returns-a-hash.md) | Nothing public returns a hash, and the sweep proves it can tell | backlog |
+
+One linear chain: the schema first, because everything else stores into it; then the primitive, the
+PHC string and its parser; then the two redacting types, the hasher built on them and its bound;
+then the fold, the port, its implementation, and last the two tests that can only be written once
+the whole surface exists — the enumeration parity and the sweep.
+
+Two decisions were raised while splitting and **neither blocks a ticket here**: `DEC-043` (what may
+a password be — the product owner's, due before `STORY-0404`) and `DEC-044` (what happens to rows
+written under older Argon2 parameters the day the cost is raised — the architect's, due before
+anyone raises it).
 
 ## Acceptance criteria
 
