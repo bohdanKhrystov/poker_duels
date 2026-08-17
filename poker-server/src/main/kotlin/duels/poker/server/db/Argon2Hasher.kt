@@ -1,6 +1,7 @@
 package duels.poker.server.db
 
 import duels.poker.server.auth.PresentedSecret
+import duels.poker.server.auth.nfcNormalisedSecret
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -85,7 +86,14 @@ internal class Argon2Hasher(private val random: SecureRandom = SecureRandom()) :
         // Written out ourselves rather than left to Bouncy Castle's char[] overload, so this
         // project owns the encoding and a future change to it breaks a test rather than silently
         // invalidating every stored hash.
-        generator.generateBytes(secret.value.toByteArray(Charsets.UTF_8), tag)
+        //
+        // This call is the one place a presented secret becomes bytes, so folding to NFC here —
+        // and nowhere else, `hash` and `matches` both route through it — is what makes sign-up and
+        // sign-in incapable of disagreeing about a password typed on one keyboard layout and
+        // re-typed on another (`ADR-0048` §5). The fold is permanent from the first stored hash:
+        // changing it later derives a different tag for the same secret, invalidating every hash
+        // already on disk, and `ADR-0031` leaves an opted-out account with no reset path back in.
+        generator.generateBytes(nfcNormalisedSecret(secret).toByteArray(Charsets.UTF_8), tag)
         return tag
     }
 }

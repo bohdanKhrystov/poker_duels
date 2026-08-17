@@ -144,6 +144,50 @@ class Argon2HasherTest {
     }
 
     @Test
+    fun aSecretHashedComposedVerifiesWhenPresentedDecomposed() {
+        runBlocking {
+            val hasher = Argon2Hasher()
+            // U+00E9 LATIN SMALL LETTER E WITH ACUTE — the single precomposed code point.
+            val composed = PresentedSecret("caf\u00E9")
+            // "e" followed by U+0301 COMBINING ACUTE ACCENT — the same visible string as two code
+            // points, and a different UTF-8 byte sequence without the fold.
+            val decomposed = PresentedSecret("cafe\u0301")
+
+            val phc = hasher.hash(composed)
+
+            assertTrue(hasher.matches(decomposed, phc))
+        }
+    }
+
+    @Test
+    fun aSecretHashedDecomposedVerifiesWhenPresentedComposed() {
+        runBlocking {
+            val hasher = Argon2Hasher()
+            val decomposed = PresentedSecret("cafe\u0301")
+            val composed = PresentedSecret("caf\u00E9")
+
+            val phc = hasher.hash(decomposed)
+
+            assertTrue(hasher.matches(composed, phc))
+        }
+    }
+
+    @Test
+    fun aCompatibilityEquivalentSecretDoesNotVerify() {
+        runBlocking {
+            val hasher = Argon2Hasher()
+            // U+FB01 LATIN SMALL LIGATURE FI: an NFKC compatibility equivalent of "fi", but not an
+            // NFC one — NFC only recomposes canonical decompositions, so this ligature is left
+            // alone and the two secrets below must stay two different secrets.
+            val ligature = PresentedSecret("\uFB01le1234")
+
+            val phc = hasher.hash(ligature)
+
+            assertFalse(hasher.matches(PresentedSecret("file1234"), phc))
+        }
+    }
+
+    @Test
     fun hashingWithAFixedRandomSourceProducesAnExactPhcString() {
         runBlocking {
             val fixedSalt = ByteArray(ARGON2_SALT_BYTES) { (it + 1).toByte() }
