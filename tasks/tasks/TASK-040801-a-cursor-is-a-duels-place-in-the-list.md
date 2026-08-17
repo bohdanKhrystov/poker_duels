@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040801
 title: A cursor is one duel's place in the list, and it survives the round trip
 type: task
-status: ready
+status: done
 parent: STORY-0408
 module: poker-server
 estimate: S
