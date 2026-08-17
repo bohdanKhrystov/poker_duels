@@ -3,8 +3,8 @@
 package duels.poker.server.http
 
 import duels.poker.server.auth.CreateCredentialResult
-import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.CredentialKind
+import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.PresentedSecret
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse

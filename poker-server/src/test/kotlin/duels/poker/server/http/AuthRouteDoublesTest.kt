@@ -222,5 +222,4 @@ class AuthRouteDoublesTest {
 
         assertTrue(duels.isEmpty())
     }
-
 }
