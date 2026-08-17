@@ -1139,8 +1139,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
 | [STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md) Duel history, paged over the whole record | | | ready |
 | | [TASK-040801](tasks/TASK-040801-a-cursor-is-a-duels-place-in-the-list.md) A cursor is one duel's place in the list, and it survives the round trip | S | **done** |
-| | [TASK-040802](tasks/TASK-040802-the-read-takes-a-cursor-and-compares-the-whole-tuple.md) The read takes a cursor, and PostgreSQL compares the whole tuple | S | ready |
-| | [TASK-040803](tasks/TASK-040803-seven-duels-in-pages-of-three-each-exactly-once.md) Seven duels in pages of three, each exactly once | S | backlog |
+| | [TASK-040802](tasks/TASK-040802-the-read-takes-a-cursor-and-compares-the-whole-tuple.md) The read takes a cursor, and PostgreSQL compares the whole tuple | S | **done** |
+| | [TASK-040803](tasks/TASK-040803-seven-duels-in-pages-of-three-each-exactly-once.md) Seven duels in pages of three, each exactly once | S | ready |
 | | [TASK-040804](tasks/TASK-040804-a-duel-that-finishes-between-two-pages.md) A duel that finishes between two pages repeats nothing and skips nothing | S | backlog |
 | | [TASK-040805](tasks/TASK-040805-two-duels-in-the-same-instant-still-page.md) Two duels that finished in the same instant still page | XS | backlog |
 | | [TASK-040806](tasks/TASK-040806-the-response-says-whether-there-is-a-next-page.md) The response says whether there is a next page, as null and not as absent | XS | backlog |

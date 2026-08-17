@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040802
 title: The read takes a cursor, and PostgreSQL compares the whole tuple
 type: task
-status: ready
+status: done
 parent: STORY-0408
 module: poker-server
 estimate: S

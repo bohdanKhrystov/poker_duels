@@ -1,5 +1,6 @@
 package duels.poker.server.db
 
+import duels.poker.server.http.DuelCursor
 import duels.poker.server.http.ProfileReads
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
@@ -8,7 +9,9 @@ import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.sql.ResultSet
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -33,33 +36,56 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
     }
 
     override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int): List<DuelSummaryResponse> =
+        recentDuelsOf(playerId, limit, after = null)
+
+    /**
+     * Reads [playerId]'s duels newest-first, at most [limit] of them, strictly after [after]
+     * when one is given.
+     *
+     * `after = null` reads exactly what [recentDuelsOf]`(playerId, limit)` always has: same rows,
+     * same order, same query shape. A non-null [after] adds
+     * `(d.finished_at, d.id) < (after.finishedAt, after.duelId)` as a single PostgreSQL row-value
+     * comparison — the row the cursor names never reappears, and no duel that ties it on
+     * `finished_at` is skipped.
+     */
+    public suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> =
         withContext(Dispatchers.IO) {
             dataSource.connection.use { connection ->
-                connection.prepareStatement(RECENT_DUELS_SQL).use { statement ->
+                val sql = if (after == null) RECENT_DUELS_SQL else DUELS_AFTER_SQL
+                connection.prepareStatement(sql).use { statement ->
                     statement.setObject(1, UUID.fromString(playerId.value))
-                    statement.setInt(2, limit)
+                    if (after == null) {
+                        statement.setInt(2, limit)
+                    } else {
+                        statement.setObject(2, OffsetDateTime.ofInstant(after.finishedAt, ZoneOffset.UTC))
+                        statement.setObject(3, after.duelId)
+                        statement.setInt(4, limit)
+                    }
                     statement.executeQuery().use { rows ->
                         val duels = mutableListOf<DuelSummaryResponse>()
                         while (rows.next()) {
-                            val coinDelta = rows.getInt("coin_delta")
-                            duels +=
-                                DuelSummaryResponse(
-                                    duelId = rows.getObject("duel_id", UUID::class.java).toString(),
-                                    opponentPlayerId = rows.getObject("opponent_id", UUID::class.java).toString(),
-                                    outcome = outcomeOf(coinDelta),
-                                    coinDelta = coinDelta,
-                                    handsPlayed = rows.getInt("hands_played"),
-                                    finishedAt = rows.getObject("finished_at", OffsetDateTime::class.java)
-                                        .toInstant()
-                                        .toString(),
-                                    opponentDisplayName = rows.getString("opponent_display_name"),
-                                )
+                            duels += readDuelSummary(rows)
                         }
                         duels
                     }
                 }
             }
         }
+
+    private fun readDuelSummary(rows: ResultSet): DuelSummaryResponse {
+        val coinDelta = rows.getInt("coin_delta")
+        return DuelSummaryResponse(
+            duelId = rows.getObject("duel_id", UUID::class.java).toString(),
+            opponentPlayerId = rows.getObject("opponent_id", UUID::class.java).toString(),
+            outcome = outcomeOf(coinDelta),
+            coinDelta = coinDelta,
+            handsPlayed = rows.getInt("hands_played"),
+            finishedAt = rows.getObject("finished_at", OffsetDateTime::class.java)
+                .toInstant()
+                .toString(),
+            opponentDisplayName = rows.getString("opponent_display_name"),
+        )
+    }
 
     private companion object {
         // ADR-0015: every participant of every completed duel has exactly one `duel_result`
@@ -69,7 +95,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         // duel_result.player_id is NOT NULL REFERENCES player (id) in V1, so exactly one
         // `player` row matches every opponent result row. The inner join can neither drop a
         // duel nor duplicate one.
-        private const val RECENT_DUELS_SQL =
+        private const val DUEL_LINES =
             """
             SELECT d.id AS duel_id,
                    o.player_id AS opponent_id,
@@ -82,8 +108,17 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
             JOIN duel_result o ON o.duel_id = r.duel_id AND o.player_id <> r.player_id
             JOIN player p ON p.id = o.player_id
             WHERE r.player_id = ?
-            ORDER BY d.finished_at DESC, d.id DESC
-            LIMIT ?
             """
+
+        private const val DUEL_ORDER = "ORDER BY d.finished_at DESC, d.id DESC LIMIT ?"
+
+        private const val RECENT_DUELS_SQL = "$DUEL_LINES $DUEL_ORDER"
+
+        // The row-value comparison mirrors DUEL_ORDER exactly: PostgreSQL compares finished_at
+        // first and falls through to id only on a tie, which is the same sequence the ORDER BY
+        // produces. The explicit ::timestamptz / ::uuid casts exist because parameter type
+        // inference inside a row constructor is not something to rely on.
+        private const val DUELS_AFTER_SQL =
+            "$DUEL_LINES AND (d.finished_at, d.id) < (?::timestamptz, ?::uuid) $DUEL_ORDER"
     }
 }

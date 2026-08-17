@@ -5,7 +5,9 @@ import duels.poker.engine.duel.DuelOutcome
 import duels.poker.engine.duel.EndCondition
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
+import duels.poker.server.http.DuelCursor
 import duels.poker.server.protocol.http.DuelOutcomeLabel
+import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
 import kotlinx.coroutines.runBlocking
@@ -393,6 +395,93 @@ class PostgresProfileReadsTest {
         assertEquals(1, countingDataSource.statementsPrepared)
     }
 
+    @Test
+    fun aNullCursorReadsExactlyWhatTheTwoArgumentCallReads() {
+        runBlocking {
+            threeDuelsAgainstThreeOpponents()
+
+            val twoArgument = profileReads.recentDuelsOf(alice.id, 10)
+            val threeArgumentWithNullCursor = profileReads.recentDuelsOf(alice.id, 10, null)
+
+            assertEquals(twoArgument.map { it.duelId }, threeArgumentWithNullCursor.map { it.duelId })
+        }
+    }
+
+    @Test
+    fun aCursorReadsOnlyTheDuelsOlderThanIt() {
+        runBlocking {
+            val allDuels = fiveDuelsAMinuteApart()
+            assertEquals(5, allDuels.size)
+            val secondRow = allDuels[1]
+            val cursor = DuelCursor(Instant.parse(secondRow.finishedAt), UUID.fromString(secondRow.duelId))
+
+            val page = profileReads.recentDuelsOf(alice.id, 10, cursor)
+
+            assertEquals(listOf(allDuels[2].duelId, allDuels[3].duelId, allDuels[4].duelId), page.map { it.duelId })
+        }
+    }
+
+    @Test
+    fun aCursorAtTheOldestDuelReadsNothing() {
+        runBlocking {
+            val allDuels = fiveDuelsAMinuteApart()
+            assertEquals(5, allDuels.size)
+            val oldestRow = allDuels[4]
+            val cursor = DuelCursor(Instant.parse(oldestRow.finishedAt), UUID.fromString(oldestRow.duelId))
+
+            val page = profileReads.recentDuelsOf(alice.id, 10, cursor)
+
+            assertTrue(page.isEmpty())
+        }
+    }
+
+    /**
+     * Two duels sharing the exact same `finished_at` is the one fixture a distinct-timestamp
+     * list can never exercise: it is the only way to prove the cursor predicate is the row-value
+     * comparison `(d.finished_at, d.id) < (?, ?)` and not `d.finished_at < ?` alone. A cursor
+     * built from the newer of the two ids must read back the older one — `d.finished_at < ?`
+     * alone would drop both, since neither is strictly before the tied instant.
+     */
+    @Test
+    fun aCursorBreaksATieOnFinishedAtByDuelId() {
+        runBlocking {
+            val tiedInstant = Instant.parse("2026-08-13T10:01:00Z")
+            val lowerId = UUID.fromString("00000000-0000-0000-0000-000000000001")
+            val higherId = UUID.fromString("00000000-0000-0000-0000-000000000002")
+
+            duelResultStore.record(finishedDuel(winner = 0, id = lowerId, finishedAt = tiedInstant))
+            duelResultStore.record(finishedDuel(winner = 0, id = higherId, finishedAt = tiedInstant))
+
+            val cursor = DuelCursor(tiedInstant, higherId)
+            val page = profileReads.recentDuelsOf(alice.id, 10, cursor)
+
+            assertEquals(listOf(lowerId.toString()), page.map { it.duelId })
+        }
+    }
+
+    /**
+     * `RECENT_DUELS_SQL` and `DUELS_AFTER_SQL` are both built from `DUEL_LINES`
+     * (`"$DUEL_LINES $DUEL_ORDER"` and `"$DUEL_LINES AND (...) $DUEL_ORDER"`), so the join the two
+     * queries share is one source text rather than two copies that could drift. Reflection is the
+     * only way in: the constants are `private const val`, deliberately not part of this class's
+     * public API.
+     */
+    @Test
+    fun theCursorQueryAndTheFirstPageQueryShareOneJoinText() {
+        val duelLines = privateSqlConstant("DUEL_LINES")
+        val recentDuelsSql = privateSqlConstant("RECENT_DUELS_SQL")
+        val duelsAfterSql = privateSqlConstant("DUELS_AFTER_SQL")
+
+        assertTrue(recentDuelsSql.contains(duelLines))
+        assertTrue(duelsAfterSql.contains(duelLines))
+    }
+
+    private fun privateSqlConstant(name: String): String {
+        val field = PostgresProfileReads::class.java.getDeclaredField(name)
+        field.isAccessible = true
+        return field.get(null) as String
+    }
+
     private fun finishedDuel(
         winner: Int?,
         id: UUID = UUID.randomUUID(),
@@ -414,6 +503,21 @@ class PostgresProfileReadsTest {
             seats = listOf(alice.id, opponent.id),
             outcome = outcome,
         )
+    }
+
+    /**
+     * Records five duels for alice against bob, finishing a minute apart from 10:01 to 10:05
+     * (`finishedDuel`'s default startedAt is 10:00:00Z, so every one of these finishes at or
+     * after it), and returns them exactly as [PostgresProfileReads.recentDuelsOf] already does:
+     * newest first.
+     */
+    private suspend fun fiveDuelsAMinuteApart(): List<DuelSummaryResponse> {
+        (1..5).forEach { minute ->
+            duelResultStore.record(
+                finishedDuel(winner = 0, finishedAt = Instant.parse("2026-08-13T10:0$minute:00Z")),
+            )
+        }
+        return profileReads.recentDuelsOf(alice.id, 10)
     }
 
     /**
