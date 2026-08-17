@@ -518,7 +518,6 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-044 | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403`'s parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack. `TASK-040306` takes the conservative side; the answer decides what the raise actually costs | [`TASK-040306`](tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) | before the Argon2 parameters are raised |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1174,5 +1173,11 @@ the reason its title carries: everything from sign-up to recovery stands on it, 
 lands with no endpoint, so every guarantee has to be structural. Two more decisions came out of the
 split and neither blocked a ticket — `DEC-043` (what may a password be), now answered by
 [`ADR-0048`](../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md) ahead of
-`STORY-0404`, and `DEC-044` (what the day the Argon2 cost is raised costs, the architect's, still
-open).
+`STORY-0404`, and `DEC-044` (what the day the Argon2 cost is raised costs), now answered by
+[`ADR-0054`](../docs/adr/ADR-0054-a-raised-argon2-cost-is-a-ledger-entry-and-a-rehash.md): a closed
+append-only ledger of parameter sets in source, a rehash in `verify` after a *correct* password, and
+**nothing built until the day the cost actually changes** — which is today one commit away from
+locking out every existing account. The downgrade refusal cannot compare against the current cost,
+since every historical entry is weaker by definition, so it turns on a fixed `ARGON2_FLOOR` equal to
+the first set ever shipped: appending a weak set reddens the pinned literals, inserting one breaks
+the strict ascent, and **prepending** one — which a bare ascent check allows — is below the floor.
