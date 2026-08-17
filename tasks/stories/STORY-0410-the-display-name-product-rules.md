@@ -43,8 +43,22 @@ silence is no longer the default this story ships under. It adds no column and n
 path — `SetNameResult`, the endpoint's four codes, `retire_display_name` and `docs/operations.md` are
 exactly as `ADR-0051` left them — and **one** thing to the read path: `profileOf` answers whether a
 name has been retired from the requesting player, which `ADR-0051` §1's `retired_from` already
-records. The wire shape of that one fact is `DEC-047`, the architect's, due before this story is
-split. The client half is `STORY-0411`'s.
+records. The client half is `STORY-0411`'s.
+
+**`DEC-047` (what shape does that fact take?) is answered too**, by
+[`ADR-0053`](../../docs/adr/ADR-0053-the-profile-says-the-name-was-removed.md): `ProfileResponse`
+gains **`displayNameRemoved: Boolean`** — non-null and **with no default value**, or it is present in
+every test's JSON and absent from the wire — true **iff** the caller holds no display name **and** a
+name has been retired from them, so the bit goes quiet once they set a new one. It is computed by
+**one correlated `EXISTS`** inside the existing profile `SELECT`, correlated to `p.id` and **never a
+`LEFT JOIN`** (a player may hold two retired names, and a join returns two rows for one profile), so
+the read stays one round trip. `ADR-0051` §8's migration gains **one partial index**,
+`name_registry_retired_from_idx ON name_registry (retired_from) WHERE retired_from IS NOT NULL`,
+which costs the name-set path nothing. `PROTOCOL_VERSION` does not move; `docs/protocol.md` gains a
+row that no gate enforces. `PostgresProfileWrites` passes the literal `false`. The split takes
+`ADR-0053` §6 as its task list, including the criterion that the *retired* and *never-named* fixtures
+must be **two players in one database** — two tests with one fixture each pass while the correlation
+is missing altogether.
 
 ## Design notes
 
