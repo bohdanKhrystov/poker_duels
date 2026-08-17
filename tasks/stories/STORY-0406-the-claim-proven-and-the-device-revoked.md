@@ -52,6 +52,12 @@ byte-identical-`player` criterion is not.
   - **P1, per player**: `player.coin_balance = COALESCE(SUM(duel_result.coin_delta WHERE player_id =
     player.id), 0)` for every row.
   - **P2, globally**: `SUM(duel_result.coin_delta) = 0` and `SUM(player.coin_balance) = 0`.
+  - **Keep both; P1 does not subsume P2.** Measured while building `TASK-040413`: drop one player's
+    `duel_result` row *and* their `coin_balance` update together, and that player is left internally
+    consistent at zero — `0 <> 0` is false, so P1 flags nobody and returns zero rows, while P2's two
+    sums both go to `1`. Only P2 catches it. When this story consolidates the two into one shared
+    helper, a consolidation that keeps the per-player check and drops the global one would look
+    equivalent and would silently stop detecting exactly that shape.
 - **Called after every step of one scenario**, not only at the end — a mint and a burn cancel:
   connect anonymously, play a duel and win, set a name, sign up, reconnect with the token, sign into
   a *second* account from the same device, play a duel as that account, sign out, reconnect

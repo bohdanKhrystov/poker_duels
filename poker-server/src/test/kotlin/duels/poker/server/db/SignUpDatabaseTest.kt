@@ -6,7 +6,9 @@ import duels.poker.server.http.DEVICE_ID_HEADER
 import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ServerMessage
+import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.serverComponents
 import io.ktor.client.HttpClient
@@ -32,6 +34,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.util.UUID
 import javax.sql.DataSource
 import kotlin.time.Duration.Companion.seconds
 
@@ -194,6 +199,126 @@ class SignUpDatabaseTest {
             }
         }
     }
+
+    @Test
+    fun theWinnersCoinIsStillThereAfterSigningUp() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                client.handshake(SIGNING_UP_DEVICE)
+                client.handshake(BYSTANDER_DEVICE)
+                val winner = UUID.fromString(client.profileOf(SIGNING_UP_DEVICE).playerId)
+                val loser = UUID.fromString(client.profileOf(BYSTANDER_DEVICE).playerId)
+
+                dataSource.writeFinishedDuel(winner, loser)
+                dataSource.assertFixtureTook(winner, loser)
+
+                // Two players, two signs: a balance read as 0 on both sides would pass a test
+                // that only checked "unchanged", so both the winner's +1 and the loser's -1 are
+                // asserted by value, not by equality with a captured "before" snapshot.
+                assertEquals(1, client.profileOf(SIGNING_UP_DEVICE).coinBalance)
+                assertEquals(-1, client.profileOf(BYSTANDER_DEVICE).coinBalance)
+
+                assertEquals(HttpStatusCode.Created, client.signUp(SIGNING_UP_DEVICE, "Bob_1", PASSWORD))
+
+                assertEquals(1, client.profileOf(SIGNING_UP_DEVICE).coinBalance)
+                assertEquals(-1, client.profileOf(BYSTANDER_DEVICE).coinBalance)
+            }
+        }
+    }
+
+    @Test
+    fun theLedgerSumsAreUnchangedByASignUp() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                client.handshake(SIGNING_UP_DEVICE)
+                client.handshake(BYSTANDER_DEVICE)
+                val winner = UUID.fromString(client.profileOf(SIGNING_UP_DEVICE).playerId)
+                val loser = UUID.fromString(client.profileOf(BYSTANDER_DEVICE).playerId)
+
+                dataSource.writeFinishedDuel(winner, loser)
+                dataSource.assertFixtureTook(winner, loser)
+
+                // P2, before and after: a mint and a burn cancel, so an after-only assertion, or
+                // a delta assertion, would miss either one landing on the wrong side of a sign-up.
+                val before = dataSource.p2LedgerSums()
+                assertEquals(0, before.playerBalanceSum)
+                assertEquals(0, before.duelResultDeltaSum)
+
+                assertEquals(HttpStatusCode.Created, client.signUp(SIGNING_UP_DEVICE, "Bob_1", PASSWORD))
+
+                val after = dataSource.p2LedgerSums()
+                assertEquals(0, after.playerBalanceSum)
+                assertEquals(0, after.duelResultDeltaSum)
+            }
+        }
+    }
+
+    @Test
+    fun everyPlayersBalanceStillEqualsTheirDeltas() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                client.handshake(SIGNING_UP_DEVICE)
+                client.handshake(BYSTANDER_DEVICE)
+                val winner = UUID.fromString(client.profileOf(SIGNING_UP_DEVICE).playerId)
+                val loser = UUID.fromString(client.profileOf(BYSTANDER_DEVICE).playerId)
+
+                dataSource.writeFinishedDuel(winner, loser)
+                dataSource.assertFixtureTook(winner, loser)
+
+                // The wrong implementation this must fail against is any UPDATE player SET
+                // coin_balance, or the duel_result repointing ADR-0030 names, both of which
+                // leave a row whose balance no longer matches its deltas.
+                assertEquals(0, dataSource.p1BrokenBalanceCount())
+
+                assertEquals(HttpStatusCode.Created, client.signUp(SIGNING_UP_DEVICE, "Bob_1", PASSWORD))
+
+                assertEquals(0, dataSource.p1BrokenBalanceCount())
+            }
+        }
+    }
+
+    @Test
+    fun theWinnerReadsTheSameDuelLineAfterSigningUp() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                client.handshake(SIGNING_UP_DEVICE)
+                client.handshake(BYSTANDER_DEVICE)
+                val winner = UUID.fromString(client.profileOf(SIGNING_UP_DEVICE).playerId)
+                val loser = UUID.fromString(client.profileOf(BYSTANDER_DEVICE).playerId)
+
+                val duelId = dataSource.writeFinishedDuel(winner, loser)
+                dataSource.assertFixtureTook(winner, loser)
+
+                val before = client.duelsOf(SIGNING_UP_DEVICE)
+                assertEquals(1, before.size)
+                assertEquals(duelId.toString(), before.single().duelId)
+                assertEquals(loser.toString(), before.single().opponentPlayerId)
+                assertEquals(1, before.single().coinDelta)
+
+                assertEquals(HttpStatusCode.Created, client.signUp(SIGNING_UP_DEVICE, "Bob_1", PASSWORD))
+
+                // The opponent-side double-count ADR-0030 describes shows up here as two lines
+                // where there was one, so size is asserted, not merely non-empty.
+                val after = client.duelsOf(SIGNING_UP_DEVICE)
+                assertEquals(1, after.size)
+                assertEquals(duelId.toString(), after.single().duelId)
+                assertEquals(loser.toString(), after.single().opponentPlayerId)
+                assertEquals(1, after.single().coinDelta)
+            }
+        }
+    }
 }
 
 /** Completes the WebSocket handshake for [deviceId], minting its `player` row. */
@@ -210,6 +335,13 @@ private suspend fun HttpClient.profileOf(deviceId: String): ProfileResponse {
     val response = get("/api/me") { header(DEVICE_ID_HEADER, deviceId) }
     assertEquals(HttpStatusCode.OK, response.status)
     return protocolJson.decodeFromString<ProfileResponse>(response.bodyAsText())
+}
+
+/** Reads the duel list the HTTP route resolves for [deviceId]. */
+private suspend fun HttpClient.duelsOf(deviceId: String): List<DuelSummaryResponse> {
+    val response = get("/api/me/duels") { header(DEVICE_ID_HEADER, deviceId) }
+    assertEquals(HttpStatusCode.OK, response.status)
+    return protocolJson.decodeFromString<RecentDuelsResponse>(response.bodyAsText()).duels
 }
 
 /** Signs [deviceId] up with [handle] and [password], returning the response status. */
@@ -253,6 +385,120 @@ private fun DataSource.snapshot(table: String): TableSnapshot {
                     rows.add(columns.indices.map { rs.getObject(it + 1) })
                 }
                 return TableSnapshot(columns, rows)
+            }
+        }
+    }
+}
+
+/**
+ * Writes one finished duel with raw SQL — a `duel` row, **two** `duel_result` rows of `+1` and
+ * `-1`, and the matching `coin_balance` update on both players — mirroring exactly what
+ * [duels.poker.server.db.PostgresDuelResultStore.record] writes for a real duel.
+ *
+ * A fixture writing only the winner's row would make P2 fail before the sign-up under test even
+ * runs, for a reason that has nothing to do with sign-up — that misdiagnosis is what this helper
+ * exists to avoid.
+ *
+ * @return the id of the `duel` row written.
+ */
+private fun DataSource.writeFinishedDuel(winner: UUID, loser: UUID): UUID {
+    val duelId = UUID.randomUUID()
+    val now = OffsetDateTime.now(ZoneOffset.UTC)
+    connection.use { connection ->
+        connection.prepareStatement(
+            "INSERT INTO duel (id, format, started_at, finished_at, hands_played) VALUES (?, ?, ?, ?, ?)",
+        ).use { statement ->
+            statement.setObject(1, duelId)
+            statement.setString(2, "heads-up-no-limit")
+            statement.setObject(3, now)
+            statement.setObject(4, now)
+            statement.setInt(5, 1)
+            statement.executeUpdate()
+        }
+        listOf(winner to 1, loser to -1).forEach { (player, delta) ->
+            connection.prepareStatement(
+                "INSERT INTO duel_result (duel_id, player_id, coin_delta) VALUES (?, ?, ?)",
+            ).use { statement ->
+                statement.setObject(1, duelId)
+                statement.setObject(2, player)
+                statement.setInt(3, delta)
+                statement.executeUpdate()
+            }
+            connection.prepareStatement("UPDATE player SET coin_balance = coin_balance + ? WHERE id = ?")
+                .use { statement ->
+                    statement.setInt(1, delta)
+                    statement.setObject(2, player)
+                    statement.executeUpdate()
+                }
+        }
+    }
+    return duelId
+}
+
+/**
+ * Asserts the fixture [writeFinishedDuel] wrote actually landed: the winner's `coin_balance` is
+ * `+1`, the loser's is `-1`, and there are exactly two `duel_result` rows. Without this, P1 and
+ * P2 below could be evaluated against a fixture that silently failed to write — and both
+ * properties hold trivially on no data, which is the trap this class guards against.
+ */
+private fun DataSource.assertFixtureTook(winner: UUID, loser: UUID) {
+    assertEquals(2L, rowCount("duel_result"))
+    assertEquals(1, balanceOf(winner))
+    assertEquals(-1, balanceOf(loser))
+}
+
+/** The `coin_balance` of [player], read fresh with a plain select. */
+private fun DataSource.balanceOf(player: UUID): Int {
+    connection.use { connection ->
+        connection.prepareStatement("SELECT coin_balance FROM player WHERE id = ?").use { statement ->
+            statement.setObject(1, player)
+            statement.executeQuery().use { rs ->
+                assertTrue(rs.next())
+                return rs.getInt("coin_balance")
+            }
+        }
+    }
+}
+
+/**
+ * P1 of `ADR-0030` §5, run with the exact SQL the ADR gives. Every row this returns names a
+ * player whose `coin_balance` no longer equals the sum of their `duel_result` deltas; P1 holds
+ * when this returns zero rows.
+ */
+private fun DataSource.p1BrokenBalanceCount(): Int {
+    connection.use { connection ->
+        connection.createStatement().use { statement ->
+            statement.executeQuery(
+                """
+                SELECT p.id FROM player p
+                LEFT JOIN duel_result r ON r.player_id = p.id
+                GROUP BY p.id, p.coin_balance
+                HAVING p.coin_balance <> COALESCE(SUM(r.coin_delta), 0)
+                """.trimIndent(),
+            ).use { rs ->
+                var count = 0
+                while (rs.next()) count++
+                return count
+            }
+        }
+    }
+}
+
+/** The two sums P2 of `ADR-0030` §5 requires to both be `0`. */
+private data class LedgerSums(val playerBalanceSum: Int, val duelResultDeltaSum: Int)
+
+/** P2 of `ADR-0030` §5, run with the exact SQL the ADR gives. */
+private fun DataSource.p2LedgerSums(): LedgerSums {
+    connection.use { connection ->
+        connection.createStatement().use { statement ->
+            statement.executeQuery(
+                """
+                SELECT (SELECT COALESCE(SUM(coin_balance), 0) FROM player),
+                       (SELECT COALESCE(SUM(coin_delta), 0) FROM duel_result)
+                """.trimIndent(),
+            ).use { rs ->
+                assertTrue(rs.next())
+                return LedgerSums(rs.getInt(1), rs.getInt(2))
             }
         }
     }
