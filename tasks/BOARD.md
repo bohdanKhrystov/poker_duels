@@ -1114,8 +1114,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040304](tasks/TASK-040304-bouncy-castle-argon2id-against-the-published-vector.md) Bouncy Castle on the classpath, pinned to the published Argon2id vector | S | **done** |
 | | [TASK-040305](tasks/TASK-040305-the-phc-string-this-project-writes.md) The PHC string this project writes, and the one function that writes it | S | **done** |
 | | [TASK-040306](tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) The parser accepts what we wrote and refuses everything else | S | **done** |
-| | [TASK-040307](tasks/TASK-040307-two-values-that-print-a-redaction.md) Two values that print a redaction, in every form a string can take | S | ready |
-| | [TASK-040308](tasks/TASK-040308-hash-a-secret-prove-a-secret-compare-in-constant-time.md) Hash a secret, prove a secret, and compare the tags in constant time | S | backlog |
+| | [TASK-040307](tasks/TASK-040307-two-values-that-print-a-redaction.md) Two values that print a redaction, in every form a string can take | S | **done** |
+| | [TASK-040308](tasks/TASK-040308-hash-a-secret-prove-a-secret-compare-in-constant-time.md) Hash a secret, prove a secret, and compare the tags in constant time | S | ready |
 | | [TASK-040309](tasks/TASK-040309-four-verifications-at-a-time-and-no-more.md) Four verifications at a time, and no more | S | backlog |
 | | [TASK-040310](tasks/TASK-040310-the-login-handle-is-folded-before-it-is-stored.md) The login handle is folded before it is stored, and the fold is ASCII | S | backlog |
 | | [TASK-040311](tasks/TASK-040311-the-credentials-port-answers-a-player-id-or-nothing.md) The `Credentials` port answers a `PlayerId` or nothing | S | backlog |
