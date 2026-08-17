@@ -35,9 +35,6 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         }
     }
 
-    override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int): List<DuelSummaryResponse> =
-        recentDuelsOf(playerId, limit, after = null)
-
     /**
      * Reads [playerId]'s duels newest-first, at most [limit] of them, strictly after [after]
      * when one is given.
@@ -48,7 +45,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
      * comparison — the row the cursor names never reappears, and no duel that ties it on
      * `finished_at` is skipped.
      */
-    public suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> =
+    override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> =
         withContext(Dispatchers.IO) {
             dataSource.connection.use { connection ->
                 val sql = if (after == null) RECENT_DUELS_SQL else DUELS_AFTER_SQL

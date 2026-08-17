@@ -32,7 +32,8 @@ public interface ProfileReads {
      * @param limit The maximum number of duels to return. The caller is expected to have
      *   already clamped this (see `duelLimitOrNull`); this port honours whatever value it is
      *   given.
+     * @param after A position in the list to resume after. `null` reads the newest page.
      * @return The player's duels ordered by finish time, newest first, capped at [limit].
      */
-    public suspend fun recentDuelsOf(playerId: PlayerId, limit: Int): List<DuelSummaryResponse>
+    public suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor? = null): List<DuelSummaryResponse>
 }
