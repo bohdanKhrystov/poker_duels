@@ -85,6 +85,15 @@ class SignUpSecrecyTest {
             "PasswordPolicy.kt" to File(repositoryRoot, "$mainKotlin/auth/PasswordPolicy.kt"),
         )
 
+        // The list above is itself the sweep's coverage: a name quietly dropped from it would
+        // otherwise still pass, having checked one file fewer and told no one. Naming all four
+        // here first, before any of them is opened, is what turns that into a failure.
+        assertEquals(
+            listOf("AuthRoutes.kt", "SignUpFields.kt", "AuthDtos.kt", "PasswordPolicy.kt"),
+            signUpFiles.map { it.first },
+            "expected to sweep exactly 4 files, got ${signUpFiles.map { it.first }}",
+        )
+
         // A wrong repository root resolves all four of these to files that simply are not there,
         // and an empty set of forbidden tokens would then pass vacuously. Naming each file here,
         // before a single byte of its content is judged, is what makes that failure loud instead
