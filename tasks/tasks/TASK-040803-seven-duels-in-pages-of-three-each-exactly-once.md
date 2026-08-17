@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040803
 title: Seven duels in pages of three, each exactly once
 type: task
-status: ready
+status: done
 parent: STORY-0408
 module: poker-server
 estimate: S
