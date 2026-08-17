@@ -31,9 +31,12 @@ class HttpEndpointDocumentationTest {
 
     // Scoping to the section that documents each response keeps the checks below from matching a
     // field name that happens to recur in an unrelated table.
-    // Note: The insertion point for signUpSection before profileSection is critical —
-    // sectionBetween() uses the *following* heading as the end marker, so if the section moves,
-    // the profileSection sectionBetween() silently starts reading from a different place.
+    // Each section is bounded by the heading that *follows* it, so moving `### Sign up` away from
+    // its position before `### Profile endpoint` breaks this pairing. That failure is **loud**, not
+    // silent: `sectionBetween` requires its end marker and throws when it is missing — measured by
+    // moving the section to the end of the document, which failed all fourteen tests here with
+    // `IllegalArgumentException` rather than quietly reading a different span. So this is a comment
+    // about why the ordering is coupled to the document, not a warning about undetectable drift.
     private val signUpSection: String =
         sectionBetween("### Sign up", "### Profile endpoint")
     private val profileSection: String =
