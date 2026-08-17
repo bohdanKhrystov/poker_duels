@@ -1116,8 +1116,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040307](tasks/TASK-040307-two-values-that-print-a-redaction.md) Two values that print a redaction, in every form a string can take | S | **done** |
 | | [TASK-040308](tasks/TASK-040308-hash-a-secret-prove-a-secret-compare-in-constant-time.md) Hash a secret, prove a secret, and compare the tags in constant time | S | **done** |
 | | [TASK-040309](tasks/TASK-040309-four-verifications-at-a-time-and-no-more.md) Four verifications at a time, and no more | S | **done** |
-| | [TASK-040310](tasks/TASK-040310-the-login-handle-is-folded-before-it-is-stored.md) The login handle is folded before it is stored, and the fold is ASCII | S | ready |
-| | [TASK-040311](tasks/TASK-040311-the-credentials-port-answers-a-player-id-or-nothing.md) The `Credentials` port answers a `PlayerId` or nothing | S | backlog |
+| | [TASK-040310](tasks/TASK-040310-the-login-handle-is-folded-before-it-is-stored.md) The login handle is folded before it is stored, and the fold is ASCII | S | **done** |
+| | [TASK-040311](tasks/TASK-040311-the-credentials-port-answers-a-player-id-or-nothing.md) The `Credentials` port answers a `PlayerId` or nothing | S | ready |
 | | [TASK-040312](tasks/TASK-040312-postgres-credentials-writes-one-row-and-reads-no-hash-back.md) `PostgresCredentials` writes one row and reads no hash back | S | backlog |
 | | [TASK-040313](tasks/TASK-040313-an-unknown-identifier-costs-what-a-wrong-secret-costs.md) An unknown identifier costs exactly what a wrong secret costs | S | backlog |
 | | [TASK-040314](tasks/TASK-040314-nothing-public-returns-a-hash.md) Nothing public returns a hash, and the sweep proves it can tell | S | backlog |
