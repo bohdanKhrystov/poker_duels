@@ -13,7 +13,13 @@
 - **Constrains:** `STORY-0406` (the revoke path and the schema property test), `STORY-0412` (the
   account screens), `STORY-0414` (the end-to-end proof)
 - **Adds one migration**, taking the next free `V<n>` — `V5` unless something else has landed one
-- **Raises:** `DEC-045`, the product owner's — see *What this does not settle*
+- **Raises:** `DEC-045`, the product owner's — see *What this does not settle*. **Since answered by
+  [`ADR-0050`](ADR-0050-revoking-the-device-signs-the-player-out-everywhere-but-here.md), which
+  amends this ADR on one point:** §6's *"revocation writes nothing to `auth_session`"* no longer
+  holds — the endpoint gains one `DELETE FROM auth_session WHERE player_id = ? AND token_hash <> ?`
+  in the same transaction, so `auth_session` leaves §2's "writes nothing to" list. `player`,
+  `credential`, `duel` and `duel_result` stay on it, and the byte-identical-`player` argument is
+  unaffected
 - **No wire change.** `PROTOCOL_VERSION` does not move; revocation is plain HTTP
 
 ## Context

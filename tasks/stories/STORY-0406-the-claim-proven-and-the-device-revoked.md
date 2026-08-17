@@ -37,9 +37,13 @@ two partial unique indexes, revocation is one `UPDATE ... SET revoked_at` plus a
 `DELETE /api/me/device`. Its §4 names the orphan-profile defect the rewritten `resolve` will ship if
 the mint is not rolled back whole, and §8 lists everything that moves with the migration.
 
-`DEC-045` (does revoking also end every other session?) came out of the same ADR and is the product
-owner's. **It does not block this story** — `ADR-0049` §6 ships revocation touching no session, and
-the other answer is one additional `DELETE` on the same endpoint.
+`DEC-045` (does revoking also end every other session?) came out of the same ADR and is **answered**
+by [`ADR-0050`](../../docs/adr/ADR-0050-revoking-the-device-signs-the-player-out-everywhere-but-here.md):
+one button, and revoking ends every other session. The answer arrived before this story was split,
+so the `DELETE FROM auth_session WHERE player_id = ? AND token_hash <> ?` ships **with** the endpoint
+in the same transaction rather than as a later PR, and the two-token criterion is this story's.
+`ADR-0049` §6's "revocation writes nothing to `auth_session`" is superseded on that one point; its
+byte-identical-`player` criterion is not.
 
 ## Design notes
 
