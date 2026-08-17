@@ -132,7 +132,7 @@ recorded rather than quietly absorbed:
 | [STORY-0405](../stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) | Sign-in, the session, and what the socket presents | 0404, 0213, 0214 | backlog — `ADR-0055` adds sign-up's budget here, on the same `AttemptBudget` as `ADR-0027` §6's sign-in budget |
 | [STORY-0406](../stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) | The claim proven, and the device binding revoked | 0405 | backlog — `DEC-041` answered by `ADR-0049`, not yet split |
 | [STORY-0407](../stories/STORY-0407-recovery-from-a-device-never-seen.md) | Recovery — signing in from a device that has never been seen | 0406 | backlog |
-| [STORY-0408](../stories/STORY-0408-duel-history-paged-over-the-whole-record.md) | Duel history, paged over the whole record | 0402 | backlog |
+| [STORY-0408](../stories/STORY-0408-duel-history-paged-over-the-whole-record.md) | Duel history, paged over the whole record | 0402 | **ready**, split into 11 tickets — raised no decision |
 | [STORY-0409](../stories/STORY-0409-history-filters-and-search.md) | History filters and search | 0408 | backlog |
 | [STORY-0410](../stories/STORY-0410-the-display-name-product-rules.md) | The display-name product rules — screened when set, and takeable away | 0401 | backlog — `DEC-042` answered by `ADR-0051`, not yet split |
 | [STORY-0411](../stories/STORY-0411-the-name-in-the-client.md) | The name in the client — shown, and settable | 0402 | backlog |
@@ -189,6 +189,13 @@ most useful thing that changed about scheduling this epic. `STORY-0401` merged i
 2026-08-17; `STORY-0402` and `STORY-0403` both became startable when it did, and `STORY-0402` was
 split first because `STORY-0408`, `0409`, `0411` and `0413` all queue behind it while `0403` has
 only the credential chain behind it. `TASK-040201` is the one startable ticket.
+
+**`STORY-0408` was split out of order on 2026-08-18, and the reason is recorded rather than
+inferred.** `STORY-0405` — the next story on the critical path — depends on `STORY-0213` and
+`STORY-0214` in `EPIC-02`, which are not this epic's to work, and `0406`/`0407` sit behind it.
+`STORY-0408` depends only on `STORY-0402`, which is done, so the name-and-history chain is where
+work exists that nothing outside this epic gates. It needs no session, no sign-in and no
+`auth_session`, and its eleven tickets assume none.
 
 Two answers add work inside stories already listed, rather than new stories:
 [`ADR-0037`](../../docs/adr/ADR-0037-the-device-is-a-credential-until-revoked.md) puts a revoke
