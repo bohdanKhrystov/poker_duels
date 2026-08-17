@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040309
 title: Four verifications at a time, and no more
 type: task
-status: backlog
+status: ready
 parent: STORY-0403
 module: poker-server
 estimate: S
