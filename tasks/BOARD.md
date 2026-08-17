@@ -518,7 +518,6 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-045 | **The product owner's** — does revoking a device also end every other session that player holds ("sign out everywhere"), or are the two separate affordances? `ADR-0049` §6 takes the reversible default (revocation writes nothing to `auth_session`, so a token on the revoked device stays valid up to thirty days) and records that the schema is indifferent — the other answer is one `DELETE` on the same endpoint. What it turns on is what a player is promised when they press the button | [`STORY-0412`](stories/STORY-0412-the-account-screens.md) | before STORY-0412 designs the screen |
 | DEC-042 | **The architect's** — by what path does an operator force-rename a profile, and where do the blocklist and the retired-name set live? `ADR-0038` fixes that the path exists and refuses to grow a role system; `ADR-0029` §4's trigger refuses `name → NULL` for everybody today | [`STORY-0410`](stories/STORY-0410-the-display-name-product-rules.md) | before STORY-0410 |
 | DEC-044 | **The architect's** — the day the Argon2 cost is raised, what happens to rows written under the old parameters? `ADR-0027` §1's *"rehash on next successful verify"* needs a parser that accepts other parameters; `STORY-0403`'s parser refuses everything but ours, because one that accepts `m=8` is a downgrade attack. `TASK-040306` takes the conservative side; the answer decides what the raise actually costs | [`TASK-040306`](tasks/TASK-040306-the-parser-refuses-every-string-we-did-not-write.md) | before the Argon2 parameters are raised |
 
@@ -1142,7 +1141,10 @@ Two decisions were raised while splitting, both the architect's, both blocking e
 [`ADR-0049`](../docs/adr/ADR-0049-a-device-binding-is-a-row-and-revoking-is-final.md) — the edge
 leaves `player` for its own `device_binding` table, so `ADR-0030` §2 gains no fourth writer because
 the column it protected no longer exists, and revoking is final in the database rather than by
-convention. It unblocks `STORY-0406` and raised `DEC-045`, the product owner's, above.
+convention. It unblocks `STORY-0406` and raised `DEC-045`, since answered by
+[`ADR-0050`](../docs/adr/ADR-0050-revoking-the-device-signs-the-player-out-everywhere-but-here.md):
+**one button** — revoking ends every other session and keeps the revoking one, so `STORY-0406`
+ships the `auth_session` `DELETE` with the endpoint rather than as a later PR.
 `DEC-042` (the operator's force-rename path, which `ADR-0038` leaves unstated) is still open.
 Neither blocks the epic, and neither is the human's — every product question this epic had was
 answered on 2026-08-15.
