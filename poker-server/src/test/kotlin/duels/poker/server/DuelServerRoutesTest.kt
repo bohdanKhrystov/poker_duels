@@ -14,7 +14,10 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
@@ -121,6 +124,40 @@ class DuelServerRoutesTest {
             val recentDuels = protocolJson.decodeFromString<RecentDuelsResponse>(duelsResponse.bodyAsText())
             assertNotNull(recentDuels)
             assertEquals(0, recentDuels.duels.size)
+        }
+    }
+
+    @Test
+    fun theSignUpRouteIsInstalled(): Unit = testApplication {
+        application { duelServer(serverComponents(config, dataSource)) }
+        val response = client.post("/api/auth/sign-up") {
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"handle":"alice","password":"password1"}""")
+        }
+        // A route that was never installed answers 404, which makes this falsifiable
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+    }
+
+    @Test
+    fun aHandshakeThenASignUpAnswersCreated(): Unit = testApplication {
+        application { duelServer(serverComponents(config, dataSource)) }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            // Complete the handshake to mint the profile for device "wired"
+            val session = client.webSocketSession("/ws")
+            session.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = "wired"))))
+            val frame = session.incoming.receive() as Frame.Text
+            val welcome = protocolJson.decodeFromString<ServerMessage>(frame.readText())
+            assertEquals("wired", (welcome as ServerMessage.Welcome).deviceId)
+
+            // Now sign up with that device id, a fresh handle and an 8-code-point password
+            val signUpResponse = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "wired")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"password1"}""")
+            }
+            assertEquals(HttpStatusCode.Created, signUpResponse.status)
         }
     }
 }
