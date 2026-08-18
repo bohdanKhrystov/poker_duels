@@ -518,7 +518,6 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-050 | **The architect's** — by what mechanism is a cursor bound to the filter that produced it? A keyset cursor is a position in *a particular ordering of a particular set*, so a cursor issued under one filter and replayed under another names a row that may not be in the new set. `STORY-0409` wants such a cursor **refused rather than silently reinterpreted**, and nothing in the opaque `DuelCursor` carries the filter it was issued under. Blocks no ticket: all eleven land without it, and `TASK-040909` ships the weaker contract out loud — an `after` beside a filter is accepted and read as a position in the same `(finishedAt, duelId)` order | [`STORY-0409`](stories/STORY-0409-history-filters-and-search.md) | before the refusal is promised to a client |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
