@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041117
 title: No name on the screen is built from a player id, and a takedown is invisible
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: S

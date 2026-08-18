@@ -1206,8 +1206,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041113](tasks/TASK-041113-the-lobby-shows-the-name-surface-and-the-table-does-not.md) The lobby shows the name surface, and the duel table never does | XS | **done** |
 | | [TASK-041114](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) The word for a player who has no name | XS | **done** |
 | | [TASK-041115](tasks/TASK-041115-the-strip-prints-the-players-own-name.md) The strip prints the player's own name, or what stands for none | XS | **done** |
-| | [TASK-041116](tasks/TASK-041116-a-duel-line-names-the-opponent.md) A duel line names the opponent it was played against | XS | ready |
-| | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | backlog |
+| | [TASK-041116](tasks/TASK-041116-a-duel-line-names-the-opponent.md) A duel line names the opponent it was played against | XS | **done** |
+| | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | ready |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
