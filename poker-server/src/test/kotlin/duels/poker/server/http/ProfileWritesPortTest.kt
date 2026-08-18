@@ -1,6 +1,6 @@
 package duels.poker.server.http
 
-import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.profileResponse
 import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -106,7 +106,7 @@ class ProfileWritesPortTest {
 
     @Test
     fun settingANameReturnsTheProfileItProduced() {
-        val testProfile = ProfileResponse(
+        val testProfile = profileResponse(
             playerId = "1",
             coinBalance = 42,
             displayName = "TestName",
