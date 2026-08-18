@@ -27,6 +27,27 @@ public data class DuelFilter(val outcome: DuelOutcomeLabel?, val opponent: Strin
 }
 
 /**
+ * Parses the raw `outcome` and `opponent` query parameters into a `DuelFilter`, or into a single
+ * refusal — so the route has one thing to check instead of two.
+ *
+ * A `null` argument means the parameter was not in the query string and that axis does not narrow
+ * the read; a `null` return means a parameter was present and unparseable. A present-but-unusable
+ * parameter on either axis causes the entire filter to be refused rather than being quietly
+ * dropped. Both arguments come straight from `request.queryParameters[...]` with nothing done to
+ * them first.
+ *
+ * @param outcome the raw `outcome` parameter, or `null` if absent from the query string
+ * @param opponent the raw `opponent` parameter, or `null` if absent from the query string
+ * @return a `DuelFilter` when both parameters parse (or are absent), or `null` if either is
+ *   present and unparseable
+ */
+public fun duelFilterOrNull(outcome: String?, opponent: String?): DuelFilter? {
+    val parsedOutcome = outcome?.let { duelOutcomeOrNull(it) ?: return null }
+    val parsedOpponent = opponent?.let { opponentSearchOrNull(it) ?: return null }
+    return DuelFilter(parsedOutcome, parsedOpponent)
+}
+
+/**
  * Parses the `outcome` query parameter into the outcome label it names.
  *
  * Returns `null` for anything the server would not accept: a string that is not one of the

@@ -82,4 +82,45 @@ class DuelFilterTest {
         val thirtyOneAstralOneLetter = "𝄞".repeat(31) + "x"
         assertEquals(thirtyOneAstralOneLetter, opponentSearchOrNull(thirtyOneAstralOneLetter))
     }
+
+    @Test
+    fun bothParametersAbsentIsNoFilter() {
+        assertEquals(DuelFilter.NONE, duelFilterOrNull(null, null))
+    }
+
+    @Test
+    fun bothParametersPresentNarrowBothAxes() {
+        val result = duelFilterOrNull("WON", "Halvard")
+        assertEquals(DuelOutcomeLabel.WON, result?.outcome)
+        assertEquals("Halvard", result?.opponent)
+    }
+
+    @Test
+    fun oneAxisAloneLeavesTheOtherNull() {
+        val outcomeOnly = duelFilterOrNull("WON", null)
+        assertEquals(DuelOutcomeLabel.WON, outcomeOnly?.outcome)
+        assertNull(outcomeOnly?.opponent)
+
+        val opponentOnly = duelFilterOrNull(null, "Halvard")
+        assertNull(opponentOnly?.outcome)
+        assertEquals("Halvard", opponentOnly?.opponent)
+    }
+
+    @Test
+    fun anUnusableOutcomeRefusesTheWholeFilter() {
+        // "won" (lower-case) is refused even though "Halvard" is perfectly good
+        val result = duelFilterOrNull("won", "Halvard")
+        assertNull(result)
+    }
+
+    @Test
+    fun anUnusableOpponentRefusesTheWholeFilter() {
+        // Empty string is present and unparseable, not absent
+        val emptyResult = duelFilterOrNull("WON", "")
+        assertNull(emptyResult)
+
+        // Whitespace-only is present and unparseable
+        val blankResult = duelFilterOrNull(null, " ")
+        assertNull(blankResult)
+    }
 }
