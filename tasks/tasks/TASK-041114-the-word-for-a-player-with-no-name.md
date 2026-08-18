@@ -3,14 +3,14 @@ schema: 2
 id: TASK-041114
 title: The word for a player who has no name
 type: task
-status: blocked
+status: backlog
 parent: STORY-0411
 module: web-client
 estimate: XS
 tier: haiku
 review: standard
 files_touched: 2
-labels: [client, profile, copy, identity, blocked]
+labels: [client, profile, copy, identity]
 depends_on: [TASK-041113]
 verify:
   - cd web-client && npm ci
@@ -20,22 +20,21 @@ verify:
   - cd web-client && npm run check
 ---
 
-## Blocked on `DEC-051` — the product owner's
+## `DEC-051` is answered — the string is `No name`
 
-**What a player sees where a display name would be, when there is none, is not settled and this
-ticket may not guess it.** `ADR-0029` §6 hands the treatment to the client and forbids only a
-server-minted placeholder. `ADR-0052` §5 then makes it load-bearing: every duel line belonging to a
-player whose name was **removed** renders this treatment, on strangers' screens, *unmarked,
-unexplained*, and byte-identical to a player who never set one. Neither ADR picks a word, `EPIC-06`
-has authored no screen for it, and the same treatment is inherited by `STORY-0413`'s history screen
-and `EPIC-05`'s leaderboard rows — so a word chosen inside a ticket is a word three later surfaces
-adopt without anybody deciding it.
+[`ADR-0058`](../../docs/adr/ADR-0058-where-a-name-would-be-the-client-prints-no-name.md) §1 fixes
+it: where a display name would be printed and the player holds none, the client prints **`No
+name`** — sentence case, one `U+0020` between the words, no full stop, no brackets, no dash. Type
+that literal out; do not compose it, abbreviate it or reword it.
 
-**When the answering ADR merges**, this ticket takes its string verbatim, and the first acceptance
-criterion below is completed with the ADR's number and section. If the answer is not expressible as
-a single string — a mark, a piece of styling, or two different treatments for the two surfaces — say
-so on the ticket and re-split it; `TASK-041115` and `TASK-041116` are written against a function
-call, not against a shape.
+§2 fixes that it is **one treatment on every surface, for every viewer** — a player's own strip
+prints `No name`, not *You* — which is why there is one function and no second-person variant. §3
+fixes that it says nothing about why: a player who never set a name and one whose name was removed
+produce the same two words, because `ADR-0052` §5's invisibility survives only if two surfaces
+cannot decide separately.
+
+The answer is a **single string**, which is the shape this ticket was written for, so the split
+stands: no re-split, and `TASK-041115` and `TASK-041116` are unchanged.
 
 ## Goal
 
@@ -49,8 +48,8 @@ that every surface calls.
 | `web-client/src/profile/name-text.ts` | modify — one export |
 | `web-client/src/profile/name-text.test.ts` | modify — two tests added |
 
-Read, not edited: the ADR answering `DEC-051`, and
-`docs/adr/ADR-0052-a-takedown-is-told-to-the-player-it-happened-to.md` §5.
+Read, not edited: `docs/adr/ADR-0058-where-a-name-would-be-the-client-prints-no-name.md` §§1–3,
+and `docs/adr/ADR-0052-a-takedown-is-told-to-the-player-it-happened-to.md` §5.
 
 ## Scope
 
@@ -89,8 +88,8 @@ Two tests added to 410, so the suite reports **412**.
 
 ## Acceptance criteria
 
-- [ ] The treatment string equals the one fixed by the ADR answering `DEC-051` — *fill in its number
-      and section here when it merges*
+- [ ] The treatment string is `No name`, exactly as `ADR-0058` §1 fixes it — sentence case, one
+      space, no full stop — and the module's KDoc quotes it with `ADR-0058` beside it
 - [ ] `the name surface's words > says the same thing about a player with no name wherever it is
       asked` passes, with two names and the null case
 - [ ] `the name surface's words > says nothing about why a name is missing` passes

@@ -518,7 +518,6 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-051 | **The product owner's** — what the client prints where a display name would be, for a player who has none: their own profile strip, and an opponent on a duel line. `ADR-0029` §6 hands the treatment to the client; `ADR-0052` §5 makes it load-bearing — a removed name renders as this same treatment on strangers' screens — and neither picks a word | [`TASK-041114`](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) | before TASK-041114 |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1205,7 +1204,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041111](tasks/TASK-041111-each-refusal-says-its-own-sentence.md) Each refusal says its own sentence, and only two leave the form | S | backlog |
 | | [TASK-041112](tasks/TASK-041112-the-write-reaches-the-tree-the-read-already-does.md) The write reaches the tree the same way the read already does | XS | backlog |
 | | [TASK-041113](tasks/TASK-041113-the-lobby-shows-the-name-surface-and-the-table-does-not.md) The lobby shows the name surface, and the duel table never does | XS | backlog |
-| | [TASK-041114](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) The word for a player who has no name | XS | **blocked** — DEC-051 |
+| | [TASK-041114](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) The word for a player who has no name | XS | backlog |
 | | [TASK-041115](tasks/TASK-041115-the-strip-prints-the-players-own-name.md) The strip prints the player's own name, or what stands for none | XS | backlog |
 | | [TASK-041116](tasks/TASK-041116-a-duel-line-names-the-opponent.md) A duel line names the opponent it was played against | XS | backlog |
 | | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | backlog |
