@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041005
 title: The uniqueness fixtures register every name, and the fold refuses before the index does
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
