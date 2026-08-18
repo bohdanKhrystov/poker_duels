@@ -1191,8 +1191,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | dropped |
 | | [TASK-041024](tasks/TASK-041024-the-kotlin-half-of-fail-closed-is-isolated.md) The Kotlin half of fail-closed is isolated | XS | **done** |
 | **[STORY-0411](stories/STORY-0411-the-name-in-the-client.md)** The name in the client — shown, and settable | | | **ready** |
-| | [TASK-041101](tasks/TASK-041101-one-fixture-builds-every-profile-a-test-uses.md) One fixture builds every profile and duel line a test uses | S | ready |
-| | [TASK-041102](tasks/TASK-041102-the-reads-tests-build-through-the-fixture.md) The strip's read tests build through the fixture | S | backlog |
+| | [TASK-041101](tasks/TASK-041101-one-fixture-builds-every-profile-a-test-uses.md) One fixture builds every profile and duel line a test uses | S | **done** |
+| | [TASK-041102](tasks/TASK-041102-the-reads-tests-build-through-the-fixture.md) The strip's read tests build through the fixture | S | ready |
 | | [TASK-041103](tasks/TASK-041103-the-components-profiles-build-through-the-fixture.md) The component tests build their profiles through the fixture | XS | backlog |
 | | [TASK-041104](tasks/TASK-041104-the-profile-read-carries-the-name-and-the-removal.md) The profile read carries the name, and whether one was removed | S | backlog |
 | | [TASK-041105](tasks/TASK-041105-a-duel-line-carries-the-opponents-name-and-no-id.md) A duel line carries the opponent's name, and still not their id | S | backlog |
