@@ -1,6 +1,7 @@
 package duels.poker.server.http
 
 import duels.poker.server.protocol.http.DuelOutcomeLabel
+import java.text.Normalizer
 
 /**
  * A filter for history reads specifying which duels a read wants.
@@ -42,3 +43,42 @@ public data class DuelFilter(val outcome: DuelOutcomeLabel?, val opponent: Strin
  */
 public fun duelOutcomeOrNull(raw: String): DuelOutcomeLabel? =
     DuelOutcomeLabel.entries.firstOrNull { it.name == raw }
+
+private const val MAX_OPPONENT_SEARCH_CODE_POINTS = 32
+
+/**
+ * Parses the `opponent` query parameter into a usable search term, or returns `null` when no
+ * search term can be extracted from [raw].
+ *
+ * NFC is applied because the column is NFC (V3__player_display_name.sql enforces
+ * `CHECK (display_name IS NFC NORMALIZED)` and `canonicalDisplayNameOrNull` normalises before
+ * storing), so a term typed on a keyboard that produces NFD would match a name it is character-
+ * for-character equal to — and silently return nothing without normalisation. This is why `ADR-0048`
+ * §1 normalises before hashing: compare like with like.
+ *
+ * Blank input — the empty string or a run of whitespace — is refused, not treated as an absent
+ * parameter. The caller sent `opponent=` or `opponent=   `, which means the caller meant to search
+ * for something. Accepting blank would turn that intent into a silent first page, the one behaviour
+ * this endpoint exists to refuse.
+ *
+ * The returned string is the NFC form and is otherwise unchanged — never trimmed. A stored name may
+ * hold an interior `U+0020` (ADR-0029 §3 permits one, refusing only doubled spaces), so ` Hal` is a
+ * real substring of `Big Hal` and trimming would make it unfindable. This is the one place this
+ * parser deliberately does less than `canonicalDisplayNameOrNull`.
+ *
+ * The limit is 32 code points because a name is at most 32 code points (the `player_display_name_length`
+ * column has `CHECK (char_length(display_name) BETWEEN 1 AND 32)`, and PostgreSQL's `char_length`
+ * counts characters), so a longer term can match nothing and is refused rather than sent to the database.
+ * Counted with `codePointCount`, never `String.length` — PasswordPolicy.kt states the reason: astral
+ * characters are 2 UTF-16 units but 1 code point, and a 32-character limit must count code points.
+ *
+ * @param raw the raw `opponent` parameter, typically from a query string
+ * @return the NFC-normalised search term, when its code-point length is between 1 and 32 (inclusive);
+ *   `null` otherwise
+ */
+public fun opponentSearchOrNull(raw: String): String? {
+    val normalised = Normalizer.normalize(raw, Normalizer.Form.NFC)
+    if (normalised.isBlank()) return null
+    if (normalised.codePointCount(0, normalised.length) > MAX_OPPONENT_SEARCH_CODE_POINTS) return null
+    return normalised
+}
