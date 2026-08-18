@@ -12,7 +12,10 @@ class ProfileDtosTest {
     fun aProfileEncodesItsPlayerIdAndBalance() {
         val profile = profileResponse("p-1", 3)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
-        assertEquals("""{"playerId":"p-1","coinBalance":3,"displayName":null}""", encoded)
+        assertEquals(
+            """{"playerId":"p-1","coinBalance":3,"displayName":null,"displayNameRemoved":false}""",
+            encoded,
+        )
     }
 
     @Test
@@ -131,6 +134,29 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 0, displayName = null)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertTrue(encoded.contains(""""displayName":null"""))
+    }
+
+    @Test
+    fun aRemovedNameIsCarriedOnTheProfile() {
+        val profile = profileResponse("p-1", 0, displayName = null, displayNameRemoved = true)
+        val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
+        assertEquals(
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":true}""",
+            encoded,
+        )
+
+        val decoded = protocolJson.decodeFromString(ProfileResponse.serializer(), encoded)
+        assertEquals(profile, decoded)
+    }
+
+    @Test
+    fun aProfileWithoutTheFieldIsRefused() {
+        assertThrows<IllegalArgumentException> {
+            protocolJson.decodeFromString(
+                ProfileResponse.serializer(),
+                """{"playerId":"p-1","coinBalance":0,"displayName":null}""",
+            )
+        }
     }
 
     @Test

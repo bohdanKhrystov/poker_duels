@@ -13,7 +13,8 @@ internal fun profileResponse(
     playerId: String,
     coinBalance: Int,
     displayName: String? = null,
-): ProfileResponse = ProfileResponse(playerId, coinBalance, displayName)
+    displayNameRemoved: Boolean = false,
+): ProfileResponse = ProfileResponse(playerId, coinBalance, displayName, displayNameRemoved)
 
 internal fun duelSummaryResponse(
     duelId: String,
