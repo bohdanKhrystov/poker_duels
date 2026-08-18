@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041007
 title: The display-name schema test registers what must land and keeps its refusals raw
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: S

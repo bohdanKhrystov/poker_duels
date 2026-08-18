@@ -56,6 +56,22 @@ would pass a happy-path test and hand back exactly what `ADR-0029` §4 was insta
 
 ## Out of scope
 
+**A gap found while converting the permanence fixtures (`TASK-041006`), recorded here because this
+is the ticket that owns the trigger.** `ADR-0051` §2's orphaned-registry-row defect has **two**
+paths, and only one is currently guarded:
+
+- the `UPDATE` matching zero rows — covered by `TASK-041003`'s `aRefusedSecondNameLeavesNoRegistryRow`;
+- **the permanence trigger raising `23001` *after* a successful registry insert** — covered by
+  nothing. A rename from a held name to a fresh one registers the new name, then the trigger refuses
+  the `player` write. If that does not roll back, the fresh name is `TAKEN` by nobody, forever, and
+  every assertion in `DisplayNamePermanenceTest` still passes: they check the SQLSTATE and the stored
+  name, never the registry.
+
+`TASK-041006` deliberately writes those three refused cases through a raw helper that does not
+register, so it does not create the state — which is correct for that ticket and also means it does
+not test it. If this ticket's work does not close the second path, it needs its own ticket.
+
+
 - `retire_display_name` — `TASK-041012`.
 - The ordering of the two writes inside the function. That is covered by the function's own tests;
   what is covered here is that the trigger is what makes the order matter.
