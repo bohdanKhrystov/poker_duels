@@ -327,6 +327,34 @@ class HttpEndpointDocumentationTest {
     }
 
     @Test
+    fun theRecentDuelsSectionDocumentsTheFilters() {
+        assertTrue(
+            recentDuelsSection.contains("outcome"),
+            "The Recent duels section must document the 'outcome' parameter",
+        )
+        assertTrue(
+            recentDuelsSection.contains("opponent"),
+            "The Recent duels section must document the 'opponent' parameter",
+        )
+        assertTrue(
+            recentDuelsSection.contains("WON"),
+            "The Recent duels section must document that 'outcome' accepts 'WON'",
+        )
+        assertTrue(
+            recentDuelsSection.contains("substring"),
+            "The Recent duels section must document that 'opponent' is a substring match",
+        )
+        assertTrue(
+            recentDuelsSection.contains("literally"),
+            "The Recent duels section must document that 'opponent' wildcards match literally",
+        )
+        assertTrue(
+            recentDuelsSection.contains("400"),
+            "The Recent duels section must document that invalid filters return 400",
+        )
+    }
+
+    @Test
     fun theDocumentMarksTheNextCursorNullable() {
         val nextCursorProperty = RecentDuelsResponse::class.memberProperties.firstOrNull { it.name == "nextCursor" }
             ?: error("RecentDuelsResponse must have a 'nextCursor' property")

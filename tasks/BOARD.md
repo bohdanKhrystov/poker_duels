@@ -1149,7 +1149,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040809](tasks/TASK-040809-one-row-more-than-the-page.md) One row more than the page, and the last page says there is no next | S | **done** |
 | | [TASK-040810](tasks/TASK-040810-over-http-against-the-database-every-duel-once.md) Over HTTP, against the database — every duel exactly once, and one player's cursor | S | **done** |
 | | [TASK-040811](tasks/TASK-040811-the-document-contracts-the-cursor.md) The document contracts the cursor and the paging rule, and a test agrees with the DTO | S | **done** |
-| [STORY-0409](stories/STORY-0409-history-filters-and-search.md) History filters and search | | | ready |
+| **[STORY-0409](stories/STORY-0409-history-filters-and-search.md)** History filters and search | | | **done** |
 | | [TASK-040901](tasks/TASK-040901-a-filter-is-two-axes-and-an-outcome-is-one-of-three-names.md) A filter is two axes, and an outcome is one of exactly three names | S | **done** |
 | | [TASK-040902](tasks/TASK-040902-the-search-term-the-server-will-accept.md) The search term the server will accept, counted in code points | S | **done** |
 | | [TASK-040903](tasks/TASK-040903-the-read-takes-a-filter-and-an-outcome-is-a-sign.md) The read takes a filter, and an outcome is the sign of the stored delta | S | **done** |
@@ -1160,7 +1160,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040908](tasks/TASK-040908-two-parameters-become-one-filter-or-one-refusal.md) Two query parameters become one filter, or one refusal | XS | **done** |
 | | [TASK-040909](tasks/TASK-040909-the-endpoint-reads-the-filter-and-refuses-what-it-refuses.md) The endpoint reads the filter, and refuses what the parsers refuse | S | **done** |
 | | [TASK-040910](tasks/TASK-040910-over-http-against-the-database-a-filtered-page.md) Over HTTP, against the database — a filtered page is exactly the filtered rows | S | **done** |
-| | [TASK-040911](tasks/TASK-040911-the-document-contracts-both-filters-and-what-each-refuses.md) The document contracts both filters, and what each of them refuses | S | ready |
+| | [TASK-040911](tasks/TASK-040911-the-document-contracts-both-filters-and-what-each-refuses.md) The document contracts both filters, and what each of them refuses | S | **done** |
 | [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | backlog |
 | [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
