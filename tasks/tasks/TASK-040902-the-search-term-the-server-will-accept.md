@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040902
 title: The search term the server will accept, counted in code points
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S
