@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041004
 title: Three fixtures register the name they hand a player
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: S
