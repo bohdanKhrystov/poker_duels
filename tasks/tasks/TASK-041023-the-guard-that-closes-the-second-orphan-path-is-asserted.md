@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041023
 title: The guard that closes the second orphan path is asserted, not merely read
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: XS
