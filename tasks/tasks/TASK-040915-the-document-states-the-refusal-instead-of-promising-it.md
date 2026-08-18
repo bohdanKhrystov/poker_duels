@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040915
 title: The document states the refusal instead of promising it
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: XS
