@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040810
 title: Over HTTP, against the database — every duel exactly once, and one player's cursor
 type: task
-status: ready
+status: done
 parent: STORY-0408
 module: poker-server
 estimate: S
