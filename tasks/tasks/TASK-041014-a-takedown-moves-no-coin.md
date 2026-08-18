@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041014
 title: A takedown moves no coin
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: XS
