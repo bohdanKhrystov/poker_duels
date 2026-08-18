@@ -2,6 +2,7 @@ package duels.poker.server.http
 
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.SignUpRequest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -43,6 +44,8 @@ class HttpEndpointDocumentationTest {
         sectionBetween("### Profile endpoint", "### Set display name")
     private val setNameSection: String =
         sectionBetween("### Set display name", "### Recent duels endpoint")
+    private val recentDuelsSection: String =
+        sectionBetween("### Recent duels endpoint", "Each duel summary in the array contains:")
     private val duelSummarySection: String =
         sectionBetween("Each duel summary in the array contains:", "## Protocol Errors")
 
@@ -283,5 +286,59 @@ class HttpEndpointDocumentationTest {
                 "The Sign up section must document status code '$statusCode'",
             )
         }
+    }
+
+    @Test
+    fun theRecentDuelsSectionNamesEveryFieldTheResponseHas() {
+        val reflectedProperties = RecentDuelsResponse::class.memberProperties.map { it.name }.toSet()
+        assertTrue(
+            reflectedProperties.isNotEmpty(),
+            "RecentDuelsResponse must expose at least one property to check",
+        )
+        // Assert the exact set to catch if a field is added to the DTO but not documented
+        assertTrue(
+            reflectedProperties == setOf("duels", "nextCursor"),
+            "RecentDuelsResponse must have exactly the fields 'duels' and 'nextCursor', but found: $reflectedProperties",
+        )
+
+        val documentedFields = documentedFieldNames(recentDuelsSection)
+        for (field in reflectedProperties) {
+            assertTrue(
+                field in documentedFields,
+                "Documented field '$field' must appear in the Recent duels section's response table",
+            )
+        }
+    }
+
+    @Test
+    fun theRecentDuelsSectionDocumentsTheCursor() {
+        assertTrue(
+            recentDuelsSection.contains("after"),
+            "The Recent duels section must document the 'after' parameter",
+        )
+        assertTrue(
+            recentDuelsSection.contains("opaque"),
+            "The Recent duels section must document that 'after' is opaque",
+        )
+        assertTrue(
+            recentDuelsSection.contains("400"),
+            "The Recent duels section must document that an invalid 'after' returns 400",
+        )
+    }
+
+    @Test
+    fun theDocumentMarksTheNextCursorNullable() {
+        val nextCursorProperty = RecentDuelsResponse::class.memberProperties.firstOrNull { it.name == "nextCursor" }
+            ?: error("RecentDuelsResponse must have a 'nextCursor' property")
+        assertTrue(
+            nextCursorProperty.returnType.isMarkedNullable,
+            "RecentDuelsResponse.nextCursor must be nullable (String or null), and the document must mark it as such",
+        )
+        val nextCursorRow = rowFor(recentDuelsSection, "nextCursor")
+            ?: error("Recent duels section must document the 'nextCursor' field")
+        assertTrue(
+            nextCursorRow.contains("null", ignoreCase = true),
+            "The nextCursor row must mention 'null' to indicate nullability: $nextCursorRow",
+        )
     }
 }
