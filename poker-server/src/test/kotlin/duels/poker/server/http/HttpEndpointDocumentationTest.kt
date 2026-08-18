@@ -206,6 +206,25 @@ class HttpEndpointDocumentationTest {
     }
 
     @Test
+    fun theProfileSectionDocumentsTheRemovedNameField() {
+        val profileFields = documentedFieldNames(profileSection)
+        assertTrue(
+            "displayNameRemoved" in profileFields,
+            "The profile section must document the 'displayNameRemoved' field",
+        )
+
+        val displayNameRemovedRow = rowFor(profileSection, "displayNameRemoved")
+            ?: error("Profile section must document the 'displayNameRemoved' field")
+        assertTrue(
+            displayNameRemovedRow.contains("boolean", ignoreCase = true),
+            "The displayNameRemoved row must mention 'boolean' to indicate the type: $displayNameRemovedRow",
+        )
+
+        val displayNameRemovedProperty = ProfileResponse::class.memberProperties.firstOrNull { it.name == "displayNameRemoved" }
+            ?: error("ProfileResponse must have a 'displayNameRemoved' property")
+    }
+
+    @Test
     fun theDocumentMarksTheOpponentDisplayNameNullable() {
         val opponentDisplayNameProperty = DuelSummaryResponse::class.memberProperties.firstOrNull { it.name == "opponentDisplayName" }
             ?: error("DuelSummaryResponse must have an 'opponentDisplayName' property")
