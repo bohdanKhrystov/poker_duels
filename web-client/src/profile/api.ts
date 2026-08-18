@@ -7,7 +7,11 @@ export interface ApiResponse {
 /** The part of `fetch` this module uses, injected so no test reaches the network. */
 export type ApiFetch = (
   path: string,
-  init: { readonly headers: Readonly<Record<string, string>> },
+  init: {
+    readonly headers: Readonly<Record<string, string>>;
+    readonly method?: string;
+    readonly body?: string;
+  },
 ) => Promise<ApiResponse>;
 
 /** What one read under `/api/me` came back with. */
