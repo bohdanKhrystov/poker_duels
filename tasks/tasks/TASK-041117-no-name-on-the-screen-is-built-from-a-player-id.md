@@ -74,7 +74,7 @@ produce a label.
 | `puts no player id on the screen, named opponent or nameless` | One read whose two rows carry `opponentPlayerId: "player-91"` with `opponentDisplayName: "Ada"`, and `opponentPlayerId: "player-92"` with `opponentDisplayName: null`. The scan finds neither id, finds `Ada`, and finds the nameless treatment. Fails against a component that falls back to the id when the name is `null` — the exact `Player-3F2A` shortcut `ADR-0029` §6 forbids — and against a scan that only reads text nodes, since the sanity assertions prove it is looking |
 | `renders a removed name and a name never set as the same pixels` | Two reads rendered separately: one profile whose `displayNameRemoved` is `true`, one whose is `false`, each with one nameless opponent line. The two `container.innerHTML` strings are **equal**. Fails against any badge, tooltip, class or word marking a takedown on a line, which `ADR-0052` §5 forbids — and it is a criterion rather than an omission because the wire cannot express the difference and no screen may invent it |
 
-Two tests added to 416, so the suite reports **418**.
+Two tests added to 417, so the suite reports **419**.
 
 ## Acceptance criteria
 

@@ -64,7 +64,7 @@ Read, not edited: `web-client/src/profile/name-text.ts` (`nameOrNone`),
 | `names a rival who has a name and stands in for one who does not, on two lines of one list` | One strip, two duel lines: `aDuelLine({ duelId: "d-1", opponentDisplayName: "Ada" })` and `aDuelLine({ duelId: "d-2", opponentDisplayName: null })`. The first list item contains `Ada`, the second contains `nameOrNone(null)`, and the first does not contain the treatment. Fails against a line that prints a constant, against one that drops the name when it is `null`, and against one that puts the same text on both lines |
 | `keeps the rest of the line exactly as it was` | The same two lines still carry their outcome word, their signed coin delta, their hand count with the right plural and their formatted time — asserted per line, as the merged test does. Fails against a name that replaced part of the line rather than joining it |
 
-Two tests added to 414, so the suite reports **416**.
+Two tests added to 415, so the suite reports **417**.
 
 ## Acceptance criteria
 

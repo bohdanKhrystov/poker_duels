@@ -84,7 +84,7 @@ export function nameOrNone(displayName: string | null): string;
 | `says the same thing about a player with no name wherever it is asked` | `nameOrNone("Ada")` is `"Ada"` and `nameOrNone("Grace")` is `"Grace"` — two names, so a passthrough cannot be a constant — and `nameOrNone(null)` equals the answering ADR's literal, typed out in the test. Fails against a function that returns the treatment for everybody, against one that returns the empty string for `null`, and against a reworded treatment |
 | `says nothing about why a name is missing` | `nameOrNone(null)` contains none of `removed`, `taken`, `banned`, `deleted`, `moderat` or `former`, in any case. Fails against a treatment that leaks the takedown onto a stranger's screen — the one thing `ADR-0052` §5 forbids by name, and the reason this string is a product decision rather than a coder's |
 
-Two tests added to 410, so the suite reports **412**.
+Two tests added to 411, so the suite reports **413**.
 
 ## Acceptance criteria
 
