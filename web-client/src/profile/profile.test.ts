@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { readProfile } from "./profile";
+import { aProfile, meBody } from "./profile-fixture";
 import type { ApiFetch, ApiResponse } from "./api";
 import { DEVICE_ID_STORAGE_KEY, writeDeviceId } from "../protocol/device-id";
 
@@ -105,7 +106,7 @@ describe("the profile read", () => {
     writeDeviceId(storage, "d-1");
     // Verify device id is stored under the correct key
     expect(storage.getItem(DEVICE_ID_STORAGE_KEY)).toBe("d-1");
-    const mock1 = answering(ok({ playerId: "p-1", coinBalance: 5 }));
+    const mock1 = answering(ok(meBody({ coinBalance: 5 })));
     const result1 = await readProfile({
       fetch: mock1.fetch,
       storage,
@@ -116,7 +117,7 @@ describe("the profile read", () => {
     expect(mock1.calls[0]?.headers["X-Device-Id"]).toBe("d-1");
     expect(result1).toEqual({
       kind: "profile",
-      profile: { playerId: "p-1", coinBalance: 5 },
+      profile: aProfile({ coinBalance: 5 }),
     });
 
     // Second call with device id "d-2" to ensure it's not hardcoded
@@ -124,7 +125,7 @@ describe("the profile read", () => {
     writeDeviceId(storage, "d-2");
     // Verify device id is stored under the correct key
     expect(storage.getItem(DEVICE_ID_STORAGE_KEY)).toBe("d-2");
-    const mock2 = answering(ok({ playerId: "p-2", coinBalance: 10 }));
+    const mock2 = answering(ok(meBody({ coinBalance: 10 })));
     const result2 = await readProfile({
       fetch: mock2.fetch,
       storage,
@@ -135,14 +136,14 @@ describe("the profile read", () => {
     expect(mock2.calls[0]?.headers["X-Device-Id"]).toBe("d-2");
     expect(result2).toEqual({
       kind: "profile",
-      profile: { playerId: "p-2", coinBalance: 10 },
+      profile: aProfile({ coinBalance: 10 }),
     });
   });
 
   it("takes the balance the server sent, sign and all", async () => {
     // First call with negative balance (-1)
     writeDeviceId(storage, "d-1");
-    const mock1 = answering(ok({ playerId: "p-1", coinBalance: -1 }));
+    const mock1 = answering(ok(meBody({ coinBalance: -1 })));
     const result1 = await readProfile({
       fetch: mock1.fetch,
       storage,
@@ -150,13 +151,13 @@ describe("the profile read", () => {
 
     expect(result1).toEqual({
       kind: "profile",
-      profile: { playerId: "p-1", coinBalance: -1 },
+      profile: aProfile({ coinBalance: -1 }),
     });
 
     // Second call with positive balance (7) to ensure it's not hardcoded
     storage = inMemoryStorage();
     writeDeviceId(storage, "d-1");
-    const mock2 = answering(ok({ playerId: "p-1", coinBalance: 7 }));
+    const mock2 = answering(ok(meBody({ coinBalance: 7 })));
     const result2 = await readProfile({
       fetch: mock2.fetch,
       storage,
@@ -164,13 +165,13 @@ describe("the profile read", () => {
 
     expect(result2).toEqual({
       kind: "profile",
-      profile: { playerId: "p-1", coinBalance: 7 },
+      profile: aProfile({ coinBalance: 7 }),
     });
   });
 
   it("answers no-profile from an empty browser and from a 401", async () => {
     // Case 1: empty browser (no device id in storage)
-    const mock1 = answering(ok({ playerId: "p-1", coinBalance: 5 }));
+    const mock1 = answering(ok(meBody({})));
     const result1 = await readProfile({
       fetch: mock1.fetch,
       storage,
@@ -204,7 +205,7 @@ describe("the profile read", () => {
 
     expect(result1).toEqual({ kind: "unavailable" });
 
-    // Case 2: playerId is not a string (it's a number)
+    // Case 2: playerId is not a string (it's a number) — stays literal to test wrong type
     storage = inMemoryStorage();
     writeDeviceId(storage, "d-1");
     const mock2 = answering(ok({ playerId: 1, coinBalance: 3 }));
@@ -215,7 +216,7 @@ describe("the profile read", () => {
 
     expect(result2).toEqual({ kind: "unavailable" });
 
-    // Case 3: coinBalance is not a number (it's a string)
+    // Case 3: coinBalance is not a number (it's a string) — stays literal to test wrong type
     storage = inMemoryStorage();
     writeDeviceId(storage, "d-1");
     const mock3 = answering(ok({ playerId: "p", coinBalance: "x" }));
