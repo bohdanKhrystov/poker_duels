@@ -15,44 +15,80 @@ import javax.sql.DataSource
 /**
  * Writes a player's display name to PostgreSQL.
  *
- * The write is the single `UPDATE` `ADR-0029` §5 specifies: the unique index and the permanence
- * trigger are the reservation, so this class runs no `SELECT` before it and takes no lock of its
- * own — one statement is the whole race protocol. `SQLSTATE` is read from what PostgreSQL returns,
+ * `ADR-0051` §2 spends `ADR-0029` §5's *"the write is one statement"*: setting a name is now two
+ * statements — a `name_registry` insert that spends the string, then the `player` `UPDATE` that
+ * hands it over — run in one transaction, and the rollback on every outcome but the happy one is
+ * load-bearing rather than tidy. Left out, a registry row survives a refused claim and permanently
+ * burns a string nobody holds (`ADR-0051` §2). `SQLSTATE` is read from what PostgreSQL returns,
  * never from an exception message, and translated here into one of [SetNameResult]'s three
  * answers; no `SQLException` escapes `duels.poker.server.db` for a refusal (`ADR-0011`).
  */
 public class PostgresProfileWrites(private val dataSource: DataSource) : ProfileWrites {
     override suspend fun setDisplayName(playerId: PlayerId, canonicalName: String): SetNameResult =
         withContext(Dispatchers.IO) {
-            try {
-                dataSource.connection.use { connection -> writeName(connection, playerId, canonicalName) }
-            } catch (failure: SQLException) {
-                // 23505 is unique_violation on player_display_name_unique: another player already
-                // holds this name under the case-insensitive fold. 23001 (the permanence trigger)
-                // cannot fire here — the WHERE clause only ever selects a row whose OLD.display_name
-                // is NULL, which is exactly the condition the trigger lets through.
-                if (failure.sqlState == UNIQUE_VIOLATION_SQLSTATE) SetNameResult.NameTaken else throw failure
-            }
+            dataSource.connection.use { connection -> writeName(connection, playerId, canonicalName) }
         }
 
+    // ADR-0051 §2: the registry insert always runs first, so a name already spent — by this
+    // player or by anyone else — is refused there before the player row is ever touched. Once
+    // PostgreSQL answers 23505 the transaction is aborted and any further statement on it fails
+    // with 25P02, so the rollback below must happen before the idempotent-retry read runs.
     private fun writeName(connection: Connection, playerId: PlayerId, canonicalName: String): SetNameResult {
-        // RETURNING makes the affected row part of the same statement, so the NameSet case needs
-        // no second round trip to build the profile it hands back.
+        connection.autoCommit = false
+        return try {
+            insertRegistryRow(connection, canonicalName)
+            claimNameForPlayer(connection, playerId, canonicalName)
+        } catch (failure: SQLException) {
+            connection.rollback()
+            if (failure.sqlState != UNIQUE_VIOLATION_SQLSTATE) throw failure
+            resultAfterRegistryConflict(connection, playerId, canonicalName)
+        } finally {
+            connection.autoCommit = true
+        }
+    }
+
+    private fun insertRegistryRow(connection: Connection, canonicalName: String) {
+        connection.prepareStatement(INSERT_NAME_REGISTRY_SQL).use { statement ->
+            statement.setString(1, canonicalName)
+            statement.executeUpdate()
+        }
+    }
+
+    // RETURNING makes the affected row part of the same statement, so the happy path needs no
+    // second round trip to build the profile it hands back. player_display_name_unique is a
+    // second line of defence here (ADR-0051 §2) — it can only fire if the registry and the
+    // column have disagreed, which is unreachable once every writer goes through this class, but
+    // a raw fixture that lands a name without a registry row can still reach it in tests.
+    private fun claimNameForPlayer(connection: Connection, playerId: PlayerId, canonicalName: String): SetNameResult {
         val setProfile = connection.prepareStatement(SET_NAME_SQL).use { statement ->
             statement.setString(1, canonicalName)
             statement.setObject(2, UUID.fromString(playerId.value))
             statement.executeQuery().use { rows -> if (rows.next()) rows.toProfile() else null }
         }
-        if (setProfile != null) return SetNameResult.NameSet(setProfile)
+        if (setProfile != null) {
+            connection.commit()
+            return SetNameResult.NameSet(setProfile)
+        }
+        // Zero rows: this player already holds a different name. The string statement 1 just
+        // spent belongs to nobody now, so it rolls back with everything else — the loser of a
+        // claim costs nothing (ADR-0051 §2).
+        connection.rollback()
+        return SetNameResult.AlreadyNamed
+    }
 
-        // Zero rows: this player already has a name. Which of the two remaining answers it is
-        // depends on what that name is, so — and only so — we read it back.
+    // The transaction is already rolled back here, on a clean one. Which of the two remaining
+    // answers this is depends on whether this player already holds the exact string they just
+    // tried to spend again — the idempotent retry — or someone else does.
+    private fun resultAfterRegistryConflict(
+        connection: Connection,
+        playerId: PlayerId,
+        canonicalName: String,
+    ): SetNameResult {
         val currentProfile = readProfile(connection, playerId)
         return if (currentProfile.displayName == canonicalName) {
-            // The identical canonical name again: the idempotent retry, not a rename attempt.
             SetNameResult.NameSet(currentProfile)
         } else {
-            SetNameResult.AlreadyNamed
+            SetNameResult.NameTaken
         }
     }
 
@@ -70,6 +106,9 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
 
     private companion object {
         private const val UNIQUE_VIOLATION_SQLSTATE = "23505"
+
+        private const val INSERT_NAME_REGISTRY_SQL =
+            "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')"
 
         private const val SET_NAME_SQL =
             "UPDATE player SET display_name = ? WHERE id = ? AND display_name IS NULL " +
