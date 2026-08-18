@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041115
 title: The strip prints the player's own name, or what stands for none
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: XS

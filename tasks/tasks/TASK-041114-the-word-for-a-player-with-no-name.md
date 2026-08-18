@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041114
 title: The word for a player who has no name
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: XS
