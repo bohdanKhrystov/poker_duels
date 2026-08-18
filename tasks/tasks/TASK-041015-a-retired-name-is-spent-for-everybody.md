@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041015
 title: A retired name is spent for everybody, including the player it was taken from
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
@@ -62,7 +62,7 @@ sets `"Ann"` through `setDisplayName`, and an operator retires it.
 | `nobodyElseCanTakeItEither` | Bob calls `setDisplayName(bob, "Ann")` and gets `NameTaken`, `display_name` still `NULL` |
 | `aDifferentCaseIsTheSameSpentString` | Bob calls `setDisplayName(bob, "ann")` — lower case, never the stored form — and gets `NameTaken`. **The wrong implementation this must fail against**: any check comparing the stored `name` with `=` rather than through `name_registry_folded`, which passes the two tests above and lets the very next claimant take the retired name back in another case |
 | `theFormerHolderCanTakeADifferentName` | Alice calls `setDisplayName(alice, "Bea")` and gets `NameSet` with `displayName == "Bea"`. `ADR-0052` §4: nothing is withheld and a new name may be set immediately. **Without this test the four refusals above are satisfied by a write path that refuses everything** |
-| `aRetiredNameIsStillOneRow` | After all of the above, `SELECT reason, retired_from FROM name_registry WHERE name = 'Ann'` returns exactly one row, `RETIRED`, `retired_from` = alice. A refused claim must not have added a second row under a different case, and must not have promoted or demoted this one |
+| `aRetiredNameIsStillOneRow` | After all of the above, a lookup **under the fold** — `WHERE lower(name COLLATE "und-x-icu") = lower(? COLLATE "und-x-icu")` bound to `'Ann'` — returns exactly one row, whose `name` is still exactly `"Ann"`, `RETIRED`, `retired_from` = alice. **The query must not be `WHERE name = 'Ann'`**: `name` is the primary key, so that predicate returns 0 or 1 rows by construction and cannot see a duplicate inserted as `'ann'`. Measured against a case-sensitive index, the duplicate row exists and the raw-equality version of this test passes anyway. The `name` assertion is what separates "no duplicate" from "the canonical row was overwritten by one" — a count under the fold cannot |
 
 ## Acceptance criteria
 
@@ -71,7 +71,7 @@ sets `"Ann"` through `setDisplayName`, and an operator retires it.
 - [ ] `RetiredNameIsSpentTest.aDifferentCaseIsTheSameSpentString` passes
 - [ ] `RetiredNameIsSpentTest.theFormerHolderCanTakeADifferentName` passes and asserts the stored
       name is `"Bea"`
-- [ ] `RetiredNameIsSpentTest.aRetiredNameIsStillOneRow` passes and asserts exactly one row
+- [ ] `RetiredNameIsSpentTest.aRetiredNameIsStillOneRow` passes, queries under the fold rather than by raw equality on the primary key, and asserts the surviving row's `name` is still `"Ann"`
 - [ ] Every refusal test asserts `SetNameResult.NameTaken` and a still-`NULL` `display_name`
 - [ ] No test in the file asserts anything that distinguishes a retired refusal from a taken one
 - [ ] No file outside this ticket is modified
