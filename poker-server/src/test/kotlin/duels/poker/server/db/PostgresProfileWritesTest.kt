@@ -213,6 +213,93 @@ class PostgresProfileWritesTest {
         }
     }
 
+    // ADR-0051 §2's defect, named directly: a registry row left behind by a refused claim burns
+    // a string nobody holds, forever. Without the rollback the count below is 1 and the result
+    // is still AlreadyNamed — every other assertion in this file stays green either way.
+    @Test
+    fun aRefusedSecondNameLeavesNoRegistryRow() {
+        runBlocking {
+            val player = playerDirectory.resolve(DeviceId("alice"))
+            profileWrites.setDisplayName(player.id, "Ann")
+
+            val result = profileWrites.setDisplayName(player.id, "Bea")
+
+            assertEquals(SetNameResult.AlreadyNamed, result)
+            assertEquals(0, registryRowCountFor("Bea"))
+        }
+    }
+
+    // Pins that the idempotent-retry read runs on a clean transaction. Fails against an
+    // implementation that reads on the aborted one (25P02 surfaces as a thrown SQLException, not
+    // a result) and against one that answers NameTaken for a retry of one's own name.
+    @Test
+    fun theSameNameAgainIsStillTheSameProfile() {
+        runBlocking {
+            val player = playerDirectory.resolve(DeviceId("alice"))
+
+            val first = profileWrites.setDisplayName(player.id, "Ann")
+            val second = profileWrites.setDisplayName(player.id, "Ann")
+
+            assertIs<SetNameResult.NameSet>(first)
+            assertEquals("Ann", first.profile.displayName)
+            assertIs<SetNameResult.NameSet>(second)
+            assertEquals("Ann", second.profile.displayName)
+            assertEquals(1, totalRegistryRowCount())
+        }
+    }
+
+    // The final claim is what makes "the loser burns nothing" an assertion rather than a
+    // sentence: B is refused Cid, costs the registry nothing, and can still claim Dot after.
+    @Test
+    fun aNameHeldByAnotherPlayerIsRefusedAndCostsNothing() {
+        runBlocking {
+            val holder = playerDirectory.resolve(DeviceId("holder"))
+            val challenger = playerDirectory.resolve(DeviceId("challenger"))
+            profileWrites.setDisplayName(holder.id, "Cid")
+
+            val result = profileWrites.setDisplayName(challenger.id, "Cid")
+
+            assertEquals(SetNameResult.NameTaken, result)
+            assertNull(storedDisplayNameOf(challenger.id))
+            assertEquals(1, registryRowCountFor("Cid"))
+            assertEquals("TAKEN", registryReasonFor("Cid"))
+
+            val secondClaim = profileWrites.setDisplayName(challenger.id, "Dot")
+
+            assertIs<SetNameResult.NameSet>(secondClaim)
+            assertEquals("Dot", secondClaim.profile.displayName)
+        }
+    }
+
+    private fun registryRowCountFor(name: String): Int =
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT count(*) FROM name_registry WHERE name = ?").use { statement ->
+                statement.setString(1, name)
+                statement.executeQuery().use { rows ->
+                    rows.next()
+                    rows.getInt(1)
+                }
+            }
+        }
+
+    private fun registryReasonFor(name: String): String? =
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT reason FROM name_registry WHERE name = ?").use { statement ->
+                statement.setString(1, name)
+                statement.executeQuery().use { rows -> if (rows.next()) rows.getString(1) else null }
+            }
+        }
+
+    private fun totalRegistryRowCount(): Int =
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT count(*) FROM name_registry").use { statement ->
+                statement.executeQuery().use { rows ->
+                    rows.next()
+                    rows.getInt(1)
+                }
+            }
+        }
+
     private fun storedDisplayNameOf(playerId: PlayerId): String? =
         dataSource.connection.use { connection ->
             connection.prepareStatement("SELECT display_name FROM player WHERE id = ?").use { statement ->

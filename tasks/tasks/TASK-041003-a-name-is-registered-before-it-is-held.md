@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041003
 title: Setting a name registers it first, and a refused claim rolls the whole transaction back
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
