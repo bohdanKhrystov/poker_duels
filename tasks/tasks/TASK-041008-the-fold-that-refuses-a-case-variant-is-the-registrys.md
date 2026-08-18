@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041008
 title: The fold that refuses a case variant is the registry's, and the schema test says so
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
