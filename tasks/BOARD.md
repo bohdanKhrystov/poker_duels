@@ -1165,7 +1165,29 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040909](tasks/TASK-040909-the-endpoint-reads-the-filter-and-refuses-what-it-refuses.md) The endpoint reads the filter, and refuses what the parsers refuse | S | **done** |
 | | [TASK-040910](tasks/TASK-040910-over-http-against-the-database-a-filtered-page.md) Over HTTP, against the database — a filtered page is exactly the filtered rows | S | **done** |
 | | [TASK-040911](tasks/TASK-040911-the-document-contracts-both-filters-and-what-each-refuses.md) The document contracts both filters, and what each of them refuses | S | **done** |
-| [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | backlog |
+| [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | ready |
+| | [TASK-041001](tasks/TASK-041001-the-migration-test-derives-its-version-list.md) The migration test derives its version list from the migrations it applies | XS | ready |
+| | [TASK-041002](tasks/TASK-041002-the-name-registry-its-guards-and-the-takedown.md) The fifth migration creates the name registry, its guards and the takedown function | S | backlog |
+| | [TASK-041003](tasks/TASK-041003-a-name-is-registered-before-it-is-held.md) Setting a name registers it first, and a refused claim rolls the whole transaction back | S | backlog |
+| | [TASK-041004](tasks/TASK-041004-three-fixtures-register-the-name-they-hand-a-player.md) Three fixtures register the name they hand a player | S | backlog |
+| | [TASK-041005](tasks/TASK-041005-the-uniqueness-fixtures-register-every-name.md) The uniqueness fixtures register every name, and the fold refuses before the index does | S | backlog |
+| | [TASK-041006](tasks/TASK-041006-the-permanence-fixtures-register-only-what-must-land.md) The permanence fixtures register only the names that must land | S | backlog |
+| | [TASK-041007](tasks/TASK-041007-the-schema-test-keeps-its-refusals-raw.md) The display-name schema test registers what must land and keeps its refusals raw | S | backlog |
+| | [TASK-041008](tasks/TASK-041008-the-fold-that-refuses-a-case-variant-is-the-registrys.md) The fold that refuses a case variant is the registry's, and the schema test says so | S | backlog |
+| | [TASK-041009](tasks/TASK-041009-the-held-race-moves-to-the-registry-row.md) The held race moves to the registry row, and the probe that waits for it follows | S | backlog |
+| | [TASK-041010](tasks/TASK-041010-a-display-name-may-only-be-a-registered-name.md) The sixth migration makes a display name a registered name or nothing | S | backlog |
+| | [TASK-041011](tasks/TASK-041011-a-registered-name-is-never-released.md) A registered name is never released, and the only change it may take is TAKEN to RETIRED | S | backlog |
+| | [TASK-041012](tasks/TASK-041012-the-takedown-is-one-function-call.md) retire_display_name takes the name away and leaves the profile unset | S | backlog |
+| | [TASK-041013](tasks/TASK-041013-the-permanence-trigger-has-exactly-one-exception.md) The permanence trigger has exactly one exception, and it is a transition | S | backlog |
+| | [TASK-041014](tasks/TASK-041014-a-takedown-moves-no-coin.md) A takedown moves no coin | XS | backlog |
+| | [TASK-041015](tasks/TASK-041015-a-retired-name-is-spent-for-everybody.md) A retired name is spent for everybody, including the player it was taken from | S | backlog |
+| | [TASK-041016](tasks/TASK-041016-a-blocked-name-is-refused-and-the-screen-fails-closed.md) A blocked name is refused when it is set, and the screen fails closed | S | backlog |
+| | [TASK-041017](tasks/TASK-041017-the-port-test-builds-its-profile-through-the-builder.md) The port test builds its profile through the shared builder | XS | backlog |
+| | [TASK-041018](tasks/TASK-041018-the-profile-says-the-name-was-removed.md) The profile says the name was removed, from one correlated EXISTS | S | backlog |
+| | [TASK-041019](tasks/TASK-041019-two-players-in-one-database.md) Two players in one database, and only one of them reads true | S | backlog |
+| | [TASK-041020](tasks/TASK-041020-a-takedown-is-invisible-to-everybody-else.md) A takedown is invisible to everybody else, and its two strings live where they should | S | backlog |
+| | [TASK-041021](tasks/TASK-041021-the-document-contracts-the-removed-name.md) The protocol document contracts the removed-name field | XS | backlog |
+| | [TASK-041022](tasks/TASK-041022-the-operations-document-is-the-only-call-site.md) docs/operations.md is the takedown's only call site | S | backlog |
 | [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
