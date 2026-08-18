@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040811
 title: The document contracts the cursor and the paging rule, and a test agrees with the DTO
 type: task
-status: backlog
+status: ready
 parent: STORY-0408
 module: poker-server
 estimate: S
