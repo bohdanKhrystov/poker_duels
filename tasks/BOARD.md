@@ -1155,8 +1155,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040903](tasks/TASK-040903-the-read-takes-a-filter-and-an-outcome-is-a-sign.md) The read takes a filter, and an outcome is the sign of the stored delta | S | **done** |
 | | [TASK-040904](tasks/TASK-040904-the-search-is-a-substring-of-the-opponents-name.md) The search is a substring of the opponent's name, folded under the pinned collation | S | **done** |
 | | [TASK-040905](tasks/TASK-040905-the-search-term-is-not-a-language.md) The search term is not a language, and an unnamed opponent is not a match | XS | **done** |
-| | [TASK-040906](tasks/TASK-040906-paging-inside-a-filter-is-still-total-and-disjoint.md) Paging inside a filter is still total and disjoint, across an insert that matches it | S | ready |
-| | [TASK-040907](tasks/TASK-040907-the-port-takes-the-filter-and-both-doubles-follow.md) The port's duel read takes the filter, and both doubles follow | XS | backlog |
+| | [TASK-040906](tasks/TASK-040906-paging-inside-a-filter-is-still-total-and-disjoint.md) Paging inside a filter is still total and disjoint, across an insert that matches it | S | **done** |
+| | [TASK-040907](tasks/TASK-040907-the-port-takes-the-filter-and-both-doubles-follow.md) The port's duel read takes the filter, and both doubles follow | XS | ready |
 | | [TASK-040908](tasks/TASK-040908-two-parameters-become-one-filter-or-one-refusal.md) Two query parameters become one filter, or one refusal | XS | backlog |
 | | [TASK-040909](tasks/TASK-040909-the-endpoint-reads-the-filter-and-refuses-what-it-refuses.md) The endpoint reads the filter, and refuses what the parsers refuse | S | backlog |
 | | [TASK-040910](tasks/TASK-040910-over-http-against-the-database-a-filtered-page.md) Over HTTP, against the database — a filtered page is exactly the filtered rows | S | backlog |

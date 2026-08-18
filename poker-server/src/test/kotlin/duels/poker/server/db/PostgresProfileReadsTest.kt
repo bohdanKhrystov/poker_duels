@@ -681,6 +681,92 @@ class PostgresProfileReadsTest {
         }
     }
 
+    /**
+     * Seven won duels among eleven interleaved with four lost ones, paged three at a time
+     * under a `WON` filter, land on `[3, 3, 1]` — seven is not a multiple of three, so the
+     * walk has a partial last page that a fixture dividing evenly could never show. Sizes
+     * `[3, 3, 3, 2]` is what the same eleven duels look like with the filter lost, and the
+     * four losses sit between the wins rather than at either end, so a walk that dropped the
+     * filter after the first request would put a loss on page one and fail the very first
+     * assertion below rather than the count at the end.
+     */
+    @Test
+    fun everyMatchingDuelIsReadExactlyOnceInPagesOfThree() {
+        runBlocking {
+            val eleven = elevenDuelsFourOfThemLost()
+            val expectedWonIds = eleven.filter { it.outcome == DuelOutcomeLabel.WON }.map { it.duelId }
+            val lostIds = eleven.filter { it.outcome == DuelOutcomeLabel.LOST }.map { it.duelId }
+
+            val pages = everyPage(alice.id, pageSize = 3, filter = DuelFilter(DuelOutcomeLabel.WON, null))
+
+            assertEquals(listOf(3, 3, 1), pages.map { it.size })
+            val flattened = pages.flatten()
+            assertEquals(expectedWonIds, flattened.map { it.duelId })
+            assertEquals(7, flattened.map { it.duelId }.distinct().size)
+            assertTrue(flattened.all { it.outcome == DuelOutcomeLabel.WON })
+            assertTrue(
+                flattened.none { it.duelId in lostIds },
+                "a lost duel id appeared in the WON-filtered walk: ${flattened.map { it.duelId }}",
+            )
+        }
+    }
+
+    /**
+     * `aDuelRecordedBetweenTwoPagesRepeatsNothingAndSkipsNothing` with a `WON` predicate in
+     * the way — the case a filter applied only to the first request, or a cursor compared
+     * against the wrong column once a predicate joins it in the `WHERE`, would silently lose
+     * or duplicate a row. Reads page one under the filter (`10:11, 10:09, 10:08`), records an
+     * eighth won duel at `10:12` — newer than everything read so far — only after that read,
+     * then walks every remaining page from page one's own last row's cursor, under the same
+     * filter.
+     */
+    @Test
+    fun aMatchingDuelRecordedBetweenTwoFilteredPagesRepeatsNothingAndSkipsNothing() {
+        runBlocking {
+            val eleven = elevenDuelsFourOfThemLost()
+            val originalWonDuels = eleven.filter { it.outcome == DuelOutcomeLabel.WON }
+            val wonFilter = DuelFilter(DuelOutcomeLabel.WON, null)
+
+            val pageOne = profileReads.recentDuelsOf(alice.id, 3, null, wonFilter)
+            assertEquals(3, pageOne.size)
+            val pageOneLastRow = pageOne.last()
+
+            val eighthWonDuelId = UUID.randomUUID()
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = eighthWonDuelId, finishedAt = Instant.parse("2026-08-13T10:12:00Z")),
+            )
+
+            val cursorAfterPageOne = DuelCursor(
+                Instant.parse(pageOneLastRow.finishedAt),
+                UUID.fromString(pageOneLastRow.duelId),
+            )
+            val laterPages = everyPage(alice.id, pageSize = 3, from = cursorAfterPageOne, filter = wonFilter)
+            val laterDuels = laterPages.flatten()
+
+            // The row page one's cursor was cut from must never come back once the walk
+            // resumes past it.
+            assertFalse(
+                laterDuels.any { it.duelId == pageOneLastRow.duelId },
+                "page one's last row (${pageOneLastRow.duelId}) reappeared: ${laterDuels.map { it.duelId }}",
+            )
+
+            // 10:12 finishes after the cursor was cut, so it sits on the already-passed side
+            // of it — a reader who scrolled past page one must never see it surface beneath
+            // them, filter or no filter.
+            assertFalse(
+                laterDuels.any { it.duelId == eighthWonDuelId.toString() },
+                "the eighth won duel appeared after a cursor cut before it existed: ${laterDuels.map { it.duelId }}",
+            )
+
+            // Every one of the seven original won duels was read exactly once across both
+            // reads — a multiset over ids, not a size, so a repeat-for-a-gap swap cannot hide
+            // behind a total that happens to still add up.
+            val allReadDuels = pageOne + laterDuels
+            val expectedCounts = originalWonDuels.associate { it.duelId to 1 }
+            assertEquals(expectedCounts, allReadDuels.groupingBy { it.duelId }.eachCount())
+        }
+    }
+
     @Test
     fun aSearchReturnsOnlyTheDuelsAgainstThatOpponent() {
         runBlocking {
@@ -886,11 +972,29 @@ class PostgresProfileReadsTest {
     }
 
     /**
+     * Eleven duels for alice a minute apart from 10:01 to 10:11; alice loses the ones at 10:02,
+     * 10:05, 10:07 and 10:10 and wins the other seven. Returns them newest-first, exactly as
+     * recentDuelsOf does.
+     */
+    private suspend fun elevenDuelsFourOfThemLost(): List<DuelSummaryResponse> {
+        val aliceLosesAt = setOf(2, 5, 7, 10)
+        (1..11).forEach { minute ->
+            val winner = if (minute in aliceLosesAt) 1 else 0
+            val paddedMinute = minute.toString().padStart(2, '0')
+            duelResultStore.record(
+                finishedDuel(winner = winner, finishedAt = Instant.parse("2026-08-13T10:$paddedMinute:00Z")),
+            )
+        }
+        return profileReads.recentDuelsOf(alice.id, 20)
+    }
+
+    /**
      * Walks [playerId]'s whole duel history a page of [pageSize] rows at a time, starting from
      * [from], returning each page as its own list so a caller can assert page *shape* — sizes,
      * count — as well as the flattened order. Every next cursor is built from the previous
      * page's **last** row via [Instant.parse] and [UUID.fromString], the same round trip through
-     * the wire's string form that a real client makes.
+     * the wire's string form that a real client makes. [filter] narrows every one of those
+     * requests identically, first page through last.
      *
      * Stops the moment a page comes back empty; that empty page is not appended, so seven duels
      * in pages of three take four requests to answer three pages. It stops on empty, never on
@@ -904,11 +1008,12 @@ class PostgresProfileReadsTest {
         playerId: PlayerId,
         pageSize: Int,
         from: DuelCursor? = null,
+        filter: DuelFilter = DuelFilter.NONE,
     ): List<List<DuelSummaryResponse>> {
         val pages = mutableListOf<List<DuelSummaryResponse>>()
         var cursor = from
         repeat(20) {
-            val page = profileReads.recentDuelsOf(playerId, pageSize, cursor)
+            val page = profileReads.recentDuelsOf(playerId, pageSize, cursor, filter)
             if (page.isEmpty()) return pages
             pages += page
             val lastRow = page.last()

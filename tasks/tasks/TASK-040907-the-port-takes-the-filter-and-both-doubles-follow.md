@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040907
 title: The port's duel read takes the filter, and both doubles follow
 type: task
-status: backlog
+status: ready
 parent: STORY-0409
 module: poker-server
 estimate: XS
