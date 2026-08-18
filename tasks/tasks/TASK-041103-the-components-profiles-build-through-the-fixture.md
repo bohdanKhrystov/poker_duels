@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041103
 title: The component tests build their profiles through the fixture
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: XS

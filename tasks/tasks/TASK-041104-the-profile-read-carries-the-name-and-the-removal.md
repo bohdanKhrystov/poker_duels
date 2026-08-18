@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041104
 title: The profile read carries the name, and whether one was removed
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: S
