@@ -43,6 +43,7 @@ class PostgresProfileReadsTest {
     private lateinit var dataSource: DataSource
     private lateinit var playerDirectory: PostgresPlayerDirectory
     private lateinit var profileReads: PostgresProfileReads
+    private lateinit var profileWrites: PostgresProfileWrites
     private lateinit var duelResultStore: PostgresDuelResultStore
     private lateinit var alice: Player
     private lateinit var bob: Player
@@ -53,6 +54,7 @@ class PostgresProfileReadsTest {
         Migrations.migrate(dataSource)
         playerDirectory = PostgresPlayerDirectory(dataSource)
         profileReads = PostgresProfileReads(dataSource)
+        profileWrites = PostgresProfileWrites(dataSource)
         duelResultStore = PostgresDuelResultStore(dataSource)
 
         runBlocking {
@@ -326,6 +328,58 @@ class PostgresProfileReadsTest {
         val profile = profileReads.profileOf(DeviceId("dave"))
 
         assertNull(profile?.displayName)
+    }
+
+    /**
+     * `ADR-0053` §4.3's mis-implementation is an uncorrelated `EXISTS (SELECT 1 FROM
+     * name_registry WHERE reason = 'RETIRED')`: it answers `true` for every caller the instant
+     * any takedown happens to anybody. Two tests with one fixture each cannot see that — each
+     * would pass alone, against its own database, whichever way the correlation goes. Both
+     * fixtures have to sit in one test against one shared database for bob's `false` to be able
+     * to fail. That is the whole reason this is one method and not two.
+     */
+    @Test
+    fun aRemovedNameReadsTrueAndANeverNamedPlayerInTheSameDatabaseReadsFalse() = runBlocking {
+        givenARetiredName(alice, "Ann")
+
+        val aliceProfile = profileReads.profileOf(DeviceId("alice"))
+        val bobProfile = profileReads.profileOf(DeviceId("bob"))
+
+        assertNull(aliceProfile?.displayName)
+        assertEquals(true, aliceProfile?.displayNameRemoved)
+
+        assertNull(bobProfile?.displayName)
+        assertEquals(false, bobProfile?.displayNameRemoved)
+    }
+
+    /**
+     * `ADR-0053` §2 row 4 — the conjunct that fails silently. An expression missing
+     * `p.display_name IS NULL` reads the `name_registry` row, which is still there forever, and
+     * shows a moderation notice to a player who chose a new name and moved on.
+     */
+    @Test
+    fun aPlayerWhoHasSinceChosenANewNameReadsFalse() = runBlocking {
+        givenARetiredName(alice, "Ann")
+        profileWrites.setDisplayName(alice.id, "Bea")
+
+        val profile = profileReads.profileOf(DeviceId("alice"))
+
+        assertEquals("Bea", profile?.displayName)
+        assertEquals(false, profile?.displayNameRemoved)
+    }
+
+    /**
+     * `ADR-0053` §2 row 3: the pair `(displayName != null, displayNameRemoved = true)` is a
+     * state no query can produce. Asserted here as an invariant of the answer, not of the type.
+     */
+    @Test
+    fun aNamedPlayerNeverReadsTrue() = runBlocking {
+        profileWrites.setDisplayName(alice.id, "Cid")
+
+        val profile = profileReads.profileOf(DeviceId("alice"))
+
+        assertEquals("Cid", profile?.displayName)
+        assertEquals(false, profile?.displayNameRemoved)
     }
 
     @Test
@@ -1142,6 +1196,22 @@ class PostgresProfileReadsTest {
             DuelOutcomeLabel.LOST to lostDuelId.toString(),
             DuelOutcomeLabel.DREW to drewDuelId.toString(),
         )
+    }
+
+    /**
+     * Gives [player] the name [displayName] through [PostgresProfileWrites] — the real write
+     * path — then has an operator retire it through `SELECT retire_display_name(?, ?)`, the real
+     * retirement path (`RetireDisplayNameTest`). Nothing here writes `name_registry` directly.
+     */
+    private suspend fun givenARetiredName(player: Player, displayName: String) {
+        profileWrites.setDisplayName(player.id, displayName)
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT retire_display_name(?, ?)").use { statement ->
+                statement.setObject(1, UUID.fromString(player.id.value))
+                statement.setString(2, displayName)
+                statement.executeQuery().use { rows -> rows.next() }
+            }
+        }
     }
 
     private fun playerRowCount(): Int {
