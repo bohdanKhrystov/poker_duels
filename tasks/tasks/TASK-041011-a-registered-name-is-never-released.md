@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041011
 title: A registered name is never released, and the only change it may take is TAKEN to RETIRED
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: S
