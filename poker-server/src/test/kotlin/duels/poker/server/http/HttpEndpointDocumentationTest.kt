@@ -4,6 +4,7 @@ import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.SignUpRequest
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -367,6 +368,26 @@ class HttpEndpointDocumentationTest {
         assertTrue(
             nextCursorRow.contains("null", ignoreCase = true),
             "The nextCursor row must mention 'null' to indicate nullability: $nextCursorRow",
+        )
+    }
+
+    @Test
+    fun theRecentDuelsSectionSaysACursorIsRefusedUnderAnotherFilter() {
+        assertTrue(
+            recentDuelsSection.contains("different filter"),
+            "The Recent duels section must document that a cursor is refused under a different filter",
+        )
+        assertTrue(
+            recentDuelsSection.contains("ADR-0057"),
+            "The Recent duels section must cite ADR-0057",
+        )
+        assertFalse(
+            recentDuelsSection.contains("not yet"),
+            "The Recent duels section must not describe a future refusal behavior",
+        )
+        assertFalse(
+            recentDuelsSection.contains("409"),
+            "The Recent duels section must not document a 409 status for cursor mismatches",
         )
     }
 }
