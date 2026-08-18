@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041111
 title: Each refusal says its own sentence, and only two leave the form
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: S
