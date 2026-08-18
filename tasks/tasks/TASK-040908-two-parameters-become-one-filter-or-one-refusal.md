@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040908
 title: Two query parameters become one filter, or one refusal
 type: task
-status: backlog
+status: ready
 parent: STORY-0409
 module: poker-server
 estimate: XS

@@ -39,16 +39,13 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         }
     }
 
-    override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> =
-        recentDuelsOf(playerId, limit, after, DuelFilter.NONE)
-
     /**
      * Reads [playerId]'s duels newest-first, at most [limit] of them, strictly after [after]
      * when one is given, and narrowed to only the outcome [filter] names when its `outcome` is
      * non-null.
      *
-     * `after = null` reads exactly what the three-argument [recentDuelsOf] always has: same rows,
-     * same order, same query shape. A non-null [after] adds
+     * `after = null` adds no cursor predicate — every row [filter] admits is eligible, in the
+     * same order. A non-null [after] adds
      * `(d.finished_at, d.id) < (after.finishedAt, after.duelId)` as a single PostgreSQL row-value
      * comparison — the row the cursor names never reappears, and no duel that ties it on
      * `finished_at` is skipped.
@@ -56,7 +53,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
      * [filter]'s `outcome` narrows the read to exactly the rows whose `coin_delta` [outcomeOf]
      * would report as that outcome — the filter reads the same sign, on the same reasoning
      * (ADR-0014), rather than comparing against a stored magnitude. [DuelFilter.NONE] reads every
-     * outcome: exactly what the three-argument overload above always has.
+     * outcome, excluding none by sign.
      *
      * [filter]'s `opponent` narrows the read to duels whose opponent's display name contains it as
      * a substring, folded under the `und-x-icu` collation pinned by ADR-0029 §1 so a search agrees
@@ -64,7 +61,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
      * `opponent` narrows nothing, and an opponent who has never set a name never matches a non-null
      * term.
      */
-    public suspend fun recentDuelsOf(
+    override suspend fun recentDuelsOf(
         playerId: PlayerId,
         limit: Int,
         after: DuelCursor?,

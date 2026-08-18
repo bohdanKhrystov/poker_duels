@@ -232,6 +232,28 @@ class ProfileRouteTest {
     }
 
     @Test
+    fun aRequestWithNoFilterAsksForNone() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            // Not isEmpty(): that would also pass for a route that never called the port at all.
+            // The singleton list is what proves the port was asked exactly once, with the
+            // no-op filter, rather than the route inventing a filter of its own (ADR-0002).
+            assertEquals(listOf(DuelFilter.NONE), reads.filtersRequested)
+        }
+    }
+
+    @Test
     fun aLimitAboveTheCapIsClamped() = testApplication {
         val reads = FakeProfileReads(
             mapOf("alice" to profileResponse("p-alice", 0)),
@@ -837,6 +859,7 @@ class ProfileRouteTest {
     ) : ProfileReads {
         val queried: MutableList<String> = mutableListOf()
         val cursorsRequested: MutableList<DuelCursor?> = mutableListOf()
+        val filtersRequested: MutableList<DuelFilter> = mutableListOf()
         var lastLimitRequested: Int = 0
 
         override suspend fun profileOf(deviceId: DeviceId): ProfileResponse? {
@@ -844,9 +867,15 @@ class ProfileRouteTest {
             return profiles[deviceId.value]
         }
 
-        override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> {
+        override suspend fun recentDuelsOf(
+            playerId: PlayerId,
+            limit: Int,
+            after: DuelCursor?,
+            filter: DuelFilter,
+        ): List<DuelSummaryResponse> {
             lastLimitRequested = limit
             cursorsRequested.add(after)
+            filtersRequested.add(filter)
             val all = duels[playerId.value] ?: emptyList()
             if (after == null) return all
             // Mirrors the real port's "rows after this cursor" contract closely enough for a
