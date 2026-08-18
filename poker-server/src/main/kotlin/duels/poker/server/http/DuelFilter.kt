@@ -1,7 +1,9 @@
 package duels.poker.server.http
 
 import duels.poker.server.protocol.http.DuelOutcomeLabel
+import java.security.MessageDigest
 import java.text.Normalizer
+import java.util.Base64
 
 /**
  * A filter for history reads specifying which duels a read wants.
@@ -45,6 +47,64 @@ public fun duelFilterOrNull(outcome: String?, opponent: String?): DuelFilter? {
     val parsedOutcome = outcome?.let { duelOutcomeOrNull(it) ?: return null }
     val parsedOpponent = opponent?.let { opponentSearchOrNull(it) ?: return null }
     return DuelFilter(parsedOutcome, parsedOpponent)
+}
+
+/**
+ * Renders this filter to its canonical text representation.
+ *
+ * The output is one line per axis that actually narrows the read, in the fixed order `outcome`
+ * then `opponent`. An absent axis contributes nothing at all — not an empty segment, not a
+ * placeholder. This is what keeps existing cursors byte-identical when a third filter axis is
+ * added later. Each line is length-delimited so no value can fake a line boundary:
+ *
+ * ```
+ * "<axis>:<utf8ByteLength>:<value>\n"
+ * ```
+ *
+ * The length is the UTF-8 byte count of the value, never `String.length` and never
+ * `codePointCount`, because the byte count consumes the value exactly and no value can fake a
+ * line boundary. An axis whose value is `null` contributes nothing at all, so
+ * `DuelFilter.NONE` renders to the empty string, and `DuelFilter(WON, "Halvard")` renders to
+ * `"outcome:3:WON\nopponent:7:Halvard\n"`.
+ *
+ * @return the canonical text of this filter
+ */
+internal fun DuelFilter.canonicalText(): String {
+    val lines = mutableListOf<String>()
+    outcome?.let { outcomeLabel ->
+        val value = outcomeLabel.name
+        val byteCount = value.toByteArray(Charsets.UTF_8).size
+        lines.add("outcome:$byteCount:$value\n")
+    }
+    opponent?.let { opponentValue ->
+        val byteCount = opponentValue.toByteArray(Charsets.UTF_8).size
+        lines.add("opponent:$byteCount:$opponentValue\n")
+    }
+    return lines.joinToString("")
+}
+
+/**
+ * Renders this filter to its fingerprint — a consistency check that binds a cursor to the filter
+ * it was drawn under.
+ *
+ * The fingerprint is the first 8 bytes of the SHA-256 of the canonical text, as unpadded
+ * URL-safe base64, which is always eleven characters. The fingerprint is a consistency check and
+ * never an authorisation check: it is unkeyed, anybody who knows the scheme can mint one, and
+ * the read is safe only because it is keyed off the player the server resolved.
+ *
+ * Three rules bind every future change to `DuelFilter`, and they are enforced by nothing except
+ * the golden test that pins this method's output for one specific filter. A new axis is appended
+ * to the canonical text order and never inserted; an existing axis is never renamed; and an
+ * absent axis contributes nothing — which together mean every cursor already in flight stays
+ * byte-identical when a third axis lands.
+ *
+ * @return the eleven-character fingerprint of this filter
+ */
+internal fun DuelFilter.fingerprint(): String {
+    val canonicalBytes = canonicalText().toByteArray(Charsets.UTF_8)
+    val digestBytes = MessageDigest.getInstance("SHA-256").digest(canonicalBytes)
+    val truncated = digestBytes.copyOf(8)
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(truncated)
 }
 
 /**

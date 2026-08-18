@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040912
 title: A filter renders one canonical line per axis, and fingerprints to eleven characters
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S

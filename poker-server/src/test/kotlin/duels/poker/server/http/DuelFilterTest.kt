@@ -123,4 +123,63 @@ class DuelFilterTest {
         val blankResult = duelFilterOrNull(null, " ")
         assertNull(blankResult)
     }
+
+    @Test
+    fun theEmptyFilterRendersNoLines() {
+        assertEquals("", DuelFilter.NONE.canonicalText())
+    }
+
+    @Test
+    fun eachNarrowingAxisRendersOneLengthDelimitedLine() {
+        val result = DuelFilter(DuelOutcomeLabel.WON, "Halvard").canonicalText()
+        assertEquals("outcome:3:WON\nopponent:7:Halvard\n", result)
+    }
+
+    @Test
+    fun anAbsentAxisContributesNothingAtAll() {
+        val outcomeOnly = DuelFilter(DuelOutcomeLabel.WON, null).canonicalText()
+        assertEquals("outcome:3:WON\n", outcomeOnly)
+
+        val opponentOnly = DuelFilter(null, "Halvard").canonicalText()
+        assertEquals("opponent:7:Halvard\n", opponentOnly)
+    }
+
+    @Test
+    fun theLengthIsTheValuesUtf8ByteCount() {
+        val result = DuelFilter(null, "Håkon").canonicalText()
+        assertEquals("opponent:6:Håkon\n", result)
+    }
+
+    @Test
+    fun theEmptyFilterFingerprintsToTheDigestOfNothing() {
+        assertEquals("47DEQpj8HBQ", DuelFilter.NONE.fingerprint())
+    }
+
+    @Test
+    fun aFilterFingerprintsToItsGoldenVector() {
+        val result = DuelFilter(DuelOutcomeLabel.WON, "Halvard").fingerprint()
+        assertEquals("J8qDx13CI_o", result)
+    }
+
+    @Test
+    fun filtersDifferingInOneAxisFingerprintDifferently() {
+        val filterWonHalvard = DuelFilter(DuelOutcomeLabel.WON, "Halvard").fingerprint()
+        val filterLostHalvard = DuelFilter(DuelOutcomeLabel.LOST, "Halvard").fingerprint()
+        val filterWonHalvar = DuelFilter(DuelOutcomeLabel.WON, "Halvar").fingerprint()
+
+        assertNotEquals(filterWonHalvard, filterLostHalvard)
+        assertNotEquals(filterWonHalvard, filterWonHalvar)
+        assertNotEquals(filterLostHalvard, filterWonHalvar)
+    }
+
+    @Test
+    fun aFingerprintIsElevenCharactersAndUnpadded() {
+        val fp1 = DuelFilter(DuelOutcomeLabel.WON, "Halvard").fingerprint()
+        assertEquals(11, fp1.length)
+        assertTrue(!fp1.contains("="), "fingerprint must be unpadded")
+
+        val fp2 = DuelFilter.NONE.fingerprint()
+        assertEquals(11, fp2.length)
+        assertTrue(!fp2.contains("="), "fingerprint must be unpadded")
+    }
 }
