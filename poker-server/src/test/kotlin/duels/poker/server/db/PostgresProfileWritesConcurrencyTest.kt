@@ -29,9 +29,10 @@ import kotlin.test.assertTrue
  * the winner's transaction had already committed — the [SetNameResult] looks identical either
  * way, so it is no proof that blocking is what happened. [secondWriterBlocksThenLosesWhenTheHolderCommits]
  * and [secondWriterSucceedsWhenTheHolderRollsBack] close that gap: one writer holds an open,
- * uncommitted transaction on the name, and this test does not resolve it until `pg_stat_activity`
- * shows a second writer genuinely waiting on it — only then does the holder commit or roll back,
- * and the second writer's outcome is asserted against each.
+ * uncommitted transaction that has already inserted the `name_registry` row for the name, and this
+ * test does not resolve it until `pg_stat_activity` shows a second writer genuinely blocked on that
+ * row — only then does the holder commit or roll back, and the second writer's outcome is asserted
+ * against each.
  */
 class PostgresProfileWritesConcurrencyTest {
     private lateinit var dataSource: DataSource
@@ -190,8 +191,8 @@ class PostgresProfileWritesConcurrencyTest {
 
     /**
      * Polls `pg_stat_activity` until some backend other than [excludingPid] is waiting on a lock
-     * while running the display-name `UPDATE` — proof that it is genuinely blocked on the held
-     * transaction's uncommitted index entry, not merely slower to start. No fixed sleep: the loop
+     * while running the `name_registry` `INSERT` — proof that it is genuinely blocked on the held
+     * transaction's uncommitted registry row, not merely slower to start. No fixed sleep: the loop
      * re-checks every 5ms and [withTimeout] fails the test outright if blocking is never observed.
      */
     private suspend fun awaitLockWaitOn(excludingPid: Int) {
@@ -206,7 +207,7 @@ class PostgresProfileWritesConcurrencyTest {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(
                 "SELECT count(*) FROM pg_stat_activity " +
-                    "WHERE wait_event_type = 'Lock' AND pid <> ? AND query ILIKE 'UPDATE player SET display_name%'",
+                    "WHERE wait_event_type = 'Lock' AND pid <> ? AND query ILIKE 'INSERT INTO name_registry%'",
             ).use { statement ->
                 statement.setInt(1, excludingPid)
                 statement.executeQuery().use { rows ->
@@ -226,8 +227,19 @@ class PostgresProfileWritesConcurrencyTest {
         }
     }
 
-    /** The same effect as `PostgresProfileWrites`'s statement, run under this test's own control. */
+    /**
+     * The same effect as `PostgresProfileWrites`'s statements, run under this test's own control:
+     * the registry insert on [connection] first, so the row it leaves behind is part of the
+     * caller's open transaction — the row the second writer then blocks on — before the `UPDATE`
+     * whose row count this still returns.
+     */
     private fun updateDisplayName(connection: Connection, playerId: PlayerId, name: String): Int {
+        connection.prepareStatement(
+            "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')",
+        ).use { statement ->
+            statement.setString(1, name)
+            statement.executeUpdate()
+        }
         return connection.prepareStatement(
             "UPDATE player SET display_name = ? WHERE id = ? AND display_name IS NULL",
         ).use { statement ->
