@@ -518,6 +518,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
+| DEC-050 | **The architect's** — by what mechanism is a cursor bound to the filter that produced it? A keyset cursor is a position in *a particular ordering of a particular set*, so a cursor issued under one filter and replayed under another names a row that may not be in the new set. `STORY-0409` wants such a cursor **refused rather than silently reinterpreted**, and nothing in the opaque `DuelCursor` carries the filter it was issued under. Blocks no ticket: all eleven land without it, and `TASK-040909` ships the weaker contract out loud — an `after` beside a filter is accepted and read as a position in the same `(finishedAt, duelId)` order | [`STORY-0409`](stories/STORY-0409-history-filters-and-search.md) | before the refusal is promised to a client |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1149,7 +1150,18 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040809](tasks/TASK-040809-one-row-more-than-the-page.md) One row more than the page, and the last page says there is no next | S | **done** |
 | | [TASK-040810](tasks/TASK-040810-over-http-against-the-database-every-duel-once.md) Over HTTP, against the database — every duel exactly once, and one player's cursor | S | **done** |
 | | [TASK-040811](tasks/TASK-040811-the-document-contracts-the-cursor.md) The document contracts the cursor and the paging rule, and a test agrees with the DTO | S | **done** |
-| [STORY-0409](stories/STORY-0409-history-filters-and-search.md) History filters and search | | | backlog |
+| [STORY-0409](stories/STORY-0409-history-filters-and-search.md) History filters and search | | | ready |
+| | [TASK-040901](tasks/TASK-040901-a-filter-is-two-axes-and-an-outcome-is-one-of-three-names.md) A filter is two axes, and an outcome is one of exactly three names | S | ready |
+| | [TASK-040902](tasks/TASK-040902-the-search-term-the-server-will-accept.md) The search term the server will accept, counted in code points | S | backlog |
+| | [TASK-040903](tasks/TASK-040903-the-read-takes-a-filter-and-an-outcome-is-a-sign.md) The read takes a filter, and an outcome is the sign of the stored delta | S | backlog |
+| | [TASK-040904](tasks/TASK-040904-the-search-is-a-substring-of-the-opponents-name.md) The search is a substring of the opponent's name, folded under the pinned collation | S | backlog |
+| | [TASK-040905](tasks/TASK-040905-the-search-term-is-not-a-language.md) The search term is not a language, and an unnamed opponent is not a match | XS | backlog |
+| | [TASK-040906](tasks/TASK-040906-paging-inside-a-filter-is-still-total-and-disjoint.md) Paging inside a filter is still total and disjoint, across an insert that matches it | S | backlog |
+| | [TASK-040907](tasks/TASK-040907-the-port-takes-the-filter-and-both-doubles-follow.md) The port's duel read takes the filter, and both doubles follow | XS | backlog |
+| | [TASK-040908](tasks/TASK-040908-two-parameters-become-one-filter-or-one-refusal.md) Two query parameters become one filter, or one refusal | XS | backlog |
+| | [TASK-040909](tasks/TASK-040909-the-endpoint-reads-the-filter-and-refuses-what-it-refuses.md) The endpoint reads the filter, and refuses what the parsers refuse | S | backlog |
+| | [TASK-040910](tasks/TASK-040910-over-http-against-the-database-a-filtered-page.md) Over HTTP, against the database — a filtered page is exactly the filtered rows | S | backlog |
+| | [TASK-040911](tasks/TASK-040911-the-document-contracts-both-filters-and-what-each-refuses.md) The document contracts both filters, and what each of them refuses | S | backlog |
 | [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | backlog |
 | [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
