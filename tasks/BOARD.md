@@ -1195,8 +1195,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041102](tasks/TASK-041102-the-reads-tests-build-through-the-fixture.md) The strip's read tests build through the fixture | S | **done** |
 | | [TASK-041103](tasks/TASK-041103-the-components-profiles-build-through-the-fixture.md) The component tests build their profiles through the fixture | XS | **done** |
 | | [TASK-041104](tasks/TASK-041104-the-profile-read-carries-the-name-and-the-removal.md) The profile read carries the name, and whether one was removed | S | **done** |
-| | [TASK-041105](tasks/TASK-041105-a-duel-line-carries-the-opponents-name-and-no-id.md) A duel line carries the opponent's name, and still not their id | S | ready |
-| | [TASK-041106](tasks/TASK-041106-one-put-sets-the-name-and-every-answer-is-its-own-outcome.md) One PUT sets the name, and every answer is its own outcome | S | backlog |
+| | [TASK-041105](tasks/TASK-041105-a-duel-line-carries-the-opponents-name-and-no-id.md) A duel line carries the opponent's name, and still not their id | S | **done** |
+| | [TASK-041106](tasks/TASK-041106-one-put-sets-the-name-and-every-answer-is-its-own-outcome.md) One PUT sets the name, and every answer is its own outcome | S | ready |
 | | [TASK-041107](tasks/TASK-041107-the-words-the-name-surface-says.md) The words the name surface says, and which of them leave a way back | S | backlog |
 | | [TASK-041108](tasks/TASK-041108-the-surface-shows-a-name-or-offers-to-set-one.md) The name surface shows the name, or offers to set one and says what that costs | S | backlog |
 | | [TASK-041109](tasks/TASK-041109-the-surface-says-a-name-was-removed-only-when-it-was.md) The surface says a name was removed, only to the player it happened to | XS | backlog |
