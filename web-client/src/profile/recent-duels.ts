@@ -7,14 +7,16 @@ export type DuelOutcomeWord = "WON" | "LOST" | "DREW";
 /**
  * One row of `GET /api/me/duels`.
  *
- * The wire carries `opponentPlayerId` and this type does not: no display name
- * exists yet (`ADR-0021`, `DEC-017`), so the only thing the client could print
- * is a raw identifier in front of a player. Dropping it here means no screen
- * can print it by accident.
+ * The wire carries `opponentPlayerId` and this type does not: the opponent's
+ * name is the label, and the id is not the client's business. Per `ADR-0021`,
+ * the id is the stable identity for correlation; this client correlates nothing,
+ * so dropping it at the parse is what keeps `profile-no-derivation.test.tsx`'s
+ * guard cheap to keep true.
  */
 export interface RecentDuel {
   readonly duelId: string;
   readonly outcome: DuelOutcomeWord;
+  readonly opponentDisplayName: string | null;
   readonly coinDelta: number;
   readonly handsPlayed: number;
   readonly finishedAt: string;
@@ -62,11 +64,15 @@ export async function readRecentDuels(deps: {
         const duels: RecentDuel[] = [];
 
         for (const row of duelsList) {
+          const opponentDisplayName = (row as Record<string, unknown>)
+            .opponentDisplayName;
           if (
             typeof row === "object" &&
             row !== null &&
             typeof (row as Record<string, unknown>).duelId === "string" &&
             typeof (row as Record<string, unknown>).outcome === "string" &&
+            (typeof opponentDisplayName === "string" ||
+              opponentDisplayName === null) &&
             typeof (row as Record<string, unknown>).coinDelta === "number" &&
             typeof (row as Record<string, unknown>).handsPlayed === "number" &&
             typeof (row as Record<string, unknown>).finishedAt === "string"
@@ -77,6 +83,7 @@ export async function readRecentDuels(deps: {
               const duel: RecentDuel = {
                 duelId: (row as Record<string, unknown>).duelId as string,
                 outcome: outcome as DuelOutcomeWord,
+                opponentDisplayName: opponentDisplayName as string | null,
                 coinDelta: (row as Record<string, unknown>).coinDelta as number,
                 handsPlayed: (row as Record<string, unknown>)
                   .handsPlayed as number,

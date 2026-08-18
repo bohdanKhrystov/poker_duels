@@ -104,7 +104,99 @@ describe("the recent duels read", () => {
     expect(calls[0]?.path).not.toContain("?");
   });
 
-  it("keeps every field a row carries except the opponent", async () => {
+  it("keeps every field a row carries except the opponent id", async () => {
+    const { fetch } = answering(
+      ok({
+        duels: [
+          {
+            duelId: "duel-1",
+            opponentPlayerId: "player-77",
+            opponentDisplayName: "Alice",
+            outcome: "WON",
+            coinDelta: 1,
+            handsPlayed: 9,
+            finishedAt: "2026-08-14T21:03:05Z",
+          },
+        ],
+      }),
+    );
+
+    const read = await readRecentDuels({
+      fetch,
+      storage: storageHolding("d-1"),
+    });
+
+    expect(read).toEqual({
+      kind: "duels",
+      duels: [
+        {
+          duelId: "duel-1",
+          opponentDisplayName: "Alice",
+          outcome: "WON",
+          coinDelta: 1,
+          handsPlayed: 9,
+          finishedAt: "2026-08-14T21:03:05Z",
+        },
+      ],
+    });
+    expect(JSON.stringify(read)).not.toContain("player-77");
+  });
+
+  it("carries a named opponent and a nameless one from the same body", async () => {
+    const { fetch } = answering(
+      ok({
+        duels: [
+          {
+            duelId: "d-1",
+            opponentPlayerId: "player-a",
+            opponentDisplayName: "Ada",
+            outcome: "WON",
+            coinDelta: 1,
+            handsPlayed: 5,
+            finishedAt: "2026-08-14T21:00:00Z",
+          },
+          {
+            duelId: "d-2",
+            opponentPlayerId: "player-b",
+            opponentDisplayName: null,
+            outcome: "LOST",
+            coinDelta: -1,
+            handsPlayed: 3,
+            finishedAt: "2026-08-14T20:00:00Z",
+          },
+        ],
+      }),
+    );
+
+    const read = await readRecentDuels({
+      fetch,
+      storage: storageHolding("d-1"),
+    });
+
+    expect(read).toEqual({
+      kind: "duels",
+      duels: [
+        {
+          duelId: "d-1",
+          opponentDisplayName: "Ada",
+          outcome: "WON",
+          coinDelta: 1,
+          handsPlayed: 5,
+          finishedAt: "2026-08-14T21:00:00Z",
+        },
+        {
+          duelId: "d-2",
+          opponentDisplayName: null,
+          outcome: "LOST",
+          coinDelta: -1,
+          handsPlayed: 3,
+          finishedAt: "2026-08-14T20:00:00Z",
+        },
+      ],
+    });
+  });
+
+  it("answers unavailable when a row says nothing about the opponent name", async () => {
     const { fetch } = answering(
       ok({
         duels: [
@@ -125,19 +217,7 @@ describe("the recent duels read", () => {
       storage: storageHolding("d-1"),
     });
 
-    expect(read).toEqual({
-      kind: "duels",
-      duels: [
-        {
-          duelId: "duel-1",
-          outcome: "WON",
-          coinDelta: 1,
-          handsPlayed: 9,
-          finishedAt: "2026-08-14T21:03:05Z",
-        },
-      ],
-    });
-    expect(JSON.stringify(read)).not.toContain("player-77");
+    expect(read).toEqual({ kind: "unavailable" });
   });
 
   it("answers an empty list for a player who has never duelled", async () => {
@@ -164,6 +244,7 @@ describe("the recent duels read", () => {
         duels: [
           {
             duelId: "duel-w",
+            opponentDisplayName: "Alice",
             outcome: "WON",
             coinDelta: 1,
             handsPlayed: 5,
@@ -171,6 +252,7 @@ describe("the recent duels read", () => {
           },
           {
             duelId: "duel-l",
+            opponentDisplayName: "Bob",
             outcome: "LOST",
             coinDelta: -1,
             handsPlayed: 3,
@@ -178,6 +260,7 @@ describe("the recent duels read", () => {
           },
           {
             duelId: "duel-d",
+            opponentDisplayName: "Charlie",
             outcome: "DREW",
             coinDelta: 0,
             handsPlayed: 7,
@@ -197,6 +280,7 @@ describe("the recent duels read", () => {
       duels: [
         {
           duelId: "duel-w",
+          opponentDisplayName: "Alice",
           outcome: "WON",
           coinDelta: 1,
           handsPlayed: 5,
@@ -204,6 +288,7 @@ describe("the recent duels read", () => {
         },
         {
           duelId: "duel-l",
+          opponentDisplayName: "Bob",
           outcome: "LOST",
           coinDelta: -1,
           handsPlayed: 3,
@@ -211,6 +296,7 @@ describe("the recent duels read", () => {
         },
         {
           duelId: "duel-d",
+          opponentDisplayName: "Charlie",
           outcome: "DREW",
           coinDelta: 0,
           handsPlayed: 7,
@@ -226,6 +312,7 @@ describe("the recent duels read", () => {
         duels: [
           {
             duelId: "duel-1",
+            opponentDisplayName: "Alice",
             outcome: "WON",
             coinDelta: 1,
             handsPlayed: 5,
@@ -233,6 +320,7 @@ describe("the recent duels read", () => {
           },
           {
             duelId: "duel-2",
+            opponentDisplayName: "Bob",
             outcome: "LOST",
             coinDelta: -1,
             handsPlayed: 3,
@@ -240,6 +328,7 @@ describe("the recent duels read", () => {
           },
           {
             duelId: "duel-3",
+            opponentDisplayName: "Charlie",
             outcome: "DREW",
             coinDelta: 0,
             handsPlayed: 7,
@@ -247,6 +336,7 @@ describe("the recent duels read", () => {
           },
           {
             duelId: "duel-discordant-won",
+            opponentDisplayName: "Dana",
             outcome: "WON",
             coinDelta: 0,
             handsPlayed: 4,
@@ -254,6 +344,7 @@ describe("the recent duels read", () => {
           },
           {
             duelId: "duel-discordant-drew",
+            opponentDisplayName: "Eve",
             outcome: "DREW",
             coinDelta: 1,
             handsPlayed: 6,
@@ -273,6 +364,7 @@ describe("the recent duels read", () => {
       duels: [
         {
           duelId: "duel-1",
+          opponentDisplayName: "Alice",
           outcome: "WON",
           coinDelta: 1,
           handsPlayed: 5,
@@ -280,6 +372,7 @@ describe("the recent duels read", () => {
         },
         {
           duelId: "duel-2",
+          opponentDisplayName: "Bob",
           outcome: "LOST",
           coinDelta: -1,
           handsPlayed: 3,
@@ -287,6 +380,7 @@ describe("the recent duels read", () => {
         },
         {
           duelId: "duel-3",
+          opponentDisplayName: "Charlie",
           outcome: "DREW",
           coinDelta: 0,
           handsPlayed: 7,
@@ -294,6 +388,7 @@ describe("the recent duels read", () => {
         },
         {
           duelId: "duel-discordant-won",
+          opponentDisplayName: "Dana",
           outcome: "WON",
           coinDelta: 0,
           handsPlayed: 4,
@@ -301,6 +396,7 @@ describe("the recent duels read", () => {
         },
         {
           duelId: "duel-discordant-drew",
+          opponentDisplayName: "Eve",
           outcome: "DREW",
           coinDelta: 1,
           handsPlayed: 6,
