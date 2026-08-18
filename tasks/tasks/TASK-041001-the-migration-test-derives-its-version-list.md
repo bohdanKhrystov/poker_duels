@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041001
 title: The migration test derives its version list from the migrations it applies
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: XS

@@ -1166,8 +1166,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040910](tasks/TASK-040910-over-http-against-the-database-a-filtered-page.md) Over HTTP, against the database — a filtered page is exactly the filtered rows | S | **done** |
 | | [TASK-040911](tasks/TASK-040911-the-document-contracts-both-filters-and-what-each-refuses.md) The document contracts both filters, and what each of them refuses | S | **done** |
 | [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | ready |
-| | [TASK-041001](tasks/TASK-041001-the-migration-test-derives-its-version-list.md) The migration test derives its version list from the migrations it applies | XS | ready |
-| | [TASK-041002](tasks/TASK-041002-the-name-registry-its-guards-and-the-takedown.md) The fifth migration creates the name registry, its guards and the takedown function | S | backlog |
+| | [TASK-041001](tasks/TASK-041001-the-migration-test-derives-its-version-list.md) The migration test derives its version list from the migrations it applies | XS | **done** |
+| | [TASK-041002](tasks/TASK-041002-the-name-registry-its-guards-and-the-takedown.md) The fifth migration creates the name registry, its guards and the takedown function | S | ready |
 | | [TASK-041003](tasks/TASK-041003-a-name-is-registered-before-it-is-held.md) Setting a name registers it first, and a refused claim rolls the whole transaction back | S | backlog |
 | | [TASK-041004](tasks/TASK-041004-three-fixtures-register-the-name-they-hand-a-player.md) Three fixtures register the name they hand a player | S | backlog |
 | | [TASK-041005](tasks/TASK-041005-the-uniqueness-fixtures-register-every-name.md) The uniqueness fixtures register every name, and the fold refuses before the index does | S | backlog |
