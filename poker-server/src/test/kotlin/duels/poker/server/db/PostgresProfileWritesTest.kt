@@ -132,7 +132,7 @@ class PostgresProfileWritesTest {
 
             val result = profileWrites.setDisplayName(player.id, "bob")
 
-            assertEquals(SetNameResult.AlreadyNamed, result)
+            assertEquals(SetNameResult.NameTaken, result)
             assertEquals("Bob", storedDisplayNameOf(player.id))
         }
     }
@@ -313,6 +313,13 @@ class PostgresProfileWritesTest {
 
     private fun setPlayerDisplayName(playerId: PlayerId, displayName: String?) {
         dataSource.connection.use { connection ->
+            if (displayName != null) {
+                val registerName = "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')"
+                connection.prepareStatement(registerName).use { statement ->
+                    statement.setString(1, displayName)
+                    statement.executeUpdate()
+                }
+            }
             connection.prepareStatement("UPDATE player SET display_name = ? WHERE id = ?").use { statement ->
                 if (displayName == null) {
                     statement.setNull(1, Types.VARCHAR)
