@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041010
 title: The sixth migration makes a display name a registered name or nothing
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
@@ -78,7 +78,7 @@ Fixture: `PostgresTestSupport.freshDatabase()` + `Migrations.migrate`, then
 | --- | --- |
 | `anUnregisteredNameCannotBeHeld` | `UPDATE player SET display_name = 'Ghost'` with no registry row raises `23503` and the message contains `player_display_name_registered`. This is the guarantee |
 | `aRegisteredNameCanBeHeld` | The same `UPDATE`, after `INSERT INTO name_registry ('Ghost', 'TAKEN')`, sets the name and it reads back as `"Ghost"`. **Without this, the test above passes against a database in which every write fails** — and that is the one wrong implementation a foreign-key test cannot otherwise tell apart |
-| `aBlockedNameIsNotHoldableEither` | A row registered as `('Slur', 'BLOCKED')` satisfies the key by string, so this test asserts the **opposite** of a guess: the `UPDATE` **succeeds** at the schema level, because the key constrains the string and not the reason. Screening is the write path's (`ADR-0051` §2, `TASK-041016`), and this test exists so nobody later "fixes" the key into something that also encodes policy |
+| `aBlockedNameIsHoldableAtTheSchemaLevel` | A row registered as `('Slur', 'BLOCKED')` satisfies the key by string, so this test asserts the **opposite** of a guess: the `UPDATE` **succeeds** at the schema level, because the key constrains the string and not the reason. Screening is the write path's (`ADR-0051` §2, `TASK-041016`), and this test exists so nobody later "fixes" the key into something that also encodes policy |
 | `theKeyTakesNoActionOnDelete` | `SELECT confdeltype FROM pg_constraint WHERE conname = 'player_display_name_registered'` is `'a'`. `'c'` (cascade), `'n'` (set null) and `'d'` (set default) each silently rewrite a player's name from a `DELETE` somebody runs in `psql`; `ADR-0039` says a deletion feature must state what it does, and `'a'` is what forces that |
 
 ## Acceptance criteria
@@ -86,7 +86,7 @@ Fixture: `PostgresTestSupport.freshDatabase()` + `Migrations.migrate`, then
 - [ ] `PlayerNameIsRegisteredTest.anUnregisteredNameCannotBeHeld` passes and asserts both `23503` and
       the constraint name
 - [ ] `PlayerNameIsRegisteredTest.aRegisteredNameCanBeHeld` passes and reads the stored name back
-- [ ] `PlayerNameIsRegisteredTest.aBlockedNameIsNotHoldableEither` passes, asserting that the schema
+- [ ] `PlayerNameIsRegisteredTest.aBlockedNameIsHoldableAtTheSchemaLevel` passes, asserting that the schema
       permits it
 - [ ] `PlayerNameIsRegisteredTest.theKeyTakesNoActionOnDelete` passes, asserting `confdeltype = 'a'`
 - [ ] `V6__player_display_name_registered.sql` contains exactly one statement and no `ON DELETE`,
