@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041113
 title: The lobby shows the name surface, and the duel table never does
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: XS

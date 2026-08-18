@@ -1203,8 +1203,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041110](tasks/TASK-041110-the-surface-sends-once-and-shows-what-came-back.md) The surface sends once, and shows the name that came back | S | **done** |
 | | [TASK-041111](tasks/TASK-041111-each-refusal-says-its-own-sentence.md) Each refusal says its own sentence, and only two leave the form | S | **done** |
 | | [TASK-041112](tasks/TASK-041112-the-write-reaches-the-tree-the-read-already-does.md) The write reaches the tree the same way the read already does | XS | **done** |
-| | [TASK-041113](tasks/TASK-041113-the-lobby-shows-the-name-surface-and-the-table-does-not.md) The lobby shows the name surface, and the duel table never does | XS | ready |
-| | [TASK-041114](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) The word for a player who has no name | XS | backlog |
+| | [TASK-041113](tasks/TASK-041113-the-lobby-shows-the-name-surface-and-the-table-does-not.md) The lobby shows the name surface, and the duel table never does | XS | **done** |
+| | [TASK-041114](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) The word for a player who has no name | XS | ready |
 | | [TASK-041115](tasks/TASK-041115-the-strip-prints-the-players-own-name.md) The strip prints the player's own name, or what stands for none | XS | backlog |
 | | [TASK-041116](tasks/TASK-041116-a-duel-line-names-the-opponent.md) A duel line names the opponent it was played against | XS | backlog |
 | | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | backlog |
