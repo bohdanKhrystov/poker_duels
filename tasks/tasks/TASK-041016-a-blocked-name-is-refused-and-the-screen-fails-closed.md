@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041016
 title: A blocked name is refused when it is set, and the screen fails closed
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
@@ -74,10 +74,10 @@ the three reasons refuses on its own.
 | Test | Proves |
 | --- | --- |
 | `aBlockedNameIsRefused` | With `('Slur', 'BLOCKED')` in the registry, `setDisplayName(alice, "Slur")` answers `NameTaken` and alice is still nameless |
-| `aBlockedNameIsRefusedInAnotherCase` | The same with `"slur"`. The blocklist is consulted through `name_registry_folded`, which is `ADR-0029` §1's ICU fold — **the wrong implementation this must fail against** is any screen that folds in the JVM, which disagrees with the index on exactly the confusable strings a blocklist is for. It is also the story's own criterion |
+| `aBlockedNameIsRefusedInAnotherCase` | The same with `"slur"` — the blocklist is consulted through the same `name_registry_folded` index as every other name, not by a separate screen. **What it does not prove**: that the fold is ICU's rather than the JVM's. `"Slur"`/`"slur"` are ASCII and fold identically under both, so a JVM-side screen would pass this too. What actually rules one out is that no such screen exists — no Kotlin code lowercases or compares the name (see `TASK-041015`); the refusal is `23505` from the index |
 | `blockingIsRefusedForANameInUse` | Alice holds `"Ann"`; inserting `('Ann', 'BLOCKED')` raises `23505` and the row for `"Ann"` is still `TAKEN`. `ADR-0051` §5: the schema *"refuses to express a third, quieter state in which a player keeps displaying a name the operator has decided is unacceptable"* |
 | `aNameAlreadyHeldIsNotRescreened` | Alice holds `"Ann"`; `('Anne', 'BLOCKED')` is added; alice still holds `"Ann"` and reading her profile still returns it. A deliberately mundane test that fails the day somebody adds a re-screening job |
-| `aRegistryThatCannotBeReachedRefusesTheName` | After the `ALTER TABLE … RENAME`, `setDisplayName(alice, "Fresh")` throws rather than returning a result, and alice's `display_name` is still `NULL`. **Fails against** a write path with a `catch (SQLException)` that falls through to the old single `UPDATE`, which is the fail-open implementation `ADR-0038` names |
+| `aRegistryThatCannotBeReachedRefusesTheName` | After the `ALTER TABLE … RENAME`, `setDisplayName(alice, "Fresh")` throws rather than returning a result, and alice's `display_name` is still `NULL`. The system fails closed. **What it does not prove**: *which* mechanism closes it. Measured against the fail-open mutant — a `catch (SQLException)` falling through to a bare `UPDATE` — this test still passes, because `player_display_name_registered` refuses that `UPDATE` with `23503`: `"Fresh"` is in no registry. Two mechanisms fail closed independently and this test cannot separate them. `TASK-041024` isolates the Kotlin half |
 | `eachOfTheThreeReasonsRefusesOnItsOwn` | In **one** database: `"Held"` is `TAKEN` (bob set it), `"Barred"` is `BLOCKED` (inserted), `"Gone"` is `RETIRED` (carol set it, an operator retired it). Three further players claim one each and all three get `NameTaken`; a fourth claims `"Free"` and gets `NameSet`. This is the story's *"the three sources of truth are each shown to refuse independently"*, and the fourth claim is what stops it passing against a write path that refuses everything |
 
 `eachOfTheThreeReasonsRefusesOnItsOwn` uses a distinct claimant per string so that no refusal can be

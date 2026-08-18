@@ -1181,14 +1181,15 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041013](tasks/TASK-041013-the-permanence-trigger-has-exactly-one-exception.md) The permanence trigger has exactly one exception, and it is a transition | S | **done** |
 | | [TASK-041014](tasks/TASK-041014-a-takedown-moves-no-coin.md) A takedown moves no coin | XS | **done** |
 | | [TASK-041015](tasks/TASK-041015-a-retired-name-is-spent-for-everybody.md) A retired name is spent for everybody, including the player it was taken from | S | **done** |
-| | [TASK-041016](tasks/TASK-041016-a-blocked-name-is-refused-and-the-screen-fails-closed.md) A blocked name is refused when it is set, and the screen fails closed | S | ready |
-| | [TASK-041017](tasks/TASK-041017-the-port-test-builds-its-profile-through-the-builder.md) The port test builds its profile through the shared builder | XS | backlog |
+| | [TASK-041016](tasks/TASK-041016-a-blocked-name-is-refused-and-the-screen-fails-closed.md) A blocked name is refused when it is set, and the screen fails closed | S | **done** |
+| | [TASK-041017](tasks/TASK-041017-the-port-test-builds-its-profile-through-the-builder.md) The port test builds its profile through the shared builder | XS | ready |
 | | [TASK-041018](tasks/TASK-041018-the-profile-says-the-name-was-removed.md) The profile says the name was removed, from one correlated EXISTS | S | backlog |
 | | [TASK-041019](tasks/TASK-041019-two-players-in-one-database.md) Two players in one database, and only one of them reads true | S | backlog |
 | | [TASK-041020](tasks/TASK-041020-a-takedown-is-invisible-to-everybody-else.md) A takedown is invisible to everybody else, and its two strings live where they should | S | backlog |
 | | [TASK-041021](tasks/TASK-041021-the-document-contracts-the-removed-name.md) The protocol document contracts the removed-name field | XS | backlog |
 | | [TASK-041022](tasks/TASK-041022-the-operations-document-is-the-only-call-site.md) docs/operations.md is the takedown's only call site | S | backlog |
 | | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | backlog |
+| | [TASK-041024](tasks/TASK-041024-the-kotlin-half-of-fail-closed-is-isolated.md) The Kotlin half of fail-closed is isolated | XS | backlog |
 | [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
