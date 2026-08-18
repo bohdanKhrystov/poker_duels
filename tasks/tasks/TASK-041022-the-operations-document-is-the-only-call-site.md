@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041022
 title: docs/operations.md is the takedown's only call site
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
