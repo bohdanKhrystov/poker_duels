@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041011
 title: A registered name is never released, and the only change it may take is TAKEN to RETIRED
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
@@ -61,18 +61,19 @@ to the pool.
 
 ## Tests
 
-`NameRegistryMonotonicityTest`, `-PrequireDocker=true`. Six tests. The three refusals and the three
+`NameRegistryMonotonicityTest`, `-PrequireDocker=true`. Seven tests. The five refusals and the two
 permissions are both required: without the permissions, a trigger that raised on everything would
-pass three tests and break the product.
+pass five tests and break the product.
 
 | Test | Proves |
 | --- | --- |
 | `aTakenNameCannotBeDeleted` | `DELETE FROM name_registry WHERE name = 'Ann'` on a `TAKEN` row raises `23001`, and the row is still there afterwards. This is *retired forever*'s foundation: a name in use cannot be quietly freed |
 | `aRetiredNameCannotBeDeleted` | The same for a row promoted to `RETIRED`. **The wrong implementation this must fail against**: a trigger whose `DELETE` branch tests `OLD.reason = 'TAKEN'` instead of `OLD.reason <> 'BLOCKED'` — it passes the test above and returns every retired string to the pool |
 | `aBlockedNameCanBeDeleted` | `DELETE` of a `('Slur', 'BLOCKED')` row succeeds and the row is gone. `ADR-0051` §5: *"a curated list must be correctable"*. Without this, a trigger that refused every `DELETE` would leave the two tests above green |
-| `takenBecomesRetiredAndNothingElseChanges` | `UPDATE name_registry SET reason = 'RETIRED', retired_from = <player> WHERE name = 'Ann'` succeeds, and the row afterwards has `reason = 'RETIRED'`, that `retired_from`, and the same `name` and `created_at` |
+| `takenBecomesRetiredAndTheNameAndCreatedAtAreUntouched` | `UPDATE name_registry SET reason = 'RETIRED', retired_from = <player> WHERE name = 'Ann'` succeeds, and the row afterwards has `reason = 'RETIRED'`, that `retired_from`, and the same `name` and `created_at`. **This is not a guarantee the schema makes.** The trigger never references `created_at` or `retired_from`; an `UPDATE` that also set `created_at` succeeds and rewrites it. The test asserts what *this* statement leaves alone |
 | `retiredCannotGoBackToTaken` | `UPDATE ... SET reason = 'TAKEN'` on a `RETIRED` row raises `23001`. Un-retiring is `ADR-0051` §9's *"no un-retire, no release"* |
-| `aRegisteredNameCannotBeRewritten` | `UPDATE name_registry SET name = 'Anne' WHERE name = 'Ann'` raises `23001` even when the new string is free. **Fails against** a trigger that checks only `reason`, which is the most likely simplification and would let an operator rename a spent string into an unspent one |
+| `aRegisteredNameCannotBeRewritten` | `UPDATE name_registry SET name = 'Anne' WHERE name = 'Ann'` raises `23001` even when the new string is free. **What it does not prove**: this statement leaves `reason` at `'TAKEN'`, so it is also refused by a trigger that dropped the `NEW.name <> OLD.name` guard entirely — the surviving `NEW.reason <> 'RETIRED'` clause catches it. The rename guard is pinned by the next test, not this one |
+| `aRenameSmuggledIntoARetirementIsRefused` | `UPDATE name_registry SET name = 'Anne', reason = 'RETIRED' WHERE name = 'Ann'` on a `TAKEN` row raises `23001`. This is the statement that separates the real trigger from one checking only `reason`: the retirement half is permitted, so **only** the `NEW.name <> OLD.name` guard can refuse it. Without this test an operator could rename a spent string into an unspent one by retiring it in the same statement |
 
 Each refusal test asserts the row's state **after** the refusal — same `name`, same `reason` — not
 only that an exception was thrown. An exception thrown after a partial write is still a defect.
@@ -82,9 +83,10 @@ only that an exception was thrown. An exception thrown after a partial write is 
 - [ ] `NameRegistryMonotonicityTest.aTakenNameCannotBeDeleted` passes
 - [ ] `NameRegistryMonotonicityTest.aRetiredNameCannotBeDeleted` passes
 - [ ] `NameRegistryMonotonicityTest.aBlockedNameCanBeDeleted` passes
-- [ ] `NameRegistryMonotonicityTest.takenBecomesRetiredAndNothingElseChanges` passes
+- [ ] `NameRegistryMonotonicityTest.takenBecomesRetiredAndTheNameAndCreatedAtAreUntouched` passes
 - [ ] `NameRegistryMonotonicityTest.retiredCannotGoBackToTaken` passes
 - [ ] `NameRegistryMonotonicityTest.aRegisteredNameCannotBeRewritten` passes
+- [ ] `NameRegistryMonotonicityTest.aRenameSmuggledIntoARetirementIsRefused` passes, and fails against a trigger whose `UPDATE` branch drops the `NEW.name <> OLD.name` guard
 - [ ] Every refusal test asserts `sqlState == "23001"` and asserts the row is unchanged afterwards
 - [ ] No test in the file matches on an exception message
 - [ ] No file outside this ticket is modified
