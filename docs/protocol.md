@@ -137,6 +137,7 @@ A name that the player typed as, for example, `  Alice  ` becomes `Alice` (9 cod
 **Query parameters:**
 
 - `limit` (optional): The maximum number of recent duels to return, defaults to `10`, capped at `50`. Non-numeric, zero, or negative values are rejected with `400 Bad Request`.
+- `after` (optional): An opaque cursor to retrieve the next page of results. The exact string a previous response returned in `nextCursor`, echoed back unchanged. Absent means the newest page. A value that does not decode is `400 Bad Request` and nothing is read. A client never constructs one — `ADR-0002`, the server is authoritative.
 
 **Authentication:** The `X-Device-Id` header (same as above). Identity is verified **before** the `limit` parameter is parsed — an unauthenticated request answers `401` even if the limit is invalid. This prevents a bad limit from revealing whether a device id is valid.
 
@@ -145,6 +146,9 @@ A name that the player typed as, for example, `  Alice  ` becomes `Alice` (9 cod
 | Field | Type | Semantics |
 | --- | --- | --- |
 | duels | array | List of recent duel summaries. Empty array if the player has no duels (not `404`). |
+| nextCursor | string or null | The cursor to send as `after` for the next page, and `null` on the last page. Always present. |
+
+**Paging:** Pages are total and disjoint — every duel appears exactly once, with no gap and no duplicate, even when a duel finishes between two requests. Results are ordered by `finishedAt` then `duelId`, both descending.
 
 Each duel summary in the array contains:
 
