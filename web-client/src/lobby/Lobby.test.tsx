@@ -519,7 +519,8 @@ describe("the lobby", () => {
     renderLobbyWithProfile(state);
 
     await screen.findByLabelText("your profile");
-    await screen.findByText("TestPlayer");
+    // TestPlayer now appears in both ProfileStrip and NameSurface
+    await screen.findAllByText("TestPlayer");
     // The lobby mounts with SetNameProvider, so NameSurface will render.
     // Verify NameSurface does not add any heading elements
     const headings = screen.queryAllByRole("heading");

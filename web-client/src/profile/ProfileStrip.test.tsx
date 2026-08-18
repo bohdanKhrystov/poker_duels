@@ -156,4 +156,70 @@ describe("the profile strip", () => {
     });
     expect(outcomes).toEqual(["Drew", "Won", "Lost"]);
   });
+
+  it("names the player, and stands in for a player with no name, in one render", () => {
+    const { rerender } = render(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: aProfile({ displayName: "Ada", coinBalance: 5 }),
+          duels: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Ada")).toBeDefined();
+    expect(screen.queryByText("No name")).toBeNull();
+
+    rerender(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: aProfile({ displayName: null, coinBalance: 5 }),
+          duels: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("No name")).toBeDefined();
+    expect(screen.queryByText("Ada")).toBeNull();
+  });
+
+  it("says nothing different about a name that was removed", () => {
+    const { container: containerRemoved } = render(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: aProfile({
+            displayName: null,
+            displayNameRemoved: true,
+            coinBalance: 5,
+          }),
+          duels: [],
+        }}
+      />,
+    );
+
+    const removedMarkup = containerRemoved.innerHTML;
+
+    cleanup();
+
+    const { container: containerNotRemoved } = render(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: aProfile({
+            displayName: null,
+            displayNameRemoved: false,
+            coinBalance: 5,
+          }),
+          duels: [],
+        }}
+      />,
+    );
+
+    const notRemovedMarkup = containerNotRemoved.innerHTML;
+
+    expect(removedMarkup).toBe(notRemovedMarkup);
+  });
 });
