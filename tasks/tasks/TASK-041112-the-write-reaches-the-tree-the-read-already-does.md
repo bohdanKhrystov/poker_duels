@@ -50,7 +50,9 @@ export function useSetName(): ((name: string) => Promise<SetNameOutcome>) | null
 - **A provider of its own, not a second prop on `ProfileProvider`.** A required prop there would
   break three merged test files at `tsc` for no gain, and an optional one is how a wiring bug hides.
 - `useSetName()` answers `null` where no provider is above it, exactly as `useProfileStrip()` does.
-  Every merged test that renders the lobby without this provider keeps passing, and the lobby's rule
+  **Measured, that reason is weaker than it reads**: making the hook throw breaks exactly one test —
+  the one asserting `null`. No lobby test calls `useSetName()` at all today, so throwing would not
+  disturb them either. The real reason is forward-looking, and the lobby's rule
   in `TASK-041113` is *no function, no surface*.
 - `main.tsx` builds the binding at **module scope**, beside `readProfile`, for the same reason: a
   reference that changed on every render would be a new function on every render.
