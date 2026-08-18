@@ -205,7 +205,23 @@ without adding a story.
 
 ## Open decisions
 
-**None.** Every decision this epic has raised is answered.
+| ID | Question | Where | Due |
+| --- | --- | --- | --- |
+| `DEC-051` | **The product owner's** — what does the client print where a display name would be, for a player who has none: their own profile strip, and an opponent on a duel line? | [`TASK-041114`](../tasks/TASK-041114-the-word-for-a-player-with-no-name.md) | before `TASK-041114` |
+
+`DEC-051` was raised on 2026-08-18 when `STORY-0411` was split. It blocks **one** ticket and the
+three behind it; the first thirteen are startable, so the story begins without it.
+[`ADR-0029`](../../docs/adr/ADR-0029-a-display-name-is-unique-and-permanent.md) §6 hands the
+treatment for a `null` name to the client and forbids only a server-minted placeholder;
+[`ADR-0052`](../../docs/adr/ADR-0052-a-takedown-is-told-to-the-player-it-happened-to.md) §5 then
+makes it load-bearing, because every duel line belonging to a player whose name was **removed**
+renders that same treatment on strangers' screens, byte-identical to a player who never set one.
+Neither ADR picks a word and `EPIC-06` has authored no screen for it, so a word chosen inside a
+ticket is one `STORY-0413` and `EPIC-05` would inherit without anybody deciding it. Everything else
+`STORY-0411` says out loud is already settled: `ADR-0052` §2 ships the removal notice verbatim and
+§7 ships both the `409` sentence and the permanence line.
+
+Every other decision this epic has raised is answered.
 
 `DEC-050` — raised on 2026-08-18 when `STORY-0409` was split, blocking **one** acceptance criterion
 of that story and no ticket — was answered the same day by
