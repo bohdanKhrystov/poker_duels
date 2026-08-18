@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { ProfileStrip } from "./ProfileStrip";
+import { aProfile, aDuelLine } from "./profile-fixture";
 
 describe("the profile strip", () => {
   it("states the balance the server sent", () => {
@@ -8,7 +9,7 @@ describe("the profile strip", () => {
       <ProfileStrip
         state={{
           kind: "profile",
-          profile: { playerId: "p1", coinBalance: 7 },
+          profile: aProfile({ coinBalance: 7 }),
           duels: [],
         }}
       />,
@@ -22,7 +23,7 @@ describe("the profile strip", () => {
       <ProfileStrip
         state={{
           kind: "profile",
-          profile: { playerId: "p2", coinBalance: -1 },
+          profile: aProfile({ coinBalance: -1 }),
           duels: [],
         }}
       />,
@@ -54,22 +55,20 @@ describe("the profile strip", () => {
       <ProfileStrip
         state={{
           kind: "profile",
-          profile: { playerId: "p1", coinBalance: 5 },
+          profile: aProfile(),
           duels: [
-            {
-              duelId: "d1",
-              outcome: "WON",
-              coinDelta: 1,
+            aDuelLine({
+              duelId: "duel-1", // distinctness: two rows, two keys
               handsPlayed: 1,
               finishedAt: "2026-01-15T10:30:00Z",
-            },
-            {
-              duelId: "d2",
+            }),
+            aDuelLine({
+              duelId: "duel-2", // distinctness: two rows, two keys
               outcome: "LOST",
               coinDelta: -1,
               handsPlayed: 9,
               finishedAt: "2025-12-20T14:45:00Z",
-            },
+            }),
           ],
         }}
       />,
@@ -96,7 +95,7 @@ describe("the profile strip", () => {
       <ProfileStrip
         state={{
           kind: "profile",
-          profile: { playerId: "p1", coinBalance: 5 },
+          profile: aProfile(),
           duels: [],
         }}
       />,
@@ -111,29 +110,27 @@ describe("the profile strip", () => {
       <ProfileStrip
         state={{
           kind: "profile",
-          profile: { playerId: "p1", coinBalance: 5 },
+          profile: aProfile(),
           duels: [
-            {
-              duelId: "duel-b",
+            aDuelLine({
+              duelId: "duel-b", // distinctness: three rows, three keys
               outcome: "DREW",
               coinDelta: 0,
               handsPlayed: 12,
               finishedAt: "2026-03-02T09:00:00Z",
-            },
-            {
-              duelId: "duel-a",
-              outcome: "WON",
-              coinDelta: 1,
+            }),
+            aDuelLine({
+              duelId: "duel-a", // distinctness: three rows, three keys
               handsPlayed: 41,
               finishedAt: "2026-05-14T18:20:00Z",
-            },
-            {
-              duelId: "duel-c",
+            }),
+            aDuelLine({
+              duelId: "duel-c", // distinctness: three rows, three keys
               outcome: "LOST",
               coinDelta: -1,
               handsPlayed: 7,
               finishedAt: "2026-01-09T22:05:00Z",
-            },
+            }),
           ],
         }}
       />,

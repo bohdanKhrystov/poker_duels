@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041103
 title: The component tests build their profiles through the fixture
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: XS
@@ -42,6 +42,11 @@ Read, not edited: `web-client/src/profile/profile-fixture.ts`.
   `ProfileStripState` literals, so a required field added to `PlayerProfile` stops the build. Ten
   errors in `ProfileStrip.test.tsx`, two in `Lobby.test.tsx`, one in `profile-provider.test.tsx` —
   counted by adding the field and running `npm run typecheck`, not estimated.
+
+  **Corrected during the work.** Run for real, the counts are **five**, two and one — eight in
+  total, not thirteen. The `Lobby` and `provider` figures were right; `ProfileStrip.test.tsx` has
+  five typed profile literals and produces five errors, not ten. Recorded because *"counted, not
+  estimated"* is the phrase that invites a reader to trust the number.
 - Each call names only what its test asserts: the balance tests pass `coinBalance`, the duel-line
   tests pass the `duelId`s and the fields they read back (`outcome`, `coinDelta`, `handsPlayed`,
   `finishedAt`), and nothing passes a `playerId`, because nothing renders one.

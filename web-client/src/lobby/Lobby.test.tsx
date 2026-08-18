@@ -12,6 +12,7 @@ import { createDuelStore, type DuelStore } from "../store/duel-store";
 import { ProfileProvider } from "../profile/profile-provider";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { SeatView, ServerMessage } from "../protocol";
+import { aProfile } from "../profile/profile-fixture";
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
 
@@ -435,10 +436,7 @@ describe("the lobby", () => {
   it("shows the profile strip under the way into a duel", async () => {
     const state: ProfileStripState = {
       kind: "profile",
-      profile: {
-        playerId: "p-1",
-        coinBalance: 3,
-      },
+      profile: aProfile({ coinBalance: 3 }),
       duels: [],
     };
     renderLobbyWithProfile(state);
@@ -453,10 +451,7 @@ describe("the lobby", () => {
   it("keeps the strip off the screen once a table is on it", () => {
     const state: ProfileStripState = {
       kind: "profile",
-      profile: {
-        playerId: "p-1",
-        coinBalance: 3,
-      },
+      profile: aProfile(),
       duels: [],
     };
     const store = createDuelStore();
