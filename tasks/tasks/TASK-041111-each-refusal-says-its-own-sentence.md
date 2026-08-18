@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041111
 title: Each refusal says its own sentence, and only two leave the form
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: S
@@ -49,6 +49,13 @@ Read, not edited: `web-client/src/profile/name-text.ts` (`refusalSentence`, `may
   something the player just did, on the screen they are looking at.
 - No sentence is composed here. Every string comes from `name-text.ts`, whose test holds the golden
   copies.
+
+
+**Carried from `TASK-041110`.** That ticket forbids client-side validation of the typed string — an
+empty field may be submitted and the server answers `400` — but nothing pins it: measured, adding a
+client-side empty-name guard there breaks no test, because no test submits an empty name. This
+ticket owns the `400` path, so **submit an empty field and assert the `400` sentence reaches the
+screen**. That is what makes the no-validation rule fail loudly instead of silently.
 
 ## Out of scope
 
