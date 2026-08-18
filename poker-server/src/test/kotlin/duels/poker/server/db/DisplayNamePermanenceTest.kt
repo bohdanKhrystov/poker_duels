@@ -39,7 +39,7 @@ class DisplayNamePermanenceTest {
         val playerId = insertPlayerWithName("bob")
 
         val exception = assertFailsWith<SQLException> {
-            updatePlayerName(playerId, "robert")
+            forceWriteName(playerId, "robert")
         }
 
         assertEquals("23001", exception.sqlState)
@@ -63,7 +63,7 @@ class DisplayNamePermanenceTest {
         val playerId = insertPlayerWithName("Bob")
 
         val exception = assertFailsWith<SQLException> {
-            updatePlayerName(playerId, "bob")
+            forceWriteName(playerId, "bob")
         }
 
         assertEquals("23001", exception.sqlState)
@@ -74,7 +74,7 @@ class DisplayNamePermanenceTest {
     fun writingTheIdenticalNameChangesNothing() {
         val playerId = insertPlayerWithName("bob")
 
-        updatePlayerName(playerId, "bob")
+        forceWriteName(playerId, "bob")
 
         assertEquals("bob", readDisplayName(playerId))
     }
@@ -119,6 +119,12 @@ class DisplayNamePermanenceTest {
         val deviceId = "device-${UUID.randomUUID()}"
         dataSource.connection.use { connection ->
             connection.prepareStatement(
+                "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.executeUpdate()
+            }
+            connection.prepareStatement(
                 "INSERT INTO player (id, device_id, coin_balance, display_name) VALUES (?, ?, ?, ?)",
             ).use { statement ->
                 statement.setObject(1, playerId)
@@ -148,6 +154,25 @@ class DisplayNamePermanenceTest {
     }
 
     private fun updatePlayerName(playerId: UUID, displayName: String) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.executeUpdate()
+            }
+            connection.prepareStatement(
+                "UPDATE player SET display_name = ? WHERE id = ?",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.setObject(2, playerId)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    /** Writes display_name without registering it: for the three writes the trigger must refuse. */
+    private fun forceWriteName(playerId: UUID, displayName: String) {
         dataSource.connection.use { connection ->
             connection.prepareStatement(
                 "UPDATE player SET display_name = ? WHERE id = ?",

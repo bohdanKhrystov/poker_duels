@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041006
 title: The permanence fixtures register only the names that must land
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
