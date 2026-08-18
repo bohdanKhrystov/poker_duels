@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041016
 title: A blocked name is refused when it is set, and the screen fails closed
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: S
