@@ -58,10 +58,12 @@ describe("the profile strip", () => {
           profile: aProfile(),
           duels: [
             aDuelLine({
+              duelId: "duel-1", // distinctness: two rows, two keys
               handsPlayed: 1,
               finishedAt: "2026-01-15T10:30:00Z",
             }),
             aDuelLine({
+              duelId: "duel-2", // distinctness: two rows, two keys
               outcome: "LOST",
               coinDelta: -1,
               handsPlayed: 9,
@@ -111,16 +113,19 @@ describe("the profile strip", () => {
           profile: aProfile(),
           duels: [
             aDuelLine({
+              duelId: "duel-b", // distinctness: three rows, three keys
               outcome: "DREW",
               coinDelta: 0,
               handsPlayed: 12,
               finishedAt: "2026-03-02T09:00:00Z",
             }),
             aDuelLine({
+              duelId: "duel-a", // distinctness: three rows, three keys
               handsPlayed: 41,
               finishedAt: "2026-05-14T18:20:00Z",
             }),
             aDuelLine({
+              duelId: "duel-c", // distinctness: three rows, three keys
               outcome: "LOST",
               coinDelta: -1,
               handsPlayed: 7,
