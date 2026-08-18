@@ -114,6 +114,47 @@ class DisplayNamePermanenceTest {
         }
     }
 
+    @Test
+    fun aRetiredNameMayBeGivenUp() {
+        val playerId = insertPlayerWithName("bob")
+        retireRegistryRow("bob", playerId)
+
+        clearPlayerName(playerId)
+
+        assertEquals(null, readDisplayName(playerId))
+    }
+
+    @Test
+    fun aNameThatIsNotRetiredStillCannotBeGivenUp() {
+        val playerId = insertPlayerWithName("bob")
+
+        val exception = assertFailsWith<SQLException> {
+            clearPlayerName(playerId)
+        }
+
+        assertEquals("23001", exception.sqlState)
+        assertEquals("bob", readDisplayName(playerId))
+    }
+
+    // The permitted transition is name -> NULL when the old name is RETIRED, not "the old name is
+    // RETIRED": an exception written the weaker way would let this write through, handing a
+    // retired profile a name it never chose -- the one thing ADR-0038 forbids. Registering
+    // "robert" first means a buggy trigger that allowed the write would be caught by this
+    // assertion, not incidentally saved by an unrelated constraint.
+    @Test
+    fun aRetiredNameStillCannotBecomeADifferentName() {
+        val playerId = insertPlayerWithName("bob")
+        retireRegistryRow("bob", playerId)
+        registerName("robert")
+
+        val exception = assertFailsWith<SQLException> {
+            forceWriteName(playerId, "robert")
+        }
+
+        assertEquals("23001", exception.sqlState)
+        assertEquals("bob", readDisplayName(playerId))
+    }
+
     private fun insertPlayerWithName(displayName: String): UUID {
         val playerId = UUID.randomUUID()
         val deviceId = "device-${UUID.randomUUID()}"
@@ -190,6 +231,34 @@ class DisplayNamePermanenceTest {
                 "UPDATE player SET display_name = NULL WHERE id = ?",
             ).use { statement ->
                 statement.setObject(1, playerId)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    /** Registers a name in name_registry without giving it to any player. */
+    private fun registerName(displayName: String) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    /**
+     * Promotes a registry row to RETIRED by the permitted transition, run directly rather than
+     * through retire_display_name: the trigger has to be shown to allow this on its own.
+     */
+    private fun retireRegistryRow(displayName: String, retiredFrom: UUID) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "UPDATE name_registry SET reason = 'RETIRED', retired_from = ? WHERE name = ?",
+            ).use { statement ->
+                statement.setObject(1, retiredFrom)
+                statement.setString(2, displayName)
                 statement.executeUpdate()
             }
         }
