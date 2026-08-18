@@ -1151,8 +1151,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040811](tasks/TASK-040811-the-document-contracts-the-cursor.md) The document contracts the cursor and the paging rule, and a test agrees with the DTO | S | **done** |
 | [STORY-0409](stories/STORY-0409-history-filters-and-search.md) History filters and search | | | ready |
 | | [TASK-040912](tasks/TASK-040912-a-filter-renders-a-canonical-text-and-fingerprints-it.md) A filter renders one canonical line per axis, and fingerprints to eleven characters | S | **done** |
-| | [TASK-040913](tasks/TASK-040913-the-cursor-payload-names-the-filter-it-was-drawn-under.md) The cursor payload names the filter it was drawn under, and a mismatch decodes to null | S | ready |
-| | [TASK-040914](tasks/TASK-040914-over-http-a-cursor-is-refused-under-any-filter-but-its-own.md) Over HTTP, a cursor is refused under every filter but the one that issued it | S | backlog |
+| | [TASK-040913](tasks/TASK-040913-the-cursor-payload-names-the-filter-it-was-drawn-under.md) The cursor payload names the filter it was drawn under, and a mismatch decodes to null | S | **done** |
+| | [TASK-040914](tasks/TASK-040914-over-http-a-cursor-is-refused-under-any-filter-but-its-own.md) Over HTTP, a cursor is refused under every filter but the one that issued it | S | ready |
 | | [TASK-040915](tasks/TASK-040915-the-document-states-the-refusal-instead-of-promising-it.md) The document states the refusal instead of promising it | XS | backlog |
 | | [TASK-040901](tasks/TASK-040901-a-filter-is-two-axes-and-an-outcome-is-one-of-three-names.md) A filter is two axes, and an outcome is one of exactly three names | S | **done** |
 | | [TASK-040902](tasks/TASK-040902-the-search-term-the-server-will-accept.md) The search term the server will accept, counted in code points | S | **done** |

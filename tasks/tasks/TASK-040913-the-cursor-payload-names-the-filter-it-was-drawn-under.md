@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040913
 title: The cursor payload names the filter it was drawn under, and a mismatch decodes to null
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S
