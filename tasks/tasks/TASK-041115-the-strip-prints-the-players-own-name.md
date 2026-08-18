@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041115
 title: The strip prints the player's own name, or what stands for none
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: XS
@@ -14,7 +14,7 @@ labels: [client, profile, ui, identity]
 depends_on: [TASK-041114]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +414 passed \(414\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +415 passed \(415\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names the player, and stands in for a player with no name, in one render'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'says nothing different about a name that was removed'
   - cd web-client && npm run check
@@ -62,7 +62,7 @@ Read, not edited: `web-client/src/profile/name-text.ts` (`nameOrNone`),
 | `names the player, and stands in for a player with no name, in one render` | Two strips in one render: `aProfile({ displayName: "Ada", coinBalance: 5 })` puts `Ada` on screen and `aProfile({ displayName: null, coinBalance: 5 })` puts `nameOrNone(null)` on screen, and neither puts the other's text there. Fails against a strip that prints a constant, against one that hides the name when it is `null` — `ADR-0029` §6 requires `null` to be rendered, not hidden — and against one that prints `playerId` |
 | `says nothing different about a name that was removed` | `aProfile({ displayName: null, displayNameRemoved: true })` and `aProfile({ displayName: null, displayNameRemoved: false })`, rendered side by side, produce **identical** strip markup for the name line. Fails against a strip that marks the removed state, which would put a moderation fact next to the coins and out of the one place `ADR-0052` §1 puts it |
 
-Two tests added to 412, so the suite reports **414**.
+Two tests added to 413, so the suite reports **415**.
 
 ## Acceptance criteria
 
@@ -73,7 +73,7 @@ Two tests added to 412, so the suite reports **414**.
 - [ ] `grep -c 'displayNameRemoved' web-client/src/profile/ProfileStrip.tsx` returns `0`
 - [ ] `grep -c 'displayName === null\|?? ' web-client/src/profile/ProfileStrip.tsx` returns `0` —
       the strip asks `nameOrNone` rather than deciding
-- [ ] `npm run --silent test` reports `Tests  414 passed (414)`
+- [ ] `npm run --silent test` reports `Tests  415 passed (415)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

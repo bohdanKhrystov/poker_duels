@@ -14,7 +14,7 @@ labels: [client, profile, identity, guard, moderation]
 depends_on: [TASK-041116]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +418 passed \(418\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +419 passed \(419\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'puts no player id on the screen, named opponent or nameless'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders a removed name and a name never set as the same pixels'
   - cd web-client && npm run check
@@ -47,6 +47,15 @@ Read, not edited: `web-client/src/profile/profile-fixture.ts`,
 - **No new production code.** If either test fails, the bug is in `TASK-041115` or `TASK-041116` and
   is fixed there, not worked around here.
 
+
+**Carried from `TASK-041114`.** `ADR-0058` rests on `nameOrNone` being the **only** place the client
+decides what to print where a name would be — that is what keeps `ADR-0052` §5's invisibility from
+being undone by a second surface choosing differently. Measured, nothing enforces it: another
+component could branch on a null `displayName` and print its own word, and no test or lint rule
+would notice. This ticket already sweeps the client for name derivation, so **assert that
+`nameOrNone` is the sole decision point** — no other file may branch on a null display name to
+produce a label.
+
 ## Out of scope
 
 - The request half of the rule — `TASK-041106`'s `sends a body whose only key is the name` already
@@ -65,7 +74,7 @@ Read, not edited: `web-client/src/profile/profile-fixture.ts`,
 | `puts no player id on the screen, named opponent or nameless` | One read whose two rows carry `opponentPlayerId: "player-91"` with `opponentDisplayName: "Ada"`, and `opponentPlayerId: "player-92"` with `opponentDisplayName: null`. The scan finds neither id, finds `Ada`, and finds the nameless treatment. Fails against a component that falls back to the id when the name is `null` — the exact `Player-3F2A` shortcut `ADR-0029` §6 forbids — and against a scan that only reads text nodes, since the sanity assertions prove it is looking |
 | `renders a removed name and a name never set as the same pixels` | Two reads rendered separately: one profile whose `displayNameRemoved` is `true`, one whose is `false`, each with one nameless opponent line. The two `container.innerHTML` strings are **equal**. Fails against any badge, tooltip, class or word marking a takedown on a line, which `ADR-0052` §5 forbids — and it is a criterion rather than an omission because the wire cannot express the difference and no screen may invent it |
 
-Two tests added to 416, so the suite reports **418**.
+Two tests added to 417, so the suite reports **419**.
 
 ## Acceptance criteria
 
@@ -75,7 +84,7 @@ Two tests added to 416, so the suite reports **418**.
       passes, comparing full markup
 - [ ] The two merged tests in this file pass unchanged
 - [ ] No file outside `web-client/src/profile/profile-no-derivation.test.tsx` differs
-- [ ] `npm run --silent test` reports `Tests  418 passed (418)`
+- [ ] `npm run --silent test` reports `Tests  419 passed (419)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

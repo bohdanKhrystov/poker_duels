@@ -14,7 +14,7 @@ labels: [client, profile, ui, identity]
 depends_on: [TASK-041115]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +416 passed \(416\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +417 passed \(417\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names a rival who has a name and stands in for one who does not, on two lines of one list'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'keeps the rest of the line exactly as it was'
   - cd web-client && npm run check
@@ -64,7 +64,7 @@ Read, not edited: `web-client/src/profile/name-text.ts` (`nameOrNone`),
 | `names a rival who has a name and stands in for one who does not, on two lines of one list` | One strip, two duel lines: `aDuelLine({ duelId: "d-1", opponentDisplayName: "Ada" })` and `aDuelLine({ duelId: "d-2", opponentDisplayName: null })`. The first list item contains `Ada`, the second contains `nameOrNone(null)`, and the first does not contain the treatment. Fails against a line that prints a constant, against one that drops the name when it is `null`, and against one that puts the same text on both lines |
 | `keeps the rest of the line exactly as it was` | The same two lines still carry their outcome word, their signed coin delta, their hand count with the right plural and their formatted time — asserted per line, as the merged test does. Fails against a name that replaced part of the line rather than joining it |
 
-Two tests added to 414, so the suite reports **416**.
+Two tests added to 415, so the suite reports **417**.
 
 ## Acceptance criteria
 
@@ -74,7 +74,7 @@ Two tests added to 414, so the suite reports **416**.
 - [ ] Every merged `ProfileStrip.test.tsx` test passes unchanged, including `shows one line per
       duel, with its outcome, coin, hands and time`
 - [ ] `grep -c 'opponentPlayerId' web-client/src/profile/ProfileStrip.tsx` returns `0`
-- [ ] `npm run --silent test` reports `Tests  416 passed (416)`
+- [ ] `npm run --silent test` reports `Tests  417 passed (417)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

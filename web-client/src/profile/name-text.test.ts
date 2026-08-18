@@ -5,6 +5,7 @@ import {
   PERMANENCE_LINE,
   refusalSentence,
   mayTryAgain,
+  nameOrNone,
 } from "./name-text";
 
 describe("the name surface's words", () => {
@@ -91,5 +92,26 @@ describe("the name surface's words", () => {
       "A name is chosen once. You cannot change it later, and it can be taken away.";
     expect(PERMANENCE_LINE).toBe(line);
     expect(PERMANENCE_LINE).toContain("and it can be taken away");
+  });
+
+  it("says the same thing about a player with no name wherever it is asked", () => {
+    // Named players pass through unchanged
+    expect(nameOrNone("Ada")).toBe("Ada");
+    expect(nameOrNone("Grace")).toBe("Grace");
+
+    // A player with no name gets the same treatment everywhere (ADR-0058 §1)
+    expect(nameOrNone(null)).toBe("No name");
+  });
+
+  it("says nothing about why a name is missing", () => {
+    const result = nameOrNone(null);
+
+    // Must not leak any hint about a takedown (ADR-0052 §5)
+    expect(result).not.toContain("removed");
+    expect(result).not.toContain("taken");
+    expect(result).not.toContain("banned");
+    expect(result).not.toContain("deleted");
+    expect(result).not.toMatch(/moderat/i); // Match case-insensitively
+    expect(result).not.toContain("former");
   });
 });
