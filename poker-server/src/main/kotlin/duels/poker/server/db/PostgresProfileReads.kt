@@ -29,13 +29,21 @@ import javax.sql.DataSource
 public class PostgresProfileReads(private val dataSource: DataSource) : ProfileReads {
     override suspend fun profileOf(deviceId: DeviceId): ProfileResponse? = withContext(Dispatchers.IO) {
         dataSource.connection.use { connection ->
-            connection.prepareStatement("SELECT id, coin_balance, display_name FROM player WHERE device_id = ?")
-                .use { statement ->
-                    statement.setString(1, deviceId.value)
-                    statement.executeQuery().use { rows ->
-                        if (rows.next()) ProfileResponse(rows.getString(1), rows.getInt(2), rows.getString(3)) else null
+            connection.prepareStatement(PROFILE_OF_SQL).use { statement ->
+                statement.setString(1, deviceId.value)
+                statement.executeQuery().use { rows ->
+                    if (rows.next()) {
+                        ProfileResponse(
+                            rows.getString(1),
+                            rows.getInt(2),
+                            rows.getString(3),
+                            rows.getBoolean(4),
+                        )
+                    } else {
+                        null
                     }
                 }
+            }
         }
     }
 
@@ -136,6 +144,27 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         }
 
     private companion object {
+        // A correlated EXISTS, never a LEFT JOIN: a player may hold more than one retired name,
+        // so a join would return one row per retired name for a single profile and
+        // `if (rows.next())` would silently take the first. EXISTS is a semijoin — one boolean
+        // per profile row whatever name_registry holds. Correlated to p.id, never to a second
+        // `?`: the statement binds the caller's device id exactly once, so a later edit cannot
+        // make the boolean describe a different player than the row does.
+        // `r.reason = 'RETIRED'` is redundant under the partial index
+        // name_registry_retired_from, and stays — the statement should read correctly without
+        // the constraint in hand.
+        private const val PROFILE_OF_SQL =
+            """
+            SELECT p.id,
+                   p.coin_balance,
+                   p.display_name,
+                   (p.display_name IS NULL
+                    AND EXISTS (SELECT 1 FROM name_registry r
+                                 WHERE r.retired_from = p.id AND r.reason = 'RETIRED')) AS display_name_removed
+            FROM player p
+            WHERE p.device_id = ?
+            """
+
         // ADR-0015: every participant of every completed duel has exactly one `duel_result`
         // row, including both rows of a draw (`coin_delta = 0`). That is what makes this
         // self-join safe: the opponent's row always exists, so a drawn duel is not a special

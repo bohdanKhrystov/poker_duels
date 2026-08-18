@@ -101,8 +101,11 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
             }
         }
 
+    // SetNameResult.NameSet describes a player who now holds a name — including ADR-0051 §2's
+    // idempotent retry — so displayNameRemoved is false by construction on every 200 from
+    // PUT /api/me/name. Never a second query, never a subquery in RETURNING (ADR-0053 §6).
     private fun ResultSet.toProfile(): ProfileResponse =
-        ProfileResponse(getString("id"), getInt("coin_balance"), getString("display_name"))
+        ProfileResponse(getString("id"), getInt("coin_balance"), getString("display_name"), false)
 
     private companion object {
         private const val UNIQUE_VIOLATION_SQLSTATE = "23505"

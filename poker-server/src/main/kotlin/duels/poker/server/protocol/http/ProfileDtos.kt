@@ -10,9 +10,23 @@ import kotlinx.serialization.Serializable
  *   negative per `ADR-0014`.
  * @property displayName The player's chosen display name, or `null` if never set. Null means
  *   *never set*, and the server fabricates no placeholder per `ADR-0029` §6.
+ * @property displayNameRemoved Whether the name was *removed* by an operator, the product's word
+ *   for a retired display name. `displayName == null && !displayNameRemoved` means the player
+ *   never set a name; `displayName == null && displayNameRemoved` means one was removed. No
+ *   default value: kotlinx.serialization omits a default-valued property unless
+ *   `encodeDefaults = true`, and `Application.module()` installs `ContentNegotiation { json() }`,
+ *   whose `Json` has `encodeDefaults = false`. These DTOs are serialised in tests by
+ *   `protocolJson`, which sets `encodeDefaults = true`, but a defaulted property would be present
+ *   in every test's JSON and absent from the real response for the ~100% of players whose answer
+ *   is `false`.
  */
 @Serializable
-public data class ProfileResponse(val playerId: String, val coinBalance: Int, val displayName: String?)
+public data class ProfileResponse(
+    val playerId: String,
+    val coinBalance: Int,
+    val displayName: String?,
+    val displayNameRemoved: Boolean,
+)
 
 /**
  * The outcome of a duel from the requesting player's perspective.
