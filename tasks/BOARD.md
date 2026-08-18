@@ -1178,8 +1178,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041010](tasks/TASK-041010-a-display-name-may-only-be-a-registered-name.md) The sixth migration makes a display name a registered name or nothing | S | **done** |
 | | [TASK-041011](tasks/TASK-041011-a-registered-name-is-never-released.md) A registered name is never released, and the only change it may take is TAKEN to RETIRED | S | **done** |
 | | [TASK-041012](tasks/TASK-041012-the-takedown-is-one-function-call.md) retire_display_name takes the name away and leaves the profile unset | S | **done** |
-| | [TASK-041013](tasks/TASK-041013-the-permanence-trigger-has-exactly-one-exception.md) The permanence trigger has exactly one exception, and it is a transition | S | ready |
-| | [TASK-041014](tasks/TASK-041014-a-takedown-moves-no-coin.md) A takedown moves no coin | XS | backlog |
+| | [TASK-041013](tasks/TASK-041013-the-permanence-trigger-has-exactly-one-exception.md) The permanence trigger has exactly one exception, and it is a transition | S | **done** |
+| | [TASK-041014](tasks/TASK-041014-a-takedown-moves-no-coin.md) A takedown moves no coin | XS | ready |
 | | [TASK-041015](tasks/TASK-041015-a-retired-name-is-spent-for-everybody.md) A retired name is spent for everybody, including the player it was taken from | S | backlog |
 | | [TASK-041016](tasks/TASK-041016-a-blocked-name-is-refused-and-the-screen-fails-closed.md) A blocked name is refused when it is set, and the screen fails closed | S | backlog |
 | | [TASK-041017](tasks/TASK-041017-the-port-test-builds-its-profile-through-the-builder.md) The port test builds its profile through the shared builder | XS | backlog |
@@ -1188,6 +1188,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041020](tasks/TASK-041020-a-takedown-is-invisible-to-everybody-else.md) A takedown is invisible to everybody else, and its two strings live where they should | S | backlog |
 | | [TASK-041021](tasks/TASK-041021-the-document-contracts-the-removed-name.md) The protocol document contracts the removed-name field | XS | backlog |
 | | [TASK-041022](tasks/TASK-041022-the-operations-document-is-the-only-call-site.md) docs/operations.md is the takedown's only call site | S | backlog |
+| | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | backlog |
 | [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
