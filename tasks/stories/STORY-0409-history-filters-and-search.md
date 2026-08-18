@@ -61,25 +61,44 @@ startable tickets would be two tickets editing one file.
 | [TASK-040909](../tasks/TASK-040909-the-endpoint-reads-the-filter-and-refuses-what-it-refuses.md) | The endpoint reads the filter, and refuses what the parsers refuse | backlog |
 | [TASK-040910](../tasks/TASK-040910-over-http-against-the-database-a-filtered-page.md) | Over HTTP, against the database — a filtered page is exactly the filtered rows | backlog |
 | [TASK-040911](../tasks/TASK-040911-the-document-contracts-both-filters-and-what-each-refuses.md) | The document contracts both filters, and what each of them refuses | backlog |
-| — | *Refusing a cursor issued under a different filter — **blocked on `DEC-050`**. Not ticketed, because every shape it could take is a guess at the answer. Re-run `/plan-story STORY-0409` once its ADR merges.* | blocked |
+| [TASK-040912](../tasks/TASK-040912-a-filter-renders-a-canonical-text-and-fingerprints-it.md) | A filter renders one canonical line per axis, and fingerprints to eleven characters | ready |
+| [TASK-040913](../tasks/TASK-040913-the-cursor-payload-names-the-filter-it-was-drawn-under.md) | The cursor payload names the filter it was drawn under, and a mismatch decodes to null | backlog |
+| [TASK-040914](../tasks/TASK-040914-over-http-a-cursor-is-refused-under-any-filter-but-its-own.md) | Over HTTP, a cursor is refused under every filter but the one that issued it | backlog |
+| [TASK-040915](../tasks/TASK-040915-the-document-states-the-refusal-instead-of-promising-it.md) | The document states the refusal instead of promising it | backlog |
 
-### The one thing this split would not decide
+Re-split on 2026-08-18, once `ADR-0057` merged and all eleven tickets above had landed. (The status
+column is each ticket's status *at the split that wrote it*, the convention every story here
+follows; `BOARD.md` is the live view.) The four new tickets are the ones `ADR-0057` §9 sizes, in the
+order it gives, and the chain stays linear for the same reason as the first eleven:
+`DuelCursor.kt`'s two functions are called from `ProfileRoutes.kt`, `DuelCursorTest.kt` and
+`ProfileRouteTest.kt`, so nothing here can run beside anything else.
 
-**A filter changes what a cursor means, and nothing settles how the server tells that apart.** A
+### The one thing the first split would not decide, and how it was answered
+
+**A filter changes what a cursor means, and nothing settled how the server told that apart.** A
 keyset cursor is a position in *a particular ordering of a particular set*; narrow the set and the
 same `(finishedAt, duelId)` names a place the client never actually walked to. This story requires
-such a cursor be **refused rather than silently reinterpreted** — and today's cursor carries nothing
-that could name the filter it was drawn under. `STORY-0408`'s split already ruled that changing what
-a cursor is *"is an ADR, not a ticket"*, so this is **`DEC-050`**, the architect's, and no ticket
-here guesses at it.
+such a cursor be **refused rather than silently reinterpreted** — and the cursor `STORY-0408` landed
+carried nothing that could name the filter it was drawn under. `STORY-0408`'s split had already
+ruled that changing what a cursor is *"is an ADR, not a ticket"*, so the first split raised
+**`DEC-050`**, the architect's, and no ticket in it guessed at the answer.
 
-The split is ordered so that exactly one guarantee waits on it and the other ten do not.
-`TASK-040909` therefore ships an endpoint that **accepts** `after` beside a filter and reads it as a
-position in the same `(finishedAt, duelId)` order — well defined, never losing a row *within* a
-consistent filter, and a weaker contract than the one above. That is stated in `TASK-040909`, in
+The split was ordered so that exactly one guarantee waited on it and the other ten did not.
+`TASK-040909` therefore shipped an endpoint that **accepts** `after` beside a filter and reads it as
+a position in the same `(finishedAt, duelId)` order — well defined, never losing a row *within* a
+consistent filter, and a weaker contract than the one above. That was stated in `TASK-040909`, in
 `TASK-040910` and in `docs/protocol.md` via `TASK-040911`, rather than left for someone to discover.
-No test in the story asserts anything about that combination in either direction, because whichever
-way it were asserted the answering ticket would have to undo it.
+No test in the story asserted anything about that combination in either direction, because whichever
+way it were asserted the answering ticket would have had to undo it.
+
+[`ADR-0057`](../../docs/adr/ADR-0057-a-cursor-names-the-filter-it-was-drawn-under.md) answered
+`DEC-050`: **the encoded payload gains a third component — an eleven-character fingerprint of the
+parsed filter** — and the canonical re-encode check that already decides cursor validity is what
+refuses a mismatch, with a flat `400` indistinguishable from a malformed cursor. `TASK-040912`
+through `TASK-040915` build it, and the restraint paid: §9 checked the eleven tickets above one by
+one and contradicted none of them. `TASK-040909`'s instruction to assert nothing about that
+combination was *confirmed*, so the four new tickets only add tests; the single sentence
+`TASK-040911` knowingly wrote as a placeholder is the only thing deleted, by `TASK-040915`.
 
 ### What the split settled, and what it sharpened
 
@@ -134,7 +153,9 @@ And two costs are recorded rather than discovered:
 - [ ] Paging inside a filter is total and disjoint, including across an insert that matches the
       filter.
 - [ ] A cursor from one filter used with another is refused rather than silently reinterpreted.
-      **Blocked on `DEC-050`; not ticketed.**
+      No longer blocked: `DEC-050` is answered by `ADR-0057`, and `TASK-040912`–`TASK-040915` build
+      it. Unticked like its siblings because the code has not landed yet, not because anything is
+      undecided.
 - [ ] An empty result is `200` with an empty page, not `404`.
 - [ ] `docs/protocol.md` contracts every parameter and what each refuses.
 
