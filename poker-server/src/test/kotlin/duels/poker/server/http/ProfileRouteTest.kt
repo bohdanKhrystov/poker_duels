@@ -400,6 +400,99 @@ class ProfileRouteTest {
     }
 
     @Test
+    fun anOutcomeParameterReachesThePort() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?outcome=WON") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals(listOf(DuelFilter(DuelOutcomeLabel.WON, null)), reads.filtersRequested)
+        }
+    }
+
+    @Test
+    fun anOpponentParameterReachesThePort() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?opponent=Halvard") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals(listOf(DuelFilter(null, "Halvard")), reads.filtersRequested)
+        }
+    }
+
+    @Test
+    fun anUnusableOutcomeIsABadRequestAndReadsNothing() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?outcome=won") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertTrue(reads.filtersRequested.isEmpty())
+            assertTrue(reads.cursorsRequested.isEmpty())
+        }
+    }
+
+    @Test
+    fun anEmptyOpponentValueIsABadRequest() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to emptyList()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?opponent=") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertTrue(reads.filtersRequested.isEmpty())
+            assertTrue(reads.cursorsRequested.isEmpty())
+        }
+    }
+
+    @Test
+    fun anUnknownDeviceIsRefusedBeforeTheFilterIsParsed() {
+        testApplication {
+            val reads = FakeProfileReads(emptyMap())
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val response = client.get("/api/me/duels?outcome=won")
+            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            assertTrue(reads.filtersRequested.isEmpty())
+            assertTrue(reads.cursorsRequested.isEmpty())
+        }
+    }
+
+    @Test
     fun aFullPageReportsTheCursorOfItsLastRow() {
         testApplication {
             val duel1 = duelSummaryResponse(

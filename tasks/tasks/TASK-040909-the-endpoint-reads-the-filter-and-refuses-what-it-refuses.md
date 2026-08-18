@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040909
 title: The endpoint reads the filter, and refuses what the parsers refuse
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S

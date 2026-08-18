@@ -29,16 +29,22 @@ public const val DEVICE_ID_HEADER: String = "X-Device-Id"
  * only credential v0.1 has, an unknown one is an invalid credential, and answering `404` for
  * unknown would tell a caller which device ids exist.
  *
- * `GET /api/me/duels?limit=N&after=C` returns the device's recent duels as a JSON array. The limit
- * defaults to [DEFAULT_DUEL_LIMIT] when absent, is clamped to [MAX_DUEL_LIMIT] when above the cap,
- * and is rejected with `400 Bad Request` when non-numeric, negative, or zero. The `after` cursor is
+ * `GET /api/me/duels?limit=N&after=C&outcome=O&opponent=P` returns the device's recent duels as
+ * a JSON array, optionally narrowed by outcome and opponent. The limit defaults to
+ * [DEFAULT_DUEL_LIMIT] when absent, is clamped to [MAX_DUEL_LIMIT] when above the cap, and is
+ * rejected with `400 Bad Request` when non-numeric, negative, or zero. The `after` cursor is
  * optional: absent, it asks for the newest page and `null` reaches `ProfileReads.recentDuelsOf`;
  * present, it is decoded with [duelCursorOrNull], and anything that function refuses — including an
  * empty value, which is present and unparseable, not absent — answers `400 Bad Request` before
- * `ProfileReads.recentDuelsOf` is ever called. An unauthenticated request is refused with
- * `401 Unauthorized` before the query string is looked at, so neither the limit nor the cursor ever
- * tells a stranger that their device id was the problem; between the two, the limit is checked
- * first. A device with no duels receives `200 OK` and an empty array, not `404`.
+ * `ProfileReads.recentDuelsOf` is ever called. `outcome` takes `WON`, `LOST` or `DREW`; anything
+ * else, including a lower-case spelling, is `400 Bad Request`. `opponent` is a case-insensitive
+ * substring of the opponent's display name, refused when blank or over 32 code points. An empty
+ * value of either `outcome` or `opponent` is present-and-unusable, not absent, and is
+ * `400 Bad Request` before `ProfileReads.recentDuelsOf` is ever called — the same rule the cursor
+ * already follows. An unauthenticated request is refused with `401 Unauthorized` before the query
+ * string is looked at, so none of the limit, the cursor, or the filter ever tells a stranger that
+ * their device id was the problem; among the three, the limit is checked first, then the cursor,
+ * then the filter. A device with no duels receives `200 OK` and an empty array, not `404`.
  *
  * `PUT /api/me/name` sets the device's display name. Identity is resolved first — exactly as the
  * other two routes resolve it, and **before the body is even read**: an absent, blank or unknown
@@ -113,7 +119,7 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites)
  */
 private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(reads: ProfileReads) {
     // Identity first: an unauthenticated request is refused before its query string is parsed, so
-    // a bad limit or a bad cursor never tells a stranger that their device id was the problem.
+    // a bad limit, cursor, or filter never tells a stranger that their device id was the problem.
     val profile = deviceIdOrNull()?.let { reads.profileOf(it) }
     if (profile == null) {
         respond(HttpStatusCode.Unauthorized)
@@ -134,10 +140,18 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(
         respond(HttpStatusCode.BadRequest)
         return
     }
+    val filter = duelFilterOrNull(
+        request.queryParameters["outcome"],
+        request.queryParameters["opponent"],
+    )
+    if (filter == null) {
+        respond(HttpStatusCode.BadRequest)
+        return
+    }
     // Ask for one row more than the page: a probe that answers "is there another page?" without a
     // second query. duelLimitOrNull already clamped limit to MAX_DUEL_LIMIT, so this never reads
     // more than MAX_DUEL_LIMIT + 1 rows.
-    val rows = reads.recentDuelsOf(PlayerId(profile.playerId), limit + 1, cursor)
+    val rows = reads.recentDuelsOf(PlayerId(profile.playerId), limit + 1, cursor, filter)
     respond(rows.recentDuelsPage(limit))
 }
 
