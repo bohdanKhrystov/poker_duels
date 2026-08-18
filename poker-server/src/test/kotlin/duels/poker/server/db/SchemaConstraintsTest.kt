@@ -176,25 +176,42 @@ class SchemaConstraintsTest {
     }
 
     @Test
-    fun twoDisplayNamesDifferingOnlyByCaseAreNotAllowed() {
+    fun twoDisplayNamesDifferingOnlyByCaseAreRefusedByTheRegistry() {
         val deviceId1 = "device-${UUID.randomUUID()}"
         val deviceId2 = "device-${UUID.randomUUID()}"
 
         val playerId1 = insertPlayer(deviceId1, 100)
         val playerId2 = insertPlayer(deviceId2, 100)
 
-        // Insert first name
-        setDisplayName(playerId1, "Bob")
+        // Register and hand over the first name
+        registerAndSetDisplayName(playerId1, "Bob")
 
-        // Try to insert second name differing only by case — should be rejected by unique index
+        // Try to register a second name differing only by case — should be refused by the registry
         val exception = assertFailsWith<SQLException> {
-            setDisplayName(playerId2, "bob")
+            registerAndSetDisplayName(playerId2, "bob")
         }
 
         assertEquals("23505", exception.sqlState)
         assertTrue(
-            exception.message?.contains("player_display_name_unique") ?: false,
-            "Exception message should contain constraint name 'player_display_name_unique', got: ${exception.message}",
+            exception.message?.contains("name_registry_folded") ?: false,
+            "Exception message should contain constraint name 'name_registry_folded', got: ${exception.message}",
+        )
+
+        val holderName = dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT display_name FROM player WHERE id = ?",
+            ).use { statement ->
+                statement.setObject(1, playerId1)
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    resultSet.getString(1)
+                }
+            }
+        }
+        assertEquals(
+            "Bob",
+            holderName,
+            "Player 2's refused claim must not have disturbed the name player 1 already holds",
         )
     }
 
@@ -203,8 +220,8 @@ class SchemaConstraintsTest {
         val deviceId = "device-${UUID.randomUUID()}"
         val playerId = insertPlayer(deviceId, 100)
 
-        // Set initial name
-        setDisplayName(playerId, "Bob")
+        // Register and hand over the initial name
+        registerAndSetDisplayName(playerId, "Bob")
 
         // Try to update to a different name — should be rejected by trigger
         val exception = assertFailsWith<SQLException> {
@@ -261,6 +278,26 @@ class SchemaConstraintsTest {
 
     private fun setDisplayName(playerId: UUID, displayName: String) {
         dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "UPDATE player SET display_name = ? WHERE id = ?",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.setObject(2, playerId)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    // ADR-0051 §2: the registry spends the string before the player is handed the name — no
+    // ON CONFLICT, so a collision on name_registry_folded raises rather than being swallowed.
+    private fun registerAndSetDisplayName(playerId: UUID, displayName: String) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.executeUpdate()
+            }
             connection.prepareStatement(
                 "UPDATE player SET display_name = ? WHERE id = ?",
             ).use { statement ->
