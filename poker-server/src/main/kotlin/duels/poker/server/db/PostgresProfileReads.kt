@@ -1,7 +1,9 @@
 package duels.poker.server.db
 
 import duels.poker.server.http.DuelCursor
+import duels.poker.server.http.DuelFilter
 import duels.poker.server.http.ProfileReads
+import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.outcomeOf
@@ -9,7 +11,9 @@ import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.sql.Types
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
@@ -35,28 +39,43 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         }
     }
 
+    override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> =
+        recentDuelsOf(playerId, limit, after, DuelFilter.NONE)
+
     /**
      * Reads [playerId]'s duels newest-first, at most [limit] of them, strictly after [after]
-     * when one is given.
+     * when one is given, and narrowed to only the outcome [filter] names when its `outcome` is
+     * non-null.
      *
-     * `after = null` reads exactly what [recentDuelsOf]`(playerId, limit)` always has: same rows,
+     * `after = null` reads exactly what the three-argument [recentDuelsOf] always has: same rows,
      * same order, same query shape. A non-null [after] adds
      * `(d.finished_at, d.id) < (after.finishedAt, after.duelId)` as a single PostgreSQL row-value
      * comparison — the row the cursor names never reappears, and no duel that ties it on
      * `finished_at` is skipped.
+     *
+     * [filter]'s `outcome` narrows the read to exactly the rows whose `coin_delta` [outcomeOf]
+     * would report as that outcome — the filter reads the same sign, on the same reasoning
+     * (ADR-0014), rather than comparing against a stored magnitude. [DuelFilter.NONE] reads every
+     * outcome: exactly what the three-argument overload above always has.
      */
-    override suspend fun recentDuelsOf(playerId: PlayerId, limit: Int, after: DuelCursor?): List<DuelSummaryResponse> =
+    public suspend fun recentDuelsOf(
+        playerId: PlayerId,
+        limit: Int,
+        after: DuelCursor?,
+        filter: DuelFilter,
+    ): List<DuelSummaryResponse> =
         withContext(Dispatchers.IO) {
             dataSource.connection.use { connection ->
                 val sql = if (after == null) RECENT_DUELS_SQL else DUELS_AFTER_SQL
                 connection.prepareStatement(sql).use { statement ->
                     statement.setObject(1, UUID.fromString(playerId.value))
+                    statement.bindOutcome(2, filter.outcome)
                     if (after == null) {
-                        statement.setInt(2, limit)
-                    } else {
-                        statement.setObject(2, OffsetDateTime.ofInstant(after.finishedAt, ZoneOffset.UTC))
-                        statement.setObject(3, after.duelId)
                         statement.setInt(4, limit)
+                    } else {
+                        statement.setObject(4, OffsetDateTime.ofInstant(after.finishedAt, ZoneOffset.UTC))
+                        statement.setObject(5, after.duelId)
+                        statement.setInt(6, limit)
                     }
                     statement.executeQuery().use { rows ->
                         val duels = mutableListOf<DuelSummaryResponse>()
@@ -84,6 +103,25 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         )
     }
 
+    // The clause has two `?` for one value (JDBC has no named parameters), so both positions
+    // are bound identically here rather than the two-branch `if` this would otherwise take at
+    // every call site.
+    private fun PreparedStatement.bindOutcome(first: Int, outcome: DuelOutcomeLabel?) {
+        val sign = outcome?.let(::coinDeltaSignOf)
+        for (index in first..first + 1) {
+            if (sign == null) setNull(index, Types.INTEGER) else setInt(index, sign)
+        }
+    }
+
+    // No `else`: a fourth DuelOutcomeLabel would fail to compile here rather than silently
+    // filter nothing.
+    private fun coinDeltaSignOf(outcome: DuelOutcomeLabel): Int =
+        when (outcome) {
+            DuelOutcomeLabel.WON -> 1
+            DuelOutcomeLabel.LOST -> -1
+            DuelOutcomeLabel.DREW -> 0
+        }
+
     private companion object {
         // ADR-0015: every participant of every completed duel has exactly one `duel_result`
         // row, including both rows of a draw (`coin_delta = 0`). That is what makes this
@@ -105,6 +143,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
             JOIN duel_result o ON o.duel_id = r.duel_id AND o.player_id <> r.player_id
             JOIN player p ON p.id = o.player_id
             WHERE r.player_id = ?
+              AND (?::int IS NULL OR sign(r.coin_delta) = ?::int)
             """
 
         private const val DUEL_ORDER = "ORDER BY d.finished_at DESC, d.id DESC LIMIT ?"

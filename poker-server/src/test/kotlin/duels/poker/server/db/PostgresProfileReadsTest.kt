@@ -6,6 +6,7 @@ import duels.poker.engine.duel.EndCondition
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import duels.poker.server.http.DuelCursor
+import duels.poker.server.http.DuelFilter
 import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.session.DeviceId
@@ -398,6 +399,84 @@ class PostgresProfileReadsTest {
         assertEquals(1, countingDataSource.statementsPrepared)
     }
 
+    /**
+     * Fails today against `>=`, a reversed sign, or a clause that filters nothing at all (three
+     * rows back); would fail against `r.coin_delta = 1` only if the award amount itself ever
+     * changed (ADR-0014) — which this clause, reading only the sign, does not.
+     */
+    @Test
+    fun filteringByWonReturnsOnlyTheWonDuel() {
+        runBlocking {
+            val duelIds = threeDuelsOneOfEachOutcome()
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(DuelOutcomeLabel.WON, null))
+
+            assertEquals(1, duels.size)
+            val entry = duels.single()
+            assertEquals(duelIds.getValue(DuelOutcomeLabel.WON), entry.duelId)
+            assertEquals(DuelOutcomeLabel.WON, entry.outcome)
+        }
+    }
+
+    /** The case a `sign(...) > 0`-style slip — one that only ever matches a win — returns empty for. */
+    @Test
+    fun filteringByLostReturnsOnlyTheLostDuel() {
+        runBlocking {
+            val duelIds = threeDuelsOneOfEachOutcome()
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(DuelOutcomeLabel.LOST, null))
+
+            assertEquals(1, duels.size)
+            val entry = duels.single()
+            assertEquals(duelIds.getValue(DuelOutcomeLabel.LOST), entry.duelId)
+            assertEquals(DuelOutcomeLabel.LOST, entry.outcome)
+        }
+    }
+
+    /**
+     * The case a `coin_delta <> 0` guard would drop entirely — the exact mistake ADR-0015 warns
+     * about, and the reason [threeDuelsOneOfEachOutcome] holds all three outcomes rather than only
+     * this one.
+     */
+    @Test
+    fun filteringByDrewReturnsOnlyTheDrawnDuel() {
+        runBlocking {
+            val duelIds = threeDuelsOneOfEachOutcome()
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(DuelOutcomeLabel.DREW, null))
+
+            assertEquals(1, duels.size)
+            val entry = duels.single()
+            assertEquals(duelIds.getValue(DuelOutcomeLabel.DREW), entry.duelId)
+            assertEquals(DuelOutcomeLabel.DREW, entry.outcome)
+        }
+    }
+
+    /**
+     * Brackets the three filtered tests above from the other side: without this test, a clause
+     * that accidentally matched no rows would still leave those three tests green, since each of
+     * them expects exactly one row; a clause that matched every row regardless of outcome would
+     * leave them red. Reading the same fixture unfiltered and expecting all three ids back, newest
+     * first, is the one assertion that fails either way.
+     */
+    @Test
+    fun noFilterStillReadsEveryOutcome() {
+        runBlocking {
+            val duelIds = threeDuelsOneOfEachOutcome()
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter.NONE)
+
+            assertEquals(
+                listOf(
+                    duelIds.getValue(DuelOutcomeLabel.DREW),
+                    duelIds.getValue(DuelOutcomeLabel.LOST),
+                    duelIds.getValue(DuelOutcomeLabel.WON),
+                ),
+                duels.map { it.duelId },
+            )
+        }
+    }
+
     @Test
     fun aNullCursorReadsExactlyWhatTheTwoArgumentCallReads() {
         runBlocking {
@@ -759,6 +838,29 @@ class PostgresProfileReadsTest {
             carolDuelId.toString() to "Sigrid",
             bobDuelId.toString() to "Halvard",
             daveDuelId.toString() to null,
+        )
+    }
+
+    /** Alice wins at 10:01, loses at 10:02 and draws at 10:03; returns outcome -> duelId. */
+    private suspend fun threeDuelsOneOfEachOutcome(): Map<DuelOutcomeLabel, String> {
+        val wonDuelId = UUID.randomUUID()
+        val lostDuelId = UUID.randomUUID()
+        val drewDuelId = UUID.randomUUID()
+
+        duelResultStore.record(
+            finishedDuel(winner = 0, id = wonDuelId, finishedAt = Instant.parse("2026-08-13T10:01:00Z")),
+        )
+        duelResultStore.record(
+            finishedDuel(winner = 1, id = lostDuelId, finishedAt = Instant.parse("2026-08-13T10:02:00Z")),
+        )
+        duelResultStore.record(
+            finishedDuel(winner = null, id = drewDuelId, finishedAt = Instant.parse("2026-08-13T10:03:00Z")),
+        )
+
+        return mapOf(
+            DuelOutcomeLabel.WON to wonDuelId.toString(),
+            DuelOutcomeLabel.LOST to lostDuelId.toString(),
+            DuelOutcomeLabel.DREW to drewDuelId.toString(),
         )
     }
 
