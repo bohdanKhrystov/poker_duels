@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041020
 title: A takedown is invisible to everybody else, and its two strings live where they should
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S

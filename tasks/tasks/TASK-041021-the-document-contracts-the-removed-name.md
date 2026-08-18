@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041021
 title: The protocol document contracts the removed-name field
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: XS
