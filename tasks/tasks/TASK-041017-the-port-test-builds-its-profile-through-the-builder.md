@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041017
 title: The port test builds its profile through the shared builder
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: XS
