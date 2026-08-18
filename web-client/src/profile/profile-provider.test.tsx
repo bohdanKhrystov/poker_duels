@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ProfileProvider, useProfileStrip } from "./profile-provider";
 import type { ProfileStripState } from "./profile-strip";
+import { aProfile } from "./profile-fixture";
 
 /** Renders whatever `useProfileStrip()` answers, in text a test can find. */
 function Consumer(): ReactElement {
@@ -20,7 +21,7 @@ describe("the profile provider", () => {
   it("hands down whatever the read answered", async () => {
     const profileAnswer: ProfileStripState = {
       kind: "profile",
-      profile: { playerId: "p-1", coinBalance: 7 },
+      profile: aProfile({ coinBalance: 7 }),
       duels: [],
     };
     const { unmount } = render(
