@@ -143,20 +143,14 @@ describe("the profile strip's surface", () => {
       ok({
         duels: [
           duelRowBody({
-            duelId: "duel-1",
+            duelId: "duel-1", // needed for distinctness
             opponentPlayerId: "player-77",
             outcome: "WON",
-            coinDelta: 1,
-            handsPlayed: 5,
-            finishedAt: "2025-01-01T00:00:00Z",
           }),
           duelRowBody({
-            duelId: "duel-2",
+            duelId: "duel-2", // needed for distinctness
             opponentPlayerId: "player-88",
             outcome: "LOST",
-            coinDelta: -1,
-            handsPlayed: 3,
-            finishedAt: "2025-01-02T00:00:00Z",
           }),
         ],
       }),
@@ -193,20 +187,12 @@ describe("the profile strip's surface", () => {
       ok({
         duels: [
           duelRowBody({
-            duelId: "duel-1",
+            duelId: "duel-1", // needed for distinctness
             opponentPlayerId: "player-1",
-            outcome: "WON",
-            coinDelta: 1,
-            handsPlayed: 5,
-            finishedAt: "2025-01-01T00:00:00Z",
           }),
           duelRowBody({
-            duelId: "duel-2",
+            duelId: "duel-2", // needed for distinctness
             opponentPlayerId: "player-2",
-            outcome: "LOST",
-            coinDelta: -1,
-            handsPlayed: 3,
-            finishedAt: "2025-01-02T00:00:00Z",
           }),
         ],
       }),
@@ -238,28 +224,16 @@ describe("the profile strip's surface", () => {
       ok({
         duels: [
           duelRowBody({
-            duelId: "duel-3",
+            duelId: "duel-3", // needed for distinctness
             opponentPlayerId: "player-3",
-            outcome: "WON",
-            coinDelta: 1,
-            handsPlayed: 2,
-            finishedAt: "2025-01-03T00:00:00Z",
           }),
           duelRowBody({
-            duelId: "duel-4",
+            duelId: "duel-4", // needed for distinctness
             opponentPlayerId: "player-4",
-            outcome: "WON",
-            coinDelta: 1,
-            handsPlayed: 4,
-            finishedAt: "2025-01-04T00:00:00Z",
           }),
           duelRowBody({
-            duelId: "duel-5",
+            duelId: "duel-5", // needed for distinctness
             opponentPlayerId: "player-5",
-            outcome: "LOST",
-            coinDelta: -1,
-            handsPlayed: 3,
-            finishedAt: "2025-01-05T00:00:00Z",
           }),
         ],
       }),

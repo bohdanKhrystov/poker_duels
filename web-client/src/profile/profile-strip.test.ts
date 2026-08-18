@@ -171,7 +171,7 @@ describe("the profile strip read", () => {
 
   it("asks both endpoints once each", async () => {
     writeDeviceId(storage, "d-1");
-    const mock = answering(ok(meBody({ coinBalance: 5 })), ok({ duels: [] }));
+    const mock = answering(ok(meBody()), ok({ duels: [] }));
 
     await readProfileStrip({
       fetch: mock.fetch,
@@ -188,7 +188,7 @@ describe("the profile strip read", () => {
 
   it("answers no-profile when either half says so", async () => {
     // First door: empty storage (no call is made at all)
-    const mock1 = answering(ok(meBody({ coinBalance: 5 })), ok({ duels: [] }));
+    const mock1 = answering(ok(meBody()), ok({ duels: [] }));
 
     const result1 = await readProfileStrip({
       fetch: mock1.fetch,
@@ -229,7 +229,7 @@ describe("the profile strip read", () => {
     // Second half: duels answer 500 while /api/me answers 200
     storage = inMemoryStorage();
     writeDeviceId(storage, "d-2");
-    const mock2 = answering(ok(meBody({ coinBalance: 5 })), refusedWith(500));
+    const mock2 = answering(ok(meBody()), refusedWith(500));
 
     const result2 = await readProfileStrip({
       fetch: mock2.fetch,
