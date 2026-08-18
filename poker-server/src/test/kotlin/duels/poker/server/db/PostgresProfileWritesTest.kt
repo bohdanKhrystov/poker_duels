@@ -24,11 +24,14 @@ import kotlin.test.fail
 /**
  * Tests for [PostgresProfileWrites], against the container.
  *
- * `ADR-0029` §5 is one `UPDATE`; these tests read its three answers off what the database returns
- * or throws, never off a message string. The pair `sendingTheSameNameAgainSucceeds` and
- * `aDifferentCaseOfOwnNameIsRefused` together pin what "identical" means for the idempotent retry:
- * exact equality of the canonical form, not a case fold — the fold is what makes *another*
- * player's name collide (`NameTaken`), never what excuses this player's own.
+ * Setting a name is two statements (`ADR-0051` §2), and these tests read their answers off what
+ * the database returns or throws, never off a message string. The pair
+ * `sendingTheSameNameAgainSucceeds` and `aDifferentCaseOfOwnNameIsRefused` together pin what
+ * "identical" means for the idempotent retry: **exact equality of the canonical form, not a case
+ * fold**. A case variant of a player's own name is refused, and since `TASK-041004` it is refused
+ * as `NameTaken` — the registry's fold index raises `23505` on the first statement, before the
+ * `UPDATE` that used to answer `AlreadyNamed` is ever reached. The fold does not excuse a name for
+ * belonging to the player who already holds it.
  */
 class PostgresProfileWritesTest {
     private lateinit var dataSource: DataSource
