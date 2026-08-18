@@ -109,7 +109,14 @@ class TakedownIsInvisibleTest {
 
         val occurrences = postgresProfileReads.readText().split("retired_from").size - 1
 
-        assertEquals(2, occurrences)
+        assertEquals(
+            2,
+            occurrences,
+            "retired_from occurs $occurrences times in PostgresProfileReads.kt, expected 2. " +
+                "Before changing this number, check the new occurrence is in neither DUEL_LINES nor " +
+                "RECENT_DUELS_SQL: those bind the opponent's player row, so the profile EXISTS pasted " +
+                "there would publish a takedown to a stranger (ADR-0053 §4.2).",
+        )
     }
 
     /**
