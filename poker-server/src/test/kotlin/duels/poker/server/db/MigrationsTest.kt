@@ -212,4 +212,64 @@ class MigrationsTest {
             }
         }
     }
+
+    @Test
+    fun theFifthMigrationAddsTheRegistryAndItsGuards() {
+        val dataSource = PostgresTestSupport.freshDatabase()
+
+        Migrations.migrate(dataSource)
+
+        dataSource.connection.use { connection ->
+            // information_schema.triggers returns one row per event, and name_registry_monotone
+            // fires on UPDATE OR DELETE, so UNION (deduplicating) rather than UNION ALL is what
+            // makes the count six regardless of how many events one trigger definition covers.
+            connection.prepareStatement(
+                """
+                SELECT DISTINCT 'table:' || tablename FROM pg_tables WHERE tablename = 'name_registry'
+                UNION SELECT 'index:' || indexname FROM pg_indexes
+                       WHERE indexname IN ('name_registry_folded', 'name_registry_retired_from_idx')
+                UNION SELECT 'trigger:' || trigger_name FROM information_schema.triggers
+                       WHERE trigger_name = 'name_registry_monotone'
+                UNION SELECT 'function:' || proname FROM pg_proc
+                       WHERE proname IN ('name_registry_is_monotone', 'retire_display_name')
+                """.trimIndent(),
+            ).use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    val objects = generateSequence { if (resultSet.next()) resultSet.getString(1) else null }
+                        .toList()
+                        .sorted()
+
+                    // player_display_name_is_permanent is deliberately absent: it already exists
+                    // from V3, so its presence would prove nothing about this migration.
+                    val expected = listOf(
+                        "function:name_registry_is_monotone",
+                        "function:retire_display_name",
+                        "index:name_registry_folded",
+                        "index:name_registry_retired_from_idx",
+                        "table:name_registry",
+                        "trigger:name_registry_monotone",
+                    )
+                    assertEquals(expected, objects)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun theRetiredFromIndexIsPartial() {
+        val dataSource = PostgresTestSupport.freshDatabase()
+
+        Migrations.migrate(dataSource)
+
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT indexdef FROM pg_indexes WHERE indexname = 'name_registry_retired_from_idx'",
+            ).use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    assertEquals(true, resultSet.next(), "name_registry_retired_from_idx index should exist")
+                    assertTrue(resultSet.getString("indexdef").contains("WHERE (retired_from IS NOT NULL)"))
+                }
+            }
+        }
+    }
 }
