@@ -33,7 +33,7 @@ class DisplayNameSchemaTest {
         val name = "a".repeat(33)
 
         val exception = assertFailsWith<SQLException> {
-            insertPlayerWithName(name)
+            insertPlayerWithRawName(name)
         }
 
         assertEquals("23514", exception.sqlState)
@@ -58,7 +58,7 @@ class DisplayNameSchemaTest {
     fun anEmptyNameIsRefused() {
         // Test that empty string is refused
         val exception = assertFailsWith<SQLException> {
-            insertPlayerWithName("")
+            insertPlayerWithRawName("")
         }
 
         assertEquals("23514", exception.sqlState)
@@ -77,7 +77,7 @@ class DisplayNameSchemaTest {
     fun aNameWithLeadingOrTrailingSpaceIsRefused() {
         // Test leading space refusal
         var exception = assertFailsWith<SQLException> {
-            insertPlayerWithName(" bob")
+            insertPlayerWithRawName(" bob")
         }
 
         assertEquals("23514", exception.sqlState)
@@ -88,7 +88,7 @@ class DisplayNameSchemaTest {
 
         // Test trailing space refusal
         exception = assertFailsWith<SQLException> {
-            insertPlayerWithName("bob ")
+            insertPlayerWithRawName("bob ")
         }
 
         assertEquals("23514", exception.sqlState)
@@ -109,7 +109,7 @@ class DisplayNameSchemaTest {
         val decomposedName = Normalizer.normalize("élodie", Normalizer.Form.NFD)
 
         val exception = assertFailsWith<SQLException> {
-            insertPlayerWithName(decomposedName)
+            insertPlayerWithRawName(decomposedName)
         }
 
         assertEquals("23514", exception.sqlState)
@@ -146,7 +146,32 @@ class DisplayNameSchemaTest {
         assertTrue(name3 == null, "Third player should have NULL display_name")
     }
 
+    /** Registers the name, then inserts the player holding it: for names that must land. */
     private fun insertPlayerWithName(displayName: String): UUID {
+        val playerId = UUID.randomUUID()
+        val deviceId = "device-${UUID.randomUUID()}"
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.executeUpdate()
+            }
+            connection.prepareStatement(
+                "INSERT INTO player (id, device_id, coin_balance, display_name) VALUES (?, ?, ?, ?)",
+            ).use { statement ->
+                statement.setObject(1, playerId)
+                statement.setString(2, deviceId)
+                statement.setInt(3, 100)
+                statement.setString(4, displayName)
+                statement.executeUpdate()
+            }
+        }
+        return playerId
+    }
+
+    /** Inserts the player holding the name without registering it: for names the CHECKs must refuse. */
+    private fun insertPlayerWithRawName(displayName: String): UUID {
         val playerId = UUID.randomUUID()
         val deviceId = "device-${UUID.randomUUID()}"
         dataSource.connection.use { connection ->
