@@ -63,13 +63,13 @@ argument does not name what that player holds.
 
 ## Tests
 
-`RetireDisplayNameTest`, `-PrequireDocker=true`. Five tests.
+`RetireDisplayNameTest`, `-PrequireDocker=true`. Six tests.
 
 | Test | Proves |
 | --- | --- |
 | `aTakedownLeavesTheProfileWithNoName` | After `retire_display_name(alice, 'Ann')`: `player.display_name` is `NULL` — **not** a server-chosen replacement. `ADR-0051` §4 and `ADR-0021` both forbid the server minting a name, and `ADR-0038`'s heading sentence says *force-rename*, which is why this is asserted rather than assumed |
 | `aTakedownRetiresTheStringAndRecordsWhoHeldIt` | The `name_registry` row for `"Ann"` still exists, with `reason = 'RETIRED'` and `retired_from` equal to alice's id. **The wrong implementation this must fail against**: a takedown that deletes the registry row — the name is then free, which is the one outcome `ADR-0038` exists to prevent, and a test that only checked `display_name IS NULL` would pass |
-| `theFunctionReturnsTheNameItTookAway` | The `SELECT` answers `"Ann"` — the string as stored, so an operator can paste it into a record. Fails against a function that returns the argument it was given rather than the column it read |
+| `theFunctionReturnsTheNameItTookAway` | Alice holds `"Ann"`; `retire_display_name(alice, 'ANN')` answers `"Ann"` — the string **as stored**, so an operator can paste it into a record. The argument must differ in case from the stored column or the test proves nothing: with both `"Ann"`, a function returning its own argument and one returning the column it read produce the same string, and the test passes against either |
 | `aMismatchedExpectedNameWritesNothing` | `retire_display_name(alice, 'Bea')` while alice holds `"Ann"` raises `23001`, and afterwards alice still holds `"Ann"` **and** the `"Ann"` row is still `TAKEN` with `retired_from IS NULL`. This is the operator-accident interlock |
 | `theInterlockIsCaseInsensitive` | Alice holds `"Ann"`; `retire_display_name(alice, '  aNN ')` succeeds and returns `"Ann"`. The comparison is under `ADR-0029` §1's fold with the expected name trimmed and NFC-normalised, so an operator need not reproduce case. **Fails against** a function comparing raw equality, which would refuse a correct takedown at the moment it is needed |
 | `aPlayerWithNoNameCannotHaveOneTakenAway` | `retire_display_name(bob, 'Anything')` where bob's `display_name` is `NULL` raises `P0002` and writes nothing |
@@ -80,7 +80,7 @@ argument does not name what that player holds.
       NULL`
 - [ ] `RetireDisplayNameTest.aTakedownRetiresTheStringAndRecordsWhoHeldIt` passes and asserts the row
       exists with `reason = 'RETIRED'` and the correct `retired_from`
-- [ ] `RetireDisplayNameTest.theFunctionReturnsTheNameItTookAway` passes
+- [ ] `RetireDisplayNameTest.theFunctionReturnsTheNameItTookAway` passes, calling with a case variant, and fails against a function returning its argument
 - [ ] `RetireDisplayNameTest.aMismatchedExpectedNameWritesNothing` passes and asserts `23001` plus
       both unchanged rows
 - [ ] `RetireDisplayNameTest.theInterlockIsCaseInsensitive` passes
