@@ -108,6 +108,28 @@ class NameBlocklistTest {
     }
 
     @Test
+    fun theRegistryFailureIsRethrownRatherThanTranslated() {
+        // "Ghost" is registered -- BLOCKED, so no player ever holds it -- before the registry is
+        // renamed away. A fail-open write that swallows the registry failure and falls through to
+        // a bare UPDATE would then find "Ghost" already present under the renamed table's
+        // constraint and succeed: player_display_name_registered has nothing left to refuse, and
+        // player_display_name_unique doesn't fire either, because nobody else holds the name. Only
+        // PostgresProfileWrites.kt:43's rethrow -- sqlState != UNIQUE_VIOLATION_SQLSTATE -- stands
+        // between the registry being unreachable and alice walking away with a blocked name.
+        insertBlockedName("Ghost")
+        val alice = resolvePlayer("alice")
+        renameRegistryTableUnreachable()
+
+        val failure =
+            assertFailsWith<SQLException> {
+                runBlocking { profileWrites.setDisplayName(alice, "Ghost") }
+            }
+
+        assertEquals(UNDEFINED_TABLE_SQLSTATE, failure.sqlState)
+        assertNull(storedDisplayNameOf(alice))
+    }
+
+    @Test
     fun eachOfTheThreeReasonsRefusesOnItsOwn() {
         val bob = resolvePlayer("bob")
         runBlocking { profileWrites.setDisplayName(bob, "Held") }
@@ -198,6 +220,7 @@ class NameBlocklistTest {
 
     private companion object {
         private const val UNIQUE_VIOLATION_SQLSTATE = "23505"
+        private const val UNDEFINED_TABLE_SQLSTATE = "42P01"
 
         // ADR-0051 §5, verbatim -- do not paraphrase.
         private const val INSERT_BLOCKED_NAME_SQL =
