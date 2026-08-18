@@ -518,6 +518,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
+| DEC-051 | **The product owner's** — what the client prints where a display name would be, for a player who has none: their own profile strip, and an opponent on a duel line. `ADR-0029` §6 hands the treatment to the client; `ADR-0052` §5 makes it load-bearing — a removed name renders as this same treatment on strangers' screens — and neither picks a word | [`TASK-041114`](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) | before TASK-041114 |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1190,7 +1191,24 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041022](tasks/TASK-041022-the-operations-document-is-the-only-call-site.md) docs/operations.md is the takedown's only call site | S | **done** |
 | | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | dropped |
 | | [TASK-041024](tasks/TASK-041024-the-kotlin-half-of-fail-closed-is-isolated.md) The Kotlin half of fail-closed is isolated | XS | **done** |
-| [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
+| **[STORY-0411](stories/STORY-0411-the-name-in-the-client.md)** The name in the client — shown, and settable | | | **ready** |
+| | [TASK-041101](tasks/TASK-041101-one-fixture-builds-every-profile-a-test-uses.md) One fixture builds every profile and duel line a test uses | S | ready |
+| | [TASK-041102](tasks/TASK-041102-the-reads-tests-build-through-the-fixture.md) The strip's read tests build through the fixture | S | backlog |
+| | [TASK-041103](tasks/TASK-041103-the-components-profiles-build-through-the-fixture.md) The component tests build their profiles through the fixture | XS | backlog |
+| | [TASK-041104](tasks/TASK-041104-the-profile-read-carries-the-name-and-the-removal.md) The profile read carries the name, and whether one was removed | S | backlog |
+| | [TASK-041105](tasks/TASK-041105-a-duel-line-carries-the-opponents-name-and-no-id.md) A duel line carries the opponent's name, and still not their id | S | backlog |
+| | [TASK-041106](tasks/TASK-041106-one-put-sets-the-name-and-every-answer-is-its-own-outcome.md) One PUT sets the name, and every answer is its own outcome | S | backlog |
+| | [TASK-041107](tasks/TASK-041107-the-words-the-name-surface-says.md) The words the name surface says, and which of them leave a way back | S | backlog |
+| | [TASK-041108](tasks/TASK-041108-the-surface-shows-a-name-or-offers-to-set-one.md) The name surface shows the name, or offers to set one and says what that costs | S | backlog |
+| | [TASK-041109](tasks/TASK-041109-the-surface-says-a-name-was-removed-only-when-it-was.md) The surface says a name was removed, only to the player it happened to | XS | backlog |
+| | [TASK-041110](tasks/TASK-041110-the-surface-sends-once-and-shows-what-came-back.md) The surface sends once, and shows the name that came back | S | backlog |
+| | [TASK-041111](tasks/TASK-041111-each-refusal-says-its-own-sentence.md) Each refusal says its own sentence, and only two leave the form | S | backlog |
+| | [TASK-041112](tasks/TASK-041112-the-write-reaches-the-tree-the-read-already-does.md) The write reaches the tree the same way the read already does | XS | backlog |
+| | [TASK-041113](tasks/TASK-041113-the-lobby-shows-the-name-surface-and-the-table-does-not.md) The lobby shows the name surface, and the duel table never does | XS | backlog |
+| | [TASK-041114](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) The word for a player who has no name | XS | **blocked** — DEC-051 |
+| | [TASK-041115](tasks/TASK-041115-the-strip-prints-the-players-own-name.md) The strip prints the player's own name, or what stands for none | XS | backlog |
+| | [TASK-041116](tasks/TASK-041116-a-duel-line-names-the-opponent.md) A duel line names the opponent it was played against | XS | backlog |
+| | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
