@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041011
 title: A registered name is never released, and the only change it may take is TAKEN to RETIRED
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
@@ -61,9 +61,9 @@ to the pool.
 
 ## Tests
 
-`NameRegistryMonotonicityTest`, `-PrequireDocker=true`. Seven tests. The four refusals and the three
+`NameRegistryMonotonicityTest`, `-PrequireDocker=true`. Seven tests. The five refusals and the two
 permissions are both required: without the permissions, a trigger that raised on everything would
-pass three tests and break the product.
+pass five tests and break the product.
 
 | Test | Proves |
 | --- | --- |
