@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040904
 title: The search is a substring of the opponent's name, folded under the pinned collation
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S
