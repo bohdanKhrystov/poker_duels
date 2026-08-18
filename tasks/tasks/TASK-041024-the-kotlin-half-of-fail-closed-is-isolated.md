@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041024
 title: The Kotlin half of fail-closed is isolated from the foreign key that covers for it
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: XS

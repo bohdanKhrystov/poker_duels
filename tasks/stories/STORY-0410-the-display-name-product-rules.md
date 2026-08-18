@@ -2,7 +2,7 @@
 id: STORY-0410
 title: The display-name product rules — screened when set, and takeable away
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: poker-server
 labels: [server, moderation, schema, identity]

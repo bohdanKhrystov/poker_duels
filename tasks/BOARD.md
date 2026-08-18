@@ -1165,7 +1165,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040909](tasks/TASK-040909-the-endpoint-reads-the-filter-and-refuses-what-it-refuses.md) The endpoint reads the filter, and refuses what the parsers refuse | S | **done** |
 | | [TASK-040910](tasks/TASK-040910-over-http-against-the-database-a-filtered-page.md) Over HTTP, against the database — a filtered page is exactly the filtered rows | S | **done** |
 | | [TASK-040911](tasks/TASK-040911-the-document-contracts-both-filters-and-what-each-refuses.md) The document contracts both filters, and what each of them refuses | S | **done** |
-| [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | ready |
+| [STORY-0410](stories/STORY-0410-the-display-name-product-rules.md) The display-name product rules — screened when set, takeable away | | | done |
 | | [TASK-041001](tasks/TASK-041001-the-migration-test-derives-its-version-list.md) The migration test derives its version list from the migrations it applies | XS | **done** |
 | | [TASK-041002](tasks/TASK-041002-the-name-registry-its-guards-and-the-takedown.md) The fifth migration creates the name registry, its guards and the takedown function | S | **done** |
 | | [TASK-041003](tasks/TASK-041003-a-name-is-registered-before-it-is-held.md) Setting a name registers it first, and a refused claim rolls the whole transaction back | S | **done** |
@@ -1189,7 +1189,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041021](tasks/TASK-041021-the-document-contracts-the-removed-name.md) The protocol document contracts the removed-name field | XS | **done** |
 | | [TASK-041022](tasks/TASK-041022-the-operations-document-is-the-only-call-site.md) docs/operations.md is the takedown's only call site | S | **done** |
 | | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | dropped |
-| | [TASK-041024](tasks/TASK-041024-the-kotlin-half-of-fail-closed-is-isolated.md) The Kotlin half of fail-closed is isolated | XS | ready |
+| | [TASK-041024](tasks/TASK-041024-the-kotlin-half-of-fail-closed-is-isolated.md) The Kotlin half of fail-closed is isolated | XS | **done** |
 | [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
