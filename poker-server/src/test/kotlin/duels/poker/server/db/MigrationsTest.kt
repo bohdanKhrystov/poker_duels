@@ -1,7 +1,9 @@
 package duels.poker.server.db
 
+import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MigrationsTest {
     @Test
@@ -10,16 +12,29 @@ class MigrationsTest {
 
         Migrations.migrate(dataSource)
 
-        // setupDatabase() already ran Migrations.migrate(dataSource) against a fresh
-        // database; V2, V3 and V4 are the first evidence that the migration chain works with more
-        // than one file.
+        // Get what Flyway sees on the classpath, configured identically to Migrations.migrate
+        val onTheClasspath = Flyway.configure()
+            .dataSource(dataSource)
+            .locations("classpath:db/migration")
+            .load()
+            .info()
+            .all()
+            .map { it.version.version }
+
+        // Get what was actually applied and recorded in the database
         dataSource.connection.use { connection ->
             connection.prepareStatement(
                 "SELECT version FROM flyway_schema_history WHERE success = true ORDER BY version",
             ).use { statement ->
                 statement.executeQuery().use { resultSet ->
-                    val versions = generateSequence { if (resultSet.next()) resultSet.getString(1) else null }.toList()
-                    assertEquals(listOf("1", "2", "3", "4"), versions)
+                    val applied = generateSequence { if (resultSet.next()) resultSet.getString(1) else null }.toList()
+
+                    // Assertion 1: floor that at least V1-V4 are visible on the classpath (non-empty assertion)
+                    assertTrue(onTheClasspath.containsAll(listOf("1", "2", "3", "4")))
+                    // Assertion 2: every migration on the classpath is in the history
+                    assertEquals(onTheClasspath, applied)
+                    // Assertion 3: history is ordered
+                    assertEquals(applied.sorted(), applied)
                 }
             }
         }
