@@ -222,4 +222,77 @@ describe("the profile strip", () => {
 
     expect(removedMarkup).toBe(notRemovedMarkup);
   });
+
+  it("names a rival who has a name and stands in for one who does not, on two lines of one list", () => {
+    render(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: aProfile(),
+          duels: [
+            aDuelLine({ duelId: "d-1", opponentDisplayName: "Ada" }),
+            aDuelLine({ duelId: "d-2", opponentDisplayName: null }),
+          ],
+        }}
+      />,
+    );
+
+    const listItems = screen.getAllByRole("listitem");
+    expect(listItems).toHaveLength(2);
+
+    const firstItem = listItems[0].textContent;
+    const secondItem = listItems[1].textContent;
+
+    // First line contains the opponent's name "Ada"
+    expect(firstItem).toContain("Ada");
+    // First line does not contain "No name"
+    expect(firstItem).not.toContain("No name");
+
+    // Second line contains the treatment for no name
+    expect(secondItem).toContain("No name");
+  });
+
+  it("keeps the rest of the line exactly as it was", () => {
+    render(
+      <ProfileStrip
+        state={{
+          kind: "profile",
+          profile: aProfile(),
+          duels: [
+            aDuelLine({
+              duelId: "d-1",
+              opponentDisplayName: "Ada",
+              outcome: "WON",
+              coinDelta: 1,
+              handsPlayed: 23,
+              finishedAt: "2026-02-03T04:05:06Z",
+            }),
+            aDuelLine({
+              duelId: "d-2",
+              opponentDisplayName: null,
+              outcome: "LOST",
+              coinDelta: -2,
+              handsPlayed: 5,
+              finishedAt: "2026-01-15T14:30:00Z",
+            }),
+          ],
+        }}
+      />,
+    );
+
+    const listItems = screen.getAllByRole("listitem");
+    expect(listItems).toHaveLength(2);
+
+    const firstItem = listItems[0].textContent;
+    expect(firstItem).toContain("Won");
+    expect(firstItem).toContain("+1");
+    expect(firstItem).toContain("23 hands");
+    expect(firstItem).toContain("2026");
+
+    const secondItem = listItems[1].textContent;
+    expect(secondItem).toContain("Lost");
+    expect(secondItem).toContain("−2");
+    expect(secondItem).toContain("5 hands");
+    expect(secondItem).toContain("2026");
+  });
 });

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041116
 title: A duel line names the opponent it was played against
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: XS

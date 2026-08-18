@@ -14,7 +14,7 @@ import { SetNameProvider } from "../profile/set-name-provider";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { SeatView, ServerMessage } from "../protocol";
 import type { SetNameOutcome } from "../profile/set-name";
-import { aProfile } from "../profile/profile-fixture";
+import { aProfile, aDuelLine } from "../profile/profile-fixture";
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
 
@@ -514,7 +514,7 @@ describe("the lobby", () => {
     const state: ProfileStripState = {
       kind: "profile",
       profile: aProfile({ displayName: "TestPlayer" }),
-      duels: [],
+      duels: [aDuelLine({ opponentDisplayName: "Opponent" })],
     };
     renderLobbyWithProfile(state);
 
