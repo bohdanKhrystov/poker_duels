@@ -60,8 +60,8 @@ Read, not edited: `docs/protocol.md` (the recent-duels table's `opponentDisplayN
 
 ## Out of scope
 
-- Rendering the name on a line — `TASK-041116`, and it waits on `DEC-051` for what a nameless
-  opponent looks like.
+- Rendering the name on a line — `TASK-041116`, which prints `ADR-0058`'s `No name` where an
+  opponent has none.
 - Any distinction between an opponent whose name was removed and one who never set a name.
   **A refusal, not an omission:** `ADR-0052` §5 makes the two byte-identical on this endpoint, on
   purpose, and `DuelSummaryResponse` carries nothing to tell them apart. A client that tried would

@@ -205,23 +205,22 @@ without adding a story.
 
 ## Open decisions
 
-| ID | Question | Where | Due |
-| --- | --- | --- | --- |
-| `DEC-051` | **The product owner's** — what does the client print where a display name would be, for a player who has none: their own profile strip, and an opponent on a duel line? | [`TASK-041114`](../tasks/TASK-041114-the-word-for-a-player-with-no-name.md) | before `TASK-041114` |
+**None.** Every decision this epic has raised is answered.
 
-`DEC-051` was raised on 2026-08-18 when `STORY-0411` was split. It blocks **one** ticket and the
-three behind it; the first thirteen are startable, so the story begins without it.
-[`ADR-0029`](../../docs/adr/ADR-0029-a-display-name-is-unique-and-permanent.md) §6 hands the
-treatment for a `null` name to the client and forbids only a server-minted placeholder;
-[`ADR-0052`](../../docs/adr/ADR-0052-a-takedown-is-told-to-the-player-it-happened-to.md) §5 then
-makes it load-bearing, because every duel line belonging to a player whose name was **removed**
-renders that same treatment on strangers' screens, byte-identical to a player who never set one.
-Neither ADR picks a word and `EPIC-06` has authored no screen for it, so a word chosen inside a
-ticket is one `STORY-0413` and `EPIC-05` would inherit without anybody deciding it. Everything else
-`STORY-0411` says out loud is already settled: `ADR-0052` §2 ships the removal notice verbatim and
-§7 ships both the `409` sentence and the permanence line.
-
-Every other decision this epic has raised is answered.
+`DEC-051` — raised on 2026-08-18 when `STORY-0411` was split, blocking `TASK-041114` and the three
+tickets behind it — was answered the same day by
+[`ADR-0058`](../../docs/adr/ADR-0058-where-a-name-would-be-the-client-prints-no-name.md): where a
+display name would be printed and the player holds none, the client prints **`No name`** — the same
+two words, on every surface, about every player, whatever the reason there is no name. All four
+tickets stand exactly as split, because the answer is a **single string** returned by the one
+`nameOrNone` function `TASK-041114` was already written around; `TASK-041114` is `backlog` and its
+first acceptance criterion now names the ADR. The answer deliberately reaches past the two surfaces
+asked about: `STORY-0413`'s history rows and `EPIC-05`'s leaderboard rows are third-person, so the
+warmer second-person treatment that reads best on a profile strip (*You*, *Your rival*) was rejected
+for one that survives its own inheritance. Two costs are recorded rather than left to be found —
+a list of nameless rivals cannot be scanned, which `ADR-0052` §5 requires anyway, and `No name` is
+itself registrable as a display name, since `ADR-0029` §3 refuses invisible characters and not
+ordinary words and `ADR-0051` §5 ships the blocklist empty.
 
 `DEC-050` — raised on 2026-08-18 when `STORY-0409` was split, blocking **one** acceptance criterion
 of that story and no ticket — was answered the same day by

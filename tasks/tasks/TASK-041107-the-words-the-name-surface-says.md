@@ -122,7 +122,8 @@ Five tests added to 392, so the suite reports **397**.
       can be taken away*, and no refusal sentence
 - [ ] `name-text.ts` contains no JSX and imports nothing from `react`
 - [ ] `grep -c 'NO_NAME\|Anonymous\|Unnamed\|nameless' web-client/src/profile/name-text.ts` returns
-      `0` — `DEC-051` is unanswered and this file does not pre-empt it
+      `0` — `DEC-051` is answered by `ADR-0058` (`No name`), and the string lands here in
+      `TASK-041114`, not in this ticket
 - [ ] `npm run --silent test` reports `Tests  397 passed (397)`
 - [ ] Every command in `verify:` exits 0
 
