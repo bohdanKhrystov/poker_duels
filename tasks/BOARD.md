@@ -1174,8 +1174,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041006](tasks/TASK-041006-the-permanence-fixtures-register-only-what-must-land.md) The permanence fixtures register only the names that must land | S | **done** |
 | | [TASK-041007](tasks/TASK-041007-the-schema-test-keeps-its-refusals-raw.md) The display-name schema test registers what must land and keeps its refusals raw | S | **done** |
 | | [TASK-041008](tasks/TASK-041008-the-fold-that-refuses-a-case-variant-is-the-registrys.md) The fold that refuses a case variant is the registry's, and the schema test says so | S | **done** |
-| | [TASK-041009](tasks/TASK-041009-the-held-race-moves-to-the-registry-row.md) The held race moves to the registry row, and the probe that waits for it follows | S | ready |
-| | [TASK-041010](tasks/TASK-041010-a-display-name-may-only-be-a-registered-name.md) The sixth migration makes a display name a registered name or nothing | S | backlog |
+| | [TASK-041009](tasks/TASK-041009-the-held-race-moves-to-the-registry-row.md) The held race moves to the registry row, and the probe that waits for it follows | S | **done** |
+| | [TASK-041010](tasks/TASK-041010-a-display-name-may-only-be-a-registered-name.md) The sixth migration makes a display name a registered name or nothing | S | ready |
 | | [TASK-041011](tasks/TASK-041011-a-registered-name-is-never-released.md) A registered name is never released, and the only change it may take is TAKEN to RETIRED | S | backlog |
 | | [TASK-041012](tasks/TASK-041012-the-takedown-is-one-function-call.md) retire_display_name takes the name away and leaves the profile unset | S | backlog |
 | | [TASK-041013](tasks/TASK-041013-the-permanence-trigger-has-exactly-one-exception.md) The permanence trigger has exactly one exception, and it is a transition | S | backlog |
