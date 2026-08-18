@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040910
 title: Over HTTP, against the database — a filtered page is exactly the filtered rows
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S
