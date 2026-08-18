@@ -80,7 +80,8 @@ and it is the half that protects the person who lost the name."*
 | Test | Proves |
 | --- | --- |
 | `aRemovedNameLooksExactlyLikeANameNeverSet` | One database: alice beats bob, alice beats carol. Bob set `"Ann"` and an operator retired it; carol never set a name. `recentDuelsOf(alice)` returns two lines whose normalised encodings are **equal**, and both have `opponentDisplayName == null`. The second assertion is not redundant: two lines could be equal and both wrongly carry a name |
-| `retiredFromIsReadInExactlyOneFile` | Exactly one file under `poker-server/src/main/kotlin` contains `retired_from`, and it is `PostgresProfileReads.kt`. **The wrong implementation this must fail against** is the one `ADR-0053` §4.2 names by hand: the same `EXISTS` pasted into `RECENT_DUELS_SQL`, where `p` is the **opponent's** `player` row — it compiles, it runs, and it publishes a takedown to a stranger |
+| `retiredFromIsReadInExactlyOneFile` | Exactly one file under `poker-server/src/main/kotlin` contains `retired_from`, and it is `PostgresProfileReads.kt`. This catches a **new** file reading the column. **What it does not catch**: the paste `ADR-0053` §4.2 names by hand — the same `EXISTS` dropped into `RECENT_DUELS_SQL`, where `p` is the *opponent's* row. That second occurrence lands in a file already in the matching set, so a file-granular assertion cannot see it, and `readDuelSummary()` names six columns and discards the seventh, so the behavioural test misses it too |
+| `retiredFromAppearsExactlyTwiceInPostgresProfileReads` | The occurrence count inside `PostgresProfileReads.kt` is pinned, so the §4.2 paste makes it three and goes red. Blunt on purpose: a legitimate third reference means updating the number **after** checking it is in neither `DUEL_LINES` nor `RECENT_DUELS_SQL`. Forcing a human to answer that question is the mechanism |
 | `retireDisplayNameIsCalledByNoProductionCode` | **No** file under `poker-server/src/main/kotlin` contains `retire_display_name`. `ADR-0051` §4: the server never calls it, there is no port, no endpoint and no Gradle task, and the operator path is `psql` |
 
 Both structural tests assert on the **set of matching file names**, not on a count — a count of `1`
@@ -92,6 +93,7 @@ cannot tell `PostgresProfileReads.kt` from `PostgresProfileWrites.kt`.
       JSON
 - [ ] `TakedownIsInvisibleTest.retiredFromIsReadInExactlyOneFile` passes and asserts the matching set
       equals `setOf("PostgresProfileReads.kt")`
+- [ ] `TakedownIsInvisibleTest.retiredFromAppearsExactlyTwiceInPostgresProfileReads` passes and fails against the `ADR-0053` §4.2 paste into `DUEL_LINES`
 - [ ] `TakedownIsInvisibleTest.retireDisplayNameIsCalledByNoProductionCode` passes and asserts the
       matching set is empty
 - [ ] Both structural tests assert the sweep saw at least fifty `.kt` files and included
