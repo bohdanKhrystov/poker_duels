@@ -31,6 +31,7 @@ export function aDuelLine(overrides: Partial<RecentDuel> = {}): RecentDuel {
   return {
     duelId: "duel-fixture",
     outcome: "WON",
+    opponentDisplayName: null,
     coinDelta: 1,
     handsPlayed: 23,
     finishedAt: "2026-02-03T04:05:06Z",
@@ -67,7 +68,7 @@ export function meBody(
  *
  * Carries `opponentPlayerId` even though the parser drops it: `profile-no-derivation.test.tsx`
  * exists to catch it reaching a screen, and a body builder that omitted it would quietly
- * disarm that guard. The five parsed fields come from `RecentDuel`; the wire adds the sixth.
+ * disarm that guard. The six parsed fields come from `RecentDuel`; the wire adds the seventh.
  */
 export function duelRowBody(
   overrides: Record<string, unknown> = {},
@@ -75,6 +76,7 @@ export function duelRowBody(
   return {
     duelId: "duel-fixture",
     outcome: "WON",
+    opponentDisplayName: null,
     coinDelta: 1,
     handsPlayed: 23,
     finishedAt: "2026-02-03T04:05:06Z",

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041106
 title: One PUT sets the name, and every answer is its own outcome
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: S

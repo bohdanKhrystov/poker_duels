@@ -17,6 +17,7 @@ describe("the profile fixtures", () => {
       "duelId",
       "finishedAt",
       "handsPlayed",
+      "opponentDisplayName",
       "outcome",
     ]);
   });
@@ -36,6 +37,7 @@ describe("the profile fixtures", () => {
       "duelId",
       "finishedAt",
       "handsPlayed",
+      "opponentDisplayName",
       "opponentPlayerId",
       "outcome",
     ]);
@@ -70,11 +72,21 @@ describe("the profile fixtures", () => {
     expect(duelRowBody({ opponentPlayerId: "opp-2" }).opponentPlayerId).toBe(
       "opp-2",
     );
+    expect(
+      duelRowBody({ opponentDisplayName: "Alice" }).opponentDisplayName,
+    ).toBe("Alice");
+    expect(
+      duelRowBody({ opponentDisplayName: "Bob" }).opponentDisplayName,
+    ).toBe("Bob");
 
     // Verify that non-overridden fields keep their defaults
     expect(aProfile({ playerId: "p-custom" }).coinBalance).toBe(41);
     expect(aDuelLine({ outcome: "LOST" }).handsPlayed).toBe(23);
+    expect(aDuelLine({ outcome: "LOST" }).opponentDisplayName).toBe(null);
     expect(meBody({ playerId: "p-test" }).coinBalance).toBe(41);
     expect(duelRowBody({ opponentPlayerId: "opp-1" }).handsPlayed).toBe(23);
+    expect(duelRowBody({ opponentPlayerId: "opp-1" }).opponentDisplayName).toBe(
+      null,
+    );
   });
 });

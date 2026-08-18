@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041105
 title: A duel line carries the opponent's name, and still not their id
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: S
