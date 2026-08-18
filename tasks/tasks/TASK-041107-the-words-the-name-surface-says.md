@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041107
 title: The words the name surface says, and which of them leave a way back
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: S

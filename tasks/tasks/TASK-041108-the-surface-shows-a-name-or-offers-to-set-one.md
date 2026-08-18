@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041108
 title: The name surface shows the name, or offers to set one and says what that costs
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: S
