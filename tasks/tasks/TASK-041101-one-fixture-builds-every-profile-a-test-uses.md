@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041101
 title: One fixture builds every profile and duel line a test uses
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: S

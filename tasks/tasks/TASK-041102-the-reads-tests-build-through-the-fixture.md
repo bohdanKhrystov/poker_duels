@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041102
 title: The strip's read tests build through the fixture
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: S
