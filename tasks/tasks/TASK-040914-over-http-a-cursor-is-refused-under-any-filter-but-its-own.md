@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040914
 title: Over HTTP, a cursor is refused under every filter but the one that issued it
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S
