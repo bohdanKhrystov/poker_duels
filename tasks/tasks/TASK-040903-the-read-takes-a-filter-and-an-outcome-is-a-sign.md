@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040903
 title: The read takes a filter, and an outcome is the sign of the stored delta
 type: task
-status: backlog
+status: ready
 parent: STORY-0409
 module: poker-server
 estimate: S
