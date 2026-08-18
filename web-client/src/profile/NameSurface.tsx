@@ -5,6 +5,8 @@ import {
   PERMANENCE_LINE,
   NAME_REMOVED_HEADING,
   NAME_REMOVED_BODY,
+  refusalSentence,
+  mayTryAgain,
 } from "./name-text";
 
 export function NameSurface(props: {
@@ -23,6 +25,13 @@ export function NameSurface(props: {
   // in-flight status the instant the second submit runs, not after a render
   // has caught up.
   const submitInFlight = useRef(false);
+  // The most recently settled refusal, if any. Replaced — never appended to
+  // — by the next attempt: a player who fails twice reads one sentence, not
+  // a log of every attempt they made.
+  const [refusal, setRefusal] = useState<Exclude<
+    SetNameOutcome["kind"],
+    "named"
+  > | null>(null);
 
   const displayName = wonName ?? profile.displayName;
 
@@ -52,11 +61,16 @@ export function NameSurface(props: {
         setWonName(outcome.profile.displayName);
         return;
       }
-      // Every other outcome leaves the form as it was: able to try again.
+      // Every other outcome settles as a refusal: its sentence replaces
+      // whatever was on screen, and `mayTryAgain` — not a condition kept
+      // here too — decides whether the form survives it.
       submitInFlight.current = false;
       setIsSubmitting(false);
+      setRefusal(outcome.kind);
     });
   };
+
+  const canTryAgain = refusal === null || mayTryAgain(refusal);
 
   return (
     <section
@@ -72,7 +86,18 @@ export function NameSurface(props: {
         </div>
       )}
       <p className="text-small">{PERMANENCE_LINE}</p>
-      <form onSubmit={handleSubmit} className="w-full">
+      {refusal !== null && (
+        <p role="status" className="text-small">
+          {refusalSentence(refusal)}
+        </p>
+      )}
+      {/*
+        Hidden, not unmounted: the field and button stay the same DOM node
+        across a settle a player can act on, so what they typed is never
+        lost to a remount, and `role` queries agree there is no form the
+        instant `mayTryAgain` says there is none.
+      */}
+      <form onSubmit={handleSubmit} className="w-full" hidden={!canTryAgain}>
         <div className="flex flex-col gap-3">
           <label htmlFor="name-input" className="text-small">
             <input

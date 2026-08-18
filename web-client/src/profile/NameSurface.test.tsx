@@ -231,4 +231,148 @@ describe("the name surface", () => {
     expect(renderedText).not.toContain("  ada  ");
     expect(screen.queryByText(/^ada$/)).toBeNull();
   });
+
+  it("gives every refusal its own sentence, from one render each", async () => {
+    // Literals, not `refusalSentence(kind)`: an assertion against the
+    // function under test would compare its output to itself and pass no
+    // matter what the sentence said. The golden copies live in
+    // name-text.test.ts; these are retyped here on purpose.
+    const cases: ReadonlyArray<{
+      kind: Exclude<SetNameOutcome["kind"], "named">;
+      typed: string | null;
+      sentence: string;
+    }> = [
+      {
+        kind: "rejected",
+        // TASK-041110 forbids a client-side empty-name guard: this field is
+        // left untouched — not typed into, not cleared, just submitted as
+        // it starts — so a silently reintroduced guard, which would swallow
+        // the click and never call `setName`, fails this test instead of
+        // failing nothing. `null` means "do not fire a change event at all".
+        typed: null,
+        sentence: "That name cannot be used. Try another.",
+      },
+      {
+        kind: "conflict",
+        typed: "Ada",
+        sentence: "That name is not available. Try another.",
+      },
+      {
+        kind: "permanent",
+        typed: "Ada",
+        sentence:
+          "You already have a display name. That choice is permanent and cannot be changed.",
+      },
+      {
+        kind: "no-profile",
+        typed: "Ada",
+        sentence: "This browser has no profile. Reload the page and try again.",
+      },
+      {
+        kind: "unavailable",
+        typed: "Ada",
+        sentence:
+          "That did not reach the server. Reload the page to see whether the name was set.",
+      },
+    ];
+
+    render(
+      <>
+        {cases.map(({ kind }) => (
+          <NameSurface
+            key={kind}
+            profile={aProfile({ displayName: null })}
+            setName={() => Promise.resolve({ kind })}
+          />
+        ))}
+      </>,
+    );
+
+    const textboxes = screen.getAllByRole("textbox");
+    const buttons = screen.getAllByRole("button");
+    cases.forEach(({ typed }, i) => {
+      // `null` leaves this particular field exactly as it was rendered —
+      // no `fireEvent.change` at all — so the empty string that reaches
+      // `setName` is the field's own starting value, not one this test typed.
+      if (typed !== null) {
+        fireEvent.change(textboxes[i], { target: { value: typed } });
+      }
+      fireEvent.click(buttons[i]);
+    });
+
+    for (const { sentence } of cases) {
+      expect(await screen.findByText(sentence)).toBeDefined();
+    }
+
+    // Scoped to the refusal sentences themselves, not the whole screen:
+    // `PERMANENCE_LINE` legitimately says a name "can be taken away", a
+    // different sense that a page-wide check would wrongly indict.
+    const statusTexts = screen
+      .getAllByRole("status")
+      .map((element) => element.textContent ?? "");
+    expect(statusTexts).toHaveLength(cases.length);
+    for (const text of statusTexts) {
+      expect(text.toLowerCase()).not.toContain("taken");
+    }
+  });
+
+  it("keeps the form for the two refusals a player can act on, and takes it away for the rest", async () => {
+    const staysWithWhatWasTyped: ReadonlyArray<
+      Exclude<SetNameOutcome["kind"], "named">
+    > = ["rejected", "conflict"];
+    const goesAway: ReadonlyArray<Exclude<SetNameOutcome["kind"], "named">> = [
+      "permanent",
+      "no-profile",
+      "unavailable",
+    ];
+
+    for (const kind of staysWithWhatWasTyped) {
+      const { unmount } = render(
+        <NameSurface
+          profile={aProfile({ displayName: null })}
+          setName={() => Promise.resolve({ kind })}
+        />,
+      );
+
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "Ada" },
+      });
+      fireEvent.click(screen.getByRole("button"));
+
+      // The settled request re-enables the button; the form that does that
+      // is the same form that must have survived the refusal.
+      await waitFor(() => {
+        expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(
+          false,
+        );
+      });
+
+      const textbox = screen.getByRole("textbox") as HTMLInputElement;
+      expect(textbox.value).toBe("Ada");
+      expect(screen.getAllByRole("button")).toHaveLength(1);
+
+      unmount();
+    }
+
+    for (const kind of goesAway) {
+      const { unmount } = render(
+        <NameSurface
+          profile={aProfile({ displayName: null })}
+          setName={() => Promise.resolve({ kind })}
+        />,
+      );
+
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "Ada" },
+      });
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(screen.queryAllByRole("textbox")).toHaveLength(0);
+      });
+      expect(screen.queryAllByRole("button")).toHaveLength(0);
+
+      unmount();
+    }
+  });
 });
