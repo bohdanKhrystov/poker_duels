@@ -6,6 +6,7 @@ import {
   finishedAtText,
   outcomeWord,
 } from "./profile-text";
+import { nameOrNone } from "./name-text";
 
 /**
  * The profile strip: states the duel coin balance, or announces no profile yet,
@@ -42,6 +43,7 @@ export function ProfileStrip(props: {
           aria-label="your profile"
           className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
         >
+          <p className="text-small">{nameOrNone(state.profile.displayName)}</p>
           <p className="font-mono text-small">
             {coinBalanceText(state.profile.coinBalance)} Duel coins
           </p>
