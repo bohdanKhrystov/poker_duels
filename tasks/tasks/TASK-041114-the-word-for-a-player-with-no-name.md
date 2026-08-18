@@ -14,7 +14,7 @@ labels: [client, profile, copy, identity]
 depends_on: [TASK-041113]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +412 passed \(412\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +413 passed \(413\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'says the same thing about a player with no name wherever it is asked'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'says nothing about why a name is missing'
   - cd web-client && npm run check
@@ -98,7 +98,7 @@ Two tests added to 410, so the suite reports **412**.
       name: `grep -rc 'displayName === null' web-client/src/` reports it in `name-text.ts` and
       nowhere under `web-client/src/profile/*.tsx` except `NameSurface.tsx`, which branches on the
       player's own state and not on a label
-- [ ] `npm run --silent test` reports `Tests  412 passed (412)`
+- [ ] `npm run --silent test` reports `Tests  413 passed (413)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

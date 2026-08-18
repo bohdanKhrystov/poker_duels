@@ -56,3 +56,19 @@ export function mayTryAgain(
       return false;
   }
 }
+
+/**
+ * What stands where a display name would be, for a player who holds none.
+ *
+ * Returns the display name as-is, or `No name` (ADR-0058 §1) for a player
+ * with no name set. This is the only place in the client that branches on a
+ * null display name — used everywhere a name is rendered to keep two surfaces
+ * (strip and duel line) from drifting apart. §2 and §3 forbid a second-person
+ * variant and any hint of why the name is missing.
+ */
+export function nameOrNone(displayName: string | null): string {
+  if (displayName === null) {
+    return "No name";
+  }
+  return displayName;
+}

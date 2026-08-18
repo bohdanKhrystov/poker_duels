@@ -14,7 +14,7 @@ labels: [client, profile, ui, identity]
 depends_on: [TASK-041115]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +416 passed \(416\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +417 passed \(417\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names a rival who has a name and stands in for one who does not, on two lines of one list'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'keeps the rest of the line exactly as it was'
   - cd web-client && npm run check
@@ -74,7 +74,7 @@ Two tests added to 414, so the suite reports **416**.
 - [ ] Every merged `ProfileStrip.test.tsx` test passes unchanged, including `shows one line per
       duel, with its outcome, coin, hands and time`
 - [ ] `grep -c 'opponentPlayerId' web-client/src/profile/ProfileStrip.tsx` returns `0`
-- [ ] `npm run --silent test` reports `Tests  416 passed (416)`
+- [ ] `npm run --silent test` reports `Tests  417 passed (417)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

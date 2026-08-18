@@ -14,7 +14,7 @@ labels: [client, profile, ui, identity]
 depends_on: [TASK-041114]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +414 passed \(414\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +415 passed \(415\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names the player, and stands in for a player with no name, in one render'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'says nothing different about a name that was removed'
   - cd web-client && npm run check
@@ -73,7 +73,7 @@ Two tests added to 412, so the suite reports **414**.
 - [ ] `grep -c 'displayNameRemoved' web-client/src/profile/ProfileStrip.tsx` returns `0`
 - [ ] `grep -c 'displayName === null\|?? ' web-client/src/profile/ProfileStrip.tsx` returns `0` —
       the strip asks `nameOrNone` rather than deciding
-- [ ] `npm run --silent test` reports `Tests  414 passed (414)`
+- [ ] `npm run --silent test` reports `Tests  415 passed (415)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
