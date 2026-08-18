@@ -3,6 +3,8 @@ import type { ProtocolError } from "../protocol";
 import { useDuelState, useSend } from "../store/duel-provider";
 import { useProfileStrip } from "../profile/profile-provider";
 import { ProfileStrip } from "../profile/ProfileStrip";
+import { NameSurface } from "../profile/NameSurface";
+import { useSetName } from "../profile/set-name-provider";
 import { ActionBar } from "../table/ActionBar";
 import { DuelResult } from "../result/DuelResult";
 import { DuelTable } from "../table/DuelTable";
@@ -13,6 +15,7 @@ export function Lobby(): ReactElement {
   const state = useDuelState();
   const send = useSend();
   const profile = useProfileStrip();
+  const setName = useSetName();
   const [typedCode, setTypedCode] = useState("");
   const code = normalizeRoomCode(typedCode);
 
@@ -68,6 +71,9 @@ export function Lobby(): ReactElement {
         <button type="submit">Join the duel</button>
       </form>
       {profile !== null && <ProfileStrip state={profile} />}
+      {profile !== null && profile.kind === "profile" && setName !== null && (
+        <NameSurface profile={profile.profile} setName={setName} />
+      )}
     </section>
   );
 }

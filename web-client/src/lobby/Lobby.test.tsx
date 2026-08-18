@@ -10,8 +10,10 @@ import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
 import { ProfileProvider } from "../profile/profile-provider";
+import { SetNameProvider } from "../profile/set-name-provider";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { SeatView, ServerMessage } from "../protocol";
+import type { SetNameOutcome } from "../profile/set-name";
 import { aProfile } from "../profile/profile-fixture";
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
@@ -74,11 +76,16 @@ function renderLobbyWithProfile(
   store: DuelStore = createDuelStore(),
 ): void {
   const read = (): Promise<ProfileStripState> => Promise.resolve(state);
+  const setName = vi.fn((): Promise<SetNameOutcome> =>
+    Promise.resolve({ kind: "named", profile: aProfile() }),
+  );
   render(
     <ProfileProvider read={read}>
-      <DuelProvider store={store} send={vi.fn()}>
-        <Lobby />
-      </DuelProvider>
+      <SetNameProvider setName={setName}>
+        <DuelProvider store={store} send={vi.fn()}>
+          <Lobby />
+        </DuelProvider>
+      </SetNameProvider>
     </ProfileProvider>,
   );
 }
@@ -461,5 +468,61 @@ describe("the lobby", () => {
 
     expect(screen.queryByLabelText("your profile")).toBeNull();
     expect(screen.getByText("Pot 30")).toBeDefined();
+  });
+
+  it("shows the name surface beside the strip, and only with a profile to show", async () => {
+    const state: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ displayName: null }),
+      duels: [],
+    };
+    renderLobbyWithProfile(state);
+
+    const profileStrip = await screen.findByLabelText("your profile");
+    const nameSurface = screen.getByLabelText("your display name");
+    expect(profileStrip).toBeDefined();
+    expect(nameSurface).toBeDefined();
+    // Verify document order: name surface comes after profile strip
+    expect(profileStrip.compareDocumentPosition(nameSurface)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+
+    cleanup();
+
+    const noProfileState: ProfileStripState = { kind: "no-profile" };
+    renderLobbyWithProfile(noProfileState);
+
+    expect(screen.queryByLabelText("your display name")).toBeNull();
+  });
+
+  it("keeps the name surface off the screen once a table is on it", () => {
+    const state: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    };
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+    renderLobbyWithProfile(state, store);
+
+    expect(screen.queryByLabelText("your display name")).toBeNull();
+    expect(screen.getByText("Pot 30")).toBeDefined();
+  });
+
+  it("renders the lobby with no headings from the name surface", async () => {
+    const state: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ displayName: "TestPlayer" }),
+      duels: [],
+    };
+    renderLobbyWithProfile(state);
+
+    await screen.findByLabelText("your profile");
+    await screen.findByText("TestPlayer");
+    // The lobby mounts with SetNameProvider, so NameSurface will render.
+    // Verify NameSurface does not add any heading elements
+    const headings = screen.queryAllByRole("heading");
+    expect(headings.length).toBe(0);
   });
 });
