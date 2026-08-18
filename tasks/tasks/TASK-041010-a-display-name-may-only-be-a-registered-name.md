@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041010
 title: The sixth migration makes a display name a registered name or nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: S
