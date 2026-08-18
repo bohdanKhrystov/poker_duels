@@ -1188,8 +1188,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041020](tasks/TASK-041020-a-takedown-is-invisible-to-everybody-else.md) A takedown is invisible to everybody else, and its two strings live where they should | S | **done** |
 | | [TASK-041021](tasks/TASK-041021-the-document-contracts-the-removed-name.md) The protocol document contracts the removed-name field | XS | **done** |
 | | [TASK-041022](tasks/TASK-041022-the-operations-document-is-the-only-call-site.md) docs/operations.md is the takedown's only call site | S | **done** |
-| | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | ready |
-| | [TASK-041024](tasks/TASK-041024-the-kotlin-half-of-fail-closed-is-isolated.md) The Kotlin half of fail-closed is isolated | XS | backlog |
+| | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | dropped |
+| | [TASK-041024](tasks/TASK-041024-the-kotlin-half-of-fail-closed-is-isolated.md) The Kotlin half of fail-closed is isolated | XS | ready |
 | [STORY-0411](stories/STORY-0411-the-name-in-the-client.md) The name in the client — shown, and settable | | | backlog |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |

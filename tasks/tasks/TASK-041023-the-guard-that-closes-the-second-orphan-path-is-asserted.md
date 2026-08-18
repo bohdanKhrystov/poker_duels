@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041023
 title: The guard that closes the second orphan path is asserted, not merely read
 type: task
-status: ready
+status: dropped
 parent: STORY-0410
 module: poker-server
 estimate: XS
@@ -13,60 +13,51 @@ files_touched: 1
 labels: [server, db, test, identity, regression]
 depends_on: [TASK-041013]
 verify:
-  - ./gradlew :poker-server:test --tests 'duels.poker.server.db.PostgresProfileWritesTest' -PrequireDocker=true
   - ./gradlew :poker-server:check -PrequireDocker=true
 ---
 
-## Goal
+## Dropped: the premise was wrong, and the coverage already exists
 
-`ADR-0051` §2's orphaned-registry-row defect has two paths. `TASK-041003` covers the first — the
-`UPDATE` matching zero rows. `TASK-041013` established that the second is **closed**: the permanence
-trigger cannot raise after a successful registry insert, because `SET_NAME_SQL` carries
-`AND display_name IS NULL` and the trigger's raise condition requires `OLD.display_name IS NOT NULL`.
-The two are mutually exclusive, so the trigger never runs for a row that clause excluded.
+This ticket was filed during `TASK-041013` on the strength of a reading of the code, not a
+measurement. Both of its claims turned out to be false when measured.
 
-That closure rests entirely on reading the code. **Delete `AND display_name IS NULL` from
-`SET_NAME_SQL` and the whole suite stays green** — `AlreadyNamed` would still be reported, because
-the second write is still refused, only now by the trigger and after the registry row is already
-written. The orphan reappears and nothing says so.
+**It claimed** that `ADR-0051` §2's second orphan path — the permanence trigger raising after a
+successful registry insert — is closed only by `SET_NAME_SQL`'s `AND display_name IS NULL`, and that
+deleting that clause would leave the whole suite green while the orphan returned.
 
-This ticket makes the guard assert itself.
+**What actually happens** when the clause is removed, run against a real database:
 
-## Scope
+- **No orphan appears.** `writeName` sets `autoCommit = false` and its `catch (SQLException)` calls
+  `connection.rollback()` unconditionally, so the registry insert and the refused `player` update
+  are undone together. Measured directly: `registryCountForRemy=0`, `storedNameForPlayer=Quinn`.
+- **The suite does not stay green.** Five of fourteen tests in `PostgresProfileWritesTest` fail, all
+  on one root cause: the trigger raises `23001`, which is not `23505`, so `writeName` rethrows
+  instead of classifying and a raw `SQLException` escapes `setDisplayName`.
+- **Two of those five already existed** — `noSqlExceptionEscapes` and
+  `aRefusedSecondNameLeavesNoRegistryRow`. The guard was already asserted. What was missing was not
+  a test; it was a written-down reason.
 
-- One test in `PostgresProfileWritesTest`: a player who **already holds** a name attempts to set a
-  second, different, previously-unregistered name. Afterwards, `name_registry` must contain **no row**
-  for that second string.
-- It must exercise `PostgresProfileWrites.setDisplayName` — the production path — not a hand-built
-  sequence. The point is that the production statement carries the guard.
-- The result assertion (`AlreadyNamed`) stays, but it is not what this test is for. Without the
-  registry assertion the test is `aRefusedSecondNameLeavesNoRegistryRow` again.
+The clause is still load-bearing, but for the failure mode those two tests describe, not the one
+this ticket named.
 
-## Out of scope
+## Why no test shipped
 
-- The migration. The guard being asserted lives in Kotlin, in `SET_NAME_SQL`.
-- Changing `SET_NAME_SQL`. It is correct; this ticket pins it.
-- The first orphan path — `TASK-041003` owns it.
+The test this ticket specified is `aRefusedSecondNameLeavesNoRegistryRow` (`TASK-041003`) with
+different literals. That test already:
 
-## Tests
+- uses a second name never registered anywhere in its fresh database (`"Bea"`);
+- asserts the registry row count for it is `0`, by count, not by result type;
+- goes through `PostgresProfileWrites.setDisplayName`, not a hand-built pair.
 
-`PostgresProfileWritesTest`, `-PrequireDocker=true`. One test added; nothing existing edited.
+Both tests failed on the identical mutation for the identical reason. Their sensitivity to the one
+property this ticket is about is indistinguishable, so shipping the new one would have added a
+duplicate under a rationale the evidence contradicts.
 
-| Test | Proves |
-| --- | --- |
-| `aSecondNameIsNeverRegisteredForAnAlreadyNamedPlayer` | After a refused second `setDisplayName`, `SELECT count(*) FROM name_registry WHERE name = <second>` is `0`. **Fails against** a `SET_NAME_SQL` without `AND display_name IS NULL`: the registry insert lands, the permanence trigger then refuses the `player` write, and the second string is `TAKEN` by nobody — forever, since a registered name is never released |
+Its comment already records the mechanism correctly: *"Without the rollback the count below is 1 and
+the result is still `AlreadyNamed` — every other assertion in this file stays green either way."*
 
-## Acceptance criteria
+## What replaces it
 
-- [ ] `PostgresProfileWritesTest.aSecondNameIsNeverRegisteredForAnAlreadyNamedPlayer` passes
-- [ ] It asserts the registry contains no row for the refused name, by count, not by result type alone
-- [ ] It calls `PostgresProfileWrites.setDisplayName`, not a hand-built `INSERT`/`UPDATE` pair
-- [ ] Removing `AND display_name IS NULL` from `SET_NAME_SQL` makes it fail — demonstrate and revert
-- [ ] No existing test is edited or renamed
-- [ ] Every command in `verify:` exits 0
-
-## Definition of done
-
-Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket:
-`verify` green, review passed, CI green, status `done`, `BOARD.md` updated, squash-merged into
-`develop`. Not done until the PR is merged.
+Nothing. `TASK-041024` still stands and is unaffected: it isolates the **Kotlin rethrow** in
+`NameBlocklistTest` from the foreign key that covers for it, which is a different guard on a
+different call path, and one nothing currently asserts.
