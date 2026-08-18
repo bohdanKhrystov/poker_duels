@@ -1184,8 +1184,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041016](tasks/TASK-041016-a-blocked-name-is-refused-and-the-screen-fails-closed.md) A blocked name is refused when it is set, and the screen fails closed | S | **done** |
 | | [TASK-041017](tasks/TASK-041017-the-port-test-builds-its-profile-through-the-builder.md) The port test builds its profile through the shared builder | XS | **done** |
 | | [TASK-041018](tasks/TASK-041018-the-profile-says-the-name-was-removed.md) The profile says the name was removed, from one correlated EXISTS | S | **done** |
-| | [TASK-041019](tasks/TASK-041019-two-players-in-one-database.md) Two players in one database, and only one of them reads true | S | ready |
-| | [TASK-041020](tasks/TASK-041020-a-takedown-is-invisible-to-everybody-else.md) A takedown is invisible to everybody else, and its two strings live where they should | S | backlog |
+| | [TASK-041019](tasks/TASK-041019-two-players-in-one-database.md) Two players in one database, and only one of them reads true | S | **done** |
+| | [TASK-041020](tasks/TASK-041020-a-takedown-is-invisible-to-everybody-else.md) A takedown is invisible to everybody else, and its two strings live where they should | S | ready |
 | | [TASK-041021](tasks/TASK-041021-the-document-contracts-the-removed-name.md) The protocol document contracts the removed-name field | XS | backlog |
 | | [TASK-041022](tasks/TASK-041022-the-operations-document-is-the-only-call-site.md) docs/operations.md is the takedown's only call site | S | backlog |
 | | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | backlog |

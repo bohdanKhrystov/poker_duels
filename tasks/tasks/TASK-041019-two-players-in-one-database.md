@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041019
 title: Two players in one database, and only one of them reads true
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
