@@ -59,7 +59,8 @@ export function ProfileStrip(props: {
                   <p>
                     {outcomeWord(duel.outcome)} {coinDeltaText(duel.coinDelta)}{" "}
                     {duel.handsPlayed}{" "}
-                    {duel.handsPlayed === 1 ? "hand" : "hands"}{" "}
+                    {duel.handsPlayed === 1 ? "hand" : "hands"} vs{" "}
+                    {nameOrNone(duel.opponentDisplayName)}{" "}
                     {finishedAtText(duel.finishedAt)}
                   </p>
                 </li>
