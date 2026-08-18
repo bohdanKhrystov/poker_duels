@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041112
 title: The write reaches the tree the same way the read already does
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: XS
