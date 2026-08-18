@@ -138,6 +138,12 @@ class DisplayNameUniquenessTest {
         val deviceId = "device-${UUID.randomUUID()}"
         dataSource.connection.use { connection ->
             connection.prepareStatement(
+                "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.executeUpdate()
+            }
+            connection.prepareStatement(
                 "INSERT INTO player (id, device_id, coin_balance, display_name) VALUES (?, ?, ?, ?)",
             ).use { statement ->
                 statement.setObject(1, playerId)
@@ -168,6 +174,12 @@ class DisplayNameUniquenessTest {
 
     private fun updatePlayerName(playerId: UUID, displayName: String) {
         dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.executeUpdate()
+            }
             connection.prepareStatement(
                 "UPDATE player SET display_name = ? WHERE id = ?",
             ).use { statement ->
