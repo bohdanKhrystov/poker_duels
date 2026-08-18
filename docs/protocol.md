@@ -95,6 +95,7 @@ These endpoints are **plain HTTP** — they carry no `type` discriminator and ar
 | playerId | string | The unique identifier of the player |
 | coinBalance | number | The player's current coin balance, computed as wins minus losses. This is a signed integer and may be negative per `ADR-0014` — a balance of `−1` is a correct answer, not an error. |
 | displayName | string or null | The player's chosen display name, or `null` if never set. Null means *never set*, and the server fabricates no placeholder per `ADR-0029` §6. |
+| displayNameRemoved | boolean | `true` when the player holds no display name **and** a name has been removed from them by an operator (`ADR-0052`). `false` for a player who never set one, and `false` again once they set a new one. Never says anything about another player. |
 
 ### Set display name
 
