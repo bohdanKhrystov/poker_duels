@@ -50,6 +50,13 @@ Read, not edited: `web-client/src/profile/name-text.ts` (`refusalSentence`, `may
 - No sentence is composed here. Every string comes from `name-text.ts`, whose test holds the golden
   copies.
 
+
+**Carried from `TASK-041110`.** That ticket forbids client-side validation of the typed string — an
+empty field may be submitted and the server answers `400` — but nothing pins it: measured, adding a
+client-side empty-name guard there breaks no test, because no test submits an empty name. This
+ticket owns the `400` path, so **submit an empty field and assert the `400` sentence reaches the
+screen**. That is what makes the no-validation rule fail loudly instead of silently.
+
 ## Out of scope
 
 - Distinguishing the three sources of a `409`. **A refusal, not an omission:** `ADR-0051` §2 makes

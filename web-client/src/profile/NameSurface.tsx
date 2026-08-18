@@ -1,4 +1,4 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import type { PlayerProfile } from "./profile";
 import type { SetNameOutcome } from "./set-name";
 import {
@@ -11,22 +11,51 @@ export function NameSurface(props: {
   readonly profile: PlayerProfile;
   readonly setName: (name: string) => Promise<SetNameOutcome>;
 }): ReactElement {
-  const { profile } = props;
+  const { profile, setName } = props;
   const [inputValue, setInputValue] = useState("");
+  // What the server sent back on a `named` outcome. Once set, this — not
+  // the (by then stale) `profile` prop — is what the surface renders,
+  // exactly as ADR-0029 §5 intends: the client is told the canonical name,
+  // never left to assume the typed string survived unchanged.
+  const [wonName, setWonName] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // A ref, not just the state above: the guard below must see the current
+  // in-flight status the instant the second submit runs, not after a render
+  // has caught up.
+  const submitInFlight = useRef(false);
 
-  if (profile.displayName !== null) {
+  const displayName = wonName ?? profile.displayName;
+
+  if (displayName !== null) {
     return (
       <section
         aria-label="your display name"
         className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
       >
-        <p className="text-small">{profile.displayName}</p>
+        <p className="text-small">{displayName}</p>
       </section>
     );
   }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // A name is permanent: a second submit while one is already in flight
+    // must send nothing, not race the first and let the server pick a
+    // winner (200) and a loser (403) the player never asked for.
+    if (submitInFlight.current) {
+      return;
+    }
+    submitInFlight.current = true;
+    setIsSubmitting(true);
+    setName(inputValue).then((outcome) => {
+      if (outcome.kind === "named") {
+        setWonName(outcome.profile.displayName);
+        return;
+      }
+      // Every other outcome leaves the form as it was: able to try again.
+      submitInFlight.current = false;
+      setIsSubmitting(false);
+    });
   };
 
   return (
@@ -56,6 +85,7 @@ export function NameSurface(props: {
           </label>
           <button
             type="submit"
+            disabled={isSubmitting}
             className="rounded-small border border-hairline bg-surface px-4 py-2 text-small"
           >
             Set my name
