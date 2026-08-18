@@ -4,13 +4,14 @@ import duels.poker.server.protocol.http.DuelOutcomeLabel
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class DuelFilterTest {
     @Test
     fun everyOutcomeLabelParsesFromItsOwnName() {
         // The test is universal: it claims every entry parses. The assertion stops it passing
         // over an empty set.
-        assert(DuelOutcomeLabel.entries.isNotEmpty())
+        assertTrue(DuelOutcomeLabel.entries.isNotEmpty(), "the sweep must run over something")
         for (entry in DuelOutcomeLabel.entries) {
             assertEquals(entry, duelOutcomeOrNull(entry.name))
         }
