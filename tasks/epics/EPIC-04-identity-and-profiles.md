@@ -205,7 +205,15 @@ without adding a story.
 
 ## Open decisions
 
-**None.** `DEC-049` — the last one open — was raised on 2026-08-17 by
+| ID | Question | Raised | Due |
+| --- | --- | --- | --- |
+| DEC-050 | **The architect's** — by what mechanism is a duel-history cursor bound to the filter that produced it, so that replaying it under a different filter is refused rather than silently reinterpreted? Full question in [`docs/adr/README.md`](../../docs/adr/README.md#open-decisions). | 2026-08-18, splitting `STORY-0409` | before `STORY-0409` closes |
+
+It blocks **one** acceptance criterion of `STORY-0409` and no ticket: the split is ordered so that
+all eleven tickets land without it, and `TASK-040909` ships an endpoint that accepts `after` beside a
+filter under the weaker contract, said out loud in the ticket and in `docs/protocol.md`.
+
+`DEC-049` — open before this one — was raised on 2026-08-17 by
 [`ADR-0055`](../../docs/adr/ADR-0055-sign-up-is-budgeted-by-address-and-over-budget-says-so.md)
 while answering `DEC-048`, and answered the same day by
 [`ADR-0056`](../../docs/adr/ADR-0056-a-throttled-sign-up-says-so-and-keeps-what-was-typed.md). It
