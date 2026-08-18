@@ -6,12 +6,50 @@ export interface PlayerProfile {
   readonly playerId: string;
   /** Signed, and negative is a correct answer (`ADR-0014`). Never clamped. */
   readonly coinBalance: number;
+  /**
+   * The name the player chose, or `null` when they hold none.
+   * `displayName === null && !displayNameRemoved` means never set.
+   * `displayName === null && displayNameRemoved` means removed by an operator (`ADR-0053`).
+   * Never derived, never defaulted.
+   */
+  readonly displayName: string | null;
+  /** `true` only when they hold no name and one was removed from them (`ADR-0053`). */
+  readonly displayNameRemoved: boolean;
 }
 
 export type ProfileRead =
   | { readonly kind: "profile"; readonly profile: PlayerProfile }
   | { readonly kind: "no-profile" }
   | { readonly kind: "unavailable" };
+
+/**
+ * Parses a wire body into a `PlayerProfile`, or returns `null` if the body is invalid.
+ *
+ * Both `displayName` and `displayNameRemoved` are required on the wire — no defaults.
+ * The body must have `playerId` (string), `coinBalance` (number), `displayName` (string or null),
+ * and `displayNameRemoved` (boolean). A missing or wrong-typed field answers `null`.
+ */
+export function profileFromBody(body: unknown): PlayerProfile | null {
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    typeof (body as Record<string, unknown>).playerId === "string" &&
+    typeof (body as Record<string, unknown>).coinBalance === "number" &&
+    typeof (body as Record<string, unknown>).displayNameRemoved === "boolean"
+  ) {
+    const displayName = (body as Record<string, unknown>).displayName;
+    if (typeof displayName === "string" || displayName === null) {
+      return {
+        playerId: (body as Record<string, unknown>).playerId as string,
+        coinBalance: (body as Record<string, unknown>).coinBalance as number,
+        displayName,
+        displayNameRemoved: (body as Record<string, unknown>)
+          .displayNameRemoved as boolean,
+      };
+    }
+  }
+  return null;
+}
 
 /**
  * Reads the player profile from the API.
@@ -38,21 +76,10 @@ export async function readProfile(deps: {
       return { kind: "unavailable" };
 
     case "body": {
-      const body = apiRead.body;
-      // Validate that body has the required fields with correct types
-      if (
-        typeof body === "object" &&
-        body !== null &&
-        typeof (body as Record<string, unknown>).playerId === "string" &&
-        typeof (body as Record<string, unknown>).coinBalance === "number"
-      ) {
-        const profile: PlayerProfile = {
-          playerId: (body as Record<string, unknown>).playerId as string,
-          coinBalance: (body as Record<string, unknown>).coinBalance as number,
-        };
+      const profile = profileFromBody(apiRead.body);
+      if (profile !== null) {
         return { kind: "profile", profile };
       }
-
       return { kind: "unavailable" };
     }
   }
