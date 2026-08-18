@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040905
 title: The search term is not a language, and an unnamed opponent is not a match
 type: task
-status: backlog
+status: ready
 parent: STORY-0409
 module: poker-server
 estimate: XS

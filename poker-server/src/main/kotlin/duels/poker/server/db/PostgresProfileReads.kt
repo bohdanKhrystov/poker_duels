@@ -57,6 +57,12 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
      * would report as that outcome — the filter reads the same sign, on the same reasoning
      * (ADR-0014), rather than comparing against a stored magnitude. [DuelFilter.NONE] reads every
      * outcome: exactly what the three-argument overload above always has.
+     *
+     * [filter]'s `opponent` narrows the read to duels whose opponent's display name contains it as
+     * a substring, folded under the `und-x-icu` collation pinned by ADR-0029 §1 so a search agrees
+     * with the name's own uniqueness about what two names differing only in case are. A `null`
+     * `opponent` narrows nothing, and an opponent who has never set a name never matches a non-null
+     * term.
      */
     public suspend fun recentDuelsOf(
         playerId: PlayerId,
@@ -70,12 +76,13 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                 connection.prepareStatement(sql).use { statement ->
                     statement.setObject(1, UUID.fromString(playerId.value))
                     statement.bindOutcome(2, filter.outcome)
+                    statement.bindOpponent(4, filter.opponent)
                     if (after == null) {
-                        statement.setInt(4, limit)
-                    } else {
-                        statement.setObject(4, OffsetDateTime.ofInstant(after.finishedAt, ZoneOffset.UTC))
-                        statement.setObject(5, after.duelId)
                         statement.setInt(6, limit)
+                    } else {
+                        statement.setObject(6, OffsetDateTime.ofInstant(after.finishedAt, ZoneOffset.UTC))
+                        statement.setObject(7, after.duelId)
+                        statement.setInt(8, limit)
                     }
                     statement.executeQuery().use { rows ->
                         val duels = mutableListOf<DuelSummaryResponse>()
@@ -113,6 +120,15 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         }
     }
 
+    // Same two-position shape as bindOutcome above. Nothing lower-cases opponent here: folding
+    // happens once, in SQL, under the collation POSITION's lower() calls pin — doing it again in
+    // Kotlin would risk the two sides disagreeing about what "same letter" means.
+    private fun PreparedStatement.bindOpponent(first: Int, opponent: String?) {
+        for (index in first..first + 1) {
+            if (opponent == null) setNull(index, Types.VARCHAR) else setString(index, opponent)
+        }
+    }
+
     // No `else`: a fourth DuelOutcomeLabel would fail to compile here rather than silently
     // filter nothing.
     private fun coinDeltaSignOf(outcome: DuelOutcomeLabel): Int =
@@ -144,6 +160,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
             JOIN player p ON p.id = o.player_id
             WHERE r.player_id = ?
               AND (?::int IS NULL OR sign(r.coin_delta) = ?::int)
+              AND (?::text IS NULL OR POSITION(lower(?::text COLLATE "und-x-icu") IN lower(p.display_name COLLATE "und-x-icu")) > 0)
             """
 
         private const val DUEL_ORDER = "ORDER BY d.finished_at DESC, d.id DESC LIMIT ?"
