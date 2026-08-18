@@ -3,7 +3,12 @@ import { aProfile, aDuelLine, meBody, duelRowBody } from "./profile-fixture";
 
 describe("the profile fixtures", () => {
   it("builds a profile carrying every field PlayerProfile declares", () => {
-    expect(Object.keys(aProfile()).sort()).toEqual(["coinBalance", "playerId"]);
+    expect(Object.keys(aProfile()).sort()).toEqual([
+      "coinBalance",
+      "displayName",
+      "displayNameRemoved",
+      "playerId",
+    ]);
   });
 
   it("builds a duel line carrying every field RecentDuel declares", () => {
@@ -18,7 +23,12 @@ describe("the profile fixtures", () => {
 
   it("builds bodies carrying every field the wire declares, opponent id included", () => {
     const me = meBody();
-    expect(Object.keys(me).sort()).toEqual(["coinBalance", "playerId"]);
+    expect(Object.keys(me).sort()).toEqual([
+      "coinBalance",
+      "displayName",
+      "displayNameRemoved",
+      "playerId",
+    ]);
 
     const duelRow = duelRowBody();
     expect(Object.keys(duelRow).sort()).toEqual([

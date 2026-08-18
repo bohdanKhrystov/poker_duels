@@ -14,6 +14,8 @@ export function aProfile(
   return {
     playerId: "p-fixture",
     coinBalance: 41,
+    displayName: null,
+    displayNameRemoved: false,
     ...overrides,
   };
 }
@@ -42,7 +44,8 @@ export function aDuelLine(overrides: Partial<RecentDuel> = {}): RecentDuel {
  * Returns a record with unknown values so a test can pass wrong-typed fields
  * like `meBody({ coinBalance: "x" })` and still get a body.
  *
- * Carries exactly the fields `GET /api/me` documents: `playerId` and `coinBalance`.
+ * Carries exactly the fields `GET /api/me` documents: `playerId`, `coinBalance`,
+ * `displayName`, and `displayNameRemoved`.
  */
 export function meBody(
   overrides: Record<string, unknown> = {},
@@ -50,6 +53,8 @@ export function meBody(
   return {
     playerId: "p-fixture",
     coinBalance: 41,
+    displayName: null,
+    displayNameRemoved: false,
     ...overrides,
   };
 }

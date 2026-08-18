@@ -227,4 +227,87 @@ describe("the profile read", () => {
 
     expect(result3).toEqual({ kind: "unavailable" });
   });
+
+  it("takes the name the server sent, and the null of a player who has none", async () => {
+    // Case 1: displayName is a string
+    writeDeviceId(storage, "d-1");
+    const mock1 = answering(ok(meBody({ displayName: "Ada Lovelace" })));
+    const result1 = await readProfile({
+      fetch: mock1.fetch,
+      storage,
+    });
+
+    expect(result1).toEqual({
+      kind: "profile",
+      profile: aProfile({ displayName: "Ada Lovelace" }),
+    });
+
+    // Case 2: displayName is null to ensure it's not hardcoded
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock2 = answering(ok(meBody({ displayName: null })));
+    const result2 = await readProfile({
+      fetch: mock2.fetch,
+      storage,
+    });
+
+    expect(result2).toEqual({
+      kind: "profile",
+      profile: aProfile({ displayName: null }),
+    });
+  });
+
+  it("takes the removed bit both ways, from two bodies", async () => {
+    // Case 1: displayNameRemoved is true
+    writeDeviceId(storage, "d-1");
+    const mock1 = answering(ok(meBody({ displayNameRemoved: true })));
+    const result1 = await readProfile({
+      fetch: mock1.fetch,
+      storage,
+    });
+
+    expect(result1).toEqual({
+      kind: "profile",
+      profile: aProfile({ displayNameRemoved: true }),
+    });
+
+    // Case 2: displayNameRemoved is false to ensure it's not hardcoded
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock2 = answering(ok(meBody({ displayNameRemoved: false })));
+    const result2 = await readProfile({
+      fetch: mock2.fetch,
+      storage,
+    });
+
+    expect(result2).toEqual({
+      kind: "profile",
+      profile: aProfile({ displayNameRemoved: false }),
+    });
+  });
+
+  it("answers unavailable when the body says nothing about a removed name", async () => {
+    // Build a literal body without displayNameRemoved to test that it is required
+    writeDeviceId(storage, "d-1");
+    const mock = answering(
+      ok({ playerId: "p-1", coinBalance: 0, displayName: null }),
+    );
+    const result = await readProfile({
+      fetch: mock.fetch,
+      storage,
+    });
+
+    expect(result).toEqual({ kind: "unavailable" });
+  });
+
+  it("answers unavailable when the name is neither a string nor null", async () => {
+    writeDeviceId(storage, "d-1");
+    const mock = answering(ok(meBody({ displayName: 42 })));
+    const result = await readProfile({
+      fetch: mock.fetch,
+      storage,
+    });
+
+    expect(result).toEqual({ kind: "unavailable" });
+  });
 });
