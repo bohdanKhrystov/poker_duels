@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041109
 title: The surface says a name was removed, only to the player it happened to
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: XS
