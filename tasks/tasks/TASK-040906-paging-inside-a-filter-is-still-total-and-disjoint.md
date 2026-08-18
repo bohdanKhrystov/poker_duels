@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040906
 title: Paging inside a filter is still total and disjoint, across an insert that matches it
 type: task
-status: backlog
+status: ready
 parent: STORY-0409
 module: poker-server
 estimate: S
