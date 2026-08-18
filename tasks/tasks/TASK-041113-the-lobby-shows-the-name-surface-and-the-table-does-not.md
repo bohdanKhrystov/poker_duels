@@ -14,7 +14,7 @@ labels: [client, profile, ui, wiring]
 depends_on: [TASK-041112]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +410 passed \(410\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +411 passed \(411\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'shows the name surface beside the strip, and only with a profile to show'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'keeps the name surface off the screen once a table is on it'
   - cd web-client && npm run check
@@ -30,7 +30,7 @@ on the screen.
 | File | Action |
 | --- | --- |
 | `web-client/src/lobby/Lobby.tsx` | modify — one conditional render |
-| `web-client/src/lobby/Lobby.test.tsx` | modify — two tests added |
+| `web-client/src/lobby/Lobby.test.tsx` | modify — three tests added |
 
 Read, not edited: `web-client/src/profile/NameSurface.tsx`,
 `web-client/src/profile/set-name-provider.tsx`, `web-client/src/profile/profile-fixture.ts`.
@@ -66,7 +66,15 @@ Read, not edited: `web-client/src/profile/NameSurface.tsx`,
 | `shows the name surface beside the strip, and only with a profile to show` | With a profile the region labelled `your display name` is on screen **after** the one labelled `your profile` (document order), and in the same test a lobby rendered with `{ kind: "no-profile" }` has no such region. Fails against a surface rendered unconditionally, against one rendered above the strip, and against one that survives a missing profile |
 | `keeps the name surface off the screen once a table is on it` | With a store holding a joined room and a snapshot, `queryByLabelText("your display name")` is `null` while the table is on screen — the sibling of the strip's own merged assertion. Fails against a surface rendered outside the lobby's last branch, which is the one edit that would put a name form over a duel |
 
-Two tests added to 408, so the suite reports **410**.
+Three tests added to 408, so the suite reports **411**.
+
+The third is `renders the lobby with no headings from the name surface`, and it lands here because
+`TASK-041108` deferred it here. That ticket recorded that `NameSurface` has no heading and that
+nothing tested it. Measured during this ticket, the gap was **still open**: adding an `<h2>` to
+`NameSurface` left `App.test.tsx` green, because that file never wraps `SetNameProvider` and so
+never mounts the component. `main.tsx` does provide it, so in production the component mounts and a
+heading there would have gone unseen by the whole suite. `Lobby.test.tsx` renders with the provider,
+so the check bites there: with an `<h2>` added it fails `expected 1 to be +0`.
 
 ## Acceptance criteria
 
@@ -76,7 +84,7 @@ Two tests added to 408, so the suite reports **410**.
 - [ ] The two merged strip tests in `Lobby.test.tsx` pass unchanged
 - [ ] `Lobby.tsx` renders `NameSurface` in exactly one place
 - [ ] `App.tsx` is unmodified and `App.test.tsx` passes
-- [ ] `npm run --silent test` reports `Tests  410 passed (410)`
+- [ ] `npm run --silent test` reports `Tests  411 passed (411)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
