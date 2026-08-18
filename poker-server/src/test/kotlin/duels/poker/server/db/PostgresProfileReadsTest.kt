@@ -681,6 +681,58 @@ class PostgresProfileReadsTest {
         }
     }
 
+    @Test
+    fun aSearchReturnsOnlyTheDuelsAgainstThatOpponent() {
+        runBlocking {
+            val fixture = threeDuelsAgainstAPrefixPair()
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(null, "Halvardsen"))
+
+            assertEquals(listOf(fixture.getValue("Halvardsen")), duels.map { it.duelId })
+        }
+    }
+
+    @Test
+    fun aSearchMatchesInsideTheName() {
+        runBlocking {
+            val fixture = threeDuelsAgainstAPrefixPair()
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(null, "vard"))
+
+            assertEquals(
+                listOf(fixture.getValue("Halvardsen"), fixture.getValue("Halvard")),
+                duels.map { it.duelId },
+            )
+        }
+    }
+
+    @Test
+    fun aSearchIgnoresTheCaseOfBothSides() {
+        runBlocking {
+            val fixture = threeDuelsAgainstAPrefixPair()
+
+            val upperTermDuels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(null, "HALVARDSEN"))
+            val lowerTermDuels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(null, "halvardsen"))
+
+            assertEquals(listOf(fixture.getValue("Halvardsen")), upperTermDuels.map { it.duelId })
+            assertEquals(listOf(fixture.getValue("Halvardsen")), lowerTermDuels.map { it.duelId })
+        }
+    }
+
+    @Test
+    fun noSearchStillReadsEveryOpponent() {
+        runBlocking {
+            val fixture = threeDuelsAgainstAPrefixPair()
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter.NONE)
+
+            assertEquals(
+                listOf(fixture.getValue("Halvardsen"), fixture.getValue("Halvard"), fixture.getValue(null)),
+                duels.map { it.duelId },
+            )
+        }
+    }
+
     /**
      * `RECENT_DUELS_SQL` and `DUELS_AFTER_SQL` are both built from `DUEL_LINES`
      * (`"$DUEL_LINES $DUEL_ORDER"` and `"$DUEL_LINES AND (...) $DUEL_ORDER"`), so the join the two
@@ -838,6 +890,53 @@ class PostgresProfileReadsTest {
             carolDuelId.toString() to "Sigrid",
             bobDuelId.toString() to "Halvard",
             daveDuelId.toString() to null,
+        )
+    }
+
+    /**
+     * Alice plays bob (named `Halvard`) at 10:02, carol (`Halvardsen`) at 10:03 and dave (unnamed)
+     * at 10:01 — recorded in that order, so newest-first is carol, bob, dave and matches neither the
+     * insertion order nor the alphabetical one. Returns display name (or null) -> duelId.
+     */
+    private suspend fun threeDuelsAgainstAPrefixPair(): Map<String?, String> {
+        val carol = playerDirectory.resolve(DeviceId("carol"))
+        val dave = playerDirectory.resolve(DeviceId("dave"))
+        setPlayerDisplayName(bob.id.value, "Halvard")
+        setPlayerDisplayName(carol.id.value, "Halvardsen")
+
+        val bobDuelId = UUID.randomUUID()
+        val carolDuelId = UUID.randomUUID()
+        val daveDuelId = UUID.randomUUID()
+
+        duelResultStore.record(
+            finishedDuel(
+                winner = 0,
+                id = bobDuelId,
+                opponent = bob,
+                finishedAt = Instant.parse("2026-08-13T10:02:00Z"),
+            ),
+        )
+        duelResultStore.record(
+            finishedDuel(
+                winner = 0,
+                id = carolDuelId,
+                opponent = carol,
+                finishedAt = Instant.parse("2026-08-13T10:03:00Z"),
+            ),
+        )
+        duelResultStore.record(
+            finishedDuel(
+                winner = 0,
+                id = daveDuelId,
+                opponent = dave,
+                finishedAt = Instant.parse("2026-08-13T10:01:00Z"),
+            ),
+        )
+
+        return linkedMapOf(
+            "Halvardsen" to carolDuelId.toString(),
+            "Halvard" to bobDuelId.toString(),
+            null to daveDuelId.toString(),
         )
     }
 
