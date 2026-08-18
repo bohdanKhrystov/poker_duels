@@ -1199,8 +1199,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041106](tasks/TASK-041106-one-put-sets-the-name-and-every-answer-is-its-own-outcome.md) One PUT sets the name, and every answer is its own outcome | S | **done** |
 | | [TASK-041107](tasks/TASK-041107-the-words-the-name-surface-says.md) The words the name surface says, and which of them leave a way back | S | **done** |
 | | [TASK-041108](tasks/TASK-041108-the-surface-shows-a-name-or-offers-to-set-one.md) The name surface shows the name, or offers to set one and says what that costs | S | **done** |
-| | [TASK-041109](tasks/TASK-041109-the-surface-says-a-name-was-removed-only-when-it-was.md) The surface says a name was removed, only to the player it happened to | XS | ready |
-| | [TASK-041110](tasks/TASK-041110-the-surface-sends-once-and-shows-what-came-back.md) The surface sends once, and shows the name that came back | S | backlog |
+| | [TASK-041109](tasks/TASK-041109-the-surface-says-a-name-was-removed-only-when-it-was.md) The surface says a name was removed, only to the player it happened to | XS | **done** |
+| | [TASK-041110](tasks/TASK-041110-the-surface-sends-once-and-shows-what-came-back.md) The surface sends once, and shows the name that came back | S | ready |
 | | [TASK-041111](tasks/TASK-041111-each-refusal-says-its-own-sentence.md) Each refusal says its own sentence, and only two leave the form | S | backlog |
 | | [TASK-041112](tasks/TASK-041112-the-write-reaches-the-tree-the-read-already-does.md) The write reaches the tree the same way the read already does | XS | backlog |
 | | [TASK-041113](tasks/TASK-041113-the-lobby-shows-the-name-surface-and-the-table-does-not.md) The lobby shows the name surface, and the duel table never does | XS | backlog |

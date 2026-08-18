@@ -1,7 +1,11 @@
 import { type ReactElement, useState } from "react";
 import type { PlayerProfile } from "./profile";
 import type { SetNameOutcome } from "./set-name";
-import { PERMANENCE_LINE } from "./name-text";
+import {
+  PERMANENCE_LINE,
+  NAME_REMOVED_HEADING,
+  NAME_REMOVED_BODY,
+} from "./name-text";
 
 export function NameSurface(props: {
   readonly profile: PlayerProfile;
@@ -30,6 +34,14 @@ export function NameSurface(props: {
       aria-label="your display name"
       className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
     >
+      {profile.displayName === null && profile.displayNameRemoved && (
+        <div className="w-full">
+          <p className="text-small">
+            <em>{NAME_REMOVED_HEADING}</em>
+          </p>
+          <p className="text-small">{NAME_REMOVED_BODY}</p>
+        </div>
+      )}
       <p className="text-small">{PERMANENCE_LINE}</p>
       <form onSubmit={handleSubmit} className="w-full">
         <div className="flex flex-col gap-3">

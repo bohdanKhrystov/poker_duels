@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041110
 title: The surface sends once, and shows the name that came back
 type: task
-status: backlog
+status: ready
 parent: STORY-0411
 module: web-client
 estimate: S
