@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041013
 title: The permanence trigger has exactly one exception, and it is a transition
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: S

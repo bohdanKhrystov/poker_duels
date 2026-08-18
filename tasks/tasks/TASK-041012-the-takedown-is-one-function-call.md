@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041012
 title: retire_display_name takes the name away and leaves the profile unset
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
