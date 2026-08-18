@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041014
 title: A takedown moves no coin
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: XS
@@ -65,8 +65,11 @@ edited.
 | --- | --- |
 | `aTakedownMovesNoCoin` | Alice beats Bob, so alice is `+1` and bob is `-1` and P1/P2 both hold. Alice sets `"Ann"`. `retire_display_name(alice, 'Ann')`. Afterwards: **P1 returns zero rows**, **P2's two sums are both `0`**, `alice.coin_balance` is still `1`, `bob.coin_balance` is still `-1`, and `SELECT count(*) FROM duel_result` is still `2`. **The wrong implementations this must fail against**: a function whose `UPDATE player` carried a second `SET`, and a fixture that never played a duel — the latter is why the `+1`/`-1` assertion runs *before* the takedown as well as after |
 
-The test asserts the two balances **by value**, not only that P1 and P2 hold: P1 and P2 are
-preserved by a change that decrements both players together, and by a database with no rows at all.
+The test asserts the two balances **by value** as defence in depth, not because P1 and P2 miss
+something specific — measured against a takedown that also decrements `coin_balance`, P1, P2 and the
+by-value check all catch it, P1 first. What actually makes this test non-vacuous is the **fixture**:
+P1 and P2 both hold on a database with no rows at all, so the duel and the `+1`/`-1` assertion
+*before* the takedown are what stop it passing against nothing.
 
 ## Acceptance criteria
 

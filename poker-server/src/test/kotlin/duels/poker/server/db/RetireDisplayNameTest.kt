@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.sql.SQLException
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
@@ -109,6 +111,66 @@ class RetireDisplayNameTest {
         assertNull(storedDisplayNameOf(bob))
     }
 
+    @Test
+    fun aTakedownMovesNoCoin() {
+        val alice = givenPlayerNamed("alice", "Ann")
+        val bob = givenPlayerWithNoName("bob")
+
+        // A hand-written duel, not a call into PostgresDuelResultStore: this file's job is the
+        // takedown, and the fixture only needs the four rows a finished duel always leaves.
+        val duelId = UUID.randomUUID()
+        val now = OffsetDateTime.now(ZoneOffset.UTC)
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "INSERT INTO duel (id, format, started_at, finished_at, hands_played) VALUES (?, ?, ?, ?, ?)",
+            ).use { statement ->
+                statement.setObject(1, duelId)
+                statement.setString(2, "heads-up-no-limit")
+                statement.setObject(3, now)
+                statement.setObject(4, now)
+                statement.setInt(5, 1)
+                statement.executeUpdate()
+            }
+            listOf(alice to 1, bob to -1).forEach { (player, delta) ->
+                connection.prepareStatement(
+                    "INSERT INTO duel_result (duel_id, player_id, coin_delta) VALUES (?, ?, ?)",
+                ).use { statement ->
+                    statement.setObject(1, duelId)
+                    statement.setObject(2, UUID.fromString(player.value))
+                    statement.setInt(3, delta)
+                    statement.executeUpdate()
+                }
+                connection.prepareStatement("UPDATE player SET coin_balance = coin_balance + ? WHERE id = ?")
+                    .use { statement ->
+                        statement.setInt(1, delta)
+                        statement.setObject(2, UUID.fromString(player.value))
+                        statement.executeUpdate()
+                    }
+            }
+        }
+
+        // ADR-0030 §5's own trap: P1 and P2 both hold on an empty database. So the duel's take is
+        // asserted by value -- +1, -1, two duel_result rows -- before the takedown runs at all,
+        // not only after.
+        assertFixtureTook(alice, bob)
+        assertEquals(0, p1BrokenBalanceCount())
+        val before = p2LedgerSums()
+        assertEquals(0, before.playerBalanceSum)
+        assertEquals(0, before.duelResultDeltaSum)
+
+        retireDisplayName(alice, "Ann")
+
+        // ADR-0051 §7 adds a fourth writer of `player`, a function nobody here reviews by reading
+        // Kotlin. These are exactly the two properties a second SET in its UPDATE would break --
+        // and the balances are checked by value, not merely unchanged, because a change that
+        // decrements both players together would still leave P1 and P2 holding.
+        assertEquals(0, p1BrokenBalanceCount())
+        val after = p2LedgerSums()
+        assertEquals(0, after.playerBalanceSum)
+        assertEquals(0, after.duelResultDeltaSum)
+        assertFixtureTook(alice, bob)
+    }
+
     private fun givenPlayerNamed(device: String, name: String): PlayerId {
         val player = runBlocking { playerDirectory.resolve(DeviceId(device)) }
         runBlocking { profileWrites.setDisplayName(player.id, name) }
@@ -161,4 +223,78 @@ class RetireDisplayNameTest {
         }
 
     private data class RegistryRow(val reason: String, val retiredFrom: UUID?)
+
+    /**
+     * Asserts the duel [aTakedownMovesNoCoin] writes above actually landed: [winner]'s
+     * `coin_balance` is `+1`, [loser]'s is `-1`, and there are exactly two `duel_result` rows.
+     * Without this, P1 and P2 below could be evaluated against a fixture that silently failed to
+     * write -- and both properties hold trivially on no data, which is the trap this test guards
+     * against.
+     */
+    private fun assertFixtureTook(winner: PlayerId, loser: PlayerId) {
+        dataSource.connection.use { connection ->
+            connection.createStatement().use { statement ->
+                statement.executeQuery("SELECT count(*) FROM duel_result").use { rows ->
+                    rows.next()
+                    assertEquals(2L, rows.getLong(1))
+                }
+            }
+            connection.prepareStatement("SELECT coin_balance FROM player WHERE id = ?").use { statement ->
+                statement.setObject(1, UUID.fromString(winner.value))
+                statement.executeQuery().use { rows ->
+                    rows.next()
+                    assertEquals(1, rows.getInt(1))
+                }
+            }
+            connection.prepareStatement("SELECT coin_balance FROM player WHERE id = ?").use { statement ->
+                statement.setObject(1, UUID.fromString(loser.value))
+                statement.executeQuery().use { rows ->
+                    rows.next()
+                    assertEquals(-1, rows.getInt(1))
+                }
+            }
+        }
+    }
+
+    /**
+     * P1 of `ADR-0030` §5, run with the exact SQL the ADR gives. Every row this returns names a
+     * player whose `coin_balance` no longer equals the sum of their `duel_result` deltas; P1 holds
+     * when this returns zero rows.
+     */
+    private fun p1BrokenBalanceCount(): Int =
+        dataSource.connection.use { connection ->
+            connection.createStatement().use { statement ->
+                statement.executeQuery(
+                    """
+                    SELECT p.id FROM player p
+                    LEFT JOIN duel_result r ON r.player_id = p.id
+                    GROUP BY p.id, p.coin_balance
+                    HAVING p.coin_balance <> COALESCE(SUM(r.coin_delta), 0)
+                    """.trimIndent(),
+                ).use { rows ->
+                    var count = 0
+                    while (rows.next()) count++
+                    count
+                }
+            }
+        }
+
+    /** The two sums P2 of `ADR-0030` §5 requires to both be `0`. */
+    private data class LedgerSums(val playerBalanceSum: Int, val duelResultDeltaSum: Int)
+
+    /** P2 of `ADR-0030` §5, run with the exact SQL the ADR gives. */
+    private fun p2LedgerSums(): LedgerSums =
+        dataSource.connection.use { connection ->
+            connection.createStatement().use { statement ->
+                statement.executeQuery(
+                    """
+                    SELECT (SELECT COALESCE(SUM(coin_balance), 0) FROM player),
+                           (SELECT COALESCE(SUM(coin_delta), 0) FROM duel_result)
+                    """.trimIndent(),
+                ).use { rows ->
+                    rows.next()
+                    LedgerSums(rows.getInt(1), rows.getInt(2))
+                }
+            }
+        }
 }
