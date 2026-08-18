@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041015
 title: A retired name is spent for everybody, including the player it was taken from
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: S
