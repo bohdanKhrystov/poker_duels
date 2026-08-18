@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041009
 title: The held race moves to the registry row, and the probe that waits for it follows
 type: task
-status: backlog
+status: ready
 parent: STORY-0410
 module: poker-server
 estimate: S
