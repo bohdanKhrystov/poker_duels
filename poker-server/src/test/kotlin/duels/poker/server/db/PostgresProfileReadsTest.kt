@@ -750,6 +750,82 @@ class PostgresProfileReadsTest {
         assertTrue(duelsAfterSql.contains(duelLines))
     }
 
+    @Test
+    fun aPercentInASearchTermMatchesLiterally() {
+        runBlocking {
+            val carol = playerDirectory.resolve(DeviceId("carol"))
+            setPlayerDisplayName(bob.id.value, "100%Sure")
+            setPlayerDisplayName(carol.id.value, "1004Sure")
+
+            val bobDuelId = UUID.randomUUID()
+            val carolDuelId = UUID.randomUUID()
+
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = bobDuelId, opponent = bob, finishedAt = Instant.parse("2026-08-13T10:02:00Z")),
+            )
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = carolDuelId, opponent = carol, finishedAt = Instant.parse("2026-08-13T10:01:00Z")),
+            )
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(null, "%Sure"))
+
+            assertEquals(listOf(bobDuelId.toString()), duels.map { it.duelId })
+        }
+    }
+
+    @Test
+    fun anUnderscoreInASearchTermMatchesLiterally() {
+        runBlocking {
+            val carol = playerDirectory.resolve(DeviceId("carol"))
+            setPlayerDisplayName(bob.id.value, "a_b")
+            setPlayerDisplayName(carol.id.value, "axb")
+
+            val bobDuelId = UUID.randomUUID()
+            val carolDuelId = UUID.randomUUID()
+
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = bobDuelId, opponent = bob, finishedAt = Instant.parse("2026-08-13T10:02:00Z")),
+            )
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = carolDuelId, opponent = carol, finishedAt = Instant.parse("2026-08-13T10:01:00Z")),
+            )
+
+            val duels = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(null, "a_b"))
+
+            assertEquals(listOf(bobDuelId.toString()), duels.map { it.duelId })
+        }
+    }
+
+    @Test
+    fun anOpponentWithNoNameMatchesNoSearch() {
+        runBlocking {
+            val carol = playerDirectory.resolve(DeviceId("carol"))
+            setPlayerDisplayName(bob.id.value, "Halvard")
+            setPlayerDisplayName(carol.id.value, null)
+
+            val bobDuelId = UUID.randomUUID()
+            val carolDuelId = UUID.randomUUID()
+
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = bobDuelId, opponent = bob, finishedAt = Instant.parse("2026-08-13T10:02:00Z")),
+            )
+            duelResultStore.record(
+                finishedDuel(winner = 0, id = carolDuelId, opponent = carol, finishedAt = Instant.parse("2026-08-13T10:01:00Z")),
+            )
+
+            val duelsWithSearch = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter(null, "a"))
+
+            assertEquals(listOf(bobDuelId.toString()), duelsWithSearch.map { it.duelId })
+
+            val duelsWithoutSearch = profileReads.recentDuelsOf(alice.id, 10, null, DuelFilter.NONE)
+
+            assertEquals(
+                listOf(bobDuelId.toString(), carolDuelId.toString()),
+                duelsWithoutSearch.map { it.duelId },
+            )
+        }
+    }
+
     private fun privateSqlConstant(name: String): String {
         val field = PostgresProfileReads::class.java.getDeclaredField(name)
         field.isAccessible = true
