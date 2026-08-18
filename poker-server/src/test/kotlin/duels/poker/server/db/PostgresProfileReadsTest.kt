@@ -1157,6 +1157,13 @@ class PostgresProfileReadsTest {
 
     private fun setPlayerDisplayName(playerId: String, displayName: String?) {
         dataSource.connection.use { connection ->
+            if (displayName != null) {
+                val registerName = "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')"
+                connection.prepareStatement(registerName).use { statement ->
+                    statement.setString(1, displayName)
+                    statement.executeUpdate()
+                }
+            }
             connection.prepareStatement("UPDATE player SET display_name = ? WHERE id = ?::uuid").use { statement ->
                 if (displayName == null) {
                     statement.setNull(1, java.sql.Types.VARCHAR)
