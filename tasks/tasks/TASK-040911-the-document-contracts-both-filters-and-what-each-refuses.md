@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040911
 title: The document contracts both filters, and what each of them refuses
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S
