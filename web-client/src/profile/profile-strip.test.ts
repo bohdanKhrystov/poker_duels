@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { readProfileStrip } from "./profile-strip";
 import type { ApiFetch, ApiResponse } from "./api";
 import { writeDeviceId } from "../protocol/device-id";
+import { meBody, duelRowBody, aProfile, aDuelLine } from "./profile-fixture";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -104,23 +105,23 @@ describe("the profile strip read", () => {
     // First case: balance of -1 and two duel rows
     writeDeviceId(storage, "d-1");
     const mock1 = answering(
-      ok({ playerId: "p-1", coinBalance: -1 }),
+      ok(meBody({ coinBalance: -1 })),
       ok({
         duels: [
-          {
+          duelRowBody({
             duelId: "duel-1",
             outcome: "WON",
             coinDelta: 10,
             handsPlayed: 5,
             finishedAt: "2025-01-01T00:00:00Z",
-          },
-          {
+          }),
+          duelRowBody({
             duelId: "duel-2",
             outcome: "LOST",
             coinDelta: -5,
             handsPlayed: 3,
             finishedAt: "2025-01-02T00:00:00Z",
-          },
+          }),
         ],
       }),
     );
@@ -132,32 +133,29 @@ describe("the profile strip read", () => {
 
     expect(result1).toEqual({
       kind: "profile",
-      profile: { playerId: "p-1", coinBalance: -1 },
+      profile: aProfile({ coinBalance: -1 }),
       duels: [
-        {
+        aDuelLine({
           duelId: "duel-1",
           outcome: "WON",
           coinDelta: 10,
           handsPlayed: 5,
           finishedAt: "2025-01-01T00:00:00Z",
-        },
-        {
+        }),
+        aDuelLine({
           duelId: "duel-2",
           outcome: "LOST",
           coinDelta: -5,
           handsPlayed: 3,
           finishedAt: "2025-01-02T00:00:00Z",
-        },
+        }),
       ],
     });
 
     // Second case: balance of 7 and no duels
     storage = inMemoryStorage();
     writeDeviceId(storage, "d-2");
-    const mock2 = answering(
-      ok({ playerId: "p-2", coinBalance: 7 }),
-      ok({ duels: [] }),
-    );
+    const mock2 = answering(ok(meBody({ coinBalance: 7 })), ok({ duels: [] }));
 
     const result2 = await readProfileStrip({
       fetch: mock2.fetch,
@@ -166,17 +164,14 @@ describe("the profile strip read", () => {
 
     expect(result2).toEqual({
       kind: "profile",
-      profile: { playerId: "p-2", coinBalance: 7 },
+      profile: aProfile({ coinBalance: 7 }),
       duels: [],
     });
   });
 
   it("asks both endpoints once each", async () => {
     writeDeviceId(storage, "d-1");
-    const mock = answering(
-      ok({ playerId: "p-1", coinBalance: 5 }),
-      ok({ duels: [] }),
-    );
+    const mock = answering(ok(meBody()), ok({ duels: [] }));
 
     await readProfileStrip({
       fetch: mock.fetch,
@@ -193,10 +188,7 @@ describe("the profile strip read", () => {
 
   it("answers no-profile when either half says so", async () => {
     // First door: empty storage (no call is made at all)
-    const mock1 = answering(
-      ok({ playerId: "p-1", coinBalance: 5 }),
-      ok({ duels: [] }),
-    );
+    const mock1 = answering(ok(meBody()), ok({ duels: [] }));
 
     const result1 = await readProfileStrip({
       fetch: mock1.fetch,
@@ -237,10 +229,7 @@ describe("the profile strip read", () => {
     // Second half: duels answer 500 while /api/me answers 200
     storage = inMemoryStorage();
     writeDeviceId(storage, "d-2");
-    const mock2 = answering(
-      ok({ playerId: "p-2", coinBalance: 5 }),
-      refusedWith(500),
-    );
+    const mock2 = answering(ok(meBody()), refusedWith(500));
 
     const result2 = await readProfileStrip({
       fetch: mock2.fetch,

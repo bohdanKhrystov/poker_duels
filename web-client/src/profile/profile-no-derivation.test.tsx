@@ -4,6 +4,7 @@ import { readProfileStrip } from "./profile-strip";
 import { ProfileStrip } from "./ProfileStrip";
 import type { ApiFetch, ApiResponse } from "./api";
 import { writeDeviceId } from "../protocol/device-id";
+import { meBody, duelRowBody } from "./profile-fixture";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -138,25 +139,19 @@ describe("the profile strip's surface", () => {
     // appear on screen, the guard catches it.
     writeDeviceId(storage, "d-1");
     const mock = answering(
-      ok({ playerId: "p-1", coinBalance: 5 }),
+      ok(meBody({ coinBalance: 5 })),
       ok({
         duels: [
-          {
-            duelId: "duel-1",
+          duelRowBody({
+            duelId: "duel-1", // needed for distinctness
             opponentPlayerId: "player-77",
             outcome: "WON",
-            coinDelta: 1,
-            handsPlayed: 5,
-            finishedAt: "2025-01-01T00:00:00Z",
-          },
-          {
-            duelId: "duel-2",
+          }),
+          duelRowBody({
+            duelId: "duel-2", // needed for distinctness
             opponentPlayerId: "player-88",
             outcome: "LOST",
-            coinDelta: -1,
-            handsPlayed: 3,
-            finishedAt: "2025-01-02T00:00:00Z",
-          },
+          }),
         ],
       }),
     );
@@ -188,25 +183,17 @@ describe("the profile strip's surface", () => {
     // A client that added the deltas would print 0, not 5.
     writeDeviceId(storage, "d-1");
     const mock1 = answering(
-      ok({ playerId: "p-1", coinBalance: 5 }),
+      ok(meBody({ coinBalance: 5 })),
       ok({
         duels: [
-          {
-            duelId: "duel-1",
+          duelRowBody({
+            duelId: "duel-1", // needed for distinctness
             opponentPlayerId: "player-1",
-            outcome: "WON",
-            coinDelta: 1,
-            handsPlayed: 5,
-            finishedAt: "2025-01-01T00:00:00Z",
-          },
-          {
-            duelId: "duel-2",
+          }),
+          duelRowBody({
+            duelId: "duel-2", // needed for distinctness
             opponentPlayerId: "player-2",
-            outcome: "LOST",
-            coinDelta: -1,
-            handsPlayed: 3,
-            finishedAt: "2025-01-02T00:00:00Z",
-          },
+          }),
         ],
       }),
     );
@@ -233,33 +220,21 @@ describe("the profile strip's surface", () => {
     storage = inMemoryStorage();
     writeDeviceId(storage, "d-2");
     const mock2 = answering(
-      ok({ playerId: "p-2", coinBalance: -2 }),
+      ok(meBody({ coinBalance: -2 })),
       ok({
         duels: [
-          {
-            duelId: "duel-3",
+          duelRowBody({
+            duelId: "duel-3", // needed for distinctness
             opponentPlayerId: "player-3",
-            outcome: "WON",
-            coinDelta: 1,
-            handsPlayed: 2,
-            finishedAt: "2025-01-03T00:00:00Z",
-          },
-          {
-            duelId: "duel-4",
+          }),
+          duelRowBody({
+            duelId: "duel-4", // needed for distinctness
             opponentPlayerId: "player-4",
-            outcome: "WON",
-            coinDelta: 1,
-            handsPlayed: 4,
-            finishedAt: "2025-01-04T00:00:00Z",
-          },
-          {
-            duelId: "duel-5",
+          }),
+          duelRowBody({
+            duelId: "duel-5", // needed for distinctness
             opponentPlayerId: "player-5",
-            outcome: "LOST",
-            coinDelta: -1,
-            handsPlayed: 3,
-            finishedAt: "2025-01-05T00:00:00Z",
-          },
+          }),
         ],
       }),
     );
