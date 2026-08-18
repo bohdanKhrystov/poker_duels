@@ -336,7 +336,7 @@ class ProfileRouteTest {
                     Instant.parse("2026-08-12T09:00:00Z"),
                     UUID.fromString("11111111-1111-1111-1111-111111111111"),
                 )
-            val response = client.get("/api/me/duels?after=${cursor.encoded()}") {
+            val response = client.get("/api/me/duels?after=${cursor.encoded(DuelFilter.NONE)}") {
                 header(DEVICE_ID_HEADER, "alice")
             }
             assertEquals(HttpStatusCode.OK, response.status)
@@ -547,7 +547,7 @@ class ProfileRouteTest {
             // probe) instead of duel3 (the page's real last row) would still look like a cursor
             // here — only decoding it and comparing the value catches the difference.
             val expectedCursor = DuelCursor(Instant.parse(duel3.finishedAt), UUID.fromString(duel3.duelId))
-            assertEquals(expectedCursor, decoded.nextCursor?.let(::duelCursorOrNull))
+            assertEquals(expectedCursor, decoded.nextCursor?.let { duelCursorOrNull(it, DuelFilter.NONE) })
         }
     }
 

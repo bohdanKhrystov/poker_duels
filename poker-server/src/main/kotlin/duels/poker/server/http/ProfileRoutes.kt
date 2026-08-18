@@ -43,8 +43,10 @@ public const val DEVICE_ID_HEADER: String = "X-Device-Id"
  * `400 Bad Request` before `ProfileReads.recentDuelsOf` is ever called — the same rule the cursor
  * already follows. An unauthenticated request is refused with `401 Unauthorized` before the query
  * string is looked at, so none of the limit, the cursor, or the filter ever tells a stranger that
- * their device id was the problem; among the three, the limit is checked first, then the cursor,
- * then the filter. A device with no duels receives `200 OK` and an empty array, not `404`.
+ * their device id was the problem; among the three, the limit is checked first, then the filter,
+ * then the cursor, and a cursor decoded under a filter other than the one that issued it is
+ * refused with the same `400 Bad Request` and the same empty body as a cursor that does not
+ * decode (`ADR-0057` §5). A device with no duels receives `200 OK` and an empty array, not `404`.
  *
  * `PUT /api/me/name` sets the device's display name. Identity is resolved first — exactly as the
  * other two routes resolve it, and **before the body is even read**: an absent, blank or unknown
@@ -130,16 +132,6 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(
         respond(HttpStatusCode.BadRequest)
         return
     }
-    // Absent `after` means the newest page, so `null` reaches the port. Present, it is decoded
-    // with duelCursorOrNull; anything that refuses — including an empty value — is `400` before
-    // reads.recentDuelsOf runs. No `takeIf { it.isNotBlank() }` here: that would turn a broken
-    // cursor into a silent first page, the one behaviour this endpoint exists to refuse.
-    val rawCursor = request.queryParameters["after"]
-    val cursor = if (rawCursor == null) null else duelCursorOrNull(rawCursor)
-    if (rawCursor != null && cursor == null) {
-        respond(HttpStatusCode.BadRequest)
-        return
-    }
     val filter = duelFilterOrNull(
         request.queryParameters["outcome"],
         request.queryParameters["opponent"],
@@ -148,11 +140,21 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(
         respond(HttpStatusCode.BadRequest)
         return
     }
+    // Absent `after` means the newest page, so `null` reaches the port. Present, it is decoded
+    // with duelCursorOrNull; anything that refuses — including an empty value — is `400` before
+    // reads.recentDuelsOf runs. No `takeIf { it.isNotBlank() }` here: that would turn a broken
+    // cursor into a silent first page, the one behaviour this endpoint exists to refuse.
+    val rawCursor = request.queryParameters["after"]
+    val cursor = if (rawCursor == null) null else duelCursorOrNull(rawCursor, filter)
+    if (rawCursor != null && cursor == null) {
+        respond(HttpStatusCode.BadRequest)
+        return
+    }
     // Ask for one row more than the page: a probe that answers "is there another page?" without a
     // second query. duelLimitOrNull already clamped limit to MAX_DUEL_LIMIT, so this never reads
     // more than MAX_DUEL_LIMIT + 1 rows.
     val rows = reads.recentDuelsOf(PlayerId(profile.playerId), limit + 1, cursor, filter)
-    respond(rows.recentDuelsPage(limit))
+    respond(rows.recentDuelsPage(limit, filter))
 }
 
 /**
@@ -169,12 +171,12 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(
  * (`Instant.toString()`, `UUID.toString()`), so parsing them back here is never a place for a
  * `try`.
  */
-private fun List<DuelSummaryResponse>.recentDuelsPage(limit: Int): RecentDuelsResponse {
+private fun List<DuelSummaryResponse>.recentDuelsPage(limit: Int, filter: DuelFilter): RecentDuelsResponse {
     if (size <= limit) return RecentDuelsResponse(this, nextCursor = null)
     val page = subList(0, limit)
     val lastRow = page.last()
     val cursor = DuelCursor(Instant.parse(lastRow.finishedAt), UUID.fromString(lastRow.duelId))
-    return RecentDuelsResponse(page, nextCursor = cursor.encoded())
+    return RecentDuelsResponse(page, nextCursor = cursor.encoded(filter))
 }
 
 /**
