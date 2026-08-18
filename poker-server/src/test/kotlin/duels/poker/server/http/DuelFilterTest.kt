@@ -42,9 +42,9 @@ class DuelFilterTest {
         // Input: 'e' (U+0065) + combining acute (U+0301) + "lodie" = 7 code points
         // Expected: composed é (U+00E9) + "lodie" = 6 code points
         // Both assertions prevent the function from merely returning the input unchanged.
-        val input = "élodie"
+        val input = "e\u0301lodie"
         val result = opponentSearchOrNull(input)
-        val expected = "élodie"
+        val expected = "\u00e9lodie"
         assertEquals(expected, result)
         assertNotEquals(input, result)
     }
