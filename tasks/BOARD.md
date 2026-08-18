@@ -1169,8 +1169,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041001](tasks/TASK-041001-the-migration-test-derives-its-version-list.md) The migration test derives its version list from the migrations it applies | XS | **done** |
 | | [TASK-041002](tasks/TASK-041002-the-name-registry-its-guards-and-the-takedown.md) The fifth migration creates the name registry, its guards and the takedown function | S | **done** |
 | | [TASK-041003](tasks/TASK-041003-a-name-is-registered-before-it-is-held.md) Setting a name registers it first, and a refused claim rolls the whole transaction back | S | **done** |
-| | [TASK-041004](tasks/TASK-041004-three-fixtures-register-the-name-they-hand-a-player.md) Three fixtures register the name they hand a player | S | ready |
-| | [TASK-041005](tasks/TASK-041005-the-uniqueness-fixtures-register-every-name.md) The uniqueness fixtures register every name, and the fold refuses before the index does | S | backlog |
+| | [TASK-041004](tasks/TASK-041004-three-fixtures-register-the-name-they-hand-a-player.md) Three fixtures register the name they hand a player | S | **done** |
+| | [TASK-041005](tasks/TASK-041005-the-uniqueness-fixtures-register-every-name.md) The uniqueness fixtures register every name, and the fold refuses before the index does | S | ready |
 | | [TASK-041006](tasks/TASK-041006-the-permanence-fixtures-register-only-what-must-land.md) The permanence fixtures register only the names that must land | S | backlog |
 | | [TASK-041007](tasks/TASK-041007-the-schema-test-keeps-its-refusals-raw.md) The display-name schema test registers what must land and keeps its refusals raw | S | backlog |
 | | [TASK-041008](tasks/TASK-041008-the-fold-that-refuses-a-case-variant-is-the-registrys.md) The fold that refuses a case variant is the registry's, and the schema test says so | S | backlog |
