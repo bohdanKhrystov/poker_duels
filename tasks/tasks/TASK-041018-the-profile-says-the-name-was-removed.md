@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041018
 title: The profile says the name was removed, from one correlated EXISTS
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
