@@ -726,6 +726,137 @@ class ProfileRouteTest {
     }
 
     @Test
+    fun aCursorFollowedUnderTheSameFilterPagesOn() {
+        testApplication {
+            val duels = twoDuels()
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to duels),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val firstPage = client.get("/api/me/duels?limit=1&outcome=WON") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, firstPage.status)
+            val firstDecoded = protocolJson.decodeFromString(RecentDuelsResponse.serializer(), firstPage.bodyAsText())
+            val mintedCursor =
+                requireNotNull(firstDecoded.nextCursor) { "limit=1 against two rows must carry a nextCursor" }
+
+            // The replay is under the exact filter the cursor was minted under — the round trip
+            // this ticket exists to prove works, not merely refuse (ADR-0057 §1).
+            val secondPage = client.get("/api/me/duels?limit=1&outcome=WON&after=$mintedCursor") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, secondPage.status)
+            val secondDecoded =
+                protocolJson.decodeFromString(RecentDuelsResponse.serializer(), secondPage.bodyAsText())
+            assertEquals(listOf(duels[1].duelId), secondDecoded.duels.map { it.duelId })
+
+            // The decoded value, not merely that a cursor arrived: a route minting under
+            // DuelFilter.NONE regardless of the request's filter would already have failed the OK
+            // assertion above, so this pins the row the cursor actually names.
+            val row = duels[0]
+            val expectedCursor = DuelCursor(Instant.parse(row.finishedAt), UUID.fromString(row.duelId))
+            assertEquals(expectedCursor, reads.cursorsRequested.last())
+        }
+    }
+
+    @Test
+    fun aCursorFromOneFilterIsRefusedUnderAnother() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to twoDuels()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val mintingPage = client.get("/api/me/duels?limit=1&outcome=WON") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, mintingPage.status)
+            val mintingDecoded =
+                protocolJson.decodeFromString(RecentDuelsResponse.serializer(), mintingPage.bodyAsText())
+            val mintedCursor =
+                requireNotNull(mintingDecoded.nextCursor) { "limit=1 against two rows must carry a nextCursor" }
+
+            // The cursor above was minted under WON; replayed under LOST it must be refused — the
+            // silent reinterpretation ADR-0057 exists to close.
+            val response = client.get("/api/me/duels?limit=1&outcome=LOST&after=$mintedCursor") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            // The minting request legitimately read once; the refused request must not add a
+            // second entry.
+            assertEquals(1, reads.cursorsRequested.size)
+        }
+    }
+
+    @Test
+    fun anUnfilteredCursorIsRefusedUnderAFilter() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to twoDuels()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val mintingPage = client.get("/api/me/duels?limit=1") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, mintingPage.status)
+            val mintingDecoded =
+                protocolJson.decodeFromString(RecentDuelsResponse.serializer(), mintingPage.bodyAsText())
+            val mintedCursor =
+                requireNotNull(mintingDecoded.nextCursor) { "limit=1 against two rows must carry a nextCursor" }
+
+            // DuelFilter.NONE must fingerprint too, or an unfiltered cursor would open any
+            // filtered walk.
+            val response = client.get("/api/me/duels?limit=1&outcome=WON&after=$mintedCursor") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertEquals(1, reads.cursorsRequested.size)
+        }
+    }
+
+    @Test
+    fun aFilteredCursorIsRefusedWithNoFilter() {
+        testApplication {
+            val reads = FakeProfileReads(
+                mapOf("alice" to profileResponse("p-alice", 0)),
+                mapOf("p-alice" to twoDuels()),
+            )
+            application {
+                module()
+                profileRoutes(reads, FakeProfileWrites())
+            }
+            val mintingPage = client.get("/api/me/duels?limit=1&opponent=Halvard") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.OK, mintingPage.status)
+            val mintingDecoded =
+                protocolJson.decodeFromString(RecentDuelsResponse.serializer(), mintingPage.bodyAsText())
+            val mintedCursor =
+                requireNotNull(mintingDecoded.nextCursor) { "limit=1 against two rows must carry a nextCursor" }
+
+            // The same bug pointed the other way: fingerprinting only when a filter is present
+            // would pass the minting half above and let this replay through.
+            val response = client.get("/api/me/duels?limit=1&after=$mintedCursor") {
+                header(DEVICE_ID_HEADER, "alice")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertEquals(1, reads.cursorsRequested.size)
+        }
+    }
+
+    @Test
     fun aKnownDeviceSetsItsName() = testApplication {
         val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 4)))
         val writes = FakeProfileWrites(SetNameResult.NameSet(profileResponse("p-alice", 4, "Alice")))
@@ -945,6 +1076,27 @@ class ProfileRouteTest {
         assertTrue(body.contains("\"coinBalance\":2"))
         assertTrue(body.contains("\"displayName\":\"Alice\""))
     }
+
+    // Two rows and `limit=1`, so the first page always carries a nextCursor to hand back.
+    private fun twoDuels(): List<DuelSummaryResponse> =
+        listOf(
+            duelSummaryResponse(
+                duelId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.WON,
+                coinDelta = 1,
+                handsPlayed = 10,
+                finishedAt = "2026-08-15T13:00:00Z",
+            ),
+            duelSummaryResponse(
+                duelId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                opponentPlayerId = "p-bob",
+                outcome = DuelOutcomeLabel.LOST,
+                coinDelta = -1,
+                handsPlayed = 8,
+                finishedAt = "2026-08-15T12:00:00Z",
+            ),
+        )
 
     private class FakeProfileReads(
         private val profiles: Map<String, ProfileResponse>,
