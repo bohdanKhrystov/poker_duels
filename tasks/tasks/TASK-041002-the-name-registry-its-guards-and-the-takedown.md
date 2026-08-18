@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041002
 title: The fifth migration creates the name registry, its guards and the takedown function
 type: task
-status: ready
+status: done
 parent: STORY-0410
 module: poker-server
 estimate: S
