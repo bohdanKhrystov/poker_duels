@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040901
 title: A filter is two axes, and an outcome is one of exactly three names
 type: task
-status: ready
+status: done
 parent: STORY-0409
 module: poker-server
 estimate: S
