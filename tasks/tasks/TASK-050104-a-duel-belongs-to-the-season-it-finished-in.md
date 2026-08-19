@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050104
 title: A duel belongs to the season it finished in, never the one it started in
 type: task
-status: backlog
+status: ready
 parent: STORY-0501
 module: poker-server
 estimate: XS
