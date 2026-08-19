@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050106
 title: The current season, read from an injected clock and never from a system clock
 type: task
-status: backlog
+status: ready
 parent: STORY-0501
 module: poker-server
 estimate: S

@@ -1406,13 +1406,13 @@ a row that leads to another player is a *link*, and a client with no addresses c
 
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
-| [STORY-0501](stories/STORY-0501-a-season-is-a-bounded-thing.md) A season is a bounded thing, and every finished duel belongs to one | | | **in progress** — 4 of 6 tickets |
+| [STORY-0501](stories/STORY-0501-a-season-is-a-bounded-thing.md) A season is a bounded thing, and every finished duel belongs to one | | | **in progress** — 5 of 6 tickets |
 | | [TASK-050101](tasks/TASK-050101-a-season-is-a-year-and-a-month.md) A season is a year and a month, and its identifier is `2026-08` | XS | **done** |
 | | [TASK-050102](tasks/TASK-050102-a-seasons-bounds-are-half-open.md) A season's bounds are half-open, and December ends in January | S | **done** |
 | | [TASK-050103](tasks/TASK-050103-the-season-an-instant-falls-in.md) The season an instant falls in, in UTC, whatever the reader's clock says | S | **done** |
 | | [TASK-050104](tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) A duel belongs to the season it finished in, never the one it started in | XS | **done** |
-| | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | ready |
-| | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | backlog |
+| | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | **done** |
+| | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | ready |
 | [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | blocked — `DEC-056`, `DEC-058`, `DEC-059` |
 | [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `DEC-056`, `DEC-058`, `DEC-059` |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
