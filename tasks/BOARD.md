@@ -1225,6 +1225,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041312](tasks/TASK-041312-the-search-box-sends-the-term-the-player-typed.md) The search box sends the term the player typed, and nothing else | S | ready |
 | | [TASK-041313](tasks/TASK-041313-the-screen-a-player-can-actually-reach.md) The screen a player can actually reach, reading through the real transport | S | backlog |
 | | [TASK-041314](tasks/TASK-041314-no-player-id-reaches-the-history-screen.md) No player id reaches the history screen, and the suite counts itself | S | backlog |
+| | [TASK-041315](tasks/TASK-041315-the-show-more-button-says-what-the-copy-module-says.md) The show-more button says what the copy module says | XS | backlog |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
 | [STORY-0415](stories/STORY-0415-the-offer-after-a-first-win.md) The offer — an account after a first win, dismissed for good | | | backlog |
 | [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | backlog |

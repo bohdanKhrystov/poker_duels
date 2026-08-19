@@ -17,6 +17,8 @@ export const EVERY_OUTCOME = "All";
 
 export const OPPONENT_LABEL = "Opponent name";
 
+export const SEARCH = "Search";
+
 /**
  * The sentence describing an empty state in the history screen.
  *

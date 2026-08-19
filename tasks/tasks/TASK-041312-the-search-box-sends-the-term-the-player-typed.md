@@ -17,6 +17,7 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'sends the term the player typed, unmodified'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'sends no opponent parameter once the box is emptied'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'drops the cursor and the rows on a search, and keeps the outcome chosen'
+  - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'asks nothing while the player types, and once when the search is submitted'
   - cd web-client && npm run check
 ---
 
@@ -71,6 +72,12 @@ Read, not edited: `web-client/src/profile/duels-query.ts`, `docs/protocol.md` li
 - If a delay is involved at all, its test installs `vi.useFakeTimers()`. `virtual-time.test.ts` is a
   merged sweep over every test file in `src/` and it fails the build otherwise; no new guard is
   needed and none is added.
+
+
+**Corrected during the work.** This ticket was written while `DEC-052` was open, and its `verify:`
+block never gained the line `ADR-0059` §5 named — the grep for
+`asks nothing while the player types, and once when the search is submitted`. As written the ticket
+could be verified without ever running the test that pins the ADR's whole decision. Added above.
 
 ## Out of scope
 
