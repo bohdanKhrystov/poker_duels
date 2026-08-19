@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050105
 title: Nothing this story adds moves a coin, writes a migration, or reaches the engine
 type: task
-status: backlog
+status: ready
 parent: STORY-0501
 module: poker-server
 estimate: S
@@ -15,6 +15,7 @@ depends_on: [TASK-050104]
 verify:
   - ./gradlew :poker-server:test --tests '*SeasonMovesNoCoinTest' -PrequireDocker=true
   - ./gradlew :poker-engine:check
+  - for t in 'Season(' '.toString()' '.start' '.endExclusive' '.contains(' 'seasonOf(instant)' 'seasonOf(duel)' 'FinishedDuel('; do grep -qF "$t" poker-server/src/test/kotlin/duels/poker/server/season/SeasonMovesNoCoinTest.kt || exit 1; done
   - test -z "$(git diff --name-only $(git merge-base HEAD origin/develop) -- poker-server/src/main/resources/db/migration)"
   - test -z "$(git diff --name-only $(git merge-base HEAD origin/develop) -- poker-engine)"
   - test -z "$(git diff --name-only $(git merge-base HEAD origin/develop) -- web-client)"
@@ -52,6 +53,9 @@ for the list of functions to exercise.
 - Between the two snapshots, **exercise every path this story added**: construct a `Season`, call
   `toString()`, read `start` and `endExclusive`, call `contains(…)` on both sides of a boundary,
   call `seasonOf(instant)` and call `seasonOf(duel)` on a `FinishedDuel` built inline.
+- **Name those two locals `instant` and `duel` exactly.** The two calls are spelled the same
+  otherwise, so `grep` cannot tell one overload from the other, and a test exercising six of
+  the seven paths would pass the gate. The names are what make the check mechanical.
 - `-PrequireDocker=true` is part of the `verify:` command on purpose. Without it a machine with no
   Docker daemon *skips* the test and the gate passes having asserted nothing.
 - `STORY-0505` was dropped because `ADR-0061` §5 makes a boundary do nothing at all. This test is
@@ -88,7 +92,11 @@ for the list of functions to exercise.
       and two `duel_result` rows
 - [ ] `SeasonMovesNoCoinTest.noSeasonFunctionMovesACoin` passes, and the *before* snapshot is taken
       before the season functions are called and the *after* snapshot after them
-- [ ] The season functions exercised between the snapshots are all seven named in Scope
+- [ ] The season functions exercised between the snapshots are all seven named in Scope. The
+      `grep` loop in `verify:` is a **sanity check on this, not a proof**: it is defeated by
+      renaming a local, by splitting a call across lines, and by the tokens appearing in a
+      comment. A reviewer confirms the seven calls by reading the test — this criterion is
+      the one item here that a green `verify:` does not settle
 - [ ] The test runs rather than skips: the `verify:` command passes `-PrequireDocker=true`
 - [ ] `git diff` against the merge base shows **no file** under
       `poker-server/src/main/resources/db/migration` — this branch adds no `V<n>__` file, because
