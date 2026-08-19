@@ -2,12 +2,15 @@ import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useSend } from "../store/duel-provider";
 import { useProfileStrip } from "../profile/profile-provider";
+import { useHistory } from "../main";
 import { ProfileStrip } from "../profile/ProfileStrip";
 import { NameSurface } from "../profile/NameSurface";
 import { useSetName } from "../profile/set-name-provider";
 import { ActionBar } from "../table/ActionBar";
 import { DuelResult } from "../result/DuelResult";
 import { DuelTable } from "../table/DuelTable";
+import { HistoryScreen } from "../history/HistoryScreen";
+import { HISTORY_HEADING } from "../history/history-text";
 import { normalizeRoomCode, roomLink } from "./room-link";
 
 /** The first screen: open a duel room, or join one by the code on the invite. */
@@ -16,7 +19,9 @@ export function Lobby(): ReactElement {
   const send = useSend();
   const profile = useProfileStrip();
   const setName = useSetName();
+  const read = useHistory();
   const [typedCode, setTypedCode] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
   const code = normalizeRoomCode(typedCode);
 
   // The duel is over. This comes first because the reducer clears nothing a
@@ -47,6 +52,19 @@ export function Lobby(): ReactElement {
     return <WaitingForRival code={state.roomCode} />;
   }
 
+  // A player is not in a duel (view is null and roomCode is null).
+  // They can reach the history screen from here.
+  if (showHistory && read !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+        <HistoryScreen read={read} />
+        <button type="button" onClick={() => setShowHistory(false)}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section>
       {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
@@ -74,6 +92,9 @@ export function Lobby(): ReactElement {
       {profile !== null && profile.kind === "profile" && setName !== null && (
         <NameSurface profile={profile.profile} setName={setName} />
       )}
+      <button type="button" onClick={() => setShowHistory(true)}>
+        {HISTORY_HEADING}
+      </button>
     </section>
   );
 }

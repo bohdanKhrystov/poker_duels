@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041314
 title: No player id reaches the history screen, and the suite counts itself
 type: task
-status: backlog
+status: ready
 parent: STORY-0413
 module: web-client
 estimate: S
