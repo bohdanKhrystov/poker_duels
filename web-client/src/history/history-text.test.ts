@@ -29,8 +29,8 @@ describe("the history screen's words", () => {
   });
 
   it("tells an empty record from an empty filter", () => {
-    expect(emptyLine(false)).toBe(NO_DUELS);
-    expect(emptyLine(true)).toBe(NO_MATCH);
+    expect(emptyLine(false)).toBe("No duels yet.");
+    expect(emptyLine(true)).toBe("No duel matches this.");
     expect(emptyLine(false)).not.toBe(emptyLine(true));
   });
 
