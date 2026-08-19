@@ -1212,8 +1212,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | **done** |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | **[STORY-0413](stories/STORY-0413-the-history-screen.md)** The history screen — pages, filters, search | | | **ready** |
-| | [TASK-041301](tasks/TASK-041301-a-filter-and-a-cursor-become-exactly-one-path.md) A filter and a cursor become exactly one path, and nothing else | S | ready |
-| | [TASK-041302](tasks/TASK-041302-one-page-of-the-record-and-the-cursor-that-names-the-next.md) One page of the record, and the cursor that names the next one | S | backlog |
+| | [TASK-041301](tasks/TASK-041301-a-filter-and-a-cursor-become-exactly-one-path.md) A filter and a cursor become exactly one path, and nothing else | S | **done** |
+| | [TASK-041302](tasks/TASK-041302-one-page-of-the-record-and-the-cursor-that-names-the-next.md) One page of the record, and the cursor that names the next one | S | ready |
 | | [TASK-041303](tasks/TASK-041303-one-endpoint-keeps-one-parse.md) One endpoint keeps one parse — the strip's read delegates | XS | backlog |
 | | [TASK-041304](tasks/TASK-041304-a-refused-cursor-restarts-the-walk-once.md) A refused cursor restarts the walk, once, and never reaches the player | S | backlog |
 | | [TASK-041305](tasks/TASK-041305-the-words-the-history-screen-says.md) The words the history screen says, and the two empties that must differ | S | backlog |
@@ -1257,7 +1257,7 @@ Two decisions were raised while splitting, both the architect's, both blocking e
 leaves `player` for its own `device_binding` table, so `ADR-0030` §2 gains no fourth writer because
 the column it protected no longer exists, and revoking is final in the database rather than by
 convention. It unblocks `STORY-0406` and raised `DEC-045`, since answered by
-[`ADR-0050`](../docs/adr/ADR-0050-revoking-the-device-signs-the-player-out-everywhere-but-here.md):
+[`ADR-0050`](../docs/adr/ADR-0050-revoking-the-device-signs-out-everywhere-but-here.md):
 **one button** — revoking ends every other session and keeps the revoking one, so `STORY-0406`
 ships the `auth_session` `DELETE` with the endpoint rather than as a later PR.
 `DEC-042` (the operator's force-rename path) is answered by

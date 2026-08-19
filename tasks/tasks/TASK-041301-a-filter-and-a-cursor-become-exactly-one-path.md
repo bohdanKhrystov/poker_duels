@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041301
 title: A filter and a cursor become exactly one path, and nothing else
 type: task
-status: ready
+status: done
 parent: STORY-0413
 module: web-client
 estimate: S
