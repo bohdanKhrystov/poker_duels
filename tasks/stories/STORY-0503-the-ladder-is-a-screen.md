@@ -49,8 +49,19 @@ which matters for an epic whose other five stories are queries and properties.
 - **The store is subscribed to, not owned.**
   [`ADR-0032`](../../docs/adr/ADR-0032-react-subscribes-to-a-store-it-does-not-own.md): no component
   creates a connection, and boot wiring stays out of the tree.
-- **A negative balance renders as a negative number** in its correct position — `ADR-0014` calls a
+- **A negative standing renders as a negative number** in its correct position — `ADR-0014` calls a
   first loss at `−1` *"the case to check first when the display work lands"*, and this is that.
+- **The screen names the season it is showing, and the name comes from the response.**
+  [`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §6:
+  a player reads the month and the year in ordinary English — `August 2026` — never the identifier
+  `2026-08`, which is the wire form. The client does **not** work the season out from the browser's
+  clock: that is a client asserting a server fact (`ADR-0002`) and it is wrong for two hours of every
+  month in half the world.
+- **The number on a row is the season standing, not the number the profile strip prints.**
+  `ProfileStrip.tsx` prints the all-time counter from `player.coin_balance`; this screen prints
+  `SUM(coin_delta)` inside the season. They differ from the second season onwards, on purpose, and
+  the season name is the only thing that keeps that honest — which is why the name is a criterion
+  below rather than decoration.
 - **Composes `design/tokens/tokens.css`; authors no colour.** `EPIC-06` owns the visual language.
 
 **Blocked on `DEC-056`** (whether a nameless player has a row at all, which decides whether
@@ -88,7 +99,12 @@ every other screen, and if not it is one more screen with none.
       asserted beside a named row in the same list. If it excludes them, this criterion is struck
       when the story is split and the exclusion is `STORY-0502`'s test, not the screen's — the
       screen never filters rows it was sent.
-- [ ] A negative balance renders with its sign, in position, asserted against a fixture holding one.
+- [ ] A negative standing renders with its sign, in position, asserted against a fixture holding one.
+- [ ] The screen names the season it is showing, taken **from the response**, asserted against two
+      responses naming different seasons — one fixture cannot tell a rendered field from a hardcoded
+      string, and a client that reads the browser's clock passes with one and fails with two.
+- [ ] An empty ladder — the routine state on the first day of a season, not a corner case — renders
+      as an empty ladder that still names its season, not as an error and not as a spinner.
 - [ ] Walking to the next page appends rows rather than replacing them, and the end of the ladder
       stops offering more.
 - [ ] Every visible string in the screen is imported from the ladder's text module; no string
@@ -107,3 +123,6 @@ every other screen, and if not it is one more screen with none.
 - **Any colour, spacing token or illustration** — `EPIC-06`.
 - **Live updates while the screen is open** — the epic's out-of-scope table: no `ServerMessage` is
   added by this epic.
+- **A season selector, a *last season* line, or anything naming a season other than the one being
+  shown** — `ADR-0061` §7 ships the current season only, and whether a finished one is ever reachable
+  is `DEC-060`. This screen shows one season and says which; it offers no way to ask for another.

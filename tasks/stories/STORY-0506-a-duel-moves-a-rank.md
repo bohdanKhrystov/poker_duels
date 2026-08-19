@@ -6,7 +6,7 @@ status: blocked
 parent: EPIC-05
 module: poker-server
 labels: [server, leaderboard, end-to-end]
-depends_on: [STORY-0503, STORY-0505]
+depends_on: [STORY-0503]
 ---
 
 ## Goal
@@ -52,15 +52,25 @@ the same way, with `STORY-0414`.
   change to any criterion below — every one of them is a *difference*, and a difference survives a
   threshold.
 
-**Not blocked on any decision.** It is blocked on `STORY-0503` and `STORY-0505` existing, which is
-a different thing — and it is the reason the epic can be scheduled the moment `DEC-055` is answered
-rather than re-planned.
+- **Everything this test plays happens inside one season**, because it plays it now. That is why the
+  ladder's number and `GET /api/me`'s `coinBalance` agree here — a **property of the fixture**, not
+  an invariant of the product
+  ([`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md)
+  §4 and §6: the ladder prints the season standing, the strip prints the all-time counter, and they
+  part company from the second season onwards). The criterion below says so, so that nobody later
+  reads a passing test as a guarantee it never made.
+
+**Not blocked on any decision.** It is blocked on `STORY-0503` existing, which is a different thing —
+and it is the reason the epic could be scheduled the moment `DEC-055` was answered rather than
+re-planned. It was blocked on `STORY-0505` too until
+[`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md)
+dropped that story: a boundary runs no code, so there is nothing for this test to wait for.
 
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `STORY-0503` and `STORY-0505` merging — run `/plan-story STORY-0506` then.* | — |
+| — | *Not split. Blocked on `STORY-0503` merging — run `/plan-story STORY-0506` then.* | — |
 
 ## Acceptance criteria
 
@@ -75,7 +85,10 @@ rather than re-planned.
       as a difference of zero rather than as an absence.
 - [ ] A player whose only duel was a loss appears on the ladder at `−1` and is not clamped, hidden
       or filtered — `ADR-0014`'s *"the case to check first"*, checked here last as well as first.
-- [ ] The ladder read after the duel agrees with `GET /api/me`'s `coinBalance` for both players.
+- [ ] The ladder read after the duel agrees with `GET /api/me`'s `coinBalance` for both players
+      **because every duel in the fixture is inside the current season**, and the test says so where
+      it asserts it. The two numbers are not the same number in general (`ADR-0061` §6); a fixture
+      spanning two seasons is `STORY-0502`'s and does not belong in this end-to-end proof.
 - [ ] The test runs under `-PrequireDocker=true` and fails, rather than skips, when Docker is
       absent.
 - [ ] `./gradlew :poker-engine:check` passes with no change to `poker-engine`.
@@ -85,7 +98,7 @@ rather than re-planned.
 - **A browser end-to-end test.** `DEC-024` — the architect's, open since `EPIC-03` — asks whether
   the project ships one at all. This story is socket-level, like `EPIC-02`'s suite, and inherits
   whatever `DEC-024` decides rather than pre-empting it.
-- **New production code.** If this story needs any, that is a defect in `STORY-0501`–`STORY-0505`
+- **New production code.** If this story needs any, that is a defect in `STORY-0501`–`STORY-0504`
   and becomes a ticket against the story that owes it, not scope here.
 - **Performance, load or a ladder of ten thousand players.** No scale problem exists yet; inventing
   a benchmark here would be inventing a requirement.
