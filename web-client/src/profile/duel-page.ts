@@ -11,12 +11,16 @@ import { duelsPath, type HistoryQuery } from "./duels-query";
  * on the last page. The cursor is always present on the wire; a body lacking it
  * answers `unavailable` rather than defaulting to `null`, which would stop a page
  * walk that has not ended.
+ *
+ * `restarted` is true when this page answers a retry the server itself forced —
+ * see `readDuelPage` — and false for a page answered on the first request.
  */
 export type DuelPageRead =
   | {
       readonly kind: "page";
       readonly duels: readonly RecentDuel[];
       readonly nextCursor: string | null;
+      readonly restarted: boolean;
     }
   | { readonly kind: "no-profile" }
   | { readonly kind: "unavailable" };
@@ -27,7 +31,11 @@ export type DuelPageRead =
  * Uses the device ID stored in the given storage to authenticate. Returns the page
  * rows and the cursor naming the next page, or no-profile/unavailable otherwise.
  * Calls fetch directly and maps its own statuses, because `TASK-041304` must
- * tell a 400 from a 500 to honour `ADR-0057` §5.
+ * tell a 400 from a 500 to honour `ADR-0057` §5: a `400` answering a request whose
+ * query carried a cursor restarts the walk from the newest page — once — with the
+ * answer marked `restarted: true`. The player is told nothing about the refusal
+ * itself; a refused cursor is indistinguishable from a client bug on purpose, and
+ * there is nothing a player could do about it.
  */
 export async function readDuelPage(request: {
   readonly fetch: ApiFetch;
@@ -43,30 +51,7 @@ export async function readDuelPage(request: {
   }
 
   try {
-    const path = duelsPath(request.query);
-    const response = await request.fetch(path, {
-      headers: {
-        "X-Device-Id": deviceId,
-      },
-    });
-
-    switch (response.status) {
-      case 200: {
-        const body = await response.json();
-        const parsed = parseDuelPageBody(body);
-        if (parsed !== null) {
-          return parsed;
-        }
-        // A 200 whose body is not valid is a server this client cannot follow.
-        return { kind: "unavailable" };
-      }
-
-      case 401:
-        return { kind: "no-profile" };
-
-      default:
-        return { kind: "unavailable" };
-    }
+    return await readPage(request.fetch, deviceId, request.query, false);
   } catch {
     // A fetch that rejects, or a json() that rejects, becomes unavailable.
     // Caught, never rethrown, and never retried on the player's behalf.
@@ -75,12 +60,67 @@ export async function readDuelPage(request: {
 }
 
 /**
+ * Reads one page for the given query, restarting the walk once if the server
+ * refuses an outstanding cursor.
+ *
+ * `restarted` is true exactly when this call is itself the retry. That both
+ * marks a successful page `restarted: true` and stops a second `400` from
+ * scheduling a third request — the retry can happen at most once, because the
+ * only place that starts one requires `restarted` to still be false.
+ */
+async function readPage(
+  fetch: ApiFetch,
+  deviceId: string,
+  query: HistoryQuery,
+  restarted: boolean,
+): Promise<DuelPageRead> {
+  const path = duelsPath(query);
+  const response = await fetch(path, {
+    headers: {
+      "X-Device-Id": deviceId,
+    },
+  });
+
+  switch (response.status) {
+    case 200: {
+      const body = await response.json();
+      const parsed = parseDuelPageBody(body, restarted);
+      if (parsed !== null) {
+        return parsed;
+      }
+      // A 200 whose body is not valid is a server this client cannot follow.
+      return { kind: "unavailable" };
+    }
+
+    case 400:
+      // A cursor to drop, and this is the first attempt: restart from the
+      // newest page, changing nothing else about the query. Otherwise — no
+      // cursor to drop, or this was already the retry — there is nothing left
+      // to try, and retrying again would only repeat a request already refused.
+      if (!restarted && query.after !== null) {
+        return readPage(fetch, deviceId, { ...query, after: null }, true);
+      }
+      return { kind: "unavailable" };
+
+    case 401:
+      return { kind: "no-profile" };
+
+    default:
+      return { kind: "unavailable" };
+  }
+}
+
+/**
  * Parses a duel page response body.
  *
- * Returns the parsed page (rows and cursor) if valid, or null if the body
- * is invalid in any way (missing fields, wrong types, missing cursor, etc.).
+ * Returns the parsed page (rows and cursor, carrying the given `restarted`
+ * flag) if valid, or null if the body is invalid in any way (missing fields,
+ * wrong types, missing cursor, etc.).
  */
-function parseDuelPageBody(body: unknown): DuelPageRead | null {
+function parseDuelPageBody(
+  body: unknown,
+  restarted: boolean,
+): DuelPageRead | null {
   if (typeof body !== "object" || body === null) {
     return null;
   }
@@ -142,5 +182,5 @@ function parseDuelPageBody(body: unknown): DuelPageRead | null {
     }
   }
 
-  return { kind: "page", duels, nextCursor };
+  return { kind: "page", duels, nextCursor, restarted };
 }
