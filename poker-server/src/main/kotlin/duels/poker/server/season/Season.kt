@@ -40,3 +40,18 @@ public data class Season(val year: Int, val month: Int) {
 
     override fun toString(): String = "%04d-%02d".format(year, month)
 }
+
+/**
+ * The season containing [instant], the calendar month read in UTC and nothing else.
+ *
+ * ADR-0061 fixes the boundary in UTC so standings are one ordering, not one per reader's clock.
+ * The cost, named in ADR-0061's *What it costs*, lives here: the client renders instants in the
+ * reader's locale (`finishedAtText`), so a player far enough east can read a duel as finishing on
+ * 1 September and find it counted in August. That mismatch is intended, not a defect —
+ * localising the boundary per player would make the standings stop being one ordering, and
+ * printing UTC everywhere is worse for everything else.
+ */
+public fun seasonOf(instant: Instant): Season {
+    val yearMonth = YearMonth.from(instant.atOffset(ZoneOffset.UTC))
+    return Season(yearMonth.year, yearMonth.monthValue)
+}
