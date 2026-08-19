@@ -148,26 +148,28 @@ can see which line moves.
 
 ## Open decisions
 
-Two, both **the product owner's**, both raised on 2026-08-19 by this split, and each blocking exactly
-one ticket at the end of the chain.
+**None.** Two were raised by this split on 2026-08-19, both **the product owner's**, and both were
+answered the same day.
 
-- **`DEC-052` — when does the search fire?** As the player types, or when they submit it. This story
-  says the term is sent *"unmodified"* and never says when. As-you-type needs a debounce delay
-  nobody has chosen, puts the client's first timer in the tree, and sends one unindexed `POSITION`
-  scan per pause against a read `STORY-0409` recorded as correct but *"not yet fast"*; on-submit
-  needs a control and a word for it. The design note above — search is *"asserted against a fake
-  transport, not a timer"* — reads against a debounce but does not settle it. Blocks `TASK-041312`.
-- **`DEC-053` — how does a player reach the record, and how do they leave it?** The client has no
-  navigation of any kind: `App.tsx` renders the lobby, and the lobby swaps itself for the duel table
-  and the result screen off store state. Its own screen from the lobby, or a section of the lobby
-  beneath the strip? `STORY-0412`'s account screens, `STORY-0415`'s offer and `EPIC-05`'s
-  leaderboard rows all inherit the answer, which is why no ticket takes it. Whether the client grows
-  URL-addressable routes and a working browser *Back* is the **architect's**, and is expected to be
-  raised by the ADR that answers this — it only arises if the answer is a distinct screen. Blocks
-  `TASK-041313`.
+- **`DEC-052` — when does the search fire?** Answered by
+  [`ADR-0059`](../../docs/adr/ADR-0059-the-record-is-searched-when-the-player-submits.md): **on
+  submit**. The box sits in a `<form>`; Enter and a submit button reading *Search* are the only two
+  acts that send a request, and typing sends nothing. Emptying the box is a search like any other,
+  and no *Clear* control is added. The design note above — search is *"asserted against a fake
+  transport, not a timer"* — now holds by construction rather than by intention.
+- **`DEC-053` — how does a player reach the record, and how do they leave it?** Answered by
+  [`ADR-0060`](../../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md):
+  **its own screen**, which replaces the first screen. In by one control reading *Your duels*,
+  beneath the profile strip and outside it, offered whatever the profile read answered and only
+  where a player is not in a duel; out by one reading *Back*, rendered by the swap rather than by
+  `HistoryScreen`, so this story's screen still knows nothing about navigation. It raised
+  **`DEC-054`** — URL routes and a working browser *Back* — which is the architect's and blocks
+  nothing here.
 
-Neither blocks the screen itself. Eleven tickets build the read, the walk, the rows, the four states,
-the page control and the outcome filter, and prove all of it, while these two are answered.
+`TASK-041312` and `TASK-041313` remain `blocked` until a planner transcribes `ADR-0059` §5 and
+`ADR-0060` §7 into them — one Scope bullet, one word, one test and one `verify:` line each. Neither
+answer moves anything already written in either ticket, both stay at three files, and **`TASK-041314`'s
+472 does not move**: its arithmetic already budgeted one ADR-named test in each.
 
 ## Out of scope
 
