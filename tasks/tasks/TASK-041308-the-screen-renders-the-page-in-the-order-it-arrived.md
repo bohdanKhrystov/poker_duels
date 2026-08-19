@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041308
 title: The screen renders the page in the order it arrived, and derives no fact
 type: task
-status: backlog
+status: ready
 parent: STORY-0413
 module: web-client
 estimate: S
