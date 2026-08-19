@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041313
 title: The screen a player can actually reach, reading through the real transport
 type: task
-status: blocked
+status: backlog
 parent: STORY-0413
 module: web-client
 estimate: S
