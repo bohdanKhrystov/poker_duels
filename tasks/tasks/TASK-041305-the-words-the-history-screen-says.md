@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041305
 title: The words the history screen says, and the two empties that must differ
 type: task
-status: ready
+status: done
 parent: STORY-0413
 module: web-client
 estimate: S

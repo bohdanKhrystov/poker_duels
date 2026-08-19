@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041306
 title: The page walk is a reducer that appends, and never sorts
 type: task
-status: backlog
+status: ready
 parent: STORY-0413
 module: web-client
 estimate: S
