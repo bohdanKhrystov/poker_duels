@@ -15,7 +15,7 @@ depends_on: [TASK-050104]
 verify:
   - ./gradlew :poker-server:test --tests '*SeasonMovesNoCoinTest' -PrequireDocker=true
   - ./gradlew :poker-engine:check
-  - for t in 'Season(' '.toString()' '.start' '.endExclusive' '.contains(' 'seasonOf(' 'FinishedDuel('; do grep -qF "$t" poker-server/src/test/kotlin/duels/poker/server/season/SeasonMovesNoCoinTest.kt || exit 1; done
+  - for t in 'Season(' '.toString()' '.start' '.endExclusive' '.contains(' 'seasonOf(instant)' 'seasonOf(duel)' 'FinishedDuel('; do grep -qF "$t" poker-server/src/test/kotlin/duels/poker/server/season/SeasonMovesNoCoinTest.kt || exit 1; done
   - test -z "$(git diff --name-only $(git merge-base HEAD origin/develop) -- poker-server/src/main/resources/db/migration)"
   - test -z "$(git diff --name-only $(git merge-base HEAD origin/develop) -- poker-engine)"
   - test -z "$(git diff --name-only $(git merge-base HEAD origin/develop) -- web-client)"
@@ -53,6 +53,9 @@ for the list of functions to exercise.
 - Between the two snapshots, **exercise every path this story added**: construct a `Season`, call
   `toString()`, read `start` and `endExclusive`, call `contains(…)` on both sides of a boundary,
   call `seasonOf(instant)` and call `seasonOf(duel)` on a `FinishedDuel` built inline.
+- **Name those two locals `instant` and `duel` exactly.** The two calls are spelled the same
+  otherwise, so `grep` cannot tell one overload from the other, and a test exercising six of
+  the seven paths would pass the gate. The names are what make the check mechanical.
 - `-PrequireDocker=true` is part of the `verify:` command on purpose. Without it a machine with no
   Docker daemon *skips* the test and the gate passes having asserted nothing.
 - `STORY-0505` was dropped because `ADR-0061` §5 makes a boundary do nothing at all. This test is
