@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useReducer, type ReactElement } from "react";
+import {
+  useCallback,
+  useEffect,
+  useReducer,
+  useState,
+  type FormEvent,
+  type ReactElement,
+} from "react";
 import type { DuelPageRead } from "../profile/duel-page";
 import type { HistoryQuery, HistoryFilter } from "../profile/duels-query";
 import { NO_FILTER, isFiltered } from "../profile/duels-query";
@@ -15,6 +22,8 @@ import {
   READ_FAILED,
   OUTCOME_LEGEND,
   EVERY_OUTCOME,
+  OPPONENT_LABEL,
+  SEARCH,
 } from "./history-text";
 import {
   coinDeltaText,
@@ -41,6 +50,13 @@ import { nameOrNone } from "../profile/name-text";
  * one rule and asking from another is how the two end up disagreeing. It is withheld while `phase`
  * is `loading`: `nextPageQuery` is pure over `nextCursor`, which a request in flight does not move,
  * so without this guard a second click would re-issue the identical query already outstanding.
+ *
+ * The opponent box lives inside a `<form>`. `ADR-0059` fires a search on exactly two acts — Enter
+ * and the `SEARCH` button, both submits of that form — and on nothing else: typing, pausing,
+ * focusing and blurring send nothing, and no timer is introduced here. The submitted term is sent
+ * exactly as typed; `duelsPath` (`../profile/duels-query`) is what percent-encodes it and what
+ * turns an empty term into no `opponent` parameter at all, so this component neither trims, folds
+ * nor special-cases the empty box — committing it is a search like any other.
  */
 export function HistoryScreen(props: {
   readonly read: (query: HistoryQuery) => Promise<DuelPageRead>;
@@ -48,6 +64,7 @@ export function HistoryScreen(props: {
 }): ReactElement {
   const { read, filter = NO_FILTER } = props;
   const [state, dispatch] = useReducer(historyReducer, filter, initialHistory);
+  const [opponentTerm, setOpponentTerm] = useState(filter.opponent);
 
   const ask = useCallback(
     async (query: HistoryQuery): Promise<void> => {
@@ -84,6 +101,19 @@ export function HistoryScreen(props: {
       ask(firstPageQuery(newFilter));
     },
     [state.filter.opponent, ask],
+  );
+
+  const handleSearch = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const newFilter: HistoryFilter = {
+        outcome: state.filter.outcome,
+        opponent: opponentTerm,
+      };
+      dispatch({ type: "filtered", filter: newFilter });
+      ask(firstPageQuery(newFilter));
+    },
+    [state.filter.outcome, opponentTerm, ask],
   );
 
   useEffect(() => {
@@ -158,6 +188,17 @@ export function HistoryScreen(props: {
           {outcomeWord("DREW")}
         </label>
       </fieldset>
+      <form onSubmit={handleSearch}>
+        <label>
+          {OPPONENT_LABEL}
+          <input
+            type="text"
+            value={opponentTerm}
+            onChange={(event) => setOpponentTerm(event.target.value)}
+          />
+        </label>
+        <button type="submit">{SEARCH}</button>
+      </form>
       {(state.phase === "loading" && isEmpty) ||
       (state.phase === "ready" && isEmpty) ? null : (
         <ul className="w-full">

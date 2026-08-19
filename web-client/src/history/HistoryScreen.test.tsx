@@ -4,6 +4,7 @@ import { HistoryScreen } from "./HistoryScreen";
 import { aDuelLine } from "../profile/profile-fixture";
 import type { DuelPageRead } from "../profile/duel-page";
 import type { HistoryQuery } from "../profile/duels-query";
+import { duelsPath } from "../profile/duels-query";
 import {
   HISTORY_HEADING,
   LOADING_RECORD,
@@ -11,6 +12,8 @@ import {
   NO_MATCH,
   READ_FAILED,
   EVERY_OUTCOME,
+  OPPONENT_LABEL,
+  SEARCH,
 } from "./history-text";
 import { finishedAtText, outcomeWord } from "../profile/profile-text";
 
@@ -780,6 +783,235 @@ describe("the history screen", () => {
       outcome: "LOST",
       opponent: "",
       after: "cursor-for-lost",
+    });
+  });
+
+  it("sends the term the player typed, unmodified", async () => {
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(1);
+    });
+
+    const input = screen.getByLabelText(OPPONENT_LABEL);
+    const searchButton = screen.getByRole("button", { name: SEARCH });
+
+    const firstTerm = "  ada  ";
+    fireEvent.change(input, { target: { value: firstTerm } });
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+    expect(read.mock.calls[1][0].opponent).toBe(firstTerm);
+
+    const secondTerm = "100%Sure";
+    fireEvent.change(input, { target: { value: secondTerm } });
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(3);
+    });
+    expect(read.mock.calls[2][0].opponent).toBe(secondTerm);
+  });
+
+  it("sends no opponent parameter once the box is emptied", async () => {
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(1);
+    });
+
+    const input = screen.getByLabelText(OPPONENT_LABEL);
+    const searchButton = screen.getByRole("button", { name: SEARCH });
+
+    fireEvent.change(input, { target: { value: "Ada" } });
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+    expect(read.mock.calls[1][0].opponent).toBe("Ada");
+
+    fireEvent.change(input, { target: { value: "" } });
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(3);
+    });
+
+    const thirdQuery = read.mock.calls[2][0];
+    expect(thirdQuery.opponent).toBe("");
+    expect(duelsPath(thirdQuery)).toBe("/api/me/duels");
+  });
+
+  it("drops the cursor and the rows on a search, and keeps the outcome chosen", async () => {
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [
+          aDuelLine({ duelId: "duel-1", opponentDisplayName: "Alice" }),
+          aDuelLine({ duelId: "duel-2", opponentDisplayName: "Bob" }),
+        ],
+        nextCursor: "cursor-123",
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-3", opponentDisplayName: "Ada" })],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(
+      <HistoryScreen read={read} filter={{ outcome: "WON", opponent: "" }} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    });
+
+    const input = screen.getByLabelText(OPPONENT_LABEL);
+    const searchButton = screen.getByRole("button", { name: SEARCH });
+
+    fireEvent.change(input, { target: { value: "Ada" } });
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+
+    expect(read.mock.calls[1][0]).toEqual({
+      outcome: "WON",
+      opponent: "Ada",
+      after: null,
+    });
+
+    const listItems = await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(1);
+      return items;
+    });
+    expect(listItems[0].textContent).toContain("Ada");
+    expect(screen.queryByText("Alice")).toBeNull();
+    expect(screen.queryByText("Bob")).toBeNull();
+  });
+
+  it("asks nothing while the player types, and once when the search is submitted", async () => {
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(1);
+    });
+
+    const input = screen.getByLabelText(OPPONENT_LABEL) as HTMLInputElement;
+    const term = "Halvard";
+
+    for (const char of term) {
+      fireEvent.change(input, { target: { value: input.value + char } });
+    }
+
+    // Every keystroke landed on the box and none of them reached the transport.
+    expect(input.value).toBe(term);
+    expect(read).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: SEARCH }));
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+    expect(read.mock.calls[1][0].opponent).toBe(term);
+  });
+
+  it("uses the term just searched when showing more, not the stale one", async () => {
+    // Mirrors TASK-041311's "uses the updated filter when showing more, not
+    // the stale one" for the opponent axis: a search dispatches `filtered`
+    // before it asks, so a later MORE click must read the searched term, not
+    // the one the screen opened with.
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-1" })],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-2" })],
+        nextCursor: "cursor-for-ada",
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-3" })],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(
+      <HistoryScreen read={read} filter={{ outcome: null, opponent: "Bob" }} />,
+    );
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(1);
+    });
+
+    const input = screen.getByLabelText(OPPONENT_LABEL);
+    const searchButton = screen.getByRole("button", { name: SEARCH });
+
+    fireEvent.change(input, { target: { value: "Ada" } });
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+
+    const moreButton = await waitFor(() =>
+      screen.getByRole("button", { name: "MORE" }),
+    );
+    fireEvent.click(moreButton);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(3);
+    });
+
+    const thirdCall = read.mock.calls[2][0];
+    expect(thirdCall).toEqual({
+      outcome: null,
+      opponent: "Ada",
+      after: "cursor-for-ada",
     });
   });
 });
