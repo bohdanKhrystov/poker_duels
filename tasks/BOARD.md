@@ -25,6 +25,15 @@ path — split into eighteen tickets. It starts with a migration rather than wit
 chain, because all three schema ADRs number their migration *at merge time* and one of them has to
 go first.
 
+`EPIC-05` (ranking, duel coins and leaderboard) **was written on 2026-08-19 and is parked**: six
+stories, none startable, all tracing back to `DEC-055` — *what is a season, and what does one do to
+a duel coin?* The vision promises v0.3 as *"Leaderboard and seasons"* and defines a season nowhere,
+and the answer decides whether the coin is all-time and a season is a query, or whether a boundary
+resets balances — which would be the first thing in the product that destroys a coin. Four more
+product decisions came with it (`DEC-056`–`DEC-059`), every one of them pointed at this epic by a
+merged document before the epic existed. **`READY: NONE` here is a product-owner run, not a wait for
+the human**, unless the season answer turns out to change the vision's *What it is*.
+
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
 ---
@@ -38,7 +47,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **ready** — 17 stories written 2026-08-16, `STORY-0401` and `STORY-0402` done | v0.2 |
-| EPIC-05 | Ranking, duel coins and leaderboard | *not written* | v0.3 |
+| [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **blocked** — 6 stories written 2026-08-19, all gated on `DEC-055` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
 | EPIC-08 | Analysis and decision quality | *not written* | later |
@@ -519,6 +528,11 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
+| DEC-055 | **The product owner's** — what is a season, and what does one do to a duel coin? What bounds one, whether a boundary resets `player.coin_balance` (making the coin a per-season score) or makes a season a window over `duel_result.coin_delta` (making it all-time and a season a query), whether a finished season stays readable, and whether the ladder shows one season or also all time. The reset branch would be the first thing in the product that **destroys** a coin, against a vision that calls it *"a counter of duels won"* — that branch changes the vision's *What it is* and escalates rather than derives. No answer needs a backfill | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | **blocks the whole epic** |
+| DEC-056 | **The product owner's** — what, if anything, gates a place on the leaderboard? `ADR-0012` gates its farming and smurfing vector on this epic; `ADR-0036` — the human's — closes the obvious countermeasure by making an anonymous profile fully ranked. So a threshold carries the gate, or the risk is accepted out loud with a deadline. Includes **whether a player with no display name appears at all**, which `ADR-0058` parks here by name | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
+| DEC-057 | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? Parked here by `EPIC-04` — *"`/api/me` means me"*. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0504` is split |
+| DEC-058 | **The product owner's** — when two players hold the same balance, do they share a rank number or does something break the tie? Ties are the common case with `wins − losses` over few duels. Which key makes paging deterministic is the architect's at split time; what the player *reads* is not | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
+| DEC-059 | **The product owner's** — does a player see their own standing, and where: on the profile strip beside the coin balance, marked on the ladder, behind a *jump to me* control, or nowhere? Parked here by `STORY-0311`. It decides whether `STORY-0502` ships one query or two | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1312,3 +1326,46 @@ locking out every existing account. The downgrade refusal cannot compare against
 since every historical entry is weaker by definition, so it turns on a fixed `ARGON2_FLOOR` equal to
 the first set ever shipped: appending a weak set reddens the pinned literals, inserting one breaks
 the strict ascent, and **prepending** one — which a bare ascent check allows — is below the floor.
+
+---
+
+## EPIC-05 — Ranking, duel coins and leaderboard
+
+Written on 2026-08-19 and **parked on the same day**, which is the intended outcome rather than a
+failed run. Six stories, none startable, all tracing back to `DEC-055`. The epic is v0.3 —
+[`docs/vision.md`](../docs/vision.md)'s *"Leaderboard and seasons"* — and the coin it ranks by is
+already paid: [`ADR-0014`](../docs/adr/ADR-0014-duel-coin-economy.md) chose a signed `wins − losses`
+balance over a win count *for this epic*, in as many words, and
+[`ADR-0029`](../docs/adr/ADR-0029-a-display-name-is-unique-and-permanent.md) kept a deterministic
+collation so this leaderboard would have an index. **What is missing is not code, it is a
+definition**: nothing in the repository says what a season is.
+
+It needs none of `EPIC-04`'s credential chain —
+[`ADR-0036`](../docs/adr/ADR-0036-an-account-is-offered-never-required.md) makes an anonymous
+profile fully ranked — so the six stories still open there gate nothing here. It does inherit
+[`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the
+ladder is its own screen and its door is the **fifth** control on the first screen, which is the
+crowding that ADR predicted in advance. It strengthens the case for `DEC-054` without answering it —
+a row that leads to another player is a *link*, and a client with no addresses cannot express one.
+
+| Story | Task | Est | Status |
+| --- | --- | --- | --- |
+| [STORY-0501](stories/STORY-0501-a-season-is-a-bounded-thing.md) A season is a bounded thing, and every finished duel belongs to one | | | blocked — `DEC-055` |
+| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | blocked — `DEC-055`, `DEC-056`, `DEC-058`, `DEC-059` |
+| [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `DEC-056`, `DEC-058`, `DEC-059` |
+| [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
+| [STORY-0505](stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) A season ends, and the record survives it | | | blocked — `DEC-055`, may be `dropped` |
+| [STORY-0506](stories/STORY-0506-a-duel-moves-a-rank.md) A duel moves a rank, end to end | | | blocked — no decision, waits on `0503` and `0505` |
+
+`STORY-0506` is the only one whose acceptance criteria were writable on the day the epic was
+written, because they depend on no open decision: a duel played through the socket moves the winner
+`+1` and the loser `−1`, asserted as a difference rather than as a value, and the coins on the
+ladder sum to the `coin_delta`s stored for the same scope. **Critical path:**
+`0501 → 0502 → 0503 → 0506`, beginning with a decision rather than with a ticket. `0503` and `0505`
+are the one genuine parallel pair — `web-client/` against `poker-server/`, no shared file.
+
+Two architect questions are named in the epic and deliberately **not numbered**, because their
+premise is `DEC-055`'s answer: what a cursor over a *mutable* ordering guarantees — a standings page
+is keyed on a number that changes while it is being walked, which `STORY-0408`'s *total and
+disjoint* cannot simply be inherited for — and whether a standing is computed per request or
+materialised. Both are `STORY-0502`'s to raise at split time.
