@@ -50,6 +50,15 @@ Read, not edited: `web-client/src/history/history-state.ts`,
 - The control is not rendered while `phase` is `loading`, so a second click cannot start a second
   walk from the same cursor.
 
+
+**Carried from `TASK-041306`.** `nextPageQuery` is pure over `state.filter` and `state.nextCursor`
+only — it never reads `askedWith` or `phase`. So while a request is in flight it returns **the
+identical query already outstanding**, because the `asked` event does not touch `nextCursor`.
+Nothing in the reducer prevents a caller re-issuing it, and nothing there can: the guard has to live
+here. **This ticket must not offer or send another page while `phase === "loading"`**, and must have
+a test that fails if it does — asserting the **request count**, because a second identical request
+returns the same answer and an outcome assertion would pass while the client hammered the server.
+
 ## Out of scope
 
 - Loading the next page when the list is scrolled to its end. **A refusal, not an omission:**

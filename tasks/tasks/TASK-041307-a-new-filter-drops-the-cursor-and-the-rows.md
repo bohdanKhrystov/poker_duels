@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041307
 title: A new filter drops the cursor and the rows it belonged to
 type: task
-status: backlog
+status: ready
 parent: STORY-0413
 module: web-client
 estimate: XS
