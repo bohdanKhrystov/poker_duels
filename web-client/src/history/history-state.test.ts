@@ -211,4 +211,84 @@ describe("the history walk", () => {
     expect(state.nextCursor).toBe("cur-9");
     expect(state.askedWith).toBeNull();
   });
+
+  it("a new filter clears the cursor, the rows and the request in flight", () => {
+    const held: HistoryState = {
+      filter: NO_FILTER,
+      rows: [rowMercury, rowVenus, rowEarth],
+      nextCursor: "cur-3",
+      askedWith: "cur-3",
+      phase: "ready",
+    };
+
+    const state = historyReducer(held, {
+      type: "filtered",
+      filter: { outcome: "LOST", opponent: "" },
+    });
+
+    expect(state).toEqual(initialHistory({ outcome: "LOST", opponent: "" }));
+  });
+
+  it("clears just as thoroughly when only the search term changed", () => {
+    const held: HistoryState = {
+      filter: NO_FILTER,
+      rows: [rowMercury, rowVenus, rowEarth],
+      nextCursor: "cur-3",
+      askedWith: "cur-3",
+      phase: "ready",
+    };
+
+    const bySearchTerm = historyReducer(held, {
+      type: "filtered",
+      filter: { outcome: null, opponent: "Ada" },
+    });
+    expect(bySearchTerm).toEqual(
+      initialHistory({ outcome: null, opponent: "Ada" }),
+    );
+
+    const byOutcome = historyReducer(held, {
+      type: "filtered",
+      filter: { outcome: "WON", opponent: "" },
+    });
+    expect(byOutcome).toEqual(initialHistory({ outcome: "WON", opponent: "" }));
+  });
+
+  it("never offers a query carrying a cursor from another filter", () => {
+    const held: HistoryState = {
+      filter: NO_FILTER,
+      rows: [rowMercury, rowVenus, rowEarth],
+      nextCursor: "cur-3",
+      askedWith: "cur-3",
+      phase: "ready",
+    };
+
+    const state = historyReducer(held, {
+      type: "filtered",
+      filter: { outcome: "LOST", opponent: "" },
+    });
+
+    expect(nextPageQuery(state)).toBeNull();
+    expect(firstPageQuery(state.filter)).toEqual({
+      outcome: "LOST",
+      opponent: "",
+      after: null,
+    });
+  });
+
+  it("clears the rows and the cursor even when the new filter is the same as the old one", () => {
+    const held: HistoryState = {
+      filter: { outcome: "WON", opponent: "Ada" },
+      rows: [rowMercury, rowVenus, rowEarth],
+      nextCursor: "cur-3",
+      askedWith: "cur-3",
+      phase: "ready",
+    };
+
+    const state = historyReducer(held, {
+      type: "filtered",
+      filter: { outcome: "WON", opponent: "Ada" },
+    });
+
+    expect(state).toEqual(initialHistory({ outcome: "WON", opponent: "Ada" }));
+  });
 });
