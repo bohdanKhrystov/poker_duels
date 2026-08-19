@@ -63,4 +63,21 @@ class SeasonOfDuelTest {
         assertEquals(Season(2019, 2), season1)
         assertEquals(Season(2019, 2), season2)
     }
+
+    @Test
+    fun aDuelFinishedExactlyAtAMonthBoundaryBelongsToThatMonth() {
+        val duel = FinishedDuel(
+            id = UUID.randomUUID(),
+            format = "FREEZEOUT",
+            startedAt = Instant.parse("2026-08-31T22:00:00Z"),
+            finishedAt = Instant.parse("2026-09-01T00:00:00Z"),
+            seats = listOf(
+                PlayerId("11111111-1111-1111-1111-111111111111"),
+                PlayerId("22222222-2222-2222-2222-222222222222"),
+            ),
+            outcome = DuelOutcome(winner = 0, handsPlayed = 12, finalStacks = listOf(20_000, 0)),
+        )
+
+        assertEquals(Season(2026, 9), seasonOf(duel))
+    }
 }
