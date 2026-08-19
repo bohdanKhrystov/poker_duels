@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050101
 title: A season is a year and a month, and its identifier is 2026-08
 type: task
-status: ready
+status: done
 parent: STORY-0501
 module: poker-server
 estimate: XS

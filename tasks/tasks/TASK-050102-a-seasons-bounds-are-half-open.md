@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050102
 title: A season's bounds are half-open, and December ends in January
 type: task
-status: backlog
+status: ready
 parent: STORY-0501
 module: poker-server
 estimate: S
