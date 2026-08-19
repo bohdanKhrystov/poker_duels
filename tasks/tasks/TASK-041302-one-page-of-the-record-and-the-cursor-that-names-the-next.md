@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041302
 title: One page of the record, and the cursor that names the next one
 type: task
-status: ready
+status: done
 parent: STORY-0413
 module: web-client
 estimate: S
