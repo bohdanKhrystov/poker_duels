@@ -540,7 +540,7 @@ describe("the history screen's surface", () => {
 
     const moreButton = (): HTMLElement | undefined =>
       [...container.querySelectorAll("button")].find(
-        (button) => button.textContent === "MORE",
+        (button) => button.textContent === "Show more",
       );
 
     // First page landed, and asked the server for a second.
