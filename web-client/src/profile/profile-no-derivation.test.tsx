@@ -1,13 +1,15 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { render } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
 import { readProfileStrip } from "./profile-strip";
 import { ProfileStrip } from "./ProfileStrip";
 import type { ApiFetch, ApiResponse } from "./api";
+import type { RecentDuel } from "./recent-duels";
 import { writeDeviceId } from "../protocol/device-id";
 import { meBody, duelRowBody } from "./profile-fixture";
+import { HistoryScreen } from "../history/HistoryScreen";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -454,5 +456,120 @@ describe("the profile strip's surface", () => {
     // an omission because the wire cannot express the difference — a
     // `RecentDuel` has no field for it — and no screen may invent one.
     expect(removedContainer.innerHTML).toBe(neverSetContainer.innerHTML);
+  });
+});
+
+describe("the history screen's surface", () => {
+  it("puts no player id on the history screen, named opponent or nameless", async () => {
+    // Prove the walk reaches the new directory before trusting what it does
+    // (or does not) find in it: `clientSources` walks the whole `src/` tree
+    // from this one place, and `history/` must show up in the result rather
+    // than be assumed to.
+    const sources = clientSources();
+    expect(sources.size).toBeGreaterThan(30);
+    const historyScreenPath = join("history", "HistoryScreen.tsx");
+    expect([...sources.keys()]).toContain(historyScreenPath);
+
+    // Two rows whose bodies carry distinct, real opponentPlayerId values —
+    // one named opponent, one nameless — so the scan below has both an id
+    // and a null name to catch.
+    const rows = [
+      duelRowBody({
+        duelId: "duel-81",
+        opponentPlayerId: "player-81",
+        opponentDisplayName: "Ada",
+      }),
+      duelRowBody({
+        duelId: "duel-82",
+        opponentPlayerId: "player-82",
+        opponentDisplayName: null,
+      }),
+    ] as unknown as RecentDuel[];
+
+    const { container } = render(
+      <HistoryScreen
+        read={async () => ({
+          kind: "page",
+          duels: rows,
+          nextCursor: null,
+          restarted: false,
+        })}
+      />,
+    );
+
+    // Prove the render is not empty before trusting a scan that found
+    // nothing on it: both rows landed, and both name treatments are on
+    // screen — the real name for the named row, and `nameOrNone`'s own word
+    // for the nameless one.
+    await waitFor(() => {
+      expect(container.querySelectorAll("li").length).toBe(2);
+    });
+    const screenContent = allContentOnScreen(container);
+    expect(screenContent).toContain("Ada");
+    expect(screenContent).toContain("No name");
+
+    // Neither id appears anywhere: not as text, not in an aria-label or
+    // title, and not in any other attribute value. Fails against a row that
+    // falls back to an id for a nameless opponent.
+    expect(screenContent).not.toContain("player-81");
+    expect(screenContent).not.toContain("player-82");
+  });
+
+  it("sends no player id to the server across a whole walk", async () => {
+    const paths: string[] = [];
+    let calls = 0;
+
+    const { container } = render(
+      <HistoryScreen
+        read={async (query) => {
+          calls += 1;
+          paths.push(JSON.stringify(query));
+          const row = duelRowBody({
+            duelId: `duel-30${calls}`,
+            opponentPlayerId: `player-30${calls}`,
+          }) as unknown as RecentDuel;
+          return {
+            kind: "page",
+            duels: [row],
+            nextCursor: calls === 1 ? "cursor-1" : null,
+            restarted: false,
+          };
+        }}
+      />,
+    );
+
+    const moreButton = (): HTMLElement | undefined =>
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "MORE",
+      );
+
+    // First page landed, and asked the server for a second.
+    await waitFor(() => {
+      expect(moreButton()).toBeTruthy();
+    });
+    fireEvent.click(moreButton() as HTMLElement);
+    await waitFor(() => {
+      expect(paths.length).toBeGreaterThan(1);
+    });
+
+    // Then narrows to an outcome. The radios render All, Won, Lost, Drew,
+    // in that fixed order, so the second one is Won.
+    const wonRadio = [
+      ...container.querySelectorAll('input[type="radio"]'),
+    ][1] as HTMLInputElement;
+    fireEvent.click(wonRadio);
+
+    // Three requests — first page, next page, narrowed page — so a walk
+    // that recorded nothing cannot pass by saying nothing.
+    await waitFor(() => {
+      expect(paths.length).toBeGreaterThan(2);
+    });
+
+    // Every request handed to `read` carries no player id. Fails against a
+    // client that correlates on an id it was told to drop — `TASK-041105`
+    // drops it at the parse, and this is what keeps that cheap to keep true.
+    for (const path of paths) {
+      expect(path).not.toContain("player-");
+    }
   });
 });

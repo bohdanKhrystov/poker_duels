@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041314
 title: No player id reaches the history screen, and the suite counts itself
 type: task
-status: ready
+status: done
 parent: STORY-0413
 module: web-client
 estimate: S
@@ -17,7 +17,7 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'puts no player id on the history screen, named opponent or nameless'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'sends no player id to the server across a whole walk'
   - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Test Files +70 passed \(70\)'
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +472 passed \(472\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +482 passed \(482\)'
   - cd web-client && npm run check
 ---
 
@@ -69,7 +69,16 @@ Read, not edited: `web-client/src/history/HistoryScreen.tsx`,
   | `TASK-041312` | +4 (three written at the split, one named by `DEC-052`'s ADR) |
   | `TASK-041313` | +3 (two written at the split, one named by `DEC-053`'s ADR) |
   | this ticket | +2 |
-  | | **472** |
+  | | **472** ← forecast |
+  | | **482** ← measured |
+
+  **The forecast was ten short, and the reason is the run rather than the arithmetic.** Measured on
+  `develop` immediately before this ticket: **480** tests in **70** files. The file count matches
+  exactly; every one of the ten extra tests is a test some ticket gained *during review* that its
+  split-time budget could not have named — a fixture that could not tell a copy from a constant, a
+  rule stated in prose with nothing to break it, a test whose name promised more than it asserted.
+  The per-ticket column is left as written, because it is an honest record of what was forecast, and
+  the total now carries both numbers.
 
   Five test files are new — `duels-query`, `duel-page`, `history-text`, `history-state`,
   `HistoryScreen` — so **70** files. If the suite reports another number, an earlier ticket landed a
@@ -110,7 +119,7 @@ Two tests added.
       and asserts the collected path count before asserting anything about the paths
 - [ ] The four merged tests in `profile-no-derivation.test.tsx` pass unchanged
 - [ ] `npm run --silent test` reports `Test Files  70 passed (70)`
-- [ ] `npm run --silent test` reports `Tests  472 passed (472)`
+- [ ] `npm run --silent test` reports `Tests  482 passed (482)`
 - [ ] No file outside `web-client/src/profile/profile-no-derivation.test.tsx` differs
 - [ ] Every command in `verify:` exits 0
 
