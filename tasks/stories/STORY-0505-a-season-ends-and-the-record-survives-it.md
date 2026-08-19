@@ -2,14 +2,43 @@
 id: STORY-0505
 title: A season ends, and the record survives it
 type: story
-status: blocked
+status: dropped
 parent: EPIC-05
 module: poker-server
 labels: [server, seasons, persistence]
 depends_on: [STORY-0502]
 ---
 
+## Dropped — `ADR-0061` §5, on 2026-08-19
+
+**The decision that killed it:**
+[`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md),
+answering `DEC-055`. **A season boundary does nothing.** No job runs, nothing is written, nothing is
+rewritten, nothing is archived, and `player.coin_balance` is never reset. The ladder shows a
+different set of duels on 1 September than on 31 August because the clock moved and for no other
+reason. There is no crossing to write, so there is no story here — the premise below turned out to be
+false, which is exactly what `dropped` is for.
+
+The file stays, unrewritten below this line, because the epic predicted this story might not survive
+its decision and the trail is worth more than the tidiness.
+
+**Where its work went.** One assertion was this story's alone — *the ladder read for a season returns
+only that season's duels* — and it moved to `STORY-0502`'s acceptance criteria, in both directions
+plus the inside case. Everything else it asserted is covered: attribution across a boundary is
+`STORY-0501`'s, *no `duel` or `duel_result` row is rewritten* is trivially true of code that does not
+exist, and idempotence has nothing to be idempotent about. `STORY-0506` dropped its dependency on
+this story and lost nothing.
+
+**What it does *not* mean.** A finished season is not gone: `ADR-0061` §7 keeps it exactly
+recomputable from rows nothing rewrites. What no longer exists is any code that runs at a boundary,
+and what does not yet exist is any way for a player to *ask* for a past season — that is `DEC-060`,
+and the sharpest cost the ADR records is that nothing anywhere remembers who won a season.
+
+---
+
 ## Goal
+
+*(As written on 2026-08-19, before the decision landed.)*
 
 The first season boundary passes without anybody being on call for it: the ladder scopes itself to
 the new season, and whatever `DEC-055` says should survive the crossing — a stored standing, a
@@ -58,7 +87,7 @@ product owner's to escalate rather than to choose quietly.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `DEC-055` — run `/plan-story STORY-0505` once it is answered.* | — |
+| — | *Never split, and never will be. `ADR-0061` §5 — a boundary runs no code.* | — |
 
 ## Acceptance criteria
 
