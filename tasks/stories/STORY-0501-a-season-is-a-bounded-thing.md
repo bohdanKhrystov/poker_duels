@@ -31,9 +31,14 @@ that*.
 - **A season is a server fact.** [`ADR-0002`](../../docs/adr/ADR-0002-server-authoritative.md): no
   client asserts which season it is, which season a duel was in, or when one ends. A query
   parameter naming a season is a *request*, and the server decides whether it is a real one.
-- **Time comes from `ServerClock.nowMillis()`** (`duels.poker.server.time.ServerClock`), never from
-  `Instant.now()` or a system clock read inline. A season boundary is the first piece of product
-  behaviour that is a function of the wall clock, and it must be testable without waiting.
+- **Time comes from an injected `java.time.Clock`**, never from `Instant.now()`,
+  `System.currentTimeMillis()` or any other clock read inline, and **never from
+  `duels.poker.server.time.ServerClock`** — that one measures elapsed time from an arbitrary epoch
+  (`System.nanoTime()`) for timeouts and grace windows, and no calendar month is derivable from it.
+  [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md) settles
+  this and amends `ADR-0061` §3, which named the wrong one. A season boundary is the first piece of
+  product behaviour that is a function of the wall clock, and it must be testable without waiting:
+  production passes `Clock.systemUTC()`, a test passes `Clock.fixed(instant, ZoneOffset.UTC)`.
 - **No backfill, under any answer.** `duel.finished_at` is `NOT NULL` on every row already written
   and `duel_result.coin_delta` is the signed award, so any window over the record is reconstructible
   from what is stored. A task that proposes rewriting existing rows has misread the schema.
@@ -47,9 +52,10 @@ which answers `DEC-055` and unblocks this story.** Every question this story was
 answer, and the answers are the specification:
 
 - **A derived range, not a row** (§3). No `season` table, no season column, **no migration**, no
-  seed, no configuration and no operator. *Which season is it* is a function of
-  `ServerClock.nowMillis()`; *which season was that duel in* is a function of `finished_at`. A task
-  that proposes a table has misread the ADR as thoroughly as one that proposes a backfill.
+  seed, no configuration and no operator. *Which season is it* is a function of the instant an
+  injected `java.time.Clock` reports — §3 as amended by `ADR-0062`; *which season was that duel in*
+  is a function of `finished_at`. A task that proposes a table has misread the ADR as thoroughly as
+  one that proposes a backfill.
 - **One calendar month, in UTC** (§1), identified by its month — `2026-08`. That identifier is the
   only one a season has, and it is a wire form: what a *player* reads is `August 2026`, on the
   screen, and that is `STORY-0503`'s.
@@ -76,12 +82,14 @@ in one expression; `TASK-050105` gives the story's three refusals executable com
 the only place in the product where *a season moved no coin* is checked, because `STORY-0505` is
 dropped.
 
-`TASK-050106` is `blocked` on **`DEC-062`**, raised at split time and the architect's. The design
-note above and `ADR-0061` §3 both name `ServerClock.nowMillis()` as the source of *which season is
-it*, and it cannot be one: `SystemClock.nowMillis()` is `System.nanoTime() / 1_000_000`, elapsed
-time from an arbitrary epoch, and the interface's own KDoc forbids using it for a date.
-`PostgresDuelResultSink` already hit this and injects `java.time.Clock`. That question blocks one
-ticket, not the story.
+`TASK-050106` was `blocked` on **`DEC-062`**, raised at split time and the architect's, because the
+design note above and `ADR-0061` §3 both named `ServerClock.nowMillis()` as the source of *which
+season is it* and it cannot be one: `SystemClock.nowMillis()` is `System.nanoTime() / 1_000_000`,
+elapsed time from an arbitrary epoch, and the interface's own KDoc forbids using it for a date. It
+is answered — [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md),
+which follows the precedent `PostgresDuelResultSink` had already set: the wall clock is an injected
+`java.time.Clock`, `ServerClock` keeps measuring durations and nothing else, and `ADR-0061` §3 is
+amended in that clause. `TASK-050106` is unblocked and sits at the end of the chain as before.
 
 | ID | Title | Status |
 | --- | --- | --- |
@@ -90,7 +98,7 @@ ticket, not the story.
 | [TASK-050103](../tasks/TASK-050103-the-season-an-instant-falls-in.md) | The season an instant falls in, in UTC, whatever the reader's clock says | backlog |
 | [TASK-050104](../tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) | A duel belongs to the season it finished in, never the one it started in | backlog |
 | [TASK-050105](../tasks/TASK-050105-nothing-here-moves-a-coin.md) | Nothing this story adds moves a coin, writes a migration, or reaches the engine | backlog |
-| [TASK-050106](../tasks/TASK-050106-the-current-season-from-an-injected-clock.md) | The current season, read from an injected clock and never from a system clock | blocked — `DEC-062` |
+| [TASK-050106](../tasks/TASK-050106-the-current-season-from-an-injected-clock.md) | The current season, read from an injected clock and never from a system clock | backlog |
 
 ## Acceptance criteria
 
@@ -108,8 +116,8 @@ a duel on the boundary falls into, which it could not before. Three are added by
       not one millisecond either side of it.
 - [ ] Nothing this story adds changes `player.coin_balance` or any `duel_result` row: a test reads
       both before and after exercising every path added here and asserts they are byte-identical.
-- [ ] The season is derived from `ServerClock`, asserted by a test that moves the clock rather than
-      by sleeping.
+- [ ] The season is derived from an injected `java.time.Clock` (`ADR-0062`), asserted by a test that
+      moves the clock rather than by sleeping — and `Season.kt` names `ServerClock` nowhere.
 - [ ] A season identifier is the month it names — `2026-08` — asserted for at least a December and a
       January, so a year boundary cannot pass on the month arithmetic alone.
 - [ ] Attribution uses `finished_at` and nothing else: a duel whose start and finish fall in

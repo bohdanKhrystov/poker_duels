@@ -56,7 +56,8 @@ overlap.
 - **`seasonOf(instant)`** — `TASK-050103`. This ticket goes from a season to its bounds; that one
   goes the other way.
 - **`seasonOf(duel)`** — `TASK-050104`.
-- **Any clock** — `TASK-050106`, `blocked` on `DEC-062`.
+- **Any clock** — `TASK-050106`, which takes an injected `java.time.Clock` per
+  [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md).
 - **A `next()` or `previous()` season.** Nothing needs one: `ADR-0061` §5 says a boundary does
   nothing, and reaching a *past* season is `DEC-060`. No test is possible for a function that does
   not exist; this is here so the absence is deliberate rather than forgotten.

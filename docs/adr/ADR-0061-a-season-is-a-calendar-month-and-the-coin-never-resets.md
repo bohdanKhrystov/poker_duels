@@ -1,6 +1,14 @@
 # ADR-0061 — A season is a calendar month, the ladder is a window over it, and the coin never resets
 
-- **Status:** Accepted
+- **Status:** Accepted — **§3 amended by
+  [ADR-0062](ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md)**, which corrects the one
+  instrument this ADR names and nothing else. §3's *"**Which season is it** is a function of
+  `ServerClock.nowMillis()`"* cannot be: that clock is `System.nanoTime()`, elapsed time from an
+  arbitrary epoch, and following the sentence literally produces a season in 1970. It reads: *which
+  season is it is a function of the instant an injected `java.time.Clock` reports; which season was
+  that duel in is a function of `finished_at`*. Everything else in §3 — a season is derived and
+  never stored, no table, no column, no migration, no seed, no season in any wire type — and every
+  other section of this ADR stand unchanged
 - **Date:** 2026-08-19
 - **Resolves:** `DEC-055` — what is a season, and what does one do to a duel coin? **Derived from
   the vision; the human did not state this call.** Two sentences license it and they pull opposite

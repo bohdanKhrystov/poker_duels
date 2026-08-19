@@ -30,9 +30,15 @@ behind `STORY-0213` and `STORY-0214` — [`ADR-0045`](../../docs/adr/ADR-0045-pr
   §3). Sign-in verifies the credential and inserts one `auth_session` row; the token is 256 bits from
   `SecureRandom`, URL-safe base64 unpadded, returned exactly once in that response body, stored as
   SHA-256, and never returned, logged or put in a `ServerMessage` again.
-- **Thirty days absolute, no sliding window**, computed from the injected `ServerClock`. Expiry is
-  enforced at read time (`WHERE expires_at > now()`), so an expired row is garbage rather than a
-  hole. No test sleeps to prove it: the clock moves.
+- **Thirty days absolute, no sliding window.** Thirty days is a constant; `issued_at` and
+  `expires_at` are `TIMESTAMPTZ` columns compared against SQL `now()`, so both instants come
+  from an injected `java.time.Clock` —
+  [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md),
+  which amends `ADR-0027` §1 on exactly this clause. **Not `ServerClock`**: it reports elapsed
+  milliseconds from an arbitrary epoch, so a row stamped from it expires in 1970 and every
+  session is dead on arrival. Expiry is still enforced at read time
+  (`WHERE expires_at > now()`), so an expired row is garbage rather than a hole. No test sleeps
+  to prove it: the test fixes the clock and issues a second one thirty days on.
 - **Sign-out is `DELETE FROM auth_session WHERE token_hash = ?` and answers `204` either way**
   ([`ADR-0030`](../../docs/adr/ADR-0030-a-claim-adds-a-credential-and-moves-nothing.md) §3). It
   writes nothing to `player`, and it **does not close live sockets** — tearing one down mid-duel

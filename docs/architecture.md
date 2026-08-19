@@ -162,6 +162,34 @@ makes the following cheap:
 
 Every source of nondeterminism is an injected dependency. The rule has no exceptions.
 
+## Time in the server
+
+The engine has no clock at all — a timestamp it needs arrives inside an action. `poker-server` has
+**two**, they measure different quantities, and neither answers the other's question:
+
+| The question | The instrument | Production | In a test |
+| --- | --- | --- | --- |
+| *How long since…*, *has this deadline passed?* | `duels.poker.server.time.ServerClock` | `SystemClock` — `System.nanoTime()` | `MutableClock` |
+| *What is the date?*, *which month is it?* | `java.time.Clock` | `Clock.systemUTC()` | `Clock.fixed(instant, ZoneOffset.UTC)` |
+
+`ServerClock` is monotonic on purpose: a grace window measured on the wall clock would stretch or
+collapse when the host corrects its time. It reports elapsed milliseconds from an **arbitrary**
+epoch, so no date is derivable from it — `Instant.ofEpochMilli(clock.nowMillis())` is a defect
+wherever it appears, and it yields a date in 1970.
+
+A deadline is sorted by one question: **does it outlive the process?** A grace window, a room
+timeout, an in-memory rate-limit window and a sweep period do not, and are counted on `ServerClock`.
+An `expires_at` column compared against SQL `now()` does, and is a wall-clock instant — the duration
+stays a constant, added to `clock.instant()`.
+
+Anything that is a function of the **calendar** — a season, a row's timestamp, a date compared to
+today — takes a `java.time.Clock` as a parameter. No static reads: `Instant.now()`,
+`System.currentTimeMillis()`, `LocalDate.now()` and `ZoneId.systemDefault()` in their no-argument
+forms appear nowhere in `poker-server/src/main`. See
+[`adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md`](adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md),
+which exists because a merged ADR once named the monotonic clock as the source of the current
+calendar month.
+
 ## Deployment (later)
 
 `poker-server` in Docker, PostgreSQL for accounts, matches and event logs, hosted on Fly.io,

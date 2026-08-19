@@ -53,7 +53,10 @@ server in Kiritimati as on one in Niue.
 
 - **`seasonOf(duel)`** — `TASK-050104`. This function takes an instant; that one takes a
   `FinishedDuel` and reads exactly one field of it.
-- **The current season and any clock** — `TASK-050106`, `blocked` on `DEC-062`.
+- **The current season and any clock** — `TASK-050106`, which takes an injected
+  `java.time.Clock` per
+  [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md)
+  and never `ServerClock`. This function stays the only place a UTC conversion happens.
 - **Doing anything about the locale hazard.** `ADR-0061`'s *What it costs* accepts it in writing;
   this ticket pins it with a test rather than softening it. There is nothing to build, so the
   refusal takes the form of a test that *asserts the surprising answer on purpose* —

@@ -54,7 +54,9 @@ gives it: `2026-08`.
 
 - **Bounds** — `start`, `endExclusive`, `contains`: `TASK-050102`. This ticket adds no `Instant`.
 - **`seasonOf(...)`** in any form: `TASK-050103` (an instant) and `TASK-050104` (a duel).
-- **The current season and any clock**: `TASK-050106`, which is `blocked` on `DEC-062`.
+- **The current season and any clock**: `TASK-050106`, which takes an injected
+  `java.time.Clock` per
+  [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md).
 - **Parsing `2026-08` back into a `Season`.** A client naming a season is a *request*, never an
   assertion (`ADR-0002`), and the route that receives one is `STORY-0502`'s. There is **no test
   for this refusal because there is no function to refuse anything** — a parser with no caller

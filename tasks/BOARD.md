@@ -537,7 +537,6 @@ parallel with `EPIC-02`; no shared file.
 | DEC-059 | **The product owner's** — does a player see their own standing, and where: on the profile strip beside the coin balance, marked on the ladder, behind a *jump to me* control, or nowhere? Parked here by `STORY-0311`. It decides whether `STORY-0502` ships one query or two. `ADR-0061` adds a clause: there are now two candidate numbers, the strip's all-time counter and the ladder's season standing, and the answer says which the strip shows | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 | DEC-061 | **The architect's** — is a season standing computed per request or materialised, and what does a page guarantee over an ordering that is **recomputed** while it is walked? The epic parked these as two unnumbered questions for `STORY-0502`'s split; `ADR-0061` supplies the premise and merges them, because the second follows the first — materialise and the ordering is a column again with `ADR-0057`'s discipline nearly intact, compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
-| DEC-062 | **The architect's** — which instrument does the server read **wall-clock** time from, when a piece of product behaviour is a function of the calendar? `ADR-0061` §3 and `STORY-0501` both name `ServerClock.nowMillis()`, and it cannot answer: it is `System.nanoTime() / 1_000_000`, elapsed time from an arbitrary epoch, and its own KDoc says never to use it for a date. `PostgresDuelResultSink` already met this need and injects `java.time.Clock`, so a merged precedent contradicts a merged ADR. Settle the instrument, which document is amended, and what every later caller needing *now* as a date injects | [`STORY-0501`](stories/STORY-0501-a-season-is-a-bounded-thing.md) | before `TASK-050106` starts |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -579,6 +578,35 @@ month; nothing records who won a season; the strip and the ladder disagree from 
 which contradicts one of this epic's own non-negotiables on purpose; the read becomes an aggregate
 over a join with no index; and past standings recompute rather than freeze, so `ADR-0039`'s eventual
 deletion would silently edit them. **Drops `STORY-0505`**, raises `DEC-060` and `DEC-061`).
+
+`DEC-062` → [`ADR-0062`](../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md)
+(**the server has two clocks and neither answers the other's question.** `ServerClock`
+(`System.nanoTime()`) measures **durations** — timeouts, grace windows, `ADR-0025`'s sweeps —
+and `java.time.Clock` reports **dates**: injected as a parameter, `Clock.systemUTC()` in production,
+`Clock.fixed` in a test. No new port and no third clock type — the wall clock is `java.time.Clock`
+itself, which `PostgresDuelResultSink` already takes. `Instant.ofEpochMilli(clock.nowMillis())` is a
+defect wherever it appears; the no-argument `Instant.now()`, `System.currentTimeMillis()`,
+`LocalDate.now()`, `YearMonth.now()` and `ZoneId.systemDefault()` appear nowhere in
+`poker-server/src/main`; there is exactly **one** `Clock.systemUTC()`, at the composition root; a
+pure function takes the clock with **no default**; and the zone is a literal `ZoneOffset.UTC`, never
+the clock's own. **Amends three merged ADRs in one clause each**, per `docs/adr/README.md`'s
+convention that a correction goes in the status line and *supersede* is for a decision reversed:
+`ADR-0061` §3 — *which season is it* is a function of the instant an injected `java.time.Clock`
+reports, not of `ServerClock.nowMillis()` — and, found by searching for the sentence rather than the
+id, `ADR-0027` §1's thirty-day session and `ADR-0031`'s twenty-four-hour and one-hour tokens, whose
+lifetimes land in an `expires_at TIMESTAMPTZ` compared against SQL `now()` and would each have been
+**born expired in 1970**. The durations are policy and do not move; both ADRs' in-memory rate-limit
+windows keep `ServerClock` and are right as written. `STORY-0501`, `STORY-0405` and `STORY-0502`
+carried the same instruction and are corrected too. `ServerClock` **keeps its name**: the rename
+to `ElapsedClock.elapsedMillis()` is argued in full and declined for now — eleven Kotlin files that must land
+atomically past a three-file ticket cap, and seven merged ADRs and fourteen merged tickets left
+naming a type that would no longer exist — with the trigger recorded and made checkable: all four occurrences predate this ADR and came
+from documents that now say the opposite, so **one more, in any document written after it**,
+makes the name the cause and the rename a story on this argument. The cost is named rather than discovered: **the misleading name survives, so the
+mistake stays expressible**, and the deterrent is a KDoc, an architecture section and a static-read
+guard test, none of which can see a misused injected clock. **Unblocks `TASK-050106`** and names
+three tickets for the planner: the KDoc that still points at `System.currentTimeMillis`, the
+composition root's single `Clock.systemUTC()` before `STORY-0502`, and the guard test).
 
 `DEC-023` → [`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md)
 (a rematch is one client intent and one room fact: `OfferRematch` in, `RematchOffered(seat)` out to
@@ -1384,7 +1412,7 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050103](tasks/TASK-050103-the-season-an-instant-falls-in.md) The season an instant falls in, in UTC, whatever the reader's clock says | S | ready |
 | | [TASK-050104](tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) A duel belongs to the season it finished in, never the one it started in | XS | backlog |
 | | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | backlog |
-| | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | blocked — `DEC-062` |
+| | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | backlog |
 | [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | blocked — `DEC-056`, `DEC-058`, `DEC-059` |
 | [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `DEC-056`, `DEC-058`, `DEC-059` |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
@@ -1414,6 +1442,11 @@ season function. With `STORY-0505` dropped, that test is now the **only** place 
 *a season moved no coin* is checked. `TASK-050103` owns the cost `ADR-0061` named out loud — a UTC
 boundary meeting a locale-rendered time — and pins it with instants half an hour either side of a
 month boundary plus a default-zone test that catches a `ZoneId.systemDefault()` implementation even
-on a CI runner already in UTC. The split raises **`DEC-062`**, the architect's, and blocks exactly
-one ticket with it: the ADR and the story both name `ServerClock` as the source of *which season is
-it*, and that clock measures `System.nanoTime()`.
+on a CI runner already in UTC. The split raised **`DEC-062`**, the architect's, and blocked exactly
+one ticket with it: the ADR and the story both named `ServerClock` as the source of *which season is
+it*, and that clock measures `System.nanoTime()`. It is **answered** —
+[`ADR-0062`](../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md), same day:
+the wall clock is an injected `java.time.Clock`, `ServerClock` keeps measuring durations and nothing
+else, and `ADR-0061` §3 is amended in that one clause. `TASK-050106` is unblocked and names the type
+it takes, the absence of a default, and how its tests pin an instant — `Clock.fixed` for the two
+fixed cases and a private movable subclass for the one that crosses a year boundary.
