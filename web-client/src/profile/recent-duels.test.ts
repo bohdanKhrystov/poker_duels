@@ -94,6 +94,7 @@ describe("the recent duels read", () => {
     const { fetch, calls } = answering(
       ok({
         duels: [],
+        nextCursor: null,
       }),
     );
 
@@ -118,6 +119,7 @@ describe("the recent duels read", () => {
             finishedAt: "2026-08-14T21:03:05Z",
           },
         ],
+        nextCursor: null,
       }),
     );
 
@@ -165,6 +167,7 @@ describe("the recent duels read", () => {
             finishedAt: "2026-08-14T20:00:00Z",
           },
         ],
+        nextCursor: null,
       }),
     );
 
@@ -209,6 +212,7 @@ describe("the recent duels read", () => {
             finishedAt: "2026-08-14T21:03:05Z",
           },
         ],
+        nextCursor: null,
       }),
     );
 
@@ -224,6 +228,7 @@ describe("the recent duels read", () => {
     const { fetch } = answering(
       ok({
         duels: [],
+        nextCursor: null,
       }),
     );
 
@@ -267,6 +272,7 @@ describe("the recent duels read", () => {
             finishedAt: "2026-08-14T19:00:00Z",
           },
         ],
+        nextCursor: null,
       }),
     );
 
@@ -351,6 +357,7 @@ describe("the recent duels read", () => {
             finishedAt: "2026-08-14T17:00:00Z",
           },
         ],
+        nextCursor: null,
       }),
     );
 
@@ -418,6 +425,7 @@ describe("the recent duels read", () => {
             finishedAt: "2026-08-14T21:00:00Z",
           },
         ],
+        nextCursor: null,
       }),
     );
 
@@ -440,6 +448,7 @@ describe("the recent duels read", () => {
             finishedAt: "2026-08-14T21:00:00Z",
           },
         ],
+        nextCursor: null,
       }),
     );
 
@@ -462,6 +471,7 @@ describe("the recent duels read", () => {
             finishedAt: "2026-08-14T21:00:00Z",
           },
         ],
+        nextCursor: null,
       }),
     );
 
