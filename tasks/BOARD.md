@@ -537,6 +537,7 @@ parallel with `EPIC-02`; no shared file.
 | DEC-059 | **The product owner's** — does a player see their own standing, and where: on the profile strip beside the coin balance, marked on the ladder, behind a *jump to me* control, or nowhere? Parked here by `STORY-0311`. It decides whether `STORY-0502` ships one query or two. `ADR-0061` adds a clause: there are now two candidate numbers, the strip's all-time counter and the ladder's season standing, and the answer says which the strip shows | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 | DEC-061 | **The architect's** — is a season standing computed per request or materialised, and what does a page guarantee over an ordering that is **recomputed** while it is walked? The epic parked these as two unnumbered questions for `STORY-0502`'s split; `ADR-0061` supplies the premise and merges them, because the second follows the first — materialise and the ordering is a column again with `ADR-0057`'s discipline nearly intact, compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
+| DEC-062 | **The architect's** — which instrument does the server read **wall-clock** time from, when a piece of product behaviour is a function of the calendar? `ADR-0061` §3 and `STORY-0501` both name `ServerClock.nowMillis()`, and it cannot answer: it is `System.nanoTime() / 1_000_000`, elapsed time from an arbitrary epoch, and its own KDoc says never to use it for a date. `PostgresDuelResultSink` already met this need and injects `java.time.Clock`, so a merged precedent contradicts a merged ADR. Settle the instrument, which document is amended, and what every later caller needing *now* as a date injects | [`STORY-0501`](stories/STORY-0501-a-season-is-a-bounded-thing.md) | before `TASK-050106` starts |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1378,6 +1379,12 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
 | [STORY-0501](stories/STORY-0501-a-season-is-a-bounded-thing.md) A season is a bounded thing, and every finished duel belongs to one | | | **ready** — split it next |
+| | [TASK-050101](tasks/TASK-050101-a-season-is-a-year-and-a-month.md) A season is a year and a month, and its identifier is `2026-08` | XS | ready |
+| | [TASK-050102](tasks/TASK-050102-a-seasons-bounds-are-half-open.md) A season's bounds are half-open, and December ends in January | S | backlog |
+| | [TASK-050103](tasks/TASK-050103-the-season-an-instant-falls-in.md) The season an instant falls in, in UTC, whatever the reader's clock says | S | backlog |
+| | [TASK-050104](tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) A duel belongs to the season it finished in, never the one it started in | XS | backlog |
+| | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | backlog |
+| | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | blocked — `DEC-062` |
 | [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | blocked — `DEC-056`, `DEC-058`, `DEC-059` |
 | [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `DEC-056`, `DEC-058`, `DEC-059` |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
@@ -1397,3 +1404,16 @@ The two architect questions the epic named and deliberately did not number are n
 single decision rather than two: `ADR-0061` supplied their missing premise and coupled them, because
 whether a standing is materialised decides what a page can guarantee over an ordering that is
 recomputed while it is walked. `STORY-0502` no longer raises them at split time; it waits on them.
+
+`STORY-0501` was split on 2026-08-19 into **six** tickets, linear because five of them touch one
+file. It ships a *function* and not a schema — no table, no column, no migration, no operator, no
+job (`ADR-0061` §3) — and `TASK-050105` turns that into commands rather than prose: no `V<n>__` file
+in the branch, no file under `poker-engine`, no file under `web-client`, and a Testcontainers test
+that snapshots `player.coin_balance` and every `duel_result` row either side of exercising every
+season function. With `STORY-0505` dropped, that test is now the **only** place in the product where
+*a season moved no coin* is checked. `TASK-050103` owns the cost `ADR-0061` named out loud — a UTC
+boundary meeting a locale-rendered time — and pins it with instants half an hour either side of a
+month boundary plus a default-zone test that catches a `ZoneId.systemDefault()` implementation even
+on a CI runner already in UTC. The split raises **`DEC-062`**, the architect's, and blocks exactly
+one ticket with it: the ADR and the story both name `ServerClock` as the source of *which season is
+it*, and that clock measures `System.nanoTime()`.
