@@ -518,8 +518,7 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-052 | **The product owner's** — when does the history search fire: as the player types, or when they submit it? Blocks [`TASK-041312`](tasks/TASK-041312-the-search-box-sends-the-term-the-player-typed.md) and nothing before it | [`STORY-0413`](stories/STORY-0413-the-history-screen.md) | before STORY-0413 closes |
-| DEC-053 | **The product owner's** — how does a player reach their whole duel record, and how do they leave it? The client has no navigation at all today, and `STORY-0412`, `STORY-0415` and `EPIC-05` inherit the answer. Blocks [`TASK-041313`](tasks/TASK-041313-the-screen-a-player-can-actually-reach.md) and nothing before it | [`STORY-0413`](stories/STORY-0413-the-history-screen.md) | before STORY-0413 closes |
+| DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1243,13 +1242,26 @@ it"* a property rather than a rule somebody remembers. The suite's own count is 
 `STORY-0411` a mid-story count change forced four tickets to be corrected at once.
 
 Two decisions were raised, **both the product owner's**, each blocking exactly one ticket at the end
-of that chain and nothing before it. `DEC-052`: when the history search fires — as the player types,
-which needs a debounce delay nobody has chosen and one unindexed `POSITION` scan per pause, or on
-submit, which needs a control and a word for it. `DEC-053`: how a player reaches the record and
-leaves it — the client has no navigation of any kind today, and `STORY-0412`, `STORY-0415` and
-`EPIC-05` all inherit whatever it gets, so no ticket takes it. Whether the client grows URL routes
-and a working browser *Back* is the architect's and only arises if `DEC-053` answers *its own
-screen*; it is left for the answering ADR to raise rather than asked imprecisely now.
+of that chain and nothing before it, and **both were answered on 2026-08-19**. `DEC-052` — when the
+history search fires — is answered by
+[`ADR-0059`](../docs/adr/ADR-0059-the-record-is-searched-when-the-player-submits.md): **on submit**,
+by Enter or by a button reading *Search*, and typing sends nothing. `ADR-0057` binds the cursor to
+its filter, so a debounced pause would not waste a request — it would throw away the player's place
+in the record and search a term they had not finished typing. `DEC-053` — how a player reaches the
+record and leaves it — is answered by
+[`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): **its
+own screen**, replacing the first screen, in by one control reading *Your duels* beneath the strip
+and out by one reading *Back*, offered only where a player is not in a duel. The lobby does not grow
+a section, because `STORY-0412`, `STORY-0415` and `EPIC-05` all inherit whatever this got, and four
+stacked sections are the whole product on the screen a new player sees first. It **raised `DEC-054`**
+— URL routes and a working browser *Back*, the architect's — which blocks nothing today.
+
+`TASK-041312` and `TASK-041313` stay **blocked** until a planner transcribes what the two ADRs name
+into them: for `TASK-041312`, one Scope bullet, the word `SEARCH`, the test `asks nothing while the
+player types, and once when the search is submitted` and its `verify:` line (`ADR-0059` §5); for
+`TASK-041313`, the door, the way back and the test `leaves the first screen for the record, and comes
+back to it` (`ADR-0060` §7). Both stay at three files, and **`TASK-041314`'s 472 does not move** —
+its arithmetic already budgeted one ADR-named test in each of the two.
 
 Two decisions were raised while splitting, both the architect's, both blocking exactly one story.
 `DEC-041` (the shape of device revocation) is answered by
