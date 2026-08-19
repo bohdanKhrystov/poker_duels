@@ -67,7 +67,9 @@ it is the season window rather than the all-time column:**
   is not a `LEFT JOIN` over every `player` row. A player whose only duel that season was a **draw**
   *does* have a row, at `0`, because `ADR-0015` writes a draw as two rows of zero — that is the case
   a fixture must contain, because it is the one an obvious implementation gets wrong.
-- **The endpoint serves the current season** (§6), computed from `ServerClock`, and **the response
+- **The endpoint serves the current season** (§6), computed from an injected `java.time.Clock`
+  — [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md),
+  never `ServerClock`, which measures elapsed time and knows no date — and **the response
   names the season it computed** so the client never derives one from the browser's clock
   (`ADR-0002`). The field's name and shape are the architect's; that there is one is not.
 - **`DEC-056` may narrow the eligible set; it may not widen it.**

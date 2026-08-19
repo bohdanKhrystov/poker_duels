@@ -1,6 +1,13 @@
 # ADR-0027 — A session token outranks a device id, and the handshake carries it
 
-- **Status:** Accepted
+- **Status:** Accepted — §1's session lifetime clause amended by
+  [ADR-0062](ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md). *"An absolute 30 days
+  from issue, computed from the injected `ServerClock`"* names a clock that reports elapsed
+  milliseconds from an arbitrary epoch: `auth_session.issued_at` and `expires_at` are `TIMESTAMPTZ`
+  compared against SQL `now()`, so a row stamped from it expires in 1970 and every session is dead
+  on arrival. Thirty days stays a constant; both instants come from an injected `java.time.Clock`.
+  The rate-limit window later in this ADR keeps `ServerClock`, correctly — it is a duration held in
+  memory, which is what that clock is for
 - **Date:** 2026-08-14
 - **Resolves:** `DEC-028` (the credential, session and handshake *mechanism*; everything about what
   a credential **contains** stays with `DEC-027`, the human's)

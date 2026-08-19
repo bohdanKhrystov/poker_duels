@@ -58,7 +58,8 @@ there is no need to open the engine to find them.
 - **Any migration.** `duel.finished_at` is already `TIMESTAMPTZ NOT NULL` on every row ever
   written, so attribution needs no column and no backfill — `ADR-0061` §3 and the story's own
   design notes. `TASK-050105` asserts the branch adds no `V<n>__` file.
-- **The current season** — `TASK-050106`, `blocked` on `DEC-062`.
+- **The current season** — `TASK-050106`, which takes an injected `java.time.Clock` per
+  [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md).
 
 ## Tests
 

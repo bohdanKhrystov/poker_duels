@@ -1,6 +1,13 @@
 # ADR-0031 — An optional recovery email, proven before it can do anything, and a handle that is not a name
 
-- **Status:** Accepted
+- **Status:** Accepted — both token-lifetime clauses amended by
+  [ADR-0062](ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md), on the same argument it
+  applies to [ADR-0027](ADR-0027-the-session-outranks-the-device-id.md) §1. *"24 hours, computed from
+  the injected `ServerClock` at issue"* and *"one hour absolute, from `ServerClock` at issue"* name a
+  clock that reports elapsed milliseconds from an arbitrary epoch, while both lifetimes land in an
+  `expires_at TIMESTAMPTZ` compared against SQL `now()`. The durations stay constants; the instants
+  come from an injected `java.time.Clock`. The rate-limit window later in this ADR keeps
+  `ServerClock`, correctly — it is a duration held in memory
 - **Date:** 2026-08-14
 - **Records:** the human's answer to `DEC-027` — *optional email, recovery only* — and settles what
   that answer requires technically
