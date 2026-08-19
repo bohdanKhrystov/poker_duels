@@ -78,6 +78,15 @@ Read, not edited: `web-client/src/profile/duel-page.ts`,
   the record. `ADR-0036` — every screen reachable anonymously stays reachable anonymously — and this
   screen gates on nothing.
 
+
+**Carried from `TASK-041308`.** `HistoryScreen` renders one heading, which `ADR-0060` names — but a
+**second** one is currently uncatchable: measured, adding an `<h3>` to it leaves all 455 tests green,
+because no test mounts `HistoryScreen` inside the lobby tree and `Lobby.test.tsx`'s guard only
+inspects that tree. This ticket makes the screen reachable, so it is where the guard can finally
+reach it: **assert the mounted history screen carries exactly one heading**, and confirm a second
+fails it. This is the same shape as the gap `TASK-041108` recorded and `TASK-041113` closed — a
+no-heading rule guarded only where something happened to render.
+
 ## Out of scope
 
 - Anything the answer to `DEC-053` does not require. If it is a section of the lobby, no navigation
