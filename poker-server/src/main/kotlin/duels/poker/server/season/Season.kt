@@ -1,5 +1,6 @@
 package duels.poker.server.season
 
+import duels.poker.server.duel.FinishedDuel
 import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneOffset
@@ -55,3 +56,12 @@ public fun seasonOf(instant: Instant): Season {
     val yearMonth = YearMonth.from(instant.atOffset(ZoneOffset.UTC))
     return Season(yearMonth.year, yearMonth.monthValue)
 }
+
+/**
+ * The season to which a finished duel belongs, read from its finish time.
+ *
+ * A duel pays its coin exactly once, at the end ([finishedAt]), so it belongs entirely to one
+ * season per ADR-0061 §2 and ADR-0017. A duel that began on 31 August and finished on 1 September
+ * is a September duel in full, never an August one — [startedAt] is deliberately unread.
+ */
+public fun seasonOf(duel: FinishedDuel): Season = seasonOf(duel.finishedAt)
