@@ -6,6 +6,7 @@ import {
   historyReducer,
   initialHistory,
   firstPageQuery,
+  nextPageQuery,
 } from "./history-state";
 import {
   HISTORY_HEADING,
@@ -33,6 +34,11 @@ import { nameOrNone } from "../profile/name-text";
  *
  * `no-profile` is dispatched as an empty page, not as a failure: a browser holding no profile has
  * played no duels, so *"No duels yet."* is true of it and *"Your duels did not load."* is not.
+ *
+ * The `MORE` control and the request it sends read one call to `nextPageQuery` — rendering it from
+ * one rule and asking from another is how the two end up disagreeing. It is withheld while `phase`
+ * is `loading`: `nextPageQuery` is pure over `nextCursor`, which a request in flight does not move,
+ * so without this guard a second click would re-issue the identical query already outstanding.
  */
 export function HistoryScreen(props: {
   readonly read: (query: HistoryQuery) => Promise<DuelPageRead>;
@@ -91,6 +97,8 @@ export function HistoryScreen(props: {
   }
   // ready + some → no sentence, just rows
 
+  const nextQuery = nextPageQuery(state);
+
   return (
     <section
       aria-label="your duels"
@@ -116,6 +124,11 @@ export function HistoryScreen(props: {
         </ul>
       )}
       {sentence && <p>{sentence}</p>}
+      {nextQuery !== null && state.phase !== "loading" && (
+        <button type="button" onClick={() => ask(nextQuery)}>
+          MORE
+        </button>
+      )}
     </section>
   );
 }
