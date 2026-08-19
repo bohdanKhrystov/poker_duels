@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { HistoryScreen } from "./HistoryScreen";
 import { aDuelLine } from "../profile/profile-fixture";
 import type { DuelPageRead } from "../profile/duel-page";
@@ -332,5 +332,146 @@ describe("the history screen", () => {
     // Verify both rows are still displayed (not cleared by the failure)
     listItems = screen.queryAllByRole("listitem");
     expect(listItems).toHaveLength(2);
+  });
+
+  // Unpadded base64url holding both "-" and "_", so a trim, a re-encode or a
+  // reconstruction of the cursor shows up as a mismatch rather than passing by luck.
+  const NEXT_CURSOR = "MjAy-Ni0w_Mw";
+
+  it("offers another page while the server names one", async () => {
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [aDuelLine()],
+          nextCursor: NEXT_CURSOR,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    // No control before the first page has landed.
+    expect(screen.queryByText("MORE")).toBeNull();
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    const buttons = screen.getAllByRole("button", { name: "MORE" });
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].textContent).toBe("MORE");
+  });
+
+  it("stops offering on the last page, and asks for nothing more", async () => {
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [aDuelLine()],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    expect(screen.queryByText("MORE")).toBeNull();
+    expect(read).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks with the cursor the server sent, byte for byte", async () => {
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-1" })],
+        nextCursor: NEXT_CURSOR,
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-2" })],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(
+      <HistoryScreen
+        read={read}
+        filter={{ outcome: "WON", opponent: "Halvard" }}
+      />,
+    );
+
+    const button = await waitFor(() =>
+      screen.getByRole("button", { name: "MORE" }),
+    );
+    fireEvent.click(button);
+
+    // That click put a request for NEXT_CURSOR in flight. `nextCursor` does
+    // not move until it answers, so a second click now would send the exact
+    // query already outstanding — the loop TASK-041306 found. Firing it
+    // anyway must not grow the request count.
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+
+    const firstCall = read.mock.calls[0][0];
+    const secondCall = read.mock.calls[1][0];
+    expect(secondCall.after).toBe(NEXT_CURSOR);
+    expect(secondCall.outcome).toBe(firstCall.outcome);
+    expect(secondCall.opponent).toBe(firstCall.opponent);
+  });
+
+  it("appends the second page under the first, in the order both arrived", async () => {
+    const firstPage = [
+      aDuelLine({ duelId: "duel-1", opponentDisplayName: "Ada" }),
+      aDuelLine({ duelId: "duel-2", opponentDisplayName: "Bob" }),
+    ];
+    const secondPage = [
+      aDuelLine({ duelId: "duel-3", opponentDisplayName: "Charlie" }),
+      aDuelLine({ duelId: "duel-4", opponentDisplayName: "Dana" }),
+    ];
+    const opponentOrder = ["Ada", "Bob", "Charlie", "Dana"];
+
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: firstPage,
+        nextCursor: NEXT_CURSOR,
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: secondPage,
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(<HistoryScreen read={read} />);
+
+    const button = await waitFor(() =>
+      screen.getByRole("button", { name: "MORE" }),
+    );
+    fireEvent.click(button);
+
+    const listItems = await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(4);
+      return items;
+    });
+
+    const renderedOrder = listItems.map(
+      (item) =>
+        opponentOrder.find((name) => item.textContent?.includes(name)) ?? null,
+    );
+    expect(renderedOrder).toEqual(opponentOrder);
   });
 });

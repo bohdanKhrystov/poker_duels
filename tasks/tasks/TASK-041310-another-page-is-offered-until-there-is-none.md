@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041310
 title: Another page is offered until the server names none, and then never asked for
 type: task
-status: ready
+status: done
 parent: STORY-0413
 module: web-client
 estimate: S
