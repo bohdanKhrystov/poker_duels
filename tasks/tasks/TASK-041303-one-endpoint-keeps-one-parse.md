@@ -15,7 +15,7 @@ depends_on: [TASK-041302]
 verify:
   - cd web-client && npm ci
   - cd web-client && NO_COLOR=1 npm run --silent test -- src/profile/recent-duels.test.ts 2>&1 | grep -qE 'Tests +8 passed \(8\)'
-  - git diff origin/develop -- web-client/src/profile/recent-duels.test.ts | grep -q '^-' && exit 1 || exit 0
+  - "! git diff origin/develop -- web-client/src/profile/ | grep -q '^[-+].*expect('"
   - cd web-client && npm run check
 ---
 
@@ -88,15 +88,19 @@ is not a duel`.
 ## Acceptance criteria
 
 - [ ] `npm run test -- src/profile/recent-duels.test.ts` reports `Tests  8 passed (8)`
-- [ ] No line is **removed** from `recent-duels.test.ts` — the diff adds `nextCursor` to mock
-      bodies and changes no assertion
+- [ ] No `expect(` line in `recent-duels.test.ts` is added or removed — a single-line mock body
+      gaining a field is reflowed by Prettier, so counting removed *lines* is the wrong check;
+      the property wanted is that no assertion moved
       — not one assertion was adjusted, and committing the change does not hide it
 - [ ] `grep -c 'readFromApi' web-client/src/profile/recent-duels.ts` returns `0`
 - [ ] `grep -c 'typeof (row' web-client/src/profile/recent-duels.ts` returns `0` — the row-shape
       check lives in one file now
 - [ ] `readRecentDuels` still takes `{ fetch, storage }` and still answers `RecentDuelsRead` with its
       three variants, so `profile-strip.ts` is unchanged
-- [ ] No file outside `web-client/src/profile/recent-duels.ts` differs
+- [ ] Only `recent-duels.ts` changes behaviour. Three test files —
+      `recent-duels.test.ts`, `profile-strip.test.ts`, `profile-no-derivation.test.tsx` — gain
+      `nextCursor` in mock bodies and **change no assertion**: `git diff` shows no `expect(` line
+      added or removed in any of them
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
