@@ -268,13 +268,69 @@ describe("the history screen", () => {
       expect(screen.getByText(READ_FAILED)).toBeDefined();
     });
 
-    const listItems = screen.queryAllByRole("listitem");
+    let listItems = screen.queryAllByRole("listitem");
     expect(listItems).toHaveLength(0);
 
-    // The second scenario will be testable when the component has UI to trigger
-    // a second read (e.g., a "show more" button). The reducer already handles
-    // keeping rows when a read fails (TASK-041306), so the rendering just needs
-    // to display the rows and the failure sentence together. This test verifies
-    // that behavior once that UI is added.
+    // Scenario 2: A first read that answers two rows, then a second read that
+    // answers `unavailable`, shows `READ_FAILED` and keeps both rows on screen.
+    // This simulates what happens when a "show more" request fails.
+    const twoRows = [
+      aDuelLine({
+        duelId: "duel-1",
+        opponentDisplayName: "Alice",
+      }),
+      aDuelLine({
+        duelId: "duel-2",
+        opponentDisplayName: "Bob",
+      }),
+    ];
+
+    let resolveFirstRead: ((value: DuelPageRead) => void) | null = null;
+    const firstReadPromise = new Promise<DuelPageRead>((resolve) => {
+      resolveFirstRead = resolve;
+    });
+
+    const read2 = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () => firstReadPromise,
+    );
+
+    const { rerender } = render(<HistoryScreen read={read2} />);
+
+    // First read is pending, component shows loading. Resolve it with rows.
+    if (resolveFirstRead) {
+      (resolveFirstRead as (value: DuelPageRead) => void)({
+        kind: "page",
+        duels: twoRows,
+        nextCursor: "cursor-123",
+        restarted: false,
+      });
+    }
+
+    // Wait for rows to appear
+    await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(2);
+    });
+
+    // Now simulate a second read (show more) failing by re-rendering with a
+    // read that returns unavailable. This triggers the effect again with the
+    // new read function.
+    const read3 = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "unavailable",
+        }) as unknown as DuelPageRead,
+    );
+
+    rerender(<HistoryScreen read={read3} />);
+
+    // Wait for the failure sentence to appear
+    await waitFor(() => {
+      expect(screen.getByText(READ_FAILED)).toBeDefined();
+    });
+
+    // Verify both rows are still displayed (not cleared by the failure)
+    listItems = screen.queryAllByRole("listitem");
+    expect(listItems).toHaveLength(2);
   });
 });
