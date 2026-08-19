@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041312
 title: The search box sends the term the player typed, and nothing else
 type: task
-status: backlog
+status: ready
 parent: STORY-0413
 module: web-client
 estimate: S

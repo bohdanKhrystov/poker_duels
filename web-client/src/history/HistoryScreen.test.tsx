@@ -10,8 +10,9 @@ import {
   NO_DUELS,
   NO_MATCH,
   READ_FAILED,
+  EVERY_OUTCOME,
 } from "./history-text";
-import { finishedAtText } from "../profile/profile-text";
+import { finishedAtText, outcomeWord } from "../profile/profile-text";
 
 describe("the history screen", () => {
   it("renders the page it was handed, in the order it was handed", async () => {
@@ -473,5 +474,312 @@ describe("the history screen", () => {
         opponentOrder.find((name) => item.textContent?.includes(name)) ?? null,
     );
     expect(renderedOrder).toEqual(opponentOrder);
+  });
+
+  it("offers all and the three outcomes, in the words a row already uses", async () => {
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [aDuelLine()],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    // Check that all four radios are present and labeled correctly
+    const allRadio = screen.getByLabelText(EVERY_OUTCOME) as HTMLInputElement;
+    expect(allRadio).toBeDefined();
+    expect(allRadio.checked).toBe(true);
+
+    const wonRadio = screen.getByLabelText(
+      outcomeWord("WON"),
+    ) as HTMLInputElement;
+    expect(wonRadio).toBeDefined();
+    expect(wonRadio.checked).toBe(false);
+
+    const lostRadio = screen.getByLabelText(
+      outcomeWord("LOST"),
+    ) as HTMLInputElement;
+    expect(lostRadio).toBeDefined();
+    expect(lostRadio.checked).toBe(false);
+
+    const drewRadio = screen.getByLabelText(
+      outcomeWord("DREW"),
+    ) as HTMLInputElement;
+    expect(drewRadio).toBeDefined();
+    expect(drewRadio.checked).toBe(false);
+  });
+
+  it("asks for the first page of the outcome chosen, dropping the cursor", async () => {
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-1" })],
+        nextCursor: "cursor-123",
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-2" })],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    const lostRadio = screen.getByLabelText(outcomeWord("LOST"));
+    fireEvent.click(lostRadio);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+
+    const secondCall = read.mock.calls[1][0];
+    expect(secondCall).toEqual({
+      outcome: "LOST",
+      opponent: "",
+      after: null,
+    });
+  });
+
+  it("replaces the rows of the filter just left", async () => {
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [
+          aDuelLine({ duelId: "duel-1", opponentDisplayName: "Alice" }),
+          aDuelLine({ duelId: "duel-2", opponentDisplayName: "Bob" }),
+        ],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [
+          aDuelLine({ duelId: "duel-3", opponentDisplayName: "Charlie" }),
+        ],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(<HistoryScreen read={read} />);
+
+    let listItems = await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(2);
+      return items;
+    });
+
+    expect(listItems[0].textContent).toContain("Alice");
+    expect(listItems[1].textContent).toContain("Bob");
+
+    const wonRadio = screen.getByLabelText(outcomeWord("WON"));
+    fireEvent.click(wonRadio);
+
+    listItems = await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(1);
+      return items;
+    });
+
+    expect(listItems[0].textContent).toContain("Charlie");
+  });
+
+  it("does not keep rows from the old filter when changing outcome, even with a cursor", async () => {
+    // FALSIFICATION (a): This test fails if "filtered" is not dispatched before ask(),
+    // because rows from the old filter would be appended to rows from the new filter.
+    // The first read returns WON outcomes with a cursor, then clicking LOST should
+    // not show the WON rows mixed with LOST rows.
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [
+          aDuelLine({
+            duelId: "duel-1",
+            opponentDisplayName: "Alice",
+            outcome: "WON",
+          }),
+          aDuelLine({
+            duelId: "duel-2",
+            opponentDisplayName: "Bob",
+            outcome: "WON",
+          }),
+        ],
+        nextCursor: "cursor-with-won",
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [
+          aDuelLine({
+            duelId: "duel-3",
+            opponentDisplayName: "Charlie",
+            outcome: "LOST",
+          }),
+        ],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(<HistoryScreen read={read} />);
+
+    let listItems = await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(2);
+      return items;
+    });
+
+    // Verify initial rows are WON outcomes
+    expect(listItems[0].textContent).toContain("Won");
+    expect(listItems[0].textContent).toContain("Alice");
+    expect(listItems[1].textContent).toContain("Won");
+    expect(listItems[1].textContent).toContain("Bob");
+
+    // Click to filter by LOST
+    const lostRadio = screen.getByLabelText(outcomeWord("LOST"));
+    fireEvent.click(lostRadio);
+
+    // After clicking, should have only the LOST row (Charlie), not the WON rows appended
+    listItems = await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(1);
+      return items;
+    });
+
+    expect(listItems[0].textContent).toContain("Lost");
+    expect(listItems[0].textContent).toContain("Charlie");
+    // Verify Alice and Bob (WON rows) are NOT present
+    expect(screen.queryByText("Alice")).toBeNull();
+    expect(screen.queryByText("Bob")).toBeNull();
+  });
+
+  it("drops the cursor from the old filter when changing outcome", async () => {
+    // FALSIFICATION (d): This test fails if ask() is called before dispatching "filtered",
+    // because the stale cursor would be sent in the request. The request should have
+    // after: null, not the cursor from the WON filter.
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-1", outcome: "WON" })],
+        nextCursor: "cursor-with-won",
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-2", outcome: "LOST" })],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    // Verify first call had no cursor
+    expect(read.mock.calls[0][0]).toEqual({
+      outcome: null,
+      opponent: "",
+      after: null,
+    });
+
+    // Click to filter by LOST
+    const lostRadio = screen.getByLabelText(outcomeWord("LOST"));
+    fireEvent.click(lostRadio);
+
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+
+    // The second call must have after: null, not the cursor from the first filter
+    const secondCall = read.mock.calls[1][0];
+    expect(secondCall).toEqual({
+      outcome: "LOST",
+      opponent: "",
+      after: null,
+    });
+  });
+
+  it("uses the updated filter when showing more, not the stale one", async () => {
+    // FALSIFICATION (a): This test fails if "filtered" is not dispatched,
+    // because state.filter won't be updated. The next "show more" request
+    // will use nextPageQuery(state), which builds from state.filter.
+    // If state.filter is still null, the request will have outcome: null
+    // instead of outcome: "LOST".
+    const read = vi
+      .fn<[HistoryQuery], Promise<DuelPageRead>>()
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-1", outcome: "WON" })],
+        nextCursor: "cursor-for-all",
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-2", outcome: "LOST" })],
+        nextCursor: "cursor-for-lost",
+        restarted: false,
+      } as DuelPageRead)
+      .mockResolvedValueOnce({
+        kind: "page",
+        duels: [aDuelLine({ duelId: "duel-3", outcome: "LOST" })],
+        nextCursor: null,
+        restarted: false,
+      } as DuelPageRead);
+
+    render(<HistoryScreen read={read} />);
+
+    // First read: no filter, one WON row with a cursor
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+    expect(screen.getByText("Won")).toBeDefined();
+
+    // Change filter to LOST
+    const lostRadio = screen.getByLabelText(outcomeWord("LOST"));
+    fireEvent.click(lostRadio);
+
+    // Second read: LOST filter, one LOST row with a cursor
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(1);
+      expect(items[0].textContent).toContain("Lost");
+    });
+
+    // Click show more
+    const moreButton = screen.getByRole("button", { name: "MORE" });
+    fireEvent.click(moreButton);
+
+    // Third read should use the LOST filter, not the old null filter
+    await waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(3);
+    });
+
+    const thirdCall = read.mock.calls[2][0];
+    expect(thirdCall).toEqual({
+      outcome: "LOST",
+      opponent: "",
+      after: "cursor-for-lost",
+    });
   });
 });

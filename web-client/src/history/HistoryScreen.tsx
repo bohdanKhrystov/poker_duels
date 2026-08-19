@@ -13,6 +13,8 @@ import {
   emptyLine,
   LOADING_RECORD,
   READ_FAILED,
+  OUTCOME_LEGEND,
+  EVERY_OUTCOME,
 } from "./history-text";
 import {
   coinDeltaText,
@@ -72,6 +74,18 @@ export function HistoryScreen(props: {
     [read],
   );
 
+  const handleOutcomeChange = useCallback(
+    (newOutcome: string | null) => {
+      const newFilter: HistoryFilter = {
+        outcome: newOutcome as "WON" | "LOST" | "DREW" | null,
+        opponent: state.filter.opponent,
+      };
+      dispatch({ type: "filtered", filter: newFilter });
+      ask(firstPageQuery(newFilter));
+    },
+    [state.filter.opponent, ask],
+  );
+
   useEffect(() => {
     ask(firstPageQuery(filter));
   }, [ask, filter]);
@@ -105,6 +119,45 @@ export function HistoryScreen(props: {
       className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4"
     >
       <h2>{HISTORY_HEADING}</h2>
+      <fieldset>
+        <legend>{OUTCOME_LEGEND}</legend>
+        <label>
+          <input
+            type="radio"
+            name="outcome"
+            checked={state.filter.outcome === null}
+            onChange={() => handleOutcomeChange(null)}
+          />
+          {EVERY_OUTCOME}
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="outcome"
+            checked={state.filter.outcome === "WON"}
+            onChange={() => handleOutcomeChange("WON")}
+          />
+          {outcomeWord("WON")}
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="outcome"
+            checked={state.filter.outcome === "LOST"}
+            onChange={() => handleOutcomeChange("LOST")}
+          />
+          {outcomeWord("LOST")}
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="outcome"
+            checked={state.filter.outcome === "DREW"}
+            onChange={() => handleOutcomeChange("DREW")}
+          />
+          {outcomeWord("DREW")}
+        </label>
+      </fieldset>
       {(state.phase === "loading" && isEmpty) ||
       (state.phase === "ready" && isEmpty) ? null : (
         <ul className="w-full">
