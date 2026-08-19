@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readDuelPage } from "./duel-page";
 import type { ApiFetch, ApiResponse } from "./api";
 import { DEVICE_ID_STORAGE_KEY } from "../protocol/device-id";
-import { WHOLE_RECORD, type HistoryQuery } from "./duels-query";
+import { duelsPath, WHOLE_RECORD, type HistoryQuery } from "./duels-query";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -190,6 +190,7 @@ describe("the duel page read", () => {
         },
       ],
       nextCursor: "cur-9",
+      restarted: false,
     });
 
     const read2 = await readDuelPage({
@@ -211,6 +212,7 @@ describe("the duel page read", () => {
         },
       ],
       nextCursor: null,
+      restarted: false,
     });
   });
 
@@ -311,8 +313,110 @@ describe("the duel page read", () => {
         },
       ],
       nextCursor: null,
+      restarted: false,
     });
 
     expect(JSON.stringify(read)).not.toContain("player-77");
+  });
+
+  it("restarts the walk when the server refuses the cursor, and says it restarted", async () => {
+    const { fetch, calls } = answering(
+      withStatus(400),
+      ok({
+        duels: [duelRowBody()],
+        nextCursor: "cur-9",
+      }),
+    );
+
+    const read = await readDuelPage({
+      fetch,
+      storage: storageHolding("d-1"),
+      query: { ...WHOLE_RECORD, after: "stale" },
+    });
+
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.path).toContain("after=stale");
+    expect(calls[1]?.path).toBe("/api/me/duels");
+    expect(read).toEqual({
+      kind: "page",
+      duels: [
+        {
+          duelId: "duel-1",
+          opponentDisplayName: "Alice",
+          outcome: "WON",
+          coinDelta: 1,
+          handsPlayed: 5,
+          finishedAt: "2026-08-14T21:00:00Z",
+        },
+      ],
+      nextCursor: "cur-9",
+      restarted: true,
+    });
+  });
+
+  it("keeps both filter axes when it restarts, and drops only the cursor", async () => {
+    const { fetch, calls } = answering(
+      withStatus(400),
+      ok({
+        duels: [],
+        nextCursor: null,
+      }),
+    );
+
+    const query: HistoryQuery = {
+      outcome: "WON",
+      opponent: "Ada",
+      after: "stale",
+    };
+
+    await readDuelPage({
+      fetch,
+      storage: storageHolding("d-1"),
+      query,
+    });
+
+    expect(calls).toHaveLength(2);
+    expect(calls[1]?.path).toBe(
+      duelsPath({ outcome: "WON", opponent: "Ada", after: null }),
+    );
+  });
+
+  it("restarts at most once", async () => {
+    const { fetch, calls } = answering(withStatus(400), withStatus(400));
+
+    const read = await readDuelPage({
+      fetch,
+      storage: storageHolding("d-1"),
+      query: { ...WHOLE_RECORD, after: "stale" },
+    });
+
+    expect(read).toEqual({ kind: "unavailable" });
+    expect(calls).toHaveLength(2);
+  });
+
+  it("reads a 400 on a request that carried no cursor as unavailable", async () => {
+    const { fetch, calls } = answering(withStatus(400));
+
+    const read = await readDuelPage({
+      fetch,
+      storage: storageHolding("d-1"),
+      query: WHOLE_RECORD,
+    });
+
+    expect(read).toEqual({ kind: "unavailable" });
+    expect(calls).toHaveLength(1);
+  });
+
+  it("reads a 500 on a request that carried a cursor as unavailable, without retrying", async () => {
+    const { fetch, calls } = answering(withStatus(500));
+
+    const read = await readDuelPage({
+      fetch,
+      storage: storageHolding("d-1"),
+      query: { ...WHOLE_RECORD, after: "stale" },
+    });
+
+    expect(read).toEqual({ kind: "unavailable" });
+    expect(calls).toHaveLength(1);
   });
 });
