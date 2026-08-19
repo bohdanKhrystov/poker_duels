@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050103
 title: The season an instant falls in, in UTC, whatever the reader's clock says
 type: task
-status: backlog
+status: ready
 parent: STORY-0501
 module: poker-server
 estimate: S

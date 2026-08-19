@@ -1378,10 +1378,10 @@ a row that leads to another player is a *link*, and a client with no addresses c
 
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
-| [STORY-0501](stories/STORY-0501-a-season-is-a-bounded-thing.md) A season is a bounded thing, and every finished duel belongs to one | | | **in progress** — 1 of 6 tickets |
+| [STORY-0501](stories/STORY-0501-a-season-is-a-bounded-thing.md) A season is a bounded thing, and every finished duel belongs to one | | | **in progress** — 2 of 6 tickets |
 | | [TASK-050101](tasks/TASK-050101-a-season-is-a-year-and-a-month.md) A season is a year and a month, and its identifier is `2026-08` | XS | **done** |
-| | [TASK-050102](tasks/TASK-050102-a-seasons-bounds-are-half-open.md) A season's bounds are half-open, and December ends in January | S | ready |
-| | [TASK-050103](tasks/TASK-050103-the-season-an-instant-falls-in.md) The season an instant falls in, in UTC, whatever the reader's clock says | S | backlog |
+| | [TASK-050102](tasks/TASK-050102-a-seasons-bounds-are-half-open.md) A season's bounds are half-open, and December ends in January | S | **done** |
+| | [TASK-050103](tasks/TASK-050103-the-season-an-instant-falls-in.md) The season an instant falls in, in UTC, whatever the reader's clock says | S | ready |
 | | [TASK-050104](tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) A duel belongs to the season it finished in, never the one it started in | XS | backlog |
 | | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | backlog |
 | | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | blocked — `DEC-062` |
