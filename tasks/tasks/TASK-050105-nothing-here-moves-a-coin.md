@@ -92,8 +92,11 @@ for the list of functions to exercise.
       and two `duel_result` rows
 - [ ] `SeasonMovesNoCoinTest.noSeasonFunctionMovesACoin` passes, and the *before* snapshot is taken
       before the season functions are called and the *after* snapshot after them
-- [ ] The season functions exercised between the snapshots are all seven named in Scope —
-      checked mechanically by the `grep` loop in `verify:`, not by reading the file
+- [ ] The season functions exercised between the snapshots are all seven named in Scope. The
+      `grep` loop in `verify:` is a **sanity check on this, not a proof**: it is defeated by
+      renaming a local, by splitting a call across lines, and by the tokens appearing in a
+      comment. A reviewer confirms the seven calls by reading the test — this criterion is
+      the one item here that a green `verify:` does not settle
 - [ ] The test runs rather than skips: the `verify:` command passes `-PrequireDocker=true`
 - [ ] `git diff` against the merge base shows **no file** under
       `poker-server/src/main/resources/db/migration` — this branch adds no `V<n>__` file, because
