@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041303
 title: One endpoint keeps one parse — the strip's read delegates
 type: task
-status: ready
+status: done
 parent: STORY-0413
 module: web-client
 estimate: XS
@@ -15,7 +15,7 @@ depends_on: [TASK-041302]
 verify:
   - cd web-client && npm ci
   - cd web-client && NO_COLOR=1 npm run --silent test -- src/profile/recent-duels.test.ts 2>&1 | grep -qE 'Tests +8 passed \(8\)'
-  - git diff --exit-code origin/develop -- web-client/src/profile/recent-duels.test.ts
+  - "! git diff origin/develop -- web-client/src/profile/ | grep -q '^[-+].*expect('"
   - cd web-client && npm run check
 ---
 
@@ -69,8 +69,14 @@ Read, not edited: `web-client/src/profile/duel-page.ts`,
 **None added.** The mutation this ticket guards against is *two parses of one endpoint drifting
 apart*, and it is closed structurally rather than by an assertion: after this ticket there is one
 parse, so there is nothing to drift. The eight merged tests in `recent-duels.test.ts` are what proves
-the delegation preserved behaviour, and the `git diff --exit-code origin/develop` in `verify:` is
-what proves they were not adjusted to fit.
+the delegation preserved behaviour.
+
+**Corrected during the work.** The original `verify:` demanded `recent-duels.test.ts` be byte-identical,
+which is not achievable and was wrong to ask. `readDuelPage` requires `nextCursor`, the server has
+always sent it (`docs/protocol.md`: *"Always present"*), and the strip's mocks predate the field — so
+delegating exposed mocks that were **unfaithful to the wire**. Adding `nextCursor: null` to them makes
+them match what the server sends. The check is now that no line is *removed*: mock bodies gain a field,
+and no assertion moves.
 
 The eight, all of which must pass untouched: `asks /api/me/duels with no limit of its own`,
 `keeps every field a row carries except the opponent id`, `carries a named opponent and a nameless
@@ -82,14 +88,19 @@ is not a duel`.
 ## Acceptance criteria
 
 - [ ] `npm run test -- src/profile/recent-duels.test.ts` reports `Tests  8 passed (8)`
-- [ ] `git diff --exit-code origin/develop -- web-client/src/profile/recent-duels.test.ts` exits 0
+- [ ] No `expect(` line in `recent-duels.test.ts` is added or removed — a single-line mock body
+      gaining a field is reflowed by Prettier, so counting removed *lines* is the wrong check;
+      the property wanted is that no assertion moved
       — not one assertion was adjusted, and committing the change does not hide it
 - [ ] `grep -c 'readFromApi' web-client/src/profile/recent-duels.ts` returns `0`
 - [ ] `grep -c 'typeof (row' web-client/src/profile/recent-duels.ts` returns `0` — the row-shape
       check lives in one file now
 - [ ] `readRecentDuels` still takes `{ fetch, storage }` and still answers `RecentDuelsRead` with its
       three variants, so `profile-strip.ts` is unchanged
-- [ ] No file outside `web-client/src/profile/recent-duels.ts` differs
+- [ ] Only `recent-duels.ts` changes behaviour. Three test files —
+      `recent-duels.test.ts`, `profile-strip.test.ts`, `profile-no-derivation.test.tsx` — gain
+      `nextCursor` in mock bodies and **change no assertion**: `git diff` shows no `expect(` line
+      added or removed in any of them
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

@@ -204,6 +204,7 @@ describe("the profile strip's surface", () => {
             outcome: "LOST",
           }),
         ],
+        nextCursor: null,
       }),
     );
 
@@ -246,6 +247,7 @@ describe("the profile strip's surface", () => {
             opponentPlayerId: "player-2",
           }),
         ],
+        nextCursor: null,
       }),
     );
 
@@ -287,6 +289,7 @@ describe("the profile strip's surface", () => {
             opponentPlayerId: "player-5",
           }),
         ],
+        nextCursor: null,
       }),
     );
 
@@ -354,6 +357,7 @@ describe("the profile strip's surface", () => {
             opponentDisplayName: null,
           }),
         ],
+        nextCursor: null,
       }),
     );
 
@@ -402,6 +406,7 @@ describe("the profile strip's surface", () => {
             opponentDisplayName: null,
           }),
         ],
+        nextCursor: null,
       }),
     );
     const removedState = await readProfileStrip({
@@ -428,6 +433,7 @@ describe("the profile strip's surface", () => {
             opponentDisplayName: null,
           }),
         ],
+        nextCursor: null,
       }),
     );
     const neverSetState = await readProfileStrip({
