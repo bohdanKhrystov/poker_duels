@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041303
 title: One endpoint keeps one parse — the strip's read delegates
 type: task
-status: ready
+status: done
 parent: STORY-0413
 module: web-client
 estimate: XS

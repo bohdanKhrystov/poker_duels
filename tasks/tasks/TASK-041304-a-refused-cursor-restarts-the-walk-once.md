@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041304
 title: A refused cursor restarts the walk, once, and never reaches the player
 type: task
-status: backlog
+status: ready
 parent: STORY-0413
 module: web-client
 estimate: S
