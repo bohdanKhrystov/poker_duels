@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041311
 title: The outcome filter is four choices, and choosing one starts a new walk
 type: task
-status: ready
+status: done
 parent: STORY-0413
 module: web-client
 estimate: S
