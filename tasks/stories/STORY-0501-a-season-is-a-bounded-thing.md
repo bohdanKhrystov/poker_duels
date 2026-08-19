@@ -63,9 +63,34 @@ answer, and the answers are the specification:
 
 ## Tasks
 
+Split on 2026-08-19, against `ADR-0061`. Six tickets, and the chain is linear because five of them
+touch `Season.kt` and the run is sequential — two startable tickets would be two tickets editing one
+file. The shape is a *function*, not a schema: nothing here adds a table, a column, a migration, an
+operator or a job (`ADR-0061` §3).
+
+The order is deliberate. `TASK-050101` fixes the identifier; `TASK-050102` fixes the half-open
+interval from the season's side; `TASK-050103` fixes it from the instant's side and **owns the
+boundary hazard `ADR-0061` names in *What it costs*** — a UTC boundary meeting a locale-rendered
+time, so a duel a player reads as September counts in August; `TASK-050104` is the attribution rule
+in one expression; `TASK-050105` gives the story's three refusals executable commands, and it is now
+the only place in the product where *a season moved no coin* is checked, because `STORY-0505` is
+dropped.
+
+`TASK-050106` is `blocked` on **`DEC-062`**, raised at split time and the architect's. The design
+note above and `ADR-0061` §3 both name `ServerClock.nowMillis()` as the source of *which season is
+it*, and it cannot be one: `SystemClock.nowMillis()` is `System.nanoTime() / 1_000_000`, elapsed
+time from an arbitrary epoch, and the interface's own KDoc forbids using it for a date.
+`PostgresDuelResultSink` already hit this and injects `java.time.Clock`. That question blocks one
+ticket, not the story.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Unblocked 2026-08-19 by `ADR-0061` — run `/plan-story STORY-0501`.* | — |
+| [TASK-050101](../tasks/TASK-050101-a-season-is-a-year-and-a-month.md) | A season is a year and a month, and its identifier is `2026-08` | ready |
+| [TASK-050102](../tasks/TASK-050102-a-seasons-bounds-are-half-open.md) | A season's bounds are half-open, and December ends in January | backlog |
+| [TASK-050103](../tasks/TASK-050103-the-season-an-instant-falls-in.md) | The season an instant falls in, in UTC, whatever the reader's clock says | backlog |
+| [TASK-050104](../tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) | A duel belongs to the season it finished in, never the one it started in | backlog |
+| [TASK-050105](../tasks/TASK-050105-nothing-here-moves-a-coin.md) | Nothing this story adds moves a coin, writes a migration, or reaches the engine | backlog |
+| [TASK-050106](../tasks/TASK-050106-the-current-season-from-an-injected-clock.md) | The current season, read from an injected clock and never from a system clock | blocked — `DEC-062` |
 
 ## Acceptance criteria
 
