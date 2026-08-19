@@ -14,6 +14,7 @@ import {
   EVERY_OUTCOME,
   OPPONENT_LABEL,
   SEARCH,
+  MORE,
 } from "./history-text";
 import { finishedAtText, outcomeWord } from "../profile/profile-text";
 
@@ -356,15 +357,35 @@ describe("the history screen", () => {
     render(<HistoryScreen read={read} />);
 
     // No control before the first page has landed.
-    expect(screen.queryByText("MORE")).toBeNull();
+    expect(screen.queryByRole("button", { name: MORE })).toBeNull();
 
     await waitFor(() => {
       expect(screen.getAllByRole("listitem")).toHaveLength(1);
     });
 
-    const buttons = screen.getAllByRole("button", { name: "MORE" });
+    const buttons = screen.getAllByRole("button", { name: MORE });
     expect(buttons).toHaveLength(1);
-    expect(buttons[0].textContent).toBe("MORE");
+    expect(buttons[0].textContent).toBe("Show more");
+  });
+
+  it("offers another page in the words the copy module holds", async () => {
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [aDuelLine()],
+          nextCursor: "cursor-123",
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    expect(screen.getByRole("button", { name: "Show more" })).toBeDefined();
   });
 
   it("stops offering on the last page, and asks for nothing more", async () => {
@@ -384,7 +405,7 @@ describe("the history screen", () => {
       expect(screen.getAllByRole("listitem")).toHaveLength(1);
     });
 
-    expect(screen.queryByText("MORE")).toBeNull();
+    expect(screen.queryByRole("button", { name: MORE })).toBeNull();
     expect(read).toHaveBeenCalledTimes(1);
   });
 
@@ -412,7 +433,7 @@ describe("the history screen", () => {
     );
 
     const button = await waitFor(() =>
-      screen.getByRole("button", { name: "MORE" }),
+      screen.getByRole("button", { name: MORE }),
     );
     fireEvent.click(button);
 
@@ -462,7 +483,7 @@ describe("the history screen", () => {
     render(<HistoryScreen read={read} />);
 
     const button = await waitFor(() =>
-      screen.getByRole("button", { name: "MORE" }),
+      screen.getByRole("button", { name: MORE }),
     );
     fireEvent.click(button);
 
@@ -770,7 +791,7 @@ describe("the history screen", () => {
     });
 
     // Click show more
-    const moreButton = screen.getByRole("button", { name: "MORE" });
+    const moreButton = screen.getByRole("button", { name: MORE });
     fireEvent.click(moreButton);
 
     // Third read should use the LOST filter, not the old null filter
@@ -999,7 +1020,7 @@ describe("the history screen", () => {
     });
 
     const moreButton = await waitFor(() =>
-      screen.getByRole("button", { name: "MORE" }),
+      screen.getByRole("button", { name: MORE }),
     );
     fireEvent.click(moreButton);
 

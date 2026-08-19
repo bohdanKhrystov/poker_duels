@@ -2,7 +2,7 @@
 id: STORY-0413
 title: The history screen — pages, filters, search
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: web-client
 labels: [client, ui, history]

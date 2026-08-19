@@ -1210,7 +1210,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041116](tasks/TASK-041116-a-duel-line-names-the-opponent.md) A duel line names the opponent it was played against | XS | **done** |
 | | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | **done** |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
-| **[STORY-0413](stories/STORY-0413-the-history-screen.md)** The history screen — pages, filters, search | | | **ready** |
+| **[STORY-0413](stories/STORY-0413-the-history-screen.md)** The history screen — pages, filters, search | | | **done** |
 | | [TASK-041301](tasks/TASK-041301-a-filter-and-a-cursor-become-exactly-one-path.md) A filter and a cursor become exactly one path, and nothing else | S | **done** |
 | | [TASK-041302](tasks/TASK-041302-one-page-of-the-record-and-the-cursor-that-names-the-next.md) One page of the record, and the cursor that names the next one | S | **done** |
 | | [TASK-041303](tasks/TASK-041303-one-endpoint-keeps-one-parse.md) One endpoint keeps one parse — the strip's read delegates | XS | **done** |
@@ -1225,7 +1225,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041312](tasks/TASK-041312-the-search-box-sends-the-term-the-player-typed.md) The search box sends the term the player typed, and nothing else | S | **done** |
 | | [TASK-041313](tasks/TASK-041313-the-screen-a-player-can-actually-reach.md) The screen a player can actually reach, reading through the real transport | S | **done** |
 | | [TASK-041314](tasks/TASK-041314-no-player-id-reaches-the-history-screen.md) No player id reaches the history screen, and the suite counts itself | S | **done** |
-| | [TASK-041315](tasks/TASK-041315-the-show-more-button-says-what-the-copy-module-says.md) The show-more button says what the copy module says | XS | ready |
+| | [TASK-041315](tasks/TASK-041315-the-show-more-button-says-what-the-copy-module-says.md) The show-more button says what the copy module says | XS | **done** |
 | | [TASK-041316](tasks/TASK-041316-the-app-test-hands-the-history-read-a-storage.md) The App test hands the history read a Storage | XS | **done** |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
 | [STORY-0415](stories/STORY-0415-the-offer-after-a-first-win.md) The offer — an account after a first win, dismissed for good | | | backlog |

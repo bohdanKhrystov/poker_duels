@@ -24,6 +24,7 @@ import {
   EVERY_OUTCOME,
   OPPONENT_LABEL,
   SEARCH,
+  MORE,
 } from "./history-text";
 import {
   coinDeltaText,
@@ -220,7 +221,7 @@ export function HistoryScreen(props: {
       {sentence && <p>{sentence}</p>}
       {nextQuery !== null && state.phase !== "loading" && (
         <button type="button" onClick={() => ask(nextQuery)}>
-          MORE
+          {MORE}
         </button>
       )}
     </section>
