@@ -1217,8 +1217,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041304](tasks/TASK-041304-a-refused-cursor-restarts-the-walk-once.md) A refused cursor restarts the walk, once, and never reaches the player | S | **done** |
 | | [TASK-041305](tasks/TASK-041305-the-words-the-history-screen-says.md) The words the history screen says, and the two empties that must differ | S | **done** |
 | | [TASK-041306](tasks/TASK-041306-the-page-walk-is-a-reducer-that-appends.md) The page walk is a reducer that appends, and never sorts | S | **done** |
-| | [TASK-041307](tasks/TASK-041307-a-new-filter-drops-the-cursor-and-the-rows.md) A new filter drops the cursor and the rows it belonged to | XS | ready |
-| | [TASK-041308](tasks/TASK-041308-the-screen-renders-the-page-in-the-order-it-arrived.md) The screen renders the page in the order it arrived, and derives no fact | S | backlog |
+| | [TASK-041307](tasks/TASK-041307-a-new-filter-drops-the-cursor-and-the-rows.md) A new filter drops the cursor and the rows it belonged to | XS | **done** |
+| | [TASK-041308](tasks/TASK-041308-the-screen-renders-the-page-in-the-order-it-arrived.md) The screen renders the page in the order it arrived, and derives no fact | S | ready |
 | | [TASK-041309](tasks/TASK-041309-four-states-and-the-two-empty-ones-differ.md) Four states, and the two empty ones say different things | S | backlog |
 | | [TASK-041310](tasks/TASK-041310-another-page-is-offered-until-there-is-none.md) Another page is offered until the server names none, and then never asked for | S | backlog |
 | | [TASK-041311](tasks/TASK-041311-the-outcome-filter-is-four-choices.md) The outcome filter is four choices, and choosing one starts a new walk | S | backlog |

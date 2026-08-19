@@ -41,7 +41,8 @@ export type HistoryEvent =
       readonly nextCursor: string | null;
       readonly restarted: boolean;
     }
-  | { readonly type: "failed" };
+  | { readonly type: "failed" }
+  | { readonly type: "filtered"; readonly filter: HistoryFilter };
 
 /**
  * The state a fresh history screen starts in: loading, with nothing read
@@ -73,6 +74,11 @@ export function initialHistory(
  *
  * `failed` never touches `rows` or `nextCursor` — a request that fails does
  * not un-read the pages already read.
+ *
+ * `filtered` keeps nothing: it answers `initialHistory(event.filter)`, the
+ * state a fresh screen starts in under the new filter, because a cursor —
+ * and the rows a cursor was walking through — is bound to the filter it was
+ * drawn under (`ADR-0057` §5) and none of it is safe to carry into another.
  */
 export function historyReducer(
   state: HistoryState,
@@ -98,6 +104,9 @@ export function historyReducer(
 
     case "failed":
       return { ...state, askedWith: null, phase: "failed" };
+
+    case "filtered":
+      return initialHistory(event.filter);
   }
 }
 
