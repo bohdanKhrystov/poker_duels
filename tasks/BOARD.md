@@ -1212,8 +1212,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | **[STORY-0413](stories/STORY-0413-the-history-screen.md)** The history screen — pages, filters, search | | | **ready** |
 | | [TASK-041301](tasks/TASK-041301-a-filter-and-a-cursor-become-exactly-one-path.md) A filter and a cursor become exactly one path, and nothing else | S | **done** |
-| | [TASK-041302](tasks/TASK-041302-one-page-of-the-record-and-the-cursor-that-names-the-next.md) One page of the record, and the cursor that names the next one | S | ready |
-| | [TASK-041303](tasks/TASK-041303-one-endpoint-keeps-one-parse.md) One endpoint keeps one parse — the strip's read delegates | XS | backlog |
+| | [TASK-041302](tasks/TASK-041302-one-page-of-the-record-and-the-cursor-that-names-the-next.md) One page of the record, and the cursor that names the next one | S | **done** |
+| | [TASK-041303](tasks/TASK-041303-one-endpoint-keeps-one-parse.md) One endpoint keeps one parse — the strip's read delegates | XS | ready |
 | | [TASK-041304](tasks/TASK-041304-a-refused-cursor-restarts-the-walk-once.md) A refused cursor restarts the walk, once, and never reaches the player | S | backlog |
 | | [TASK-041305](tasks/TASK-041305-the-words-the-history-screen-says.md) The words the history screen says, and the two empties that must differ | S | backlog |
 | | [TASK-041306](tasks/TASK-041306-the-page-walk-is-a-reducer-that-appends.md) The page walk is a reducer that appends, and never sorts | S | backlog |
