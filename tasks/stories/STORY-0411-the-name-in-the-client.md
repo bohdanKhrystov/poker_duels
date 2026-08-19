@@ -2,7 +2,7 @@
 id: STORY-0411
 title: The name in the client — shown, and settable
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: web-client
 labels: [client, ui, profiles, identity]

@@ -1190,7 +1190,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041022](tasks/TASK-041022-the-operations-document-is-the-only-call-site.md) docs/operations.md is the takedown's only call site | S | **done** |
 | | [TASK-041023](tasks/TASK-041023-the-guard-that-closes-the-second-orphan-path-is-asserted.md) The guard that closes the second orphan path is asserted | XS | dropped |
 | | [TASK-041024](tasks/TASK-041024-the-kotlin-half-of-fail-closed-is-isolated.md) The Kotlin half of fail-closed is isolated | XS | **done** |
-| **[STORY-0411](stories/STORY-0411-the-name-in-the-client.md)** The name in the client — shown, and settable | | | **ready** |
+| **[STORY-0411](stories/STORY-0411-the-name-in-the-client.md)** The name in the client — shown, and settable | | | **done** |
 | | [TASK-041101](tasks/TASK-041101-one-fixture-builds-every-profile-a-test-uses.md) One fixture builds every profile and duel line a test uses | S | **done** |
 | | [TASK-041102](tasks/TASK-041102-the-reads-tests-build-through-the-fixture.md) The strip's read tests build through the fixture | S | **done** |
 | | [TASK-041103](tasks/TASK-041103-the-components-profiles-build-through-the-fixture.md) The component tests build their profiles through the fixture | XS | **done** |
@@ -1207,7 +1207,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041114](tasks/TASK-041114-the-word-for-a-player-with-no-name.md) The word for a player who has no name | XS | **done** |
 | | [TASK-041115](tasks/TASK-041115-the-strip-prints-the-players-own-name.md) The strip prints the player's own name, or what stands for none | XS | **done** |
 | | [TASK-041116](tasks/TASK-041116-a-duel-line-names-the-opponent.md) A duel line names the opponent it was played against | XS | **done** |
-| | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | ready |
+| | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | **done** |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
 | [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
