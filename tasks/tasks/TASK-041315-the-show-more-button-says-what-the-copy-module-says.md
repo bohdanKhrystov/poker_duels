@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041315
 title: The show-more button says what the copy module says
 type: task
-status: backlog
+status: ready
 parent: STORY-0413
 module: web-client
 estimate: XS
