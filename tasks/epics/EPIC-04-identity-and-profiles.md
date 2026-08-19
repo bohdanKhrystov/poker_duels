@@ -205,7 +205,17 @@ without adding a story.
 
 ## Open decisions
 
-**None.** Every decision this epic has raised is answered.
+**Two, both the product owner's, both raised on 2026-08-19 when `STORY-0413` was split, and each
+blocking exactly one ticket at the end of that story.** Everything else this epic has raised is
+answered.
+
+| ID | Question | Blocks |
+| --- | --- | --- |
+| `DEC-052` | When does the history search send its request — **as the player types**, or **when they submit it**? As-you-type needs a debounce delay nobody has chosen, puts the client's first timer in the tree, and sends one unindexed `POSITION` scan per pause against a read `STORY-0409` recorded as correct but *"not yet fast"*. `STORY-0413` says only that the term is sent *"unmodified"* | `TASK-041312` |
+| `DEC-053` | How does a player reach their whole duel record, and how do they leave it? The client has no navigation at all today. Its own screen from the lobby, or a section of the lobby? `STORY-0412`, `STORY-0415` and `EPIC-05` all inherit the answer. The follow-on — whether the client grows URL routes and a working browser *Back* — is the **architect's** and only arises if the answer is a distinct screen | `TASK-041313` |
+
+The eleven tickets before them are unblocked, so `STORY-0413` builds and proves the whole screen
+either way; what waits is the search's trigger and the door into the screen.
 
 `DEC-051` — raised on 2026-08-18 when `STORY-0411` was split, blocking `TASK-041114` and the three
 tickets behind it — was answered the same day by

@@ -518,6 +518,8 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
+| DEC-052 | **The product owner's** — when does the history search fire: as the player types, or when they submit it? Blocks [`TASK-041312`](tasks/TASK-041312-the-search-box-sends-the-term-the-player-typed.md) and nothing before it | [`STORY-0413`](stories/STORY-0413-the-history-screen.md) | before STORY-0413 closes |
+| DEC-053 | **The product owner's** — how does a player reach their whole duel record, and how do they leave it? The client has no navigation at all today, and `STORY-0412`, `STORY-0415` and `EPIC-05` inherit the answer. Blocks [`TASK-041313`](tasks/TASK-041313-the-screen-a-player-can-actually-reach.md) and nothing before it | [`STORY-0413`](stories/STORY-0413-the-history-screen.md) | before STORY-0413 closes |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -1209,11 +1211,45 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041116](tasks/TASK-041116-a-duel-line-names-the-opponent.md) A duel line names the opponent it was played against | XS | **done** |
 | | [TASK-041117](tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) No name on the screen is built from a player id, and a takedown is invisible | S | **done** |
 | [STORY-0412](stories/STORY-0412-the-account-screens.md) The account screens — sign up, sign in, sign out, and which routes are live | | | backlog |
-| [STORY-0413](stories/STORY-0413-the-history-screen.md) The history screen — pages, filters, search | | | backlog |
+| **[STORY-0413](stories/STORY-0413-the-history-screen.md)** The history screen — pages, filters, search | | | **ready** |
+| | [TASK-041301](tasks/TASK-041301-a-filter-and-a-cursor-become-exactly-one-path.md) A filter and a cursor become exactly one path, and nothing else | S | ready |
+| | [TASK-041302](tasks/TASK-041302-one-page-of-the-record-and-the-cursor-that-names-the-next.md) One page of the record, and the cursor that names the next one | S | backlog |
+| | [TASK-041303](tasks/TASK-041303-one-endpoint-keeps-one-parse.md) One endpoint keeps one parse — the strip's read delegates | XS | backlog |
+| | [TASK-041304](tasks/TASK-041304-a-refused-cursor-restarts-the-walk-once.md) A refused cursor restarts the walk, once, and never reaches the player | S | backlog |
+| | [TASK-041305](tasks/TASK-041305-the-words-the-history-screen-says.md) The words the history screen says, and the two empties that must differ | S | backlog |
+| | [TASK-041306](tasks/TASK-041306-the-page-walk-is-a-reducer-that-appends.md) The page walk is a reducer that appends, and never sorts | S | backlog |
+| | [TASK-041307](tasks/TASK-041307-a-new-filter-drops-the-cursor-and-the-rows.md) A new filter drops the cursor and the rows it belonged to | XS | backlog |
+| | [TASK-041308](tasks/TASK-041308-the-screen-renders-the-page-in-the-order-it-arrived.md) The screen renders the page in the order it arrived, and derives no fact | S | backlog |
+| | [TASK-041309](tasks/TASK-041309-four-states-and-the-two-empty-ones-differ.md) Four states, and the two empty ones say different things | S | backlog |
+| | [TASK-041310](tasks/TASK-041310-another-page-is-offered-until-there-is-none.md) Another page is offered until the server names none, and then never asked for | S | backlog |
+| | [TASK-041311](tasks/TASK-041311-the-outcome-filter-is-four-choices.md) The outcome filter is four choices, and choosing one starts a new walk | S | backlog |
+| | [TASK-041312](tasks/TASK-041312-the-search-box-sends-the-term-the-player-typed.md) The search box sends the term the player typed, and nothing else | S | **blocked** `DEC-052` |
+| | [TASK-041313](tasks/TASK-041313-the-screen-a-player-can-actually-reach.md) The screen a player can actually reach, reading through the real transport | S | **blocked** `DEC-053` |
+| | [TASK-041314](tasks/TASK-041314-no-player-id-reaches-the-history-screen.md) No player id reaches the history screen, and the suite counts itself | S | backlog |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
 | [STORY-0415](stories/STORY-0415-the-offer-after-a-first-win.md) The offer — an account after a first win, dismissed for good | | | backlog |
 | [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | backlog |
 | [STORY-0417](stories/STORY-0417-the-recovery-screens.md) The recovery screens — attach an address, and reset a password | | | backlog |
+
+`STORY-0413` was split on 2026-08-19 into **fourteen**, on top of what `STORY-0409` and `STORY-0411`
+actually landed, and eleven of them are unblocked. The read grows a second function rather than a
+wider one — `readDuelPage` carries the query, the `nextCursor` the client has been discarding since
+`STORY-0408` shipped it, and `ADR-0057` §5's one-shot restart, while `readRecentDuels` keeps its
+signature so the lobby strip stays outside this story's blast radius; `TASK-041303` then deletes the
+duplicate parse, so the endpoint keeps one. The page walk is a pure reducer whose `filtered` event
+answers `initialHistory`, which is what makes *"a cursor cannot outlive the filter that produced
+it"* a property rather than a rule somebody remembers. The suite's own count is asserted in
+**one** ticket (`TASK-041314`, at 472) with the arithmetic that produced it, because during
+`STORY-0411` a mid-story count change forced four tickets to be corrected at once.
+
+Two decisions were raised, **both the product owner's**, each blocking exactly one ticket at the end
+of that chain and nothing before it. `DEC-052`: when the history search fires — as the player types,
+which needs a debounce delay nobody has chosen and one unindexed `POSITION` scan per pause, or on
+submit, which needs a control and a word for it. `DEC-053`: how a player reaches the record and
+leaves it — the client has no navigation of any kind today, and `STORY-0412`, `STORY-0415` and
+`EPIC-05` all inherit whatever it gets, so no ticket takes it. Whether the client grows URL routes
+and a working browser *Back* is the architect's and only arises if `DEC-053` answers *its own
+screen*; it is left for the answering ADR to raise rather than asked imprecisely now.
 
 Two decisions were raised while splitting, both the architect's, both blocking exactly one story.
 `DEC-041` (the shape of device revocation) is answered by
