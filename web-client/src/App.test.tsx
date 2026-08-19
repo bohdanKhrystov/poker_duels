@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { act, render, screen, fireEvent } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { App } from "./App";
 import { DuelProvider } from "./store/duel-provider";
 import { createDuelStore } from "./store/duel-store";
@@ -11,6 +12,27 @@ import { HistoryScreen } from "./history/HistoryScreen";
 import type { Snapshot, SeatView } from "./protocol";
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+// main.tsx's HistoryProvider hands HistoryScreen the real readHistory, bound to
+// window.fetch and localStorage. Node's own localStorage shadows jsdom's and is
+// undefined, so mounting that real tree here throws inside HistoryScreen's mount
+// effect and rejects a promise nothing in this file awaits. Every test below gets
+// this fake standing in for the whole module instead, so no test reaches
+// main.tsx's binding — the same reason the layering guard further down hands
+// HistoryScreen a fake `read` directly, without going through main.tsx at all.
+vi.mock("./main", () => {
+  const fakeHistoryRead = vi.fn(async () => ({
+    kind: "page" as const,
+    duels: [],
+    nextCursor: null,
+    restarted: false,
+  }));
+  return {
+    HistoryProvider: (props: { children: ReactNode }): ReactNode =>
+      props.children,
+    useHistory: () => fakeHistoryRead,
+  };
+});
 
 function seatView(index: number): SeatView {
   return {
