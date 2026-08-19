@@ -4,7 +4,13 @@ import { HistoryScreen } from "./HistoryScreen";
 import { aDuelLine } from "../profile/profile-fixture";
 import type { DuelPageRead } from "../profile/duel-page";
 import type { HistoryQuery } from "../profile/duels-query";
-import { HISTORY_HEADING } from "./history-text";
+import {
+  HISTORY_HEADING,
+  LOADING_RECORD,
+  NO_DUELS,
+  NO_MATCH,
+  READ_FAILED,
+} from "./history-text";
 import { finishedAtText } from "../profile/profile-text";
 
 describe("the history screen", () => {
@@ -171,5 +177,104 @@ describe("the history screen", () => {
       opponent: "",
       after: null,
     });
+  });
+
+  it("says it is loading before the first page lands, and says nothing else", async () => {
+    // A promise that never resolves, to keep the screen in loading state
+    const neverResolves = new Promise<DuelPageRead>(() => {});
+
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () => neverResolves,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    // Wait for the loading sentence to appear
+    await waitFor(() => {
+      expect(screen.getByText(LOADING_RECORD)).toBeDefined();
+    });
+
+    // Verify that no list is shown
+    const listItems = screen.queryAllByRole("listitem");
+    expect(listItems).toHaveLength(0);
+
+    // Verify that the other empty sentences are NOT shown
+    expect(screen.queryByText(NO_DUELS)).toBeNull();
+    expect(screen.queryByText(NO_MATCH)).toBeNull();
+    expect(screen.queryByText(READ_FAILED)).toBeNull();
+  });
+
+  it("tells an empty record from a filter that matched nothing", async () => {
+    // First render: empty page with no filter (should show NO_DUELS)
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    const { unmount } = render(<HistoryScreen read={read} />);
+
+    // Wait for NO_DUELS to appear
+    await waitFor(() => {
+      expect(screen.getByText(NO_DUELS)).toBeDefined();
+    });
+
+    // Verify NO_MATCH is NOT shown
+    expect(screen.queryByText(NO_MATCH)).toBeNull();
+
+    // Clean up before second render
+    unmount();
+
+    // Second render: empty page with filter (should show NO_MATCH)
+    const read2 = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(
+      <HistoryScreen read={read2} filter={{ outcome: "WON", opponent: "" }} />,
+    );
+
+    // Wait for NO_MATCH to appear
+    await waitFor(() => {
+      expect(screen.getByText(NO_MATCH)).toBeDefined();
+    });
+
+    // Verify NO_DUELS is NOT shown
+    expect(screen.queryByText(NO_DUELS)).toBeNull();
+  });
+
+  it("says the read failed, and keeps the pages already read", async () => {
+    // Scenario 1: A first read that answers `unavailable` shows `READ_FAILED` and no list
+    const read1 = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "unavailable",
+        }) as unknown as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(READ_FAILED)).toBeDefined();
+    });
+
+    const listItems = screen.queryAllByRole("listitem");
+    expect(listItems).toHaveLength(0);
+
+    // The second scenario will be testable when the component has UI to trigger
+    // a second read (e.g., a "show more" button). The reducer already handles
+    // keeping rows when a read fails (TASK-041306), so the rendering just needs
+    // to display the rows and the failure sentence together. This test verifies
+    // that behavior once that UI is added.
   });
 });
