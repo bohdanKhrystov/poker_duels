@@ -15,6 +15,7 @@ import java.time.Instant
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * Drives [PostgresStandingsReads] against a real PostgreSQL: the page comes back in coin order
@@ -29,6 +30,7 @@ class PostgresStandingsReadsTest {
     private lateinit var playerDirectory: PostgresPlayerDirectory
     private lateinit var duelResultStore: PostgresDuelResultStore
     private lateinit var standingsReads: PostgresStandingsReads
+    private lateinit var profileWrites: PostgresProfileWrites
 
     @BeforeEach
     fun setupDatabase() {
@@ -37,6 +39,7 @@ class PostgresStandingsReadsTest {
         playerDirectory = PostgresPlayerDirectory(dataSource)
         duelResultStore = PostgresDuelResultStore(dataSource)
         standingsReads = PostgresStandingsReads(dataSource)
+        profileWrites = PostgresProfileWrites(dataSource)
     }
 
     @Test
@@ -191,6 +194,76 @@ class PostgresStandingsReadsTest {
                 setOf(a.id.value, b.id.value, c.id.value, d.id.value, e.id.value, f.id.value),
                 idsAcrossBothPages.toSet(),
             )
+        }
+    }
+
+    @Test
+    fun aDrawEarnsARowAtZeroAndAPlayerWhoDidNotPlayHasNone() {
+        runBlocking {
+            // Two different kinds of absence, so neither a LEFT JOIN player (which would list
+            // carol at 0) nor a missing lower bound (which would keep dave and erin) can pass by
+            // getting only one of them right. Creation order (dave, carol, alice, erin, bob) and
+            // recording order (dave-erin's July duel, then alice-bob's August draw) both differ
+            // from the expected page (alice, bob).
+            val dave = playerDirectory.resolve(DeviceId("dave"))
+            val carol = playerDirectory.resolve(DeviceId("carol"))
+            val alice = playerDirectory.resolve(DeviceId("alice"))
+            val erin = playerDirectory.resolve(DeviceId("erin"))
+            val bob = playerDirectory.resolve(DeviceId("bob"))
+
+            val season = Season(2026, 8)
+            duelResultStore.record(won(dave, erin, Instant.parse("2026-07-20T10:00:00Z")))
+            duelResultStore.record(drawn(bob, alice, Instant.parse("2026-08-10T10:00:00Z")))
+
+            val page = standingsReads.standingsPage(season, season.endExclusive, limit = 10)
+
+            assertEquals(2, page.size)
+            assertEquals(setOf(alice.id.value, bob.id.value), page.map { it.playerId }.toSet())
+            assertEquals(listOf(0, 0), page.map { it.coins })
+        }
+    }
+
+    @Test
+    fun aNamelessPlayerHasARowCarryingNull() {
+        runBlocking {
+            // Creation order (bob, alice) differs from recording order below, and from the
+            // narrative (alice is the one who names herself).
+            val bob = playerDirectory.resolve(DeviceId("bob"))
+            val alice = playerDirectory.resolve(DeviceId("alice"))
+            profileWrites.setDisplayName(alice.id, "Alice")
+
+            val season = Season(2026, 8)
+            duelResultStore.record(won(alice, bob, Instant.parse("2026-08-17T10:00:00Z")))
+
+            val page = standingsReads.standingsPage(season, season.endExclusive, limit = 10)
+
+            assertEquals("Alice", page.first { it.playerId == alice.id.value }.displayName)
+            assertNull(page.first { it.playerId == bob.id.value }.displayName)
+        }
+    }
+
+    @Test
+    fun onePlayerWithOneDuelIsOnThePageBesideOneWithSeveral() {
+        runBlocking {
+            // Frank's only duel this season is the loss below; george holds that same win plus
+            // two more against different opponents, so no minimum-duels gate could tell george's
+            // rows from frank's by shape alone. Creation order (grace, henry, frank, george) and
+            // recording order (frank, then grace, then henry) both differ from each other.
+            val grace = playerDirectory.resolve(DeviceId("grace"))
+            val henry = playerDirectory.resolve(DeviceId("henry"))
+            val frank = playerDirectory.resolve(DeviceId("frank"))
+            val george = playerDirectory.resolve(DeviceId("george"))
+
+            val season = Season(2026, 8)
+            val base = Instant.parse("2026-08-18T10:00:00Z")
+            duelResultStore.record(won(george, frank, base))
+            duelResultStore.record(won(george, grace, base.plusSeconds(60)))
+            duelResultStore.record(won(george, henry, base.plusSeconds(120)))
+
+            val page = standingsReads.standingsPage(season, season.endExclusive, limit = 10)
+
+            assertEquals(-1, page.first { it.playerId == frank.id.value }.coins)
+            assertEquals(3, page.first { it.playerId == george.id.value }.coins)
         }
     }
 
