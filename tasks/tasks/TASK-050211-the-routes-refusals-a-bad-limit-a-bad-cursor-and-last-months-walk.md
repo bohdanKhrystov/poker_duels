@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050211
 title: The route's refusals — a bad limit, a cursor that does not decode, and a walk from last month
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
