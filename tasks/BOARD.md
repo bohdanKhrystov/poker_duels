@@ -33,8 +33,8 @@ a boundary **does nothing**, and `player.coin_balance` is never reset. The produ
 branch the vision licenses and declined the other out loud: a reset would make *"a counter of duels
 won"* false, and that is the human's to change, not an ADR's. `STORY-0501` is `ready` with no
 migration, `STORY-0505` is **`dropped`** because the crossing it was written for turns out to be no
-code at all, and **every product decision on the epic's critical path is now answered** — what is
-left blocking `STORY-0502` is `DEC-061`, the architect's. `DEC-056` is answered by
+code at all, and **every decision on the epic's critical path is now answered** — `STORY-0502` is
+gated by none and waits only on being split. `DEC-056` is answered by
 [`ADR-0063`](../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md):
 **nothing gates a place**, a nameless player has a row that reads `No name`, and the farming vector
 `ADR-0012` gated on this epic is accepted out loud until the ladder is served on a public address.
@@ -48,8 +48,13 @@ player their own row** — one self line above the rows, stating their rank and 
 served with the page — and **the profile strip keeps the all-time coin and gains nothing**, so
 `STORY-0502` ships two aggregates in one response and `STORY-0503` marks no row. `DEC-060` (a
 finished season on a screen) and `DEC-061` (a page over a season aggregate) were raised by
-`DEC-055`'s answer; `DEC-060` blocks nothing today and `DEC-061` is now the **only** thing blocking
-`STORY-0502`, with `STORY-0503` waiting on nothing but `STORY-0502` landing.
+`DEC-055`'s answer; `DEC-060` blocks nothing today, and **`DEC-061` is answered** by
+[`ADR-0066`](../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md):
+**the ladder is computed per request** — nothing stores a standing, so a duel is on the ladder the
+instant it commits — **and a walk is pinned to the instant it began**, so it returns every player of
+the ladder *as it stood at that cutoff* exactly once, is **not live**, and carries one named
+exception where a row can still be seen twice or missed. `STORY-0502` is gated by no decision and
+waits only on `/plan-story`; `STORY-0503` waits on `STORY-0502` landing.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -547,7 +552,6 @@ parallel with `EPIC-02`; no shared file.
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-057 | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? Parked here by `EPIC-04` — *"`/api/me` means me"*. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0504` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
-| DEC-061 | **The architect's** — is a season standing computed per request or materialised, and what does a page guarantee over an ordering that is **recomputed** while it is walked? The epic parked these as two unnumbered questions for `STORY-0502`'s split; `ADR-0061` supplies the premise and merges them, because the second follows the first — materialise and the ordering is a column again with `ADR-0057`'s discipline nearly intact, compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all. [`ADR-0064`](../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md) **constrains the answer without taking it**: a rank is `1 + the number of players standing strictly higher`, a function of the **whole ladder** rather than of the page, so a cursor cannot carry a position forward as a rank — and the tiebreak key that makes the order total must be a fact about a row's identity, never about how its player performed | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -687,6 +691,52 @@ of these 190 rows is mine* a sharper question that this decision deliberately do
 **Unblocks `STORY-0502` down to `DEC-061` alone and `STORY-0503` down to `STORY-0502` landing.**
 Constrains `DEC-061` further — one player's rank cannot be derived from a page that player is not
 on — leaves `DEC-057` and `DEC-060` untouched, and **names no ticket and raises no `DEC`**).
+
+`DEC-061` → [`ADR-0066`](../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md)
+(**the ladder is computed per request, and a walk is pinned to the instant it began.** Answered by
+the architect on 2026-08-21, and both halves are taken. **Per request, from the ledger:** no
+`season_standing` table, no materialised view, no summary column, no cache, no refresh job, no third
+ticker sweep, and no change to the transaction that records a duel — `ADR-0061` §3's *"nothing writes
+a season down, so nothing can disagree about one"* applied one level down, which is also what keeps a
+duel on the ladder **the instant it commits**, with no window to explain to the player who just won.
+The read is one `WITH standing AS (SUM(coin_delta) …)` over the season window, and SQL's `rank()`
+**is** `ADR-0064` §1's competition rank rather than an expression anybody invents. **The page
+guarantee is bought, not inherited**, and `STORY-0408`'s sentence is explicitly not claimed: a
+request with no cursor mints `asOf = Instant.now(clock)`, the cursor carries it back, and the
+query's upper bound is **the cutoff, never the season's end** — so a walk enumerates *the ladder as
+it stood committed at the cutoff* and returns **every player of that ladder exactly once**, with the
+rank each held then, so ranks never decrease down a walk and the self standing (`ADR-0065` §3) is
+byte-identical on every page of it. **Two refusals are written down rather than glossed.** A walk is
+**not live**: a duel finishing after the cutoff is in no page of it, a player whose first duel of the
+season lands mid-walk has no row anywhere in it, and page forty is as old as page one — seeing it
+means starting a new walk. And exactly-once has **one named exception**: a duel *committed* after a
+page was drawn but stamped `finished_at` *before* the cutoff moves the pinned ladder underneath the
+rest of the walk, so its **winner can be never returned** and its **loser returned twice**. Both are
+accepted; what the cutoff buys is that the window is the width of one duel-recording transaction
+instead of the width of the walk, where a live recompute would lose every player who wins while you
+read and repeat every player who loses. The order is `coins DESC, player_id DESC` — `player.id` is
+**forced rather than chosen**, as the only key that is identity (`ADR-0064` §4), unique, and
+**immutable**, since a `display_name` takedown would move a row mid-walk — paged by one row-value
+comparison, `DUELS_AFTER_SQL`'s idiom, with `recentDuelsPage`'s `limit + 1` probe row. The page and
+the self standing are **two statements bounded by the same cutoff**, which agree without a
+transaction, so `ADR-0065` §3's permission to be inconsistent goes unused. A cursor whose `asOf` sits
+outside the season the server's clock is in is a flat `400` (`ADR-0057` §5), so a walk crossing a
+month boundary restarts instead of serving August in September; and `ADR-0057` §7's *"a leaderboard
+page"* MAC clause is shown **not to engage**, because `ADR-0065` §4 makes the page identical for
+every reader, so a forged position leaks nothing that asking normally would not. Costs recorded
+rather than discovered: **every page is a full-month aggregate and there are two per page**, so a
+twenty-page walk is forty unindexed passes on a public, unauthenticated, unbudgeted read — the
+sharpest cost, and there is still no measurement anywhere in the product; later pages are **stale**
+and nothing on screen says so; **exactly-once carries its exception permanently in the contract**, so
+a reader genuinely can see a row twice or miss one; a walk is refused twelve times a year at the
+month boundary and every client must implement *restart the walk*; the cursor now carries a value the
+server trusts from the client; two statements do the same expensive work twice; and a **live walk is
+foreclosed** by construction. **Unblocks `STORY-0502`** — the last gate on it — leaves `DEC-057` and
+`DEC-060` untouched, and raises no `DEC`. **Names one ticket** for the planner: an index for the
+season window, `duel (finished_at)` in a new `V7__` migration carrying an `EXPLAIN`-backed
+measurement in its `verify:` block, deliberately outside `STORY-0502` because the tables hold
+hundreds of rows and an index added on imagination is a permanent write cost on the one transaction
+where a coin moves).
 
 `DEC-062` → [`ADR-0062`](../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md)
 (**the server has two clocks and neither answers the other's question.** `ServerClock`
@@ -1522,7 +1572,7 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050104](tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) A duel belongs to the season it finished in, never the one it started in | XS | **done** |
 | | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | **done** |
 | | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | **done** |
-| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | blocked — `DEC-061` |
+| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | **ready** — split it next |
 | [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `STORY-0502` |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
 | [STORY-0505](stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) A season ends, and the record survives it | | | **dropped** — `ADR-0061` §5: a boundary does nothing, so there is no crossing to write |
@@ -1537,10 +1587,13 @@ one assertion no other story owned — *the ladder read for a season returns onl
 — moved to `STORY-0502` when it was dropped, so nothing is lost with it, and the epic loses its only
 genuine parallel pair along with it.
 
-The two architect questions the epic named and deliberately did not number are now **`DEC-061`**, a
+The two architect questions the epic named and deliberately did not number became **`DEC-061`**, a
 single decision rather than two: `ADR-0061` supplied their missing premise and coupled them, because
 whether a standing is materialised decides what a page can guarantee over an ordering that is
-recomputed while it is walked. `STORY-0502` no longer raises them at split time; it waits on them.
+recomputed while it is walked. Both are **answered** by
+[`ADR-0066`](../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md) —
+computed per request, and a walk pinned to the instant it began — so `STORY-0502` raises nothing at
+split time and is gated by nothing.
 
 `STORY-0501` was split on 2026-08-19 into **six** tickets, linear because five of them touch one
 file. It ships a *function* and not a schema — no table, no column, no migration, no operator, no

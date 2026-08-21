@@ -68,8 +68,12 @@ which answers `DEC-055`:
 - **A season, represented once.** Something the server can name and bound, and a rule that
   attributes a finished duel to exactly one of them. `ADR-0061` §1–§3: a **derived range**, one
   calendar month in UTC, half-open, identified by its month, stored nowhere.
-- **The standings read path.** An ordered, paged, server-computed ladder over plain HTTP, with the
-  same totality and disjointness discipline `STORY-0408` pinned for `GET /api/me/duels`.
+- **The standings read path.** An ordered, paged, server-computed ladder over plain HTTP, whose
+  walk states its own guarantee rather than inheriting `GET /api/me/duels`'.
+  [`ADR-0066`](../../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md)
+  answers `DEC-061`: the standing is computed **per request** and a walk is **pinned to the instant
+  it began**, so it returns every player of the ladder as it stood at that cutoff exactly once — and
+  is not live, and carries one named exception.
   [`ADR-0065`](../../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md) adds one
   obligation to it and answers `DEC-059`: the same response also tells the requesting player where
   **they** stand, so this read carries **two aggregates**, not one.
@@ -150,12 +154,17 @@ which answers `DEC-055`:
 - **The engine learns nothing.** No season, rank, ladder or standing type crosses into
   `poker-engine`, and its dependency allowlist does not move. A duel is played by two seats; where
   those seats stand is a server fact and always was.
-- **A ladder page is harder than a history page.** `STORY-0408` pinned *total and disjoint* for
-  `GET /api/me/duels` and [`ADR-0057`](../../docs/adr/ADR-0057-a-cursor-names-the-filter-it-was-drawn-under.md)
-  bound a cursor to the filter that drew it. A standings page is ordered by a number that **changes
-  while it is being read** — somebody wins a duel between page one and page two — so the same
-  property is strictly harder here, and the story that ships paging owes a stated guarantee rather
-  than an inherited one.
+- **A ladder page is harder than a history page, and the guarantee is stated rather than
+  inherited.** `STORY-0408` pinned *total and disjoint* for `GET /api/me/duels` and
+  [`ADR-0057`](../../docs/adr/ADR-0057-a-cursor-names-the-filter-it-was-drawn-under.md) bound a
+  cursor to the filter that drew it. A standings page is ordered by a number that **changes while it
+  is being read** — somebody wins a duel between page one and page two — so that property does not
+  travel.
+  [`ADR-0066`](../../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md)
+  pays for it explicitly instead: the cursor carries the instant the walk began and the query is
+  bounded by that cutoff, so a walk enumerates one fixed ladder exactly once. What it does **not**
+  promise is written down with it — a walk is not live, and a duel committed after a page was drawn
+  but stamped before the cutoff can still leave one player unreturned and another returned twice.
 - **Migrations are immutable**, and this epic may add one. A change to the schema is a new
   `V<n>__` file, numbered at merge time, never an edit to a merged one. `ADR-0061` §3 removes the
   one this epic looked most likely to need: a season is derived, so `STORY-0501` adds no migration.
@@ -189,7 +198,7 @@ survive its decision did not**.
 | ID | Title | Depends on | Gated by | Status |
 | --- | --- | --- | --- | --- |
 | [STORY-0501](../stories/STORY-0501-a-season-is-a-bounded-thing.md) | A season is a bounded thing, and every finished duel belongs to one | — | — | **ready** |
-| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | `DEC-061` | blocked |
+| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | — | ready |
 | [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | — | blocked |
 | [STORY-0504](../stories/STORY-0504-what-a-row-leads-to.md) | What a row leads to — another player, seen by a stranger | 0503 | `DEC-057` | blocked — may be `dropped` |
 | [STORY-0505](../stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) | A season ends, and the record survives it | 0502 | — | **dropped** — `ADR-0061` §5 |
@@ -215,7 +224,7 @@ Almost nothing, and the chain is honest rather than pessimistic:
 **Critical path:** `0501 → 0502 → 0503 → 0506`, and it now begins with a ticket rather than with a
 decision. That is the single most useful thing to know about scheduling this epic today.
 
-## Questions the story split would have raised, now numbered as `DEC-061`
+## Questions the story split would have raised, numbered as `DEC-061` and answered
 
 They were left unnumbered because asking them before `DEC-055` would have asked them with the wrong
 premise. `ADR-0061` supplied the premise — a standing is a `SUM(coin_delta)` over a window, not an
@@ -229,7 +238,17 @@ follows the first's:
   moving? Materialise and the ordering is a column again with `ADR-0057`'s discipline nearly intact;
   compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all.
 
-`STORY-0502` no longer raises these at split time — it **waits on `DEC-061`**.
+`STORY-0502` no longer raises these at split time, and no longer waits either.
+[`ADR-0066`](../../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md),
+2026-08-21, answers both halves. **Per request**, from the ledger, with nothing storing a standing —
+so a duel is on the ladder the instant it commits, and `ADR-0061` §3's *"nothing writes a season
+down, so nothing can disagree about one"* holds one level down. **And a walk is pinned**: the cursor
+carries the instant the walk began, the query's upper bound is that cutoff rather than the season's
+end, and a walk therefore returns every player of *the ladder as it stood committed at the cutoff*
+exactly once. `STORY-0408`'s sentence is **not** inherited and not claimed: a walk is **not live**,
+and exactly-once carries one named exception — a duel committed after a page was drawn but stamped
+before the cutoff can leave its winner never returned and its loser returned twice, bounded by the
+width of one duel-recording transaction rather than of the walk.
 
 ## Inherited risk: the first screen is the only door
 
@@ -265,8 +284,14 @@ profile strip is **untouched** and gains no season number, which closes what `ST
 now gated by no decision at all** and waits only on `STORY-0502` landing. That leaves **one** of the
 original five open — `DEC-057`, which blocks only `STORY-0504`. Two more were raised **by**
 `DEC-055`'s answer: `DEC-060`, the product owner's, blocking nothing; and `DEC-061`, the architect's,
-which is the epic's two previously unnumbered questions merged into one and is now the **only** thing
-standing between `STORY-0502` and a split.
+which is the epic's two previously unnumbered questions merged into one. **`DEC-061` is answered** —
+[`ADR-0066`](../../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md),
+2026-08-21: the ladder is **computed per request** with nothing storing a standing, and **a walk is
+pinned to the instant it began**, returning every player of the ladder as it stood at that cutoff
+exactly once, at the price of a walk that is not live and one named exception where a row can still
+be seen twice or missed. **Nothing gates `STORY-0502` now**, and the epic's critical path begins with
+a split rather than a decision. It names one ticket for the planner — an index for the season window,
+`duel (finished_at)`, with a measurement — and raises no `DEC`.
 
 A seventh, **`DEC-062`**, was raised at `STORY-0501`'s split and **answered the same day** —
 [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md): the server
@@ -286,7 +311,6 @@ coming due at once, which is what a v0.3 milestone is.
 | --- | --- | --- |
 | `DEC-057` | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? `EPIC-04` parked this here in as many words — *"viewing another player's profile or history … it needs a name per leaderboard row and owns what a row links to. Here, `/api/me` means me."* Settle whether a row is inert text or opens something; if it opens something, what a stranger may read — display name, coin balance, duels played, win/loss record, the duel list itself, which `GET /api/me/duels` today serves only to the player it belongs to; and how that sits with `ADR-0029` §7's *"no code path turns a name into an identity"*, which is why history search returns duels and never players. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | `STORY-0504` — whether it exists at all |
 | `DEC-060` | **The product owner's, raised by [`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7** — does a **finished** season ever become reachable from a screen, and how is one chosen? The ADR settles that a finished season is never *gone*: its standings recompute exactly from `duel` and `duel_result` rows nothing rewrites, and nothing is archived because an archive would preserve nothing the ledger does not. What it deliberately does not settle is whether a player is ever given a way to ask for one. As shipped, on the first day of a month the previous season's ladder is computable and unreachable, and **nothing anywhere records who won it** — the first season this product runs ends with its winner celebrated by nothing. Settle whether the product ever shows a past season and, if so, how one is named and chosen: a selector, a *last season* line, a single remembered winner, or nothing. Note the cost on the other side — a selector is one more control on a screen `ADR-0060` already said would crowd. *Never* is a complete answer and needs saying out loud rather than falling out | nothing today; the deadline is the first season boundary after the ladder ships |
-| `DEC-061` | **The architect's, raised by [`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §4** — is a season standing computed per request or materialised, and what does a page guarantee over an ordering that is **recomputed** while it is walked? These are the two questions this epic listed as *"deliberately not numbered yet"*, merged into one because the ADR coupled them: materialise and the ordering is a column again with [`ADR-0057`](../../docs/adr/ADR-0057-a-cursor-names-the-filter-it-was-drawn-under.md)'s cursor discipline nearly intact; compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all. The read is now a `SUM(duel_result.coin_delta)` over a join to `duel` filtered by `finished_at`, with no index built for it, no scale problem yet, and no measurement anywhere in this product to say what it costs — so *"compute per request and state the guarantee honestly"* is a legitimate answer and premature caching is the obvious wrong first move. [`ADR-0064`](../../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md) **constrains this without answering it**: a rank is `1 + the number of players standing strictly higher`, a function of the **whole ladder** rather than of the page, so a keyset cursor cannot carry a position forward as if it were a rank; and whichever key gives the ladder its deterministic total order, it must be a fact about a row's **identity** — id, name collation, profile age — rather than about how its player performed, because a key of the second kind is a second ranking rule and `ADR-0014` reserves one for an ADR that supersedes it | `STORY-0502` |
 
 **Inherited, not raised here:** `DEC-054` — the architect's — whether the client grows
 URL-addressable routes and a working browser *Back*. Due before `STORY-0412` is split, which is
