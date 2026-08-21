@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050207
 title: The number is the window and not the column, and a season's standings sum to exactly zero
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
