@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050215
 title: The named exception, asserted — the loser twice, the winner never, and a new walk that sees both
 type: task
-status: backlog
+status: ready
 parent: STORY-0502
 module: poker-server
 estimate: S

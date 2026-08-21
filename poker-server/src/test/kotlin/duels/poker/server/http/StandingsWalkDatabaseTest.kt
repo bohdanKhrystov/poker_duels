@@ -49,8 +49,11 @@ private val WALK_CLOCK: Clock = Clock.fixed(Instant.parse("2026-08-20T09:00:00Z"
  *
  * The fixture below never changes while it is read: nothing here finishes a duel mid-walk. That is
  * what makes exactly-once provable at all. `ADR-0066` §4 does not extend `STORY-0408`'s *total and
- * disjoint* guarantee to a ladder that moves between requests, and no test in this file claims
- * that — a moving ladder is `TASK-050214` and `TASK-050215`'s concern, not this one's.
+ * disjoint* guarantee to a ladder that moves between requests, and these first two tests don't
+ * claim that. `TASK-050214`'s tests below do: their fixture finishes one duel between two requests
+ * of the same walk, at the exact instant the walk's cutoff names, and prove the walk stays pinned
+ * to the ladder as it stood when the walk began. The complementary case — a duel finishing
+ * strictly *before* that cutoff — is `TASK-050215`'s fixture, not this one's.
  */
 class StandingsWalkDatabaseTest {
     private lateinit var dataSource: DataSource
@@ -144,6 +147,98 @@ class StandingsWalkDatabaseTest {
         }
     }
 
+    /**
+     * `ADR-0066` §4 and §9: a duel that finishes exactly at the walk's cutoff must be in no page of
+     * it, and the fixture proves that only because its winner and loser sit on opposite sides of
+     * the cursor page one leaves behind — a duel between two players already served, or two players
+     * neither yet served, could not fail this even under the mutated window (`<=` instead of `<`).
+     */
+    @Test
+    fun aDuelStampedAtTheCutoffIsInNoPageOfTheWalk() {
+        val fixture = setupMidWalkFixture()
+
+        testApplication {
+            application {
+                module()
+                standingsRoutes(
+                    PostgresProfileReads(fixture.dataSource),
+                    PostgresStandingsReads(fixture.dataSource),
+                    WALK_CLOCK,
+                )
+            }
+
+            val pageOne = fetchPage(client, PAGE_LIMIT, null)
+            // Recorded only now, after page one's cursor already names x -- not folded into the
+            // fixture above, and not recorded before this line either (TASK-050214's third
+            // falsification checks exactly that timing). Stamped at WALK_CLOCK.instant() itself,
+            // the same instant the cursorless request above just minted as asOf, so the half-open
+            // window [season.start, asOf) excludes it from every remaining page of this walk.
+            fixture.duelResultStore.record(wonDuel(fixture.w, fixture.x, WALK_CLOCK.instant()))
+            val pages = listOf(pageOne) + walkAllPages(client, PAGE_LIMIT, pageOne.nextCursor)
+
+            val rows = pages.flatMap { it.rows }
+            val expectedIds = listOf(fixture.a, fixture.x, fixture.w, fixture.e, fixture.d).map { it.id.value }
+            val occurrences = rows.map { it.playerId }.groupingBy { it }.eachCount()
+
+            // Named individually, as the seven-player walk's test above does: a player who repeats
+            // and a player who disappears can cancel each other out in a bare size comparison.
+            val missing = expectedIds.filter { (occurrences[it] ?: 0) == 0 }
+            val repeated = expectedIds.filter { (occurrences[it] ?: 0) > 1 }
+            assertTrue(missing.isEmpty(), "players missing from the walk: $missing")
+            assertTrue(repeated.isEmpty(), "players repeated across the walk: $repeated")
+
+            val xRow = rows.single { it.playerId == fixture.x.id.value }
+            val wRow = rows.single { it.playerId == fixture.w.id.value }
+            assertEquals(1, xRow.coins, "x's row must read the standing it held at the cutoff, not after losing the mid-walk duel")
+            assertEquals(0, wRow.coins, "w's row must read the standing it held at the cutoff, not after winning the mid-walk duel")
+
+            // The direct check the two lookups above already imply, spelled out on its own because
+            // it is the assertion the ticket's window mutation is aimed at: nowhere in the walk may
+            // either player be seen holding the coin total the excluded duel would have given them.
+            assertTrue(rows.none { it.playerId == fixture.w.id.value && it.coins == 1 }, "no row may carry w at the post-duel +1")
+            assertTrue(rows.none { it.playerId == fixture.x.id.value && it.coins == 0 }, "no row may carry x at the post-duel 0")
+        }
+    }
+
+    /**
+     * The rank companion to [aDuelStampedAtTheCutoffIsInNoPageOfTheWalk]: `w`'s rank must stay the
+     * one the whole ladder gave it before the mid-walk duel, never the one a win would have earned.
+     */
+    @Test
+    fun theRanksALaterPageCarriesAreTheCutoffsRanks() {
+        val fixture = setupMidWalkFixture()
+
+        testApplication {
+            application {
+                module()
+                standingsRoutes(
+                    PostgresProfileReads(fixture.dataSource),
+                    PostgresStandingsReads(fixture.dataSource),
+                    WALK_CLOCK,
+                )
+            }
+
+            val pageOne = fetchPage(client, PAGE_LIMIT, null)
+            fixture.duelResultStore.record(wonDuel(fixture.w, fixture.x, WALK_CLOCK.instant()))
+            val pages = listOf(pageOne) + walkAllPages(client, PAGE_LIMIT, pageOne.nextCursor)
+
+            val ranks = pages.flatMap { page -> page.rows.map { it.rank } }
+            // The literal sequence, as the seven-player walk's rank test asserts -- a rank
+            // re-derived from row position would pass just as well on a page the mid-walk duel
+            // had actually reshuffled.
+            assertEquals(listOf(1, 2, 3, 4, 5), ranks)
+
+            val wRank = pages.flatMap { it.rows }.single { it.playerId == fixture.w.id.value }.rank
+            assertEquals(3, wRank, "w must keep the rank it held before the mid-walk duel")
+
+            var highestSoFar = Int.MIN_VALUE
+            for ((index, rank) in ranks.withIndex()) {
+                assertTrue(rank >= highestSoFar, "rank $rank at position $index is below an earlier rank in $ranks")
+                highestSoFar = rank
+            }
+        }
+    }
+
     private fun drawnDuel(firstPlayer: Player, secondPlayer: Player, finishedAt: Instant): FinishedDuel {
         return FinishedDuel(
             id = UUID.randomUUID(),
@@ -168,6 +263,57 @@ class StandingsWalkDatabaseTest {
         )
     }
 
+    /**
+     * Fixture B for the two mid-walk tests above: five players with distinct standings, on a
+     * database of their own rather than [dataSource] -- sharing [dataSource] would fold the
+     * seven-player ladder's rows into this walk too, and the three pages `ADR-0066` §9's fixture
+     * documents (`[a, x] [w, e] [d]`) would stop being the pages the walk actually returns.
+     */
+    private data class MidWalkFixture(
+        val dataSource: DataSource,
+        val duelResultStore: PostgresDuelResultStore,
+        val w: Player,
+        val x: Player,
+        val a: Player,
+        val e: Player,
+        val d: Player,
+    )
+
+    private fun setupMidWalkFixture(): MidWalkFixture {
+        val fixtureDataSource = PostgresTestSupport.freshDatabase()
+        Migrations.migrate(fixtureDataSource)
+        val playerDirectory = PostgresPlayerDirectory(fixtureDataSource)
+        val duelResultStore = PostgresDuelResultStore(fixtureDataSource)
+
+        return runBlocking {
+            val minted =
+                listOf("mw-1", "mw-2", "mw-3", "mw-4", "mw-5")
+                    .map { playerDirectory.resolve(DeviceId(it)) }
+
+            // player_id DESC is STANDINGS_ORDER's tiebreaker, and only that order decides which
+            // side of the cursor a given id lands on -- never UUID.compareTo, which compares two
+            // signed longs and disagrees with PostgreSQL's byte order over the canonical
+            // lower-case text.
+            val byId = minted.sortedByDescending { it.id.value }
+            val w = byId[0]
+            val x = byId[1]
+            val a = byId[2]
+            val e = byId[3]
+            val d = byId[4]
+
+            // a +2, x +1, w 0, e -1, d -2 -- sums to zero, and every finishedAt below sits on
+            // 2026-08-10, inside the one season WALK_CLOCK's fixed instant names.
+            val base = Instant.parse("2026-08-10T10:00:00Z")
+            duelResultStore.record(wonDuel(a, e, base.plusSeconds(60)))
+            duelResultStore.record(wonDuel(a, d, base.plusSeconds(120)))
+            duelResultStore.record(wonDuel(x, e, base.plusSeconds(180)))
+            duelResultStore.record(wonDuel(w, d, base.plusSeconds(240)))
+            duelResultStore.record(wonDuel(e, w, base.plusSeconds(300)))
+
+            MidWalkFixture(fixtureDataSource, duelResultStore, w, x, a, e, d)
+        }
+    }
+
     private suspend fun fetchPage(client: HttpClient, limit: Int, after: String?): StandingsResponse {
         val url = if (after == null) "/api/standings?limit=$limit" else "/api/standings?limit=$limit&after=$after"
         val response = client.get(url)
@@ -181,9 +327,13 @@ class StandingsWalkDatabaseTest {
     // server defect, and this loop reports that defect with a message instead of spinning on it.
     // The cursor is passed straight through -- never decoded and re-encoded here, which would test
     // this test's round trip instead of the server's.
-    private suspend fun walkAllPages(client: HttpClient, limit: Int): List<StandingsResponse> {
+    //
+    // startCursor defaults to null for the seven-player walk's two callers above, which start a
+    // walk from its first page; the mid-walk tests pass page one's own cursor instead, so this
+    // same loop can walk the rest of a walk whose first page they already fetched themselves.
+    private suspend fun walkAllPages(client: HttpClient, limit: Int, startCursor: String? = null): List<StandingsResponse> {
         val pages = mutableListOf<StandingsResponse>()
-        var cursor: String? = null
+        var cursor: String? = startCursor
         repeat(MAX_PAGE_WALK_REQUESTS) {
             val page = fetchPage(client, limit, cursor)
             pages.add(page)
