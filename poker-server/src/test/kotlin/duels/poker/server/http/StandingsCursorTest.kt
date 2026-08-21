@@ -66,12 +66,13 @@ class StandingsCursorTest {
         val padded = canonical + "="
         assertNull(standingsCursorOrNull(padded, season))
 
-        // Uppercase UUID
-        val upperCased = "MjAyNi0wOC0xNVQxMjowMDowMFp8M3wwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDE".replace(
-            "mdAwMDA",
-            "MDAWMDA",
-        )
-        assertNull(standingsCursorOrNull(upperCased, season))
+        // Uppercase UUID (in the string representation, not base64)
+        val uuidWithLetters = "00000000-0000-4000-8000-000000abcdef"
+        val upperCasedUUID = "2026-08-15T12:00:00Z|3|$uuidWithLetters"
+            .replace(uuidWithLetters, uuidWithLetters.uppercase())
+        val upperCasedEncoded = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(upperCasedUUID.toByteArray(Charsets.UTF_8))
+        assertNull(standingsCursorOrNull(upperCasedEncoded, season))
 
         // Different instant format (equivalent but not canonical)
         val instantPayload = "2026-08-15T12:00:00+00:00|3|00000000-0000-4000-8000-000000000001"
