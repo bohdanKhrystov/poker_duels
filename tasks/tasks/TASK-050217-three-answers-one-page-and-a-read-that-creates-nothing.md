@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050217
 title: Three answers about the reader, one page for everybody, and a read that creates nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0502
 module: poker-server
 estimate: S
