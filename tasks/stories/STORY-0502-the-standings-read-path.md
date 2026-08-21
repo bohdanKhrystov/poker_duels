@@ -36,6 +36,19 @@ kept a deterministic collation on `display_name` so this read would have an inde
   [`ADR-0002`](../../docs/adr/ADR-0002-server-authoritative.md). The client is given a position; it
   never derives one. A response that omits the rank and expects the reader to count is the defect
   this rule exists to prevent, and it is invisible until page two.
+- **A rank is `1 + the number of players standing strictly higher`, and it is not the row's offset.**
+  [`ADR-0064`](../../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md)
+  §1–§2 answers `DEC-058`: tied players read the **same** rank and the next distinct standing reads
+  the rank it would have had anyway — `3, 3, 5`, never `3, 4, 5` and never `3, 3, 4`. The rank is a
+  function of the **whole ladder**, not of the page, so it cannot be the page offset plus a row
+  index; a tie spanning a page boundary makes page two begin with the rank page one ended on, and
+  that is correct rather than a duplicate. Totality and disjointness are properties of **players**,
+  never of rank numbers.
+- **The key that gives the ladder a deterministic total order is `DEC-061`'s, and it is invisible.**
+  `ADR-0064` §4 constrains it in one product-facing way and chooses nothing: it is a fact about who
+  a row is — player id, name collation, profile age — and never about how that player did, because a
+  tiebreak on duels played or on who reached a standing first is a second ranking rule and
+  `ADR-0014` reserves one for an ADR that supersedes it.
 - **The read follows the shape `EPIC-04` already built.** A port in
   `duels.poker.server.http` with a Postgres implementation in `duels.poker.server.db`, so no route
   holds a `DataSource` (`ADR-0011`), alongside `ProfileReads`/`PostgresProfileReads`. The response
@@ -86,12 +99,12 @@ it is the season window rather than the all-time column:**
   purpose by that ADR, in writing, and the criteria below are rewritten to match rather than left to
   fail.
 
-**Still blocked on two decisions**, each of which changes the query rather than decorating it, and
-on one the answer to `DEC-055` raised. `DEC-056` — the eligibility predicate — is **answered** by
-`ADR-0063` and is no longer one of them:
+**Still blocked on one product decision**, which changes the query rather than decorating it, and on
+one the answer to `DEC-055` raised. Two of the original gate are **answered**: `DEC-056` — the
+eligibility predicate — by `ADR-0063`, and `DEC-058` — the tie — by
+[`ADR-0064`](../../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md),
+which settles that *rank* and *position in the page* are two numbers and only the first is served:
 
-- `DEC-058` — whether tied players share a rank number, which decides whether *rank* and *position
-  in the page* are one field or two.
 - `DEC-059` — whether a player can learn their own standing without walking to it. One player's rank
   is a different query from a page of them, and if the answer puts a standing on the profile strip
   it is a field on `ProfileResponse` rather than anything on this endpoint. It now also decides
@@ -105,18 +118,31 @@ on one the answer to `DEC-055` raised. `DEC-056` — the eligibility predicate �
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `DEC-058`, `DEC-059` and `DEC-061` — run `/plan-story STORY-0502` once they are answered. `DEC-056` is answered by `ADR-0063`.* | — |
+| — | *Not split. Blocked on `DEC-059` and `DEC-061` — run `/plan-story STORY-0502` once they are answered. `DEC-056` is answered by `ADR-0063`, `DEC-058` by `ADR-0064`.* | — |
 
 ## Acceptance criteria
 
-These hold under every answer the four open decisions can give; the answers add more. The four that
-name `ADR-0061` are what `DEC-055`'s answer added or rewrote.
+These hold under every answer the open decisions can give; the answers add more. The four that name
+`ADR-0061` are what `DEC-055`'s answer added or rewrote, and the three naming `ADR-0064` are what
+`DEC-058`'s answer added.
 
 - [ ] Players come back in coin order, asserted against a fixture holding at least one positive, one
       zero and one **negative** season standing — three inputs, so the ordering cannot pass on a
       constant.
 - [ ] The rank is a field in the response and is correct on the **second** page, asserted by walking
       to it. A client counting rows would be wrong here and the test says so.
+- [ ] **Tied players read the same rank, and the next distinct standing skips.** Asserted against a
+      fixture holding two players on the same season standing followed by a third on a lower one:
+      the first two read the same number and the third reads that number plus two — `3, 3, 5`. A
+      fixture with no tie in it cannot fail this, so the tie is in the fixture (`ADR-0064` §1).
+- [ ] **The rank is not the row's offset.** Asserted on a page whose ranks are not consecutive —
+      `1, 1, 3` is enough — so an implementation that numbers rows from the page offset fails on
+      page **one** rather than surviving to production (`ADR-0064` §2).
+- [ ] **A tie spanning a page boundary repeats a rank across two pages and each player exactly
+      once.** Asserted by a fixture whose tied block is larger than one page: page two begins with
+      the rank page one ended on, and the union of the pages holds every player once. A repeated
+      rank is not a duplicate row, and a test that treats it as one is asserting the wrong property
+      (`ADR-0064` §2).
 - [ ] Walking every page returns each eligible player exactly once — no gap, no duplicate — under
       whatever guarantee this story states, and the guarantee is written in `docs/protocol.md`.
 - [ ] A player with no display name **has a row**, and it carries `null` rather than a placeholder,
@@ -167,3 +193,10 @@ name `ADR-0061` are what `DEC-055`'s answer added or rewrote.
 - **A `ServerMessage` that pushes ladder changes** — nowhere yet; the epic's out-of-scope table says
   why, and this story's *no `PROTOCOL_VERSION` step* is the enforcing consequence.
 - **A rating or points** — `ADR-0014` says a floating balance supersedes it. Not here.
+- **A tiebreak that measures play** — `ADR-0064` §4. The query needs a deterministic total order and
+  `DEC-061` chooses the key, but a key of the form *fewer duels*, *beat a stronger opponent* or
+  *reached it first* is a second ranking rule, is not this story's to add, and would supersede
+  `ADR-0014` by accident. The order among equals is never presented, and no field on the response
+  carries it.
+- **A count of how many players share a rank, or any marker on a tied row** — `ADR-0064` §5: v0.3
+  prints the repeated number and nothing else, so this response carries no tie field.
