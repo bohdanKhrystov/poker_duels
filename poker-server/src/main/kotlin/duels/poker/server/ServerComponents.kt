@@ -8,10 +8,12 @@ import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
 import duels.poker.server.db.PostgresProfileReads
 import duels.poker.server.db.PostgresProfileWrites
+import duels.poker.server.db.PostgresStandingsReads
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.SecureHandSeedSource
 import duels.poker.server.http.ProfileReads
 import duels.poker.server.http.ProfileWrites
+import duels.poker.server.http.StandingsReads
 import duels.poker.server.room.RandomRoomCodeSource
 import duels.poker.server.room.RoomRegistry
 import duels.poker.server.session.ConnectionDirectory
@@ -33,6 +35,7 @@ public data class ServerComponents(
     val reads: ProfileReads,
     val writes: ProfileWrites,
     val credentials: Credentials,
+    val standings: StandingsReads,
     val wallClock: Clock,
 )
 
@@ -84,6 +87,7 @@ public fun serverComponents(
     )
 
     val credentials = PostgresCredentials(dataSource)
+    val standings = PostgresStandingsReads(dataSource)
 
-    return ServerComponents(socket = socket, reads = reads, writes = writes, credentials = credentials, wallClock = wallClock)
+    return ServerComponents(socket = socket, reads = reads, writes = writes, credentials = credentials, standings = standings, wallClock = wallClock)
 }

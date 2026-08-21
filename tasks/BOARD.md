@@ -1572,7 +1572,7 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050104](tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) A duel belongs to the season it finished in, never the one it started in | XS | **done** |
 | | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | **done** |
 | | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | **done** |
-| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | **in progress** — 11 of 19 tickets |
+| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | **in progress** — 12 of 19 tickets |
 | | [TASK-050201](tasks/TASK-050201-the-composition-root-owns-the-wall-clock.md) The composition root owns the one wall clock, and no component mints its own | XS | **done** |
 | | [TASK-050202](tasks/TASK-050202-a-standings-cursor-carries-the-walks-cutoff.md) A standings cursor carries the walk's cutoff, and one from another season does not decode | S | **done** |
 | | [TASK-050203](tasks/TASK-050203-the-wire-shape-a-row-a-season-and-a-self-standing.md) The wire shape — a row, the season, and a self standing that is never a zero | S | **done** |
@@ -1584,8 +1584,8 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050209](tasks/TASK-050209-the-route-answers-a-page-and-pins-the-walk.md) The route answers a page, names its season, and pins the walk to one cutoff | S | **done** |
 | | [TASK-050210](tasks/TASK-050210-the-page-the-route-serves-and-the-self-it-carries.md) The probe row, the last page, the empty ladder, and the self object's three shapes | S | **done** |
 | | [TASK-050211](tasks/TASK-050211-the-routes-refusals-a-bad-limit-a-bad-cursor-and-last-months-walk.md) The route's refusals — a bad limit, a bad cursor, and a walk from last month | S | **done** |
-| | [TASK-050212](tasks/TASK-050212-the-shipped-server-installs-the-ladder-route.md) The shipped server installs the ladder route, on the wall clock the root owns | XS | ready |
-| | [TASK-050213](tasks/TASK-050213-over-http-every-player-once-and-page-twos-ranks.md) Over HTTP — every player exactly once, and page two's ranks are the ladder's | S | backlog |
+| | [TASK-050212](tasks/TASK-050212-the-shipped-server-installs-the-ladder-route.md) The shipped server installs the ladder route, on the wall clock the root owns | XS | **done** |
+| | [TASK-050213](tasks/TASK-050213-over-http-every-player-once-and-page-twos-ranks.md) Over HTTP — every player exactly once, and page two's ranks are the ladder's | S | ready |
 | | [TASK-050214](tasks/TASK-050214-a-duel-that-commits-mid-walk-is-in-no-page-of-it.md) A duel stamped at the cutoff is in no page of the walk, and the ranks stay the cutoff's | S | backlog |
 | | [TASK-050215](tasks/TASK-050215-the-named-exception-and-the-walk-that-sees-it.md) The named exception — the loser twice, the winner never, and a new walk that sees both | S | backlog |
 | | [TASK-050216](tasks/TASK-050216-the-response-tells-a-player-where-they-stand.md) The response tells a player where they stand, on the page drawn and off it | S | backlog |
