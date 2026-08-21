@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050206
 title: The ladder is results, not players — a draw earns a row, a nameless player keeps one, one duel is enough
 type: task
-status: backlog
+status: ready
 parent: STORY-0502
 module: poker-server
 estimate: S

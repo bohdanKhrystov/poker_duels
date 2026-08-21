@@ -4,6 +4,7 @@ import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
+import duels.poker.server.http.StandingsCursor
 import duels.poker.server.season.Season
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
@@ -87,6 +88,109 @@ class PostgresStandingsReadsTest {
 
             assertEquals(2, page.size)
             assertEquals(setOf(augustWinner.id.value, augustLoser.id.value), page.map { it.playerId }.toSet())
+        }
+    }
+
+    @Test
+    fun tiedPlayersReadTheSameRankAndTheNextDistinctStandingSkips() {
+        runBlocking {
+            // Creation order (d, f, a, e, c, b) differs from the ladder (a, b, c, d, f, e) --
+            // ADR-0064 ranks the summed standing, never the order players were created in.
+            val d = playerDirectory.resolve(DeviceId("d"))
+            val f = playerDirectory.resolve(DeviceId("f"))
+            val a = playerDirectory.resolve(DeviceId("a"))
+            val e = playerDirectory.resolve(DeviceId("e"))
+            val c = playerDirectory.resolve(DeviceId("c"))
+            val b = playerDirectory.resolve(DeviceId("b"))
+
+            val season = Season(2026, 8)
+            val base = Instant.parse("2026-08-11T10:00:00Z")
+
+            // Recording order interleaves the four winners instead of grouping by opponent, so
+            // it is the SUM the query reads, never the order the duels arrived in.
+            duelResultStore.record(won(d, e, base))
+            duelResultStore.record(won(a, f, base.plusSeconds(60)))
+            duelResultStore.record(won(b, e, base.plusSeconds(120)))
+            duelResultStore.record(won(c, e, base.plusSeconds(180)))
+            duelResultStore.record(won(b, e, base.plusSeconds(240)))
+            duelResultStore.record(won(a, f, base.plusSeconds(300)))
+            duelResultStore.record(won(a, f, base.plusSeconds(360)))
+
+            val page = standingsReads.standingsPage(season, season.endExclusive, limit = 6)
+
+            // a(+3) b(+2) {c,d}(+1) f(-3) e(-4): the tie at +1 shares rank 3 and rank 4 is
+            // never read -- the next distinct standing (f, -3) is rank 5, per ADR-0064 §1.
+            assertEquals(listOf(1, 2, 3, 3, 5, 6), page.map { it.rank })
+            assertEquals(listOf(3, 2, 1, 1, -3, -4), page.map { it.coins })
+        }
+    }
+
+    @Test
+    fun theRankIsNotTheRowsOffset() {
+        runBlocking {
+            // Creation order (x, t2, t1) differs from the ladder ({t1, t2}, x).
+            val x = playerDirectory.resolve(DeviceId("x"))
+            val t2 = playerDirectory.resolve(DeviceId("t2"))
+            val t1 = playerDirectory.resolve(DeviceId("t1"))
+
+            val season = Season(2026, 8)
+            val base = Instant.parse("2026-08-12T10:00:00Z")
+
+            duelResultStore.record(won(t2, x, base))
+            duelResultStore.record(won(t1, x, base.plusSeconds(60)))
+
+            val page = standingsReads.standingsPage(season, season.endExclusive, limit = 3)
+
+            // t1 and t2 both stand at +1 and share rank 1; numbering rows from the page offset
+            // instead would return [1, 2, 3] here, on page one, where a whole-ladder defect
+            // would otherwise hide until a later page.
+            assertEquals(listOf(1, 1, 3), page.map { it.rank })
+        }
+    }
+
+    @Test
+    fun aTieSpanningAPageBoundaryRepeatsTheRankAndEachPlayerOnce() {
+        runBlocking {
+            // Creation order (f, b, e, d, a, c) differs from the ladder (a, b, c, d, f, e).
+            val f = playerDirectory.resolve(DeviceId("f"))
+            val b = playerDirectory.resolve(DeviceId("b"))
+            val e = playerDirectory.resolve(DeviceId("e"))
+            val d = playerDirectory.resolve(DeviceId("d"))
+            val a = playerDirectory.resolve(DeviceId("a"))
+            val c = playerDirectory.resolve(DeviceId("c"))
+
+            val season = Season(2026, 8)
+            val asOf = season.endExclusive
+            val base = Instant.parse("2026-08-13T10:00:00Z")
+
+            duelResultStore.record(won(c, e, base))
+            duelResultStore.record(won(a, f, base.plusSeconds(60)))
+            duelResultStore.record(won(b, e, base.plusSeconds(120)))
+            duelResultStore.record(won(a, f, base.plusSeconds(180)))
+            duelResultStore.record(won(d, e, base.plusSeconds(240)))
+            duelResultStore.record(won(b, e, base.plusSeconds(300)))
+            duelResultStore.record(won(a, f, base.plusSeconds(360)))
+
+            val pageOne = standingsReads.standingsPage(season, asOf, limit = 3)
+            val lastRow = pageOne.last()
+            val after = StandingsCursor(asOf, lastRow.coins, UUID.fromString(lastRow.playerId))
+            val pageTwo = standingsReads.standingsPage(season, asOf, limit = 3, after = after)
+
+            // The tie between c and d straddles the boundary: page one's last row and page
+            // two's first row both read rank 3. ADR-0064 §2 makes that repeat correct, not a
+            // duplicate row, so what is asserted is the two players, never their order.
+            assertEquals(3, lastRow.rank)
+            assertEquals(3, pageTwo.first().rank)
+            assertEquals(setOf(c.id.value, d.id.value), setOf(lastRow.playerId, pageTwo.first().playerId))
+
+            // Totality and disjointness are properties of players, not of rank numbers: the
+            // six ids across both pages, taken together, are exactly the six that were seeded.
+            val idsAcrossBothPages = (pageOne + pageTwo).map { it.playerId }
+            assertEquals(6, idsAcrossBothPages.size)
+            assertEquals(
+                setOf(a.id.value, b.id.value, c.id.value, d.id.value, e.id.value, f.id.value),
+                idsAcrossBothPages.toSet(),
+            )
         }
     }
 
