@@ -1572,15 +1572,15 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050104](tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) A duel belongs to the season it finished in, never the one it started in | XS | **done** |
 | | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | **done** |
 | | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | **done** |
-| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | **in progress** — 6 of 19 tickets |
+| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | **in progress** — 7 of 19 tickets |
 | | [TASK-050201](tasks/TASK-050201-the-composition-root-owns-the-wall-clock.md) The composition root owns the one wall clock, and no component mints its own | XS | **done** |
 | | [TASK-050202](tasks/TASK-050202-a-standings-cursor-carries-the-walks-cutoff.md) A standings cursor carries the walk's cutoff, and one from another season does not decode | S | **done** |
 | | [TASK-050203](tasks/TASK-050203-the-wire-shape-a-row-a-season-and-a-self-standing.md) The wire shape — a row, the season, and a self standing that is never a zero | S | **done** |
 | | [TASK-050204](tasks/TASK-050204-the-port-and-the-query-one-ordered-page.md) The port and the query — one ordered page, narrowed by nothing else | S | **done** |
 | | [TASK-050205](tasks/TASK-050205-tied-players-share-a-rank-and-a-rank-is-not-an-offset.md) Tied players share a rank, a rank is not a row's offset, a tie may span a boundary | S | **done** |
 | | [TASK-050206](tasks/TASK-050206-the-ladder-is-results-not-players.md) The ladder is results, not players — a draw earns a row, one duel is enough | S | **done** |
-| | [TASK-050207](tasks/TASK-050207-the-window-not-the-column-and-a-season-sums-to-zero.md) The number is the window and not the column, and a season sums to exactly zero | S | ready |
-| | [TASK-050208](tasks/TASK-050208-the-port-answers-one-players-own-standing.md) The port answers one player's own standing, against the whole ladder | S | backlog |
+| | [TASK-050207](tasks/TASK-050207-the-window-not-the-column-and-a-season-sums-to-zero.md) The number is the window and not the column, and a season sums to exactly zero | S | **done** |
+| | [TASK-050208](tasks/TASK-050208-the-port-answers-one-players-own-standing.md) The port answers one player's own standing, against the whole ladder | S | ready |
 | | [TASK-050209](tasks/TASK-050209-the-route-answers-a-page-and-pins-the-walk.md) The route answers a page, names its season, and pins the walk to one cutoff | S | backlog |
 | | [TASK-050210](tasks/TASK-050210-the-page-the-route-serves-and-the-self-it-carries.md) The probe row, the last page, the empty ladder, and the self object's three shapes | S | backlog |
 | | [TASK-050211](tasks/TASK-050211-the-routes-refusals-a-bad-limit-a-bad-cursor-and-last-months-walk.md) The route's refusals — a bad limit, a bad cursor, and a walk from last month | S | backlog |

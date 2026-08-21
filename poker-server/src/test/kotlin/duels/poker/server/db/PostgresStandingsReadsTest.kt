@@ -5,6 +5,7 @@ import duels.poker.engine.duel.DuelOutcome
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import duels.poker.server.http.StandingsCursor
+import duels.poker.server.protocol.http.StandingRow
 import duels.poker.server.season.Season
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
@@ -15,7 +16,9 @@ import java.time.Instant
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Drives [PostgresStandingsReads] against a real PostgreSQL: the page comes back in coin order
@@ -31,6 +34,7 @@ class PostgresStandingsReadsTest {
     private lateinit var duelResultStore: PostgresDuelResultStore
     private lateinit var standingsReads: PostgresStandingsReads
     private lateinit var profileWrites: PostgresProfileWrites
+    private lateinit var profileReads: PostgresProfileReads
 
     @BeforeEach
     fun setupDatabase() {
@@ -40,6 +44,7 @@ class PostgresStandingsReadsTest {
         duelResultStore = PostgresDuelResultStore(dataSource)
         standingsReads = PostgresStandingsReads(dataSource)
         profileWrites = PostgresProfileWrites(dataSource)
+        profileReads = PostgresProfileReads(dataSource)
     }
 
     @Test
@@ -264,6 +269,89 @@ class PostgresStandingsReadsTest {
 
             assertEquals(-1, page.first { it.playerId == frank.id.value }.coins)
             assertEquals(3, page.first { it.playerId == george.id.value }.coins)
+        }
+    }
+
+    @Test
+    fun theCoinsAreTheSeasonsWindowAndNotTheAllTimeColumn() {
+        runBlocking {
+            // Creation order (bob, dave, carol, alice) and recording order (carol's single
+            // August win, then alice's August win, then alice's two July wins) both differ from
+            // the narrative told in the ticket -- ADR-0061 §4 is exactly what would be missed by
+            // a fixture that happened to follow the story order.
+            val bob = playerDirectory.resolve(DeviceId("bob"))
+            val dave = playerDirectory.resolve(DeviceId("dave"))
+            val carol = playerDirectory.resolve(DeviceId("carol"))
+            val alice = playerDirectory.resolve(DeviceId("alice"))
+
+            val season = Season(2026, 8)
+            val asOf = season.endExclusive
+
+            duelResultStore.record(won(carol, dave, Instant.parse("2026-08-10T10:00:00Z")))
+            duelResultStore.record(won(alice, bob, Instant.parse("2026-08-05T10:00:00Z")))
+            duelResultStore.record(won(alice, bob, Instant.parse("2026-07-20T10:00:00Z")))
+            duelResultStore.record(won(alice, bob, Instant.parse("2026-07-05T10:00:00Z")))
+
+            // The same path the profile strip reads, per the ticket -- not raw SQL, so the
+            // comparison is between the two answers the product actually gives.
+            val aliceProfile = assertNotNull(profileReads.profileOf(DeviceId("alice")))
+            val carolProfile = assertNotNull(profileReads.profileOf(DeviceId("carol")))
+
+            val page = standingsReads.standingsPage(season, asOf, limit = 10)
+            val aliceStanding = page.first { it.playerId == alice.id.value }
+            val carolStanding = page.first { it.playerId == carol.id.value }
+
+            // Alice's all-time column carries all three of her wins; her season window carries
+            // only August's. The two numbers disagree on purpose (ADR-0061 §4), and a query that
+            // quietly read the column instead of the window would make them agree here.
+            assertEquals(3, aliceProfile.coinBalance)
+            assertEquals(1, aliceStanding.coins)
+
+            // Carol's only duel is inside the season, so her column and her window agree. Without
+            // her, "coinBalance != ladder coins" would look like the property under test, which
+            // is false in general -- this is what stops that wrong reading from also passing.
+            assertEquals(1, carolProfile.coinBalance)
+            assertEquals(1, carolStanding.coins)
+        }
+    }
+
+    @Test
+    fun theSeasonsStandingsSumToExactlyZero() {
+        runBlocking {
+            // Creation order (erin, dave, bob, alice, carol) and recording order (the draw
+            // first, then carol's win, then alice's win) both differ from the narrative telling
+            // of who played whom, the same discipline every fixture above keeps.
+            val erin = playerDirectory.resolve(DeviceId("erin"))
+            val dave = playerDirectory.resolve(DeviceId("dave"))
+            val bob = playerDirectory.resolve(DeviceId("bob"))
+            val alice = playerDirectory.resolve(DeviceId("alice"))
+            val carol = playerDirectory.resolve(DeviceId("carol"))
+
+            val season = Season(2026, 8)
+            val asOf = season.endExclusive
+
+            // One draw (erin vs bob) and two decisive duels (carol beats dave, alice beats bob)
+            // among five players -- ADR-0063 §4: every duel writes rows that sum to zero, drawn
+            // or decisive alike, so the whole ladder must too.
+            duelResultStore.record(drawn(erin, bob, Instant.parse("2026-08-02T09:00:00Z")))
+            duelResultStore.record(won(carol, dave, Instant.parse("2026-08-06T09:00:00Z")))
+            duelResultStore.record(won(alice, bob, Instant.parse("2026-08-09T09:00:00Z")))
+
+            val rows = mutableListOf<StandingRow>()
+            var after: StandingsCursor? = null
+            while (true) {
+                val page = standingsReads.standingsPage(season, asOf, limit = 2, after = after)
+                if (page.isEmpty()) break
+                rows += page
+                val last = page.last()
+                after = StandingsCursor(asOf, last.coins, UUID.fromString(last.playerId))
+                if (page.size < 2) break
+            }
+
+            // The row count is asserted before the total: an empty ladder also sums to zero, so
+            // the count is what proves the walk returned the rows this fixture recorded.
+            assertTrue(rows.size >= 5)
+            assertEquals(0, rows.sumOf { it.coins })
         }
     }
 
