@@ -275,4 +275,134 @@ class StandingsRouteTest {
         // Rows should match
         assertEquals(rows, noStandingBody.rows)
     }
+
+    @Test
+    fun aLimitTheServerWillNotParseIsFourHundredAndReadsNothing(): Unit = testApplication {
+        val standings = RecordingStandingsReads()
+        application {
+            module()
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+        }
+
+        // Test limit=0
+        val zeroResponse = client.get("/api/standings?limit=0")
+        assertEquals(HttpStatusCode.BadRequest, zeroResponse.status)
+        assertEquals("", zeroResponse.bodyAsText())
+        assertEquals(0, standings.calls.size, "standings.standingsPage should not be called for limit=0")
+
+        // Test limit=-1
+        val negativeResponse = client.get("/api/standings?limit=-1")
+        assertEquals(HttpStatusCode.BadRequest, negativeResponse.status)
+        assertEquals("", negativeResponse.bodyAsText())
+        assertEquals(0, standings.calls.size, "standings.standingsPage should not be called for limit=-1")
+
+        // Test limit=abc
+        val abcResponse = client.get("/api/standings?limit=abc")
+        assertEquals(HttpStatusCode.BadRequest, abcResponse.status)
+        assertEquals("", abcResponse.bodyAsText())
+        assertEquals(0, standings.calls.size, "standings.standingsPage should not be called for limit=abc")
+    }
+
+    @Test
+    fun aLimitAboveTheCapIsClampedRatherThanRefused(): Unit = testApplication {
+        val standings = RecordingStandingsReads()
+        application {
+            module()
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+        }
+
+        val response = client.get("/api/standings?limit=999")
+        assertEquals(HttpStatusCode.OK, response.status)
+        val call = standings.calls.single()
+        // The route asks for limit + 1, and 999 is clamped to 50, so it asks for 51
+        assertEquals(51, call.limit)
+    }
+
+    @Test
+    fun aCursorThatDoesNotDecodeIsFourHundredAndReadsNothing(): Unit = testApplication {
+        val standings = RecordingStandingsReads()
+        application {
+            module()
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+        }
+
+        // Test after=not-a-cursor
+        val invalidCursorResponse = client.get("/api/standings?after=not-a-cursor")
+        assertEquals(HttpStatusCode.BadRequest, invalidCursorResponse.status)
+        assertEquals("", invalidCursorResponse.bodyAsText())
+        assertEquals(0, standings.calls.size, "standings.standingsPage should not be called for invalid cursor")
+
+        // Test after= (present and empty)
+        val emptyCursorResponse = client.get("/api/standings?after=")
+        assertEquals(HttpStatusCode.BadRequest, emptyCursorResponse.status)
+        assertEquals("", emptyCursorResponse.bodyAsText())
+        assertEquals(0, standings.calls.size, "standings.standingsPage should not be called for empty cursor")
+    }
+
+    @Test
+    fun aCursorFromAnotherSeasonIsTheSameFourHundred(): Unit = testApplication {
+        // Create a cursor with asOf in August 2026
+        val augustCursorAsOf = Instant.parse("2026-08-20T09:00:00Z")
+        val augustCursor = StandingsCursor(augustCursorAsOf, 40, UUID.fromString("00000000-0000-0000-0000-00000000000a"))
+        val augustCursorString = augustCursor.encoded()
+
+        // Create a cursor with asOf in September 2026
+        val septemberCursorAsOf = Instant.parse("2026-09-01T00:00:00Z")
+        val septemberCursor = StandingsCursor(septemberCursorAsOf, 40, UUID.fromString("00000000-0000-0000-0000-00000000000b"))
+        val septemberCursorString = septemberCursor.encoded()
+
+        // Test 1: August cursor under August clock (2026-08-20T09:00:00Z) should return 200
+        testApplication {
+            val augustStandings = RecordingStandingsReads()
+            val augustClock = Clock.fixed(Instant.parse("2026-08-20T09:00:00Z"), ZoneOffset.UTC)
+            application {
+                module()
+                standingsRoutes(FixedProfileReads(emptyMap()), augustStandings, augustClock)
+            }
+            val augustUnderAugustResponse = client.get("/api/standings?after=$augustCursorString")
+            assertEquals(HttpStatusCode.OK, augustUnderAugustResponse.status)
+            assertEquals(1, augustStandings.calls.size, "standings.standingsPage should be called for valid cursor in same season")
+        }
+
+        // Test 2: August cursor under September clock (2026-09-01T00:00:01Z) should return 400
+        testApplication {
+            val septemberStandings = RecordingStandingsReads()
+            val septemberClock = Clock.fixed(Instant.parse("2026-09-01T00:00:01Z"), ZoneOffset.UTC)
+            application {
+                module()
+                standingsRoutes(FixedProfileReads(emptyMap()), septemberStandings, septemberClock)
+            }
+            val augustUnderSeptemberResponse = client.get("/api/standings?after=$augustCursorString")
+            assertEquals(HttpStatusCode.BadRequest, augustUnderSeptemberResponse.status)
+            assertEquals("", augustUnderSeptemberResponse.bodyAsText())
+            assertEquals(0, septemberStandings.calls.size, "standings.standingsPage should not be called for cursor from different season")
+        }
+
+        // Test 3: September cursor under August clock (2026-08-20T09:00:00Z) should return 400
+        testApplication {
+            val augustStandings2 = RecordingStandingsReads()
+            val augustClock2 = Clock.fixed(Instant.parse("2026-08-20T09:00:00Z"), ZoneOffset.UTC)
+            application {
+                module()
+                standingsRoutes(FixedProfileReads(emptyMap()), augustStandings2, augustClock2)
+            }
+            val septemberUnderAugustResponse = client.get("/api/standings?after=$septemberCursorString")
+            assertEquals(HttpStatusCode.BadRequest, septemberUnderAugustResponse.status)
+            assertEquals("", septemberUnderAugustResponse.bodyAsText())
+            assertEquals(0, augustStandings2.calls.size, "standings.standingsPage should not be called for cursor from different season")
+        }
+
+        // Test 4: September cursor under September clock (2026-09-01T00:00:01Z) should return 200
+        testApplication {
+            val septemberStandings2 = RecordingStandingsReads()
+            val septemberClock2 = Clock.fixed(Instant.parse("2026-09-01T00:00:01Z"), ZoneOffset.UTC)
+            application {
+                module()
+                standingsRoutes(FixedProfileReads(emptyMap()), septemberStandings2, septemberClock2)
+            }
+            val septemberUnderSeptemberResponse = client.get("/api/standings?after=$septemberCursorString")
+            assertEquals(HttpStatusCode.OK, septemberUnderSeptemberResponse.status)
+            assertEquals(1, septemberStandings2.calls.size, "standings.standingsPage should be called for valid cursor in same season")
+        }
+    }
 }
