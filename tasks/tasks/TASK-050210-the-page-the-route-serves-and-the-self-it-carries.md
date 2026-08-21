@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050210
 title: The page the route serves — the probe row, the last page, the empty ladder, and the self object
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
