@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050202
 title: A standings cursor carries the walk's cutoff, and one from another season does not decode
 type: task
-status: backlog
+status: ready
 parent: STORY-0502
 module: poker-server
 estimate: S

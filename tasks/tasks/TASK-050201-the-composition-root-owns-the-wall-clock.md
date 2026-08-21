@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050201
 title: The composition root owns the one wall clock, and no component mints its own
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: XS
