@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050218
 title: The document contracts the ladder — every parameter, the promise, and both refusals
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
