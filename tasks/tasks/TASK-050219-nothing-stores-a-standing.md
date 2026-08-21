@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050219
 title: Nothing stores a standing — no table, no column, no materialised view, and no migration
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: XS
