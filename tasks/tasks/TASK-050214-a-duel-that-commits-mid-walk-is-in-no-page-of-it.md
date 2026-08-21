@@ -99,10 +99,14 @@ reached.
 | `aDuelStampedAtTheCutoffIsInNoPageOfTheWalk` | after the four steps above, the five ids come back **exactly once** across the walk, `x`'s row reads `coins = 1` and `w`'s reads `coins = 0` — the standings they held at the cutoff — and no row anywhere in the walk carries `w = +1` or `x = 0` |
 | `theRanksALaterPageCarriesAreTheCutoffsRanks` | on the same run, `w`'s rank is `3`, the rank it held before the mid-walk duel, and the concatenated rank sequence over the walk is `[1, 2, 3, 4, 5]` with no rank smaller than one returned before it |
 
-**Named mutations.** Reading the clock again on a cursored request — a live walk — makes the second
-page see the new duel, which lifts `w` above the cursor and drops it from the walk entirely: four
-ids instead of five, and the first test reddens. Making the window's upper bound `<=` instead of
+**Named mutations.** Making the window's upper bound `<=` instead of
 `<`, or using `season.endExclusive` as the bound, admits the at-cutoff duel and reddens both tests.
+
+Re-reading the clock on a cursored request is **not** a mutation this ticket can catch: under
+`Clock.fixed` every call returns the same instant, so a live read reproduces the value already
+stored in the cursor and nothing observable changes. The live-versus-pinned property belongs to
+`TASK-050209`'s `aCursoredRequestReusesTheCursorsCutoffAndNotTheClock`, whose cursor carries an
+`asOf` deliberately different from the clock's.
 
 ## Acceptance criteria
 

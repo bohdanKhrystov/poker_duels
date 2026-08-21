@@ -17,7 +17,7 @@ verify:
   - ./gradlew :poker-server:compileKotlin
   - ./gradlew :poker-server:ktlintCheck
   - "grep -qF 'wallClock: Clock = Clock.systemUTC()' poker-server/src/main/kotlin/duels/poker/server/ServerComponents.kt"
-  - test 1 -eq "$(grep -rlF 'Clock.systemUTC()' poker-server/src/main/kotlin | wc -l | tr -d ' ')"
+  - test 1 -eq "$(grep -rlF '= Clock.systemUTC()' poker-server/src/main/kotlin | wc -l | tr -d ' ')"
 ---
 
 ## Goal
@@ -91,7 +91,7 @@ The two greps in `verify:` are the real assertion this ticket adds:
 | Command | Proves |
 | --- | --- |
 | `grep -qF 'wallClock: Clock = Clock.systemUTC()' ServerComponents.kt` | the root has the parameter, spelled so a reader finds it |
-| `test 1 -eq "$(grep -rlF 'Clock.systemUTC()' poker-server/src/main/kotlin \| wc -l ...)"` | exactly **one** file under `src/main` mints a system clock; deleting the sink's default is what makes this pass, and putting a default back reddens it |
+| `test 1 -eq "$(grep -rlF '= Clock.systemUTC()' poker-server/src/main/kotlin \| wc -l ...)"` | exactly **one** file under `src/main` *assigns* a system clock; the leading `= ` is load-bearing — the bare string also matches `Season.kt`'s KDoc sentence about where `Clock.systemUTC()` belongs, which would make this gate unsatisfiable |
 
 ## Acceptance criteria
 
@@ -99,8 +99,10 @@ The two greps in `verify:` are the real assertion this ticket adds:
       `ServerComponents` exposes it as `val wallClock: Clock`
 - [ ] `PostgresDuelResultSink`'s `clock` parameter has **no** default value, and its KDoc no longer
       says it defaults to anything
-- [ ] Exactly one file under `poker-server/src/main/kotlin` contains `Clock.systemUTC()` — restoring
-      the sink's default makes the last `verify:` line exit 1
+- [ ] Exactly one file under `poker-server/src/main/kotlin` contains `= Clock.systemUTC()` —
+      restoring the sink's default makes the last `verify:` line exit 1. Match the assignment, not
+      the bare call: `Season.kt`'s KDoc says where `Clock.systemUTC()` belongs, so a bare grep
+      counts two files and can never exit 0
 - [ ] Every test already in `PostgresDuelResultSinkTest` passes with its assertions unchanged
 - [ ] `poker-server/src/main/kotlin/duels/poker/server/time/` is unchanged: `git diff --stat` names
       no file under it
