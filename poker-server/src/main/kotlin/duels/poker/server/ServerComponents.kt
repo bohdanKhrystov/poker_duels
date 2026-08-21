@@ -21,6 +21,7 @@ import duels.poker.server.session.SessionRegistry
 import duels.poker.server.session.SocketDependencies
 import duels.poker.server.time.ServerClock
 import duels.poker.server.time.SystemClock
+import java.time.Clock
 import javax.sql.DataSource
 
 /**
@@ -32,6 +33,7 @@ public data class ServerComponents(
     val reads: ProfileReads,
     val writes: ProfileWrites,
     val credentials: Credentials,
+    val wallClock: Clock,
 )
 
 /**
@@ -55,6 +57,7 @@ public fun serverComponents(
     dataSource: DataSource,
     clock: ServerClock = SystemClock,
     seeds: HandSeedSource = SecureHandSeedSource(),
+    wallClock: Clock = Clock.systemUTC(),
 ): ServerComponents {
     val directory = PostgresPlayerDirectory(dataSource)
     val reads = PostgresProfileReads(dataSource)
@@ -67,7 +70,7 @@ public fun serverComponents(
         clock,
         config.roomTimeouts(),
         seeds,
-        PostgresDuelResultSink(PostgresDuelResultStore(dataSource)),
+        PostgresDuelResultSink(PostgresDuelResultStore(dataSource), wallClock),
     )
 
     val socket = SocketDependencies(
@@ -82,5 +85,5 @@ public fun serverComponents(
 
     val credentials = PostgresCredentials(dataSource)
 
-    return ServerComponents(socket = socket, reads = reads, writes = writes, credentials = credentials)
+    return ServerComponents(socket = socket, reads = reads, writes = writes, credentials = credentials, wallClock = wallClock)
 }

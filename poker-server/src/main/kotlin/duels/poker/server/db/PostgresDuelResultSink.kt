@@ -37,12 +37,12 @@ import java.time.Instant
  * `seats` and `outcome` map straight across unchanged.
  *
  * @param store the store this sink delegates every write to.
- * @param clock the source of the wall-clock timestamps stamped on each duel row. Defaults to
- *   [Clock.systemUTC].
+ * @param clock the source of the wall-clock timestamps stamped on each duel row. Supplied by the
+ *   composition root to ensure exactly one place mints a wall clock.
  */
 public class PostgresDuelResultSink(
     private val store: PostgresDuelResultStore,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock,
 ) : DuelResultSink {
     override suspend fun record(result: DuelResult) {
         // DuelResult carries no notion of when the duel began — only that it is now finished —
