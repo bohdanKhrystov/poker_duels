@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050208
 title: The port answers one player's own whole-season standing, computed against the whole ladder
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
