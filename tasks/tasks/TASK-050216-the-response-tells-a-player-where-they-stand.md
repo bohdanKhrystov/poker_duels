@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050216
 title: The response tells a player where they stand — on the page drawn, and on a page they are not on
 type: task
-status: backlog
+status: ready
 parent: STORY-0502
 module: poker-server
 estimate: S

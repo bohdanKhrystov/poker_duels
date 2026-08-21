@@ -239,6 +239,106 @@ class StandingsWalkDatabaseTest {
         }
     }
 
+    /**
+     * `ADR-0066` §4's second refusal, pinned rather than assumed away: `PostgresDuelResultSink`
+     * stamps `finished_at` before its recording transaction commits, so a duel can commit after a
+     * page was drawn while carrying a `finished_at` that lands inside the window every later page
+     * still recomputes. `w`'s win lifts it above the cursor page one left behind, into territory a
+     * forward-only walk never revisits, so `w` is returned zero times; `x`'s loss pushes it back
+     * below that same cursor, into territory the walk still has to cross, so `x` is returned
+     * twice. `ADR-0066` §9 asks for this test in as many words, so the anomaly is known rather
+     * than discovered.
+     */
+    @Test
+    fun aDuelCommittedAfterAPageWasDrawnReturnsItsLoserTwiceAndItsWinnerNever() {
+        val fixture = setupMidWalkFixture()
+
+        testApplication {
+            application {
+                module()
+                standingsRoutes(
+                    PostgresProfileReads(fixture.dataSource),
+                    PostgresStandingsReads(fixture.dataSource),
+                    WALK_CLOCK,
+                )
+            }
+
+            val pageOne = fetchPage(client, PAGE_LIMIT, null)
+            // One minute inside [season.start, asOf), unlike the sibling fixture above which
+            // stamps the same duel exactly at the cutoff and is excluded by it: this stamp lands
+            // inside the window every later page recomputes, even though page one -- and its
+            // cursor -- were already drawn from the ladder as it stood before this duel existed.
+            fixture.duelResultStore.record(wonDuel(fixture.w, fixture.x, WALK_CLOCK.instant().minusSeconds(60)))
+            val pages = listOf(pageOne) + walkAllPages(client, PAGE_LIMIT, pageOne.nextCursor)
+
+            val rows = pages.flatMap { it.rows }
+            val occurrences = rows.map { it.playerId }.groupingBy { it }.eachCount()
+
+            // Named individually and by exact count, never folded into a set-size check, as the
+            // seven-player walk's test above does: a repeat and a miss can cancel each other out.
+            assertEquals(2, occurrences[fixture.x.id.value] ?: 0, "x (the mid-walk duel's loser) must be returned exactly twice")
+            assertEquals(0, occurrences[fixture.w.id.value] ?: 0, "w (the mid-walk duel's winner) must be returned zero times")
+            for (untouched in listOf(fixture.a, fixture.e, fixture.d)) {
+                assertEquals(
+                    1,
+                    occurrences[untouched.id.value] ?: 0,
+                    "${untouched.id.value} takes no part in the mid-walk duel and must appear exactly once",
+                )
+            }
+
+            // The two appearances of x are not two identical rows: one is the standing it held
+            // when page one was drawn, before the duel existed, and the other is what a later
+            // page's recompute finds once the duel has committed.
+            val xCoins = rows.filter { it.playerId == fixture.x.id.value }.map { it.coins }.sorted()
+            assertEquals(listOf(0, 1), xCoins, "x's two rows must be the standings it held either side of the mid-walk duel")
+        }
+    }
+
+    /**
+     * `ADR-0066` §9's next criterion, immediately after the one above: with no refresh, sweep,
+     * job or wait -- nothing but a plain request with no cursor -- the very next walk over the
+     * same clock reads the ladder the duel actually left behind. This is the criterion a
+     * materialised or periodically-refreshed ladder fails; `ADR-0066` §1's "no cache, no refresh
+     * job" is what makes it true here.
+     */
+    @Test
+    fun aNewWalkSeesTheDuelTheOldWalkCouldNot() {
+        val fixture = setupMidWalkFixture()
+
+        testApplication {
+            application {
+                module()
+                standingsRoutes(
+                    PostgresProfileReads(fixture.dataSource),
+                    PostgresStandingsReads(fixture.dataSource),
+                    WALK_CLOCK,
+                )
+            }
+
+            val pageOne = fetchPage(client, PAGE_LIMIT, null)
+            fixture.duelResultStore.record(wonDuel(fixture.w, fixture.x, WALK_CLOCK.instant().minusSeconds(60)))
+            // The old walk, finished exactly as the test above finishes it -- this is the walk
+            // that could not see w, and the one this test's name compares against.
+            walkAllPages(client, PAGE_LIMIT, pageOne.nextCursor)
+
+            // The new walk: no cursor, no refresh, sweep, job or wait -- just the next request.
+            val freshPages = walkAllPages(client, PAGE_LIMIT)
+            val freshRows = freshPages.flatMap { it.rows }
+            val expectedIds = listOf(fixture.a, fixture.w, fixture.x, fixture.e, fixture.d).map { it.id.value }
+            val occurrences = freshRows.map { it.playerId }.groupingBy { it }.eachCount()
+
+            val missing = expectedIds.filter { (occurrences[it] ?: 0) == 0 }
+            val repeated = expectedIds.filter { (occurrences[it] ?: 0) > 1 }
+            assertTrue(missing.isEmpty(), "players missing from the new walk: $missing")
+            assertTrue(repeated.isEmpty(), "players repeated in the new walk: $repeated")
+
+            val wRow = freshRows.single { it.playerId == fixture.w.id.value }
+            val xRow = freshRows.single { it.playerId == fixture.x.id.value }
+            assertEquals(1, wRow.coins, "w must read the standing the duel actually left it at")
+            assertEquals(0, xRow.coins, "x must read the standing the duel actually left it at")
+        }
+    }
+
     private fun drawnDuel(firstPlayer: Player, secondPlayer: Player, finishedAt: Instant): FinishedDuel {
         return FinishedDuel(
             id = UUID.randomUUID(),
