@@ -167,6 +167,86 @@ Each duel summary in the array contains:
 | handsPlayed | number | The number of hands played in the duel. |
 | finishedAt | string | ISO-8601 instant when the duel finished, as text in UTC (produced by `Instant.toString()`) |
 
+### Standings endpoint
+
+**Method and path:** `GET /api/standings`
+
+**Authentication:** No authentication is required. The `X-Device-Id` header is optional here, and
+supplying it changes **only** the `self` field of the response — `rows` and `nextCursor` are
+identical for every reader, whoever asks. This endpoint has no `401`: an absent, blank, or unknown
+device id is not a refusal, it simply means the server has no reader to attach a `self` to, and
+`self` comes back `null`.
+
+**Query parameters:**
+
+- `limit` (optional): The maximum number of standings rows to return, defaults to `10`, capped at
+  `50`. Non-numeric, zero, or negative values are rejected with `400 Bad Request`.
+- `after` (optional): An opaque cursor to retrieve the next page of the walk. The exact string a
+  previous response returned in `nextCursor`, echoed back unchanged. Absent means the first page,
+  and mints the cutoff the whole walk is pinned to (see below). A value that does not decode, **or**
+  whose instant lies outside the season the server is currently in, is `400 Bad Request` and nothing
+  is read — the two failures are indistinguishable from one another, and the remedy is the same
+  either way: drop the cursor and ask for the first page.
+
+Every `400` refusal on this endpoint returns an empty body. There is no `season` query parameter
+and no `playerId` query parameter: this endpoint serves only the season the server is currently in,
+and a past season is not offered.
+
+**Response:** `200 OK` with a JSON object containing:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| season | string | The season this page was computed for, `"YYYY-MM"` (`ADR-0061` §1). Always the current season. |
+| rows | array | The leaderboard rows on this page, in rank order from 1. |
+| nextCursor | string or null | The cursor to send as `after` for the next page, and `null` on the last page. Always present. |
+| self | object or null | The calling player's own standing, or `null` if `X-Device-Id` was absent, blank, or unknown. See below. |
+
+Each row in `rows` contains:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| rank | number | The row's rank in the season standings; `1` is the best. Ties share a rank rather than break it — three players level at third place and the next player at fifth read `3, 3, 5`, not `3, 4, 5` (`ADR-0064` §2) — so a repeated rank is not a duplicate row. |
+| playerId | string | The unique identifier of the player. |
+| displayName | string or null | The player's chosen display name, or `null` if never set. Null means *never set*; the server fabricates no placeholder per `ADR-0029` §6. |
+| coins | number | The player's coin standing for this season: coin-changing duels won minus lost. May be negative per `ADR-0014`. |
+
+**The reader's own standing (`self`):** With a known `X-Device-Id`, `self` answers one of three
+ways (`ADR-0065` §4), regardless of whether the reader's own row appears on the current page:
+
+- **Placed:** the player has finished a duel this season, so `self` carries their `rank` and
+  `coins`, exactly as a row in `rows` would.
+- **No place this season:** the player has a profile but has finished no duel this season, so
+  `self` carries `playerId` with `rank` and `coins` both `null` — not `0`. A draw earns a real
+  standing of `0` (`ADR-0015`); printing `0` here would claim a placement this player does not have.
+- **No known device:** the device id was absent, blank, or unknown, so `self` is `null`
+  in its entirety, not an object with null fields inside it.
+
+A reader's own standing always follows their own `X-Device-Id`; there is no `playerId` query
+parameter, and a request cannot ask for another player's `self`.
+
+**The walk's promise:** A request with no `after` mints a cutoff — an instant — and the whole walk
+is pinned to it: every `nextCursor` this walk hands out carries that same cutoff forward, not a
+fresh one. This is a promise and two refusals, not one (`ADR-0066` §4):
+
+- Every player who was on the ladder **as it stood committed at that cutoff** is returned
+  exactly once across the full walk, at the rank they held then.
+- **A walk is not live.** A duel that finishes after the cutoff is in no page of it — page forty is
+  exactly as old as page one, both computed against the instant the walk began. To see a duel that
+  committed after the walk started, a reader drops the cursor and starts a new walk from the first
+  page.
+- **The named exception:** a duel that commits after a page of the walk has already been drawn, but
+  whose recorded instant lies before the cutoff, can still slip that page. Its winner can then be
+  missed by the walk entirely, and its loser can be returned twice. Both are accepted; what is
+  refused is only the *unbounded* version of this — a walk never loses or duplicates a player
+  outside this one, named circumstance.
+
+This is not the guarantee `GET /api/me/duels` makes for its own paging: a standings ordering moves
+as duels commit under it, a history ordering does not, and the two endpoints promise different
+things.
+
+A walk that crosses a month boundary — the season changing under it — is refused rather than
+continued into the new season; the reader restarts with no cursor (`ADR-0066` §7).
+
 ## Protocol Errors
 
 - `UNKNOWN_MESSAGE`: A frame with no matching message type in the current schema.

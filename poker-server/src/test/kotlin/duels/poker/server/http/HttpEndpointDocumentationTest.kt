@@ -3,7 +3,10 @@ package duels.poker.server.http
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
+import duels.poker.server.protocol.http.SelfStandingResponse
 import duels.poker.server.protocol.http.SignUpRequest
+import duels.poker.server.protocol.http.StandingRow
+import duels.poker.server.protocol.http.StandingsResponse
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -48,7 +51,9 @@ class HttpEndpointDocumentationTest {
     private val recentDuelsSection: String =
         sectionBetween("### Recent duels endpoint", "Each duel summary in the array contains:")
     private val duelSummarySection: String =
-        sectionBetween("Each duel summary in the array contains:", "## Protocol Errors")
+        sectionBetween("Each duel summary in the array contains:", "### Standings endpoint")
+    private val standingsSection: String =
+        sectionBetween("### Standings endpoint", "## Protocol Errors")
 
     private fun sectionBetween(startMarker: String, endMarker: String): String {
         val startIndex = doc.indexOf(startMarker)
@@ -407,6 +412,115 @@ class HttpEndpointDocumentationTest {
         assertFalse(
             recentDuelsSection.contains("409"),
             "The Recent duels section must not document a 409 status for cursor mismatches",
+        )
+    }
+
+    @Test
+    fun theDocumentContractsTheStandingsEndpoint() {
+        assertTrue(
+            standingsSection.contains("GET /api/standings"),
+            "The Standings section must document 'GET /api/standings'",
+        )
+        assertTrue(
+            standingsSection.contains("limit"),
+            "The Standings section must document the 'limit' parameter",
+        )
+        assertTrue(
+            standingsSection.contains("after"),
+            "The Standings section must document the 'after' parameter",
+        )
+        assertTrue(
+            standingsSection.contains("400"),
+            "The Standings section must document a '400' refusal",
+        )
+        assertTrue(
+            standingsSection.contains("No authentication is required", ignoreCase = true),
+            "The Standings section must state that no authentication is required",
+        )
+        assertTrue(
+            standingsSection.contains("current season", ignoreCase = true),
+            "The Standings section must state that only the current season is served",
+        )
+    }
+
+    @Test
+    fun theDocumentedStandingsFieldNamesAllExist() {
+        // The section holds two tables (the response, and each row in `rows`), so one scan of the
+        // whole section against all three DTOs mirrors theDocumentedFieldNamesAllExist's approach.
+        val standingsFields = documentedFieldNames(standingsSection)
+        assertTrue(
+            standingsFields.isNotEmpty(),
+            "Expected at least one documented field for the Standings endpoint",
+        )
+
+        val standingsResponsePropertyNames = StandingsResponse::class.memberProperties.map { it.name }.toSet()
+        val standingRowPropertyNames = StandingRow::class.memberProperties.map { it.name }.toSet()
+        val selfStandingPropertyNames = SelfStandingResponse::class.memberProperties.map { it.name }.toSet()
+        val validPropertyNames = standingsResponsePropertyNames + standingRowPropertyNames + selfStandingPropertyNames
+        assertTrue(
+            validPropertyNames.isNotEmpty(),
+            "StandingsResponse, StandingRow and SelfStandingResponse must expose at least one property",
+        )
+
+        for (field in standingsFields) {
+            assertTrue(
+                field in validPropertyNames,
+                "Documented field '$field' does not exist on StandingsResponse, StandingRow, or " +
+                    "SelfStandingResponse",
+            )
+        }
+    }
+
+    @Test
+    fun theDocumentStatesThePromiseAndBothRefusals() {
+        assertTrue(
+            standingsSection.contains("cutoff"),
+            "The Standings section must state the walk's cutoff",
+        )
+        assertTrue(
+            standingsSection.contains("exactly once"),
+            "The Standings section must state that each player of the ladder as it stood committed " +
+                "at the cutoff is returned exactly once",
+        )
+        assertTrue(
+            standingsSection.contains("not live", ignoreCase = true),
+            "The Standings section must state that a walk is not live",
+        )
+        assertTrue(
+            standingsSection.contains("named exception", ignoreCase = true),
+            "The Standings section must name the exception to the walk's promise",
+        )
+        assertTrue(
+            standingsSection.contains("winner", ignoreCase = true) &&
+                standingsSection.contains("twice", ignoreCase = true),
+            "The Standings section must describe the named exception: a missed winner and a doubled loser",
+        )
+        assertFalse(
+            standingsSection.contains("total and disjoint"),
+            "The Standings section must not claim the 'total and disjoint' guarantee that belongs " +
+                "to GET /api/me/duels",
+        )
+    }
+
+    @Test
+    fun theDocumentStatesTheThreeAnswersAboutTheReader() {
+        assertTrue(
+            standingsSection.contains("rank") && standingsSection.contains("coins") &&
+                standingsSection.contains("Placed", ignoreCase = true),
+            "The Standings section must state the rank-and-standing answer for a player who has placed",
+        )
+        assertTrue(
+            standingsSection.contains("No place this season", ignoreCase = true),
+            "The Standings section must state the 'no place this season' answer",
+        )
+        assertTrue(
+            standingsSection.contains("not `0`"),
+            "The Standings section must state that a player with no place this season is never printed as 0",
+        )
+        assertTrue(
+            standingsSection.contains("No known device", ignoreCase = true) &&
+                standingsSection.contains("in its entirety"),
+            "The Standings section must state the absent-self answer for a request with no known device",
         )
     }
 }
