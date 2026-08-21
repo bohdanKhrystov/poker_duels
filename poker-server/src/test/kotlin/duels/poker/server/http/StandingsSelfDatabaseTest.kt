@@ -30,6 +30,8 @@ import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private const val PAGE_LIMIT = 2
@@ -150,6 +152,73 @@ class StandingsSelfDatabaseTest {
         }
     }
 
+    @Test
+    fun aProfileWithNoDuelThisSeasonIsToldItHasNoPlaceAndIsNotGivenAZero() {
+        val fixtureBDataSource = PostgresTestSupport.freshDatabase()
+        Migrations.migrate(fixtureBDataSource)
+        val fixture = setupFixtureB(fixtureBDataSource)
+
+        testApplication {
+            application {
+                module()
+                standingsRoutes(
+                    PostgresProfileReads(fixtureBDataSource),
+                    PostgresStandingsReads(fixtureBDataSource),
+                    CLOCK,
+                )
+            }
+
+            val absentPage = fetchPage(client, "absent", PAGE_LIMIT, after = null)
+            val absentSelf =
+                requireNotNull(absentPage.self) { "absent has a profile and must be told so, even with no place" }
+            assertEquals(fixture.absent.id.value, absentSelf.playerId)
+            assertNull(absentSelf.rank, "no duel this season must read as no rank, not a page-local miss")
+            assertNull(absentSelf.coins, "no duel this season must not be reported as standing at zero")
+
+            val drewPage = fetchPage(client, "drew", PAGE_LIMIT, after = null)
+            val drewSelf = requireNotNull(drewPage.self) { "drew drew a duel this season and must have a place" }
+            assertEquals(fixture.drew.id.value, drewSelf.playerId)
+            assertNotNull(drewSelf.rank, "drew played this season and must be ranked, unlike absent")
+            assertEquals(0, drewSelf.coins, "a draw stands at zero coins, ADR-0015 -- not absent from the ladder")
+        }
+    }
+
+    @Test
+    fun anUnknownDeviceGetsThePageAndNoSelfLine() {
+        testApplication {
+            application {
+                module()
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK)
+            }
+
+            val knownPage = fetchPage(client, "a", PAGE_LIMIT, after = null)
+
+            val unknownDevicePage = fetchPage(client, "never-seen-before", PAGE_LIMIT, after = null)
+            assertNull(unknownDevicePage.self, "an unknown device reads the ladder like anybody else")
+            assertEquals(knownPage.rows, unknownDevicePage.rows, "the page must not depend on who is asking")
+
+            val noHeaderPage = fetchPage(client, null, PAGE_LIMIT, after = null)
+            assertNull(noHeaderPage.self, "no header at all must draw no self line either")
+            assertEquals(knownPage.rows, noHeaderPage.rows, "the page must not depend on a header being present")
+        }
+    }
+
+    @Test
+    fun readingTheLadderCreatesNothing() {
+        testApplication {
+            application {
+                module()
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK)
+            }
+
+            val before = playerRowCount(dataSource)
+            fetchPage(client, "never-seen-before", PAGE_LIMIT, after = null)
+            val after = playerRowCount(dataSource)
+
+            assertEquals(before, after, "reading the ladder must mint no row -- ADR-0012, profiles are not")
+        }
+    }
+
     private fun wonDuel(winner: Player, loser: Player, finishedAt: Instant): FinishedDuel {
         return FinishedDuel(
             id = UUID.randomUUID(),
@@ -161,9 +230,59 @@ class StandingsSelfDatabaseTest {
         )
     }
 
-    private suspend fun fetchPage(client: HttpClient, device: String, limit: Int, after: String?): StandingsResponse {
+    private fun drawnDuel(playerX: Player, playerY: Player, finishedAt: Instant): FinishedDuel {
+        return FinishedDuel(
+            id = UUID.randomUUID(),
+            format = formatLabel(DuelFormat.DEFAULT),
+            startedAt = finishedAt.minusSeconds(60),
+            finishedAt = finishedAt,
+            seats = listOf(playerX.id, playerY.id),
+            outcome = DuelOutcome(winner = null, handsPlayed = 1, finalStacks = listOf(10_000, 10_000)),
+        )
+    }
+
+    /**
+     * Fixture B: `drew` and `rival` draw a duel in August; `absent`'s only duel finished in July,
+     * against `july` -- a season this fixture's [CLOCK] has already left. Built on its own fresh
+     * database rather than the class fixture's, so its August ladder never gains the class
+     * fixture's five players: "the August ladder holds drew and rival and nobody else" would
+     * otherwise stop being true.
+     */
+    private fun setupFixtureB(dataSource: DataSource): FixtureB {
+        val playerDirectory = PostgresPlayerDirectory(dataSource)
+        val duelResultStore = PostgresDuelResultStore(dataSource)
+
+        return runBlocking {
+            val drew = playerDirectory.resolve(DeviceId("drew"))
+            val rival = playerDirectory.resolve(DeviceId("rival"))
+            val absent = playerDirectory.resolve(DeviceId("absent"))
+            val july = playerDirectory.resolve(DeviceId("july"))
+
+            duelResultStore.record(drawnDuel(drew, rival, Instant.parse("2026-08-05T10:00:00Z")))
+            duelResultStore.record(wonDuel(absent, july, Instant.parse("2026-07-05T10:00:00Z")))
+
+            FixtureB(drew, rival, absent)
+        }
+    }
+
+    private data class FixtureB(val drew: Player, val rival: Player, val absent: Player)
+
+    // A direct count is a fact about the player table itself, not about whatever a port chooses
+    // to expose through it -- the same way ServerComponentsTest counts rows.
+    private fun playerRowCount(dataSource: DataSource): Long {
+        dataSource.connection.use { connection ->
+            connection.createStatement().use { statement ->
+                statement.executeQuery("SELECT count(*) FROM player").use { resultSet ->
+                    resultSet.next()
+                    return resultSet.getLong(1)
+                }
+            }
+        }
+    }
+
+    private suspend fun fetchPage(client: HttpClient, device: String?, limit: Int, after: String?): StandingsResponse {
         val url = if (after == null) "/api/standings?limit=$limit" else "/api/standings?limit=$limit&after=$after"
-        val response = client.get(url) { header(DEVICE_ID_HEADER, device) }
+        val response = client.get(url) { if (device != null) header(DEVICE_ID_HEADER, device) }
 
         assertEquals(HttpStatusCode.OK, response.status)
         val body = response.bodyAsText()
