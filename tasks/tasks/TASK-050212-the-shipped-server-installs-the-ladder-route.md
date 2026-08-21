@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050212
 title: The shipped server installs the ladder route, on the wall clock the root owns
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: XS
