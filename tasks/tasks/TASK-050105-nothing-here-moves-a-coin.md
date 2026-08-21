@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050105
 title: Nothing this story adds moves a coin, writes a migration, or reaches the engine
 type: task
-status: ready
+status: done
 parent: STORY-0501
 module: poker-server
 estimate: S
