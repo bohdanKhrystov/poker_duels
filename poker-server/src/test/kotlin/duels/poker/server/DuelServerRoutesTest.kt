@@ -9,6 +9,7 @@ import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
+import duels.poker.server.protocol.http.StandingsResponse
 import duels.poker.server.protocol.protocolJson
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocketSession
@@ -159,5 +160,18 @@ class DuelServerRoutesTest {
             }
             assertEquals(HttpStatusCode.Created, signUpResponse.status)
         }
+    }
+
+    @Test
+    fun theStandingsRouteAnswersWithoutAProfile(): Unit = testApplication {
+        application { duelServer(serverComponents(config, dataSource)) }
+        val response = client.get("/api/standings")
+        assertEquals(HttpStatusCode.OK, response.status)
+        val standings = protocolJson.decodeFromString<StandingsResponse>(response.bodyAsText())
+        assertEquals(0, standings.rows.size)
+        assertEquals(null, standings.nextCursor)
+        assertEquals(null, standings.self)
+        // Season should match YYYY-MM format
+        assert(standings.season.matches(Regex("""\d{4}-\d{2}""")))
     }
 }

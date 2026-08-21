@@ -6,6 +6,7 @@ import duels.poker.server.db.Database
 import duels.poker.server.db.Migrations
 import duels.poker.server.http.authRoutes
 import duels.poker.server.http.profileRoutes
+import duels.poker.server.http.standingsRoutes
 import duels.poker.server.room.GraceExpiry
 import duels.poker.server.room.RoomRegistry
 import duels.poker.server.session.ConnectionDirectory
@@ -83,6 +84,7 @@ public fun Application.duelServer(
     duelSocket(components.socket)
     authRoutes(components.reads, components.credentials)
     profileRoutes(components.reads, components.writes)
+    standingsRoutes(components.reads, components.standings, components.wallClock)
     scheduleSweeps(components.socket.rooms, components.socket.connections, sweepPeriodMillis)
 }
 
