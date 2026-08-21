@@ -33,9 +33,13 @@ a boundary **does nothing**, and `player.coin_balance` is never reset. The produ
 branch the vision licenses and declined the other out loud: a reset would make *"a counter of duels
 won"* false, and that is the human's to change, not an ADR's. `STORY-0501` is `ready` with no
 migration, `STORY-0505` is **`dropped`** because the crossing it was written for turns out to be no
-code at all, and `STORY-0502` and `STORY-0503` wait on `DEC-056`, `DEC-058` and `DEC-059` — three
-product decisions a single run can take. `DEC-060` (a finished season on a screen) and `DEC-061` (a
-page over a season aggregate) were raised by the answer and block nothing today.
+code at all, and `STORY-0502` and `STORY-0503` wait on `DEC-058` and `DEC-059` — two product
+decisions a single run can take. `DEC-056` is answered by
+[`ADR-0063`](../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md):
+**nothing gates a place**, a nameless player has a row that reads `No name`, and the farming vector
+`ADR-0012` gated on this epic is accepted out loud until the ladder is served on a public address.
+`DEC-060` (a finished season on a screen) and `DEC-061` (a page over a season aggregate) were raised
+by `DEC-055`'s answer and block nothing today.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -531,7 +535,6 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
-| DEC-056 | **The product owner's** — what, if anything, gates a place on the leaderboard? `ADR-0012` gates its farming and smurfing vector on this epic; `ADR-0036` — the human's — closes the obvious countermeasure by making an anonymous profile fully ranked. So a threshold carries the gate, or the risk is accepted out loud with a deadline. Includes **whether a player with no display name appears at all**, which `ADR-0058` parks here by name | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 | DEC-057 | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? Parked here by `EPIC-04` — *"`/api/me` means me"*. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0504` is split |
 | DEC-058 | **The product owner's** — when two players hold the same balance, do they share a rank number or does something break the tie? Ties are the common case with `wins − losses` over few duels. Which key makes paging deterministic is the architect's at split time; what the player *reads* is not | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 | DEC-059 | **The product owner's** — does a player see their own standing, and where: on the profile strip beside the coin balance, marked on the ladder, behind a *jump to me* control, or nowhere? Parked here by `STORY-0311`. It decides whether `STORY-0502` ships one query or two. `ADR-0061` adds a clause: there are now two candidate numbers, the strip's all-time counter and the ladder's season standing, and the answer says which the strip shows | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
@@ -578,6 +581,39 @@ month; nothing records who won a season; the strip and the ladder disagree from 
 which contradicts one of this epic's own non-negotiables on purpose; the read becomes an aggregate
 over a join with no index; and past standings recompute rather than freeze, so `ADR-0039`'s eventual
 deletion would silently edit them. **Drops `STORY-0505`**, raises `DEC-060` and `DEC-061`).
+
+`DEC-056` → [`ADR-0063`](../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md)
+(**nothing gates a place on the ladder, and the farming vector is accepted out loud until the ladder
+is public.** Answered by the product owner on 2026-08-21, derived from the vision. The ladder lists
+exactly the set `ADR-0061` §4 defines — a row for whoever finished at least one duel in the season —
+**narrowed by nothing**: no minimum duels, no minimum standing, no account, no display name, no
+profile age, no opponent-diversity rule, so `STORY-0502` adds no `WHERE` beyond the season window and
+`STORY-0503` filters no row it was sent. **A player with no display name has a row and it prints
+`nameOrNone`'s `No name`** — the question `ADR-0058` parked here by name — with the wire still
+carrying `null`. **Two profiles that only ever duel each other are an ordinary pair**, because that
+pair is the vision's founding case, *"the author wanted to play quick heads-up duels against his
+sister"*, and no server fact separates it from a farm. Two properties are pinned so a later gate
+cannot break them quietly: a rank is a position among **everyone** who played that season, and a
+season's standings **sum to exactly zero**. The decisive finding was in `duel-rules.md`: a farmed
+duel is not merely certain but **fast** — two colluding profiles shove all-in and finish in under a
+minute against an honest duel's *"20–45 hands, roughly 5–15 minutes"* — so any rule counting duels is
+cleared by the farmer first and taxes the honest player instead. `ADR-0012`'s gate is **discharged
+rather than amended**: it is applied at the event that ADR names, *"when the leaderboard goes
+public"*, which `EPIC-05`'s out-of-scope table had already relocated to `EPIC-07`. The acceptance
+expires at an **event, not a date** — the first time the ladder is served on a public address — or
+earlier if a season ends with a standing shaped like a farm, which is recorded as a signal to look
+and never as a rule, because one strong player against one regular rival looks the same. Costs
+recorded rather than discovered: the farm stays possible **on purpose**, so the first ladder this
+product shows can be topped by somebody who never beat anybody; `No name` can be the top row and a
+ladder of them cannot be read; a nameless player cannot find themselves on it, which makes `DEC-059`
+load-bearing rather than a nicety; a place gate is now more expensive to add than it was to refuse,
+since a later one takes away places players have held; and with no threshold the top of the ladder is
+noise for the first days of every season. **Unblocks nothing on its own** — `STORY-0502` and
+`STORY-0503` still wait on `DEC-058`, `DEC-059` and, for the server, `DEC-061`. **Names one ticket**
+for the planner: `EPIC-07`'s definition of done gains a line requiring this acceptance to be
+re-affirmed in writing or replaced by a countermeasure before the ladder is served publicly. It
+raises no `DEC` — the countermeasure's shape is a decision for the day the acceptance expires, and
+`ADR-0063`'s alternative 4, a rate limit on finishing duels, is the shape to start from).
 
 `DEC-062` → [`ADR-0062`](../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md)
 (**the server has two clocks and neither answers the other's question.** `ServerClock`

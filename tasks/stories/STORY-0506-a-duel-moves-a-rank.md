@@ -46,11 +46,14 @@ the same way, with `STORY-0414`.
 - **The engine learns nothing**, and this story adds no production code at all if the five before it
   did their jobs. If it needs production code, that is a finding about one of them.
 
-- **The fixture satisfies whatever `DEC-056` requires for a place.** If a threshold gates the
-  ladder, two players who have duelled once are not on it, and the test plays enough duels to clear
-  the threshold rather than quietly asserting against an empty page. That is a fixture detail, not a
-  change to any criterion below — every one of them is a *difference*, and a difference survives a
-  threshold.
+- **The fixture needs no threshold to clear.**
+  [`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md)
+  answers `DEC-056`: nothing gates a place, so two players who have duelled **once** are both on the
+  ladder and this test plays exactly the duels it means to. The prediction written here — that every
+  criterion below is a *difference*, and a difference survives a threshold — was right and cost
+  nothing. The same ADR's §4 sharpens the conservation note above from *sums agree* to a constant:
+  a season's standings sum to exactly `0`, because every duel writes two rows summing to zero and
+  both players are listed.
 
 - **Everything this test plays happens inside one season**, because it plays it now. That is why the
   ladder's number and `GET /api/me`'s `coinBalance` agree here — a **property of the fixture**, not

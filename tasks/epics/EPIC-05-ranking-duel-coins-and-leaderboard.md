@@ -70,8 +70,13 @@ which answers `DEC-055`:
   calendar month in UTC, half-open, identified by its month, stored nowhere.
 - **The standings read path.** An ordered, paged, server-computed ladder over plain HTTP, with the
   same totality and disjointness discipline `STORY-0408` pinned for `GET /api/me/duels`.
-- **Whatever gates a place on it.** `ADR-0012`'s gate, discharged rather than forgotten — either as
-  a rule in the query or as a written, dated acceptance of the residual risk (`DEC-056`).
+- ~~**Whatever gates a place on it.**~~ Discharged by
+  [`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md),
+  which answers `DEC-056`: **nothing gates a place** — the ladder is `ADR-0061` §4's set narrowed by
+  nothing, a nameless player has a row that reads `No name`, and two profiles that only ever duel
+  each other are an ordinary pair. `ADR-0012`'s gate is discharged as the second of the two shapes
+  this obligation allowed — a **written, dated acceptance** of the residual risk, expiring at an
+  event rather than a date: the first time the ladder is served on a public address.
 - **The ladder as a screen**, reached from the first screen and left the way `ADR-0060` says a
   second screen is left.
 - **Whatever a row leads to** (`DEC-057`), including nothing.
@@ -171,8 +176,8 @@ survive its decision did not**.
 | ID | Title | Depends on | Gated by | Status |
 | --- | --- | --- | --- | --- |
 | [STORY-0501](../stories/STORY-0501-a-season-is-a-bounded-thing.md) | A season is a bounded thing, and every finished duel belongs to one | — | — | **ready** |
-| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | `DEC-056`, `DEC-058`, `DEC-059`, `DEC-061` | blocked |
-| [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | `DEC-056`, `DEC-058`, `DEC-059` | blocked |
+| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | `DEC-058`, `DEC-059`, `DEC-061` | blocked |
+| [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | `DEC-058`, `DEC-059` | blocked |
 | [STORY-0504](../stories/STORY-0504-what-a-row-leads-to.md) | What a row leads to — another player, seen by a stranger | 0503 | `DEC-057` | blocked — may be `dropped` |
 | [STORY-0505](../stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) | A season ends, and the record survives it | 0502 | — | **dropped** — `ADR-0061` §5 |
 | [STORY-0506](../stories/STORY-0506-a-duel-moves-a-rank.md) | A duel moves a rank, end to end | 0503 | — | blocked |
@@ -231,10 +236,14 @@ which is well before anything here starts.
 
 Five were raised on 2026-08-19 when this epic was written, all five the product owner's. **`DEC-055`
 is answered** — [`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md),
-same day — and the epic is unblocked. The remaining four block one or two stories each and are still
-written so that a single product-owner run can answer them in dependency order. Two more were raised
-**by** the answer: `DEC-060`, the product owner's, blocking nothing; and `DEC-061`, the architect's,
-which is the epic's two previously unnumbered questions merged into one.
+same day — and the epic is unblocked. **`DEC-056` is answered too** —
+[`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md),
+2026-08-21 — which discharges the gate `ADR-0012` put on this epic and settles what `ADR-0058` parked
+here: nothing gates a place, and a nameless player has a row. The remaining three block one or two
+stories each and are still written so that a single product-owner run can answer them in dependency
+order. Two more were raised **by** `DEC-055`'s answer: `DEC-060`, the product owner's, blocking
+nothing; and `DEC-061`, the architect's, which is the epic's two previously unnumbered questions
+merged into one.
 
 A seventh, **`DEC-062`**, was raised at `STORY-0501`'s split and **answered the same day** —
 [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md): the server
@@ -252,7 +261,6 @@ coming due at once, which is what a v0.3 milestone is.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
-| `DEC-056` | **The product owner's** — what, if anything, gates a place on the leaderboard, given that device ids are free and an account may **not** be required? [`ADR-0012`](../../docs/adr/ADR-0012-device-bound-anonymous-profiles.md) says device ids are trivially minted, that this is *"a farming and smurfing vector"* against a ranked ladder, and that *"it must not still be true when the leaderboard goes public"*. [`ADR-0036`](../../docs/adr/ADR-0036-an-account-is-offered-never-required.md) — **the human's call** — closes the obvious countermeasure: an anonymous profile *"takes a leaderboard place, exactly as it does today"* and declining an account costs *"no withheld leaderboard place"*. So something else carries the gate, or the risk is accepted out loud. Settle: whether a profile needs a minimum number of duels (or any other threshold) before it has a place; **whether a player who has set no display name appears at all** — [`ADR-0058`](../../docs/adr/ADR-0058-where-a-name-would-be-the-client-prints-no-name.md) parks exactly this question here, and the answer decides whether `No name` is ever printed on a ladder row; whether two profiles that only ever duel each other are treated like any other pair; and, if the residual risk is accepted for v0.3, what that acceptance is written against so `ADR-0012`'s gate is **discharged rather than forgotten** — `EPIC-07`'s deployment is the deadline the ADR's own wording implies. An answer that requires an account contradicts `ADR-0036` and is the human's, not the product owner's | `STORY-0502`, `STORY-0503` |
 | `DEC-057` | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? `EPIC-04` parked this here in as many words — *"viewing another player's profile or history … it needs a name per leaderboard row and owns what a row links to. Here, `/api/me` means me."* Settle whether a row is inert text or opens something; if it opens something, what a stranger may read — display name, coin balance, duels played, win/loss record, the duel list itself, which `GET /api/me/duels` today serves only to the player it belongs to; and how that sits with `ADR-0029` §7's *"no code path turns a name into an identity"*, which is why history search returns duels and never players. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | `STORY-0504` — whether it exists at all |
 | `DEC-058` | **The product owner's** — when two players hold the same balance, what is a player told: do they share one rank number, or does something break the tie into distinct positions, and if so what? Only half of this is product. Paging needs *some* deterministic total order or a ladder page is neither total nor disjoint, and which key provides it is the architect's at split time; what the **player reads** — `3, 3, 5` against `3, 4, 5` — is not, and it decides whether a displayed rank and a page position are the same number or two. Ties are the common case here, not the corner: with `wins − losses` over few duels, most of the ladder is stacked on 0, 1 and −1 | `STORY-0502`, `STORY-0503` |
 | `DEC-059` | **The product owner's** — does a player see **their own** standing, and where? `STORY-0311`'s profile strip parked *"leaderboard, rating, season standing"* here by name, and the strip is the obvious home for a rank beside the coin balance it already prints. The alternatives are not equivalent: a rank on the strip is a field on `ProfileResponse` and a second query on a route that runs on every lobby load; a marked row on the ladder is a client concern and useless once the player is on page forty; a *jump to me* control is a third endpoint. And *nothing — the player scrolls* is a real answer for a ladder with two players on it. Settle which, because it decides whether `STORY-0502` ships one query or two. The vision is the argument for asking rather than assuming: *"Ranked results over a season"* is about where **you** stand, and an anonymous profile takes a place like anyone else (`ADR-0036`), so *never* would need saying out loud rather than falling out. `ADR-0061` adds a clause: there are now two candidate numbers — the strip's all-time counter and the ladder's season standing — and the answer says which of them the strip shows | `STORY-0502`, `STORY-0503` |
@@ -274,8 +282,13 @@ player is a link, and a client with no addresses has none to give it.
 - [ ] The ladder **names the season it is showing**, from the response rather than the browser's
       clock (`ADR-0061` §6) — the one thing that keeps a season standing from being mistaken for the
       all-time counter the profile strip prints.
-- [ ] `ADR-0012`'s gate is discharged in writing — either by a rule in the code, or by an accepted
+- [x] `ADR-0012`'s gate is discharged in writing — either by a rule in the code, or by an accepted
       risk with a named deadline. Not silently.
+      [`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md),
+      2026-08-21: the second shape — an accepted risk, expiring at the event `ADR-0012` itself names
+      rather than at a date. It carries one obligation out of this epic, which the planner files as a
+      ticket: `EPIC-07`'s definition of done gains a line requiring the acceptance to be re-affirmed
+      in writing or replaced by a countermeasure before the ladder is served on a public address.
 - [ ] `docs/protocol.md` contracts every endpoint this epic adds, including what each refuses.
 - [ ] `poker-engine` is untouched by every commit in the epic.
 

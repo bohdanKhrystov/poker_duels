@@ -42,7 +42,10 @@ which matters for an epic whose other five stories are queries and properties.
 - **`nameOrNone` is the only branch on a null display name**, from
   `web-client/src/profile/name-text.ts`
   ([`ADR-0058`](../../docs/adr/ADR-0058-where-a-name-would-be-the-client-prints-no-name.md)). A ladder
-  row that writes its own fallback breaks that decision even if the string happens to match.
+  row that writes its own fallback breaks that decision even if the string happens to match. **A
+  nameless player is on the ladder**, so this screen prints `No name` in ordinary rows —
+  [`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md)
+  §2 answers the question `ADR-0058` parked, and it is the inheritance that ADR predicted.
 - **Every visible string comes from a text module**, the way `HISTORY_HEADING` in
   `web-client/src/history/history-text.ts` gives the door and the heading one spelling. The door's
   label and the screen's heading are the same constant.
@@ -64,10 +67,12 @@ which matters for an epic whose other five stories are queries and properties.
   below rather than decoration.
 - **Composes `design/tokens/tokens.css`; authors no colour.** `EPIC-06` owns the visual language.
 
-**Blocked on `DEC-056`** (whether a nameless player has a row at all, which decides whether
-`No name` is ever printed here), **`DEC-058`** (whether tied players share a rank number, which
-decides whether one number is printed or two) and **`DEC-059`** (whether the player's own standing
-is marked, jumped to, or shown somewhere else entirely).
+**Blocked on `DEC-058`** (whether tied players share a rank number, which decides whether one
+number is printed or two) and **`DEC-059`** (whether the player's own standing is marked, jumped to,
+or shown somewhere else entirely). `DEC-056` is **answered** — `ADR-0063`: nothing gates a place, so
+this screen filters no row it was sent and `No name` is an ordinary ladder row. `DEC-059` gets
+sharper because of it: with no name to look for, a nameless player has no way to find themselves on
+this screen by scanning it.
 
 **Inherited, and worth naming before the ticket split argues about it:** this door is the *fifth*
 control on the first screen, after *Create a duel room*, *Join the duel*, the profile strip's name
@@ -80,7 +85,7 @@ every other screen, and if not it is one more screen with none.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `DEC-056`, `DEC-058` and `DEC-059`, and on `STORY-0502` merging — run `/plan-story STORY-0503` then.* | — |
+| — | *Not split. Blocked on `DEC-058` and `DEC-059`, and on `STORY-0502` merging — run `/plan-story STORY-0503` then. `DEC-056` is answered by `ADR-0063`.* | — |
 
 ## Acceptance criteria
 
@@ -95,10 +100,12 @@ every other screen, and if not it is one more screen with none.
       in coin order on the wire — a client that sorts fails this.
 - [ ] The rank printed is the rank the response carried, asserted on a page whose first row is not
       rank 1.
-- [ ] If `DEC-056` admits nameless players, a row for one prints exactly what `nameOrNone` returns,
-      asserted beside a named row in the same list. If it excludes them, this criterion is struck
-      when the story is split and the exclusion is `STORY-0502`'s test, not the screen's — the
-      screen never filters rows it was sent.
+- [ ] A row for a player with no display name prints exactly what `nameOrNone` returns, asserted
+      beside a named row in the same list (`ADR-0063` §2 — `DEC-056` admits them, so this criterion
+      is written rather than struck).
+- [ ] The screen renders every row it was sent, asserted against a page containing a nameless player
+      and a player with a **negative** standing — the two rows a client might be tempted to drop.
+      The screen filters nothing; there is no eligibility rule on this side of the wire.
 - [ ] A negative standing renders with its sign, in position, asserted against a fixture holding one.
 - [ ] The screen names the season it is showing, taken **from the response**, asserted against two
       responses naming different seasons — one fixture cannot tell a rendered field from a hardcoded
