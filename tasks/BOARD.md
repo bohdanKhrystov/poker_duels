@@ -1592,7 +1592,7 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050217](tasks/TASK-050217-three-answers-one-page-and-a-read-that-creates-nothing.md) Three answers about the reader, one page for everybody, a read that creates nothing | S | **done** |
 | | [TASK-050218](tasks/TASK-050218-the-document-contracts-the-ladder-and-its-promise.md) The document contracts the ladder — every parameter, the promise, and both refusals | S | **done** |
 | | [TASK-050219](tasks/TASK-050219-nothing-stores-a-standing.md) Nothing stores a standing — no table, no column, no view, and no migration | XS | **done** |
-| [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `STORY-0502` |
+| [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | **ready** — split it next |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
 | [STORY-0505](stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) A season ends, and the record survives it | | | **dropped** — `ADR-0061` §5: a boundary does nothing, so there is no crossing to write |
 | [STORY-0506](stories/STORY-0506-a-duel-moves-a-rank.md) A duel moves a rank, end to end | | | blocked — no decision, waits on `0503` |
