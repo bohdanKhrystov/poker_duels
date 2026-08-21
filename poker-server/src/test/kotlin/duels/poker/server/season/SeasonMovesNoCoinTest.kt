@@ -7,7 +7,9 @@ import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.session.PlayerId
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
@@ -87,6 +89,8 @@ class SeasonMovesNoCoinTest {
             ),
         )
         seasonOf(duel)
+
+        currentSeason(Clock.fixed(instant, ZoneOffset.UTC))
 
         // Second snapshot: after all season functions have been called.
         val playerSnapshotAfter = readPlayerSnapshot()
