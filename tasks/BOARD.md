@@ -1573,6 +1573,25 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | **done** |
 | | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | **done** |
 | [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | **ready** — split it next |
+| | [TASK-050201](tasks/TASK-050201-the-composition-root-owns-the-wall-clock.md) The composition root owns the one wall clock, and no component mints its own | XS | ready |
+| | [TASK-050202](tasks/TASK-050202-a-standings-cursor-carries-the-walks-cutoff.md) A standings cursor carries the walk's cutoff, and one from another season does not decode | S | backlog |
+| | [TASK-050203](tasks/TASK-050203-the-wire-shape-a-row-a-season-and-a-self-standing.md) The wire shape — a row, the season, and a self standing that is never a zero | S | backlog |
+| | [TASK-050204](tasks/TASK-050204-the-port-and-the-query-one-ordered-page.md) The port and the query — one ordered page, narrowed by nothing else | S | backlog |
+| | [TASK-050205](tasks/TASK-050205-tied-players-share-a-rank-and-a-rank-is-not-an-offset.md) Tied players share a rank, a rank is not a row's offset, a tie may span a boundary | S | backlog |
+| | [TASK-050206](tasks/TASK-050206-the-ladder-is-results-not-players.md) The ladder is results, not players — a draw earns a row, one duel is enough | S | backlog |
+| | [TASK-050207](tasks/TASK-050207-the-window-not-the-column-and-a-season-sums-to-zero.md) The number is the window and not the column, and a season sums to exactly zero | S | backlog |
+| | [TASK-050208](tasks/TASK-050208-the-port-answers-one-players-own-standing.md) The port answers one player's own standing, against the whole ladder | S | backlog |
+| | [TASK-050209](tasks/TASK-050209-the-route-answers-a-page-and-pins-the-walk.md) The route answers a page, names its season, and pins the walk to one cutoff | S | backlog |
+| | [TASK-050210](tasks/TASK-050210-the-page-the-route-serves-and-the-self-it-carries.md) The probe row, the last page, the empty ladder, and the self object's three shapes | S | backlog |
+| | [TASK-050211](tasks/TASK-050211-the-routes-refusals-a-bad-limit-a-bad-cursor-and-last-months-walk.md) The route's refusals — a bad limit, a bad cursor, and a walk from last month | S | backlog |
+| | [TASK-050212](tasks/TASK-050212-the-shipped-server-installs-the-ladder-route.md) The shipped server installs the ladder route, on the wall clock the root owns | XS | backlog |
+| | [TASK-050213](tasks/TASK-050213-over-http-every-player-once-and-page-twos-ranks.md) Over HTTP — every player exactly once, and page two's ranks are the ladder's | S | backlog |
+| | [TASK-050214](tasks/TASK-050214-a-duel-that-commits-mid-walk-is-in-no-page-of-it.md) A duel stamped at the cutoff is in no page of the walk, and the ranks stay the cutoff's | S | backlog |
+| | [TASK-050215](tasks/TASK-050215-the-named-exception-and-the-walk-that-sees-it.md) The named exception — the loser twice, the winner never, and a new walk that sees both | S | backlog |
+| | [TASK-050216](tasks/TASK-050216-the-response-tells-a-player-where-they-stand.md) The response tells a player where they stand, on the page drawn and off it | S | backlog |
+| | [TASK-050217](tasks/TASK-050217-three-answers-one-page-and-a-read-that-creates-nothing.md) Three answers about the reader, one page for everybody, a read that creates nothing | S | backlog |
+| | [TASK-050218](tasks/TASK-050218-the-document-contracts-the-ladder-and-its-promise.md) The document contracts the ladder — every parameter, the promise, and both refusals | S | backlog |
+| | [TASK-050219](tasks/TASK-050219-nothing-stores-a-standing.md) Nothing stores a standing — no table, no column, no view, and no migration | XS | backlog |
 | [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `STORY-0502` |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
 | [STORY-0505](stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) A season ends, and the record survives it | | | **dropped** — `ADR-0061` §5: a boundary does nothing, so there is no crossing to write |
@@ -1594,6 +1613,32 @@ recomputed while it is walked. Both are **answered** by
 [`ADR-0066`](../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md) —
 computed per request, and a walk pinned to the instant it began — so `STORY-0502` raises nothing at
 split time and is gated by nothing.
+
+`STORY-0502` was split on 2026-08-21 into **nineteen** tickets, strictly linear: the run is
+sequential and six of them accumulate tests in one file each. It begins with `ADR-0062` §7's ticket
+**(b)** — *"due before `STORY-0502`"* and still unwritten — because the ladder route is the first
+production caller that needs a wall clock it did not construct itself; `serverComponents` gains
+`wallClock: Clock = Clock.systemUTC()`, `PostgresDuelResultSink` loses its own default, and a grep
+holds `src/main` to exactly one `Clock.systemUTC()`. Ticket **(a)** and ticket **(c)** are not
+included and stay unwritten. Four traps the story invites are owned by name rather than hoped away:
+the **self line computed from the page** is `TASK-050216`, which asks with a player on page three
+and again with one on page one, because an implementation that finds the requester among the rows it
+drew is correct exactly when the player can already see themselves; the **accepted anomaly** of
+`ADR-0066` §4 is `TASK-050215`, which puts winner and loser on opposite sides of the cursor and
+asserts the loser **twice** and the winner **never**, with `TASK-050214` asserting the
+at-the-cutoff duel that disturbs nothing — neither file claims `STORY-0408`'s *total and disjoint*,
+which is explicitly not inherited; **rank versus row position** is `TASK-050205` at the port and
+`TASK-050213` over HTTP, both pinning literal rank sequences with ties straddling page boundaries,
+where an offset implementation reads `[3, 4]` for the ladder's `[2, 4]`; and **a fixture already in
+tie order** is refused everywhere — every fixture names its creation order and its recording order,
+and both differ from the answer. The two id-sensitive fixtures assign roles from
+`sortedByDescending { it.id.value }` rather than `UUID.compareTo`, because PostgreSQL orders `uuid`
+by bytes and Java by two signed longs. `TASK-050219` turns `ADR-0066` §1 into a durable guard —
+no table, no column and no materialised view naming a standing or a season — and `ADR-0066` §8's
+index stays **named and unwritten**, as its own §8 asks. The story raised **no decision**:
+`DEC-056`, `DEC-058`, `DEC-059` and `DEC-061` were answered by `ADR-0063` through `ADR-0066` before
+the split, and `DEC-057` and `DEC-060` are untouched — no `playerId` parameter and no season
+parameter, greps included.
 
 `STORY-0501` was split on 2026-08-19 into **six** tickets, linear because five of them touch one
 file. It ships a *function* and not a schema — no table, no column, no migration, no operator, no
