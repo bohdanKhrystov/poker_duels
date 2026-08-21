@@ -2,7 +2,7 @@
 id: STORY-0501
 title: A season is a bounded thing, and every finished duel belongs to one
 type: story
-status: in-progress
+status: done
 parent: EPIC-05
 module: poker-server
 labels: [server, seasons, persistence]

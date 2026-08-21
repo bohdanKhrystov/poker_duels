@@ -1,6 +1,7 @@
 package duels.poker.server.season
 
 import duels.poker.server.duel.FinishedDuel
+import java.time.Clock
 import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneOffset
@@ -65,3 +66,15 @@ public fun seasonOf(instant: Instant): Season {
  * is a September duel in full, never an August one — [startedAt] is deliberately unread.
  */
 public fun seasonOf(duel: FinishedDuel): Season = seasonOf(duel.finishedAt)
+
+/**
+ * The season it is now, read from [clock] and nothing else.
+ *
+ * [clock] has no default per ADR-0062 §3: a defaulted pure function can be called with no clock at
+ * all, and that call would compile anywhere with nothing in a diff to notice. Production's one
+ * `Clock.systemUTC()` belongs at the composition root, not here.
+ *
+ * No zone is named here: [seasonOf] already reads UTC, and [clock]'s own zone is never consulted,
+ * so a clock fixed in another zone cannot change the answer.
+ */
+public fun currentSeason(clock: Clock): Season = seasonOf(clock.instant())
