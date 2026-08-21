@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050205
 title: Tied players share a rank, a rank is not a row's offset, and a tie may span a page boundary
 type: task
-status: backlog
+status: ready
 parent: STORY-0502
 module: poker-server
 estimate: S
