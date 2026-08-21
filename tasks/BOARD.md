@@ -33,13 +33,18 @@ a boundary **does nothing**, and `player.coin_balance` is never reset. The produ
 branch the vision licenses and declined the other out loud: a reset would make *"a counter of duels
 won"* false, and that is the human's to change, not an ADR's. `STORY-0501` is `ready` with no
 migration, `STORY-0505` is **`dropped`** because the crossing it was written for turns out to be no
-code at all, and `STORY-0502` and `STORY-0503` wait on `DEC-058` and `DEC-059` — two product
-decisions a single run can take. `DEC-056` is answered by
+code at all, and `STORY-0502` and `STORY-0503` wait on `DEC-059` — the last product decision
+on the epic's critical path — plus `DEC-061` for the server half. `DEC-056` is answered by
 [`ADR-0063`](../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md):
 **nothing gates a place**, a nameless player has a row that reads `No name`, and the farming vector
 `ADR-0012` gated on this epic is accepted out loud until the ladder is served on a public address.
-`DEC-060` (a finished season on a screen) and `DEC-061` (a page over a season aggregate) were raised
-by `DEC-055`'s answer and block nothing today.
+`DEC-058` is answered by
+[`ADR-0064`](../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md):
+**tied players share one rank number** — `1 + the number of players standing strictly higher`, so
+the ladder prints `3, 3, 5` — and the order rows sit in is not a ranking, which leaves the tiebreak
+key inside `DEC-061` where it belongs. `DEC-060` (a finished season on a screen) and `DEC-061` (a
+page over a season aggregate) were raised by `DEC-055`'s answer; `DEC-060` blocks nothing today and
+`DEC-061` now blocks `STORY-0502` alongside `DEC-059`.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -536,10 +541,9 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-057 | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? Parked here by `EPIC-04` — *"`/api/me` means me"*. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0504` is split |
-| DEC-058 | **The product owner's** — when two players hold the same balance, do they share a rank number or does something break the tie? Ties are the common case with `wins − losses` over few duels. Which key makes paging deterministic is the architect's at split time; what the player *reads* is not | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
-| DEC-059 | **The product owner's** — does a player see their own standing, and where: on the profile strip beside the coin balance, marked on the ladder, behind a *jump to me* control, or nowhere? Parked here by `STORY-0311`. It decides whether `STORY-0502` ships one query or two. `ADR-0061` adds a clause: there are now two candidate numbers, the strip's all-time counter and the ladder's season standing, and the answer says which the strip shows | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
+| DEC-059 | **The product owner's** — does a player see their own standing, and where: on the profile strip beside the coin balance, marked on the ladder, behind a *jump to me* control, or nowhere? Parked here by `STORY-0311`. It decides whether `STORY-0502` ships one query or two. `ADR-0061` adds a clause: there are now two candidate numbers, the strip's all-time counter and the ladder's season standing, and the answer says which the strip shows. [`ADR-0064`](../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md) sharpens it a second time without answering it: tied players share one rank, so a rank shared by 190 people locates nobody and *nothing — the player scrolls* now has to be argued for | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
-| DEC-061 | **The architect's** — is a season standing computed per request or materialised, and what does a page guarantee over an ordering that is **recomputed** while it is walked? The epic parked these as two unnumbered questions for `STORY-0502`'s split; `ADR-0061` supplies the premise and merges them, because the second follows the first — materialise and the ordering is a column again with `ADR-0057`'s discipline nearly intact, compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
+| DEC-061 | **The architect's** — is a season standing computed per request or materialised, and what does a page guarantee over an ordering that is **recomputed** while it is walked? The epic parked these as two unnumbered questions for `STORY-0502`'s split; `ADR-0061` supplies the premise and merges them, because the second follows the first — materialise and the ordering is a column again with `ADR-0057`'s discipline nearly intact, compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all. [`ADR-0064`](../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md) **constrains the answer without taking it**: a rank is `1 + the number of players standing strictly higher`, a function of the **whole ladder** rather than of the page, so a cursor cannot carry a position forward as a rank — and the tiebreak key that makes the order total must be a fact about a row's identity, never about how its player performed | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
@@ -614,6 +618,37 @@ for the planner: `EPIC-07`'s definition of done gains a line requiring this acce
 re-affirmed in writing or replaced by a countermeasure before the ladder is served publicly. It
 raises no `DEC` — the countermeasure's shape is a decision for the day the acceptance expires, and
 `ADR-0063`'s alternative 4, a rate limit on finishing duels, is the shape to start from).
+
+`DEC-058` → [`ADR-0064`](../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md)
+(**tied players share one rank number, and the order rows sit in is not a ranking.** Answered by the
+product owner on 2026-08-21, derived from the vision — *"**A leaderboard.** Ranked results over a
+season"* ranks a **result**, and two players whose season standings are the same integer have the
+same result. A rank is **`1 + the number of players standing strictly higher`**: competition
+ranking, so the ladder prints `3, 3, 5` and never `3, 4, 5` and never `3, 3, 4`, and the number
+means a sentence a player can state — *there are exactly `rank − 1` players ahead of me this
+season*. **A displayed rank and a position in a page are two numbers and only the rank is shown**, a
+distinction that survives page two: a page may begin with the rank the previous page ended on, and a
+repeated rank across two pages is not a duplicate row, because `STORY-0502`'s totality and
+disjointness are properties of **players**. Nothing on the screen breaks a tie, and a tie is marked
+by the repeated number and by nothing else in v0.3 — no `=`, no *tied with 12 others*, no styling.
+The order tied rows are emitted in stays **the architect's** inside `DEC-061`, constrained in one
+product-facing way: the key is a fact about **who a row is** — player id, name collation, profile
+age — and never about **how that player did**, because a tiebreak on duels played or on who got
+there first is a second ranking rule, `ADR-0014` reserves one for an ADR that *supersedes* it, and
+it would mean the way to hold a rank is to stop playing. Costs recorded rather than discovered: **the
+rank stops being free**, because it is a function of the whole ladder rather than of the page — under
+ordinal ranking it would have been the page offset plus the row index — so `DEC-061` gets harder and
+a keyset cursor cannot carry a position forward as if it were a rank; the ladder **cannot name a
+leader for the first days of every month**, twelve times a year, and a player cannot tell where in a
+190-row block of `5`s they sit, which makes `DEC-059` load-bearing for the second time; a jump from
+`5` to `195` reads as missing rows, and §5 prints nothing that explains it; a season can end with
+**no single winner**, so `DEC-060`'s *a single remembered winner* is not always well defined; every
+future *top N* is ill-defined, being three people on a mature ladder and three hundred on day two;
+and the size of a tie is invisible from any single screen. **Unblocks nothing on its own** —
+`STORY-0502` still waits on `DEC-059` and `DEC-061`, `STORY-0503` on `DEC-059` and on `STORY-0502`.
+**Names no ticket and raises no `DEC`**: whether a tie is ever marked with a glyph or a count is a
+string in the ladder's text module and an ordinary ticket against `STORY-0503` if it is ever
+wanted).
 
 `DEC-062` → [`ADR-0062`](../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md)
 (**the server has two clocks and neither answers the other's question.** `ServerClock`
@@ -1449,8 +1484,8 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050104](tasks/TASK-050104-a-duel-belongs-to-the-season-it-finished-in.md) A duel belongs to the season it finished in, never the one it started in | XS | **done** |
 | | [TASK-050105](tasks/TASK-050105-nothing-here-moves-a-coin.md) Nothing this story adds moves a coin, writes a migration, or reaches the engine | S | **done** |
 | | [TASK-050106](tasks/TASK-050106-the-current-season-from-an-injected-clock.md) The current season, read from an injected clock and never from a system clock | S | **done** |
-| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | blocked — `DEC-058`, `DEC-059` |
-| [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `DEC-058`, `DEC-059` |
+| [STORY-0502](stories/STORY-0502-the-standings-read-path.md) The standings read path — ordered, paged, and a rank the server computes | | | blocked — `DEC-059`, `DEC-061` |
+| [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | blocked — `DEC-059` |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
 | [STORY-0505](stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) A season ends, and the record survives it | | | **dropped** — `ADR-0061` §5: a boundary does nothing, so there is no crossing to write |
 | [STORY-0506](stories/STORY-0506-a-duel-moves-a-rank.md) A duel moves a rank, end to end | | | blocked — no decision, waits on `0503` |

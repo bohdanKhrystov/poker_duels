@@ -39,6 +39,15 @@ which matters for an epic whose other five stories are queries and properties.
 - **The client never sorts, never renumbers, never derives a position.**
   [`ADR-0002`](../../docs/adr/ADR-0002-server-authoritative.md) and `STORY-0502`'s server-computed
   rank. The screen prints the rank it was given.
+- **Repeated rank numbers are printed verbatim, and a tie is marked by nothing else.**
+  [`ADR-0064`](../../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md)
+  answers `DEC-058`: tied players share one rank, so a page reading `1 1 1 1 5 5 5 …` is ordinary
+  and the screen neither de-duplicates it, nor collapses it into a group, nor renumbers it, nor
+  prints `=`, `T5` or *tied with 189 others* (§5). A page may also begin with the rank the previous
+  page ended on, which is correct rather than a repeat to filter (§2). **This is the routine state
+  for the first days of every season**, not a corner case: with `ADR-0061`'s monthly window and
+  `ADR-0063`'s absent gate, a four-hundred-row September ladder two days in holds about five
+  distinct numbers, and the gap from `5` to `195` is a skip rather than missing rows.
 - **`nameOrNone` is the only branch on a null display name**, from
   `web-client/src/profile/name-text.ts`
   ([`ADR-0058`](../../docs/adr/ADR-0058-where-a-name-would-be-the-client-prints-no-name.md)). A ladder
@@ -67,12 +76,12 @@ which matters for an epic whose other five stories are queries and properties.
   below rather than decoration.
 - **Composes `design/tokens/tokens.css`; authors no colour.** `EPIC-06` owns the visual language.
 
-**Blocked on `DEC-058`** (whether tied players share a rank number, which decides whether one
-number is printed or two) and **`DEC-059`** (whether the player's own standing is marked, jumped to,
-or shown somewhere else entirely). `DEC-056` is **answered** — `ADR-0063`: nothing gates a place, so
-this screen filters no row it was sent and `No name` is an ordinary ladder row. `DEC-059` gets
-sharper because of it: with no name to look for, a nameless player has no way to find themselves on
-this screen by scanning it.
+**Blocked on `DEC-059`** — whether the player's own standing is marked, jumped to, or shown
+somewhere else entirely. Two of the three gates are **answered**. `DEC-056` — `ADR-0063`: nothing
+gates a place, so this screen filters no row it was sent and `No name` is an ordinary ladder row.
+`DEC-058` — `ADR-0064`: tied players share one rank, the screen prints one number per row and prints
+repeats unchanged. `DEC-059` gets sharper from **both** of them: with no name to look for, a nameless
+player cannot find themselves by scanning, and with 190 rows reading `5` neither can anybody else.
 
 **Inherited, and worth naming before the ticket split argues about it:** this door is the *fifth*
 control on the first screen, after *Create a duel room*, *Join the duel*, the profile strip's name
@@ -85,7 +94,7 @@ every other screen, and if not it is one more screen with none.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `DEC-058` and `DEC-059`, and on `STORY-0502` merging — run `/plan-story STORY-0503` then. `DEC-056` is answered by `ADR-0063`.* | — |
+| — | *Not split. Blocked on `DEC-059`, and on `STORY-0502` merging — run `/plan-story STORY-0503` then. `DEC-056` is answered by `ADR-0063`, `DEC-058` by `ADR-0064`.* | — |
 
 ## Acceptance criteria
 
@@ -98,8 +107,19 @@ every other screen, and if not it is one more screen with none.
       one.
 - [ ] Rows print in the order the server sent them, asserted against a fixture deliberately **not**
       in coin order on the wire — a client that sorts fails this.
-- [ ] The rank printed is the rank the response carried, asserted on a page whose first row is not
-      rank 1.
+- [ ] The rank printed is the rank the response carried, asserted on **two** pages: one whose first
+      row is not rank 1, and one whose first row repeats the rank the previous page ended on. A tie
+      spanning a page boundary is ordinary and the screen must not treat the repeat as a duplicate
+      (`ADR-0064` §2).
+- [ ] **Repeated ranks are printed verbatim**, asserted against a page whose ranks read
+      `1, 1, 1, 4` — every row shows its number, no row is blanked, grouped, de-duplicated or
+      renumbered, and the skip from `1` to `4` is rendered as sent (`ADR-0064` §1, §5).
+- [ ] **A tied row carries no marker**, asserted by the absence of any tie glyph, count or extra
+      class on a page full of equal ranks. `ADR-0064` §5 ships the repeated number and nothing else,
+      so this is the criterion that catches a `=` being helpfully invented inside a ticket.
+- [ ] **A nearly flat ladder renders as an ordinary ladder** — asserted against the routine second
+      day of a season, a page whose rows all carry the same rank and near-identical standings. Not
+      an empty state, not a message, not a special case (`ADR-0064` §6).
 - [ ] A row for a player with no display name prints exactly what `nameOrNone` returns, asserted
       beside a named row in the same list (`ADR-0063` §2 — `DEC-056` admits them, so this criterion
       is written rather than struck).
@@ -120,6 +140,10 @@ every other screen, and if not it is one more screen with none.
 
 ## Out of scope
 
+- **Marking, grouping or counting a tie** — `ADR-0064` §5: v0.3 prints the repeated rank and nothing
+  else. A `=`, a `T5`, a *tied with 189 others* line or a visual grouping of equal ranks is a change
+  to that decision's cheapest sentence and an ordinary ticket if it is ever wanted, not a detail to
+  fill in here.
 - **Searching or filtering the ladder** — nothing in the vision asks for it, and if it is ever
   wanted it inherits [`ADR-0059`](../../docs/adr/ADR-0059-the-record-is-searched-when-the-player-submits.md)'s
   submit-not-typing rule rather than inventing a second answer.
