@@ -179,7 +179,25 @@ the season window — and §9 lists the criteria it added, all of which are belo
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split, and gated by nothing — run `/plan-story STORY-0502`. `DEC-056` is answered by `ADR-0063`, `DEC-058` by `ADR-0064`, `DEC-059` by `ADR-0065`, `DEC-061` by `ADR-0066`.* | — |
+| [TASK-050201](../tasks/TASK-050201-the-composition-root-owns-the-wall-clock.md) | The composition root owns the one wall clock, and no component mints its own | ready |
+| [TASK-050202](../tasks/TASK-050202-a-standings-cursor-carries-the-walks-cutoff.md) | A standings cursor carries the walk's cutoff, and one from another season does not decode | backlog |
+| [TASK-050203](../tasks/TASK-050203-the-wire-shape-a-row-a-season-and-a-self-standing.md) | The wire shape — a row, the season, and a self standing that is never a zero | backlog |
+| [TASK-050204](../tasks/TASK-050204-the-port-and-the-query-one-ordered-page.md) | The port and the query — one ordered page of the season's ladder, narrowed by nothing else | backlog |
+| [TASK-050205](../tasks/TASK-050205-tied-players-share-a-rank-and-a-rank-is-not-an-offset.md) | Tied players share a rank, a rank is not a row's offset, and a tie may span a page boundary | backlog |
+| [TASK-050206](../tasks/TASK-050206-the-ladder-is-results-not-players.md) | The ladder is results, not players — a draw earns a row, one duel is enough | backlog |
+| [TASK-050207](../tasks/TASK-050207-the-window-not-the-column-and-a-season-sums-to-zero.md) | The number is the window and not the column, and a season's standings sum to zero | backlog |
+| [TASK-050208](../tasks/TASK-050208-the-port-answers-one-players-own-standing.md) | The port answers one player's own whole-season standing | backlog |
+| [TASK-050209](../tasks/TASK-050209-the-route-answers-a-page-and-pins-the-walk.md) | The route answers a page, names its season, and pins the walk to one cutoff | backlog |
+| [TASK-050210](../tasks/TASK-050210-the-page-the-route-serves-and-the-self-it-carries.md) | The probe row, the last page, the empty ladder, and the self object's three shapes | backlog |
+| [TASK-050211](../tasks/TASK-050211-the-routes-refusals-a-bad-limit-a-bad-cursor-and-last-months-walk.md) | The route's refusals — a bad limit, a bad cursor, and a walk from last month | backlog |
+| [TASK-050212](../tasks/TASK-050212-the-shipped-server-installs-the-ladder-route.md) | The shipped server installs the ladder route, on the wall clock the root owns | backlog |
+| [TASK-050213](../tasks/TASK-050213-over-http-every-player-once-and-page-twos-ranks.md) | Over HTTP against the database — every player exactly once, and page two's ranks | backlog |
+| [TASK-050214](../tasks/TASK-050214-a-duel-that-commits-mid-walk-is-in-no-page-of-it.md) | A duel stamped at the cutoff is in no page of the walk, and the ranks stay the cutoff's | backlog |
+| [TASK-050215](../tasks/TASK-050215-the-named-exception-and-the-walk-that-sees-it.md) | The named exception — the loser twice, the winner never, and a new walk that sees both | backlog |
+| [TASK-050216](../tasks/TASK-050216-the-response-tells-a-player-where-they-stand.md) | The response tells a player where they stand — on the page drawn, and off it | backlog |
+| [TASK-050217](../tasks/TASK-050217-three-answers-one-page-and-a-read-that-creates-nothing.md) | Three answers about the reader, one page for everybody, and a read that creates nothing | backlog |
+| [TASK-050218](../tasks/TASK-050218-the-document-contracts-the-ladder-and-its-promise.md) | The document contracts the ladder — every parameter, the promise, and both refusals | backlog |
+| [TASK-050219](../tasks/TASK-050219-nothing-stores-a-standing.md) | Nothing stores a standing — no table, no column, no materialised view, no migration | backlog |
 
 ## Acceptance criteria
 
