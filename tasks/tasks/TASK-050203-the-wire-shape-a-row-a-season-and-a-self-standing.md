@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050203
 title: The wire shape — a row, the season it was computed for, and a self standing that is never a zero
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
