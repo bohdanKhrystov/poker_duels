@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050209
 title: The route answers a page, names the season it computed, and pins the walk to one cutoff
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
