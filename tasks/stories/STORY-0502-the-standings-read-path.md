@@ -45,8 +45,9 @@ kept a deterministic collation on `display_name` so this read would have an inde
 - **Negative balances are ordinary and sort where they belong.** `ADR-0014`: a first loss is `−1`.
   Not clamped, not filtered out of the tail, not an error.
 - **A null display name is `null` on the wire.** `ADR-0029` §6 — the server fabricates no
-  placeholder, and `No name` is a client string (`ADR-0058`). Whether a nameless player has a row at
-  all is `DEC-056`'s, and is a different question from what the field carries.
+  placeholder, and `No name` is a client string (`ADR-0058`). A nameless player **does** have a row —
+  [`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md)
+  §2 — and that is still a different question from what the field carries, which is `null`.
 - **Paging is total and disjoint or it says why not.** `STORY-0408` pinned that property for
   `GET /api/me/duels` and [`ADR-0057`](../../docs/adr/ADR-0057-a-cursor-names-the-filter-it-was-drawn-under.md)
   bound a cursor to the filter that drew it. **It cannot be inherited here**: a standings order is
@@ -72,16 +73,23 @@ it is the season window rather than the all-time column:**
   never `ServerClock`, which measures elapsed time and knows no date — and **the response
   names the season it computed** so the client never derives one from the browser's clock
   (`ADR-0002`). The field's name and shape are the architect's; that there is one is not.
-- **`DEC-056` may narrow the eligible set; it may not widen it.**
+- **The eligible set is narrowed by nothing.**
+  [`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md)
+  §1 answers `DEC-056`: there is **no eligibility predicate** — no minimum duels, no minimum
+  standing, no account, no display name, no profile age, no opponent-diversity rule. Beyond the
+  season window and whatever paging `DEC-061` settles, this query adds **no `WHERE` at all**, and a
+  predicate that appears in a ticket here is a defect rather than a refinement. Two properties of §4
+  follow and are criteria below: a rank is a position among **everyone** who played the season, and
+  the standings of a whole season **sum to exactly zero**.
 - **The ladder's number is not `player.coin_balance`**, and from the second season on they differ for
   anyone who played in both. `EPIC-05`'s non-negotiable about the two agreeing is contradicted on
   purpose by that ADR, in writing, and the criteria below are rewritten to match rather than left to
   fail.
 
-**Still blocked on three decisions**, each of which changes the query rather than decorating it, and
-on one the answer to `DEC-055` raised:
+**Still blocked on two decisions**, each of which changes the query rather than decorating it, and
+on one the answer to `DEC-055` raised. `DEC-056` — the eligibility predicate — is **answered** by
+`ADR-0063` and is no longer one of them:
 
-- `DEC-056` — the eligibility predicate, including whether a player with no display name has a row.
 - `DEC-058` — whether tied players share a rank number, which decides whether *rank* and *position
   in the page* are one field or two.
 - `DEC-059` — whether a player can learn their own standing without walking to it. One player's rank
@@ -97,7 +105,7 @@ on one the answer to `DEC-055` raised:
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `DEC-056`, `DEC-058`, `DEC-059` and `DEC-061` — run `/plan-story STORY-0502` once they are answered.* | — |
+| — | *Not split. Blocked on `DEC-058`, `DEC-059` and `DEC-061` — run `/plan-story STORY-0502` once they are answered. `DEC-056` is answered by `ADR-0063`.* | — |
 
 ## Acceptance criteria
 
@@ -111,11 +119,17 @@ name `ADR-0061` are what `DEC-055`'s answer added or rewrote.
       to it. A client counting rows would be wrong here and the test says so.
 - [ ] Walking every page returns each eligible player exactly once — no gap, no duplicate — under
       whatever guarantee this story states, and the guarantee is written in `docs/protocol.md`.
-- [ ] The nameless case is asserted in whichever direction `DEC-056` chose, and there is no third
-      option: **either** a player with no display name has a row and it carries `null` — never a
-      placeholder — asserted beside a named player in the same page, **or** they have no row and the
-      test asserts their absence from a page they would otherwise sort into. One of these two tests
-      exists.
+- [ ] A player with no display name **has a row**, and it carries `null` rather than a placeholder,
+      asserted beside a named player in the same page (`ADR-0063` §2 — the branch `DEC-056` chose;
+      the alternative test, asserting their absence, is not written).
+- [ ] **One duel is enough, and nothing else is required.** A player who finished exactly one duel in
+      the season is on the page, asserted beside a player with several — and no request parameter,
+      profile field or credential changes either answer. This is the criterion that catches an
+      eligibility predicate being invented inside a ticket (`ADR-0063` §1).
+- [ ] **The season's standings sum to exactly zero** over the whole ladder, asserted by walking every
+      page of a fixture holding at least one draw and one decisive duel. `ADR-0063` §4: every duel
+      writes two rows summing to zero and both players are listed, so a ladder whose total is
+      non-zero has either lost a row or invented one.
 - [ ] Reading the ladder creates nothing: a request from an unknown device leaves the `player` row
       count unchanged, asserted.
 - [ ] An empty ladder is `200` with an empty page, not `404` — the same shape `GET /api/me/duels`
