@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050204
 title: The port and the query — one ordered page of the season's ladder, narrowed by nothing else
 type: task
-status: backlog
+status: ready
 parent: STORY-0502
 module: poker-server
 estimate: S
