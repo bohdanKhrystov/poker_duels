@@ -11,9 +11,10 @@ depends_on: [STORY-0501]
 
 ## Goal
 
-One HTTP endpoint answers *where does everybody stand*: an ordered page of players with their duel
-coins and a rank the server worked out, scoped to a season, walkable to the end without gaps or
-duplicates.
+One HTTP endpoint answers *where does everybody stand* and, in the same response, *where do I
+stand*: an ordered page of players with their duel coins and a rank the server worked out, scoped to
+a season, walkable to the end without gaps or duplicates — plus the requesting player's own rank and
+season standing, served whether or not their row is on the page drawn (`ADR-0065`).
 
 ## Why
 
@@ -66,7 +67,9 @@ kept a deterministic collation on `display_name` so this read would have an inde
   bound a cursor to the filter that drew it. **It cannot be inherited here**: a standings order is
   keyed on a number that changes while the walk is in progress, because somebody wins a duel between
   page one and page two. Whatever this story guarantees, it guarantees explicitly.
-- **One query per page**, as the history read does.
+- **One query per page of rows**, as the history read does — and one more aggregate on the request
+  that opens the ladder, for the player's own standing (`ADR-0065` §3). Two answers, one response;
+  whether that is one statement or two is `DEC-061`'s.
 - **The engine learns nothing**, and no route parameter reaches `poker-engine`.
 
 **The scope is settled, by
@@ -99,26 +102,44 @@ it is the season window rather than the all-time column:**
   purpose by that ADR, in writing, and the criteria below are rewritten to match rather than left to
   fail.
 
-**Still blocked on one product decision**, which changes the query rather than decorating it, and on
-one the answer to `DEC-055` raised. Two of the original gate are **answered**: `DEC-056` — the
-eligibility predicate — by `ADR-0063`, and `DEC-058` — the tie — by
-[`ADR-0064`](../../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md),
-which settles that *rank* and *position in the page* are two numbers and only the first is served:
+**This read answers with two things, not one**, by
+[`ADR-0065`](../../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md), which answers
+`DEC-059`:
 
-- `DEC-059` — whether a player can learn their own standing without walking to it. One player's rank
-  is a different query from a page of them, and if the answer puts a standing on the profile strip
-  it is a field on `ProfileResponse` rather than anything on this endpoint. It now also decides
-  *which* number the strip shows, since there are two.
+- **The page, and the requesting player's own rank and season standing**, in **one response** to
+  **one request**. The player's own standing is served whether or not their row is in the page
+  drawn, so it cannot be derived from the rows — a player on page forty asks for page one and must
+  still be told rank `812` (§1, §3).
+- **It is required on the request that opens the ladder** — the one with no cursor — and is **not**
+  required on later pages, and it is **not** required to be drawn from the same instant as the page
+  (§3). A standing one duel stale is an ordinary answer. Whether one statement or two produce it,
+  and whether one snapshot covers both, is `DEC-061`'s.
+- **Three answers, and the third is not a zero** (§4): a rank and a standing for a player who
+  finished a duel this season; **no place this season** — no rank, and never `0` — for a profile
+  that finished none, because `0` is a real standing a draw earns (`ADR-0015`); and **nothing at
+  all** for a request carrying no known device, which is the ordinary state of a first visit.
+- **The page itself is identical in all three.** No row is added, removed, reordered or filtered by
+  who asked. The ladder stays readable by a client with no profile, and it never becomes personalised
+  in any other way.
+- **`ProfileResponse` gains no field and `GET /api/me` gains no aggregate** (§2). The profile strip
+  keeps the all-time counter; the season number lives only on this endpoint's answers. A rank added
+  to the profile read is a change to a merged decision, not a convenience.
+
+**Still blocked on one decision, the architect's:**
+
 - `DEC-061` — **the architect's, raised by `ADR-0061`.** Is a standing computed per request or
   materialised, and what does a page guarantee over an ordering that is *recomputed* while it is
   walked? The epic had parked these as two unnumbered questions for this story to raise at split
   time; the ADR supplied their premise and merged them, so this story now **waits** on them instead.
+  `ADR-0065` §3 narrows it once more: whatever the mechanism, it has to produce a competition rank
+  for a **single named player** who may be on no page the request drew, so a design that only
+  numbers rows while walking an ordered page cannot serve this endpoint.
 
 ## Tasks
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `DEC-059` and `DEC-061` — run `/plan-story STORY-0502` once they are answered. `DEC-056` is answered by `ADR-0063`, `DEC-058` by `ADR-0064`.* | — |
+| — | *Not split. Blocked on `DEC-061` alone — run `/plan-story STORY-0502` once it is answered. `DEC-056` is answered by `ADR-0063`, `DEC-058` by `ADR-0064`, `DEC-059` by `ADR-0065`.* | — |
 
 ## Acceptance criteria
 
@@ -156,6 +177,18 @@ These hold under every answer the open decisions can give; the answers add more.
       page of a fixture holding at least one draw and one decisive duel. `ADR-0063` §4: every duel
       writes two rows summing to zero and both players are listed, so a ladder whose total is
       non-zero has either lost a row or invented one.
+- [ ] **The requesting player's own rank and season standing come back with the page, for a player
+      who is not on the page requested** — asserted against a fixture where they sit on a later page,
+      and again where they sit on the page drawn — where the two numbers must equal the row that
+      player has in it. Two inputs, because one fixture whose player is on the page cannot tell a real
+      whole-ladder aggregate from an echo of the rows (`ADR-0065` §1).
+- [ ] **A profile that finished no duel this season is told it has no place**, and is not given a
+      rank and not given `0` — asserted beside a player whose only duel that season was a **draw**,
+      who *does* have a rank and a standing of `0`. These are the two answers an obvious
+      implementation collapses into one (`ADR-0065` §4, `ADR-0015`).
+- [ ] **A request carrying no known device gets the page and no self standing**, asserted — and the
+      page it gets is the same page a known device gets, row for row, asserted against the same
+      fixture. The ladder is readable without a profile and is narrowed by nobody (`ADR-0065` §4).
 - [ ] Reading the ladder creates nothing: a request from an unknown device leaves the `player` row
       count unchanged, asserted.
 - [ ] An empty ladder is `200` with an empty page, not `404` — the same shape `GET /api/me/duels`
@@ -177,7 +210,9 @@ These hold under every answer the open decisions can give; the answers add more.
 - [ ] The response names the season it was computed for, and a test asserts the endpoint answers for
       the season the server's clock is in — moved, not waited for.
 - [ ] `docs/protocol.md` contracts the endpoint, every parameter, and what each one refuses,
-      including which season it serves and that it serves no other.
+      including which season it serves and that it serves no other, **and the three answers the
+      requesting player's own standing has** — a rank and a standing, no place this season, or absent
+      (`ADR-0065` §4).
 - [ ] `./gradlew :poker-engine:check` passes with no change to `poker-engine`.
 
 ## Out of scope
@@ -200,3 +235,13 @@ These hold under every answer the open decisions can give; the answers add more.
   carries it.
 - **A count of how many players share a rank, or any marker on a tied row** — `ADR-0064` §5: v0.3
   prints the repeated number and nothing else, so this response carries no tie field.
+- **A standing, a rank or a season on `GET /api/me`** — `ADR-0065` §2. `ProfileResponse` is untouched
+  by this story and the profile strip keeps the all-time counter; the whole-ladder aggregate stays off
+  the route that runs on every lobby load. Asserted by leaving `ProfileReads`' tests untouched.
+- **A *jump to me* parameter, a page-containing-player-X query, or a ladder total** — `ADR-0065` §5
+  and §7. The self standing is the whole answer in v0.3; each of these is an ordinary ticket if it is
+  ever wanted, and none is a gap in this endpoint.
+- **A standing for anybody but the requester** — `ADR-0065` §3. The requester is identified by the
+  `X-Device-Id` header the other reads already carry; **no `playerId` parameter**, because an endpoint
+  answering *what is player X's standing* for any X asked is `DEC-057`'s question and this story does
+  not pre-empt it.

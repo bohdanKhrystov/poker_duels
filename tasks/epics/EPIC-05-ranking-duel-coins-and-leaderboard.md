@@ -70,6 +70,9 @@ which answers `DEC-055`:
   calendar month in UTC, half-open, identified by its month, stored nowhere.
 - **The standings read path.** An ordered, paged, server-computed ladder over plain HTTP, with the
   same totality and disjointness discipline `STORY-0408` pinned for `GET /api/me/duels`.
+  [`ADR-0065`](../../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md) adds one
+  obligation to it and answers `DEC-059`: the same response also tells the requesting player where
+  **they** stand, so this read carries **two aggregates**, not one.
 - ~~**Whatever gates a place on it.**~~ Discharged by
   [`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md),
   which answers `DEC-056`: **nothing gates a place** — the ladder is `ADR-0061` §4's set narrowed by
@@ -78,7 +81,8 @@ which answers `DEC-055`:
   this obligation allowed — a **written, dated acceptance** of the residual risk, expiring at an
   event rather than a date: the first time the ladder is served on a public address.
 - **The ladder as a screen**, reached from the first screen and left the way `ADR-0060` says a
-  second screen is left.
+  second screen is left — and, by `ADR-0065`, a screen that hands the player their own row in a
+  self line above the rows rather than asking them to find it.
 - **Whatever a row leads to** (`DEC-057`), including nothing.
 - ~~**What happens when a season ends**, and what of the record survives it.~~ `ADR-0061` §5: a
   boundary does **nothing** — nothing is written, reset or archived, and the record survives it by
@@ -124,6 +128,11 @@ which answers `DEC-055`:
   What keeps it honest is the label — §6 requires the ladder to name the season it is showing, taken
   from the response and never from the browser's clock. A row that prints a season standing *without*
   saying it is one is the defect that sentence was reaching for, and it is still a defect.
+  [`ADR-0065`](../../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md) §2 keeps the two
+  apart by surface as well as by label: the strip prints the all-time counter and gains **nothing**,
+  every number on the ladder screen — rows and the player's own self line alike — is the season
+  standing, and `ADR-0060`'s screen swap means the two are never visible at the same time. A season
+  number on the profile strip is now a change to that decision, not a field somebody adds.
 - **A negative balance is ordinary, and this is the first surface that sorts by one.**
   `ADR-0014`: a new player's first loss puts them at −1, *"that is intended, and it is the case to
   check first when the display work lands"*. Not clamped, not hidden, not filtered off the bottom
@@ -180,8 +189,8 @@ survive its decision did not**.
 | ID | Title | Depends on | Gated by | Status |
 | --- | --- | --- | --- | --- |
 | [STORY-0501](../stories/STORY-0501-a-season-is-a-bounded-thing.md) | A season is a bounded thing, and every finished duel belongs to one | — | — | **ready** |
-| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | `DEC-059`, `DEC-061` | blocked |
-| [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | `DEC-059` | blocked |
+| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | `DEC-061` | blocked |
+| [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | — | blocked |
 | [STORY-0504](../stories/STORY-0504-what-a-row-leads-to.md) | What a row leads to — another player, seen by a stranger | 0503 | `DEC-057` | blocked — may be `dropped` |
 | [STORY-0505](../stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) | A season ends, and the record survives it | 0502 | — | **dropped** — `ADR-0061` §5 |
 | [STORY-0506](../stories/STORY-0506-a-duel-moves-a-rank.md) | A duel moves a rank, end to end | 0503 | — | blocked |
@@ -247,11 +256,17 @@ here: nothing gates a place, and a nameless player has a row. **And `DEC-058` is
 [`ADR-0064`](../../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md),
 2026-08-21: tied players share one rank number, `1 + the number of players standing strictly higher`,
 and the order rows sit in is not a ranking — which leaves the tiebreak key inside `DEC-061` rather
-than answering half of somebody else's question. The remaining two of the original five block one or
-two stories each and are still written so that a single product-owner run can answer them in
-dependency order. Two more were raised **by** `DEC-055`'s answer: `DEC-060`, the product owner's, blocking
-nothing; and `DEC-061`, the architect's, which is the epic's two previously unnumbered questions
-merged into one.
+than answering half of somebody else's question. **And `DEC-059` is answered** —
+[`ADR-0065`](../../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md), 2026-08-21: the
+ladder screen renders one **self line** above the rows stating the player's own rank and season
+standing, served with the page, so `STORY-0502` ships **two aggregates in one response**; the
+profile strip is **untouched** and gains no season number, which closes what `STORY-0311` and
+`ADR-0061` §6 both parked here; and nothing marks the player's row in the list. **`STORY-0503` is
+now gated by no decision at all** and waits only on `STORY-0502` landing. That leaves **one** of the
+original five open — `DEC-057`, which blocks only `STORY-0504`. Two more were raised **by**
+`DEC-055`'s answer: `DEC-060`, the product owner's, blocking nothing; and `DEC-061`, the architect's,
+which is the epic's two previously unnumbered questions merged into one and is now the **only** thing
+standing between `STORY-0502` and a split.
 
 A seventh, **`DEC-062`**, was raised at `STORY-0501`'s split and **answered the same day** —
 [`ADR-0062`](../../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md): the server
@@ -270,7 +285,6 @@ coming due at once, which is what a v0.3 milestone is.
 | ID | Question | Blocks |
 | --- | --- | --- |
 | `DEC-057` | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? `EPIC-04` parked this here in as many words — *"viewing another player's profile or history … it needs a name per leaderboard row and owns what a row links to. Here, `/api/me` means me."* Settle whether a row is inert text or opens something; if it opens something, what a stranger may read — display name, coin balance, duels played, win/loss record, the duel list itself, which `GET /api/me/duels` today serves only to the player it belongs to; and how that sits with `ADR-0029` §7's *"no code path turns a name into an identity"*, which is why history search returns duels and never players. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | `STORY-0504` — whether it exists at all |
-| `DEC-059` | **The product owner's** — does a player see **their own** standing, and where? `STORY-0311`'s profile strip parked *"leaderboard, rating, season standing"* here by name, and the strip is the obvious home for a rank beside the coin balance it already prints. The alternatives are not equivalent: a rank on the strip is a field on `ProfileResponse` and a second query on a route that runs on every lobby load; a marked row on the ladder is a client concern and useless once the player is on page forty; a *jump to me* control is a third endpoint. And *nothing — the player scrolls* is a real answer for a ladder with two players on it. Settle which, because it decides whether `STORY-0502` ships one query or two. The vision is the argument for asking rather than assuming: *"Ranked results over a season"* is about where **you** stand, and an anonymous profile takes a place like anyone else (`ADR-0036`), so *never* would need saying out loud rather than falling out. `ADR-0061` adds a clause: there are now two candidate numbers — the strip's all-time counter and the ladder's season standing — and the answer says which of them the strip shows. [`ADR-0064`](../../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md) sharpens it a second time and answers no part of it: tied players share one rank, so on the second day of a season a rank shared by 190 people locates nobody on the screen, and *nothing — the player scrolls* is now an answer that has to be argued for rather than one that falls out | `STORY-0502`, `STORY-0503` |
 | `DEC-060` | **The product owner's, raised by [`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7** — does a **finished** season ever become reachable from a screen, and how is one chosen? The ADR settles that a finished season is never *gone*: its standings recompute exactly from `duel` and `duel_result` rows nothing rewrites, and nothing is archived because an archive would preserve nothing the ledger does not. What it deliberately does not settle is whether a player is ever given a way to ask for one. As shipped, on the first day of a month the previous season's ladder is computable and unreachable, and **nothing anywhere records who won it** — the first season this product runs ends with its winner celebrated by nothing. Settle whether the product ever shows a past season and, if so, how one is named and chosen: a selector, a *last season* line, a single remembered winner, or nothing. Note the cost on the other side — a selector is one more control on a screen `ADR-0060` already said would crowd. *Never* is a complete answer and needs saying out loud rather than falling out | nothing today; the deadline is the first season boundary after the ladder ships |
 | `DEC-061` | **The architect's, raised by [`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §4** — is a season standing computed per request or materialised, and what does a page guarantee over an ordering that is **recomputed** while it is walked? These are the two questions this epic listed as *"deliberately not numbered yet"*, merged into one because the ADR coupled them: materialise and the ordering is a column again with [`ADR-0057`](../../docs/adr/ADR-0057-a-cursor-names-the-filter-it-was-drawn-under.md)'s cursor discipline nearly intact; compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all. The read is now a `SUM(duel_result.coin_delta)` over a join to `duel` filtered by `finished_at`, with no index built for it, no scale problem yet, and no measurement anywhere in this product to say what it costs — so *"compute per request and state the guarantee honestly"* is a legitimate answer and premature caching is the obvious wrong first move. [`ADR-0064`](../../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md) **constrains this without answering it**: a rank is `1 + the number of players standing strictly higher`, a function of the **whole ladder** rather than of the page, so a keyset cursor cannot carry a position forward as if it were a rank; and whichever key gives the ladder its deterministic total order, it must be a fact about a row's **identity** — id, name collation, profile age — rather than about how its player performed, because a key of the second kind is a second ranking rule and `ADR-0014` reserves one for an ADR that supersedes it | `STORY-0502` |
 
@@ -289,6 +303,11 @@ player is a link, and a client with no addresses has none to give it.
 - [ ] The ladder **names the season it is showing**, from the response rather than the browser's
       clock (`ADR-0061` §6) — the one thing that keeps a season standing from being mistaken for the
       all-time counter the profile strip prints.
+- [ ] **A player learns where they stand without finding their row.** A player with no display name,
+      tied with a hundred others, opens the ladder and reads their own rank and season standing from
+      the self line ([`ADR-0065`](../../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md)
+      §1) — and a player who finished no duel this season is told they have no place rather than
+      shown a `0` or a rank (§4).
 - [x] `ADR-0012`'s gate is discharged in writing — either by a rule in the code, or by an accepted
       risk with a named deadline. Not silently.
       [`ADR-0063`](../../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md),
