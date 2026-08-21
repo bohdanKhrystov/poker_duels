@@ -2,7 +2,7 @@
 id: STORY-0502
 title: The standings read path — ordered, paged, and a rank the server computes
 type: story
-status: blocked
+status: ready
 parent: EPIC-05
 module: poker-server
 labels: [server, http, read-path, leaderboard]
