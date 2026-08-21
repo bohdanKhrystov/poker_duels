@@ -110,7 +110,7 @@ class SeasonMovesNoCoinTest {
         val playerSnapshotBefore = readPlayerSnapshot()
         val duelResultSnapshotBefore = readDuelResultSnapshot()
 
-        // Deliberately move a coin to test the detector.
+        // Deliberately move a coin in the player table to test the detector.
         dataSource.connection.use { connection ->
             connection.prepareStatement(
                 "UPDATE player SET coin_balance = coin_balance + 1",
@@ -123,13 +123,43 @@ class SeasonMovesNoCoinTest {
         val playerSnapshotAfter = readPlayerSnapshot()
         val duelResultSnapshotAfter = readDuelResultSnapshot()
 
-        // Assert the comparison detects the coin movement.
-        // If this assertion passes, the comparison mechanism is working and would catch
-        // any unintended coin movement in noSeasonFunctionMovesACoin.
+        // Assert the comparison detects the coin movement in the player table.
         assertEquals(
             false,
             playerSnapshotBefore == playerSnapshotAfter,
-            "snapshot comparison must detect the coin movement",
+            "snapshot comparison must detect the coin movement in player table",
+        )
+    }
+
+    @Test
+    fun theSnapshotComparisonDetectsDuelResultMovedCoins() {
+        // Insert fixture: two players and one duel with its results.
+        val playerId1 = insertPlayer("device-1", 3)
+        val playerId2 = insertPlayer("device-2", -1)
+        val duelId = insertDuel()
+        insertDuelResult(duelId, playerId1, 1)
+        insertDuelResult(duelId, playerId2, -1)
+
+        // First snapshot: before any coin moves.
+        val duelResultSnapshotBefore = readDuelResultSnapshot()
+
+        // Deliberately move a coin in the duel_result table to test the detector.
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "UPDATE duel_result SET coin_delta = coin_delta + 1",
+            ).use { statement ->
+                statement.executeUpdate()
+            }
+        }
+
+        // Second snapshot: after moving a coin.
+        val duelResultSnapshotAfter = readDuelResultSnapshot()
+
+        // Assert the comparison detects the coin movement in the duel_result table.
+        assertEquals(
+            false,
+            duelResultSnapshotBefore == duelResultSnapshotAfter,
+            "snapshot comparison must detect the coin movement in duel_result table",
         )
     }
 
