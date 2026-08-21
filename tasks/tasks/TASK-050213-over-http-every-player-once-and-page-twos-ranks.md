@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050213
 title: Over HTTP against the database — every player exactly once, and page two's ranks are the ladder's
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
