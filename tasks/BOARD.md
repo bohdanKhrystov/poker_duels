@@ -33,8 +33,8 @@ a boundary **does nothing**, and `player.coin_balance` is never reset. The produ
 branch the vision licenses and declined the other out loud: a reset would make *"a counter of duels
 won"* false, and that is the human's to change, not an ADR's. `STORY-0501` is `ready` with no
 migration, `STORY-0505` is **`dropped`** because the crossing it was written for turns out to be no
-code at all, and `STORY-0502` and `STORY-0503` wait on `DEC-059` — the last product decision
-on the epic's critical path — plus `DEC-061` for the server half. `DEC-056` is answered by
+code at all, and **every product decision on the epic's critical path is now answered** — what is
+left blocking `STORY-0502` is `DEC-061`, the architect's. `DEC-056` is answered by
 [`ADR-0063`](../docs/adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md):
 **nothing gates a place**, a nameless player has a row that reads `No name`, and the farming vector
 `ADR-0012` gated on this epic is accepted out loud until the ladder is served on a public address.
@@ -42,9 +42,14 @@ on the epic's critical path — plus `DEC-061` for the server half. `DEC-056` is
 [`ADR-0064`](../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md):
 **tied players share one rank number** — `1 + the number of players standing strictly higher`, so
 the ladder prints `3, 3, 5` — and the order rows sit in is not a ranking, which leaves the tiebreak
-key inside `DEC-061` where it belongs. `DEC-060` (a finished season on a screen) and `DEC-061` (a
-page over a season aggregate) were raised by `DEC-055`'s answer; `DEC-060` blocks nothing today and
-`DEC-061` now blocks `STORY-0502` alongside `DEC-059`.
+key inside `DEC-061` where it belongs. `DEC-059` is answered by
+[`ADR-0065`](../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md): **the ladder hands a
+player their own row** — one self line above the rows, stating their rank and their season standing,
+served with the page — and **the profile strip keeps the all-time coin and gains nothing**, so
+`STORY-0502` ships two aggregates in one response and `STORY-0503` marks no row. `DEC-060` (a
+finished season on a screen) and `DEC-061` (a page over a season aggregate) were raised by
+`DEC-055`'s answer; `DEC-060` blocks nothing today and `DEC-061` is now the **only** thing blocking
+`STORY-0502`, with `STORY-0503` waiting on nothing but `STORY-0502` landing.
 
 Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 
@@ -541,7 +546,6 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-057 | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? Parked here by `EPIC-04` — *"`/api/me` means me"*. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0504` is split |
-| DEC-059 | **The product owner's** — does a player see their own standing, and where: on the profile strip beside the coin balance, marked on the ladder, behind a *jump to me* control, or nowhere? Parked here by `STORY-0311`. It decides whether `STORY-0502` ships one query or two. `ADR-0061` adds a clause: there are now two candidate numbers, the strip's all-time counter and the ladder's season standing, and the answer says which the strip shows. [`ADR-0064`](../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md) sharpens it a second time without answering it: tied players share one rank, so a rank shared by 190 people locates nobody and *nothing — the player scrolls* now has to be argued for | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 | DEC-061 | **The architect's** — is a season standing computed per request or materialised, and what does a page guarantee over an ordering that is **recomputed** while it is walked? The epic parked these as two unnumbered questions for `STORY-0502`'s split; `ADR-0061` supplies the premise and merges them, because the second follows the first — materialise and the ordering is a column again with `ADR-0057`'s discipline nearly intact, compute per request and `STORY-0408`'s *total and disjoint* cannot be inherited at all. [`ADR-0064`](../docs/adr/ADR-0064-tied-players-share-one-rank-and-row-order-is-not-a-ranking.md) **constrains the answer without taking it**: a rank is `1 + the number of players standing strictly higher`, a function of the **whole ladder** rather than of the page, so a cursor cannot carry a position forward as a rank — and the tiebreak key that makes the order total must be a fact about a row's identity, never about how its player performed | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0502` is split |
 
@@ -649,6 +653,40 @@ and the size of a tie is invisible from any single screen. **Unblocks nothing on
 **Names no ticket and raises no `DEC`**: whether a tie is ever marked with a glyph or a count is a
 string in the ladder's text module and an ordinary ticket against `STORY-0503` if it is ever
 wanted).
+
+`DEC-059` → [`ADR-0065`](../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md)
+(**the ladder hands a player their own row, and the profile strip keeps the all-time coin.**
+Answered by the product owner on 2026-08-21, derived from the vision — *"**A leaderboard.** Ranked
+results over a season"* ranks a result **belonging to a player**, and a ladder whose own player
+cannot locate their result ranks it for everybody except the person who produced it; and *"**One
+duel coin per win.** Not chips, not currency, not a balance. A counter of duels won"* is why the
+strip keeps printing that counter and gains nothing. The **ladder screen** renders one **self
+line**, above the rows and below the season name, stating the requesting player's **rank** and
+**season standing** — present whether or not their row is in the page on screen, and unchanged as
+they walk pages, so a player is handed their row rather than asked to find it. **The profile strip
+is untouched**: no rank, no season standing, no season name, `ProfileResponse` gains no field, and
+`GET /api/me` never becomes a whole-ladder aggregate on a route that runs on every lobby load —
+which answers what `STORY-0311` and `ADR-0061` §6 both parked here. Which number each surface shows
+is pinned: strip = all-time `player.coin_balance`, ladder rows **and** self line = the season
+`SUM(coin_delta)`, told apart by `ADR-0061` §6's season name and by `ADR-0060` never putting the two
+on one screen. **`STORY-0502` therefore ships two aggregates in one response**, not one query: the
+page, and one player's competition rank for a player who may be on no page it drew — mechanism left
+to `DEC-061`. Three states, and the third is not a zero: a rank and a standing; **no place this
+season** for a profile that finished no duel in it, printing no rank and never `0`, because `0` is a
+real standing a draw earns (`ADR-0015`); and no line at all for a request with no known device — and
+**the page is identical in all three**, so the ladder stays readable without a profile and is never
+personalised. **Nothing else marks the player in v0.3**: no highlighted row, no *jump to me*, no
+ladder total, no movement, no tie count, no link. Costs recorded rather than discovered: the ladder
+read **stops being one query** and `DEC-061` gets harder for the second time in a day; the lobby
+still does not say where you stand, so it is a click every time on a screen `ADR-0060` said would
+crowd; the self line may disagree with the same player's row in the same response, which the ADR
+permits on purpose rather than paying for a snapshot; **the ladder response is now per-requester**
+and can no longer be cached as one public document, a bill `EPIC-07` pays; the founding two-player
+ladder gets a line restating a row beneath it; and telling a player they are rank `5` makes *which
+of these 190 rows is mine* a sharper question that this decision deliberately does not answer.
+**Unblocks `STORY-0502` down to `DEC-061` alone and `STORY-0503` down to `STORY-0502` landing.**
+Constrains `DEC-061` further — one player's rank cannot be derived from a page that player is not
+on — leaves `DEC-057` and `DEC-060` untouched, and **names no ticket and raises no `DEC`**).
 
 `DEC-062` → [`ADR-0062`](../docs/adr/ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md)
 (**the server has two clocks and neither answers the other's question.** `ServerClock`

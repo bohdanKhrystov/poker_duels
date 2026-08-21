@@ -11,8 +11,9 @@ depends_on: [STORY-0502]
 
 ## Goal
 
-A player opens the ladder from the first screen, reads an ordered list of rivals with their duel
-coins and their positions, walks it a page at a time, and comes back to where they started.
+A player opens the ladder from the first screen, is told where **they** stand before they read
+anybody else's row, reads an ordered list of rivals with their duel coins and their positions, walks
+it a page at a time, and comes back to where they started.
 
 ## Why
 
@@ -76,12 +77,32 @@ which matters for an epic whose other five stories are queries and properties.
   below rather than decoration.
 - **Composes `design/tokens/tokens.css`; authors no colour.** `EPIC-06` owns the visual language.
 
-**Blocked on `DEC-059`** — whether the player's own standing is marked, jumped to, or shown
-somewhere else entirely. Two of the three gates are **answered**. `DEC-056` — `ADR-0063`: nothing
-gates a place, so this screen filters no row it was sent and `No name` is an ordinary ladder row.
-`DEC-058` — `ADR-0064`: tied players share one rank, the screen prints one number per row and prints
-repeats unchanged. `DEC-059` gets sharper from **both** of them: with no name to look for, a nameless
-player cannot find themselves by scanning, and with 190 rows reading `5` neither can anybody else.
+**Gated by no decision.** All three are answered, and the last of them is why this screen has a line
+above its rows. `DEC-056` — `ADR-0063`: nothing gates a place, so this screen filters no row it was
+sent and `No name` is an ordinary ladder row. `DEC-058` — `ADR-0064`: tied players share one rank,
+the screen prints one number per row and prints repeats unchanged. `DEC-059` —
+[`ADR-0065`](../../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md), which was sharpened
+by **both** of the others: with no name to look for a nameless player cannot find themselves by
+scanning, and with 190 rows reading `5` neither can anybody else, so the ladder hands a player their
+row instead:
+
+- **One self line, above the list and below the season name**, stating the player's own **rank** and
+  **season standing** — the same two numbers their row carries (§1). It is rendered whether or not
+  their row is in the page on screen, and it does not change as pages are appended.
+- **It is rendered from the field the response carried, never derived by matching the player's id
+  against the rows on screen** (`ADR-0002`, §8). Matching would be wrong on every page the player is
+  not on, which is nearly all of them.
+- **Three states, and the third is not a zero** (§4): rank and standing; **no place this season** for
+  a player who finished no duel in it, printing no number at all; and **nothing** for a client with
+  no profile, where the ladder renders exactly as it otherwise would.
+- **No row in the list is marked as the reader's**, no *jump to me*, no scroll-to-my-row, no ladder
+  total, no movement line, no tie count (§5, §7). The self line is the whole answer in v0.3.
+- **The self line duplicating a row on the page is correct** (§6). A player who is on the page they
+  are looking at appears twice, once above the list and once in it, and a test that reads the second
+  as a duplicate is asserting the wrong property.
+- **Every number on this screen — rows and self line alike — is the season standing**, under the
+  season name (§2). The all-time counter stays on the profile strip, on the other screen, and the two
+  are never visible at once.
 
 **Inherited, and worth naming before the ticket split argues about it:** this door is the *fifth*
 control on the first screen, after *Create a duel room*, *Join the duel*, the profile strip's name
@@ -94,7 +115,7 @@ every other screen, and if not it is one more screen with none.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `DEC-059`, and on `STORY-0502` merging — run `/plan-story STORY-0503` then. `DEC-056` is answered by `ADR-0063`, `DEC-058` by `ADR-0064`.* | — |
+| — | *Not split. Blocked on `STORY-0502` merging and on nothing else — run `/plan-story STORY-0503` then. `DEC-056` is answered by `ADR-0063`, `DEC-058` by `ADR-0064`, `DEC-059` by `ADR-0065`.* | — |
 
 ## Acceptance criteria
 
@@ -127,6 +148,24 @@ every other screen, and if not it is one more screen with none.
       and a player with a **negative** standing — the two rows a client might be tempted to drop.
       The screen filters nothing; there is no eligibility rule on this side of the wire.
 - [ ] A negative standing renders with its sign, in position, asserted against a fixture holding one.
+- [ ] **The self line states the rank and the season standing the response carried**, asserted against
+      **two** responses carrying different self standings — one fixture cannot tell a rendered field
+      from a hardcoded string (`ADR-0065` §1).
+- [ ] **The self line renders for a response whose page does not contain the player**, asserted — and
+      the numbers it shows come from the response's own field rather than from any row, which is the
+      assertion that catches a client matching its player id against the rows on screen (`ADR-0065`
+      §8, `ADR-0002`).
+- [ ] **A player with no place this season is told so, and no number is printed** — asserted against a
+      response carrying that state, beside one carrying a rank and a `0` standing. `0` is a real
+      standing and *no place* is not one, and a screen that prints `0` for both fails this
+      (`ADR-0065` §4).
+- [ ] **A response carrying no self standing renders no self line, and the ladder renders anyway** —
+      asserted, because this is the ordinary state of a first visit and it is not an error, not an
+      empty state and not a spinner (`ADR-0065` §4).
+- [ ] **No row in the list is marked as the reader's**, asserted against a page that **contains** the
+      reader's own row: it renders exactly as its neighbours do, and the player appears twice — once
+      in the self line, once in the list — which is correct rather than a duplicate (`ADR-0065` §5,
+      §6).
 - [ ] The screen names the season it is showing, taken **from the response**, asserted against two
       responses naming different seasons — one fixture cannot tell a rendered field from a hardcoded
       string, and a client that reads the browser's clock passes with one and fails with two.
@@ -151,6 +190,13 @@ every other screen, and if not it is one more screen with none.
   row is text and the tests assert no link, which is a real assertion rather than an absence.
 - **URL addressability and browser *Back*** — `DEC-054`, the architect's, and `EPIC-04`'s
   `STORY-0412` is where it lands. This story uses whatever exists when it starts.
+- **A rank, a season standing or a season name on the profile strip** —
+  [`ADR-0065`](../../docs/adr/ADR-0065-the-ladder-hands-a-player-their-own-row.md) §2. `ProfileStrip.tsx`
+  keeps printing the all-time counter and is untouched by this story; the season number lives on this
+  screen only, under the season name.
+- **A *jump to me* control, a scroll-to-my-row, a highlighted row, a ladder total (*5th of 404*), a
+  movement line or a tie count** — `ADR-0065` §5 and §7. The self line is the whole answer in v0.3,
+  and each of these is an ordinary ticket if it is ever wanted rather than a detail to fill in here.
 - **Any colour, spacing token or illustration** — `EPIC-06`.
 - **Live updates while the screen is open** — the epic's out-of-scope table: no `ServerMessage` is
   added by this epic.
