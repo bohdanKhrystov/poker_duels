@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050214
 title: A duel stamped at the cutoff is in no page of the walk, and the ranks stay the cutoff's
 type: task
-status: ready
+status: done
 parent: STORY-0502
 module: poker-server
 estimate: S
