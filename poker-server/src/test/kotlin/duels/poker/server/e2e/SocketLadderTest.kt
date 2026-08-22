@@ -780,7 +780,7 @@ internal class SocketLadderTest {
             val winnerPlayer = if (winner.deviceId == HOST_DEVICE) host else guest
             val loserPlayer = if (loser.deviceId == HOST_DEVICE) host else guest
 
-            val standings = client.ladder(HOST_DEVICE, limit = LADDER_LIMIT)
+            val standings = client.ladder(loser.deviceId, limit = LADDER_LIMIT)
 
             // Exactly two rows: winner and loser, both on the ladder
             assertEquals(
