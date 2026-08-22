@@ -550,7 +550,6 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
-| DEC-057 | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? Parked here by `EPIC-04` — *"`/api/me` means me"*. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | [`EPIC-05`](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | before `STORY-0504` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
@@ -766,6 +765,55 @@ mistake stays expressible**, and the deterrent is a KDoc, an architecture sectio
 guard test, none of which can see a misused injected clock. **Unblocks `TASK-050106`** and names
 three tickets for the planner: the KDoc that still points at `System.currentTimeMillis`, the
 composition root's single `Clock.systemUTC()` before `STORY-0502`, and the guard test).
+
+`DEC-057` → [`ADR-0067`](../docs/adr/ADR-0067-a-leaderboard-row-is-text-and-no-id-turns-into-a-profile.md)
+(**a leaderboard row is text, it leads nowhere, and no id turns into a profile.** Answered by the
+product owner on 2026-08-22, derived from the vision, whose two sentences answer different halves.
+The **roadmap** answers *whether*: v0.3 is *"Leaderboard and seasons"* and v0.4 is *"Friends,
+statistics, replay viewer"*, so a page about another player carrying duels played, a win/loss record
+or a duel list is **statistics**, one milestone later — and deciding that a v0.4 thing **waits** is
+applying the roadmap, while deciding it **moves** would be reordering it, which is the human's, so
+only one of the two directions was ever available. *"**A leaderboard.** Ranked results over a
+season"* answers *what*: the vision names **ranked results**, not ranked people — `ADR-0061` §4's
+*"results, not players"* — and a result is discharged by a row, not by a person waiting behind it.
+**A row is a rank, a name or `No name`, and a season standing, on one line** (`4 Ada 3`,
+`215 No name −1`): not a link, not a button, not a control. This **confirms what `STORY-0503`
+already ships** rather than changing it — `TASK-050313`'s *no `<a>`, no `link` role, no `button`
+inside the section* assertion was written *"until `DEC-057` is answered"* and is now the decision.
+**What a stranger reads is exactly four fields**: `rank`, `displayName`, `coins`, `playerId`. All
+four already ship; what is new is that they are the **boundary** rather than the set the first story
+needed. **What a stranger does not read is enumerated field by field** so that absence is testable:
+the all-time `coin_balance`, duels played, wins, losses, draws, a win rate, the ladder total, the
+**duel list** — `GET /api/me/duels` gains no player parameter, no opponent filter and no second
+route — streaks, movement, last seen, online state, anything about a credential, handle, email,
+device binding or session, and `displayNameRemoved`, which already *"never says anything about
+another player"* (`ADR-0053`). **`playerId` stays on the wire and is a name for a row, never an
+address**: the server serves five paths and not one of them answers *what about player X*, while a
+client may still use the id as a list key and to correlate what it was already told (`ADR-0021`).
+That is **`ADR-0029` §7 pushed from the other side** — §7 keeps a **name** from becoming an id, this
+keeps an **id** from becoming a person, and together **no path in this product turns anything into a
+lookup of a player**. **`STORY-0504` is `dropped`**, its premise false, with nothing moving out of
+it: its one surviving assertion already ships in `TASK-050313`. Reopening is deliberately made a
+decision and not a ticket: a new `DEC` naming **one field at a time**, an answer to what the subject
+is asked and can turn off on a product with no opt-in (`ADR-0063` §1), no opt-out and no deletion
+(`ADR-0039`) whose default player never signed up for anything (`ADR-0012`, `ADR-0036`) — **and the
+human's call before any fact a player did not choose to publish is published**, which is where a
+product decision starts having consequences outside the software. No escalation was needed for
+*this* answer, because it publishes nothing new; the opposite answer would have needed one. Costs
+recorded rather than discovered: **the ladder is a list of strangers and a player has no way to ask
+who any of them are** — you lose a duel, open the ladder, see the name that beat you at rank 3, and
+the gesture every ladder on the internet has trained you to make does nothing, so the vision's own
+*rival* has nowhere to point; **`DEC-054` loses its sharpest argument**, since this epic's case for
+it was *"a leaderboard row that leads to another player is a link, and a client with no addresses
+cannot express one"*, and an address-less client just got more comfortable for another milestone;
+the question is **deferred, not solved, and gets harder** — in v0.4 it arrives as a ticket saying
+*just add a player page*, guarded by prose; the asymmetry is deliberate and uncomfortable, since a
+player is published on a ladder they never opted into and can look up nobody, including whoever just
+beat them, while the server holds all of it; and **v0.3 ships no social surface at all**, so the
+first thing connecting two players outside a duel is now v0.4's *Friends*. **Forecloses nothing
+structurally** — that is the point — but forecloses inside `EPIC-05` even the zero-disclosure
+head-to-head view, which is a small ticket and still v0.4's row. Leaves `DEC-054`, `DEC-060` and
+`DEC-008` untouched, **names no ticket and raises no `DEC`**).
 
 `DEC-023` → [`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md)
 (a rematch is one client intent and one room fact: `OfferRematch` in, `RematchOffered(seat)` out to

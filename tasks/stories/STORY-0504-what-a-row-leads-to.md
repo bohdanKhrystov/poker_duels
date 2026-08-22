@@ -2,11 +2,46 @@
 id: STORY-0504
 title: What a row leads to — another player, seen by a stranger
 type: story
-status: blocked
+status: dropped
 parent: EPIC-05
 module: poker-server, web-client
 labels: [server, client, leaderboard, read-path]
 depends_on: [STORY-0503]
+---
+
+## Dropped — `ADR-0067`, on 2026-08-22
+
+**The decision that killed it:**
+[`ADR-0067`](../../docs/adr/ADR-0067-a-leaderboard-row-is-text-and-no-id-turns-into-a-profile.md),
+answering `DEC-057`. **A leaderboard row leads nowhere.** It is a rank, a name or `No name`, and a
+season standing rendered as one line — not a link, not a button, not a control — so there is no
+destination, no endpoint and no screen to build. What a stranger reads about another player is
+**exactly the four fields the ladder row already carries** (`rank`, `displayName`, `coins`,
+`playerId`), all of which shipped with `STORY-0502`; §3 of the ADR enumerates field by field what
+they do not read, and the duel list stays the property of the player it belongs to. The premise
+below — *a leaderboard row stops being a dead end* — turned out to be false, which is exactly what
+`dropped` is for.
+
+The file stays, unrewritten below this line, because the epic predicted this story might not survive
+its decision and the trail is worth more than the tidiness. It is the second of the two it named;
+`STORY-0505` was the first.
+
+**Where its work went.** Nowhere, and nothing was lost. Every design note below was a constraint on
+a thing that is not being built. The one assertion that survives — *a row leads nowhere* — already
+ships: `TASK-050313` asserts that inside the leaderboard section `queryAllByRole("link")` is empty,
+`querySelectorAll("a")` is empty and `queryAllByRole("button")` is empty, and `ADR-0067` §1 turns
+that from *"until `DEC-057` is answered"* into the decision itself. `STORY-0503`'s out-of-scope line
+*"Clicking a row through to a player — `STORY-0504`, and only if `DEC-057` says so"* is left as
+written: it was true when it was written and it now has an answer.
+
+**What it does *not* mean.** The ladder is not private — `GET /api/standings` is unauthenticated and
+lists every player who finished a duel this season (`ADR-0063` §1), so a name and a season standing
+are already public. What does not exist, and what `ADR-0067` §4 keeps from existing, is any route
+that takes a player id as its subject: `/api/me` still means me, `GET /api/me/duels` gains no player
+parameter, and no path in this product turns a name or an id into a lookup of a person
+(`ADR-0029` §7). Reopening this is a new `DEC` naming one field at a time, not a ticket — and
+publishing a fact a player did not choose to publish is the human's call, per `ADR-0067` §6.
+
 ---
 
 ## Goal
