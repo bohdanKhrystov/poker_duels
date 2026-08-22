@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050312
 title: Another page appends, page two's ranks are the ladder's, and the self line does not move
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S

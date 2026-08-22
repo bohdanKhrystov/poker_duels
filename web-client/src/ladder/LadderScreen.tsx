@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useReducer, type ReactElement } from "react";
 import type { LadderRead } from "./ladder-read";
-import { ladderReducer, initialLadder } from "./ladder-state";
+import { ladderReducer, initialLadder, nextPageAfter } from "./ladder-state";
 import {
   LADDER_HEADING,
   LOADING_LADDER,
   EMPTY_LADDER,
   LADDER_FAILED,
+  MORE,
   rowLine,
   seasonName,
   selfLine,
@@ -14,7 +15,8 @@ import {
 /**
  * The ladder screen: it asks for the first page of the season standings
  * through the read it is handed, and prints exactly the rows that page
- * carried, in the order it carried them.
+ * carried, in the order it carried them. A *Show more* control asks for
+ * each further page the same way, appending under what is already shown.
  *
  * Holds `useReducer(ladderReducer, initialLadder())` and calls `read` once,
  * on mount; it constructs nothing of the browser's fetch and touches none
@@ -64,6 +66,24 @@ export function LadderScreen(props: {
   }
   // ready + rows → no sentence
 
+  // Read once and reuse for both the render decision and the click's
+  // argument below — asking from a second read of `nextPageAfter` is how
+  // the two end up disagreeing about which page comes next.
+  const after = nextPageAfter(state);
+  // A request in flight does not move `nextCursor`, so `after` alone would
+  // still name the same page while one is loading. Without this phase term
+  // a second press would ask for it again: TASK-050305 showed, with real
+  // output, that `askedWith` is a single slot with no per-request identity,
+  // so a late answer to a request the walk no longer remembers asking is
+  // misread as a first page — the held rows would vanish.
+  const canAskMore = after !== null && state.phase !== "loading";
+
+  const askMore = (): void => {
+    if (canAskMore) {
+      void ask(after);
+    }
+  };
+
   return (
     <section
       aria-label="leaderboard"
@@ -87,6 +107,15 @@ export function LadderScreen(props: {
           </li>
         ))}
       </ul>
+      {/*
+        Hidden, not conditionally unmounted: the button must stay the same
+        node across the loading transition, so a second press lands on a
+        control the guard can refuse — not on one already torn out of the
+        tree, which would refuse for the wrong reason and prove nothing.
+      */}
+      <button type="button" hidden={!canAskMore} onClick={askMore}>
+        {MORE}
+      </button>
       {sentence && <p>{sentence}</p>}
     </section>
   );
