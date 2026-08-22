@@ -7,8 +7,9 @@ import type { ReactNode } from "react";
 import { App } from "./App";
 import { DuelProvider } from "./store/duel-provider";
 import { createDuelStore } from "./store/duel-store";
-import { HistoryProvider } from "./main";
+import { HistoryProvider, LadderProvider } from "./main";
 import { HistoryScreen } from "./history/HistoryScreen";
+import { LadderScreen } from "./ladder/LadderScreen";
 import type { Snapshot, SeatView } from "./protocol";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -27,10 +28,22 @@ vi.mock("./main", () => {
     nextCursor: null,
     restarted: false,
   }));
+  const fakeLadderRead = vi.fn(async () => ({
+    kind: "page" as const,
+    page: {
+      season: "2026-08",
+      rows: [],
+      nextCursor: null,
+      self: null,
+    },
+  }));
   return {
     HistoryProvider: (props: { children: ReactNode }): ReactNode =>
       props.children,
     useHistory: () => fakeHistoryRead,
+    LadderProvider: (props: { children: ReactNode }): ReactNode =>
+      props.children,
+    useLadder: () => fakeLadderRead,
   };
 });
 
@@ -49,9 +62,11 @@ function seatView(index: number): SeatView {
 function renderApp(): void {
   render(
     <HistoryProvider>
-      <DuelProvider store={createDuelStore()} send={vi.fn()}>
-        <App />
-      </DuelProvider>
+      <LadderProvider>
+        <DuelProvider store={createDuelStore()} send={vi.fn()}>
+          <App />
+        </DuelProvider>
+      </LadderProvider>
     </HistoryProvider>,
   );
 }
@@ -99,6 +114,34 @@ describe("App", () => {
     // duel-page should not use window.fetch or localStorage
     expect(duelPageSource).not.toMatch(/window\.fetch\(/);
     expect(duelPageSource).not.toMatch(/localStorage\./);
+  });
+
+  it("binds the ladder read to the browser fetch and the browser storage", () => {
+    // The same source assertion as the history one above, for the ladder's
+    // own binding: main.tsx names window.fetch, localStorage and
+    // readLadderPage, and neither LadderScreen.tsx nor ladder-read.ts names
+    // window.fetch or localStorage. Fails against a component that reaches
+    // for a global.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+    expect(mainSource).toMatch(/window\.fetch\(/);
+    expect(mainSource).toMatch(/localStorage/);
+    expect(mainSource).toMatch(/readLadderPage/);
+
+    const ladderScreenSource = readFileSync(
+      resolve(here, "ladder/LadderScreen.tsx"),
+      "utf-8",
+    );
+    // LadderScreen should not use window.fetch or localStorage
+    expect(ladderScreenSource).not.toMatch(/window\.fetch\(/);
+    expect(ladderScreenSource).not.toMatch(/localStorage\./);
+
+    const ladderReadSource = readFileSync(
+      resolve(here, "ladder/ladder-read.ts"),
+      "utf-8",
+    );
+    // ladder-read should not use window.fetch or localStorage
+    expect(ladderReadSource).not.toMatch(/window\.fetch\(/);
+    expect(ladderReadSource).not.toMatch(/localStorage\./);
   });
 
   it("leaves the lobby exactly as it was for a player who never opens the record", () => {
@@ -159,6 +202,46 @@ describe("App", () => {
 
     // The history screen is gone
     expect(screen.queryByLabelText("your duels")).toBeNull();
+  });
+
+  it("leaves the first screen for the ladder, and comes back to it", () => {
+    // The same round trip as the record's test above, for the fifth control
+    // ADR-0060 predicted the first screen would carry: the lobby is showing,
+    // *Leaderboard* is clicked, *Create a duel room* is gone and the ladder
+    // is on screen; *Back* is clicked, and the lobby is back.
+    renderApp();
+
+    // The lobby is showing
+    expect(
+      screen.getByRole("button", { name: "Create a duel room" }),
+    ).toBeDefined();
+
+    // Click "Leaderboard" button
+    const leaderboardButton = screen.getByRole("button", {
+      name: "Leaderboard",
+    });
+    fireEvent.click(leaderboardButton);
+
+    // The create button is gone
+    expect(
+      screen.queryByRole("button", { name: "Create a duel room" }),
+    ).toBeNull();
+
+    // The ladder screen is shown
+    const ladderScreen = screen.getByLabelText("leaderboard");
+    expect(ladderScreen).toBeDefined();
+
+    // Click "Back" button
+    const backButton = screen.getByRole("button", { name: "Back" });
+    fireEvent.click(backButton);
+
+    // The create button is back
+    expect(
+      screen.getByRole("button", { name: "Create a duel room" }),
+    ).toBeDefined();
+
+    // The ladder screen is gone
+    expect(screen.queryByLabelText("leaderboard")).toBeNull();
   });
 
   it("mounted history screen carries exactly one heading", () => {
@@ -260,6 +343,28 @@ describe("App", () => {
     render(<HistoryScreen read={mockRead} />);
 
     // HistoryScreen should not render a Back button
+    const backButton = screen.queryByRole("button", { name: "Back" });
+    expect(backButton).toBeNull();
+  });
+
+  it("renders no Back button when the ladder screen is mounted on its own", () => {
+    // LadderScreen is a pure presentation component that knows nothing about
+    // navigation, mirroring the HistoryScreen guard above. The Back button is
+    // rendered by whatever renders the swap (Lobby), never by LadderScreen
+    // itself — ADR-0060's layering.
+    const mockRead = vi.fn(async () => ({
+      kind: "page" as const,
+      page: {
+        season: "2026-08",
+        rows: [],
+        nextCursor: null,
+        self: null,
+      },
+    }));
+
+    render(<LadderScreen read={mockRead} />);
+
+    // LadderScreen should not render a Back button
     const backButton = screen.queryByRole("button", { name: "Back" });
     expect(backButton).toBeNull();
   });

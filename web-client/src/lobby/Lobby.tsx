@@ -2,7 +2,7 @@ import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useSend } from "../store/duel-provider";
 import { useProfileStrip } from "../profile/profile-provider";
-import { useHistory } from "../main";
+import { useHistory, useLadder } from "../main";
 import { ProfileStrip } from "../profile/ProfileStrip";
 import { NameSurface } from "../profile/NameSurface";
 import { useSetName } from "../profile/set-name-provider";
@@ -11,6 +11,8 @@ import { DuelResult } from "../result/DuelResult";
 import { DuelTable } from "../table/DuelTable";
 import { HistoryScreen } from "../history/HistoryScreen";
 import { HISTORY_HEADING } from "../history/history-text";
+import { LadderScreen } from "../ladder/LadderScreen";
+import { LADDER_HEADING } from "../ladder/ladder-text";
 import { normalizeRoomCode, roomLink } from "./room-link";
 
 /** The first screen: open a duel room, or join one by the code on the invite. */
@@ -20,8 +22,10 @@ export function Lobby(): ReactElement {
   const profile = useProfileStrip();
   const setName = useSetName();
   const read = useHistory();
+  const readLadder = useLadder();
   const [typedCode, setTypedCode] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [showLadder, setShowLadder] = useState(false);
   const code = normalizeRoomCode(typedCode);
 
   // The duel is over. This comes first because the reducer clears nothing a
@@ -65,6 +69,21 @@ export function Lobby(): ReactElement {
     );
   }
 
+  // They can reach the ladder screen from here too. The way back is rendered
+  // here, by the swap, and not by LadderScreen itself (ADR-0060): LadderScreen
+  // knows nothing about navigation, so its own affordance is assertable with
+  // no transport at all.
+  if (showLadder && readLadder !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+        <LadderScreen read={readLadder} />
+        <button type="button" onClick={() => setShowLadder(false)}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section>
       {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
@@ -94,6 +113,9 @@ export function Lobby(): ReactElement {
       )}
       <button type="button" onClick={() => setShowHistory(true)}>
         {HISTORY_HEADING}
+      </button>
+      <button type="button" onClick={() => setShowLadder(true)}>
+        {LADDER_HEADING}
       </button>
     </section>
   );

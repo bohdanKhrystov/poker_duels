@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050314
 title: The ladder is a screen a player can reach — one control in, one control back
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
