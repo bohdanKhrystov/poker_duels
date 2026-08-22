@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { LadderPage, LadderRow } from "./ladder-page";
 import type { LadderRead } from "./ladder-read";
 import { LadderScreen } from "./LadderScreen";
-import { LOADING_LADDER, EMPTY_LADDER, LADDER_FAILED } from "./ladder-text";
 
 /**
  * Builds a page carrying exactly the given rows. `nextCursor` is always
@@ -240,10 +239,16 @@ describe("the ladder screen", () => {
     expect(within(list).queryAllByRole("listitem")).toHaveLength(0);
 
     // Verify EMPTY_LADDER is shown
-    expect(screen.getByText(EMPTY_LADDER)).toBeTruthy();
+    expect(
+      screen.getByText("No duels have finished this season yet."),
+    ).toBeTruthy();
 
     // Verify LADDER_FAILED is not shown
-    expect(screen.queryByText(LADDER_FAILED)).toBeNull();
+    expect(
+      screen.queryByText(
+        "The leaderboard did not load. Reload the page to try again.",
+      ),
+    ).toBeNull();
   });
 
   it("says the ladder is loading before the first page answers", async () => {
@@ -259,11 +264,13 @@ describe("the ladder screen", () => {
 
     // LOADING_LADDER should appear
     await waitFor(() => {
-      expect(screen.getByText(LOADING_LADDER)).toBeTruthy();
+      expect(screen.getByText("Loading the leaderboard…")).toBeTruthy();
     });
 
     // EMPTY_LADDER should not appear
-    expect(screen.queryByText(EMPTY_LADDER)).toBeNull();
+    expect(
+      screen.queryByText("No duels have finished this season yet."),
+    ).toBeNull();
 
     // No season should be named yet
     expect(screen.queryByText(/2026-08|August 2026/)).toBeNull();
@@ -278,10 +285,16 @@ describe("the ladder screen", () => {
     render(<LadderScreen read={read} />);
 
     await waitFor(() => {
-      expect(screen.getByText(LADDER_FAILED)).toBeTruthy();
+      expect(
+        screen.getByText(
+          "The leaderboard did not load. Reload the page to try again.",
+        ),
+      ).toBeTruthy();
     });
 
     // EMPTY_LADDER should not appear
-    expect(screen.queryByText(EMPTY_LADDER)).toBeNull();
+    expect(
+      screen.queryByText("No duels have finished this season yet."),
+    ).toBeNull();
   });
 });
