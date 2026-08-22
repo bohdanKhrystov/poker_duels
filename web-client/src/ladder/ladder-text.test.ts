@@ -4,7 +4,6 @@ import {
   MORE,
   seasonName,
   rowLine,
-  NO_PLACE_THIS_SEASON,
   selfLine,
 } from "./ladder-text";
 
@@ -53,7 +52,8 @@ describe("the words the ladder says", () => {
 
   it("says a player with no place has none, and prints no number at all", () => {
     const noPlace = selfLine({ rank: null, coins: null });
-    expect(noPlace).toBe(NO_PLACE_THIS_SEASON);
+    // The no-place sentence must be exactly this literal, and contain no digit
+    expect(noPlace).toBe("You have no place on this season's leaderboard.");
     expect(/\d/.test(noPlace)).toBe(false);
 
     // A player with rank 195 and 0 coins is different from a player with no place
