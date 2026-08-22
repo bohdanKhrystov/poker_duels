@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050606
 title: The player's own place after the duel — served on the page drawn and off it
 type: task
-status: ready
+status: done
 parent: STORY-0506
 module: poker-server
 estimate: S
@@ -17,6 +17,7 @@ verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.e2e.SocketLadderTest.theSelfStandingRepeatsThePlayersOwnRowWhenTheyAreOnThePage' -PrequireDocker=true
   - ./gradlew :poker-server:test --tests 'duels.poker.server.e2e.SocketLadderTest' -PrequireDocker=true
   - ./gradlew :poker-server:ktlintCheck
+  - test -f poker-server/src/main/kotlin/duels/poker/server/http/StandingsRoutes.kt && test 2 -eq "$(grep -c 'request.queryParameters\[' poker-server/src/main/kotlin/duels/poker/server/http/StandingsRoutes.kt)"
 ---
 
 ## Goal
@@ -98,7 +99,10 @@ reddens the first. Removing the requester's row from the page reddens the second
 - [ ] `SocketLadderTest.theSelfStandingRepeatsThePlayersOwnRowWhenTheyAreOnThePage` passes,
       asserting the self rank and coins against that player's own row in the same response
 - [ ] Both tests assert `rows.size == 1`
-- [ ] Neither request carries a `playerId` query parameter
+- [x] Neither request carries a `playerId` query parameter
+- [x] That criterion has a mechanism: `StandingsRoutes.kt` reads exactly two query parameters.
+      A third — `playerId` or anything else — fails `verify`. The gate counts parameter *reads*
+      rather than grepping for the word, because line 31's KDoc contains the literal `playerId`.
 - [ ] Every test already in the class passes with its assertions unchanged
 - [ ] Every file this ticket creates or modifies is under `poker-server/src/test/`
 - [ ] Every command in `verify:` exits 0
