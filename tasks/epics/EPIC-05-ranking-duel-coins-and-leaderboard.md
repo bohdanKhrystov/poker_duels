@@ -211,12 +211,12 @@ survive its decision did not**.
 
 | ID | Title | Depends on | Gated by | Status |
 | --- | --- | --- | --- | --- |
-| [STORY-0501](../stories/STORY-0501-a-season-is-a-bounded-thing.md) | A season is a bounded thing, and every finished duel belongs to one | — | — | **ready** |
-| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | — | ready |
-| [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | — | blocked |
+| [STORY-0501](../stories/STORY-0501-a-season-is-a-bounded-thing.md) | A season is a bounded thing, and every finished duel belongs to one | — | — | done |
+| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | — | done |
+| [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | — | done |
 | [STORY-0504](../stories/STORY-0504-what-a-row-leads-to.md) | What a row leads to — another player, seen by a stranger | 0503 | — | **dropped** — `ADR-0067`: a row leads nowhere |
 | [STORY-0505](../stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) | A season ends, and the record survives it | 0502 | — | **dropped** — `ADR-0061` §5 |
-| [STORY-0506](../stories/STORY-0506-a-duel-moves-a-rank.md) | A duel moves a rank, end to end | 0503 | — | blocked |
+| [STORY-0506](../stories/STORY-0506-a-duel-moves-a-rank.md) | A duel moves a rank, end to end | 0503 | — | **ready** |
 
 `STORY-0506` is the only one whose acceptance criteria were writable in full on the day the epic was
 written: a duel played through the server moves both players' standings by exactly what `ADR-0014`

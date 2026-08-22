@@ -1656,7 +1656,7 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050313](tasks/TASK-050313-a-flat-ladder-is-an-ordinary-ladder-and-a-tie-is-marked-by-nothing.md) A flat ladder is an ordinary ladder, a tie is marked by nothing, and no row leads anywhere | S | **done** |
 | | [TASK-050314](tasks/TASK-050314-the-screen-a-player-can-reach-one-control-in-one-control-back.md) The ladder is a screen a player can reach — one control in, one control back | S | **done** |
 | | [TASK-050315](tasks/TASK-050315-the-door-survives-a-failed-profile-read-and-stands-down-for-a-duel.md) The door survives a failed profile read, and stands down for a duel in progress | S | **done** |
-| [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | blocked — `DEC-057`, may be `dropped` |
+| [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | **dropped** — `ADR-0067`: a row leads nowhere |
 | [STORY-0505](stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) A season ends, and the record survives it | | | **dropped** — `ADR-0061` §5: a boundary does nothing, so there is no crossing to write |
 | [STORY-0506](stories/STORY-0506-a-duel-moves-a-rank.md) A duel moves a rank, end to end | | | **ready** — split it next |
 
