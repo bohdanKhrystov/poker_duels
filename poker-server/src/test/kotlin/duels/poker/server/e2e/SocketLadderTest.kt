@@ -27,6 +27,7 @@ import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -594,6 +595,159 @@ internal class SocketLadderTest {
                 rows.sumOf { it.coins },
                 "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: the four coins should sum to " +
                     "exactly 0, got $rows",
+            )
+        }
+    }
+
+    /**
+     * `limit = 1` with `FILLER_ONE_DEVICE`: the player at rank 4 who is not on a page showing
+     * rank 1 still receives their own standing. `rows` holds exactly one row (rank 1),
+     * `fillerOne`'s player id is not on it, `nextCursor` is non-null, and `self` reads that
+     * player's own id with rank `4` and coins `−1` — a rank naming three players ahead on a
+     * page showing one. This proves the self standing is computed from the whole ladder, not
+     * just the page returned.
+     *
+     * `ADR-0065` §4, §8: the self standing is a separate query, and there is no `playerId`
+     * parameter — the requester is named by the session alone.
+     */
+    @Test
+    fun theSelfStandingIsTheWholeLaddersPlaceForAPlayerOnNoPageDrawn(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+            val duel = client.openSocketDuel()
+
+            val host = resolvePlayer(HOST_DEVICE)
+            val guest = resolvePlayer(GUEST_DEVICE)
+            val fixture = seedTheLadderTheDuelArrivesInto(host, guest)
+
+            duel.playToFinish()
+
+            // After the duel: guest is rank 1 (+1), host and fillerTwo are rank 2 (0), fillerOne is rank 4 (-1).
+            // Request with limit=1 as fillerOne (rank 4, off the page).
+            val standings = client.ladder(FILLER_ONE_DEVICE, limit = 1)
+
+            // The page shows only one row: the rank 1 player (guest).
+            assertEquals(
+                1,
+                standings.rows.size,
+                "rows should have exactly one row",
+            )
+            assertEquals(
+                guest.id.value,
+                standings.rows[0].playerId,
+                "the one row should be guest (rank 1)",
+            )
+
+            // There are more rows beyond this page.
+            assertNotNull(
+                standings.nextCursor,
+                "nextCursor should not be null since fillerOne (rank 4) is not on this page",
+            )
+
+            // The self standing shows fillerOne's own rank and coins, not derived from the page.
+            assertEquals(
+                fixture.fillerOne.id.value,
+                standings.self?.playerId,
+                "self should be fillerOne",
+            )
+            assertEquals(
+                4,
+                standings.self?.rank,
+                "self rank should be 4 (the literal rank of fillerOne on the whole ladder)",
+            )
+            assertEquals(
+                -1,
+                standings.self?.coins,
+                "self coins should be -1 (the literal coin delta for fillerOne)",
+            )
+        }
+    }
+
+    /**
+     * `limit = 1` with `GUEST_DEVICE`, the duel's winner now at rank 1: `rows` holds exactly one
+     * row, it **is** `guest`'s row with rank `1` and coins `1`, and `self` reads the same id,
+     * rank and coins. The row is present, not filtered out for being the requester's.
+     *
+     * This test shares a `RANKED_CTE` with the database's `standingOf` query in
+     * `PostgresStandingsReads`, so "self equals my own row in the same response" is two paths
+     * through **one piece of SQL**. The shared CTE could compute the rank wrongly and both sides
+     * would fail equally — this test would not catch it alone. But paired with the first test's
+     * off-page player, the two paths together assure the CTE is correct: a rank computed as
+     * "rows on this page plus one" would answer 2 for rank-4 fillerOne and redden the first test.
+     *
+     * `ADR-0065` §4, §8: the self standing is a separate query, and there is no `playerId`
+     * parameter — the requester is named by the session alone.
+     */
+    @Test
+    fun theSelfStandingRepeatsThePlayersOwnRowWhenTheyAreOnThePage(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+            val duel = client.openSocketDuel()
+
+            val host = resolvePlayer(HOST_DEVICE)
+            val guest = resolvePlayer(GUEST_DEVICE)
+            seedTheLadderTheDuelArrivesInto(host, guest)
+
+            duel.playToFinish()
+
+            // After the duel: guest is rank 1 (+1), the winner.
+            // Request with limit=1 as guest (rank 1, on the page).
+            val standings = client.ladder(GUEST_DEVICE, limit = 1)
+
+            // The page shows exactly one row: guest's row.
+            assertEquals(
+                1,
+                standings.rows.size,
+                "rows should have exactly one row",
+            )
+            val guestRow = standings.rows[0]
+            assertEquals(
+                guest.id.value,
+                guestRow.playerId,
+                "the one row should be guest",
+            )
+
+            // Guest's row on the page matches the literal values.
+            assertEquals(
+                1,
+                guestRow.rank,
+                "guest's rank should be 1 (the literal rank as the duel's winner)",
+            )
+            assertEquals(
+                1,
+                guestRow.coins,
+                "guest's coins should be 1 (the literal delta: 0 before the duel, +1 for winning)",
+            )
+
+            // The self standing matches guest's row exactly.
+            assertEquals(
+                guest.id.value,
+                standings.self?.playerId,
+                "self should be guest",
+            )
+            assertEquals(
+                1,
+                standings.self?.rank,
+                "self rank should be 1 (matching the row's rank)",
+            )
+            assertEquals(
+                1,
+                standings.self?.coins,
+                "self coins should be 1 (matching the row's coins)",
+            )
+
+            // Verify the self standing is consistent with the row, and both are anchored to literals.
+            assertEquals(
+                guestRow.rank,
+                standings.self?.rank,
+                "self rank should equal the row's rank",
+            )
+            assertEquals(
+                guestRow.coins,
+                standings.self?.coins,
+                "self coins should equal the row's coins",
             )
         }
     }
