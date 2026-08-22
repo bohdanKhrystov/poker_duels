@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050311
 title: The self line sits above the rows, and states a standing for a player on no page drawn
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
