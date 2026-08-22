@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050608
 title: The ladder and the profile strip agree for both duellists — and part company for an older record
 type: task
-status: backlog
+status: ready
 parent: STORY-0506
 module: poker-server
 estimate: S
