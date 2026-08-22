@@ -8,6 +8,7 @@ import {
   LADDER_FAILED,
   rowLine,
   seasonName,
+  selfLine,
 } from "./ladder-text";
 
 /**
@@ -70,6 +71,12 @@ export function LadderScreen(props: {
     >
       <h2>{LADDER_HEADING}</h2>
       {state.season !== null && <p>{seasonName(state.season)}</p>}
+      {/*
+        Rendered from state.self alone — never matched against state.rows.
+        Matching would be wrong on every page the reader's row is not on,
+        which is nearly all of them (ADR-0065 §8).
+      */}
+      {state.self !== null && <p>{selfLine(state.self)}</p>}
       <ul className="w-full">
         {state.rows.map((row) => (
           <li
