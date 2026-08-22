@@ -1592,14 +1592,14 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050217](tasks/TASK-050217-three-answers-one-page-and-a-read-that-creates-nothing.md) Three answers about the reader, one page for everybody, a read that creates nothing | S | **done** |
 | | [TASK-050218](tasks/TASK-050218-the-document-contracts-the-ladder-and-its-promise.md) The document contracts the ladder — every parameter, the promise, and both refusals | S | **done** |
 | | [TASK-050219](tasks/TASK-050219-nothing-stores-a-standing.md) Nothing stores a standing — no table, no column, no view, and no migration | XS | **done** |
-| [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | **in progress** — 5 of 15 tickets |
+| [STORY-0503](stories/STORY-0503-the-ladder-is-a-screen.md) The ladder is a screen, reached from the first screen and left by one control | | | **in progress** — 6 of 15 tickets |
 | | [TASK-050301](tasks/TASK-050301-a-row-and-a-page-parse-in-the-order-they-arrived.md) A ladder row parses, and the page keeps the order it arrived in | S | **done** |
 | | [TASK-050302](tasks/TASK-050302-the-self-standing-two-numbers-two-nulls-or-nothing.md) The self standing is two numbers, two nulls, or nothing — and it carries no player id | S | **done** |
 | | [TASK-050303](tasks/TASK-050303-the-words-the-ladder-says-and-a-season-named-without-a-clock.md) The words the ladder says — a row line, and a season named without a clock | S | **done** |
 | | [TASK-050304](tasks/TASK-050304-the-read-the-device-id-is-optional-and-there-is-no-401.md) The ladder read — the device id is optional here, and there is no 401 to fear | S | **done** |
 | | [TASK-050305](tasks/TASK-050305-the-walk-appends-and-a-failed-request-un-reads-nothing.md) The ladder walk is a reducer that appends, and a failed request un-reads nothing | S | **done** |
-| | [TASK-050306](tasks/TASK-050306-the-season-and-the-self-standing-are-the-first-pages.md) The season and the self standing are the first page's, and later pages do not move them | S | ready |
-| | [TASK-050307](tasks/TASK-050307-the-screen-prints-the-page-in-the-order-it-arrived.md) The screen asks for the first page and prints it in the order it arrived, ranks and all | S | backlog |
+| | [TASK-050306](tasks/TASK-050306-the-season-and-the-self-standing-are-the-first-pages.md) The season and the self standing are the first page's, and later pages do not move them | S | **done** |
+| | [TASK-050307](tasks/TASK-050307-the-screen-prints-the-page-in-the-order-it-arrived.md) The screen asks for the first page and prints it in the order it arrived, ranks and all | S | ready |
 | | [TASK-050308](tasks/TASK-050308-the-screen-filters-nothing.md) The screen filters nothing — a nameless row and a negative standing are ordinary rows | XS | backlog |
 | | [TASK-050309](tasks/TASK-050309-the-screen-names-the-season-the-response-carried.md) The screen names the season the response carried, and its four states are four sentences | S | backlog |
 | | [TASK-050310](tasks/TASK-050310-the-self-lines-two-sentences-and-no-number-where-there-is-no-place.md) The self line has two sentences, and the one for no place prints no number at all | S | backlog |

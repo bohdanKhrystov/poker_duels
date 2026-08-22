@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050307
 title: The screen asks for the first page and prints it in the order it arrived, ranks and all
 type: task
-status: backlog
+status: ready
 parent: STORY-0503
 module: web-client
 estimate: S
