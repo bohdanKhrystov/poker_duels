@@ -87,7 +87,15 @@ which answers `DEC-055`:
 - **The ladder as a screen**, reached from the first screen and left the way `ADR-0060` says a
   second screen is left — and, by `ADR-0065`, a screen that hands the player their own row in a
   self line above the rows rather than asking them to find it.
-- **Whatever a row leads to** (`DEC-057`), including nothing.
+- ~~**Whatever a row leads to** (`DEC-057`), including nothing.~~ Discharged by
+  [`ADR-0067`](../../docs/adr/ADR-0067-a-leaderboard-row-is-text-and-no-id-turns-into-a-profile.md),
+  which answers `DEC-057`: **a row leads nowhere.** It is a rank, a name or `No name`, and a season
+  standing on one line — not a link, not a button, not a control — which confirms what `STORY-0503`
+  already shipped rather than changing it. What a stranger reads about another player is **exactly
+  those four wire fields** (`rank`, `displayName`, `coins`, `playerId`) and the ADR enumerates
+  field by field what they do not read. The `playerId` is a name for a row and never an address: no
+  route takes a player id as its subject. Like `ADR-0061` §5 before it, this obligation is
+  discharged by a decision rather than by code, which is why `STORY-0504` is `dropped`.
 - ~~**What happens when a season ends**, and what of the record survives it.~~ `ADR-0061` §5: a
   boundary does **nothing** — nothing is written, reset or archived, and the record survives it by
   never having been touched. This obligation is discharged by a decision rather than by code, which
@@ -149,8 +157,10 @@ which answers `DEC-055`:
   by name — and answering one does not answer the other.
 - **No path turns a name into an identity.** `ADR-0029` §7, the reason `GET /api/me/duels` searches
   names and returns *duels*. A leaderboard hands out names and ids together by design, which is the
-  first time that rule is pushed from the other side; whatever `DEC-057` permits, it permits
-  deliberately and in writing.
+  first time that rule is pushed from the other side, and
+  [`ADR-0067`](../../docs/adr/ADR-0067-a-leaderboard-row-is-text-and-no-id-turns-into-a-profile.md)
+  §4 is the decision not to walk around it: §7 keeps a **name** from becoming an id, §4 keeps an
+  **id** from becoming a person, and no route in this product takes a player id as its subject.
 - **The engine learns nothing.** No season, rank, ladder or standing type crosses into
   `poker-engine`, and its dependency allowlist does not move. A duel is played by two seats; where
   those seats stand is a server fact and always was.
@@ -187,7 +197,11 @@ two stories were later added and two re-cut when the answers landed. The same is
 the cost is recorded rather than hidden: **`STORY-0504` and `STORY-0505` may not survive their
 decisions**, and the honest end for a story whose premise turns out to be false is `dropped`, not
 deleted. `STORY-0505` did not survive `DEC-055` — `dropped` on the same day, file kept, reason on
-it.
+it. **Neither did `STORY-0504`**: `ADR-0067` answered `DEC-057` with *a row leads nowhere*, so both
+stories named here as unlikely to survive their decisions are `dropped`, both files kept and both
+carrying the decision that killed them. Two of six is a high rate and it is the expected one for an
+epic opened with its central product questions open; the defect would have been a story left
+`blocked` on an answered question, or one quietly rewritten into something else.
 
 All six were `blocked` on the day they were written, and all six traced back to `DEC-055`. That was
 not a scheduling accident: a query cannot scope itself to a season that has no definition, and a
@@ -197,12 +211,12 @@ survive its decision did not**.
 
 | ID | Title | Depends on | Gated by | Status |
 | --- | --- | --- | --- | --- |
-| [STORY-0501](../stories/STORY-0501-a-season-is-a-bounded-thing.md) | A season is a bounded thing, and every finished duel belongs to one | — | — | **ready** |
-| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | — | ready |
-| [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | — | blocked |
-| [STORY-0504](../stories/STORY-0504-what-a-row-leads-to.md) | What a row leads to — another player, seen by a stranger | 0503 | `DEC-057` | blocked — may be `dropped` |
+| [STORY-0501](../stories/STORY-0501-a-season-is-a-bounded-thing.md) | A season is a bounded thing, and every finished duel belongs to one | — | — | done |
+| [STORY-0502](../stories/STORY-0502-the-standings-read-path.md) | The standings read path — ordered, paged, and a rank the server computes | 0501 | — | done |
+| [STORY-0503](../stories/STORY-0503-the-ladder-is-a-screen.md) | The ladder is a screen, reached from the first screen and left by one control | 0502 | — | done |
+| [STORY-0504](../stories/STORY-0504-what-a-row-leads-to.md) | What a row leads to — another player, seen by a stranger | 0503 | — | **dropped** — `ADR-0067`: a row leads nowhere |
 | [STORY-0505](../stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) | A season ends, and the record survives it | 0502 | — | **dropped** — `ADR-0061` §5 |
-| [STORY-0506](../stories/STORY-0506-a-duel-moves-a-rank.md) | A duel moves a rank, end to end | 0503 | — | blocked |
+| [STORY-0506](../stories/STORY-0506-a-duel-moves-a-rank.md) | A duel moves a rank, end to end | 0503 | — | **ready** |
 
 `STORY-0506` is the only one whose acceptance criteria were writable in full on the day the epic was
 written: a duel played through the server moves both players' standings by exactly what `ADR-0014`
@@ -219,7 +233,8 @@ Almost nothing, and the chain is honest rather than pessimistic:
 - ~~**`0503` and `0505` are the one genuine parallel pair.**~~ Gone with `0505`. The epic is now a
   straight line, which is a real loss of throughput and the price of there being no crossing to
   write.
-- `0504` extends both halves of `0503` and queues behind it rather than beside it.
+- ~~`0504` extends both halves of `0503` and queues behind it rather than beside it.~~ Gone with
+  `0504`, which `ADR-0067` dropped. There was never any parallelism in it to lose.
 
 **Critical path:** `0501 → 0502 → 0503 → 0506`, and it now begins with a ticket rather than with a
 decision. That is the single most useful thing to know about scheduling this epic today.
@@ -259,10 +274,15 @@ inheriting it, so *"the end state is every screen the product has, stacked"* on 
 player sees first. The ladder's door is a fifth control on that screen, and `STORY-0503` is where
 the aggregate stops being cheap.
 
-This epic does not reopen `ADR-0060` — it inherits it. It does, however, **strengthen the case for
+This epic does not reopen `ADR-0060` — it inherits it. ~~It does, however, **strengthen the case for
 answering `DEC-054`**: a leaderboard row that leads to another player (`DEC-057`) is a *link*, and a
-client with no addresses cannot express one. `DEC-054` is already due before `STORY-0412` is split,
-which is well before anything here starts.
+client with no addresses cannot express one.~~ **That case is gone.**
+[`ADR-0067`](../../docs/adr/ADR-0067-a-leaderboard-row-is-text-and-no-id-turns-into-a-profile.md)
+makes a row text, so this epic needs no address it does not already have — and the ADR records the
+loss as one of its own costs, because an address-less client just got more comfortable for another
+milestone. `DEC-054` is unchanged in substance, still the architect's, still due before `STORY-0412`
+is split, and now carried by its other reasons alone: nothing links to a screen, a reload lands on
+the first screen, and *Back* leaves the client.
 
 ## Open decisions
 
@@ -281,10 +301,20 @@ ladder screen renders one **self line** above the rows stating the player's own 
 standing, served with the page, so `STORY-0502` ships **two aggregates in one response**; the
 profile strip is **untouched** and gains no season number, which closes what `STORY-0311` and
 `ADR-0061` §6 both parked here; and nothing marks the player's row in the list. **`STORY-0503` is
-now gated by no decision at all** and waits only on `STORY-0502` landing. That leaves **one** of the
-original five open — `DEC-057`, which blocks only `STORY-0504`. Two more were raised **by**
-`DEC-055`'s answer: `DEC-060`, the product owner's, blocking nothing; and `DEC-061`, the architect's,
-which is the epic's two previously unnumbered questions merged into one. **`DEC-061` is answered** —
+now gated by no decision at all** and waits only on `STORY-0502` landing. **And `DEC-057` is
+answered** —
+[`ADR-0067`](../../docs/adr/ADR-0067-a-leaderboard-row-is-text-and-no-id-turns-into-a-profile.md),
+2026-08-22: **a row leads nowhere.** A row is a rank, a name or `No name`, and a season standing on
+one line — not a link, not a button, not a control — which confirms what `STORY-0503` shipped rather
+than changing it; what a stranger reads about another player is **exactly the four fields the wire
+already carries**, and the ADR enumerates field by field what they do not, including the duel list,
+which stays the property of the player it belongs to; and `playerId` stays on the wire as a **name
+for a row, never an address**, since no route takes a player id as its subject. **`STORY-0504` is
+`dropped`** — the second of the two stories this epic predicted might not survive its decision — so
+**all five of the original decisions are answered** and none of them blocks anything here. Two more
+were raised **by** `DEC-055`'s answer: `DEC-060`, the product owner's, blocking nothing; and
+`DEC-061`, the architect's, which is the epic's two previously unnumbered questions merged into
+one. **`DEC-061` is answered** —
 [`ADR-0066`](../../docs/adr/ADR-0066-the-ladder-is-computed-per-request-and-a-walk-is-pinned.md),
 2026-08-21: the ladder is **computed per request** with nothing storing a standing, and **a walk is
 pinned to the instant it began**, returning every player of the ladder as it stood at that cutoff
@@ -309,13 +339,13 @@ coming due at once, which is what a v0.3 milestone is.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
-| `DEC-057` | **The product owner's** — does a leaderboard row lead anywhere: is another player's profile visible to a stranger, and what is on it? `EPIC-04` parked this here in as many words — *"viewing another player's profile or history … it needs a name per leaderboard row and owns what a row links to. Here, `/api/me` means me."* Settle whether a row is inert text or opens something; if it opens something, what a stranger may read — display name, coin balance, duels played, win/loss record, the duel list itself, which `GET /api/me/duels` today serves only to the player it belongs to; and how that sits with `ADR-0029` §7's *"no code path turns a name into an identity"*, which is why history search returns duels and never players. *A row is inert* is a complete answer and ends `STORY-0504` as `dropped` | `STORY-0504` — whether it exists at all |
 | `DEC-060` | **The product owner's, raised by [`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7** — does a **finished** season ever become reachable from a screen, and how is one chosen? The ADR settles that a finished season is never *gone*: its standings recompute exactly from `duel` and `duel_result` rows nothing rewrites, and nothing is archived because an archive would preserve nothing the ledger does not. What it deliberately does not settle is whether a player is ever given a way to ask for one. As shipped, on the first day of a month the previous season's ladder is computable and unreachable, and **nothing anywhere records who won it** — the first season this product runs ends with its winner celebrated by nothing. Settle whether the product ever shows a past season and, if so, how one is named and chosen: a selector, a *last season* line, a single remembered winner, or nothing. Note the cost on the other side — a selector is one more control on a screen `ADR-0060` already said would crowd. *Never* is a complete answer and needs saying out loud rather than falling out | nothing today; the deadline is the first season boundary after the ladder ships |
 
 **Inherited, not raised here:** `DEC-054` — the architect's — whether the client grows
 URL-addressable routes and a working browser *Back*. Due before `STORY-0412` is split, which is
-before anything in this epic starts, and `DEC-057` makes it sharper: a row that leads to another
-player is a link, and a client with no addresses has none to give it.
+before anything in this epic starts. It was expected to get sharper here and did the opposite:
+`ADR-0067` makes a row text, so this epic asks the client for no address it does not already have,
+and `DEC-054` now rests on its own reasons alone.
 
 ## Definition of done
 
