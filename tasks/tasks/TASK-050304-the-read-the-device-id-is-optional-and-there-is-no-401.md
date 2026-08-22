@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050304
 title: The ladder read — the device id is optional here, and there is no 401 to fear
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
