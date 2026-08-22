@@ -115,7 +115,21 @@ every other screen, and if not it is one more screen with none.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `STORY-0502` merging and on nothing else — run `/plan-story STORY-0503` then. `DEC-056` is answered by `ADR-0063`, `DEC-058` by `ADR-0064`, `DEC-059` by `ADR-0065`.* | — |
+| [TASK-050301](../tasks/TASK-050301-a-row-and-a-page-parse-in-the-order-they-arrived.md) | A ladder row parses, and the page keeps the order it arrived in | ready |
+| [TASK-050302](../tasks/TASK-050302-the-self-standing-two-numbers-two-nulls-or-nothing.md) | The self standing is two numbers, two nulls, or nothing — and it carries no player id | backlog |
+| [TASK-050303](../tasks/TASK-050303-the-words-the-ladder-says-and-a-season-named-without-a-clock.md) | The words the ladder says — a row line, and a season named without a clock | backlog |
+| [TASK-050304](../tasks/TASK-050304-the-read-the-device-id-is-optional-and-there-is-no-401.md) | The ladder read — the device id is optional here, and there is no 401 to fear | backlog |
+| [TASK-050305](../tasks/TASK-050305-the-walk-appends-and-a-failed-request-un-reads-nothing.md) | The ladder walk is a reducer that appends, and a failed request un-reads nothing | backlog |
+| [TASK-050306](../tasks/TASK-050306-the-season-and-the-self-standing-are-the-first-pages.md) | The season and the self standing are the first page's, and later pages do not move them | backlog |
+| [TASK-050307](../tasks/TASK-050307-the-screen-prints-the-page-in-the-order-it-arrived.md) | The screen asks for the first page and prints it in the order it arrived, ranks and all | backlog |
+| [TASK-050308](../tasks/TASK-050308-the-screen-filters-nothing.md) | The screen filters nothing — a nameless row and a negative standing are ordinary rows | backlog |
+| [TASK-050309](../tasks/TASK-050309-the-screen-names-the-season-the-response-carried.md) | The screen names the season the response carried, and its four states are four sentences | backlog |
+| [TASK-050310](../tasks/TASK-050310-the-self-lines-two-sentences-and-no-number-where-there-is-no-place.md) | The self line has two sentences, and the one for no place prints no number at all | backlog |
+| [TASK-050311](../tasks/TASK-050311-the-self-line-above-the-rows-for-a-player-on-no-page-drawn.md) | The self line sits above the rows, and states a standing for a player on no page drawn | backlog |
+| [TASK-050312](../tasks/TASK-050312-another-page-appends-and-page-twos-ranks-are-the-ladders.md) | Another page appends, page two's ranks are the ladder's, and the self line does not move | backlog |
+| [TASK-050313](../tasks/TASK-050313-a-flat-ladder-is-an-ordinary-ladder-and-a-tie-is-marked-by-nothing.md) | A flat ladder is an ordinary ladder, a tie is marked by nothing, and no row leads anywhere | backlog |
+| [TASK-050314](../tasks/TASK-050314-the-screen-a-player-can-reach-one-control-in-one-control-back.md) | The ladder is a screen a player can reach — one control in, one control back | backlog |
+| [TASK-050315](../tasks/TASK-050315-the-door-survives-a-failed-profile-read-and-stands-down-for-a-duel.md) | The door survives a failed profile read, and stands down for a duel in progress | backlog |
 
 ## Acceptance criteria
 
