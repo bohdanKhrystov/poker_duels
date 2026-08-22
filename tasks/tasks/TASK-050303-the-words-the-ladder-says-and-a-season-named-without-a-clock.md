@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050303
 title: The words the ladder says — a row line, and a season named without a clock
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
