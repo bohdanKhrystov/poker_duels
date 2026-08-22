@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { LadderPage, LadderRow } from "./ladder-page";
 import type { LadderRead } from "./ladder-read";
@@ -16,6 +22,62 @@ function buildPage(rows: readonly LadderRow[]): LadderPage {
     rows,
     nextCursor: null,
     self: null,
+  };
+}
+
+/**
+ * Builds a two-call `read`: the first call (cursor `null`) answers page
+ * one; every later call answers page two, but only once the test itself
+ * calls the returned `resolvePageTwo` — held open so a second press made
+ * before page two answers can be observed rather than raced.
+ *
+ * Page one's ranks are `[1, 1, 1, 5]` and page two's are `[5, 5, 9, 9]` —
+ * neither reads `1..n`, and the boundary rank `5` is deliberately printed
+ * by both pages, the way a real tie spanning a page break reads
+ * (`ADR-0064` §2). The two `self` standings differ (rank 5 vs. rank 9) so a
+ * test reading the self line after the second page can tell the walk held
+ * page one's standing from a port that merely happened to leave a
+ * same-valued line alone.
+ */
+function buildTwoPageRead() {
+  const pageOne: LadderPage = {
+    season: "2026-08",
+    rows: [
+      { rank: 1, playerId: "p1", displayName: "P1", coins: 1 },
+      { rank: 1, playerId: "p2", displayName: "P2", coins: 1 },
+      { rank: 1, playerId: "p3", displayName: "P3", coins: 1 },
+      { rank: 5, playerId: "p4", displayName: "P4", coins: 5 },
+    ],
+    nextCursor: "c1",
+    self: { rank: 5, coins: 1 },
+  };
+  const pageTwo: LadderPage = {
+    season: "2026-08",
+    rows: [
+      { rank: 5, playerId: "p5", displayName: "P5", coins: 5 },
+      { rank: 5, playerId: "p6", displayName: "P6", coins: 5 },
+      { rank: 9, playerId: "p7", displayName: "P7", coins: 9 },
+      { rank: 9, playerId: "p8", displayName: "P8", coins: 9 },
+    ],
+    nextCursor: null,
+    self: { rank: 9, coins: -2 },
+  };
+
+  let deliverPageTwo: (answer: LadderRead) => void = () => {};
+  const pageTwoAnswer = new Promise<LadderRead>((resolve) => {
+    deliverPageTwo = resolve;
+  });
+
+  const read = vi.fn((after: string | null): Promise<LadderRead> => {
+    if (after === null) {
+      return Promise.resolve({ kind: "page", page: pageOne });
+    }
+    return pageTwoAnswer;
+  });
+
+  return {
+    read,
+    resolvePageTwo: () => deliverPageTwo({ kind: "page", page: pageTwo }),
   };
 }
 
@@ -468,5 +530,118 @@ describe("the ladder screen", () => {
         .getAllByRole("listitem")
         .map((item) => item.textContent),
     ).toEqual(["1 Ada 2", "1 Bo 2", "3 Cy 1", "4 Dee 0"]);
+  });
+
+  it("appends the next page under the first, and repeats the rank the boundary repeated", async () => {
+    const { read, resolvePageTwo } = buildTwoPageRead();
+
+    render(<LadderScreen read={read} />);
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("list")).getAllByRole("listitem"),
+      ).toHaveLength(4);
+    });
+
+    const moreButton = screen.getByRole("button", { name: "Show more" });
+    fireEvent.click(moreButton);
+
+    // A second press while the first is still outstanding must not start a
+    // second read: TASK-050305 demonstrated, with real output, that a late
+    // answer to a superseded request is misclassified as a first page and
+    // the held rows vanish. Only a request count can show the press was
+    // refused — the visible outcome is identical either way.
+    fireEvent.click(moreButton);
+    expect(read).toHaveBeenCalledTimes(2);
+    expect(read).toHaveBeenNthCalledWith(2, "c1");
+
+    resolvePageTwo();
+
+    const items = await waitFor(() => {
+      const found = within(screen.getByRole("list")).getAllByRole("listitem");
+      expect(found).toHaveLength(8);
+      return found;
+    });
+
+    expect(items.map((item) => item.textContent)).toEqual([
+      "1 P1 1",
+      "1 P2 1",
+      "1 P3 1",
+      "5 P4 5",
+      "5 P5 5",
+      "5 P6 5",
+      "9 P7 9",
+      "9 P8 9",
+    ]);
+
+    // The double press cost nothing: still exactly the first call and the
+    // one call for "c1", never a third.
+    expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops offering another page at the end of the ladder", async () => {
+    const { read, resolvePageTwo } = buildTwoPageRead();
+
+    render(<LadderScreen read={read} />);
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("list")).getAllByRole("listitem"),
+      ).toHaveLength(4);
+    });
+
+    // Before the click: page one named a next cursor, so the walk offers
+    // another page.
+    expect(screen.getByRole("button", { name: "Show more" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show more" }));
+    resolvePageTwo();
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("list")).getAllByRole("listitem"),
+      ).toHaveLength(8);
+    });
+
+    // After the click: page two named no next cursor, so there is nowhere
+    // left for the walk to go.
+    expect(screen.queryByRole("button", { name: "Show more" })).toBeNull();
+    expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves the self line where it was when a second page arrives", async () => {
+    const { read, resolvePageTwo } = buildTwoPageRead();
+
+    render(<LadderScreen read={read} />);
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("list")).getAllByRole("listitem"),
+      ).toHaveLength(4);
+    });
+
+    expect(
+      screen.getByText("You are rank 5 this season, on 1 duel coin."),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show more" }));
+    // Page two's self standing is rank 9, not rank 5 — a different value
+    // than page one's, so the assertion below can tell the walk held page
+    // one's line from a port that merely happened to leave a same-valued
+    // line alone.
+    resolvePageTwo();
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("list")).getAllByRole("listitem"),
+      ).toHaveLength(8);
+    });
+
+    // The self line still reads page one's standing, never page two's.
+    expect(
+      screen.getByText("You are rank 5 this season, on 1 duel coin."),
+    ).toBeTruthy();
+    expect(screen.queryByText(/rank 9/)).toBeNull();
+    expect(read).toHaveBeenCalledTimes(2);
   });
 });
