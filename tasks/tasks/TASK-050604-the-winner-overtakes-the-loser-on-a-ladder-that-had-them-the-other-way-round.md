@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050604
 title: The winner overtakes the loser on a ladder that had them the other way round
 type: task
-status: ready
+status: done
 parent: STORY-0506
 module: poker-server
 estimate: S
