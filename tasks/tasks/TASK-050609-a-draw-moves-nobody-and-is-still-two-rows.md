@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050609
 title: A draw moves nobody, and is still two rows and two places
 type: task
-status: backlog
+status: ready
 parent: STORY-0506
 module: poker-server
 estimate: S
