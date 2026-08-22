@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050602
 title: The ladder the duel arrives into — a shared rank, a skipped one, and last month left out
 type: task
-status: backlog
+status: ready
 parent: STORY-0506
 module: poker-server
 estimate: S

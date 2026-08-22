@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050601
 title: The ladder, read from the same application the duel is played in — two seated players and no place yet
 type: task
-status: ready
+status: done
 parent: STORY-0506
 module: poker-server
 estimate: S

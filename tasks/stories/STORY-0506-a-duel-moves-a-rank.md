@@ -2,7 +2,7 @@
 id: STORY-0506
 title: A duel moves a rank, end to end
 type: story
-status: ready
+status: in-progress
 parent: EPIC-05
 module: poker-server
 labels: [server, leaderboard, end-to-end]
