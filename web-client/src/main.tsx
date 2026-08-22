@@ -21,6 +21,7 @@ import { SetNameProvider } from "./profile/set-name-provider";
 import { setDisplayName } from "./profile/set-name";
 import { readDuelPage, type DuelPageRead } from "./profile/duel-page";
 import type { HistoryQuery } from "./profile/duels-query";
+import { readLadderPage, type LadderRead } from "./ladder/ladder-read";
 
 // Module scope, so the provider's effect sees one stable reference and one
 // mount means one read. An arrow written inline in the JSX would be a new
@@ -48,6 +49,16 @@ const readHistory = (query: HistoryQuery): Promise<DuelPageRead> =>
     fetch: (path, init) => window.fetch(path, init),
     storage: localStorage,
     query,
+  });
+
+// Module scope, for the reason readHistory beside it gives: the effect that
+// calls this needs one stable reference across renders, and an arrow written
+// inline in the JSX would be a new function on every render.
+const readLadder = (after: string | null): Promise<LadderRead> =>
+  readLadderPage({
+    fetch: (path, init) => window.fetch(path, init),
+    storage: localStorage,
+    after,
   });
 
 // One boot per tab, outside the tree (ADR-0032): StrictMode below may mount and
@@ -83,6 +94,31 @@ export function useHistory():
   return useContext(HistoryContext);
 }
 
+const LadderContext = createContext<
+  ((after: string | null) => Promise<LadderRead>) | null
+>(null);
+
+/**
+ * Runs `readLadder` once above the tree and puts it within reach of the lobby.
+ *
+ * The read is a module-scope constant (not an inline arrow) so a component's
+ * effect sees one stable reference: a reference that changes on every render
+ * would re-run the effect on every render with it.
+ */
+export function LadderProvider(props: { children: ReactNode }): ReactElement {
+  return (
+    <LadderContext.Provider value={readLadder}>
+      {props.children}
+    </LadderContext.Provider>
+  );
+}
+
+/** The ladder read bound to `window.fetch` and `localStorage`, or `null` where no provider is above. */
+export function useLadder():
+  ((after: string | null) => Promise<LadderRead>) | null {
+  return useContext(LadderContext);
+}
+
 const container = document.getElementById("root");
 if (container) {
   ReactDOM.createRoot(container).render(
@@ -90,9 +126,11 @@ if (container) {
       <ProfileProvider read={readProfile}>
         <SetNameProvider setName={setName}>
           <HistoryProvider>
-            <DuelProvider store={client.store} send={client.send}>
-              <App />
-            </DuelProvider>
+            <LadderProvider>
+              <DuelProvider store={client.store} send={client.send}>
+                <App />
+              </DuelProvider>
+            </LadderProvider>
           </HistoryProvider>
         </SetNameProvider>
       </ProfileProvider>
