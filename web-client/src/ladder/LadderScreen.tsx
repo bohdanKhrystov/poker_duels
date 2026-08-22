@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useReducer, type ReactElement } from "react";
 import type { LadderRead } from "./ladder-read";
 import { ladderReducer, initialLadder } from "./ladder-state";
-import { LADDER_HEADING, rowLine } from "./ladder-text";
+import {
+  LADDER_HEADING,
+  LOADING_LADDER,
+  EMPTY_LADDER,
+  LADDER_FAILED,
+  rowLine,
+  seasonName,
+} from "./ladder-text";
 
 /**
  * The ladder screen: it asks for the first page of the season standings
@@ -45,12 +52,24 @@ export function LadderScreen(props: {
     ask(null);
   }, [ask]);
 
+  // Determine which sentence to show based on phase and rows
+  let sentence: string | null = null;
+  if (state.phase === "loading") {
+    sentence = LOADING_LADDER;
+  } else if (state.phase === "failed") {
+    sentence = LADDER_FAILED;
+  } else if (state.phase === "ready" && state.rows.length === 0) {
+    sentence = EMPTY_LADDER;
+  }
+  // ready + rows → no sentence
+
   return (
     <section
       aria-label="leaderboard"
       className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4"
     >
       <h2>{LADDER_HEADING}</h2>
+      {state.season !== null && <p>{seasonName(state.season)}</p>}
       <ul className="w-full">
         {state.rows.map((row) => (
           <li
@@ -61,6 +80,7 @@ export function LadderScreen(props: {
           </li>
         ))}
       </ul>
+      {sentence && <p>{sentence}</p>}
     </section>
   );
 }
