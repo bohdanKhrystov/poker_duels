@@ -81,6 +81,32 @@ function buildTwoPageRead() {
   };
 }
 
+/**
+ * Builds a page whose four rows carry the given ranks and coins, under the
+ * names ["Ada", "Bo", null, "Cy"], with `season: "2026-09"` and a self line
+ * of rank 5 on 1 coin. TASK-050313's flat and spread fixtures share every
+ * field but these two arrays, so a difference between their renders can only
+ * be the numbers a reader compares — never the row count, the season, or
+ * whether a self line is present at all.
+ */
+function buildRefusalPage(
+  ranks: readonly number[],
+  coins: readonly number[],
+): LadderPage {
+  const names: readonly (string | null)[] = ["Ada", "Bo", null, "Cy"];
+  return {
+    season: "2026-09",
+    rows: names.map((name, index) => ({
+      rank: ranks[index],
+      playerId: name ?? `no-name-${index}`,
+      displayName: name,
+      coins: coins[index],
+    })),
+    nextCursor: null,
+    self: { rank: 5, coins: 1 },
+  };
+}
+
 describe("the ladder screen", () => {
   it("asks for the first page once, with no cursor", async () => {
     const rows: readonly LadderRow[] = [
@@ -643,5 +669,130 @@ describe("the ladder screen", () => {
     ).toBeTruthy();
     expect(screen.queryByText(/rank 9/)).toBeNull();
     expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it("renders a nearly flat ladder exactly as it renders a spread one", async () => {
+    // A day-two season, every rank tied at 5, is the moment ADR-0064 §6
+    // refuses to soften with a "the season is still young" affordance — so
+    // its markup, stripped of words, must be indistinguishable from a
+    // spread ladder's. A banner, a grouping wrapper or an extra class on a
+    // tied row exists in one skeleton and not the other, and reddens here.
+    const flatRead = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: buildRefusalPage([5, 5, 5, 5], [1, 1, 1, 1]),
+    }));
+
+    const { container: flatContainer, unmount } = render(
+      <LadderScreen read={flatRead} />,
+    );
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("list")).getAllByRole("listitem"),
+      ).toHaveLength(4);
+    });
+
+    const flatSection = flatContainer.querySelector("section");
+    if (flatSection === null) {
+      throw new Error("expected the ladder to render inside a <section>");
+    }
+    const flatSkeleton = flatSection.innerHTML.replace(/>[^<]*</g, "><");
+
+    unmount();
+
+    const spreadRead = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: buildRefusalPage([2, 3, 4, 6], [4, 3, 2, 1]),
+    }));
+
+    const { container: spreadContainer } = render(
+      <LadderScreen read={spreadRead} />,
+    );
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("list")).getAllByRole("listitem"),
+      ).toHaveLength(4);
+    });
+
+    const spreadSection = spreadContainer.querySelector("section");
+    if (spreadSection === null) {
+      throw new Error("expected the ladder to render inside a <section>");
+    }
+    const spreadSkeleton = spreadSection.innerHTML.replace(/>[^<]*</g, "><");
+
+    expect(flatSkeleton).toBe(spreadSkeleton);
+  });
+
+  it("marks no row on a page of equal ranks, and none as the one the reader stands on", async () => {
+    // Every row here carries the self line's own rank and standing.
+    // ADR-0065 §5 refuses a marker, a jump control and a scroll-to-my-row;
+    // §6 says the reader appearing twice (once in the self line, once in
+    // its row) is correct as is. Nothing may set any one of the four rows
+    // apart from the rest, and none may be dropped for repeating the self
+    // line.
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: buildRefusalPage([5, 5, 5, 5], [1, 1, 1, 1]),
+    }));
+
+    render(<LadderScreen read={read} />);
+
+    const items = await waitFor(() => {
+      const found = within(screen.getByRole("list")).getAllByRole("listitem");
+      expect(found).toHaveLength(4);
+      return found;
+    });
+
+    const [firstClassName] = items.map((item) => item.className);
+    for (const item of items) {
+      expect(item.className).toBe(firstClassName);
+    }
+
+    expect(screen.getByRole("list").textContent).toBe(
+      "5 Ada 15 Bo 15 No name 15 Cy 1",
+    );
+  });
+
+  it("renders the heading, the season, the self line and the rows, and nothing else", async () => {
+    // ADR-0065 §7 refuses a ladder total, a movement line, a streak and a
+    // tie count. DEC-057 — whether a row ever leads anywhere — is open, so
+    // today's answer is that a row is text: no link, no exposed button
+    // beyond the *Show more* control, which stays mounted and `hidden`
+    // (never conditionally unmounted, so a second press can land on a node
+    // the guard can still refuse — see LadderScreen's own comment). `hidden`
+    // drops a node from the accessibility tree, which is why the role
+    // queries below still find zero buttons, but not from `textContent`,
+    // which is why its trailing words are part of the section's exact text
+    // rather than absent from it.
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: buildRefusalPage([5, 5, 5, 5], [1, 1, 1, 1]),
+    }));
+
+    const { container } = render(<LadderScreen read={read} />);
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("list")).getAllByRole("listitem"),
+      ).toHaveLength(4);
+    });
+
+    const section = container.querySelector("section");
+    if (section === null) {
+      throw new Error("expected the ladder to render inside a <section>");
+    }
+
+    expect(section.textContent).toBe(
+      "Leaderboard" +
+        "September 2026" +
+        "You are rank 5 this season, on 1 duel coin." +
+        "5 Ada 15 Bo 15 No name 15 Cy 1" +
+        "Show more",
+    );
+
+    expect(within(section).queryAllByRole("link")).toHaveLength(0);
+    expect(section.querySelectorAll("a")).toHaveLength(0);
+    expect(within(section).queryAllByRole("button")).toHaveLength(0);
   });
 });

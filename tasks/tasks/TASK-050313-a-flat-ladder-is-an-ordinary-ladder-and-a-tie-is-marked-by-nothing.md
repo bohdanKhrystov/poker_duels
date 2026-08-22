@@ -17,7 +17,7 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders a nearly flat ladder exactly as it renders a spread one'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'marks no row on a page of equal ranks, and none as the one the reader stands on'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders the heading, the season, the self line and the rows, and nothing else'
-  - cd web-client && test -f src/ladder/LadderScreen.test.tsx && ! grep -qE 'toContain|toMatch|Containing|Snapshot|toHaveTextContent' src/ladder/LadderScreen.test.tsx
+  - cd web-client && test -f src/ladder/LadderScreen.test.tsx && test 0 -eq "$(grep -E 'toContain|toMatch|Containing|Snapshot|toHaveTextContent' src/ladder/LadderScreen.test.tsx | grep -cv '\.not\.')"
   - cd web-client && npm run check
 ---
 
@@ -83,8 +83,20 @@ That is now a **gate, not an instruction**: the last `verify:` line refuses the 
 `toContain` anywhere in this test file. `.toContain(` is used nowhere in it, so the check has
 no false positives — and without it, a single `toBe` → `toContain` retires all six refusals
 while every test still passes and every named test still appears in the reporter output.
-The `test -f` is load-bearing: `! grep -q` on a **missing** file exits 0, so without it the
-gate would fail open rather than loudly. The denylist is wider than `toContain` because
+The `test -f` is load-bearing: a grep on a **missing** file would otherwise let the gate pass
+vacuously. The `grep -cv '\.not\.'` is load-bearing for a second reason found by running it:
+**`.not.toContain(...)` is a strengthening assertion** — it proves a value is absent, which is
+exactly the fixture-overlap check `TASK-050311` needed — while a bare `.toContain(...)` weakens
+an exact equality. The gate must ban the second and permit the first. The count form is used
+rather than `! grep -q` because `test 0 -eq "$(...)"` reads the **printed count**, never grep's
+own exit code, so it cannot inherit any `-q`/`-v` exit-code difference between grep dialects —
+confirmed identical on BSD grep 2.6.0 and GNU grep 3.7.
+
+**Known blind spot, accepted rather than chased.** The filter matches `.not.` anywhere on the
+line, so a genuine weakening followed by a comment containing the literal `.not.` passes. That is
+the ceiling of a line-oriented grep: each fix moves the exploit surface rather than closing it.
+If comment-based evasion ever actually occurs, that is the trigger to move this rule to an ESLint
+rule, not to spend another round on shell. The denylist is wider than `toContain` because
 `HistoryScreen.test.tsx` — the file this screen is told to copy in shape — uses `.toContain(`
 throughout, so reaching for a containment check here is ordinary rather than devious;
 `toMatch`, `toHaveTextContent` and `stringContaining` weaken the assertion identically.
