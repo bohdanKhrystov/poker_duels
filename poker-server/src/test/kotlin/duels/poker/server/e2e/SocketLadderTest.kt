@@ -41,6 +41,20 @@ private const val FILLER_ONE_DEVICE = "e2e-f1"
 private const val FILLER_TWO_DEVICE = "e2e-f2"
 
 /**
+ * Measured, not derived: under the fixed `HAND_SEED` and `POLICY_SEED` that [openSocketDuel]
+ * plays with -- the determinism [SocketDuelTest.theSameSeedsPlayTheSameDuel] proves holds on a
+ * fresh schema, twice, frame count included -- the duel is won by seat 1, the `GUEST_DEVICE`
+ * client, in 9 hands with final stacks `[0, 20000]`.
+ *
+ * The head start in [seedTheLadderTheDuelArrivesInto] has to belong to whoever turns out to lose,
+ * chosen before the duel is played, which is why this seat is pinned rather than read off the
+ * outcome. If the assertion pinning it below ever fails, these two seeds now play a different
+ * duel: move the head start in [seedTheLadderTheDuelArrivesInto] to the other seat and update this
+ * constant to match.
+ */
+private const val EXPECTED_WINNING_SEAT: Int = 1
+
+/**
  * The ladder is readable over HTTP from inside the same running application that hosts the
  * two WebSocket clients. Two seated players who have finished nothing are on no ladder and hold
  * no place — the *before* half of every later assertion in this story.
@@ -371,6 +385,69 @@ internal class SocketLadderTest {
                 afterFillerTwo,
                 "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: fillerTwo's coins must be unchanged by a " +
                     "duel it did not play, before=$beforeFillerTwo after=$afterFillerTwo",
+            )
+        }
+    }
+
+    /**
+     * The head start belongs to whoever turns out to lose, chosen before the duel is played --
+     * see [EXPECTED_WINNING_SEAT] for why the seat has to be named rather than read off
+     * [DuelOutcome.winner] after the fact.
+     */
+    @Test
+    fun theDuelPutsTheWinnerAboveTheLoserOnALadderThatHadThemTheOtherWayRound(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+            val duel = client.openSocketDuel()
+
+            val host = resolvePlayer(HOST_DEVICE)
+            val guest = resolvePlayer(GUEST_DEVICE)
+            seedTheLadderTheDuelArrivesInto(host, guest)
+
+            val before = client.ladder(HOST_DEVICE, limit = LADDER_LIMIT)
+            val beforeHostRow = before.rowFor(host)
+            val beforeGuestRow = before.rowFor(guest)
+            val beforeHostIndex = before.rows.indexOf(beforeHostRow)
+            val beforeGuestIndex = before.rows.indexOf(beforeGuestRow)
+
+            assertEquals(1, beforeHostRow.rank, "before: host's rank")
+            assertEquals(1, beforeHostRow.coins, "before: host's coins")
+            assertEquals(2, beforeGuestRow.rank, "before: guest's rank")
+            assertEquals(0, beforeGuestRow.coins, "before: guest's coins")
+            assertEquals(
+                true,
+                beforeHostIndex < beforeGuestIndex,
+                "before: host's row index ($beforeHostIndex) should be lower than guest's " +
+                    "($beforeGuestIndex) -- the loser-to-be is ahead, rows=${before.rows}",
+            )
+
+            val outcome = duel.playToFinish()
+            assertEquals(
+                EXPECTED_WINNING_SEAT,
+                outcome.winner,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: expected seat " +
+                    "$EXPECTED_WINNING_SEAT to win, got outcome=$outcome -- these seeds now play a " +
+                    "different duel than the one this ticket measured; move the head start in " +
+                    "seedTheLadderTheDuelArrivesInto to the other seat and update " +
+                    "EXPECTED_WINNING_SEAT to match",
+            )
+
+            val after = client.ladder(HOST_DEVICE, limit = LADDER_LIMIT)
+            val afterGuestRow = after.rowFor(guest)
+            val afterHostRow = after.rowFor(host)
+            val afterGuestIndex = after.rows.indexOf(afterGuestRow)
+            val afterHostIndex = after.rows.indexOf(afterHostRow)
+
+            assertEquals(1, afterGuestRow.rank, "after: guest's rank")
+            assertEquals(1, afterGuestRow.coins, "after: guest's coins")
+            assertEquals(2, afterHostRow.rank, "after: host's rank")
+            assertEquals(0, afterHostRow.coins, "after: host's coins")
+            assertEquals(
+                true,
+                afterGuestIndex < afterHostIndex,
+                "after: guest's row index ($afterGuestIndex) should be lower than host's " +
+                    "($afterHostIndex) -- the winner overtook the loser, rows=${after.rows}",
             )
         }
     }
