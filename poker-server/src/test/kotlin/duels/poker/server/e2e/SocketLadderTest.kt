@@ -245,4 +245,133 @@ internal class SocketLadderTest {
             assertNull(standings.nextCursor, "nextCursor should be null: all four rows fit on one page of $LADDER_LIMIT")
         }
     }
+
+    /**
+     * The winning seat named by [outcome], failing loudly and reproducibly if there is none.
+     *
+     * Copied from `SocketCoinsTest`: a `checkNotNull` that names both seeds when the outcome has
+     * no winner, so a fixture that somehow drew reports that rather than silently treating seat 0
+     * as the winner.
+     */
+    private fun SocketDuel.winnerSeat(outcome: DuelOutcome): Int =
+        checkNotNull(outcome.winner) {
+            "handSeed=$handSeed policySeed=$POLICY_SEED: outcome has no winner, outcome=$outcome"
+        }
+
+    /**
+     * Six wins inside [ladderSeason] that put both [host] and [guest] at `±3` before the story's
+     * central duel is played: three for [host] over `fillerOne`, three for `fillerTwo` over
+     * [guest]. Deliberately a different fixture from [seedTheLadderTheDuelArrivesInto]'s: that
+     * one's post-duel numbers happen to include a `+1`, so a ladder that never sums history and
+     * instead answers a fixed `+1`/`−1` per outcome could pass it by accident. Starting both
+     * duellists away from zero turns every later assertion into an `after − before` difference,
+     * wrong for both duellists whichever seat wins, and that is what this fixture is for.
+     */
+    private suspend fun seedADeepLadder(host: Player, guest: Player): LadderFixture {
+        val fillerOne = resolvePlayer(FILLER_ONE_DEVICE)
+        val fillerTwo = resolvePlayer(FILLER_TWO_DEVICE)
+
+        recordWin(winner = host, loser = fillerOne, at = thisSeasonAt(1))
+        recordWin(winner = host, loser = fillerOne, at = thisSeasonAt(2))
+        recordWin(winner = host, loser = fillerOne, at = thisSeasonAt(3))
+        recordWin(winner = fillerTwo, loser = guest, at = thisSeasonAt(4))
+        recordWin(winner = fillerTwo, loser = guest, at = thisSeasonAt(5))
+        recordWin(winner = fillerTwo, loser = guest, at = thisSeasonAt(6))
+
+        return LadderFixture(fillerOne, fillerTwo)
+    }
+
+    @Test
+    fun theLadderMovesTheWinnerUpOneAndTheLoserDownOne(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+            val duel = client.openSocketDuel()
+            val hostSeat = duel.clients.single { it.deviceId == HOST_DEVICE }.seat
+            val guestSeat = duel.clients.single { it.deviceId == GUEST_DEVICE }.seat
+
+            val host = resolvePlayer(HOST_DEVICE)
+            val guest = resolvePlayer(GUEST_DEVICE)
+            val fixture = seedADeepLadder(host, guest)
+            val playerByDevice = mapOf(HOST_DEVICE to host, GUEST_DEVICE to guest)
+
+            // Established before playToFinish() so the deltas asserted below are the duel's own,
+            // not a number that was already sitting there -- the same bracketing SocketCoinsTest
+            // uses, applied here to a ladder that starts away from zero instead of at it.
+            val before = client.ladder(HOST_DEVICE, limit = LADDER_LIMIT)
+            val beforeHost = before.rowFor(host).coins
+            val beforeGuest = before.rowFor(guest).coins
+            val beforeFillerOne = before.rowFor(fixture.fillerOne).coins
+            val beforeFillerTwo = before.rowFor(fixture.fillerTwo).coins
+            val beforeByDevice = mapOf(HOST_DEVICE to beforeHost, GUEST_DEVICE to beforeGuest)
+
+            assertEquals(
+                3,
+                beforeHost,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: host seat=$hostSeat " +
+                    "expected pre-duel coins 3, got $beforeHost",
+            )
+            assertEquals(
+                -3,
+                beforeGuest,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: guest seat=$guestSeat " +
+                    "expected pre-duel coins -3, got $beforeGuest",
+            )
+            assertEquals(
+                -3,
+                beforeFillerOne,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: fillerOne expected pre-duel coins -3, " +
+                    "got $beforeFillerOne",
+            )
+            assertEquals(
+                3,
+                beforeFillerTwo,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: fillerTwo expected pre-duel coins 3, " +
+                    "got $beforeFillerTwo",
+            )
+
+            val outcome = duel.playToFinish()
+            val winnerSeat = duel.winnerSeat(outcome)
+            val loserSeat = 1 - winnerSeat
+            val winner = duel.seat(winnerSeat)
+            val loser = duel.seat(loserSeat)
+            val winnerPlayer = playerByDevice.getValue(winner.deviceId)
+            val loserPlayer = playerByDevice.getValue(loser.deviceId)
+            val beforeWinner = beforeByDevice.getValue(winner.deviceId)
+            val beforeLoser = beforeByDevice.getValue(loser.deviceId)
+
+            val after = client.ladder(HOST_DEVICE, limit = LADDER_LIMIT)
+            val afterWinner = after.rowFor(winnerPlayer).coins
+            val afterLoser = after.rowFor(loserPlayer).coins
+            val afterFillerOne = after.rowFor(fixture.fillerOne).coins
+            val afterFillerTwo = after.rowFor(fixture.fillerTwo).coins
+
+            assertEquals(
+                1,
+                afterWinner - beforeWinner,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: winner seat=$winnerSeat " +
+                    "deviceId=${winner.deviceId} expected coins delta +1, before=$beforeWinner " +
+                    "after=$afterWinner",
+            )
+            assertEquals(
+                -1,
+                afterLoser - beforeLoser,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: loser seat=$loserSeat " +
+                    "deviceId=${loser.deviceId} expected coins delta -1, before=$beforeLoser " +
+                    "after=$afterLoser",
+            )
+            assertEquals(
+                beforeFillerOne,
+                afterFillerOne,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: fillerOne's coins must be unchanged by a " +
+                    "duel it did not play, before=$beforeFillerOne after=$afterFillerOne",
+            )
+            assertEquals(
+                beforeFillerTwo,
+                afterFillerTwo,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: fillerTwo's coins must be unchanged by a " +
+                    "duel it did not play, before=$beforeFillerTwo after=$afterFillerTwo",
+            )
+        }
+    }
 }
