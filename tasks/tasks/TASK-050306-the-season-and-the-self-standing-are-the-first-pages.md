@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050306
 title: The season and the self standing are the first page's, and later pages do not move them
 type: task
-status: backlog
+status: ready
 parent: STORY-0503
 module: web-client
 estimate: S

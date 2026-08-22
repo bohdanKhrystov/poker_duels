@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050305
 title: The ladder walk is a reducer that appends, and a failed request un-reads nothing
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
