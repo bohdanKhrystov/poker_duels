@@ -10,6 +10,9 @@ import { createDuelStore } from "./store/duel-store";
 import { HistoryProvider, LadderProvider } from "./main";
 import { HistoryScreen } from "./history/HistoryScreen";
 import { LadderScreen } from "./ladder/LadderScreen";
+import { ProfileProvider } from "./profile/profile-provider";
+import { aProfile } from "./profile/profile-fixture";
+import type { ProfileStripState } from "./profile/profile-strip";
 import type { Snapshot, SeatView } from "./protocol";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -367,5 +370,158 @@ describe("App", () => {
     // LadderScreen should not render a Back button
     const backButton = screen.queryByRole("button", { name: "Back" });
     expect(backButton).toBeNull();
+  });
+
+  it("offers the same ladder door whether the profile read failed or answered", () => {
+    // ADR-0060: the door does not depend on the profile read. A ladder
+    // unreachable because the profile read was slow is a bug this decision
+    // already refused. The test renders the app twice, once with a failed
+    // profile read and once with a successful one, and asserts the same
+    // control (Leaderboard button) is found in both and that clicking it
+    // opens the ladder section in both cases. One fixture cannot tell a
+    // rule from a default: a door rendered unconditionally passes a single
+    // failed-read test, as does a door rendered only when the read failed.
+    // This test therefore renders both states and asserts the same control
+    // in both.
+
+    // First render with unavailable profile
+    const failedRead = vi.fn(async (): Promise<ProfileStripState> => ({
+      kind: "unavailable",
+    }));
+    const { unmount: unmount1 } = render(
+      <ProfileProvider read={failedRead}>
+        <HistoryProvider>
+          <LadderProvider>
+            <DuelProvider store={createDuelStore()} send={vi.fn()}>
+              <App />
+            </DuelProvider>
+          </LadderProvider>
+        </HistoryProvider>
+      </ProfileProvider>,
+    );
+
+    // Assert Leaderboard button exists when profile read failed
+    const leaderboardButton1 = screen.getByRole("button", {
+      name: "Leaderboard",
+    });
+    expect(leaderboardButton1).toBeDefined();
+
+    // Click it and assert ladder opens
+    fireEvent.click(leaderboardButton1);
+    const ladderSection1 = screen.getByLabelText("leaderboard");
+    expect(ladderSection1).toBeDefined();
+
+    // Clean up first render
+    unmount1();
+
+    // Second render with successful profile read
+    const successRead = vi.fn(async (): Promise<ProfileStripState> => ({
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    }));
+    render(
+      <ProfileProvider read={successRead}>
+        <HistoryProvider>
+          <LadderProvider>
+            <DuelProvider store={createDuelStore()} send={vi.fn()}>
+              <App />
+            </DuelProvider>
+          </LadderProvider>
+        </HistoryProvider>
+      </ProfileProvider>,
+    );
+
+    // Assert Leaderboard button exists when profile read succeeded
+    const leaderboardButton2 = screen.getByRole("button", {
+      name: "Leaderboard",
+    });
+    expect(leaderboardButton2).toBeDefined();
+
+    // Click it and assert ladder opens
+    fireEvent.click(leaderboardButton2);
+    const ladderSection2 = screen.getByLabelText("leaderboard");
+    expect(ladderSection2).toBeDefined();
+  });
+
+  it("does not offer the ladder door while a duel is in progress", () => {
+    // ADR-0060 again: the door is offered only on the lobby branch that
+    // offers "Create a duel room", because a player who opened another
+    // screen mid-hand would leave their rival at a table nothing ends.
+    // This test applies RoomJoined and a Snapshot to the store, then
+    // asserts the door is gone.
+    const store = createDuelStore();
+    const send = vi.fn();
+
+    render(
+      <HistoryProvider>
+        <LadderProvider>
+          <DuelProvider store={store} send={send}>
+            <App />
+          </DuelProvider>
+        </LadderProvider>
+      </HistoryProvider>,
+    );
+
+    // Initially in lobby, ladder door should be available
+    expect(
+      screen.queryByRole("button", { name: "Leaderboard" }),
+    ).not.toBeNull();
+
+    // Simulate joining a room
+    act(() => {
+      store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 0 });
+    });
+
+    // Simulate a duel starting with a Snapshot (view !== null)
+    const snapshot: Snapshot = {
+      type: "Snapshot",
+      view: {
+        viewerSeat: 0,
+        handNumber: 1,
+        buttonSeat: 0,
+        street: "PREFLOP",
+        board: { cards: [] },
+        pot: 30,
+        betToMatch: 20,
+        minRaiseTo: 40,
+        seatToAct: 0,
+        smallBlind: 10,
+        bigBlind: 20,
+        seats: [seatView(0), seatView(1)],
+      },
+    };
+
+    act(() => {
+      store.apply(snapshot);
+    });
+
+    // Now the duel is in progress (view !== null), and the ladder door should not be available
+    expect(screen.queryByRole("button", { name: "Leaderboard" })).toBeNull();
+  });
+
+  it("mounted ladder screen carries exactly one heading", () => {
+    // Assert the LadderScreen component contains exactly one heading total.
+    // This test guards against adding extra headings inside LadderScreen.
+    // The guard is only reachable once the screen is mounted in the tree,
+    // which TASK-050314 made possible.
+    renderApp();
+
+    // Click "Leaderboard" to show the ladder screen
+    const leaderboardButton = screen.getByRole("button", {
+      name: "Leaderboard",
+    });
+    fireEvent.click(leaderboardButton);
+
+    // Get the ladder screen section
+    const ladderScreen = screen.getByLabelText("leaderboard");
+
+    // Count headings within the ladder screen
+    const headingsInLadder = ladderScreen.querySelectorAll(
+      "h1, h2, h3, h4, h5, h6",
+    );
+
+    // Should be exactly one heading in the ladder screen
+    expect(headingsInLadder).toHaveLength(1);
   });
 });
