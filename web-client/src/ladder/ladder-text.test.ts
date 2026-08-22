@@ -1,5 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import { LADDER_HEADING, MORE, seasonName, rowLine } from "./ladder-text";
+import {
+  LADDER_HEADING,
+  MORE,
+  seasonName,
+  rowLine,
+  NO_PLACE_THIS_SEASON,
+  selfLine,
+} from "./ladder-text";
 
 describe("the words the ladder says", () => {
   it("states every sentence exactly, character for character", () => {
@@ -33,5 +40,31 @@ describe("the words the ladder says", () => {
     expect(
       rowLine({ rank: 215, playerId: "q", displayName: null, coins: -1 }),
     ).toBe("215 No name −1");
+  });
+
+  it("states the rank and the standing the response carried, for two different responses", () => {
+    expect(selfLine({ rank: 5, coins: 3 })).toBe(
+      "You are rank 5 this season, on 3 duel coins.",
+    );
+    expect(selfLine({ rank: 215, coins: -1 })).toBe(
+      "You are rank 215 this season, on −1 duel coins.",
+    );
+  });
+
+  it("says a player with no place has none, and prints no number at all", () => {
+    const noPlace = selfLine({ rank: null, coins: null });
+    expect(noPlace).toBe(NO_PLACE_THIS_SEASON);
+    expect(/\d/.test(noPlace)).toBe(false);
+
+    // A player with rank 195 and 0 coins is different from a player with no place
+    const hasPlace = selfLine({ rank: 195, coins: 0 });
+    expect(hasPlace).not.toBe(noPlace);
+    expect(/\d/.test(hasPlace)).toBe(true);
+  });
+
+  it("names one duel coin in the singular", () => {
+    expect(selfLine({ rank: 1, coins: 1 })).toBe(
+      "You are rank 1 this season, on 1 duel coin.",
+    );
   });
 });

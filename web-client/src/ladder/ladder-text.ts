@@ -1,4 +1,4 @@
-import type { LadderRow } from "./ladder-page";
+import type { LadderRow, SelfStanding } from "./ladder-page";
 import { nameOrNone } from "../profile/name-text";
 import { coinBalanceText } from "../profile/profile-text";
 
@@ -73,4 +73,21 @@ export function seasonName(season: string): string {
  */
 export function rowLine(row: LadderRow): string {
   return `${row.rank} ${nameOrNone(row.displayName)} ${coinBalanceText(row.coins)}`;
+}
+
+export const NO_PLACE_THIS_SEASON =
+  "You have no place on this season's leaderboard.";
+
+/**
+ * Converts a player's standing into the one sentence they read about themselves.
+ *
+ * A player with a place reads their rank and coin standing. A player who
+ * has not finished a duel this season is told they have no place, with no
+ * digit anywhere in the sentence — never `0`, never a rank.
+ */
+export function selfLine(self: SelfStanding): string {
+  if (self.rank !== null && self.coins !== null) {
+    return `You are rank ${self.rank} this season, on ${coinBalanceText(self.coins)} duel ${self.coins === 1 ? "coin" : "coins"}.`;
+  }
+  return NO_PLACE_THIS_SEASON;
 }
