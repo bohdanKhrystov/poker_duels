@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050309
 title: The screen names the season the response carried, and its four states are four sentences
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
