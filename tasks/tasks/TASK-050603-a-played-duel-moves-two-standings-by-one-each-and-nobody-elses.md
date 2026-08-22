@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050603
 title: A played duel moves two standings by one each — measured as a difference, on a ladder that was never zero
 type: task
-status: ready
+status: done
 parent: STORY-0506
 module: poker-server
 estimate: S

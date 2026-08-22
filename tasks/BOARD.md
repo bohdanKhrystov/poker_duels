@@ -1658,11 +1658,11 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050315](tasks/TASK-050315-the-door-survives-a-failed-profile-read-and-stands-down-for-a-duel.md) The door survives a failed profile read, and stands down for a duel in progress | S | **done** |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | **dropped** — `ADR-0067`: a row leads nowhere |
 | [STORY-0505](stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) A season ends, and the record survives it | | | **dropped** — `ADR-0061` §5: a boundary does nothing, so there is no crossing to write |
-| [STORY-0506](stories/STORY-0506-a-duel-moves-a-rank.md) A duel moves a rank, end to end | | | **in progress** — 2 of 9 tickets |
+| [STORY-0506](stories/STORY-0506-a-duel-moves-a-rank.md) A duel moves a rank, end to end | | | **in progress** — 3 of 9 tickets |
 | | [TASK-050601](tasks/TASK-050601-the-ladder-two-seated-players-and-no-place-yet.md) The ladder, read from the same application the duel is played in — two seated players and no place yet | S | **done** |
 | | [TASK-050602](tasks/TASK-050602-the-ladder-the-duel-arrives-into-a-shared-rank-a-skipped-one-and-last-month-left-out.md) The ladder the duel arrives into — a shared rank, a skipped one, and last month left out | S | **done** |
-| | [TASK-050603](tasks/TASK-050603-a-played-duel-moves-two-standings-by-one-each-and-nobody-elses.md) A played duel moves two standings by one each — measured as a difference, on a ladder that was never zero | S | ready |
-| | [TASK-050604](tasks/TASK-050604-the-winner-overtakes-the-loser-on-a-ladder-that-had-them-the-other-way-round.md) The winner overtakes the loser on a ladder that had them the other way round | S | **backlog** |
+| | [TASK-050603](tasks/TASK-050603-a-played-duel-moves-two-standings-by-one-each-and-nobody-elses.md) A played duel moves two standings by one each — measured as a difference, on a ladder that was never zero | S | **done** |
+| | [TASK-050604](tasks/TASK-050604-the-winner-overtakes-the-loser-on-a-ladder-that-had-them-the-other-way-round.md) The winner overtakes the loser on a ladder that had them the other way round | S | ready |
 | | [TASK-050605](tasks/TASK-050605-every-standing-is-that-players-own-season-results.md) Every standing on the ladder is that player's own season results, and the ladder totals zero | S | **backlog** |
 | | [TASK-050606](tasks/TASK-050606-the-players-own-place-after-the-duel-on-the-page-and-off-it.md) The player's own place after the duel — served on the page drawn and off it | S | **backlog** |
 | | [TASK-050607](tasks/TASK-050607-a-player-whose-only-duel-was-a-loss-has-a-row-and-it-reads-minus-one.md) A player whose only duel was a loss has a row, and it reads minus one | S | **backlog** |
