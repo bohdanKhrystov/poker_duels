@@ -2,7 +2,7 @@
 id: STORY-0503
 title: The ladder is a screen, reached from the first screen and left by one control
 type: story
-status: in-progress
+status: done
 parent: EPIC-05
 module: web-client
 labels: [client, leaderboard, screen]
