@@ -5,7 +5,7 @@ import {
   nextPageAfter,
   type LadderState,
 } from "./ladder-state";
-import type { LadderPage, LadderRow } from "./ladder-page";
+import type { LadderPage, LadderRow, SelfStanding } from "./ladder-page";
 
 function row(rank: number): LadderRow {
   return {
@@ -16,12 +16,23 @@ function row(rank: number): LadderRow {
   };
 }
 
-function page(ranks: readonly number[], nextCursor: string | null): LadderPage {
+// `season` and `self` default to the walk's usual first-page values so the
+// five tests written before either field existed keep producing the exact
+// pages they always did; a test proving the season or self rule overrides
+// one or both.
+function page(
+  ranks: readonly number[],
+  nextCursor: string | null,
+  overrides?: {
+    readonly season?: string;
+    readonly self?: SelfStanding | null;
+  },
+): LadderPage {
   return {
-    season: "2026-08",
+    season: overrides?.season ?? "2026-08",
     rows: ranks.map(row),
     nextCursor,
-    self: null,
+    self: overrides?.self ?? null,
   };
 }
 
@@ -37,7 +48,20 @@ function heldState(
     nextCursor,
     askedWith: null,
     phase: "ready",
+    season: "2026-08",
+    self: null,
   };
+}
+
+// The state after the walk's first page has answered — the season and self
+// standing this fixes are what the tests below prove a second page cannot
+// move.
+function walkedFirstPage(): LadderState {
+  const asked = ladderReducer(initialLadder(), { type: "asked", after: null });
+  return ladderReducer(asked, {
+    type: "page",
+    page: page([1], "c1", { season: "2026-08", self: { rank: 5, coins: 1 } }),
+  });
 }
 
 describe("the ladder walk", () => {
@@ -90,5 +114,53 @@ describe("the ladder walk", () => {
     expect(state.nextCursor).toBeNull();
     expect(state.askedWith).toBeNull();
     expect(state.phase).toBe("loading");
+  });
+
+  it("takes the season and the self standing of a page that carried no cursor", () => {
+    const asked = ladderReducer(initialLadder(), {
+      type: "asked",
+      after: null,
+    });
+    const next = ladderReducer(asked, {
+      type: "page",
+      page: page([1], "c1", {
+        season: "2026-08",
+        self: { rank: 5, coins: 1 },
+      }),
+    });
+
+    expect(next.season).toBe("2026-08");
+    expect(next.self).toEqual({ rank: 5, coins: 1 });
+  });
+
+  it("keeps the season and the self standing the first page carried", () => {
+    const asked = ladderReducer(walkedFirstPage(), {
+      type: "asked",
+      after: "c1",
+    });
+    const next = ladderReducer(asked, {
+      type: "page",
+      page: page([2], "c2", {
+        season: "2026-09",
+        self: { rank: 9, coins: -4 },
+      }),
+    });
+
+    expect(next.season).toBe("2026-08");
+    expect(next.self).toEqual({ rank: 5, coins: 1 });
+    expect(next.rows.map((r) => r.rank)).toEqual([1, 2]);
+  });
+
+  it("does not move the self standing when a later page carries a different one", () => {
+    const asked = ladderReducer(walkedFirstPage(), {
+      type: "asked",
+      after: "c1",
+    });
+    const next = ladderReducer(asked, {
+      type: "page",
+      page: page([2], "c2", { self: null }),
+    });
+
+    expect(next.self).toEqual({ rank: 5, coins: 1 });
   });
 });
