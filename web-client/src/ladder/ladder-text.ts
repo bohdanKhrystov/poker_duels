@@ -59,7 +59,7 @@ export function seasonName(season: string): string {
  * Formats a leaderboard row as a string combining rank, player name, and standing.
  *
  * Builds one line of text by combining three fields separated by spaces:
- * the rank number, the player's display name (or "No name" if missing),
+ * the rank number, the player's display name (or `nameOrNone`'s fallback when it is missing),
  * and their coin standing. The display name and coin formatting are delegated
  * to their respective single-purpose functions to ensure every surface
  * that renders these fields uses the same logic.
