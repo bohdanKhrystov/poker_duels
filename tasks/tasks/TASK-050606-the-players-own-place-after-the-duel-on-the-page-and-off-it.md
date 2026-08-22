@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050606
 title: The player's own place after the duel — served on the page drawn and off it
 type: task
-status: backlog
+status: ready
 parent: STORY-0506
 module: poker-server
 estimate: S
