@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050313
 title: A flat ladder is an ordinary ladder, a tie is marked by nothing, and no row leads anywhere
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
