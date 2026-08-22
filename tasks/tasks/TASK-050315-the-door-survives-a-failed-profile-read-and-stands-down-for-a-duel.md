@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050315
 title: The door survives a failed profile read, and stands down for a duel in progress
 type: task
-status: backlog
+status: ready
 parent: STORY-0503
 module: web-client
 estimate: S
