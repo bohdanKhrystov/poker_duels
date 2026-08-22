@@ -173,7 +173,8 @@ describe("reading one page of the ladder", () => {
   });
 
   it("answers unavailable for a refusal, a server error, and a fetch that throws", async () => {
-    // Proves that 400, 500, fetch rejection, and unparseable 200 all map to unavailable
+    // Proves that 400, 500, fetch rejection, and unparseable 200 all map to unavailable.
+    // Each case counts requests: a silent retry would double the call count and be caught.
     const storage = inMemoryStorage();
 
     // Test 1: 400 status
@@ -184,6 +185,7 @@ describe("reading one page of the ladder", () => {
       after: null,
     });
     expect(result400.kind).toBe("unavailable");
+    expect(mock400.calls).toHaveLength(1);
 
     // Test 2: 500 status
     const mock500 = answering(response(500));
@@ -193,11 +195,23 @@ describe("reading one page of the ladder", () => {
       after: null,
     });
     expect(result500.kind).toBe("unavailable");
+    expect(mock500.calls).toHaveLength(1);
 
     // Test 3: fetch that rejects
-    const mockReject = {
-      calls: [] as FetchCall[],
-      fetch: async (): Promise<ApiResponse> => {
+    const rejectCalls: FetchCall[] = [];
+    const mockReject: {
+      readonly calls: FetchCall[];
+      readonly fetch: ApiFetch;
+    } = {
+      calls: rejectCalls,
+      fetch: async (
+        path: string,
+        init: { readonly headers: Readonly<Record<string, string>> },
+      ): Promise<ApiResponse> => {
+        rejectCalls.push({
+          path,
+          headers: { ...init.headers },
+        });
         throw new Error("Network error");
       },
     };
@@ -207,6 +221,7 @@ describe("reading one page of the ladder", () => {
       after: null,
     });
     expect(resultReject.kind).toBe("unavailable");
+    expect(mockReject.calls).toHaveLength(1);
 
     // Test 4: 200 with unparseable body (missing required fields)
     const mockInvalid = answering(ok({ invalid: "body" }));
@@ -216,6 +231,7 @@ describe("reading one page of the ladder", () => {
       after: null,
     });
     expect(resultInvalid.kind).toBe("unavailable");
+    expect(mockInvalid.calls).toHaveLength(1);
 
     // Verify none of them threw
     expect(result400).toBeDefined();
