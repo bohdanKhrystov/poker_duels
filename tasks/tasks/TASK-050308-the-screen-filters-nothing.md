@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050308
 title: The screen filters nothing — a nameless row and a negative standing are ordinary rows
 type: task
-status: backlog
+status: ready
 parent: STORY-0503
 module: web-client
 estimate: XS

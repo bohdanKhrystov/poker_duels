@@ -55,6 +55,23 @@ show.
 - Fixtures in this ticket's tests **do** carry cursors; every fixture written by an earlier ticket
   keeps `nextCursor: null` and therefore keeps rendering no control.
 
+## The guard this ticket must carry
+
+`TASK-050305` demonstrated, with real output, that `ladderReducer`'s `askedWith` is a **single slot
+with no per-request identity**: two reads in flight, and a late response for the superseded one is
+misclassified as a first page — the held rows vanish and `phase` reads `"ready"` while a request is
+still outstanding. The same exposure sits in the merged `history-state.ts`.
+
+`TASK-050307` shipped the screen with **one** call site, so today the only way to reach it is to
+break the documented *stable `read` reference* contract. **This ticket adds the second entry point.**
+A *show more* control that can be pressed while a page is loading makes the gap live and reachable by
+an ordinary player double-pressing a button.
+
+So the control must not start a read while one is outstanding — a phase guard, as
+`HistoryScreen`'s *show more* already carries (`state.phase !== "loading"`), or an equivalent. Assert
+it: a second press during a pending read must issue **no** second request, and only a request count
+can show that.
+
 ## Out of scope
 
 - **Restarting a walk the server refused** — `TASK-050304` maps a `400` to `unavailable` and
