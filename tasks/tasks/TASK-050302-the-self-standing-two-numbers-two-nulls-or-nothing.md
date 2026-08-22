@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050302
 title: The self standing is two numbers, two nulls, or nothing — and it carries no player id
 type: task
-status: backlog
+status: ready
 parent: STORY-0503
 module: web-client
 estimate: S

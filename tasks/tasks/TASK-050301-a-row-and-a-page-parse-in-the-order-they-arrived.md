@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050301
 title: A ladder row parses, and the page keeps the order it arrived in
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
