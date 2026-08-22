@@ -17,6 +17,7 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders a nearly flat ladder exactly as it renders a spread one'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'marks no row on a page of equal ranks, and none as the one the reader stands on'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders the heading, the season, the self line and the rows, and nothing else'
+  - cd web-client && ! grep -q 'toContain' src/ladder/LadderScreen.test.tsx
   - cd web-client && npm run check
 ---
 
@@ -50,7 +51,9 @@ it pass is in scope and nothing else is.
 - Two fixtures, both `season: "2026-09"`, both `self: { rank: 5, coins: 1 }`, both
   `nextCursor: null`, both four rows with names `["Ada", "Bo", null, "Cy"]`:
   - **flat** — the routine second day of a season: ranks `[5, 5, 5, 5]`, coins `[1, 1, 1, 1]`.
-  - **spread** — ranks `[1, 2, 3, 4]`, coins `[4, 3, 2, 1]`.
+  - **spread** — ranks `[2, 3, 4, 6]`, coins `[4, 3, 2, 1]`. Deliberately not `1..n`: no rank
+    fixture in this story is the identity sequence, so a position-derived rank cannot pass anywhere
+    by coincidence.
 - `nextCursor: null` on both, so the *Show more* control renders on neither and a button found
   anywhere in the section is a control somebody added.
 
@@ -76,6 +79,10 @@ it pass is in scope and nothing else is.
 The expected strings are written literally, not built by calling `rowLine`, `selfLine` or
 `seasonName`. If the concatenation does not match because JSX introduced whitespace, the fix is to
 remove the whitespace from the component — not to weaken the assertion to `toContain`.
+That is now a **gate, not an instruction**: the last `verify:` line refuses the string
+`toContain` anywhere in this test file. `.toContain(` is used nowhere in it, so the check has
+no false positives — and without it, a single `toBe` → `toContain` retires all six refusals
+while every test still passes and every named test still appears in the reporter output.
 
 ## Acceptance criteria
 
