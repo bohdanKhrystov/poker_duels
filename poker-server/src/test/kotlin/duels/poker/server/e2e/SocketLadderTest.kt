@@ -751,4 +751,101 @@ internal class SocketLadderTest {
             )
         }
     }
+
+    /**
+     * A player's only duel was a loss: they are on the ladder at −1, no minimum duels, no
+     * `WHERE coins > 0`, no hidden nameless row. `ADR-0063` §1: nothing gates a place.
+     *
+     * The loser is derived from [DuelOutcome.winner] after the duel is played, not pinned
+     * beforehand by a head start like [seedTheLadderTheDuelArrivesInto]'s losing seat in
+     * [theDuelPutsTheWinnerAboveTheLoserOnALadderThatHadThemTheOtherWayRound]. This test
+     * seeds no ladder, so it can read the outcome after the fact and derive the loser from it.
+     * Seat numbers are computed from the outcome, not hard-coded.
+     */
+    @Test
+    fun aPlayerWhoseOnlyDuelWasALossHasARowAtMinusOne(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+            val duel = client.openSocketDuel()
+
+            val host = resolvePlayer(HOST_DEVICE)
+            val guest = resolvePlayer(GUEST_DEVICE)
+
+            val outcome = duel.playToFinish()
+            val winnerSeat = duel.winnerSeat(outcome)
+            val loserSeat = 1 - winnerSeat
+            val winner = duel.seat(winnerSeat)
+            val loser = duel.seat(loserSeat)
+            val winnerPlayer = if (winner.deviceId == HOST_DEVICE) host else guest
+            val loserPlayer = if (loser.deviceId == HOST_DEVICE) host else guest
+
+            val standings = client.ladder(HOST_DEVICE, limit = LADDER_LIMIT)
+
+            // Exactly two rows: winner and loser, both on the ladder
+            assertEquals(
+                2,
+                standings.rows.size,
+                "ladder should have exactly two rows after a single duel between two players",
+            )
+            assertEquals(
+                listOf(1, 2),
+                standings.rows.map { it.rank },
+                "ranks in page order should be 1, 2 -- winner ranked above loser",
+            )
+
+            // Winner's row: rank 1, +1 coins
+            val winnerRow = standings.rowFor(winnerPlayer)
+            assertEquals(
+                1,
+                winnerRow.rank,
+                "winner's rank should be 1 (literal: the top seat after a two-player duel)",
+            )
+            assertEquals(
+                1,
+                winnerRow.coins,
+                "winner's coins should be 1 (literal: +1 for winning a duel)",
+            )
+
+            // Loser's row: rank 2, −1 coins, null displayName
+            val loserRow = standings.rowFor(loserPlayer)
+            assertEquals(
+                2,
+                loserRow.rank,
+                "loser's rank should be 2 (literal: the second seat after a two-player duel)",
+            )
+            assertEquals(
+                -1,
+                loserRow.coins,
+                "loser's coins should be -1 (literal: −1 for losing, unclamped, not filtered out)",
+            )
+            assertNull(
+                loserRow.displayName,
+                "loser's displayName should be null (literal: no display name set for a new player)",
+            )
+
+            // Loser's self standing: same rank and coins
+            assertEquals(
+                loserPlayer.id.value,
+                standings.self?.playerId,
+                "self should be the loser (the device ID this request was made with)",
+            )
+            assertEquals(
+                2,
+                standings.self?.rank,
+                "self rank should be 2 (literal: loser's rank on the whole ladder)",
+            )
+            assertEquals(
+                -1,
+                standings.self?.coins,
+                "self coins should be -1 (literal: loser's coin delta, unclamped)",
+            )
+
+            // No pagination: both rows fit on a page of 10
+            assertNull(
+                standings.nextCursor,
+                "nextCursor should be null: exactly two rows fit on one page of limit=$LADDER_LIMIT",
+            )
+        }
+    }
 }
