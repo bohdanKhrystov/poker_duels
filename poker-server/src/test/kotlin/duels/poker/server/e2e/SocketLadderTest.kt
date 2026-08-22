@@ -9,6 +9,7 @@ import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import duels.poker.server.http.DEVICE_ID_HEADER
+import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.StandingRow
 import duels.poker.server.protocol.http.StandingsResponse
 import duels.poker.server.protocol.protocolJson
@@ -39,6 +40,10 @@ import kotlin.test.fail
 private const val LADDER_LIMIT = 10
 private const val FILLER_ONE_DEVICE = "e2e-f1"
 private const val FILLER_TWO_DEVICE = "e2e-f2"
+
+// Bounded like StandingsWalkDatabaseTest.walkAllPages: a cursor that never turns null is a server
+// defect, and the walk reports that defect with a message instead of spinning on it forever.
+private const val MAX_LADDER_WALK_REQUESTS = 10
 
 /**
  * Measured, not derived: under the fixed `HAND_SEED` and `POLICY_SEED` that [openSocketDuel]
@@ -115,6 +120,46 @@ internal class SocketLadderTest {
             HttpStatusCode.OK,
             response.status,
             "GET /api/standings for deviceId=$deviceId returned ${response.status}",
+        )
+        return protocolJson.decodeFromString(response.bodyAsText())
+    }
+
+    /**
+     * Walks every page of `/api/standings` for [deviceId], following `nextCursor` from the first
+     * page to the last and concatenating each page's `rows` into one list -- a real walk, not a
+     * page wearing a loop, whenever [limit] is smaller than the number of rows on the ladder.
+     *
+     * Bounded by [MAX_LADDER_WALK_REQUESTS] and failing with a message naming the last cursor if
+     * the walk does not terminate, exactly as [StandingsWalkDatabaseTest.walkAllPages] does. The
+     * cursor is passed straight through from one page's `nextCursor` into the next request's
+     * `after` -- never decoded and re-encoded here, which would test this walk's round trip
+     * instead of the server's.
+     */
+    private suspend fun HttpClient.walkLadder(deviceId: String?, limit: Int): List<StandingRow> {
+        val rows = mutableListOf<StandingRow>()
+        var cursor: String? = null
+        repeat(MAX_LADDER_WALK_REQUESTS) {
+            val page = ladder(deviceId, limit = limit, after = cursor)
+            rows.addAll(page.rows)
+            cursor = page.nextCursor
+            if (cursor == null) {
+                return rows
+            }
+        }
+        fail("Ladder walk did not terminate within $MAX_LADDER_WALK_REQUESTS requests; last cursor was $cursor")
+    }
+
+    /**
+     * Reads [deviceId]'s recent duels from `GET /api/me/duels`, asserting the response is `200`,
+     * then decodes the body with [protocolJson] directly -- copied from
+     * [SocketHistoryTest.recentDuelsOf], the per-player history this story's per-player check reads.
+     */
+    private suspend fun HttpClient.recentDuelsOf(deviceId: String): RecentDuelsResponse {
+        val response = get("/api/me/duels") { header(DEVICE_ID_HEADER, deviceId) }
+        assertEquals(
+            HttpStatusCode.OK,
+            response.status,
+            "GET /api/me/duels for deviceId=$deviceId returned ${response.status}",
         )
         return protocolJson.decodeFromString(response.bodyAsText())
     }
@@ -448,6 +493,107 @@ internal class SocketLadderTest {
                 afterGuestIndex < afterHostIndex,
                 "after: guest's row index ($afterGuestIndex) should be lower than host's " +
                     "($afterHostIndex) -- the winner overtook the loser, rows=${after.rows}",
+            )
+        }
+    }
+
+    /**
+     * The story's conservation criterion end to end (`ADR-0063` §4): every row the ladder prints
+     * is that player's own season results, and the season as a whole sums to zero. The order below
+     * matters: the per-player check has teeth because a wrong window moves it, while the total
+     * asserted last does not, because every duel's two `duel_result` rows already sum to zero
+     * (`ADR-0015`) whatever window a query happens to read them through. Neither assertion
+     * subsumes the other -- this one catches a wrong window, the total catches a row lost or
+     * invented outright.
+     */
+    @Test
+    fun everyStandingIsThatPlayersOwnSeasonResultsAndTheLadderTotalsZero(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+            val duel = client.openSocketDuel()
+
+            val host = resolvePlayer(HOST_DEVICE)
+            val guest = resolvePlayer(GUEST_DEVICE)
+            val fixture = seedTheLadderTheDuelArrivesInto(host, guest)
+            val playersByDevice =
+                listOf(
+                    HOST_DEVICE to host,
+                    GUEST_DEVICE to guest,
+                    FILLER_ONE_DEVICE to fixture.fillerOne,
+                    FILLER_TWO_DEVICE to fixture.fillerTwo,
+                )
+
+            duel.playToFinish()
+
+            // limit = 2 makes this a real walk -- two pages and a cursor between them -- rather
+            // than one page wearing a loop: the four fixture rows do not fit on a page of 2.
+            val rows = client.walkLadder(HOST_DEVICE, limit = 2)
+
+            // (1) Row count and identity, asserted before either total below: a page returned
+            // instead of the full walk, or a row served twice for one player with its coins
+            // otherwise unchanged, would slip past every per-player comparison that follows --
+            // rows.size catches the duplicate that a set of ids alone would silently collapse away.
+            assertEquals(
+                4,
+                rows.size,
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: walk should return exactly " +
+                    "four rows, got $rows",
+            )
+            assertEquals(
+                playersByDevice.map { (_, player) -> player.id.value }.toSet(),
+                rows.map { it.playerId }.toSet(),
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: the four rows should be host, " +
+                    "guest, fillerOne and fillerTwo, got $rows",
+            )
+            val rowsByPlayerId = rows.associateBy { it.playerId }
+
+            // (2) Every standing is that player's own season results: the ladder's coins compared
+            // against a sum independently computed from that player's GET /api/me/duels, filtered
+            // to the season -- never the same value read twice.
+            for ((deviceId, player) in playersByDevice) {
+                val history = client.recentDuelsOf(deviceId)
+                assertNull(
+                    history.nextCursor,
+                    "$deviceId's duel history must fit on one page or this sum would miss " +
+                        "entries left unread, nextCursor=${history.nextCursor}",
+                )
+                val seasonSum =
+                    history.duels
+                        .filter { ladderSeason.contains(Instant.parse(it.finishedAt)) }
+                        .sumOf { it.coinDelta }
+                val row = rowsByPlayerId.getValue(player.id.value)
+                assertEquals(
+                    seasonSum,
+                    row.coins,
+                    "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: $deviceId's ladder coins " +
+                        "(${row.coins}) should equal the season sum of its own duel history ($seasonSum)",
+                )
+            }
+
+            // (3) fillerOne is the player who makes the window observable: a win at lastSeasonAt()
+            // leaves their all-time record at 0 while their season standing is -1 -- these two
+            // numbers differing is exactly what a query reading the wrong window would get caught
+            // by, and it is why the fixture carries this player at all.
+            val fillerOneDuels = client.recentDuelsOf(FILLER_ONE_DEVICE).duels
+            val fillerOneSeasonSum =
+                fillerOneDuels
+                    .filter { ladderSeason.contains(Instant.parse(it.finishedAt)) }
+                    .sumOf { it.coinDelta }
+            val fillerOneUnfilteredSum = fillerOneDuels.sumOf { it.coinDelta }
+            assertEquals(-1, fillerOneSeasonSum, "fillerOne's season sum should be -1")
+            assertEquals(0, fillerOneUnfilteredSum, "fillerOne's unfiltered, all-time sum should be 0")
+
+            // (4) The ladder as a whole still sums to zero -- necessary, but unlike (2), not
+            // sufficient: every duel writes two duel_result rows that sum to zero (ADR-0015 makes a
+            // draw two zeroes rather than nothing), so this total would read 0 under this season,
+            // last season, or no window at all. It would survive the exact wrong-window mutation
+            // (2) exists to catch; what it catches instead is a row lost or invented outright.
+            assertEquals(
+                0,
+                rows.sumOf { it.coins },
+                "handSeed=${duel.handSeed} policySeed=$POLICY_SEED: the four coins should sum to " +
+                    "exactly 0, got $rows",
             )
         }
     }
