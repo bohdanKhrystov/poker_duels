@@ -71,9 +71,40 @@ dropped that story: a boundary runs no code, so there is nothing for this test t
 
 ## Tasks
 
+Split on 2026-08-22 into **nine** tickets, strictly linear: every one of them adds tests to the
+single class `poker-server/src/test/kotlin/duels/poker/server/e2e/SocketLadderTest.kt`, so no two
+are startable at once. `TASK-050601` is `ready`; the rest are `backlog`.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split. Blocked on `STORY-0503` merging — run `/plan-story STORY-0506` then.* | — |
+| [TASK-050601](../tasks/TASK-050601-the-ladder-two-seated-players-and-no-place-yet.md) | The ladder, read from the same application the duel is played in — two seated players and no place yet | **ready** |
+| [TASK-050602](../tasks/TASK-050602-the-ladder-the-duel-arrives-into-a-shared-rank-a-skipped-one-and-last-month-left-out.md) | The ladder the duel arrives into — a shared rank, a skipped one, and last month left out | backlog |
+| [TASK-050603](../tasks/TASK-050603-a-played-duel-moves-two-standings-by-one-each-and-nobody-elses.md) | A played duel moves two standings by one each — measured as a difference, on a ladder that was never zero | backlog |
+| [TASK-050604](../tasks/TASK-050604-the-winner-overtakes-the-loser-on-a-ladder-that-had-them-the-other-way-round.md) | The winner overtakes the loser on a ladder that had them the other way round | backlog |
+| [TASK-050605](../tasks/TASK-050605-every-standing-is-that-players-own-season-results.md) | Every standing on the ladder is that player's own season results, and the ladder totals zero | backlog |
+| [TASK-050606](../tasks/TASK-050606-the-players-own-place-after-the-duel-on-the-page-and-off-it.md) | The player's own place after the duel — served on the page drawn and off it | backlog |
+| [TASK-050607](../tasks/TASK-050607-a-player-whose-only-duel-was-a-loss-has-a-row-and-it-reads-minus-one.md) | A player whose only duel was a loss has a row, and it reads minus one | backlog |
+| [TASK-050608](../tasks/TASK-050608-the-ladder-and-the-profile-strip-agree-here-and-part-company-for-an-older-record.md) | The ladder and the profile strip agree for both duellists — and part company for an older record | backlog |
+| [TASK-050609](../tasks/TASK-050609-a-draw-moves-nobody-and-is-still-two-rows.md) | A draw moves nobody, and is still two rows and two places | backlog |
+
+**Three things the split settled that the story had left open.**
+
+- **A drawn duel cannot be played over the socket.** `CreateRoom` opens the shipped default format,
+  whose end condition is `EndCondition.Freezeout`, and `outcomeOf` names a `null` winner only under
+  `EndCondition.FixedHands` with level stacks. `TASK-050609` therefore records the drawn duel
+  through `PostgresDuelResultStore` — the class `PostgresDuelResultSink` delegates every write to,
+  and where `coinDeltas` and `ADR-0015`'s two-row write live — and says so in the test. Making a
+  draw reachable over the wire would be new production code, which this story refuses.
+- **The clock stays real.** `PostgresStandingsReads` reads the half-open window
+  `[season.start, asOf)`, so a fixed `wallClock` would stamp the duel's `finished_at` at exactly
+  the `asOf` its own ladder read mints and the duel under test would vanish from the ladder it is
+  supposed to move. Fixture rows are placed at `currentSeason(Clock.systemUTC()).start` plus
+  milliseconds instead, which is inside the window at both ends whenever the suite runs.
+- **The ordering criterion names a winning seat, once.** A ±1 swing overtakes only across a gap of
+  one, so the head start cannot be handed to whichever seat turns out to win — it has to be chosen
+  before the duel. It can be: under `HAND_SEED` and `POLICY_SEED` the duel is won by seat 1, and
+  `SocketDuelTest.theSameSeedsPlayTheSameDuel` is the merged proof that the same seeds play the
+  same duel. `TASK-050604` pins that seat in an assertion whose failure message says what to change.
 
 ## Acceptance criteria
 
