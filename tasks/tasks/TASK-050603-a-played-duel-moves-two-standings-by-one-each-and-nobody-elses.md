@@ -32,8 +32,10 @@ and `−1` beside whoever lost it — never summing anything — would satisfy t
 
 So this ticket's fixture starts both duellists at `±3`, and every assertion about them is an
 `after − before` **difference**. A ladder that answers `+1` for a winner and `−1` for a loser
-regardless of history is then wrong for **both** duellists whichever seat wins, because the right
-answers here are `+2` and `−2`. The fixture is a different one from `TASK-050602`'s for exactly
+regardless of history is then wrong for **both** duellists whichever seat wins: the right answer here
+is a *difference* of exactly `+1` and `−1`, and a history-ignoring ladder produces some other
+difference for both. Which wrong pair it produces depends on which seat won — that is precisely why
+the criterion asserts the difference rather than any absolute pair. The fixture is a different one from `TASK-050602`'s for exactly
 this reason: that ladder's post-duel numbers happen to include a `+1`, and a number that could have
 been right by accident is not evidence.
 
@@ -92,8 +94,9 @@ diagnosable from the report alone.
 **Named mutations.** Awarding the coin to the losing seat reddens both differences. Clamping a
 standing at zero (`ADR-0014`'s *"the case to check first"*) reddens the loser's, whose right answer
 is negative on both sides of the duel. Answering a fixed `+1`/`−1` per outcome instead of summing
-the window reddens both, because the right answers are `+2` and `−2` — this is the mutation
-`TASK-050602`'s fixture could not have caught. Widening the write to touch a third player's rows
+the window reddens both, because the measured difference is then not `+1`/`−1` for either duellist —
+the exact wrong values depend on which seat won, which is why the assertion is on the difference. This
+is the mutation `TASK-050602`'s fixture could not have caught. Widening the write to touch a third player's rows
 reddens the fillers-unchanged assertion.
 
 ## Acceptance criteria
