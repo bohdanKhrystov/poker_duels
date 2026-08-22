@@ -139,4 +139,126 @@ describe("one page of the ladder, parsed", () => {
     });
     expect(coinsAsString).toBeNull();
   });
+
+  it("reads a placed reader as a rank and a standing, and keeps no player id on it", () => {
+    const page = parseLadderPage({
+      season: "2026-08",
+      rows: [
+        {
+          rank: 1,
+          playerId: "player1",
+          displayName: "Player",
+          coins: 10,
+        },
+      ],
+      nextCursor: null,
+      self: {
+        playerId: "me",
+        rank: 5,
+        coins: -1,
+      },
+    });
+
+    expect(page).not.toBeNull();
+    if (page !== null) {
+      expect(page.self).not.toBeNull();
+      if (page.self !== null) {
+        expect(page.self.rank).toBe(5);
+        expect(page.self.coins).toBe(-1);
+        // Ensure playerId is not copied to SelfStanding
+        expect(Object.keys(page.self)).toEqual(["rank", "coins"]);
+      }
+    }
+  });
+
+  it("reads a reader with no place as two nulls, never as a zero", () => {
+    const page = parseLadderPage({
+      season: "2026-08",
+      rows: [
+        {
+          rank: 1,
+          playerId: "player1",
+          displayName: "Player",
+          coins: 10,
+        },
+      ],
+      nextCursor: null,
+      self: {
+        playerId: "me",
+        rank: null,
+        coins: null,
+      },
+    });
+
+    expect(page).not.toBeNull();
+    if (page !== null) {
+      expect(page.self).not.toBeNull();
+      if (page.self !== null) {
+        expect(page.self.rank).toBeNull();
+        expect(page.self.coins).toBeNull();
+        expect(page.self.coins).not.toBe(0);
+      }
+    }
+  });
+
+  it("reads an absent reader as no self standing at all", () => {
+    const page = parseLadderPage({
+      season: "2026-08",
+      rows: [
+        {
+          rank: 1,
+          playerId: "player1",
+          displayName: "Player",
+          coins: 10,
+        },
+      ],
+      nextCursor: null,
+      self: null,
+    });
+
+    expect(page).not.toBeNull();
+    if (page !== null) {
+      expect(page.self).toBeNull();
+    }
+  });
+
+  it("refuses a self object that has a rank but no standing", () => {
+    // Body with rank as number and coins as null
+    const rankButNoCoin = parseLadderPage({
+      season: "2026-08",
+      rows: [
+        {
+          rank: 1,
+          playerId: "player1",
+          displayName: "Player",
+          coins: 10,
+        },
+      ],
+      nextCursor: null,
+      self: {
+        rank: 5,
+        coins: null,
+      },
+    });
+    expect(rankButNoCoin).toBeNull();
+
+    // Body with coins as number and rank as null
+    const coinButNoRank = parseLadderPage({
+      season: "2026-08",
+      rows: [
+        {
+          rank: 1,
+          playerId: "player1",
+          displayName: "Player",
+          coins: 10,
+        },
+      ],
+      nextCursor: null,
+      self: {
+        rank: null,
+        coins: 3,
+      },
+    });
+    expect(coinButNoRank).toBeNull();
+  });
 });
