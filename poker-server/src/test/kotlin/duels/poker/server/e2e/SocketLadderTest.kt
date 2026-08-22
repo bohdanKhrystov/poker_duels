@@ -1,11 +1,21 @@
 package duels.poker.server.e2e
 
+import duels.poker.engine.duel.DuelFormat
+import duels.poker.engine.duel.DuelOutcome
+import duels.poker.server.db.PostgresDuelResultStore
+import duels.poker.server.db.PostgresPlayerDirectory
 import duels.poker.server.db.PostgresProfileReads
 import duels.poker.server.db.PostgresTestSupport
+import duels.poker.server.duel.FinishedDuel
+import duels.poker.server.duel.formatLabel
 import duels.poker.server.http.DEVICE_ID_HEADER
+import duels.poker.server.protocol.http.StandingRow
 import duels.poker.server.protocol.http.StandingsResponse
 import duels.poker.server.protocol.protocolJson
+import duels.poker.server.season.Season
+import duels.poker.server.season.currentSeason
 import duels.poker.server.session.DeviceId
+import duels.poker.server.session.Player
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.get
@@ -20,9 +30,15 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.time.Clock
+import java.time.Instant
+import java.util.UUID
 import javax.sql.DataSource
+import kotlin.test.fail
 
 private const val LADDER_LIMIT = 10
+private const val FILLER_ONE_DEVICE = "e2e-f1"
+private const val FILLER_TWO_DEVICE = "e2e-f2"
 
 /**
  * The ladder is readable over HTTP from inside the same running application that hosts the
@@ -38,6 +54,17 @@ private const val LADDER_LIMIT = 10
 @Timeout(120)
 internal class SocketLadderTest {
     private lateinit var dataSource: DataSource
+
+    // Read once per test instance (JUnit5's default per-method lifecycle makes a fresh instance,
+    // and this property initializer, run for every @Test), so every fixture instant below agrees
+    // on the same season however close to a month boundary the suite runs.
+    private val ladderSeason: Season = currentSeason(Clock.systemUTC())
+
+    /** An instant inside [ladderSeason], anchored to its inclusive lower edge, never to the wall clock. */
+    private fun thisSeasonAt(offsetMillis: Long): Instant = ladderSeason.start.plusMillis(offsetMillis)
+
+    /** One second before [ladderSeason] begins — the prior calendar month, regardless of when this runs. */
+    private fun lastSeasonAt(): Instant = ladderSeason.start.minusSeconds(1)
 
     @BeforeEach
     fun setup() {
@@ -121,6 +148,101 @@ internal class SocketLadderTest {
             val noHeaderStandings = client.ladder(null)
             assertEquals(true, noHeaderStandings.rows.isEmpty(), "rows should be empty for no header")
             assertNull(noHeaderStandings.self, "self should be null for no header")
+        }
+    }
+
+    private suspend fun resolvePlayer(deviceId: String): Player =
+        PostgresPlayerDirectory(dataSource).resolve(DeviceId(deviceId))
+
+    private suspend fun recordWin(winner: Player, loser: Player, at: Instant) {
+        PostgresDuelResultStore(dataSource).record(
+            FinishedDuel(
+                id = UUID.randomUUID(),
+                format = formatLabel(DuelFormat.DEFAULT),
+                startedAt = at,
+                finishedAt = at,
+                seats = listOf(winner.id, loser.id),
+                outcome = DuelOutcome(winner = 0, handsPlayed = 1, finalStacks = listOf(20_000, 0)),
+            ),
+        )
+    }
+
+    private suspend fun recordDraw(first: Player, second: Player, at: Instant) {
+        PostgresDuelResultStore(dataSource).record(
+            FinishedDuel(
+                id = UUID.randomUUID(),
+                format = formatLabel(DuelFormat.DEFAULT),
+                startedAt = at,
+                finishedAt = at,
+                seats = listOf(first.id, second.id),
+                // ADR-0015: a draw pays neither seat, so both coin deltas land at zero.
+                outcome = DuelOutcome(winner = null, handsPlayed = 1, finalStacks = listOf(10_000, 10_000)),
+            ),
+        )
+    }
+
+    private data class LadderFixture(val fillerOne: Player, val fillerTwo: Player)
+
+    /**
+     * The three duels the story's standing fixture is built from — see the table in
+     * `TASK-050602`. `host` and `guest` are the two devices [openSocketDuel] already seated;
+     * `fillerOne` and `fillerTwo` exist only to give the ladder a shared rank, a skipped one, and
+     * a duel that must not count.
+     */
+    private suspend fun seedTheLadderTheDuelArrivesInto(host: Player, guest: Player): LadderFixture {
+        val fillerOne = resolvePlayer(FILLER_ONE_DEVICE)
+        val fillerTwo = resolvePlayer(FILLER_TWO_DEVICE)
+
+        recordWin(winner = host, loser = fillerOne, at = thisSeasonAt(1))
+        recordDraw(first = guest, second = fillerTwo, at = thisSeasonAt(2))
+        // Last season: must move nobody's standing this season, only appear in duel history.
+        recordWin(winner = fillerOne, loser = fillerTwo, at = lastSeasonAt())
+
+        return LadderFixture(fillerOne, fillerTwo)
+    }
+
+    private fun StandingsResponse.rowFor(player: Player): StandingRow =
+        rows.singleOrNull { it.playerId == player.id.value }
+            ?: fail("no row for player ${player.id.value} in rows=$rows")
+
+    @Test
+    fun theLadderTheDuelArrivesIntoSharesARankAndSkipsTheNext(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+            client.openSocketDuel()
+
+            val host = resolvePlayer(HOST_DEVICE)
+            val guest = resolvePlayer(GUEST_DEVICE)
+            val fixture = seedTheLadderTheDuelArrivesInto(host, guest)
+
+            val standings = client.ladder(HOST_DEVICE, limit = LADDER_LIMIT)
+
+            // The literal sequence, never re-derived from row position: a rank numbered from where
+            // a row sits on the page would read 1, 2, 3, 4 and satisfy that derivation just as well.
+            assertEquals(
+                listOf(1, 2, 2, 4),
+                standings.rows.map { it.rank },
+                "ranks in page order should be 1, 2, 2, 4 -- a shared rank and a skipped one",
+            )
+
+            val hostRow = standings.rowFor(host)
+            assertEquals(1, hostRow.rank, "host's rank")
+            assertEquals(1, hostRow.coins, "host's coins")
+
+            val guestRow = standings.rowFor(guest)
+            assertEquals(2, guestRow.rank, "guest's rank")
+            assertEquals(0, guestRow.coins, "guest's coins")
+
+            val fillerTwoRow = standings.rowFor(fixture.fillerTwo)
+            assertEquals(2, fillerTwoRow.rank, "fillerTwo's rank")
+            assertEquals(0, fillerTwoRow.coins, "fillerTwo's coins")
+
+            val fillerOneRow = standings.rowFor(fixture.fillerOne)
+            assertEquals(4, fillerOneRow.rank, "fillerOne's rank")
+            assertEquals(-1, fillerOneRow.coins, "fillerOne's coins")
+
+            assertNull(standings.nextCursor, "nextCursor should be null: all four rows fit on one page of $LADDER_LIMIT")
         }
     }
 }
