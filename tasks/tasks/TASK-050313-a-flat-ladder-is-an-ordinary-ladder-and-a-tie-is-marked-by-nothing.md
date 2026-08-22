@@ -17,7 +17,7 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders a nearly flat ladder exactly as it renders a spread one'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'marks no row on a page of equal ranks, and none as the one the reader stands on'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders the heading, the season, the self line and the rows, and nothing else'
-  - cd web-client && ! grep -q 'toContain' src/ladder/LadderScreen.test.tsx
+  - cd web-client && test -f src/ladder/LadderScreen.test.tsx && ! grep -qE 'toContain|toMatch|Containing|Snapshot|toHaveTextContent' src/ladder/LadderScreen.test.tsx
   - cd web-client && npm run check
 ---
 
@@ -83,6 +83,11 @@ That is now a **gate, not an instruction**: the last `verify:` line refuses the 
 `toContain` anywhere in this test file. `.toContain(` is used nowhere in it, so the check has
 no false positives — and without it, a single `toBe` → `toContain` retires all six refusals
 while every test still passes and every named test still appears in the reporter output.
+The `test -f` is load-bearing: `! grep -q` on a **missing** file exits 0, so without it the
+gate would fail open rather than loudly. The denylist is wider than `toContain` because
+`HistoryScreen.test.tsx` — the file this screen is told to copy in shape — uses `.toContain(`
+throughout, so reaching for a containment check here is ordinary rather than devious;
+`toMatch`, `toHaveTextContent` and `stringContaining` weaken the assertion identically.
 
 ## Acceptance criteria
 
