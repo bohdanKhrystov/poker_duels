@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050607
 title: A player whose only duel was a loss has a row, and it reads minus one
 type: task
-status: backlog
+status: ready
 parent: STORY-0506
 module: poker-server
 estimate: S
