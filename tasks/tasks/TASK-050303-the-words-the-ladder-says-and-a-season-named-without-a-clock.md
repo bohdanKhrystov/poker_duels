@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050303
 title: The words the ladder says — a row line, and a season named without a clock
 type: task
-status: ready
+status: done
 parent: STORY-0503
 module: web-client
 estimate: S
@@ -19,6 +19,7 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names the season the response carried while the browser clock says another month'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'builds a row line from the rank, the name and the standing the server sent'
   - cd web-client && ! grep -qE 'Date|Intl|toLocale|getMonth|getFullYear' src/ladder/ladder-text.ts
+  - cd web-client && test -f src/ladder/ladder-text.ts && test 0 -eq "$(grep -c 'No name' src/ladder/ladder-text.ts)"
   - cd web-client && npm run check
 ---
 
