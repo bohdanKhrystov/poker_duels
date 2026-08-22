@@ -9,6 +9,7 @@ import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import duels.poker.server.http.DEVICE_ID_HEADER
+import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.StandingRow
@@ -43,6 +44,13 @@ import kotlin.test.fail
 private const val LADDER_LIMIT = 10
 private const val FILLER_ONE_DEVICE = "e2e-f1"
 private const val FILLER_TWO_DEVICE = "e2e-f2"
+
+// TASK-050609's own fixture: a settled pair the drawn duel under test is played between, and a
+// pair of newcomers whose only result is a draw with each other.
+private const val SETTLED_DEVICE = "e2e-draw-1"
+private const val UNSETTLED_DEVICE = "e2e-draw-2"
+private const val NEWCOMER_ONE_DEVICE = "e2e-draw-3"
+private const val NEWCOMER_TWO_DEVICE = "e2e-draw-4"
 
 // Bounded like StandingsWalkDatabaseTest.walkAllPages: a cursor that never turns null is a server
 // defect, and the walk reports that defect with a message instead of spinning on it forever.
@@ -964,6 +972,187 @@ internal class SocketLadderTest {
                 fillerTwoLadderCoins,
                 fillerTwoProfileBalance,
                 "fillerTwo: ladder (0) differs from profile (−1) because one duel was last season",
+            )
+        }
+    }
+
+    private data class DrawLadderFixture(
+        val settled: Player,
+        val unsettled: Player,
+        val newcomerOne: Player,
+        val newcomerTwo: Player,
+    )
+
+    /**
+     * The four players a drawn duel is tested against: `settled` already beat `unsettled` before
+     * the draw under test, so their standings have somewhere real to *not* move from.
+     * `newcomerOne` drew `newcomerTwo` with no other duel, so their `0` is that draw showing as a
+     * place on the ladder (`ADR-0061` §4), not the default row of a player who has finished
+     * nothing.
+     *
+     * Every draw recorded here, and the one each test records under its own name, is written
+     * straight through [PostgresDuelResultStore] rather than played over a socket, because no
+     * duel reachable through the socket can draw: `CreateRoom` opens the shipped default format,
+     * whose end condition is `EndCondition.Freezeout`, and a `null` winner is only possible under
+     * `EndCondition.FixedHands` with level stacks -- `SocketCoinsTest` and `SocketHistoryTest` say
+     * so in their own `winnerSeat` helpers, and `TASK-021008`/`TASK-021108` parked the
+     * socket-level draw before this epic existed. [PostgresDuelResultStore] is the class
+     * `PostgresDuelResultSink` delegates every write to, and the lowest layer where `ADR-0014`'s
+     * coin deltas and `ADR-0015`'s two-row write actually happen -- as far down as a drawn duel
+     * can honestly be recorded, not a shortcut around a socket path that exists and was skipped.
+     */
+    private suspend fun seedTheDrawLadder(): DrawLadderFixture {
+        val settled = resolvePlayer(SETTLED_DEVICE)
+        val unsettled = resolvePlayer(UNSETTLED_DEVICE)
+        val newcomerOne = resolvePlayer(NEWCOMER_ONE_DEVICE)
+        val newcomerTwo = resolvePlayer(NEWCOMER_TWO_DEVICE)
+
+        recordWin(winner = settled, loser = unsettled, at = thisSeasonAt(1))
+        recordDraw(first = newcomerOne, second = newcomerTwo, at = thisSeasonAt(2))
+
+        return DrawLadderFixture(settled, unsettled, newcomerOne, newcomerTwo)
+    }
+
+    /**
+     * A draw moves nobody -- not "there was nothing here to move", but a difference of zero read
+     * against pre-draw standings that are themselves not zero. `settled` and `unsettled` already
+     * carry the `+1`/`−1` [seedTheDrawLadder]'s win left them at before this test records its own
+     * draw between the same two players at `thisSeasonAt(3)`, so an `after − before` landing on
+     * zero here means the draw left them where they actually were, not that a broken ladder
+     * answered the same wrong number on both reads alike -- the exact vacuous shape this story
+     * has been written against.
+     *
+     * See [seedTheDrawLadder] for why this draw is recorded through [PostgresDuelResultStore]
+     * rather than played.
+     */
+    @Test
+    fun aDrawnDuelMovesNeitherPlayersStanding(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+
+            val fixture = seedTheDrawLadder()
+
+            val before = client.ladder(SETTLED_DEVICE, limit = LADDER_LIMIT)
+            val beforeSettled = before.rowFor(fixture.settled).coins
+            val beforeUnsettled = before.rowFor(fixture.unsettled).coins
+
+            assertEquals(1, beforeSettled, "settled's coins before the draw (literal: +1 from the earlier win)")
+            assertEquals(
+                -1,
+                beforeUnsettled,
+                "unsettled's coins before the draw (literal: -1 from the earlier loss)",
+            )
+            assertEquals(
+                4,
+                before.rows.size,
+                "before the draw: four rows -- settled, unsettled, newcomerOne, newcomerTwo, got ${before.rows}",
+            )
+            assertEquals(
+                0,
+                before.rowFor(fixture.newcomerOne).coins,
+                "newcomerOne is on the ladder at 0 before the draw under test -- a draw is a place, not an absence",
+            )
+            assertEquals(
+                0,
+                before.rowFor(fixture.newcomerTwo).coins,
+                "newcomerTwo is on the ladder at 0 before the draw under test -- a draw is a place, not an absence",
+            )
+
+            recordDraw(first = fixture.settled, second = fixture.unsettled, at = thisSeasonAt(3))
+
+            val after = client.ladder(SETTLED_DEVICE, limit = LADDER_LIMIT)
+            val afterSettled = after.rowFor(fixture.settled).coins
+            val afterUnsettled = after.rowFor(fixture.unsettled).coins
+
+            assertEquals(1, afterSettled, "settled's coins after the draw (literal: unchanged at +1)")
+            assertEquals(-1, afterUnsettled, "unsettled's coins after the draw (literal: unchanged at -1)")
+            assertEquals(
+                0,
+                afterSettled - beforeSettled,
+                "settled's standing must not move for a draw: after ($afterSettled) minus before " +
+                    "($beforeSettled), a nonzero +1, should be 0",
+            )
+            assertEquals(
+                0,
+                afterUnsettled - beforeUnsettled,
+                "unsettled's standing must not move for a draw: after ($afterUnsettled) minus before " +
+                    "($beforeUnsettled), a nonzero -1, should be 0",
+            )
+            assertEquals(
+                4,
+                after.rows.size,
+                "row count unchanged by a draw: still four rows, got ${after.rows}",
+            )
+            assertEquals(
+                0,
+                after.rowFor(fixture.newcomerOne).coins,
+                "newcomerOne remains on the ladder at 0 after the draw under test",
+            )
+            assertEquals(
+                0,
+                after.rowFor(fixture.newcomerTwo).coins,
+                "newcomerTwo remains on the ladder at 0 after the draw under test",
+            )
+        }
+    }
+
+    /**
+     * A draw is still two records, not the absence of one: `settled` and `unsettled` each read
+     * back **two** duels from `GET /api/me/duels` after the draw this test records between them.
+     * The drawn row is located by its own `finishedAt`, never by its `outcome` -- so the outcome
+     * assertions below are a real check of what got written, not a predicate finding the row and
+     * then confirming it found what it was looking for. Both sides are read independently, so a
+     * write that corrupted one seat's row without touching the other's would still be caught.
+     *
+     * See [seedTheDrawLadder] for why this draw is recorded through [PostgresDuelResultStore]
+     * rather than played.
+     */
+    @Test
+    fun aDrawnDuelIsTwoResultRowsAndNotNone(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+
+            val fixture = seedTheDrawLadder()
+            val drawnAt = thisSeasonAt(3)
+            recordDraw(first = fixture.settled, second = fixture.unsettled, at = drawnAt)
+
+            val settledDuels = client.recentDuelsOf(SETTLED_DEVICE).duels
+            val unsettledDuels = client.recentDuelsOf(UNSETTLED_DEVICE).duels
+
+            assertEquals(
+                2,
+                settledDuels.size,
+                "settled has two duels: the earlier win and this draw, got $settledDuels",
+            )
+            assertEquals(
+                2,
+                unsettledDuels.size,
+                "unsettled has two duels: the earlier loss and this draw, got $unsettledDuels",
+            )
+
+            val settledDraw = settledDuels.singleOrNull { Instant.parse(it.finishedAt) == drawnAt }
+                ?: fail("settled has no duel finishing at $drawnAt, duels=$settledDuels")
+            val unsettledDraw = unsettledDuels.singleOrNull { Instant.parse(it.finishedAt) == drawnAt }
+                ?: fail("unsettled has no duel finishing at $drawnAt, duels=$unsettledDuels")
+
+            assertEquals(
+                settledDraw.duelId,
+                unsettledDraw.duelId,
+                "both sides should read the same duel id for the shared draw",
+            )
+            assertEquals(0, settledDraw.coinDelta, "settled's coinDelta for the draw (literal: 0, ADR-0015)")
+            assertEquals(0, unsettledDraw.coinDelta, "unsettled's coinDelta for the draw (literal: 0, ADR-0015)")
+            assertEquals(
+                DuelOutcomeLabel.DREW,
+                settledDraw.outcome,
+                "settled's outcome for the draw (literal: DREW)",
+            )
+            assertEquals(
+                DuelOutcomeLabel.DREW,
+                unsettledDraw.outcome,
+                "unsettled's outcome for the draw (literal: DREW)",
             )
         }
     }
