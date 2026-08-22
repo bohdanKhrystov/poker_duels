@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050605
 title: Every standing on the ladder is that player's own season results, and the ladder totals zero
 type: task
-status: ready
+status: done
 parent: STORY-0506
 module: poker-server
 estimate: S
