@@ -5,10 +5,16 @@ export interface LadderRow {
   readonly coins: number;
 }
 
+export interface SelfStanding {
+  readonly rank: number | null;
+  readonly coins: number | null;
+}
+
 export interface LadderPage {
   readonly season: string;
   readonly rows: readonly LadderRow[];
   readonly nextCursor: string | null;
+  readonly self: SelfStanding | null;
 }
 
 /**
@@ -44,6 +50,42 @@ export function parseLadderPage(body: unknown): LadderPage | null {
 
   const nextCursor = bodyRecord.nextCursor;
   if (typeof nextCursor !== "string" && nextCursor !== null) {
+    return null;
+  }
+
+  // Validate that self exists and is null or an object with valid rank and coins
+  if (!("self" in bodyRecord)) {
+    return null;
+  }
+
+  const selfValue = bodyRecord.self;
+  let self: SelfStanding | null = null;
+
+  if (selfValue === null) {
+    // null is a valid self value
+    self = null;
+  } else if (typeof selfValue === "object") {
+    const selfRecord = selfValue as Record<string, unknown>;
+    const selfRank = selfRecord.rank;
+    const selfCoins = selfRecord.coins;
+
+    // Both must be numbers or both must be null (no mixed shapes)
+    const rankIsNumber = typeof selfRank === "number";
+    const coinsIsNumber = typeof selfCoins === "number";
+    const rankIsNull = selfRank === null;
+    const coinsIsNull = selfCoins === null;
+
+    if ((rankIsNumber && coinsIsNumber) || (rankIsNull && coinsIsNull)) {
+      self = {
+        rank: rankIsNumber ? selfRank : null,
+        coins: coinsIsNumber ? selfCoins : null,
+      };
+    } else {
+      // Mixed shape (one number, one null) or other invalid combination
+      return null;
+    }
+  } else {
+    // self is neither null nor an object
     return null;
   }
 
@@ -85,5 +127,5 @@ export function parseLadderPage(body: unknown): LadderPage | null {
     rows.push(ladderRow);
   }
 
-  return { season, rows, nextCursor };
+  return { season, rows, nextCursor, self };
 }
