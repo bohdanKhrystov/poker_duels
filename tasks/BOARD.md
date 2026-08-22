@@ -69,7 +69,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **ready** — 17 stories written 2026-08-16, `STORY-0401` and `STORY-0402` done | v0.2 |
-| [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **ready** — 6 stories written 2026-08-19, `DEC-055` answered by `ADR-0061`, `STORY-0501` startable, `STORY-0505` dropped | v0.3 |
+| [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
 | EPIC-08 | Analysis and decision quality | *not written* | later |
@@ -1658,7 +1658,7 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050315](tasks/TASK-050315-the-door-survives-a-failed-profile-read-and-stands-down-for-a-duel.md) The door survives a failed profile read, and stands down for a duel in progress | S | **done** |
 | [STORY-0504](stories/STORY-0504-what-a-row-leads-to.md) What a row leads to — another player, seen by a stranger | | | **dropped** — `ADR-0067`: a row leads nowhere |
 | [STORY-0505](stories/STORY-0505-a-season-ends-and-the-record-survives-it.md) A season ends, and the record survives it | | | **dropped** — `ADR-0061` §5: a boundary does nothing, so there is no crossing to write |
-| [STORY-0506](stories/STORY-0506-a-duel-moves-a-rank.md) A duel moves a rank, end to end | | | **in progress** — 8 of 9 tickets |
+| [STORY-0506](stories/STORY-0506-a-duel-moves-a-rank.md) A duel moves a rank, end to end | | | **done** — 9 tickets |
 | | [TASK-050601](tasks/TASK-050601-the-ladder-two-seated-players-and-no-place-yet.md) The ladder, read from the same application the duel is played in — two seated players and no place yet | S | **done** |
 | | [TASK-050602](tasks/TASK-050602-the-ladder-the-duel-arrives-into-a-shared-rank-a-skipped-one-and-last-month-left-out.md) The ladder the duel arrives into — a shared rank, a skipped one, and last month left out | S | **done** |
 | | [TASK-050603](tasks/TASK-050603-a-played-duel-moves-two-standings-by-one-each-and-nobody-elses.md) A played duel moves two standings by one each — measured as a difference, on a ladder that was never zero | S | **done** |
@@ -1667,7 +1667,7 @@ a row that leads to another player is a *link*, and a client with no addresses c
 | | [TASK-050606](tasks/TASK-050606-the-players-own-place-after-the-duel-on-the-page-and-off-it.md) The player's own place after the duel — served on the page drawn and off it | S | **done** |
 | | [TASK-050607](tasks/TASK-050607-a-player-whose-only-duel-was-a-loss-has-a-row-and-it-reads-minus-one.md) A player whose only duel was a loss has a row, and it reads minus one | S | **done** |
 | | [TASK-050608](tasks/TASK-050608-the-ladder-and-the-profile-strip-agree-here-and-part-company-for-an-older-record.md) The ladder and the profile strip agree for both duellists — and part company for an older record | S | **done** |
-| | [TASK-050609](tasks/TASK-050609-a-draw-moves-nobody-and-is-still-two-rows.md) A draw moves nobody, and is still two rows and two places | S | ready |
+| | [TASK-050609](tasks/TASK-050609-a-draw-moves-nobody-and-is-still-two-rows.md) A draw moves nobody, and is still two rows and two places | S | **done** |
 
 `STORY-0506` is the only one whose acceptance criteria were writable on the day the epic was
 written, because they depend on no open decision: a duel played through the socket moves the winner
