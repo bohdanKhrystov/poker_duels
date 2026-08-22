@@ -17,7 +17,7 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders a nearly flat ladder exactly as it renders a spread one'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'marks no row on a page of equal ranks, and none as the one the reader stands on'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders the heading, the season, the self line and the rows, and nothing else'
-  - cd web-client && test -f src/ladder/LadderScreen.test.tsx && ! grep -qE 'toContain|toMatch|Containing|Snapshot|toHaveTextContent' src/ladder/LadderScreen.test.tsx
+  - cd web-client && test -f src/ladder/LadderScreen.test.tsx && test 0 -eq "$(grep -E 'toContain|toMatch|Containing|Snapshot|toHaveTextContent' src/ladder/LadderScreen.test.tsx | grep -cv '\.not\.')"
   - cd web-client && npm run check
 ---
 
@@ -83,8 +83,13 @@ That is now a **gate, not an instruction**: the last `verify:` line refuses the 
 `toContain` anywhere in this test file. `.toContain(` is used nowhere in it, so the check has
 no false positives — and without it, a single `toBe` → `toContain` retires all six refusals
 while every test still passes and every named test still appears in the reporter output.
-The `test -f` is load-bearing: `! grep -q` on a **missing** file exits 0, so without it the
-gate would fail open rather than loudly. The denylist is wider than `toContain` because
+The `test -f` is load-bearing: a grep on a **missing** file would otherwise let the gate pass
+vacuously. The `grep -cv '\.not\.'` is load-bearing for a second reason found by running it:
+**`.not.toContain(...)` is a strengthening assertion** — it proves a value is absent, which is
+exactly the fixture-overlap check `TASK-050311` needed — while a bare `.toContain(...)` weakens
+an exact equality. The gate must ban the second and permit the first. A `! grep -q` form cannot:
+on BSD grep, `grep -qv` exits 1 on a file whose lines are mixed, where `grep -v` exits 0, so the
+gate would never fire here and might fire differently under GNU grep in CI. The denylist is wider than `toContain` because
 `HistoryScreen.test.tsx` — the file this screen is told to copy in shape — uses `.toContain(`
 throughout, so reaching for a containment check here is ordinary rather than devious;
 `toMatch`, `toHaveTextContent` and `stringContaining` weaken the assertion identically.
