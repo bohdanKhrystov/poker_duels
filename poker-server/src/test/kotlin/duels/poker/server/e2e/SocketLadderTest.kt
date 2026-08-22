@@ -9,6 +9,7 @@ import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import duels.poker.server.http.DEVICE_ID_HEADER
+import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.StandingRow
 import duels.poker.server.protocol.http.StandingsResponse
@@ -27,6 +28,7 @@ import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
@@ -161,6 +163,21 @@ internal class SocketLadderTest {
             HttpStatusCode.OK,
             response.status,
             "GET /api/me/duels for deviceId=$deviceId returned ${response.status}",
+        )
+        return protocolJson.decodeFromString(response.bodyAsText())
+    }
+
+    /**
+     * Reads [deviceId]'s profile over `GET /api/me`, asserting the response is `200`, then decodes
+     * the body with [protocolJson] directly — the same manual decode every other e2e test in this
+     * package uses for frames off a socket, never client-side content negotiation.
+     */
+    private suspend fun HttpClient.profileOf(deviceId: String): ProfileResponse {
+        val response = get("/api/me") { header(DEVICE_ID_HEADER, deviceId) }
+        assertEquals(
+            HttpStatusCode.OK,
+            response.status,
+            "GET /api/me for deviceId=$deviceId returned ${response.status}",
         )
         return protocolJson.decodeFromString(response.bodyAsText())
     }
@@ -845,6 +862,108 @@ internal class SocketLadderTest {
             assertNull(
                 standings.nextCursor,
                 "nextCursor should be null: exactly two rows fit on one page of limit=$LADDER_LIMIT",
+            )
+        }
+    }
+
+    @Test
+    fun theLadderAgreesWithTheProfileStripForBothDuellistsAndDisagreesForAnOlderRecord(): Unit = runBlocking {
+        testApplication {
+            installDuelServer(dataSource)
+            val client = createClient { install(WebSockets) }
+            val duel = client.openSocketDuel()
+
+            val host = resolvePlayer(HOST_DEVICE)
+            val guest = resolvePlayer(GUEST_DEVICE)
+            val fixture = seedTheLadderTheDuelArrivesInto(host, guest)
+
+            duel.playToFinish()
+
+            // Read the ladder
+            val standings = client.ladder(HOST_DEVICE, limit = LADDER_LIMIT)
+
+            // Get the ladder coins for each player
+            val hostLadderCoins = standings.rowFor(host).coins
+            val guestLadderCoins = standings.rowFor(guest).coins
+            val fillerOneLadderCoins = standings.rowFor(fixture.fillerOne).coins
+            val fillerTwoLadderCoins = standings.rowFor(fixture.fillerTwo).coins
+
+            // Get the profile coinBalance for each player via GET /api/me
+            val hostProfileBalance = client.profileOf(HOST_DEVICE).coinBalance
+            val guestProfileBalance = client.profileOf(GUEST_DEVICE).coinBalance
+            val fillerOneProfileBalance = client.profileOf(FILLER_ONE_DEVICE).coinBalance
+            val fillerTwoProfileBalance = client.profileOf(FILLER_TWO_DEVICE).coinBalance
+
+            // For host and guest, ladder coins (this season) and profile coinBalance (all time)
+            // agree because all their duels are in this season. These are not the same number
+            // in general (ADR-0061 §6): the ladder reads the season window, while coinBalance
+            // is the lifetime counter.
+            assertEquals(
+                0,
+                hostLadderCoins,
+                "host's ladder coins (this season)",
+            )
+            assertEquals(
+                0,
+                hostProfileBalance,
+                "host's profile balance (all time)",
+            )
+            assertEquals(
+                hostLadderCoins,
+                hostProfileBalance,
+                "host: ladder and profile agree because all duels were this season",
+            )
+
+            assertEquals(
+                1,
+                guestLadderCoins,
+                "guest's ladder coins (this season)",
+            )
+            assertEquals(
+                1,
+                guestProfileBalance,
+                "guest's profile balance (all time)",
+            )
+            assertEquals(
+                guestLadderCoins,
+                guestProfileBalance,
+                "guest: ladder and profile agree because all duels were this season",
+            )
+
+            // For fillerOne and fillerTwo, the numbers diverge. fillerOne has a duel from last
+            // season that contributes to coinBalance (+1 then −1 = 0 lifetime) but not to this
+            // season's window (−1). fillerTwo's last-season duel is a loss (−1 lifetime) that
+            // does not affect this season (0).
+            assertEquals(
+                -1,
+                fillerOneLadderCoins,
+                "fillerOne's ladder coins (this season)",
+            )
+            assertEquals(
+                0,
+                fillerOneProfileBalance,
+                "fillerOne's profile balance (all time)",
+            )
+            assertNotEquals(
+                fillerOneLadderCoins,
+                fillerOneProfileBalance,
+                "fillerOne: ladder (−1) differs from profile (0) because one duel was last season",
+            )
+
+            assertEquals(
+                0,
+                fillerTwoLadderCoins,
+                "fillerTwo's ladder coins (this season)",
+            )
+            assertEquals(
+                -1,
+                fillerTwoProfileBalance,
+                "fillerTwo's profile balance (all time)",
+            )
+            assertNotEquals(
+                fillerTwoLadderCoins,
+                fillerTwoProfileBalance,
+                "fillerTwo: ladder (0) differs from profile (−1) because one duel was last season",
             )
         }
     }
