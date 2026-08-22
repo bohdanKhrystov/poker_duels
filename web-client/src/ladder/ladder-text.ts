@@ -4,6 +4,13 @@ import { coinBalanceText } from "../profile/profile-text";
 
 export const LADDER_HEADING = "Leaderboard";
 
+export const LOADING_LADDER = "Loading the leaderboard…";
+
+export const EMPTY_LADDER = "No duels have finished this season yet.";
+
+export const LADDER_FAILED =
+  "The leaderboard did not load. Reload the page to try again.";
+
 export const MORE = "Show more";
 
 /**

@@ -166,4 +166,135 @@ describe("the ladder screen", () => {
     // The third <li> is a named player with the same negative coins.
     expect(items[2].textContent).toBe("3 Bo −2");
   });
+
+  it("names the season the response carried, and a different one for a different response", async () => {
+    // First render: 2026-08 should display as "August 2026"
+    const rows1: readonly LadderRow[] = [
+      { rank: 1, playerId: "ada", displayName: "Ada", coins: 5 },
+    ];
+    const read1 = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: {
+        season: "2026-08",
+        rows: rows1,
+        nextCursor: null,
+        self: null,
+      },
+    }));
+
+    const { unmount } = render(<LadderScreen read={read1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("August 2026")).toBeTruthy();
+    });
+    expect(screen.queryByText("2026-08")).toBeNull();
+
+    unmount();
+
+    // Second render: 2019-02 should display as "February 2019"
+    const rows2: readonly LadderRow[] = [
+      { rank: 1, playerId: "bo", displayName: "Bo", coins: 3 },
+    ];
+    const read2 = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: {
+        season: "2019-02",
+        rows: rows2,
+        nextCursor: null,
+        self: null,
+      },
+    }));
+
+    render(<LadderScreen read={read2} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("February 2019")).toBeTruthy();
+    });
+    expect(screen.queryByText("2019-02")).toBeNull();
+  });
+
+  it("renders an empty ladder as an empty ladder that still names its season", async () => {
+    // An empty ladder with season should show the season name and EMPTY_LADDER sentence
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: {
+        season: "2026-09",
+        rows: [],
+        nextCursor: null,
+        self: null,
+      },
+    }));
+
+    render(<LadderScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("September 2026")).toBeTruthy();
+    });
+
+    // Verify the heading is present
+    expect(screen.getByRole("heading")).toBeTruthy();
+
+    // Verify the list is empty
+    const list = screen.getByRole("list");
+    expect(within(list).queryAllByRole("listitem")).toHaveLength(0);
+
+    // Verify EMPTY_LADDER is shown
+    expect(
+      screen.getByText("No duels have finished this season yet."),
+    ).toBeTruthy();
+
+    // Verify LADDER_FAILED is not shown
+    expect(
+      screen.queryByText(
+        "The leaderboard did not load. Reload the page to try again.",
+      ),
+    ).toBeNull();
+  });
+
+  it("says the ladder is loading before the first page answers", async () => {
+    // A pending read should show LOADING_LADDER
+    const read = vi.fn(
+      () =>
+        new Promise<LadderRead>(() => {
+          /* never resolves */
+        }),
+    );
+
+    render(<LadderScreen read={read} />);
+
+    // LOADING_LADDER should appear
+    await waitFor(() => {
+      expect(screen.getByText("Loading the leaderboard…")).toBeTruthy();
+    });
+
+    // EMPTY_LADDER should not appear
+    expect(
+      screen.queryByText("No duels have finished this season yet."),
+    ).toBeNull();
+
+    // No season should be named yet
+    expect(screen.queryByText(/2026-08|August 2026/)).toBeNull();
+  });
+
+  it("tells a read that failed from a ladder that is empty", async () => {
+    // A failed read should show LADDER_FAILED
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "unavailable",
+    }));
+
+    render(<LadderScreen read={read} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "The leaderboard did not load. Reload the page to try again.",
+        ),
+      ).toBeTruthy();
+    });
+
+    // EMPTY_LADDER should not appear
+    expect(
+      screen.queryByText("No duels have finished this season yet."),
+    ).toBeNull();
+  });
 });

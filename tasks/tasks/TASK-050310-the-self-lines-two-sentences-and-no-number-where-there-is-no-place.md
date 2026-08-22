@@ -3,7 +3,7 @@ schema: 2
 id: TASK-050310
 title: The self line has two sentences, and the one for no place prints no number at all
 type: task
-status: backlog
+status: ready
 parent: STORY-0503
 module: web-client
 estimate: S
