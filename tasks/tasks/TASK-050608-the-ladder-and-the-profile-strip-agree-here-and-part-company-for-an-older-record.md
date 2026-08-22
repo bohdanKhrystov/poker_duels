@@ -60,6 +60,17 @@ Read, do not edit:
   `playToFinish()`.
 - No production file is created or modified.
 
+## An assertion shape this story has already been caught by
+
+`TASK-050603` shipped two *unchanged across the duel* assertions of the form
+`assertEquals(beforeFiller, afterFiller)`. Deep review confirmed by isolating them that they **pass
+vacuously** under a ladder that is consistently wrong on both reads — they compare a value to itself,
+and carry weight only because a *separate, earlier* assertion pinned the before-value to a literal.
+That safety net is positional, not structural, and it disappears the moment the idiom is copied.
+
+**So: every "unchanged" assertion in this story must have its value pinned to a literal on at least
+one side, in the same test method — never merely equal to its own earlier reading.**
+
 ## Out of scope
 
 - **Changing `ProfileResponse` or `GET /api/me`.** `ADR-0065` §2 and `ADR-0061` §6 — the strip is
