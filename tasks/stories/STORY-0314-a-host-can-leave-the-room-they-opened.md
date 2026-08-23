@@ -2,7 +2,7 @@
 id: STORY-0314
 title: A host can leave the room they opened
 type: story
-status: blocked
+status: ready
 parent: EPIC-03
 module: web-client
 labels: [client, ui, rooms]
@@ -11,8 +11,9 @@ depends_on: [STORY-0309]
 
 ## Goal
 
-A player who creates a duel room and is not joined can get back to the lobby, in this tab, without
-waiting for the room to be reaped or clearing browser storage.
+A player who creates a duel room and is not joined presses **`Back to the lobby`** and gets there,
+in this tab, without waiting for the room to be reaped or clearing browser storage — and the screen
+tells them the room stays open and the link still works ([`ADR-0073`](../../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md)).
 
 ## Why
 
@@ -37,15 +38,35 @@ unclaimed); or the player clears storage. `ADR-0072` gives the client the missin
 before: `TASK-030918` already wires exactly this call to exactly this kind of control, one screen
 along.
 
-## What is not decided
+## What was decided, and what it fixes
 
-**`DEC-068`, the product owner's.** Does that screen offer a way out at all, and what does it say?
-Nothing in `docs/vision.md`, `ADR-0022` or the design settles it, and the words are not a planner's
-to invent — a *Cancel* that leaves a live room standing for ten minutes says something different
-from a *Back*, and the design has no such control to copy. **Nothing in this story is splittable
-until it is answered**; it blocks no other story and no ticket outside this one.
+**`DEC-068` is answered by [`ADR-0073`](../../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md).**
+Every string below is quoted from it and none of them is the implementer's to choose:
 
-What the decision does **not** have to settle, because it is already settled:
+- **The control reads `Back to the lobby`** — capital *B*, lower-case *lobby*, no full stop,
+  byte-identical to the string `DuelResult.tsx` already renders for the same action on the same
+  memory (`ADR-0073` §2).
+- **It does nothing to the room**, and **exactly one other line** says so, placed with the control
+  (`ADR-0073` §3):
+
+  > `The room stays open. That link still works for your rival, and it brings you back.`
+
+- **No confirmation** — no dialog, no second press, no undo (`ADR-0073` §4). The action destroys
+  nothing.
+- **No duration, countdown or expiry time** appears anywhere on this screen: the client owns no
+  clock against a server window (`ADR-0072` §6). When the room is finally reaped, the already
+  shipped *No duel room has that code.* is the correction.
+- **Those two strings are the whole addition.** A third string on this screen needs a new ADR, not a
+  ticket (`ADR-0073` §3).
+- *Cancel*, *Close the room*, *Delete the room*, *Leave*, *Back* alone, *forfeit*, *give up*,
+  *stand up* and *sit out* are refused by name, each with its reason (`ADR-0073` §5).
+- **`design/screens/create-duel.html`'s waiting frame gains both strings verbatim**, as `EPIC-06`'s
+  work. Placement and weight are the design's. **This story does not wait on that frame**
+  (`ADR-0073` §6).
+
+This story is splittable now, and it blocks no other story and no ticket outside itself.
+
+What the decision did **not** have to settle, because it was already settled:
 
 - **Nothing is sent.** There is no leave on the wire (`ADR-0044` ships no `LeaveRoom`), so the room
   stands until it is reaped whatever the control says, and the seat is not vacated. A control that
@@ -61,8 +82,8 @@ What the decision does **not** have to settle, because it is already settled:
 - The control belongs to `WaitingForRival` in `web-client/src/lobby/Lobby.tsx`, beside the invite
   box. `Lobby.tsx` already holds `useForgetRoom()` after `TASK-030918`, so nothing new reaches into
   boot.
-- Whether `design/screens/create-duel.html` gains the affordance is part of `DEC-068`: the design is
-  the source for this screen, and today it shows one.
+- `design/screens/create-duel.html` gains the control and the line (`ADR-0073` §6), as `EPIC-06`'s
+  work. The words are fixed, so the two cannot drift while they are briefly out of step.
 - A player who leaves and then follows their own invite link is a *first* join to the server, which
   refuses it with `ALREADY_SEATED` and answers `RoomJoined` — they land back on the waiting screen,
   correctly, because they still hold the seat. The client is not being asked to hide that.
@@ -71,15 +92,18 @@ What the decision does **not** have to settle, because it is already settled:
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Splittable the day `DEC-068` is answered — the mechanism is settled, only the words are not.* | — |
+| — | *Not yet split. Splittable now: `ADR-0073` fixed the words and `ADR-0072` §4 shipped the mechanism.* | — |
 
 ## Acceptance criteria
 
 - [ ] From the *waiting for your rival* screen, one action reaches the lobby in this tab, and a
       reload after it stays at the lobby rather than returning to the room.
 - [ ] That action sends nothing: the socket sees no frame because of it.
-- [ ] The words on it are `DEC-068`'s, quoted from the ADR that answers it, not chosen by the
-      implementer.
+- [ ] The control reads `Back to the lobby` and the screen carries exactly one other new line,
+      `The room stays open. That link still works for your rival, and it brings you back.` — both
+      quoted from `ADR-0073`, neither chosen by the implementer, and no third string added.
+- [ ] No confirmation step stands between the press and the lobby, and no duration, countdown or
+      expiry time appears on this screen.
 
 ## Out of scope
 

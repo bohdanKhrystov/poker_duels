@@ -72,7 +72,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
-| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 11 of 14 stories done; `STORY-0309` is split into **twenty** and **runs** now that `STORY-0213` has merged; `STORY-0313` still waits on `EPIC-02`'s `STORY-0214`, and `STORY-0314` on `DEC-068` | v0.1 |
+| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 11 of 14 stories done; `STORY-0309` is split into **twenty** and **runs** now that `STORY-0213` has merged; `STORY-0313` still waits on `EPIC-02`'s `STORY-0214`; `STORY-0314` is unblocked by `ADR-0073` and waits to be split | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **parked** — 9 of 17 stories done (`STORY-0401`–`0404`, `0408`–`0411`, `0413`). The remaining 8 all trace to `STORY-0405`, which depends on `STORY-0213` and `STORY-0214` — EPIC-02 work this run was not authorised to start | v0.2 |
 | [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
@@ -644,7 +644,37 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
-| DEC-068 | **The product owner's** — does the *waiting for your rival* screen offer a way out, and what does it say? A host who creates a room is remembered in it and has no control that leaves it: `resume` declines a `WAITING` room, the ordinary join answers `ALREADY_SEATED` *exactly as a fresh seating would*, and a reload lands back on the same screen — so the routes out are a rival joining, the room being reaped after ten minutes, or clearing storage. [`ADR-0072`](../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md) names the gap, closes none of it because the screen is the product's, and supplies the mechanism (`forgetRoom()`), so only the words are missing. **Nothing is sent** — there is no leave on the wire and the room stands until it is reaped — so a control implying otherwise would be untrue. Blocks [`STORY-0314`](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) and nothing else | [`ADR-0072`](../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md) | before `STORY-0314` is split |
+
+`DEC-068` → [`ADR-0073`](../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md)
+on 2026-08-23 — **the waiting screen says *Back to the lobby*, and the room stays open.** Derived
+from `docs/vision.md`'s *Positioning* sentence — the same one `ADR-0046` derived its string set from
+— and from `ADR-0022`, which already gives a `WAITING` room one way to end and no other. **The
+screen gains a way out**, calling `ADR-0072` §4's `forgetRoom()` from an event handler. **The control
+reads `Back to the lobby`, byte-identical to what `DuelResult.tsx` already renders** for the same
+action on the same memory: one phrase for one action, no new vocabulary. **It does nothing to the
+room** — the room stays `WAITING`, the host keeps seat 0, the code keeps resolving, and the idle
+timeout is still the only thing that ends it — and **exactly one line says so**: *The room stays
+open. That link still works for your rival, and it brings you back.* Every clause was checked in
+source: `Room.join`'s `WAITING` branch seats a rival, and the host's own follow of the link is
+`ALREADY_SEATED` answered as `RoomJoined(code, seat)`. **The line names no duration**, because the
+client owns no clock against a server window (`ADR-0072` §6); the already-shipped *No duel room has
+that code.* is the correction once the room is reaped. **No confirmation of any kind** — the action
+destroys nothing, and a dialog would assert that it does. **Two strings are the whole addition**,
+and a third needs a new ADR, which is what makes `STORY-0314`'s *the words are the ADR's* criterion
+enforceable. Refused by name: *Cancel* / *Close the room* (claims the room is gone; `Room.join` will
+still seat a rival at that code), *Leave* (claims the seat is vacated; `ADR-0072` §4 refused
+`leaveRoom` for a function nobody sees), *Back* alone (the lobby's two panel swaps say it and change
+nothing), *forfeit* / *sit out*, and any duration. **`design/screens/create-duel.html`'s waiting
+frame gains both strings verbatim**, as `EPIC-06`'s work; `STORY-0314` does not wait on it. Costs:
+**a host pulled into a duel after pressing this has a store that never saw `RoomJoined`** — `deliver`
+addresses by player id, so the lobby tab gets the opening `Snapshot` and renders the table, but
+`duel-state.ts` sets `mySeat` and `roomCode` only on `RoomJoined`, so the result screen loses its
+seat and a reload does not rejoin; **a rival opening the link after the host walked away gets a duel
+with an absent seat**, and the host can lose a coin without seeing a card — both predate this
+control, which only makes the route one press. Forecloses one thing on purpose: **this control never
+quietly becomes a room-closing control** — an invite that dies with its host is a frame, Kotlin in
+`EPIC-02` and a protocol step, and it must arrive with different words. **Unblocks `STORY-0314`**
+and nothing else. Raises no `DEC`.
 
 `DEC-067` → [`ADR-0072`](../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md)
 on 2026-08-23 — **a tab remembers its room until the player leaves it, and the way back is what
@@ -1283,16 +1313,19 @@ split are worth keeping:
   by the time `forgetRoom()` is called. Run both ways to find that out. Its job is that the forget
   still reaches a finished room; the `! grep` on `boot.ts` is what proves the branch is gone.
 
-**`DEC-068` is raised and is the product owner's**, and it does not touch the rematch: the *waiting
-for your rival* screen has no way out, in `Lobby.tsx` or in `design/screens/create-duel.html`. The
-claim was checked rather than taken from the ADR — `RoomRegistry.resume` declines a `WAITING` room,
-`Room.join` refuses a seated player with `ALREADY_SEATED`, and `DuelSocket.replyToJoinRoom` answers
-that *exactly as a fresh seating would*, so a host's reload lands back on the same screen and the
-routes out are a rival joining, the ten-minute reap, or clearing storage. `forgetRoom()` is exactly
-what a control there would call, which is why it is cheap to close now; what that control **says**
-is not a planner's to invent, and a *Cancel* that implies the room is gone would be untrue, because
-nothing is sent and the room stands until it is reaped. It is [`STORY-0314`](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md),
-blocked on `DEC-068` and blocking nothing else — in particular not the transport half above.
+**`DEC-068` was raised here and is answered by [`ADR-0073`](../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md)**,
+and it never touched the rematch: the *waiting for your rival* screen had no way out, in `Lobby.tsx`
+or in `design/screens/create-duel.html`. The claim was checked rather than taken from the ADR —
+`RoomRegistry.resume` declines a `WAITING` room, `Room.join` refuses a seated player with
+`ALREADY_SEATED`, and `DuelSocket.replyToJoinRoom` answers that *exactly as a fresh seating would*,
+so a host's reload lands back on the same screen and the routes out were a rival joining, the
+ten-minute reap, or clearing storage. `forgetRoom()` is exactly what a control there would call,
+which is why it was cheap to close now. The answer: the control exists, it reads **`Back to the
+lobby`** — the string `DuelResult.tsx` already renders for the same action — it does **nothing** to
+the room, and one line says so (*The room stays open. That link still works for your rival, and it
+brings you back.*), with no confirmation and no duration printed anywhere. It is
+[`STORY-0314`](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md), now `ready` to split and
+blocking nothing else — in particular not the transport half above.
 
 `STORY-0213`'s planning defect is carried across deliberately: eight of its nine tests passed against
 a hard-coded `seat = 0`, because every one drove the host into the offer. Here the seat comparison
@@ -1564,7 +1597,7 @@ written and is still true.
 | | [TASK-031208](tasks/TASK-031208-no-rival-card-reaches-the-screen-before-the-reveal.md) No rival card reaches the screen before the frame that reveals it | S | **done** |
 | | [TASK-031209](tasks/TASK-031209-a-hand-won-without-a-showdown-shows-no-rival-card.md) A hand won without a showdown shows no rival card at all | S | **done** |
 | [STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent (needs `STORY-0214`) | **blocked** |
-| [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (needs `DEC-068`) | **blocked** |
+| [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (`ADR-0073` fixed its words) | **ready** — not yet split |
 
 ---
 
