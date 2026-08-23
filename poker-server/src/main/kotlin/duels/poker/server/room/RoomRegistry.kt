@@ -480,13 +480,23 @@ public class RoomRegistry(
      *    seats now in [Room.absentSeats], the expired room is abandoned instead of written back
      *    as-is — both players are gone, so there is no duel left to fold, and abandoning is what
      *    makes the room reapable under [RoomTimeouts.finishedMillis] rather than this method
-     *    growing a second timer for it.
+     *    growing a second timer for it. This pass also remembers the single seat a room lost,
+     *    when it was not abandoned, for the second pass to describe.
      * 2. Every room the first pass changed has [Room.foldAbsentSeats] applied through [act],
      *    never written back directly: [act] is what claims a duel that finishes this way in
      *    [recording], hands it to [DuelResultSink] outside the lock, and unclaims it again if
      *    that throws. A fold that ends a duel must reach the sink exactly as a played one does, so
      *    it has to go through the one place that already does that correctly rather than a second
      *    copy of it here.
+     *
+     * Before the fold's own frames, this second pass prepends `Addressed(otherSeat,
+     * room.presenceOf(expiredSeat, now))` — the same `now` read above — to whatever [act]
+     * returned, so the seat that stayed is told `ABSENT` before the frame explaining why
+     * (`ADR-0028` §5, §10). Ordering here is a courtesy, not the mechanism: `(handNumber,
+     * actionSequence)` is what identifies the decision point either frame describes. Nothing is
+     * prepended for a room the first pass abandoned instead of folding — there is no other seat
+     * left to receive it — and nothing for a `WAITING` room's lone host either, who has no guest
+     * to tell.
      *
      * The second pass isolates every room's [act] call: by the time it runs, the first pass has
      * already cleared [Room.gracePeriods] for every room in this batch, so an exception this
@@ -502,16 +512,18 @@ public class RoomRegistry(
      * sites every other mutation in this class already uses.
      *
      * @return One [GraceExpiry] per room the first pass changed whose second-pass [act] call
-     *   completed, carrying that room as it stands after both passes, and the frames its fold
-     *   produced — empty for a room that was abandoned instead, since abandoning produces no
-     *   frames to hand back. A room whose [act] call threw is omitted, not retried by a later call
-     *   to this method.
+     *   completed, carrying that room as it stands after both passes, and its outbound frames:
+     *   the presence frame naming the seat that expired, if any, followed by the frames the fold
+     *   produced. Both are empty for a room that was abandoned instead, since abandoning leaves no
+     *   duel to fold and no other seat to describe one to. A room whose [act] call threw is
+     *   omitted, not retried by a later call to this method.
      */
     public suspend fun expireGracePeriods(): List<GraceExpiry> {
         val now = clock.nowMillis()
-        val touched = mutableListOf<RoomCode>()
+        val expiredSeatByCode = mutableMapOf<RoomCode, Int?>()
         for ((code, holder) in rooms) {
             if (holder.room.gracePeriods.isEmpty()) continue
+            var expiredSeat: Int? = null
             val changed = mutate(
                 code,
                 absent = { false },
@@ -520,27 +532,39 @@ public class RoomRegistry(
                     val expired = room.expireGrace(now)
                     if (expired === room) return@mutate Pair(null, false)
                     val bothGone = expired.guest != null && expired.absentSeats == setOf(0, 1)
+                    if (!bothGone) {
+                        expiredSeat = (expired.absentSeats - room.absentSeats).single()
+                    }
                     Pair(if (bothGone) expired.abandon(now) else expired, true)
                 },
             )
-            if (changed) touched.add(code)
+            if (changed) expiredSeatByCode[code] = expiredSeat
         }
 
         val expiries = mutableListOf<GraceExpiry>()
-        for (code in touched) {
+        for ((code, expiredSeat) in expiredSeatByCode) {
             val step = try {
                 act(code) { it.foldAbsentSeats(handSeeds) }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Throwable) {
                 // One room's failure — a sink outage while this fold finished its duel is the
-                // obvious cause — must not cost every later room in `touched` its own, unrelated
-                // fold: see the KDoc above for why a later sweep cannot pick this room back up.
+                // obvious cause — must not cost every later room in `expiredSeatByCode` its own,
+                // unrelated fold: see the KDoc above for why a later sweep cannot pick this room
+                // back up.
                 logger.error("expireGracePeriods: folding absent seats failed for room {}", code, failure)
                 continue
             }
             val room = checkNotNull(get(code)) { "a room this pass just wrote back must still be registered" }
-            expiries.add(GraceExpiry(room, step?.outbound ?: emptyList()))
+            val presence = expiredSeat?.let { seat ->
+                val otherSeat = 1 - seat
+                if (otherSeat == 0 || room.guest != null) {
+                    Addressed(otherSeat, room.presenceOf(seat, now))
+                } else {
+                    null
+                }
+            }
+            expiries.add(GraceExpiry(room, listOfNotNull(presence) + (step?.outbound ?: emptyList())))
         }
         return expiries
     }
