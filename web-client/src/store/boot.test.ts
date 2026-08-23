@@ -292,4 +292,59 @@ describe("booting the duel client", () => {
 
     expect(sentJoinRooms(socket)).toEqual([]);
   });
+
+  it("forgets the room when the tab is told to", () => {
+    const { socket, client, storage } = bootOverFakeSocket();
+
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
+    expect(readRoomCode(storage)).toBe("ABCDEFGH");
+
+    client.forgetRoom();
+
+    expect(readRoomCode(storage)).toBeNull();
+  });
+
+  it("sends no JoinRoom on the Welcome after the tab forgot the room", () => {
+    const { socket, client } = bootOverFakeSocket(null);
+
+    socket.open();
+    socket.receive(WELCOME);
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
+    socket.receive(WELCOME);
+
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ABCDEFGH" },
+    ]);
+
+    client.forgetRoom();
+
+    socket.receive(WELCOME);
+    socket.receive(WELCOME);
+
+    expect(sentJoinRooms(socket)).toEqual([
+      { type: "JoinRoom", code: "ABCDEFGH" },
+    ]);
+  });
+
+  it("takes the forget where there is nothing to forget in", () => {
+    const socket = new FakeSocket();
+    const client = bootDuelClient({
+      connect: (onMessage) =>
+        openConnection({
+          socket: socket.asWebSocket(),
+          storage: inMemoryStorage(),
+          onMessage,
+        }),
+      joinRoomCode: null,
+    });
+
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
+
+    expect(() => {
+      client.forgetRoom();
+    }).not.toThrow();
+
+    const state = client.store.getState();
+    expect(state.roomCode).toBe("ABCDEFGH");
+  });
 });
