@@ -2,7 +2,7 @@
 id: STORY-0213
 title: The wire carries a rematch
 type: story
-status: ready
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, protocol, rooms]

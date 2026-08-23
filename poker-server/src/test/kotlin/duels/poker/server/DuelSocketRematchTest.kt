@@ -586,4 +586,44 @@ class DuelSocketRematchTest {
             assertTrue(guestAfter.none { it is ServerMessage.Failure }, "guest saw a Failure once the duel had finished: $guestAfter")
         }
     }
+
+    /**
+     * `TASK-021308`: `ADR-0044` §2's first half again, with the offering seat flipped. Every other
+     * test in this class drives the *host* into the offer, so their shared `seat == 0` expectation
+     * cannot tell a seat that tracks the offering socket apart from a hard-coded `0` or a seat
+     * resolved to the host's by construction. Here the **guest** sends the only [OfferRematch], and
+     * both sockets' [ServerMessage.RematchOffered] must read `seat == 1` — the guest's own seat —
+     * for the field to be doing anything other than one of those two wrong things.
+     */
+    @Test
+    fun theGuestsOfferNamesSeatOneOnBothSockets() = testApplication {
+        val deps = testDeps(rooms = testRoomRegistry())
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val duel = client.finishedDuel(deps)
+
+            duel.guest.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+
+            val hostAfter = duel.host.drainServerMessages()
+            val guestAfter = duel.guest.drainServerMessages()
+
+            val hostOffers = hostAfter.filterIsInstance<ServerMessage.RematchOffered>()
+            val guestOffers = guestAfter.filterIsInstance<ServerMessage.RematchOffered>()
+
+            // asserted per socket, not on the pooled total — a frame delivered twice to one
+            // socket and never to the other would otherwise still sum to two.
+            assertEquals(1, hostOffers.size)
+            assertEquals(1, guestOffers.size)
+            assertEquals(1, hostOffers.single().seat)
+            assertEquals(1, guestOffers.single().seat)
+
+            assertTrue(noDuelStarted(hostAfter), "host saw a message only a started duel would send: $hostAfter")
+            assertTrue(noDuelStarted(guestAfter), "guest saw a message only a started duel would send: $guestAfter")
+        }
+    }
 }
