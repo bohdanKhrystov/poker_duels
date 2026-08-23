@@ -155,6 +155,28 @@ internal class RoomResumeTest {
         assertTrue(resumption!!.outbound.contains(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.PRESENT))))
     }
 
+    /**
+     * The mirror of [theReturningSeatIsToldTheOpponentIsPresent] and
+     * [theSeatThatStayedIsToldTheOtherIsBack] together: both above disconnect and resume the
+     * guest, so this drops and returns the host instead, checking both addresses the two above
+     * split across two tests.
+     */
+    @Test
+    fun aReturningHostIsToldAndTellsTheGuest(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, host)
+
+        val resumption = registry.resume(room.code, host)
+
+        assertTrue(resumption!!.outbound.contains(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.PRESENT))))
+        assertTrue(resumption.outbound.contains(Addressed(1, ServerMessage.OpponentPresence(SeatPresence.PRESENT))))
+    }
+
     // The returning seat here is the host (0), not the guest (1) every scenario above resumes as:
     // buttonSeat is fixed at 0 throughout this suite, so a "the returning seat" frame that hardcoded
     // seat 1 (or an "other seat" frame that hardcoded seat 0) would pass every test above by
