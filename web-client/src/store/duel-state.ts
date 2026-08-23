@@ -24,6 +24,12 @@ export interface DuelState {
   readonly rejectionCount: number;
   readonly outcome: DuelOutcome | null;
   readonly refusal: ProtocolError | null;
+  /**
+   * The seats whose rematch offers stand, in the order the server stated them.
+   * Client bookkeeping the store accumulates across frames, in the same class as
+   * `rejectionCount` — no single frame carries it (`ADR-0044`, Consequences).
+   */
+  readonly rematchOffers: readonly number[];
 }
 
 export interface PendingTurn {
@@ -43,6 +49,7 @@ export function initialState(): DuelState {
     rejectionCount: 0,
     outcome: null,
     refusal: null,
+    rematchOffers: [],
   };
 }
 
@@ -97,6 +104,14 @@ export function applyServerMessage(
       };
     case "Failure":
       return { ...state, refusal: message.error };
+    case "RematchOffered":
+      // ADR-0044 §3: a repeat offer is answered with the same frame, not an error. Returning
+      // the state unchanged is what keeps the store from notifying anybody about nothing.
+      if (state.rematchOffers.includes(message.seat)) return state;
+      return {
+        ...state,
+        rematchOffers: [...state.rematchOffers, message.seat],
+      };
     default:
       return state;
   }

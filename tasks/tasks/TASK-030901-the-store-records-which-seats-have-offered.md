@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030901
 title: The store records which seats have offered a rematch
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: S
