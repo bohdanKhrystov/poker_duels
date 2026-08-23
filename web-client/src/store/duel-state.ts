@@ -114,6 +114,9 @@ export function applyServerMessage(
         rematchOffers: [],
       };
     case "Failure":
+      // ADR-0044 §6 documents REMATCH_UNAVAILABLE as transient: nothing was recorded and the
+      // same offer may be sent again, so there is no state to enter and no screen to change.
+      if (message.error === "REMATCH_UNAVAILABLE") return state;
       return { ...state, refusal: message.error };
     case "RematchOffered":
       // ADR-0044 §3: a repeat offer is answered with the same frame, not an error. Returning
