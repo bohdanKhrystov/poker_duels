@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030920
 title: From a resumed socket's frames, the way back forgets the room
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: XS
