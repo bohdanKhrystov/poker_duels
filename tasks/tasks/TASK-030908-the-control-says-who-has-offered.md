@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030908
 title: The control says who has offered, and reads it from either side
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: S

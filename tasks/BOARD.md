@@ -1545,8 +1545,8 @@ written and is still true.
 | | [TASK-030905](tasks/TASK-030905-whose-rematch-offer-it-is.md) Whose rematch offer it is, read from the seat the server gave this client | XS | **done** |
 | | [TASK-030906](tasks/TASK-030906-the-result-panel-shows-the-rematch-it-is-handed.md) The result panel shows the rematch it is handed, and adds none of its own | S | **done** |
 | | [TASK-030907](tasks/TASK-030907-the-rematch-control-offers-one-press.md) The rematch control offers one press, and a second press is harmless | S | **done** |
-| | [TASK-030908](tasks/TASK-030908-the-control-says-who-has-offered.md) The control says who has offered, and reads it from either side | S | **ready** |
-| | [TASK-030909](tasks/TASK-030909-a-room-that-is-gone-retires-the-control.md) A room that is gone retires the control and says so | XS | backlog |
+| | [TASK-030908](tasks/TASK-030908-the-control-says-who-has-offered.md) The control says who has offered, and reads it from either side | S | **done** |
+| | [TASK-030909](tasks/TASK-030909-a-room-that-is-gone-retires-the-control.md) A room that is gone retires the control and says so | XS | **ready** |
 | | [TASK-030910](tasks/TASK-030910-the-result-screen-hands-over-the-control-and-the-press-reaches-the-wire.md) The result screen hands over the control, and the press reaches the wire | S | backlog |
 | | [TASK-030911](tasks/TASK-030911-the-way-back-steps-aside-for-the-rematch.md) The way back steps aside for the rematch | XS | backlog |
 | | [TASK-030912](tasks/TASK-030912-the-rematch-begins-and-the-button-changes-sides.md) The rematch begins, and the button is on the other side | S | backlog |
