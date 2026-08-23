@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021403
 title: Room.presenceOf projects a seat's presence from state the room already keeps
 type: task
-status: ready
+status: done
 parent: STORY-0214
 module: poker-server
 estimate: S

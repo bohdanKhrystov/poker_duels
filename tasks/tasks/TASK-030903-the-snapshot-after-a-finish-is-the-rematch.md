@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030903
 title: The snapshot after a finish is the rematch, and clears the duel that ended
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: XS

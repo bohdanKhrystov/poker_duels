@@ -472,8 +472,8 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | **[STORY-0214](stories/STORY-0214-the-wire-names-an-absent-opponent.md)** The wire names an absent opponent — *schema 2* | | | **ready** |
 | | [TASK-021401](tasks/TASK-021401-disconnect-answers-with-a-room-and-its-frames.md) RoomRegistry.disconnect answers with a room and the frames it produced | S | **done** |
 | | [TASK-021402](tasks/TASK-021402-the-wire-names-presence-and-the-version-takes-its-step.md) OpponentPresence and ActedForAbsent reach the wire, and PROTOCOL_VERSION takes its step | S | **done** |
-| | [TASK-021403](tasks/TASK-021403-room-presence-of-projects-the-three-states.md) Room.presenceOf projects a seat's presence from state the room already keeps | S | **ready** |
-| | [TASK-021404](tasks/TASK-021404-a-drop-builds-the-away-frame-for-the-other-seat.md) A drop builds AWAY and the configured window, for the other seat only | S | backlog |
+| | [TASK-021403](tasks/TASK-021403-room-presence-of-projects-the-three-states.md) Room.presenceOf projects a seat's presence from state the room already keeps | S | **done** |
+| | [TASK-021404](tasks/TASK-021404-a-drop-builds-the-away-frame-for-the-other-seat.md) A drop builds AWAY and the configured window, for the other seat only | S | **ready** |
 | | [TASK-021405](tasks/TASK-021405-the-away-frame-reaches-the-opponents-socket.md) The AWAY frame reaches the opponent's socket, from inside the NonCancellable block | S | backlog |
 | | [TASK-021406](tasks/TASK-021406-an-act-after-the-countdown-would-have-hit-zero.md) An Act sent after the client's countdown would have reached zero is still refused | XS | backlog |
 | | [TASK-021407](tasks/TASK-021407-expiry-says-absent-before-the-fold-it-explains.md) Expiry says ABSENT before the fold it explains, and an abandoned room says nothing | S | backlog |
@@ -644,7 +644,23 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
-| DEC-067 | **The architect's** — after a `DuelFinished`, does this tab still remember the room it was seated in, and what forgets it so the lobby stays reachable? `boot.ts` forgets the code on that frame (`TASK-031009`), because the way on from the result is a reload (`TASK-030807`) and a tab that remembered would rejoin, be handed the same `DuelFinished`, and never reach the lobby. `ADR-0044` §5 needs the opposite: a reopened socket must re-`JoinRoom` to be handed the standing offer, so as merged a rematch survives no reconnect and the player's own press answers `UNKNOWN_ROOM` from an empty `RoomMembership`. Three non-equivalent shapes — the way back forgets before it navigates (a third member on `DuelClient`), the forget moves to `Failure(UNKNOWN_ROOM)` without `TASK-031010`'s `rejoining` guard, or `DuelFinished` keeps forgetting and the rematch is documented as live-sockets-only. **Blocks no `STORY-0309` ticket**; blocks the transport half of that story's fourth acceptance criterion | [`STORY-0309`](stories/STORY-0309-rematch.md) | before STORY-0309 is done |
+
+`DEC-067` → [`ADR-0072`](../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md)
+on 2026-08-23 — **a tab remembers its room until the player leaves it, and the way back is what
+forgets.** The client half moves: `boot.ts`'s `DuelFinished` branch is **deleted**, `pd.roomCode`
+means *the room this tab is seated in* and never *the screen this tab should show*, and exactly two
+things clear it — the player leaving, and `Failure(UNKNOWN_ROOM)` answering this tab's **own**
+rejoin, `TASK-031010`'s `rejoining` guard kept verbatim. The asymmetry was **verified, not
+inferred**: `boot.test.ts`'s merged, green *sends no JoinRoom on the Welcome after a duel has
+finished* is a standing assertion that no socket this tab opens ever rejoins after a finish, so
+`DuelSocket`'s restatement loop runs for nobody. `DuelClient` gains `forgetRoom()` beside `store`
+and `send`, `DuelProvider` an optional third prop, `useForgetRoom()` beside `useSend()`, and
+`ADR-0032` §3's *event handlers only* extends to it. The way back stays an `<a href="/">` and gains
+one `onClick` — `removeItem` is synchronous — with `DuelResult` still a function of its props. A
+stale code strands nobody: a boot holding a reaped code is refused, forgets, and lands at the lobby
+with *No duel room has that code.* **Blocks and unblocks no ticket**; `STORY-0309` may not be called
+done without the transport half it now decides. Names one gap it does not close — the *waiting for
+your rival* screen still has no way out — and raises no `DEC`.
 
 `DEC-063` → [`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md) on 2026-08-23 (the gates that make a `PROTOCOL_VERSION` bump atomic do not move; `files_touched` becomes a true count, and a ticket held together by a merged gate declares up to twelve files and names its gates in `atomic:`. `ADR-0047` §6's *"five artifacts"* is replaced by a procedure rather than another number). **Unblocks `TASK-021301`, `STORY-0213`, `STORY-0214` and `STORY-0405`.**
 
@@ -1232,13 +1248,17 @@ Splitting it found two things the story could not have known and one it must not
   likewise owns `STORY-0308`'s `offers no rematch it cannot honour`, whose premise — `DEC-023` open,
   the wire unable to carry one — is gone; it is replaced by two narrower tests rather than left
   standing.
-- **`DEC-067` is raised and is the architect's.** `boot.ts` forgets the remembered room code on
-  `DuelFinished` (`TASK-031009`, so a reload reaches the lobby), which means a tab that reloads or
-  whose socket reopens on the result screen never re-`JoinRoom`s: as merged, a rematch survives no
-  reconnect, and that player's own press answers `UNKNOWN_ROOM` from an empty `RoomMembership`.
-  Undoing the forget re-opens the trap `TASK-031009` closed, so it needs an answer. It **blocks no
-  ticket** — all fourteen apply frames to the store, as every screen test in `Lobby.test.tsx` already
-  does — and blocks the transport half of the story's fourth acceptance criterion.
+- **`DEC-067` was raised here and is now answered** by
+  [`ADR-0072`](../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md). The
+  split found that `boot.ts` forgets the remembered room code on `DuelFinished` (`TASK-031009`, so a
+  reload reaches the lobby), which means a tab that reloads or whose socket reopens on the result
+  screen never re-`JoinRoom`s: as merged, a rematch survives no reconnect, and that player's own
+  press answers `UNKNOWN_ROOM` from an empty `RoomMembership`. The answer deletes that branch and
+  puts the forget on the way back instead — the memory names the room this tab is **seated in**, and
+  only the player leaving or a refused rejoin clears it. It blocked **no ticket** — all fourteen
+  apply frames to the store, as every screen test in `Lobby.test.tsx` already does — but the
+  transport half of the story's fourth acceptance criterion is its work, and the story is not done
+  until that lands.
 
 `STORY-0213`'s planning defect is carried across deliberately: eight of its nine tests passed against
 a hard-coded `seat = 0`, because every one drove the host into the offer. Here the seat comparison
@@ -1451,8 +1471,8 @@ written and is still true.
 | | [TASK-030809](tasks/TASK-030809-the-duel-screen-shows-the-result-when-the-duel-ends.md) The duel screen shows the result when the duel ends | S | **done** |
 | **[STORY-0309](stories/STORY-0309-rematch.md)** Rematch from the result screen — *schema 2* | | **ready** |
 | | [TASK-030901](tasks/TASK-030901-the-store-records-which-seats-have-offered.md) The store records which seats have offered a rematch | S | **done** |
-| | [TASK-030902](tasks/TASK-030902-a-finished-duel-begins-the-result-screen-with-no-offer-standing.md) A finished duel begins the result screen with no offer standing | XS | **ready** |
-| | [TASK-030903](tasks/TASK-030903-the-snapshot-after-a-finish-is-the-rematch.md) The snapshot after a finish is the rematch, and clears the duel that ended | XS | backlog |
+| | [TASK-030902](tasks/TASK-030902-a-finished-duel-begins-the-result-screen-with-no-offer-standing.md) A finished duel begins the result screen with no offer standing | XS | **done** |
+| | [TASK-030903](tasks/TASK-030903-the-snapshot-after-a-finish-is-the-rematch.md) The snapshot after a finish is the rematch, and clears the duel that ended | XS | **ready** |
 | | [TASK-030904](tasks/TASK-030904-a-rematch-the-room-cannot-take-yet-is-recorded-nowhere.md) A rematch the room cannot take yet is recorded nowhere | XS | backlog |
 | | [TASK-030905](tasks/TASK-030905-whose-rematch-offer-it-is.md) Whose rematch offer it is, read from the seat the server gave this client | XS | backlog |
 | | [TASK-030906](tasks/TASK-030906-the-result-panel-shows-the-rematch-it-is-handed.md) The result panel shows the rematch it is handed, and adds none of its own | S | backlog |

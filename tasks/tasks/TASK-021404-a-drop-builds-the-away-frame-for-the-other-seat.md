@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021404
 title: A drop builds AWAY and the configured window, for the other seat only
 type: task
-status: backlog
+status: ready
 parent: STORY-0214
 module: poker-server
 estimate: S
