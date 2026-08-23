@@ -60,7 +60,9 @@ What the client gets:
 - **An offer survives a reconnect.** A player who reloads or reconnects re-`JoinRoom`s, receives
   `RoomJoined` and `DuelFinished`, and then one `RematchOffered` per standing offer. The result
   screen must therefore be able to take an offer *after* it has been entered, not only while it is
-  live.
+  live. **The screen half is `TASK-030913`; the transport half does not work yet** — `boot.ts`
+  forgets the room code on `DuelFinished` (`TASK-031009`), so no reopened socket re-`JoinRoom`s
+  after a duel ends, and `DEC-067` is open on what to do about it.
 - The button seat alternates on a rematch; the room owns that, and the client learns it from the
   `Snapshot` that follows. Nothing here computes who is on the button.
 - A rematch is the same room, not a new one. Faking it with `CreateRoom` plus a re-shared link
@@ -68,9 +70,49 @@ What the client gets:
 
 ## Tasks
 
+Split on 2026-08-23, from a **measured** baseline of 533 client tests; cumulative counts 536 → 566.
+`TASK-030901` is startable now. The chain is linear because every ticket's `verify` asserts the
+suite's whole count, so two of them in flight at once would each be wrong about the other.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0309` once `STORY-0213` has merged.* | — |
+| [TASK-030901](../tasks/TASK-030901-the-store-records-which-seats-have-offered.md) | The store records which seats have offered a rematch | ready |
+| [TASK-030902](../tasks/TASK-030902-a-finished-duel-begins-the-result-screen-with-no-offer-standing.md) | A finished duel begins the result screen with no offer standing | backlog |
+| [TASK-030903](../tasks/TASK-030903-the-snapshot-after-a-finish-is-the-rematch.md) | The snapshot after a finish is the rematch, and clears the duel that ended | backlog |
+| [TASK-030904](../tasks/TASK-030904-a-rematch-the-room-cannot-take-yet-is-recorded-nowhere.md) | A rematch the room cannot take yet is recorded nowhere | backlog |
+| [TASK-030905](../tasks/TASK-030905-whose-rematch-offer-it-is.md) | Whose rematch offer it is, read from the seat the server gave this client | backlog |
+| [TASK-030906](../tasks/TASK-030906-the-result-panel-shows-the-rematch-it-is-handed.md) | The result panel shows the rematch it is handed, and adds none of its own | backlog |
+| [TASK-030907](../tasks/TASK-030907-the-rematch-control-offers-one-press.md) | The rematch control offers one press, and a second press is harmless | backlog |
+| [TASK-030908](../tasks/TASK-030908-the-control-says-who-has-offered.md) | The control says who has offered, and reads it from either side | backlog |
+| [TASK-030909](../tasks/TASK-030909-a-room-that-is-gone-retires-the-control.md) | A room that is gone retires the control and says so | backlog |
+| [TASK-030910](../tasks/TASK-030910-the-result-screen-hands-over-the-control-and-the-press-reaches-the-wire.md) | The result screen hands over the control, and the press reaches the wire | backlog |
+| [TASK-030911](../tasks/TASK-030911-the-way-back-steps-aside-for-the-rematch.md) | The way back steps aside for the rematch | backlog |
+| [TASK-030912](../tasks/TASK-030912-the-rematch-begins-and-the-button-changes-sides.md) | The rematch begins, and the button is on the other side | backlog |
+| [TASK-030913](../tasks/TASK-030913-an-offer-restated-after-a-rejoin-reaches-the-result-screen.md) | An offer restated after a rejoin reaches the result screen, and one stated before it does not | backlog |
+| [TASK-030914](../tasks/TASK-030914-a-gone-room-ends-it-and-a-transient-refusal-does-not.md) | A gone room ends the rematch, and a transient refusal leaves it live | backlog |
+
+### What the split found, and what it did not decide
+
+- **`ADR-0044` §5's ordering has a client half, and the store did not have it.** The reducer ignored
+  `RematchOffered` entirely (`default: return state`), so nothing distinguished an offer arriving
+  before `DuelFinished` from one arriving after — the distinction the server took a commitment on.
+  `TASK-030902` makes `DuelFinished` clear the recorded offers, and `TASK-030913` asserts the
+  ordering at the screen, both ways round.
+- **`Snapshot` did not clear `outcome`, and `Lobby.tsx` tests `outcome` before `view`.** Without
+  `TASK-030903` a rematch's opening frames would leave the result screen up forever. Measured: that
+  reducer change, together with everything else this story adds to `duel-state.ts`, turns exactly
+  **one** pre-existing test red — `starts with nothing the server has not sent`, which
+  `TASK-030901` owns and fixes.
+- **`STORY-0308`'s `offers no rematch it cannot honour` is invalidated by this story.**
+  `TASK-030906` replaces it with two narrower tests rather than leaving a test standing whose
+  premise (`DEC-023` open, the wire unable to carry one) is gone.
+- **Not decided here: `DEC-067`, the architect's.** `boot.ts` forgets the remembered room code on
+  `DuelFinished` (`TASK-031009`, so a reload reaches the lobby), which means a tab that reloads or
+  whose socket reopens after the duel ends never re-`JoinRoom`s — and the offer `ADR-0044` §5
+  restates reaches nobody. Undoing the forget re-opens the trap `TASK-031009` closed, so it needs an
+  answer, not a guess. **It blocks no ticket in this story**: every one of the fourteen applies
+  frames to the store, which is what every screen test in `Lobby.test.tsx` already does. It blocks
+  the *transport* half of the fourth acceptance criterion below.
 
 ## Acceptance criteria
 
@@ -83,6 +125,23 @@ What the client gets:
 - [ ] `Failure(UNKNOWN_ROOM)` after an offer returns the player to the lobby with the reason shown,
       rather than leaving a hanging button; `Failure(REMATCH_UNAVAILABLE)` leaves the control live
       and enters no error state.
+
+### Which ticket carries each
+
+| Criterion | Ticket |
+| --- | --- |
+| 1 — this seat has offered, from the frame; two clicks are harmless | `TASK-030907` (no lock), `TASK-030908` (the chip), `TASK-030910` (nothing before the frame) |
+| 2 — the opponent has offered and this seat has not | `TASK-030908`, `TASK-030910` |
+| 3 — both have offered: the table returns, button on the other seat, no trace of the result | `TASK-030903` (the reducer), `TASK-030912` (the screen, both button seats read) |
+| 4 — a rejoin onto a result screen shows an offer already standing | `TASK-030913`. Its *transport* half — the tab rejoining at all after a `DuelFinished` — is `DEC-067`'s |
+| 5 — the two refusals | `TASK-030904`, `TASK-030909`, `TASK-030914` |
+
+Criterion 5's *returns the player to the lobby* is delivered as `ADR-0044` §6 words it — **the
+client says so and offers the way back** — not as a navigation the client performs: the reason
+replaces the rematch control and `TASK-030807`'s `Back to the lobby` link, directly below it, is the
+way back. The alternative, a reducer that cleared `outcome`, `view` and `roomCode` on any
+`UNKNOWN_ROOM`, would change what that frame means to the whole client — including a reconnect that
+lands on a reaped room mid-duel — and is deliberately not taken here.
 
 ## Out of scope
 
