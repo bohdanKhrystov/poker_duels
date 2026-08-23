@@ -60,9 +60,12 @@ What the client gets:
 - **An offer survives a reconnect.** A player who reloads or reconnects re-`JoinRoom`s, receives
   `RoomJoined` and `DuelFinished`, and then one `RematchOffered` per standing offer. The result
   screen must therefore be able to take an offer *after* it has been entered, not only while it is
-  live. **The screen half is `TASK-030913`; the transport half does not work yet** — `boot.ts`
-  forgets the room code on `DuelFinished` (`TASK-031009`), so no reopened socket re-`JoinRoom`s
-  after a duel ends, and `DEC-067` is open on what to do about it.
+  live. **The screen half is `TASK-030913`; the transport half is `DEC-067`'s**, answered by
+  [`ADR-0072`](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md):
+  `boot.ts`'s `DuelFinished` branch is deleted so a reopened socket rejoins, the memory is cleared
+  by the way back instead (`DuelClient.forgetRoom`, `useForgetRoom`, one `onClick` on `DuelResult`'s
+  existing `<a href="/">`), and the fourteen tickets below are unchanged by it. **That work is not
+  in this table yet** — it is a split of its own, and this story is not `done` until it lands.
 - The button seat alternates on a rematch; the room owns that, and the client learns it from the
   `Snapshot` that follows. Nothing here computes who is on the button.
 - A rematch is the same room, not a new one. Faking it with `CreateRoom` plus a re-shared link
@@ -106,13 +109,16 @@ suite's whole count, so two of them in flight at once would each be wrong about 
 - **`STORY-0308`'s `offers no rematch it cannot honour` is invalidated by this story.**
   `TASK-030906` replaces it with two narrower tests rather than leaving a test standing whose
   premise (`DEC-023` open, the wire unable to carry one) is gone.
-- **Not decided here: `DEC-067`, the architect's.** `boot.ts` forgets the remembered room code on
-  `DuelFinished` (`TASK-031009`, so a reload reaches the lobby), which means a tab that reloads or
-  whose socket reopens after the duel ends never re-`JoinRoom`s — and the offer `ADR-0044` §5
-  restates reaches nobody. Undoing the forget re-opens the trap `TASK-031009` closed, so it needs an
-  answer, not a guess. **It blocks no ticket in this story**: every one of the fourteen applies
-  frames to the store, which is what every screen test in `Lobby.test.tsx` already does. It blocks
-  the *transport* half of the fourth acceptance criterion below.
+- **Not decided at the split: `DEC-067`, the architect's — now answered.** `boot.ts` forgot the
+  remembered room code on `DuelFinished` (`TASK-031009`, so a reload reaches the lobby), which meant
+  a tab that reloads or whose socket reopens after the duel ends never re-`JoinRoom`s — and the
+  offer `ADR-0044` §5 restates reached nobody.
+  [`ADR-0072`](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md)
+  deletes that branch and moves the forget onto the way back, so the memory names the room this tab
+  is **seated in** and only the player leaving or a refused rejoin clears it. **It blocked no ticket
+  in this story** — every one of the fourteen applies frames to the store, which is what every
+  screen test in `Lobby.test.tsx` already does — but the *transport* half of the fourth acceptance
+  criterion below is its work, and needs tickets of its own before this story is `done`.
 
 ## Acceptance criteria
 
@@ -133,7 +139,7 @@ suite's whole count, so two of them in flight at once would each be wrong about 
 | 1 — this seat has offered, from the frame; two clicks are harmless | `TASK-030907` (no lock), `TASK-030908` (the chip), `TASK-030910` (nothing before the frame) |
 | 2 — the opponent has offered and this seat has not | `TASK-030908`, `TASK-030910` |
 | 3 — both have offered: the table returns, button on the other seat, no trace of the result | `TASK-030903` (the reducer), `TASK-030912` (the screen, both button seats read) |
-| 4 — a rejoin onto a result screen shows an offer already standing | `TASK-030913`. Its *transport* half — the tab rejoining at all after a `DuelFinished` — is `DEC-067`'s |
+| 4 — a rejoin onto a result screen shows an offer already standing | `TASK-030913`. Its *transport* half — the tab rejoining at all after a `DuelFinished` — is [`ADR-0072`](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md)'s, and is not yet ticketed |
 | 5 — the two refusals | `TASK-030904`, `TASK-030909`, `TASK-030914` |
 
 Criterion 5's *returns the player to the lobby* is delivered as `ADR-0044` §6 words it — **the
