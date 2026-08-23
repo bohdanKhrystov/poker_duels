@@ -77,12 +77,18 @@ export function applyServerMessage(
         refusal: null,
       };
     case "Snapshot":
+      // ADR-0044 §4: there is no started frame, and after a `DuelFinished` a `Snapshot` can only
+      // mean a new duel has begun in the same room, because `resumeFrames` gives a finished duel
+      // `finishedFrames` alone. Clearing the result and the offers that produced it is what
+      // unblocks the table's return: `Lobby.tsx` tests `state.outcome` before `state.view`.
       return {
         ...state,
         view: message.view,
         pendingTurn: null,
         rejection: null,
         refusal: null,
+        outcome: null,
+        rematchOffers: [],
       };
     case "Rejected":
       // A rejection reports on an attempt, not on state (ADR-0043): `pendingTurn` and `view` stay
