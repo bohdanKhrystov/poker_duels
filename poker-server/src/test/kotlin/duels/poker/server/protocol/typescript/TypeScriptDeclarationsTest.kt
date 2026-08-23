@@ -98,7 +98,7 @@ class TypeScriptDeclarationsTest {
     fun aSealedHierarchyIsAUnionOfItsVariants() {
         val descriptor = ClientMessage.serializer().descriptor
         val result = unionDeclaration(descriptor)
-        val expected = "export type ClientMessage = Act | CreateRoom | Hello | JoinRoom;"
+        val expected = "export type ClientMessage = Act | CreateRoom | Hello | JoinRoom | OfferRematch;"
         assertEquals(expected, result)
     }
 
