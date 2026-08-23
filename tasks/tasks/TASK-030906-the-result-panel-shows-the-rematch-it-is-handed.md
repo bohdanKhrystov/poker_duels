@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030906
 title: The result panel shows the rematch it is handed, and adds none of its own
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: S
