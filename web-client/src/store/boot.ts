@@ -77,12 +77,6 @@ export function bootDuelClient(options: BootOptions): DuelClient {
       rejoining = false;
       forgetRoomCode(options.storage);
     }
-    if (message.type === "DuelFinished" && options.storage) {
-      // The way on from the result is a reload (TASK-030807). A tab that still
-      // remembered this room would rejoin it and be handed the same DuelFinished
-      // back, and the lobby would be unreachable.
-      forgetRoomCode(options.storage);
-    }
   });
 
   return {
