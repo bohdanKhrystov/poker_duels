@@ -3,8 +3,10 @@ package duels.poker.server.room
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.EndCondition
 import duels.poker.engine.game.PlayerAction
+import duels.poker.server.duel.Addressed
 import duels.poker.server.duel.decisionPointOf
 import duels.poker.server.protocol.Act
+import duels.poker.server.protocol.SeatPresence
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.MutableClock
@@ -53,7 +55,7 @@ internal class RoomResumeTest {
 
         assertEquals(1, resumption!!.seat)
         assertTrue(resumption.outbound.isNotEmpty())
-        assertTrue(resumption.outbound.all { it.seat == 1 })
+        assertTrue(resumption.outbound.filterNot { it.message is ServerMessage.OpponentPresence }.all { it.seat == 1 })
         assertTrue(resumption.outbound.any { it.message is ServerMessage.Snapshot })
     }
 
@@ -117,9 +119,134 @@ internal class RoomResumeTest {
 
         val resumption = registry.resume(room.code, host)
 
-        assertEquals(1, resumption!!.outbound.size)
-        assertTrue(resumption.outbound.single().message is ServerMessage.DuelFinished)
+        val duelFinished = resumption!!.outbound.filter { it.message is ServerMessage.DuelFinished }
+        assertEquals(1, duelFinished.size)
+        assertEquals(0, duelFinished.single().seat)
         assertTrue(resumption.outbound.none { it.message is ServerMessage.Snapshot })
+    }
+
+    @Test
+    fun theReturningSeatIsToldTheOpponentIsPresent(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, guest)
+
+        val resumption = registry.resume(room.code, guest)
+
+        assertTrue(resumption!!.outbound.contains(Addressed(1, ServerMessage.OpponentPresence(SeatPresence.PRESENT))))
+    }
+
+    @Test
+    fun theSeatThatStayedIsToldTheOtherIsBack(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, guest)
+
+        val resumption = registry.resume(room.code, guest)
+
+        assertTrue(resumption!!.outbound.contains(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.PRESENT))))
+    }
+
+    // The returning seat here is the host (0), not the guest (1) every scenario above resumes as:
+    // buttonSeat is fixed at 0 throughout this suite, so a "the returning seat" frame that hardcoded
+    // seat 1 (or an "other seat" frame that hardcoded seat 0) would pass every test above by
+    // coincidence alone. This one, and the two below, resume as the host instead, so the address
+    // itself — not just the presence value — is what a mistake here would get wrong.
+    @Test
+    fun nobodyIsToldAboutASeatNobodyWasWaitingFor(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+
+        val resumption = registry.resume(room.code, host)
+
+        assertTrue(resumption!!.outbound.none { it.seat == 1 })
+        assertTrue(resumption.outbound.contains(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.PRESENT))))
+    }
+
+    @Test
+    fun theReturningSeatIsToldTheOpponentIsAway(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, guest)
+        clock.advance(5_000)
+
+        val resumption = registry.resume(room.code, host)
+
+        assertTrue(
+            resumption!!.outbound.contains(
+                Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 25_000)),
+            ),
+        )
+    }
+
+    @Test
+    fun theReturningSeatIsToldTheOpponentIsAbsent(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, guest)
+        clock.advance(TEST_TIMEOUTS.disconnectGraceMillis)
+        registry.expireGracePeriods()
+
+        val resumption = registry.resume(room.code, host)
+
+        assertTrue(resumption!!.outbound.contains(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.ABSENT))))
+    }
+
+    @Test
+    fun thePresenceFollowsTheResumedFrames(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, guest)
+
+        val resumption = registry.resume(room.code, guest)
+
+        val snapshotIndex = resumption!!.outbound.indexOfFirst { it.message is ServerMessage.Snapshot }
+        assertTrue(snapshotIndex >= 0)
+        val presenceIndices =
+            resumption.outbound.withIndex()
+                .filter { it.value.message is ServerMessage.OpponentPresence }
+                .map { it.index }
+        assertTrue(presenceIndices.isNotEmpty())
+        assertTrue(presenceIndices.all { it > snapshotIndex })
+    }
+
+    @Test
+    fun noEventsAreReplayed(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, guest)
+
+        val resumption = registry.resume(room.code, guest)
+
+        assertTrue(resumption!!.outbound.none { it.message is ServerMessage.Events })
     }
 
     @Test

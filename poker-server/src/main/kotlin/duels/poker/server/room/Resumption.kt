@@ -12,6 +12,6 @@ import duels.poker.server.duel.Addressed
  * @property room The room after the resume: the returning seat's disconnect grace window
  *   (`ADR-0013`) cleared, and its activity clock touched.
  * @property seat The seat the resuming player holds: `0` for the host, `1` for the guest.
- * @property outbound The frames [seat] is entitled to see right now — never another seat's.
+ * @property outbound The frames this call produced, each addressed to the seat it names.
  */
 public data class Resumption(val room: Room, val seat: Int, val outbound: List<Addressed>)
