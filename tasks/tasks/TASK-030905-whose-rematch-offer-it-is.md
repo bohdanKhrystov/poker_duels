@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030905
 title: Whose rematch offer it is, read from the seat the server gave this client
 type: task
-status: backlog
+status: done
 parent: STORY-0309
 module: web-client
 estimate: XS
