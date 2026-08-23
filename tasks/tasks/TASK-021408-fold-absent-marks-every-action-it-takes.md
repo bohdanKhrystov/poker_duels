@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021408
 title: foldAbsent marks every action it takes for an absent seat, to both seats
 type: task
-status: backlog
+status: ready
 parent: STORY-0214
 module: poker-server
 estimate: S

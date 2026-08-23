@@ -476,8 +476,8 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021404](tasks/TASK-021404-a-drop-builds-the-away-frame-for-the-other-seat.md) A drop builds AWAY and the configured window, for the other seat only | S | **done** |
 | | [TASK-021405](tasks/TASK-021405-the-away-frame-reaches-the-opponents-socket.md) The AWAY frame reaches the opponent's socket, from inside the NonCancellable block | S | **done** |
 | | [TASK-021406](tasks/TASK-021406-an-act-after-the-countdown-would-have-hit-zero.md) An Act sent after the client's countdown would have reached zero is still refused | XS | **done** |
-| | [TASK-021407](tasks/TASK-021407-expiry-says-absent-before-the-fold-it-explains.md) Expiry says ABSENT before the fold it explains, and an abandoned room says nothing | S | **ready** |
-| | [TASK-021408](tasks/TASK-021408-fold-absent-marks-every-action-it-takes.md) foldAbsent marks every action it takes for an absent seat, to both seats | S | backlog |
+| | [TASK-021407](tasks/TASK-021407-expiry-says-absent-before-the-fold-it-explains.md) Expiry says ABSENT before the fold it explains, and an abandoned room says nothing | S | **done** |
+| | [TASK-021408](tasks/TASK-021408-fold-absent-marks-every-action-it-takes.md) foldAbsent marks every action it takes for an absent seat, to both seats | S | **ready** |
 | | [TASK-021409](tasks/TASK-021409-a-checked-down-absent-seat-is-marked-as-a-check.md) A checked-down absent seat is marked as a check, where a fold is not legal | XS | backlog |
 | | [TASK-021410](tasks/TASK-021410-a-resume-tells-both-sides-where-they-stand.md) A resume tells the returning seat where its opponent stands, and the seat that stayed only if it changed | S | backlog |
 | | [TASK-021411](tasks/TASK-021411-the-other-seat-drops-and-every-frame-names-the-mirror.md) The host is the seat that goes, and every presence frame names the mirror image | S | backlog |
