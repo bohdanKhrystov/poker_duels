@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030919
 title: A finished duel forgets nothing, and the next socket rejoins that room
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: S
