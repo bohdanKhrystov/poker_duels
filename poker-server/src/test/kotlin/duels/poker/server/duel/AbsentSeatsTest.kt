@@ -251,6 +251,9 @@ internal class AbsentSeatsTest {
             .first()
 
         assertEquals(decisionPointSequence, mark.actionSequence)
+        // Literal, not `bigBlind`: this test constructs the interesting seat (1) on purpose, and
+        // must actually check the mark's seat field to close the gap a hardcoded 0 would leave.
+        assertEquals(1, mark.seat)
     }
 
     @Test
