@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030907
 title: The rematch control offers one press, and a second press is harmless
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: S
