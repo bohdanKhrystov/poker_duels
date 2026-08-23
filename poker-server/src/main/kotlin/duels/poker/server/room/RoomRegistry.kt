@@ -285,8 +285,15 @@ public class RoomRegistry(
                     RoomState.PLAYING, RoomState.FINISHED -> {
                         val seat = room.seatOf(player) ?: return@mutate Pair(null, null)
                         val runner = room.runner ?: return@mutate Pair(null, null)
-                        val returned = room.reconnect(seat).touch(clock.nowMillis())
-                        Pair(returned, Resumption(returned, seat, resumeFrames(runner, seat)))
+                        val otherSeat = 1 - seat
+                        val wasAway = seat in room.gracePeriods || seat in room.absentSeats
+                        val now = clock.nowMillis()
+                        val returned = room.reconnect(seat).touch(now)
+                        val presence = buildList {
+                            add(Addressed(seat, returned.presenceOf(otherSeat, now)))
+                            if (wasAway) add(Addressed(otherSeat, returned.presenceOf(seat, now)))
+                        }
+                        Pair(returned, Resumption(returned, seat, resumeFrames(runner, seat) + presence))
                     }
                     RoomState.WAITING, RoomState.ABANDONED -> Pair(null, null)
                 }

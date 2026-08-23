@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021411
 title: The host is the seat that goes, and every presence frame names the mirror image
 type: task
-status: backlog
+status: ready
 parent: STORY-0214
 module: poker-server
 estimate: S
