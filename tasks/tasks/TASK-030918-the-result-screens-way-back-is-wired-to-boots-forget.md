@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030918
 title: The result screen's way back is wired to boot's forget
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: XS
