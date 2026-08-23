@@ -575,4 +575,60 @@ describe("the lobby", () => {
     ).toBeDefined();
     expect(screen.queryByRole("button", { name: "Rematch" })).toBeNull();
   });
+
+  it("the snapshot after a finish returns the table with the button on the other side", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+    });
+
+    // First duel: button at seat 0, inside "You" plate
+    const firstButton = screen.getByLabelText("the button");
+    const firstPlate = firstButton.closest("div");
+    expect(firstPlate?.textContent).toContain("You");
+
+    // Duel finishes, both offer rematch
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+      });
+      store.apply({ type: "RematchOffered", seat: 1 });
+    });
+
+    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
+
+    // Second duel: button at seat 1, inside "Your rival" plate
+    act(() => {
+      store.apply({
+        type: "Snapshot",
+        view: {
+          viewerSeat: 0,
+          handNumber: 2,
+          buttonSeat: 1,
+          street: "PREFLOP",
+          board: { cards: [] },
+          pot: 30,
+          betToMatch: 20,
+          minRaiseTo: 40,
+          seatToAct: 0,
+          smallBlind: 10,
+          bigBlind: 20,
+          seats: [seatView(0), seatView(1)],
+        },
+      });
+    });
+
+    expect(screen.queryByRole("region", { name: "the result" })).toBeNull();
+    expect(screen.getByText("Pot 30")).toBeDefined();
+
+    const secondButton = screen.getByLabelText("the button");
+    const secondPlate = secondButton.closest("div");
+    expect(secondPlate?.textContent).toContain("Your rival");
+
+    expect(screen.queryByText(/rematch/i)).toBeNull();
+  });
 });
