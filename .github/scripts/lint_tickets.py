@@ -31,6 +31,12 @@ ESTIMATES_V2 = {"XS", "S"}
 TIERS = {"haiku", "sonnet", "opus"}
 REVIEW_LEVELS = {"light", "standard", "deep"}
 MAX_FILES_TOUCHED = 3
+# A change some merged gate refuses to let land in pieces — a protocol version bump, an
+# interface signature dragging its implementers, a NOT NULL column breaking every fixture.
+# ADR-0068: the ticket declares the true count and names the gate in `atomic:`. Twelve is the
+# largest atomic unit this repository has demonstrated, so a thirteenth file is a decision
+# rather than an escalation. Without `atomic:` nothing changes and the cap is still 3.
+MAX_FILES_TOUCHED_ATOMIC = 12
 
 ID_PATTERNS = {
     "epic": re.compile(r"^EPIC-\d{2}$"),
@@ -129,14 +135,39 @@ def check_task_schema(where: str, data: dict[str, object]) -> None:
     if review not in REVIEW_LEVELS:
         fail(where, f"review must be one of {sorted(REVIEW_LEVELS)}, got {review!r}")
 
+    # `atomic:` is the one declared exemption from the three-file cap (ADR-0068): a block
+    # sequence naming, one per line, each merged gate that fails on a smaller commit. The linter
+    # checks that it is there and that the count is in range, never that the claim is true —
+    # that is the reviewer's, and the ADR says so rather than implying the check is mechanical.
+    atomic = data.get("atomic")
+    claimed_atomic = atomic is not None
+    if claimed_atomic and not (
+        isinstance(atomic, list) and atomic and all(str(g).strip() for g in atomic)
+    ):
+        fail(where, "atomic: must be a block sequence naming one merged gate per line")
+        claimed_atomic = False
+
     touched = data.get("files_touched")
     try:
         touched_n = int(str(touched))
     except (TypeError, ValueError):
         fail(where, f"files_touched must be an integer, got {touched!r}")
     else:
-        if not 1 <= touched_n <= MAX_FILES_TOUCHED:
-            fail(where, f"files_touched must be 1..{MAX_FILES_TOUCHED}, got {touched_n}")
+        if claimed_atomic:
+            # Below four, `atomic:` buys nothing and only blurs what its presence means.
+            if not MAX_FILES_TOUCHED < touched_n <= MAX_FILES_TOUCHED_ATOMIC:
+                fail(
+                    where,
+                    f"files_touched must be {MAX_FILES_TOUCHED + 1}..{MAX_FILES_TOUCHED_ATOMIC} "
+                    f"on a task declaring atomic:, got {touched_n}",
+                )
+        elif not 1 <= touched_n <= MAX_FILES_TOUCHED:
+            fail(
+                where,
+                f"files_touched must be 1..{MAX_FILES_TOUCHED}, got {touched_n} — a change no "
+                f"merged gate forbids splitting is two tickets; one that is atomic declares "
+                f"atomic: and the true count (ADR-0068)",
+            )
 
     # The verify block is what makes a cheap model reliable: done is "these commands exit 0",
     # not "the code looks right". A schema-2 task without one has no objective gate at all.

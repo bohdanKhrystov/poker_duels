@@ -40,7 +40,7 @@ is not satisfied by deleting the command — it is satisfied by writing the test
 - **Never widen scope.** The ticket has an `## Out of scope` section. Respect it exactly. If you
   spot a bug, a bad name, or a missing abstraction outside this ticket, mention it in your final
   report so it can become its own ticket. Do not fix it.
-- **Never touch more files than `files_touched` allows.** If you cannot fit, stop and report it.
+- **Never touch more files than `files_touched` allows.** If you cannot fit, stop and report it. That holds for an `atomic:` ticket too: its count is the whole change, not a starting point.
 - **Never weaken a test to make it pass.** If a test is wrong, say so and stop.
 - **Never edit the `verify` block** to make it easier.
 - **Never commit or push.** The driver does that.

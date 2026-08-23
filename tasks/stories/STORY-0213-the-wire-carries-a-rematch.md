@@ -71,7 +71,7 @@ against its own out-of-scope rule.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-021301](../tasks/TASK-021301-the-wire-gains-a-rematch-and-the-version-takes-its-step.md) | `OfferRematch` and `RematchOffered` reach the wire, and `PROTOCOL_VERSION` takes its step | **blocked** — `DEC-063` |
+| [TASK-021301](../tasks/TASK-021301-the-wire-gains-a-rematch-and-the-version-takes-its-step.md) | `OfferRematch` and `RematchOffered` reach the wire, and `PROTOCOL_VERSION` takes its step | **ready** |
 | [TASK-021302](../tasks/TASK-021302-one-offer-reaches-both-seats-and-starts-no-duel.md) | One seat's offer puts `RematchOffered` on both sockets and starts no duel | backlog |
 | [TASK-021303](../tasks/TASK-021303-the-second-offer-starts-the-duel-with-the-button-moved.md) | The second offer starts a fresh duel, with the button on the other seat | backlog |
 | [TASK-021304](../tasks/TASK-021304-a-repeat-offer-is-answered-and-records-nothing.md) | A repeat offer is answered, not refused, and records nothing new | backlog |
@@ -82,15 +82,21 @@ against its own out-of-scope rule.
 The chain is linear: every ticket after `TASK-021301` depends on the one before it, and all but
 `TASK-021302`–`TASK-021306` — which share one test file — could not overlap anyway.
 
-**`TASK-021301` is blocked on `DEC-063`, and nothing in this story can start until it merges.** The
+**`TASK-021301` is `ready`, and everything in this story queues behind it.** The
 split found that the wire step is irreducibly **twelve** files: the three type files, the constant,
 `DuelSocket`'s two exhaustive `when`s, `ProtocolJsonTest`'s literal, `docs/protocol.md`,
 `docs/protocol-versions.md`, both generated client artifacts, `version.ts` and `frames.ts`. Every one
 is forced by a gate that is already merged, and no two of them can land in different commits: a wire
 shape with no ledger row fails `ProtocolVersionLedgerTest`, a documented message with no type fails
-`ProtocolDocumentationTest`, and a type with no row fails it the other way. A schema-2 ticket is
-capped at three files. `DEC-063` is the architect's, and `STORY-0214` and `STORY-0405` are behind
-this story in the same queue with the same problem.
+`ProtocolDocumentationTest`, and a type with no row fails it the other way. A schema-2 ticket was
+capped at three files, which is what `DEC-063` asked about.
+[`ADR-0068`](../../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)
+answers it: **the gates do not move** — a budgeting rule never rewrites a correctness gate — and
+instead `files_touched` becomes a true count, with a ticket held together by a merged gate declaring
+up to twelve files and naming those gates in a new `atomic:` key. The ticket carries
+`files_touched: 12` and has **no headroom**: a thirteenth file is a decision, not a bigger ticket.
+`STORY-0214` and `STORY-0405` are behind this story in the same queue and are written the same way,
+each recomputing its own set from `ADR-0068` §5's procedure rather than from a remembered number.
 
 Two of the twelve are files `ADR-0044` §9 did not foresee, and both are mechanical:
 `web-client/src/protocol/frames.ts` holds a `satisfies Record<ServerMessage["type"], true>` table

@@ -10,8 +10,9 @@ and puts the rematch's wire half in `STORY-0213`, and
 [`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md) answers `DEC-038` and puts the
 pause state's wire half in `STORY-0214` — both where the code lives, rather than in `EPIC-03`. They
 land one at a time, `0213` first, because each moves `PROTOCOL_VERSION`. `STORY-0213` was split on
-2026-08-23 into seven tickets and **stalls on the first of them**: the wire step is twelve files
-against a three-file ticket cap, none of them separable, which is `DEC-063` — the architect's.
+2026-08-23 into seven tickets and **runs**: the wire step is twelve files, none of them separable,
+which `ADR-0068` settles by letting a ticket declare the true count and name the merged gates that
+forbid splitting it.
 `EPIC-06` (design) runs in parallel on disjoint files, see `ADR-0023`. `EPIC-03` (web client) is
 in progress.
 
@@ -458,7 +459,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021214](tasks/TASK-021214-a-test-filter-names-one-class.md) A test filter names one class, so a green run cannot have run nothing | XS | **done** |
 | | [TASK-021215](tasks/TASK-021215-a-logging-backend-so-a-swallowed-failure-is-visible.md) A logging backend, so a swallowed sweep failure is visible | S | **done** |
 | **[STORY-0213](stories/STORY-0213-the-wire-carries-a-rematch.md)** The wire carries a rematch — *schema 2* | | | **ready** |
-| | [TASK-021301](tasks/TASK-021301-the-wire-gains-a-rematch-and-the-version-takes-its-step.md) OfferRematch and RematchOffered reach the wire, and PROTOCOL_VERSION takes its step | S | **blocked** — `DEC-063` |
+| | [TASK-021301](tasks/TASK-021301-the-wire-gains-a-rematch-and-the-version-takes-its-step.md) OfferRematch and RematchOffered reach the wire, and PROTOCOL_VERSION takes its step | S | **ready** |
 | | [TASK-021302](tasks/TASK-021302-one-offer-reaches-both-seats-and-starts-no-duel.md) One seat's offer puts RematchOffered on both sockets and starts no duel | S | backlog |
 | | [TASK-021303](tasks/TASK-021303-the-second-offer-starts-the-duel-with-the-button-moved.md) The second offer starts a fresh duel, with the button on the other seat | S | backlog |
 | | [TASK-021304](tasks/TASK-021304-a-repeat-offer-is-answered-and-records-nothing.md) A repeat offer is answered, not refused, and records nothing new | S | backlog |
@@ -470,13 +471,17 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 `STORY-0214`'s tickets come from `/plan-story` when it is reached — after `STORY-0213` merges, since
 both move `PROTOCOL_VERSION` and only one bumping branch is open at a time (`ADR-0045` §3).
 
-**`STORY-0213` is split and stalled on its first ticket.** `TASK-021301` is the wire step — two
+**`STORY-0213` is split and starts on its first ticket.** `TASK-021301` is the wire step — two
 message types, one `ProtocolError` value, the version, both documents and both generated client
 artifacts — and the split found it is irreducibly **twelve** files against a three-file cap, with no
 two of them separable: `ADR-0047`'s ledger test is what forbids a wire shape whose fingerprint no
 version row claims, and `ProtocolDocumentationTest` forbids the document moving either before or
-after the Kotlin. That is `DEC-063`, the architect's, and it blocks the whole story. The six tickets
-behind it are ordinary one- and two-file tickets and run straight through once it lands.
+after the Kotlin. That was `DEC-063`, and
+[`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)
+answers it: the gates do not move, `files_touched` becomes a true count, and a ticket held together
+by a merged gate declares up to twelve files and names the gates in `atomic:`. The ticket is `ready`
+at `files_touched: 12`. The six tickets behind it are ordinary one- and two-file tickets and run
+straight through once it lands.
 
 **`STORY-0213` reopened this epic on 2026-08-16.**
 [`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) answers `DEC-023`:
@@ -568,8 +573,9 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
-| DEC-063 | **The architect's** — a `PROTOCOL_VERSION` bump is irreducibly **twelve** files and a schema-2 ticket is capped at **three**; which gives? Raised by splitting [`STORY-0213`](stories/STORY-0213-the-wire-carries-a-rematch.md): [`ADR-0047`](../docs/adr/ADR-0047-a-protocol-version-is-claimed-in-a-ledger.md) §6 says a bump commit carries *"five artifacts"*, and the first bump since both the client and the ledger exist carries twelve — three type files, the constant, `DuelSocket`'s two exhaustive `when`s, a literal in `ProtocolJsonTest`, two documents, two generated client artifacts, `version.ts` and `frames.ts`. **None can land in a separate commit**, because that atomicity is exactly what `ADR-0047`'s gate enforces. `lint_tickets.py` caps `files_touched` at 3, so `TASK-021301` cannot be written honestly and cannot be split. Blocks `STORY-0213` entirely, and `STORY-0214` and `STORY-0405` are behind it with the identical problem | [`TASK-021301`](tasks/TASK-021301-the-wire-gains-a-rematch-and-the-version-takes-its-step.md) | before any wire ticket is started |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
+
+`DEC-063` → [`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md) on 2026-08-23 (the gates that make a `PROTOCOL_VERSION` bump atomic do not move; `files_touched` becomes a true count, and a ticket held together by a merged gate declares up to twelve files and names its gates in `atomic:`. `ADR-0047` §6's *"five artifacts"* is replaced by a procedure rather than another number). **Unblocks `TASK-021301`, `STORY-0213`, `STORY-0214` and `STORY-0405`.**
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →
