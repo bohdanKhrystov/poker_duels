@@ -85,6 +85,8 @@ internal class SocketSecrecyTest {
                 is ServerMessage.Rejected,
                 is ServerMessage.Failure,
                 is ServerMessage.DuelFinished,
+                is ServerMessage.OpponentPresence,
+                is ServerMessage.ActedForAbsent,
                 -> Unit
             }
         }

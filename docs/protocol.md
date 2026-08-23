@@ -2,7 +2,7 @@
 
 This document is the contract for EPIC-03 (the game server's protocol). The Kotlin definitions in `duels.poker.server.protocol` are the source of truth for the wire protocol; the TypeScript client is generated from this schema (see `ADR-0003` and `STORY-0203`).
 
-Protocol version: **3**
+Protocol version: **4**
 
 ## Messages
 
@@ -22,6 +22,8 @@ Protocol version: **3**
 | `YourTurn` | server → client | `handNumber`, `actionSequence`, `legalActions` | Server requests an action from client |
 | `Rejected` | server → client | `rejection` | Server rejects an illegal action |
 | `DuelFinished` | server → client | `outcome` (DuelOutcome) | The duel has ended |
+| `OpponentPresence` | server → client | `presence`, `graceRemainingMillis` | The server informs a client how present its opponent is |
+| `ActedForAbsent` | server → client | `seat`, `handNumber`, `actionSequence`, `action` | The server folded or checked on behalf of an absent seat |
 
 ### What a `Rejected` does not change
 

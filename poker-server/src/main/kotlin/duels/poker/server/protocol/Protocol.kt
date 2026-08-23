@@ -6,8 +6,9 @@ import kotlinx.serialization.json.Json
  * The wire protocol this build speaks. Bumping it breaks every older client, deliberately.
  * Version 2 is the version in which `ServerMessage` gained `DuelFinished` and both hierarchies gained the room messages (ADR-0017).
  * Version 3 is the version in which `ClientMessage` gained `OfferRematch` and `ServerMessage` gained `RematchOffered` (ADR-0044).
+ * Version 4 is the version in which `ServerMessage` gained `OpponentPresence` and `ActedForAbsent` (ADR-0028).
  */
-public const val PROTOCOL_VERSION: Int = 3
+public const val PROTOCOL_VERSION: Int = 4
 
 /**
  * The shared Json instance for encoding and decoding all protocol frames.
