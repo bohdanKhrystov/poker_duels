@@ -481,6 +481,15 @@ private suspend fun ConnectionWriter.replyToCreateRoom(
  * where it sits. [duels.poker.server.room.JoinResult.Refused] carries no room, so that seat is
  * derived fresh from [SocketDependencies.rooms] rather than assumed — never a stale claim about a
  * room the registry has since reaped.
+ *
+ * A resumed seat is also handed anything the room is still holding open for it, `ADR-0044` §5:
+ * after this join's own [ServerMessage.RoomJoined] and after the resumption's own frames land,
+ * this socket is sent one [ServerMessage.RematchOffered] per player already recorded in
+ * [duels.poker.server.room.Room.rematchOffers], addressed via
+ * [duels.poker.server.room.Room.seatOf] — never before either. That order is load-bearing:
+ * [ServerMessage.DuelFinished] is where a client enters its result screen, so an offer restated
+ * ahead of it would be discarded by a reducer that treats that frame as where the screen begins,
+ * not as a moment inside a duel still running.
  */
 private suspend fun ConnectionWriter.replyToJoinRoom(
     code: String,
@@ -497,6 +506,13 @@ private suspend fun ConnectionWriter.replyToJoinRoom(
         room.code = parsed
         send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, resumed.seat)))
         deliver(resumed.outbound, resumed.room, deps.connections)
+        // ADR-0044 §5: restated only now, after everything above — DuelFinished is where a
+        // client enters its result screen, and an offer stated ahead of that frame would be
+        // discarded by a reducer that treats it as where the screen begins.
+        for (player in resumed.room.rematchOffers) {
+            val seat = resumed.room.seatOf(player) ?: continue
+            send(ProtocolCodec.encode(ServerMessage.RematchOffered(seat)))
+        }
         return
     }
     when (val result = deps.rooms.join(parsed, session.player.id)) {

@@ -8,6 +8,7 @@ import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.CreateRoom
 import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.JoinRoom
+import duels.poker.server.protocol.OfferRematch
 import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
@@ -319,6 +320,76 @@ class DuelSocketReconnectTest {
             assertEquals(1, rest.count { it is ServerMessage.DuelFinished })
             assertTrue(rest.none { it is ServerMessage.Snapshot })
             assertTrue(rest.none { it is ServerMessage.YourTurn })
+        }
+    }
+
+    /**
+     * `TASK-021307`, `ADR-0044` §5: an offer made while the opponent was inside its disconnect
+     * grace window is not lost — it is restated to the returning socket, but only after that
+     * socket's own [ServerMessage.DuelFinished], never before it. The order is what this test
+     * proves, via the two frames' *indices* rather than their mere presence: "both arrived" is
+     * true of the order this ticket exists to prevent.
+     */
+    @Test
+    fun aStandingOfferIsRestatedAfterTheReturningSocketsDuelFinished(): Unit = testApplication {
+        val rooms = testRoomRegistry(MutableClock())
+        val deps = testDeps(rooms = rooms)
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            // CreateRoom always opens DuelFormat.DEFAULT, so a one-hand duel is pre-created
+            // directly on the registry and handed to the host and guest over the wire instead.
+            val format = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
+            val host = deps.directory.resolve(DeviceId("host"))
+            val room = rooms.create(host.id, format)
+
+            val (hostSession, _) = client.joinRoom("host", room.code.value)
+            val (guestSession, _) = client.joinRoom("guest", room.code.value)
+            val hostOpening = hostSession.drainServerMessages()
+            guestSession.drainServerMessages()
+
+            // folding hand 1's only decision ends that hand, and FixedHands(1) ends the duel there.
+            val yourTurn = hostOpening.filterIsInstance<ServerMessage.YourTurn>().single()
+            hostSession.send(
+                Frame.Text(
+                    ProtocolCodec.encode(Act(yourTurn.handNumber, yourTurn.actionSequence, PlayerAction.Fold(0))),
+                ),
+            )
+            hostSession.drainServerMessages()
+            guestSession.drainServerMessages()
+
+            dropGuest(rooms, guestSession, room.code)
+
+            // The one fact the room is still holding: an offer into a seat nobody is on right now.
+            hostSession.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            // The host's own copy of the offer, told when it was recorded (ADR-0044 §3) — not
+            // what this test is about, so it is drained here rather than left to contaminate the
+            // "no second RematchOffered" assertion below.
+            hostSession.drainServerMessages()
+
+            val frames = client.reconnectGuest(room.code)
+            val joined = frames.first() as ServerMessage.RoomJoined
+            val rest = frames.drop(1)
+
+            assertEquals(room.code.value, joined.code)
+            assertEquals(1, joined.seat)
+            assertEquals(1, rest.count { it is ServerMessage.DuelFinished })
+            assertEquals(1, rest.count { it is ServerMessage.RematchOffered })
+            assertTrue(rest.none { it is ServerMessage.Snapshot })
+
+            // The claim is about order, so the indices — not the two presences — are the proof.
+            val finishedIndex = rest.indexOfFirst { it is ServerMessage.DuelFinished }
+            val offeredIndex = rest.indexOfFirst { it is ServerMessage.RematchOffered }
+            assertTrue(offeredIndex > finishedIndex)
+            assertEquals(0, (rest[offeredIndex] as ServerMessage.RematchOffered).seat)
+
+            // send, not deliver (see replyToJoinRoom): the guest's return tells nobody but itself.
+            val hostFramesAfterReconnect = hostSession.drainServerMessages()
+            assertTrue(hostFramesAfterReconnect.none { it is ServerMessage.RematchOffered })
         }
     }
 }
