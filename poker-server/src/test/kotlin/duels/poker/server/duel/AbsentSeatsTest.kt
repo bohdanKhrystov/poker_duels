@@ -291,4 +291,81 @@ internal class AbsentSeatsTest {
         val markedSeats = marks.mapNotNull { (it.message as? ServerMessage.ActedForAbsent)?.seat }.toSet()
         assertEquals(setOf(0, 1), markedSeats)
     }
+
+    @Test
+    fun anAbsentBigBlindsOptionIsMarkedAsACheck() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val button = step.runner.hand!!.state.seatToAct!!
+        val bigBlind = 1 - button
+
+        val afterCall = actOn(step, button, PlayerAction.Call(button))
+        assertEquals(bigBlind, afterCall.runner.hand!!.state.seatToAct)
+        assertFalse(legalActions(afterCall.runner.hand!!.state).allows(ActionType.FOLD))
+
+        val result = foldAbsent(afterCall, setOf(bigBlind), seeds)
+        val mark = result.outbound.drop(afterCall.outbound.size)
+            .map { it.message }
+            .filterIsInstance<ServerMessage.ActedForAbsent>()
+            .first()
+
+        assertEquals(ActionType.CHECK, mark.action)
+        assertEquals(bigBlind, mark.seat)
+    }
+
+    @Test
+    fun anAbsentSeatOnACheckedStreetIsMarkedAsACheck() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val button = step.runner.hand!!.state.seatToAct!!
+        val bigBlind = 1 - button
+
+        val preflopChecked = actOn(
+            actOn(step, button, PlayerAction.Call(button)),
+            bigBlind,
+            PlayerAction.Check(bigBlind),
+        )
+        val flopFirst = preflopChecked.runner.hand!!.state.seatToAct!!
+        val flopFirstChecked = actOn(preflopChecked, flopFirst, PlayerAction.Check(flopFirst))
+        val flopSecond = flopFirstChecked.runner.hand!!.state.seatToAct!!
+        val flopChecked = actOn(flopFirstChecked, flopSecond, PlayerAction.Check(flopSecond))
+
+        val turnFirst = flopChecked.runner.hand!!.state.seatToAct!!
+        assertFalse(legalActions(flopChecked.runner.hand!!.state).allows(ActionType.FOLD))
+
+        val result = foldAbsent(flopChecked, setOf(turnFirst), seeds)
+        val mark = result.outbound.drop(flopChecked.outbound.size)
+            .map { it.message }
+            .filterIsInstance<ServerMessage.ActedForAbsent>()
+            .first()
+
+        assertEquals(ActionType.CHECK, mark.action)
+        assertEquals(turnFirst, mark.seat)
+    }
+
+    @Test
+    fun theTwoOutcomesAreMarkedDifferently() {
+        val foldStep = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val foldSeat = foldStep.runner.hand!!.state.seatToAct!!
+        assertTrue(legalActions(foldStep.runner.hand!!.state).allows(ActionType.FOLD))
+
+        val foldResult = foldAbsent(foldStep, setOf(foldSeat), seeds)
+        val foldMark = foldResult.outbound.drop(foldStep.outbound.size)
+            .map { it.message }
+            .filterIsInstance<ServerMessage.ActedForAbsent>()
+            .first()
+
+        val checkStep = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val button = checkStep.runner.hand!!.state.seatToAct!!
+        val bigBlind = 1 - button
+        val afterCall = actOn(checkStep, button, PlayerAction.Call(button))
+        assertFalse(legalActions(afterCall.runner.hand!!.state).allows(ActionType.FOLD))
+
+        val checkResult = foldAbsent(afterCall, setOf(bigBlind), seeds)
+        val checkMark = checkResult.outbound.drop(afterCall.outbound.size)
+            .map { it.message }
+            .filterIsInstance<ServerMessage.ActedForAbsent>()
+            .first()
+
+        assertEquals(ActionType.FOLD, foldMark.action)
+        assertEquals(ActionType.CHECK, checkMark.action)
+    }
 }
