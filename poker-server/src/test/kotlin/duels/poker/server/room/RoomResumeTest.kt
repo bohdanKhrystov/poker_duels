@@ -119,9 +119,24 @@ internal class RoomResumeTest {
 
         val resumption = registry.resume(room.code, host)
 
-        val duelFinished = resumption!!.outbound.filter { it.message is ServerMessage.DuelFinished }
+        // A finished room resumes with exactly two frames: DuelFinished and OpponentPresence.
+        // The host resumes without having been away, so presenceOf(guest) reads PRESENT, the same as
+        // presenceOf(host) would — a value mixup between the two is undetectable here. That mixup
+        // is caught on the running-room path by theReturningSeatIsToldTheOpponentIsAway, where
+        // the two presences differ. This assertion proves the frame exists, is addressed correctly,
+        // and there is exactly one of each frame type.
+        assertEquals(2, resumption!!.outbound.size)
+
+        val duelFinished = resumption.outbound.filter { it.message is ServerMessage.DuelFinished }
         assertEquals(1, duelFinished.size)
         assertEquals(0, duelFinished.single().seat)
+
+        val opponentPresence = resumption.outbound.filter { it.message is ServerMessage.OpponentPresence }
+        assertEquals(1, opponentPresence.size)
+        assertEquals(0, opponentPresence.single().seat)
+        val presence = (opponentPresence.single().message as ServerMessage.OpponentPresence).presence
+        assertEquals(SeatPresence.PRESENT, presence)
+
         assertTrue(resumption.outbound.none { it.message is ServerMessage.Snapshot })
     }
 
