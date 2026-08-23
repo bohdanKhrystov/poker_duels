@@ -5,6 +5,13 @@
 - **Resolves:** `DEC-018` — **the human's product call**, made verbatim as *"away + countdown + mark
   timeout folds"*. This ADR does not choose it; it records it and works out what it costs in types,
   emission points, clock discipline and wire version.
+- **Amended by** [`ADR-0071`](ADR-0071-a-discriminator-is-its-kotlin-type-name.md) — §1's second
+  subtype is renamed **`ActedForAbsent`**, Kotlin type and `@SerialName` together, because
+  `ProtocolDiscriminatorTest` has refused any discriminator over sixteen characters since
+  `TASK-020210` and `ActedForAbsentSeat` is eighteen. **Nothing else in §1 moves** — the four
+  fields, both `require` blocks and both recipients stand — and `SeatPresence`,
+  `OpponentPresence` and §§2–8 are untouched. **Read `ActedForAbsent` for `ActedForAbsentSeat`
+  everywhere below.**
 - **Amends:** [ADR-0013](ADR-0013-disconnect-grace-period.md) — the pause and the grace window are
   no longer silent; and [ADR-0023](ADR-0023-an-absent-seat-checks-when-nothing-is-owed.md), whose
   context took it as settled that an absence action is *"indistinguishable in the log and on the

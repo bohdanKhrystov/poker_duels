@@ -1,9 +1,9 @@
 ---
 schema: 2
 id: TASK-021402
-title: OpponentPresence and ActedForAbsentSeat reach the wire, and PROTOCOL_VERSION takes its step
+title: OpponentPresence and ActedForAbsent reach the wire, and PROTOCOL_VERSION takes its step
 type: task
-status: blocked
+status: backlog
 parent: STORY-0214
 module: poker-server
 estimate: S
@@ -34,17 +34,19 @@ verify:
 
 ## Goal
 
-`SeatPresence`, `OpponentPresence` and `ActedForAbsentSeat` exist on the wire, `PROTOCOL_VERSION`
+`SeatPresence`, `OpponentPresence` and `ActedForAbsent` exist on the wire, `PROTOCOL_VERSION`
 takes the next number free, and both documents and both generated client artifacts move in the same
 commit. No frame is emitted anywhere: the types exist and nothing builds one.
 
-> **`blocked` on `DEC-066`.** `ADR-0028` §1 specifies `@SerialName("ActedForAbsentSeat")` verbatim,
-> and `ProtocolDiscriminatorTest.everyDiscriminatorIsShortAndUnique` — merged since `TASK-020210` —
-> fails the build on any discriminator over 16 characters. `ActedForAbsentSeat` is 18. Measured, not
-> read: with the probe applied the assertion reads
-> `Discriminator longer than 16 characters: [ActedForAbsentSeat]`. `OpponentPresence` is exactly 16
-> and passes. **Do not pick a name.** The answer sets the discriminator this ticket writes, and if
-> it raises the limit instead, `ProtocolDiscriminatorTest.kt` becomes a fourteenth *Files* row.
+> **`DEC-066` is answered by [`ADR-0071`](../../docs/adr/ADR-0071-a-discriminator-is-its-kotlin-type-name.md).**
+> `ADR-0028` §1's `ActedForAbsentSeat` is 18 characters and
+> `ProtocolDiscriminatorTest.everyDiscriminatorIsShortAndUnique` — merged since `TASK-020210` —
+> fails the build over 16. **The type is renamed `ActedForAbsent`** (14), Kotlin name and
+> `@SerialName` together and identical to each other (`ADR-0071` §1); nothing else in `ADR-0028` §1
+> moves. **The gate is not edited**: `ProtocolDiscriminatorTest.kt` is *not* a fourteenth *Files*
+> row, `files_touched` stays 13, and `ProtocolDiscriminatorTest` stays in `verify:` as a gate this
+> ticket satisfies. Write `ActedForAbsent` exactly; do not restore the longer name and do not
+> shorten only the annotation.
 
 ## Files
 
@@ -66,7 +68,7 @@ cost `TASK-021301` its third stall are untouched here, and so is `connection.tes
 | `docs/protocol-versions.md` | modify | `:poker-server:test` — `ProtocolVersionLedgerTest.theLastRowsVersionEqualsProtocolVersion` and `theLastRowsFingerprintEqualsTheComputedFingerprint` |
 | `web-client/src/protocol/protocol.gen.ts` | regenerate | `:poker-server:verifyProtocolTypes` — a byte comparison on every `check` |
 | `web-client/src/e2e/scripted-duel.gen.json` | regenerate | `:poker-server:verifyDuelScript` — it embeds a `Welcome`'s `protocolVersion` |
-| `web-client/src/protocol/frames.ts` | modify | `npm run check` — `tsc` TS1360 at `frames.ts:17`, the `satisfies Record<ServerMessage["type"], true>` table |
+| `web-client/src/protocol/frames.ts` | modify | `npm run check` — `tsc` TS1360 at `frames.ts:17`, the `satisfies Record<ServerMessage["type"], true>` table; its header comment names the pre-`ADR-0071` type and is corrected in the same edit |
 | `web-client/src/protocol/version.ts` | modify | `npm run check` — `tsc` TS2322 at `version.ts:11`, `Type '3' is not assignable to type '4'` |
 
 Read `protocol/ProtocolError.kt` (the enum style to copy), `protocol/ServerMessage.kt`,
@@ -80,11 +82,14 @@ Read `protocol/ProtocolError.kt` (the enum style to copy), `protocol/ServerMessa
 - `ServerMessage.OpponentPresence(presence: SeatPresence, graceRemainingMillis: Long? = null)`,
   with `ADR-0028` §1's two `require`s verbatim: the nullable field is present **exactly when**
   `AWAY`, and never negative. **No seat field** — it is recipient-relative, like `YourTurn`.
-- `ServerMessage.ActedForAbsentSeat(seat, handNumber, actionSequence, action: ActionType)`, with
-  `require(seat in 0..1)` and a `require` refusing any action but `FOLD` or `CHECK`. Its
-  discriminator is whatever `DEC-066` settles.
+- `ServerMessage.ActedForAbsent(seat, handNumber, actionSequence, action: ActionType)`, with
+  `require(seat in 0..1)` and a `require` refusing any action but `FOLD` or `CHECK`.
+  `@SerialName("ActedForAbsent")` — the same string as the Kotlin type name, per `ADR-0071` §1.
 - **Regenerate, never hand-edit**, both generated artifacts:
   `./gradlew :poker-server:generateProtocolTypes` and `./gradlew :poker-server:generateDuelScript`.
+- **`frames.ts` carries a stale comment.** Its header names `ActedForAbsentSeat` as the type
+  `ADR-0028` will add; correct it to `ActedForAbsent` in the same edit that adds the two
+  `SERVER_MESSAGE_TABLE` rows. No new file — that row is already in the table.
 - **The version is read, not named.** Rebase on `develop` immediately before the commit and set
   `PROTOCOL_VERSION` to whatever it says **plus one** (`ADR-0045` §4). Append **one** ledger row to
   `docs/protocol-versions.md`; `ProtocolVersionLedgerTest`'s failure message prints the exact row,
@@ -119,8 +124,8 @@ nothing. The two existing suites named in `verify` cover the rest without being 
 | `presentWithARemainingIsRefused` | `OpponentPresence(SeatPresence.PRESENT, 1L)` throws; and so does `ABSENT` with one — both values, so the `require` cannot be an `AWAY`-only check |
 | `aNegativeRemainingIsRefused` | `OpponentPresence(SeatPresence.AWAY, -1L)` throws |
 | `presentAndAbsentCarryNothing` | `OpponentPresence(SeatPresence.PRESENT)` and `OpponentPresence(SeatPresence.ABSENT)` both construct with the default |
-| `theServerOnlyEverFoldsOrChecksForAnAbsentSeat` | `ActedForAbsentSeat(0, 1, 0, ActionType.FOLD)` and `(1, 1, 0, ActionType.CHECK)` construct; `CALL`, `BET`, `RAISE` and `ALL_IN` each throw — all four, not one |
-| `aMarkNamesASeatAtTheTable` | `ActedForAbsentSeat(2, 1, 0, ActionType.FOLD)` and seat `-1` both throw |
+| `theServerOnlyEverFoldsOrChecksForAnAbsentSeat` | `ActedForAbsent(0, 1, 0, ActionType.FOLD)` and `(1, 1, 0, ActionType.CHECK)` construct; `CALL`, `BET`, `RAISE` and `ALL_IN` each throw — all four, not one |
+| `aMarkNamesASeatAtTheTable` | `ActedForAbsent(2, 1, 0, ActionType.FOLD)` and seat `-1` both throw |
 
 ## Acceptance criteria
 
@@ -128,7 +133,7 @@ nothing. The two existing suites named in `verify` cover the rest without being 
 - [ ] `ProtocolDocumentationTest`, `ProtocolVersionLedgerTest`, `ProtocolPayloadTest`,
       `ProtocolDiscriminatorTest` and `ProtocolJsonTest` all pass
 - [ ] `web-client/src/protocol/protocol.gen.ts` names `SeatPresence`, `OpponentPresence` and
-      `ActedForAbsentSeat`, and was produced by `./gradlew :poker-server:generateProtocolTypes`
+      `ActedForAbsent`, and was produced by `./gradlew :poker-server:generateProtocolTypes`
       rather than by hand
 - [ ] `docs/protocol-versions.md` has exactly one new row, whose version equals `PROTOCOL_VERSION`
       and whose fingerprint equals the one `ProtocolVersionLedgerTest` computes
@@ -148,10 +153,11 @@ tests run and **none skipped**, Testcontainers suites included. The probe was th
 run names a prefix; this one is green, so an eighteenth gate-held file would have to fail while the
 gate set passes.
 
-`ProtocolDiscriminatorTest` fails on the eighteen-character name and that is `DEC-066`, not a
-propagation: the gate admits three different correct edits with different consequences on the wire.
-The probe continued past it under a provisional 14-character discriminator, which is why the other
-twelve rows are still a green measurement.
+`ProtocolDiscriminatorTest` failed on the eighteen-character name and that was `DEC-066`, now
+answered by `ADR-0071`: the type is `ActedForAbsent`, fourteen characters, and the gate is unedited.
+The probe had continued past the failure under a provisional 14-character discriminator, which is why
+the other twelve rows were a green measurement then and why thirteen is still the count now — the
+answer chose a name of exactly that length, so no row moves.
 
 ## Definition of done
 

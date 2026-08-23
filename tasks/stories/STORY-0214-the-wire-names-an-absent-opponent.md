@@ -44,11 +44,11 @@ specification; nothing here goes beyond it, and `ADR-0045` adds no type, field o
 - **Two `ServerMessage` subtypes and one enum**, generated like every other wire type, in
   `duels.poker.server.protocol`. `SeatPresence { PRESENT, AWAY, ABSENT }`;
   `OpponentPresence(presence, graceRemainingMillis: Long?)` with an `init` pinning the nullable field
-  present **exactly when** `AWAY` and never negative; `ActedForAbsentSeat(seat, handNumber,
+  present **exactly when** `AWAY` and never negative; `ActedForAbsent(seat, handNumber,
   actionSequence, action)` with an `init` that refuses any action but `FOLD` or `CHECK`, pinning
   `ADR-0023` at the wire boundary.
 - **`OpponentPresence` carries no seat.** It is addressed to one recipient and its whole content is
-  relative to them, like `YourTurn`. `ActedForAbsentSeat` is the opposite: a fact about the shared
+  relative to them, like `YourTurn`. `ActedForAbsent` is the opposite: a fact about the shared
   log, delivered identically to both seats, so it names the seat it is about.
 - **The countdown is a remaining duration, sent once** — not a deadline and not a tick. The two sides
   share no epoch: `ServerClock` is monotonic from an arbitrary origin on purpose, and wall clock is
@@ -98,7 +98,7 @@ specification; nothing here goes beyond it, and `ADR-0045` adds no type, field o
 | ID | Title | Status |
 | --- | --- | --- |
 | [TASK-021401](../tasks/TASK-021401-disconnect-answers-with-a-room-and-its-frames.md) | `RoomRegistry.disconnect` answers with a room and the frames it produced | **ready** |
-| [TASK-021402](../tasks/TASK-021402-the-wire-names-presence-and-the-version-takes-its-step.md) | `OpponentPresence` and `ActedForAbsentSeat` reach the wire, and `PROTOCOL_VERSION` takes its step | **blocked** (`DEC-066`) |
+| [TASK-021402](../tasks/TASK-021402-the-wire-names-presence-and-the-version-takes-its-step.md) | `OpponentPresence` and `ActedForAbsent` reach the wire, and `PROTOCOL_VERSION` takes its step | backlog |
 | [TASK-021403](../tasks/TASK-021403-room-presence-of-projects-the-three-states.md) | `Room.presenceOf` projects a seat's presence from state the room already keeps | backlog |
 | [TASK-021404](../tasks/TASK-021404-a-drop-builds-the-away-frame-for-the-other-seat.md) | A drop builds `AWAY` and the configured window, for the other seat only | backlog |
 | [TASK-021405](../tasks/TASK-021405-the-away-frame-reaches-the-opponents-socket.md) | The `AWAY` frame reaches the opponent's socket, from inside the `NonCancellable` block | backlog |
@@ -114,9 +114,9 @@ two could overlap anyway.
 
 **`TASK-021401` is `ready` and starts the story.** It is the only ticket that needs none of
 `ADR-0028`'s new types: `Disconnection(room, outbound)` is built from `Room` and `Addressed`, which
-both exist. Putting it in front means the story moves while `DEC-066` is answered.
+both exist. Putting it in front meant the story moved while `DEC-066` was answered.
 
-**`TASK-021402` is `blocked` on `DEC-066`, and everything after it queues behind it.** The wire step
+**`TASK-021402` is unblocked and queues behind `TASK-021401`.** The wire step
 was sized by the [`ADR-0070`](../../docs/adr/ADR-0070-a-blast-radius-is-complete-only-when-the-gates-are-green.md)
 §2 probe — a throwaway stub of every declaration this story adds, run through the commands
 `.github/workflows/build.yml` runs, iterated until the whole gate set exited **0**, then reverted.
@@ -127,9 +127,14 @@ untouched. Seventeen was a fact about that ticket, never about protocol bumps.
 
 The probe also found what no reading had: `ProtocolDiscriminatorTest.everyDiscriminatorIsShortAndUnique`
 has failed the build on any discriminator over 16 characters since `TASK-020210`, and `ADR-0028` §1
-specifies `@SerialName("ActedForAbsentSeat")` — **eighteen**. `OpponentPresence` is exactly sixteen
-and passes. Three edits satisfy that gate and they are not equivalent, so it is `DEC-066` and the
-architect's, not a propagation.
+specified `@SerialName("ActedForAbsentSeat")` — **eighteen**. `OpponentPresence` is exactly sixteen
+and passes. Three edits satisfied that gate and they were not equivalent, so it was `DEC-066` and
+the architect's, not a propagation.
+[`ADR-0071`](../../docs/adr/ADR-0071-a-discriminator-is-its-kotlin-type-name.md) answers it: **the
+type is renamed `ActedForAbsent`**, Kotlin name and `@SerialName` together and equal to each other,
+and the 16-character gate is left unedited. The count stays **thirteen** — the new name is fourteen
+characters, so `ProtocolDiscriminatorTest.kt` is not a fourteenth row. Every ticket below writes
+`ActedForAbsent`.
 
 ## Acceptance criteria
 
@@ -141,7 +146,7 @@ architect's, not a propagation.
 - [ ] **An `Act` sent after a client's countdown would have reached zero, but before the sweep has
       expired the window, is still refused with `DUEL_PAUSED` and moves nothing.** The
       server-authoritative rule made executable.
-- [ ] A checked-down absent seat produces `ActedForAbsentSeat` with `action = CHECK`, on virtual
+- [ ] A checked-down absent seat produces `ActedForAbsent` with `action = CHECK`, on virtual
       time, in a spot where `FOLD` is not legal.
 - [ ] A submission that makes no progress produces no mark.
 - [ ] A returning player receives the opponent's current presence and no replayed `Events`; the seat

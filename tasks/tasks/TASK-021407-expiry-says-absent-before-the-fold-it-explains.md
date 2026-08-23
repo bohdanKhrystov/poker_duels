@@ -49,7 +49,7 @@ Read `room/Room.kt`'s `presenceOf` and `expireGrace`, `room/GraceExpiry.kt`, and
 
 ## Out of scope
 
-- **The mark on the fold itself** — `TASK-021408` puts `ActedForAbsentSeat` inside `foldAbsent`.
+- **The mark on the fold itself** — `TASK-021408` puts `ActedForAbsent` inside `foldAbsent`.
   This ticket asserts the presence frame precedes *the frames the fold produced*, which today are
   `Events` and `Snapshot`; it does not assert anything about a mark that does not exist yet.
 - `Application.kt` — unchanged.

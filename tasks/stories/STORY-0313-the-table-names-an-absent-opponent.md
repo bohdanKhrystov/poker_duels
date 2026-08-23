@@ -30,7 +30,7 @@ reconnect observes once; filing it under reconnect would misname it permanently.
 
 **Blocked until `STORY-0214` merges.** Nothing here is startable before then, because
 `web-client/src/protocol/protocol.gen.ts` does not yet name `SeatPresence`, `OpponentPresence` or
-`ActedForAbsentSeat`. **This story writes no Kotlin**, which is `EPIC-03`'s standing rule and the
+`ActedForAbsent`. **This story writes no Kotlin**, which is `EPIC-03`'s standing rule and the
 rule that produced `DEC-038`.
 
 ## The wire it renders
@@ -41,7 +41,7 @@ Three frames' worth, all server → client, all already specified:
   no seat number — it is always *about the opponent*. `PRESENT`, `AWAY` (the window is running, the
   duel is **paused**) or `ABSENT` (the window ran out, the duel is **live** and the server gives up
   that seat's turns for it). `graceRemainingMillis` is present exactly when `AWAY`.
-- **`ActedForAbsentSeat(seat, handNumber, actionSequence, action)`**, to both seats, `action` only
+- **`ActedForAbsent(seat, handNumber, actionSequence, action)`**, to both seats, `action` only
   ever `FOLD` or `CHECK`.
 - Nothing new client → server. The client sends **nothing** because of any of this.
 
