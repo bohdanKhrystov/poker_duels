@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021305
 title: Three ways to hold no seat answer one indistinguishable UNKNOWN_ROOM
 type: task
-status: backlog
+status: ready
 parent: STORY-0213
 module: poker-server
 estimate: S
