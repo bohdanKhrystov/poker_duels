@@ -127,7 +127,11 @@ if (container) {
         <SetNameProvider setName={setName}>
           <HistoryProvider>
             <LadderProvider>
-              <DuelProvider store={client.store} send={client.send}>
+              <DuelProvider
+                store={client.store}
+                send={client.send}
+                forgetRoom={client.forgetRoom}
+              >
                 <App />
               </DuelProvider>
             </LadderProvider>

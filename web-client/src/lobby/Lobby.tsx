@@ -1,6 +1,6 @@
 import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
-import { useDuelState, useSend } from "../store/duel-provider";
+import { useDuelState, useForgetRoom, useSend } from "../store/duel-provider";
 import { useProfileStrip } from "../profile/profile-provider";
 import { useHistory, useLadder } from "../main";
 import { ProfileStrip } from "../profile/ProfileStrip";
@@ -20,6 +20,7 @@ import { normalizeRoomCode, roomLink } from "./room-link";
 export function Lobby(): ReactElement {
   const state = useDuelState();
   const send = useSend();
+  const forgetRoom = useForgetRoom();
   const profile = useProfileStrip();
   const setName = useSetName();
   const read = useHistory();
@@ -45,6 +46,7 @@ export function Lobby(): ReactElement {
             onOffer={() => send({ type: "OfferRematch" })}
           />
         }
+        onLeave={forgetRoom}
       />
     );
   }
