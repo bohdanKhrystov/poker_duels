@@ -10,7 +10,7 @@ import duels.poker.server.protocol.OfferRematch
 import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
-import duels.poker.server.protocol.handshake
+import duels.poker.server.protocol.versionRefusalOrNull
 import duels.poker.server.room.JoinResult
 import duels.poker.server.room.RematchRefusal
 import duels.poker.server.room.RematchResult
@@ -96,12 +96,13 @@ public fun Application.duelSocket(deps: SocketDependencies) {
 }
 
 /**
- * Gates the connection behind [readHello], then performs the handshake itself.
+ * Gates the connection behind [readHello], then [versionRefusalOrNull] before anything else runs.
  *
- * A [ServerMessage.Welcome] is sent and the connection waits for further frames, racing them
- * against eviction via [seats] — see [serveUntilEvictedOrClosed]. A [ServerMessage.Failure] is
- * sent and the socket is closed with [PROTOCOL_VERSION_MISMATCH], since [handshake] returns a
- * failure only for a protocol version mismatch.
+ * A non-null refusal is sent and the socket is closed with [PROTOCOL_VERSION_MISMATCH] —
+ * [versionRefusalOrNull] answers only a protocol version mismatch — without ever minting or
+ * reading a device id. Only once the version is accepted does this resolve the connection's
+ * player and send [ServerMessage.Welcome]; the connection then waits for further frames, racing
+ * them against eviction via [seats] — see [serveUntilEvictedOrClosed].
  */
 private suspend fun DefaultWebSocketServerSession.serve(
     deps: SocketDependencies,
@@ -110,66 +111,52 @@ private suspend fun DefaultWebSocketServerSession.serve(
     seats: SeatOwnership,
 ) {
     val hello = readHello(writer, pump, deps.maxFrameLength, deps.maxFrameNestingDepth) ?: return
+    val refusal = versionRefusalOrNull(hello)
+    if (refusal != null) {
+        writer.send(ProtocolCodec.encode(refusal))
+        writer.close()
+        pump.join()
+        close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, PROTOCOL_VERSION_MISMATCH))
+        return
+    }
     val deviceId = hello.deviceId?.let(::DeviceId) ?: deps.deviceIds.newDeviceId()
-    when (val message = handshake(hello, deviceId.value)) {
-        is ServerMessage.Welcome -> {
-            val player = deps.directory.resolve(deviceId)
-            val session = Session(SessionRegistry.newSessionId(), player)
-            val room = RoomMembership()
-            val eviction = seats.adopt(deps.sessions, session)
-            deps.connections.register(player.id, writer)
-            try {
-                writer.send(ProtocolCodec.encode(message))
-                serveUntilEvictedOrClosed(
-                    deps,
-                    session,
-                    room,
-                    writer,
-                    pump,
-                    eviction,
-                    deps.maxFrameLength,
-                    deps.maxFrameNestingDepth,
-                )
-            } finally {
-                deps.sessions.remove(session.id)
-                seats.forget(session.id)
-                if (deps.connections.forget(player.id, writer)) {
-                    room.code?.let { code ->
-                        // RoomRegistry.disconnect takes the room's mutex, so unlike every other
-                        // statement in this finally block it must suspend. A finally reached by
-                        // cancellation sees a plain suspending call throw CancellationException
-                        // before it does anything, so without NonCancellable the seat's grace
-                        // window would silently never start on the most common close path there
-                        // is. The forget guard above is what keeps this from firing at all for a
-                        // socket a newer connection for the same device has already adopted.
-                        withContext(NonCancellable) {
-                            deps.rooms.disconnect(code, player.id)?.let {
-                                deliver(it.outbound, it.room, deps.connections)
-                            }
-                        }
+    val player = deps.directory.resolve(deviceId)
+    val message = ServerMessage.Welcome(deviceId.value)
+    val session = Session(SessionRegistry.newSessionId(), player)
+    val room = RoomMembership()
+    val eviction = seats.adopt(deps.sessions, session)
+    deps.connections.register(player.id, writer)
+    try {
+        writer.send(ProtocolCodec.encode(message))
+        serveUntilEvictedOrClosed(
+            deps,
+            session,
+            room,
+            writer,
+            pump,
+            eviction,
+            deps.maxFrameLength,
+            deps.maxFrameNestingDepth,
+        )
+    } finally {
+        deps.sessions.remove(session.id)
+        seats.forget(session.id)
+        if (deps.connections.forget(player.id, writer)) {
+            room.code?.let { code ->
+                // RoomRegistry.disconnect takes the room's mutex, so unlike every other
+                // statement in this finally block it must suspend. A finally reached by
+                // cancellation sees a plain suspending call throw CancellationException
+                // before it does anything, so without NonCancellable the seat's grace
+                // window would silently never start on the most common close path there
+                // is. The forget guard above is what keeps this from firing at all for a
+                // socket a newer connection for the same device has already adopted.
+                withContext(NonCancellable) {
+                    deps.rooms.disconnect(code, player.id)?.let {
+                        deliver(it.outbound, it.room, deps.connections)
                     }
                 }
             }
         }
-
-        is ServerMessage.Failure -> {
-            writer.send(ProtocolCodec.encode(message))
-            writer.close()
-            pump.join()
-            close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, PROTOCOL_VERSION_MISMATCH))
-        }
-
-        is ServerMessage.RoomJoined,
-        is ServerMessage.RematchOffered,
-        is ServerMessage.Snapshot,
-        is ServerMessage.Events,
-        is ServerMessage.YourTurn,
-        is ServerMessage.Rejected,
-        is ServerMessage.DuelFinished,
-        is ServerMessage.OpponentPresence,
-        is ServerMessage.ActedForAbsent,
-        ->
-            error("handshake() returned $message; it may only return Welcome or Failure")
     }
 }
 

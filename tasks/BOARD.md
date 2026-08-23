@@ -1747,8 +1747,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040413](tasks/TASK-040413-the-coin-a-duel-paid-survives-the-sign-up.md) The coin a duel paid is still there after the sign-up | S | **done** |
 | | [TASK-040414](tasks/TASK-040414-the-document-names-the-sign-up-endpoint.md) The document names the sign-up endpoint, and a test agrees with the code | S | **done** |
 | **[STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md)** Sign-in, the session, and what the socket presents | | | **ready** — split into 24 on 2026-08-23; `DEC-069` raised and answered by `ADR-0074` |
-| | [TASK-040501](tasks/TASK-040501-the-version-is-answered-before-an-identity-is-minted.md) The version question is answered before any identity is minted | S | ready |
-| | [TASK-040502](tasks/TASK-040502-the-wire-carries-a-token-names-the-player-and-the-version-takes-its-step.md) The wire carries a session token, names the player, and PROTOCOL_VERSION takes its step | S | backlog |
+| | [TASK-040501](tasks/TASK-040501-the-version-is-answered-before-an-identity-is-minted.md) The version question is answered before any identity is minted | S | **done** |
+| | [TASK-040502](tasks/TASK-040502-the-wire-carries-a-token-names-the-player-and-the-version-takes-its-step.md) The wire carries a session token, names the player, and PROTOCOL_VERSION takes its step | S | **ready** |
 | | [TASK-040503](tasks/TASK-040503-a-mismatched-version-mints-nothing.md) A version mismatch mints no device id and creates no profile | XS | backlog |
 | | [TASK-040504](tasks/TASK-040504-a-session-token-is-256-bits-url-safe-and-unpadded.md) A session token is 256 bits, URL-safe and unpadded | XS | backlog |
 | | [TASK-040505](tasks/TASK-040505-the-session-store-is-a-port-and-a-double-that-knows-nothing.md) The session store is a port, and a double that has issued nothing | XS | backlog |

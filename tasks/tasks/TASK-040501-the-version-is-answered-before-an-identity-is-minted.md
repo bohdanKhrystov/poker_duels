@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040501
 title: The version question is answered before any identity is minted
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -92,9 +92,18 @@ sends the same frames in the same order. It is in `verify:` as the gate that say
 
 ## Proof
 
-Change `versionRefusalOrNull`'s comparison from `==` to `<=` and `aNewerVersionIsRefused` turns
-red while the other three stay green. That is what makes the pair worth having: with only
-`anOlderVersionIsRefused`, the mutant survives.
+Change `versionRefusalOrNull`'s comparison from `==` to `<=` and `anOlderVersionIsRefused` turns
+red while the other three stay green; change it to `>=` and `aNewerVersionIsRefused` turns red
+instead. That is what makes the pair worth having: either test alone leaves one directional mutant
+alive.
+
+**Corrected at landing.** This section named `<=` as the mutation that reddens
+`aNewerVersionIsRefused`. It is the other way round — `<=` waves *older* versions through, so it is
+`anOlderVersionIsRefused` that fails, and `>=` is the mutation the original sentence describes. The
+property being argued for is real and the suite does catch both directional mutants; only the
+pairing was stated backwards. Found by the coder running the Proof rather than trusting it, and
+confirmed independently in review — the third Proof section this run to name a mutation that does
+not do what it claims.
 
 ## Definition of done
 

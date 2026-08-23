@@ -1,25 +1,22 @@
 package duels.poker.server.protocol
 
 /**
- * Accepts or refuses a handshake based on protocol version matching.
+ * Answers the one question a handshake can decide on its own: does [hello] name a protocol
+ * version this server speaks?
  *
- * The caller must send the returned message to the client:
- * - If it is a [ServerMessage.Welcome], the connection is accepted; the client may proceed to
- *   joining or creating a duel.
- * - If it is a [ServerMessage.Failure], send it and then close the socket. A refused handshake
- *   is terminal for this client connection.
+ * Everything past the version — minting or reading a device id, resolving a player, building
+ * [ServerMessage.Welcome] — is the caller's, and happens only once this answers `null`; see
+ * `ADR-0027` §4 on why identity resolution has to be a step of its own rather than folded into
+ * this one.
  *
  * @param hello The client's handshake message.
- * @param deviceId The device id for this connection. If the client presented one, it is the
- *   client's claimed id; if not, the server has generated one per ADR-0012. This function does
- *   not validate or mint it—that responsibility lives in STORY-0205 and STORY-0210.
- * @return A [ServerMessage.Welcome] if the protocol versions match, or a [ServerMessage.Failure]
- *   with [ProtocolError.VERSION_MISMATCH] if they do not. No other error is returned by this
- *   function; it is pure, with no I/O and no state.
+ * @return A [ServerMessage.Failure] with [ProtocolError.VERSION_MISMATCH] if [hello]'s protocol
+ *   version does not match [PROTOCOL_VERSION], or `null` if it does. No other error is returned
+ *   by this function; it is pure, with no I/O and no state.
  */
-public fun handshake(hello: Hello, deviceId: String): ServerMessage =
+public fun versionRefusalOrNull(hello: Hello): ServerMessage.Failure? =
     if (hello.protocolVersion == PROTOCOL_VERSION) {
-        ServerMessage.Welcome(deviceId)
+        null
     } else {
         ServerMessage.Failure(ProtocolError.VERSION_MISMATCH)
     }

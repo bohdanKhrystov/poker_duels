@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040502
 title: The wire carries a session token, names the player, and PROTOCOL_VERSION takes its step
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
