@@ -34,7 +34,7 @@ internal class RoomDisconnectTest {
 
         val disconnected = registry.disconnect(room.code, guest)
 
-        assertEquals(mapOf(1 to 30_000L), disconnected!!.gracePeriods)
+        assertEquals(mapOf(1 to 30_000L), disconnected!!.room.gracePeriods)
     }
 
     @Test
@@ -49,7 +49,7 @@ internal class RoomDisconnectTest {
         clock.advance(5_000)
         val disconnected = registry.disconnect(room.code, guest)
 
-        assertEquals(mapOf(1 to 35_000L), disconnected!!.gracePeriods)
+        assertEquals(mapOf(1 to 35_000L), disconnected!!.room.gracePeriods)
     }
 
     @Test
@@ -78,12 +78,12 @@ internal class RoomDisconnectTest {
         registry.join(room.code, guest)
 
         val first = registry.disconnect(room.code, guest)
-        assertEquals(mapOf(1 to 30_000L), first!!.gracePeriods)
+        assertEquals(mapOf(1 to 30_000L), first!!.room.gracePeriods)
 
         clock.advance(5_000)
         val second = registry.disconnect(room.code, guest)
 
-        assertEquals(mapOf(1 to 35_000L), second!!.gracePeriods)
+        assertEquals(mapOf(1 to 35_000L), second!!.room.gracePeriods)
     }
 
     @Test
@@ -96,13 +96,13 @@ internal class RoomDisconnectTest {
         registry.join(room.code, guest)
 
         val afterHost = registry.disconnect(room.code, host)
-        assertEquals(setOf(0), afterHost!!.gracePeriods.keys)
+        assertEquals(setOf(0), afterHost!!.room.gracePeriods.keys)
 
         clock.advance(5_000)
         val afterGuest = registry.disconnect(room.code, guest)
 
-        assertEquals(setOf(0, 1), afterGuest!!.gracePeriods.keys)
-        assertEquals(mapOf(0 to 30_000L, 1 to 35_000L), afterGuest.gracePeriods)
+        assertEquals(setOf(0, 1), afterGuest!!.room.gracePeriods.keys)
+        assertEquals(mapOf(0 to 30_000L, 1 to 35_000L), afterGuest.room.gracePeriods)
     }
 
     @Test
@@ -133,5 +133,19 @@ internal class RoomDisconnectTest {
         val result = registry.disconnect(RoomCode("ZZZZZZZZ"), host)
 
         assertNull(result)
+    }
+
+    @Test
+    fun aDisconnectProducesNoFramesYet(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+
+        val disconnected = registry.disconnect(room.code, guest)
+
+        assertEquals(emptyList<Any>(), disconnected!!.outbound)
     }
 }
