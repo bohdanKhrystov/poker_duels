@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import type { ProtocolError } from "../protocol/protocol.gen";
 import { rematchStand } from "./rematch-stand";
 
 /**
@@ -11,14 +12,28 @@ import { rematchStand } from "./rematch-stand";
  * idempotent on the wire — a repeat is answered with the same `RematchOffered`,
  * never an error. A double press cannot produce an error state and needs no guard.
  * Unlike `ActionBar`'s `sent` lock, which exists because `Act` is not idempotent.
+ *
+ * When the room is reaped, `refusal` becomes `UNKNOWN_ROOM`, the control retires
+ * with a message, and no other refusal touches it — as per `ADR-0044` §6, this is
+ * the frame that ends a rematch.
  */
 export function RematchControl(props: {
   mySeat: number | null;
   onOffer: () => void;
   offers: readonly number[];
+  refusal: ProtocolError | null;
 }): ReactElement | null {
   if (props.mySeat === null) {
     return null;
+  }
+
+  // The room is gone: retire the control and state it plainly.
+  if (props.refusal === "UNKNOWN_ROOM") {
+    return (
+      <div className="text-center text-small text-text-muted">
+        That duel room is gone.
+      </div>
+    );
   }
 
   const { mine, theirs } = rematchStand(props.offers, props.mySeat);
