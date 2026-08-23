@@ -46,6 +46,7 @@ describe("the duel state", () => {
       rejectionCount: 0,
       outcome: null,
       refusal: null,
+      rematchOffers: [],
     });
   });
 
@@ -768,5 +769,44 @@ describe("the duel state", () => {
       legalActions,
     });
     expect(state.rejectionCount).toBe(0);
+  });
+
+  it("records the seat a rematch offer named", () => {
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "RematchOffered",
+      seat: 1,
+    });
+    expect(state.rematchOffers).toEqual([1]);
+  });
+
+  it("records an offer from each seat", () => {
+    const stateAfterFirstOffer = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RematchOffered",
+        seat: 0,
+      },
+    );
+    const state = duelState.applyServerMessage(stateAfterFirstOffer, {
+      type: "RematchOffered",
+      seat: 1,
+    });
+    expect(state.rematchOffers).toEqual([0, 1]);
+  });
+
+  it("records a repeated offer once, and returns the state it was given", () => {
+    const stateAfterFirstOffer = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RematchOffered",
+        seat: 0,
+      },
+    );
+    const state = duelState.applyServerMessage(stateAfterFirstOffer, {
+      type: "RematchOffered",
+      seat: 0,
+    });
+    expect(state.rematchOffers).toEqual([0]);
+    expect(state).toBe(stateAfterFirstOffer);
   });
 });
