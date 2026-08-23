@@ -208,6 +208,13 @@ public class RoomRegistry(
      * reporting the drop knows nothing of the configured window, so neither of them could compute
      * it instead.
      *
+     * The same `now` also builds the frame the seat that stayed is owed: `disconnected.presenceOf(
+     * seat, now)`, addressed to `1 - seat`, reads `AWAY` with however much of the window remains —
+     * which, read from the very instant the deadline above was computed from, is always the
+     * configured window exactly (`ADR-0028` §2, §5). Nothing is built when the other seat holds no
+     * player: a [RoomState.WAITING] room has no guest, so a host's drop there always answers an
+     * empty [Disconnection.outbound] — `ADR-0028` §5's rule, not an optimisation.
+     *
      * [Room.seatOf] decides which seat [player] holds; a player this room has not seated leaves
      * the room untouched and this returns `null`, the same idiom [offerRematch] uses for a
      * refusal that carries no new room. A [RoomState.WAITING] room may take a disconnect too —
@@ -226,8 +233,15 @@ public class RoomRegistry(
             absent = { null },
             block = { room ->
                 val seat = room.seatOf(player) ?: return@mutate Pair(null, null)
-                val disconnected = room.disconnect(seat, clock.nowMillis() + timeouts.disconnectGraceMillis)
-                Pair(disconnected, Disconnection(disconnected, emptyList()))
+                val now = clock.nowMillis()
+                val disconnected = room.disconnect(seat, now + timeouts.disconnectGraceMillis)
+                val otherSeat = 1 - seat
+                val outbound = if (otherSeat == 0 || disconnected.guest != null) {
+                    listOf(Addressed(otherSeat, disconnected.presenceOf(seat, now)))
+                } else {
+                    emptyList()
+                }
+                Pair(disconnected, Disconnection(disconnected, outbound))
             },
         )
     }

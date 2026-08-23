@@ -1,5 +1,8 @@
 package duels.poker.server.room
 
+import duels.poker.server.duel.Addressed
+import duels.poker.server.protocol.SeatPresence
+import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.MutableClock
 import kotlinx.coroutines.runBlocking
@@ -136,7 +139,7 @@ internal class RoomDisconnectTest {
     }
 
     @Test
-    fun aDisconnectProducesNoFramesYet(): Unit = runBlocking {
+    fun aDropTellsTheOtherSeatItIsAway(): Unit = runBlocking {
         val clock = MutableClock()
         val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
         val host = newPlayerId()
@@ -146,6 +149,78 @@ internal class RoomDisconnectTest {
 
         val disconnected = registry.disconnect(room.code, guest)
 
-        assertEquals(emptyList<Any>(), disconnected!!.outbound)
+        assertEquals(
+            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY, 30_000L))),
+            disconnected!!.outbound,
+        )
+    }
+
+    @Test
+    fun theRemainingIsTheConfiguredWindow(): Unit = runBlocking {
+        val clock = MutableClock()
+        val timeouts = RoomTimeouts(waitingMillis = 10_000, finishedMillis = 4_000, disconnectGraceMillis = 12_345)
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, timeouts)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+
+        val disconnected = registry.disconnect(room.code, guest)
+
+        assertEquals(
+            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY, 12_345L))),
+            disconnected!!.outbound,
+        )
+    }
+
+    @Test
+    fun theDropNamesTheSeatThatStayed(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+
+        val afterHost = registry.disconnect(room.code, host)
+        assertEquals(
+            listOf(Addressed(1, ServerMessage.OpponentPresence(SeatPresence.AWAY, 30_000L))),
+            afterHost!!.outbound,
+        )
+
+        clock.advance(5_000)
+        val afterGuest = registry.disconnect(room.code, guest)
+        assertEquals(
+            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY, 30_000L))),
+            afterGuest!!.outbound,
+        )
+    }
+
+    @Test
+    fun aRoomWithNobodyElseSeatedProducesNoFrame(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val room = registry.create(host)
+
+        val disconnected = registry.disconnect(room.code, host)
+
+        assertEquals(mapOf(0 to 30_000L), disconnected!!.room.gracePeriods)
+        assertEquals(emptyList<Any>(), disconnected.outbound)
+    }
+
+    @Test
+    fun anUnseatedPlayerProducesNoFrame(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+
+        val result = registry.disconnect(room.code, PlayerId("stranger"))
+
+        assertNull(result)
+        assertEquals(emptyMap<Int, Long>(), registry.get(room.code)!!.gracePeriods)
     }
 }
