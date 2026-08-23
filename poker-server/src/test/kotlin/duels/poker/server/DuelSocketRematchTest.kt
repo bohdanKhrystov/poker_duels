@@ -120,6 +120,36 @@ private suspend fun HttpClient.finishedDuel(deps: SocketDependencies): FinishedD
 }
 
 /**
+ * Like [finishedDuel], but keeps the host's opening [ServerMessage.Snapshot] from the first duel
+ * instead of letting it fall away as ordinary setup noise. `TASK-021303`'s button-seat comparison
+ * needs that real "before" frame, and [finishedDuel] is a fixture other tests depend on staying
+ * exactly as it is, so it cannot be the one to hand it back.
+ */
+private suspend fun HttpClient.finishedDuelKeepingFirstOpeningSnapshot(
+    deps: SocketDependencies,
+): Pair<FinishedDuel, ServerMessage.Snapshot> {
+    val format = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
+    val host = deps.directory.resolve(DeviceId("host"))
+    val room = deps.rooms.create(host.id, format)
+
+    val (hostSession, _) = enterRoom("host", room.code.value)
+    val (guestSession, _) = enterRoom("guest", room.code.value)
+
+    // the room always opens with the host on the button (Room.open), hence on turn first.
+    val hostOpening = hostSession.drainServerMessages()
+    guestSession.drainServerMessages()
+    val yourTurn = hostOpening.filterIsInstance<ServerMessage.YourTurn>().single()
+    val openingSnapshot = hostOpening.filterIsInstance<ServerMessage.Snapshot>().single()
+
+    // folding hand 1's only decision ends that hand, and FixedHands(1) ends the duel there.
+    hostSession.sendAct(yourTurn.handNumber, yourTurn.actionSequence, PlayerAction.Fold(0))
+    hostSession.drainServerMessages()
+    guestSession.drainServerMessages()
+
+    return FinishedDuel(hostSession, guestSession) to openingSnapshot
+}
+
+/**
  * True once none of [messages] is a sign a duel started: a [ServerMessage.Snapshot], an
  * [ServerMessage.Events], or a [ServerMessage.YourTurn].
  */
@@ -161,6 +191,85 @@ class DuelSocketRematchTest {
 
             assertTrue(noDuelStarted(hostAfter), "host saw a message only a started duel would send: $hostAfter")
             assertTrue(noDuelStarted(guestAfter), "guest saw a message only a started duel would send: $guestAfter")
+        }
+    }
+
+    /**
+     * `TASK-021303`: `ADR-0044` §4 over the wire. The second seat's [OfferRematch] — the one that
+     * completes agreement — starts a fresh duel on both sockets outright: no [ServerMessage.RematchOffered]
+     * of its own, just the new duel's opening frames.
+     */
+    @Test
+    fun theSecondOfferStartsAFreshDuelOnBothSockets() = testApplication {
+        val deps = testDeps(rooms = testRoomRegistry())
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val duel = client.finishedDuel(deps)
+
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            duel.host.drainServerMessages()
+            duel.guest.drainServerMessages()
+
+            duel.guest.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val hostAfter = duel.host.drainServerMessages()
+            val guestAfter = duel.guest.drainServerMessages()
+
+            assertTrue(hostAfter.any { it is ServerMessage.Snapshot }, "host saw no Snapshot: $hostAfter")
+            assertTrue(guestAfter.any { it is ServerMessage.Snapshot }, "guest saw no Snapshot: $guestAfter")
+
+            // exactly one seat is on turn first in the fresh duel, so exactly one socket sees YourTurn —
+            // asserted as a count of sockets, not of frames, so two YourTurn frames landing on the same
+            // socket could not masquerade as "both seats got a turn".
+            val socketsWithYourTurn =
+                listOf(hostAfter, guestAfter).count { messages -> messages.any { it is ServerMessage.YourTurn } }
+            assertEquals(1, socketsWithYourTurn)
+
+            // checked against the frames just asserted non-empty above, not against silence: agreement
+            // replaces RematchOffered with the duel's own frames, it does not simply send nothing.
+            val hostOffers = hostAfter.filterIsInstance<ServerMessage.RematchOffered>()
+            val guestOffers = guestAfter.filterIsInstance<ServerMessage.RematchOffered>()
+            assertTrue(hostOffers.isEmpty(), "host saw a RematchOffered on agreement: $hostAfter")
+            assertTrue(guestOffers.isEmpty(), "guest saw a RematchOffered on agreement: $guestAfter")
+        }
+    }
+
+    /**
+     * `TASK-021303`: `ADR-0044` §4's button claim. A room `RoomRegistry.create` opens starts at
+     * `openingButtonSeat == 0`, and `Room.offerRematch` flips the fresh duel's button to
+     * `1 - openingButtonSeat` — so the host's own socket should read `buttonSeat == 0` on the first
+     * duel's opening [ServerMessage.Snapshot] and `buttonSeat == 1` on the rematch's.
+     */
+    @Test
+    fun theRematchPutsTheButtonOnTheOtherSeat() = testApplication {
+        val deps = testDeps(rooms = testRoomRegistry())
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val (duel, firstOpeningSnapshot) = client.finishedDuelKeepingFirstOpeningSnapshot(deps)
+
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            duel.host.drainServerMessages()
+            duel.guest.drainServerMessages()
+
+            duel.guest.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val hostAfter = duel.host.drainServerMessages()
+            duel.guest.drainServerMessages()
+
+            val rematchOpeningSnapshot = hostAfter.filterIsInstance<ServerMessage.Snapshot>().single()
+
+            // both numbers, not only the second: a buttonSeat that was 1 all along would satisfy half
+            // of this and prove nothing about the flip.
+            assertEquals(0, firstOpeningSnapshot.view.buttonSeat)
+            assertEquals(1, rematchOpeningSnapshot.view.buttonSeat)
         }
     }
 }

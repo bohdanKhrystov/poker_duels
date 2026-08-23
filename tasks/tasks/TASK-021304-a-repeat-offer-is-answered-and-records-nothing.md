@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021304
 title: A repeat offer is answered, not refused, and records nothing new
 type: task
-status: backlog
+status: ready
 parent: STORY-0213
 module: poker-server
 estimate: S
