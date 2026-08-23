@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040506
 title: issue writes one row, a digest, and thirty days from the injected clock
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
