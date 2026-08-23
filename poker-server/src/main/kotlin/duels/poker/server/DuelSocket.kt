@@ -142,7 +142,11 @@ private suspend fun DefaultWebSocketServerSession.serve(
                         // window would silently never start on the most common close path there
                         // is. The forget guard above is what keeps this from firing at all for a
                         // socket a newer connection for the same device has already adopted.
-                        withContext(NonCancellable) { deps.rooms.disconnect(code, player.id) }
+                        withContext(NonCancellable) {
+                            deps.rooms.disconnect(code, player.id)?.let {
+                                deliver(it.outbound, it.room, deps.connections)
+                            }
+                        }
                     }
                 }
             }
