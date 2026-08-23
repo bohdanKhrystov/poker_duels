@@ -631,4 +631,34 @@ describe("the lobby", () => {
 
     expect(screen.queryByText(/rematch/i)).toBeNull();
   });
+
+  it("takes a rematch offer restated after the rejoins DuelFinished", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    store.apply({
+      type: "DuelFinished",
+      outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+    });
+    store.apply({ type: "RematchOffered", seat: 0 });
+    renderLobby(store);
+
+    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
+    expect(screen.getByText("Your rival offers a rematch")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Rematch" })).toBeDefined();
+  });
+
+  it("takes no offer that arrived before the DuelFinished", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    store.apply({ type: "RematchOffered", seat: 0 });
+    store.apply({
+      type: "DuelFinished",
+      outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+    });
+    renderLobby(store);
+
+    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
+    expect(screen.queryByText("Your rival offers a rematch")).toBeNull();
+    expect(screen.getByRole("button", { name: "Rematch" })).toBeDefined();
+  });
 });
