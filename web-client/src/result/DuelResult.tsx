@@ -51,7 +51,7 @@ export function DuelResult(props: {
       </p>
       {props.rematch}
       <a
-        className="rounded-medium bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
+        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
         href="/"
       >
         Back to the lobby

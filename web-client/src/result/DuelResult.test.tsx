@@ -113,6 +113,8 @@ describe("the result screen", () => {
 
     const back = screen.getByRole("link", { name: "Back to the lobby" });
     expect(back.getAttribute("href")).toBe("/");
+    expect(back.className.split(" ")).toContain("border-hairline");
+    expect(back.className.split(" ")).not.toContain("bg-accent-fill");
   });
 
   it("adds no rematch of its own", () => {
