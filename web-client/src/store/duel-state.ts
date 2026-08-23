@@ -95,12 +95,17 @@ export function applyServerMessage(
     case "Events":
       return { ...state, narration: [...state.narration, ...message.events] };
     case "DuelFinished":
+      // ADR-0044 §5: the server restates a standing offer after a returning socket's
+      // DuelFinished and never before, precisely because this frame is where the client
+      // enters its result screen. Clearing here is the client half of that commitment —
+      // without it, the ordering the server took on buys nothing.
       return {
         ...state,
         outcome: message.outcome,
         pendingTurn: null,
         rejection: null,
         refusal: null,
+        rematchOffers: [],
       };
     case "Failure":
       return { ...state, refusal: message.error };
