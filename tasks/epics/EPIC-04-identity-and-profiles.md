@@ -129,7 +129,7 @@ recorded rather than quietly absorbed:
 | [STORY-0402](../stories/STORY-0402-the-read-path-carries-the-display-name.md) | The read path carries the display name | 0401 | **ready**, split into 5 tickets |
 | [STORY-0403](../stories/STORY-0403-credentials-storage-and-hashing.md) | Credentials — the schema, the hash, and a port that returns none | 0401 | **ready**, split into 14 tickets |
 | [STORY-0404](../stories/STORY-0404-sign-up-an-account-for-the-profile-already-here.md) | Sign-up — one endpoint, and it attaches an account to the profile already here | 0403 | **ready**, split into 14 tickets — raised `DEC-048`, answered by `ADR-0055`, which leaves all 14 unchanged |
-| [STORY-0405](../stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) | Sign-in, the session, and what the socket presents | 0404, 0213, 0214 | **ready**, split into 24 tickets on 2026-08-23 — raised `DEC-069` (the sign-in budget's numbers), which blocks one ticket at the end of the chain and nothing else |
+| [STORY-0405](../stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) | Sign-in, the session, and what the socket presents | 0404, 0213, 0214 | **ready**, split into 24 tickets on 2026-08-23 — raised `DEC-069` (the sign-in budget's numbers), answered on 2026-08-24 by [`ADR-0074`](../../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md); nothing in the chain is blocked |
 | [STORY-0406](../stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) | The claim proven, and the device binding revoked | 0405 | backlog — `DEC-041` answered by `ADR-0049`, not yet split |
 | [STORY-0407](../stories/STORY-0407-recovery-from-a-device-never-seen.md) | Recovery — signing in from a device that has never been seen | 0406 | backlog |
 | [STORY-0408](../stories/STORY-0408-duel-history-paged-over-the-whole-record.md) | Duel history, paged over the whole record | 0402 | **ready**, split into 11 tickets — raised no decision |
@@ -205,14 +205,33 @@ without adding a story.
 
 ## Open decisions
 
-**Two, both the architect's.** `DEC-054` was raised on 2026-08-19 by the ADR that answered
-`DEC-053`; `DEC-069` was raised on 2026-08-23 when `STORY-0405` was split. Everything else this
-epic has raised is answered.
+**One, the architect's.** `DEC-054` was raised on 2026-08-19 by the ADR that answered
+`DEC-053`. `DEC-069`, raised on 2026-08-23 when `STORY-0405` was split, was answered on 2026-08-24
+and is recorded below. Everything else this epic has raised is answered.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
 | `DEC-054` | Does the web client grow **URL-addressable routes and a working browser *Back***, and what carries them — the History API behind the store, a router library, or neither for now? [`ADR-0060`](../../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) makes the duel record a screen the client swaps to and which has **no address**: nothing links to it, a reload lands on the first screen, and *Back* leaves the client rather than returning to the lobby. The answer settles what owns *which screen is showing*, what a route does to `ADR-0032`'s out-of-tree boot and single socket, what the dev proxy and `EPIC-07`'s deployment must serve so a deep link is not a `404`, and whether `?room=` becomes a route | nothing today; due before `STORY-0412` is split, which is when the second and third screens arrive |
-| `DEC-069` | What are the two numbers of the **sign-in** attempt budget, and does an over-budget attempt still count against its own window? [`ADR-0027`](../../docs/adr/ADR-0027-the-session-outranks-the-device-id.md) §6 fixes the mechanism, the key and the answer and fixes **no numbers**; [`ADR-0055`](../../docs/adr/ADR-0055-sign-up-is-budgeted-by-address-and-over-budget-says-so.md) §2's pair is sign-up's alone, and its *meter the spending, not the failure* is a stated departure. [`ADR-0048`](../../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md) makes the size load-bearing — it accepts `password` and names this budget plus Argon2id as the whole defence — and sign-in is repeated from shared addresses in a way sign-up is not | `TASK-040523` and nothing else; due before `EPIC-07` exposes the endpoint |
+
+`DEC-069` — raised on 2026-08-23 when `STORY-0405` was split, blocking `TASK-040523` and nothing
+else — was answered on 2026-08-24 by
+[`ADR-0074`](../../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md):
+**ten failed sign-ins per remote address per rolling sixty seconds**, defaults `10` and `60000` under
+`AUTH_SIGN_IN_MAX_ATTEMPTS` and `AUTH_SIGN_IN_WINDOW_MILLIS`, on a second `AttemptBudget` instance.
+The pair is `ADR-0022` §2's rather than sign-up's five per fifteen minutes, because the arithmetic
+shows the defence is nearly insensitive across that range while the shared-address collateral is not,
+and because fifteen minutes combined with *over budget still counts* is what turns a burst into an
+indefinite lockout. The budget is **reserved before the hash and refunded when the password was
+right** — `ADR-0027` §6 meters failures, the pool is only protected if the check precedes the hash,
+and the peek-then-record shape that appears to reconcile them lets concurrent requests from one
+address burst unbounded Argon2 work. `AttemptBudget` therefore gains one method, `refund`, in
+`TASK-040519`, which is unstarted; `TASK-040520` gains sign-in's config pair beside sign-up's; and
+`TASK-040523` is unblocked at five files with `atomic:`, the same compiler gate `TASK-040521`
+names, and waits only on `TASK-040522` like every other ticket in the chain. Over budget answers exactly as a wrong password does, so nothing reaches the wire and
+`ADR-0056` §1 stands. The cost is recorded rather than left to be found: eleven wrong passwords from
+one address inside a minute deny sign-in to everyone behind it for sixty seconds past the last
+attempt, and they are told only that their password is wrong. **No account is ever locked** — the key
+is the address, which is why nothing in this decision was the product owner's.
 
 `DEC-052` and `DEC-053` — both raised on 2026-08-19 when `STORY-0413` was split, each blocking
 exactly one ticket at the end of that chain — were answered the same day and are recorded below.

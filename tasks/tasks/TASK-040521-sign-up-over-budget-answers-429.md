@@ -54,7 +54,8 @@ Read `ADR-0055` §§1, 3 and 4, and `ADR-0048` §6's response table. Nothing els
   forwarded-header plugin, this must not read `X-Forwarded-For`: a client-supplied key is a limiter
   that looks green in every test and stops nothing. Say so in the KDoc, in one line, naming
   `EPIC-07`.
-- Sign-in gets **no** budget in this ticket. `TASK-040523` is blocked on `DEC-069`.
+- Sign-in gets **no** budget in this ticket. `TASK-040523` builds it, on its own numbers and its own
+  instance (`ADR-0074` §1), and it is the only caller that refunds.
 
 ## Out of scope
 
