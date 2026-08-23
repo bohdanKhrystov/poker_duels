@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030913
 title: An offer restated after a rejoin reaches the result screen, and one stated before it does not
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: XS

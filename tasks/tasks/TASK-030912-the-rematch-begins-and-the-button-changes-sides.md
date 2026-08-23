@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030912
 title: The rematch begins, and the button is on the other side
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: S

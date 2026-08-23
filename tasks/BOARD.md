@@ -1549,8 +1549,8 @@ written and is still true.
 | | [TASK-030909](tasks/TASK-030909-a-room-that-is-gone-retires-the-control.md) A room that is gone retires the control and says so | XS | **done** |
 | | [TASK-030910](tasks/TASK-030910-the-result-screen-hands-over-the-control-and-the-press-reaches-the-wire.md) The result screen hands over the control, and the press reaches the wire | S | **done** |
 | | [TASK-030911](tasks/TASK-030911-the-way-back-steps-aside-for-the-rematch.md) The way back steps aside for the rematch | XS | **done** |
-| | [TASK-030912](tasks/TASK-030912-the-rematch-begins-and-the-button-changes-sides.md) The rematch begins, and the button is on the other side | S | **ready** |
-| | [TASK-030913](tasks/TASK-030913-an-offer-restated-after-a-rejoin-reaches-the-result-screen.md) An offer restated after a rejoin reaches the result screen, and one stated before it does not | XS | backlog |
+| | [TASK-030912](tasks/TASK-030912-the-rematch-begins-and-the-button-changes-sides.md) The rematch begins, and the button is on the other side | S | **done** |
+| | [TASK-030913](tasks/TASK-030913-an-offer-restated-after-a-rejoin-reaches-the-result-screen.md) An offer restated after a rejoin reaches the result screen, and one stated before it does not | XS | **ready** |
 | | [TASK-030914](tasks/TASK-030914-a-gone-room-ends-it-and-a-transient-refusal-does-not.md) A gone room ends the rematch, and a transient refusal leaves it live | XS | backlog |
 | | [TASK-030915](tasks/TASK-030915-boot-can-forget-the-room-this-tab-remembers.md) Boot can forget the room this tab remembers | S | backlog |
 | | [TASK-030916](tasks/TASK-030916-the-provider-carries-the-forget-down-to-the-screen.md) The provider carries the forget down to the screen | S | backlog |
