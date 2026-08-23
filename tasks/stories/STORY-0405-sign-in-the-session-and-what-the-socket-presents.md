@@ -91,11 +91,11 @@ behind `STORY-0213` and `STORY-0214` — [`ADR-0045`](../../docs/adr/ADR-0045-pr
 | [TASK-040516](../tasks/TASK-040516-the-document-names-sign-in-and-sign-out.md) | The document names sign-in and sign-out, and the test that reads it keeps its bearings | backlog |
 | [TASK-040517](../tasks/TASK-040517-the-socket-is-handed-the-resolver.md) | The socket's dependencies carry the resolver | backlog |
 | [TASK-040518](../tasks/TASK-040518-the-socket-presents-the-session-and-an-invalid-one-is-refused.md) | The socket presents the session, and an invalid one is refused rather than downgraded | backlog |
-| [TASK-040519](../tasks/TASK-040519-a-budget-is-a-rolling-window-and-over-budget-still-counts.md) | A budget is a rolling window, and an over-budget attempt still counts | backlog |
-| [TASK-040520](../tasks/TASK-040520-the-sign-up-budget-is-two-config-values.md) | The sign-up budget is two configuration values with defaults | backlog |
+| [TASK-040519](../tasks/TASK-040519-a-budget-is-a-rolling-window-and-over-budget-still-counts.md) | A budget is a rolling window, an over-budget attempt still counts, and a slot can be refunded | backlog |
+| [TASK-040520](../tasks/TASK-040520-the-sign-up-budget-is-two-config-values.md) | The two auth budgets are four configuration values with defaults | backlog |
 | [TASK-040521](../tasks/TASK-040521-sign-up-over-budget-answers-429.md) | Sign-up over budget answers `429`, and the budget meters the hash | backlog |
 | [TASK-040522](../tasks/TASK-040522-the-document-names-the-seventh-answer.md) | The document names sign-up's seventh answer | backlog |
-| [TASK-040523](../tasks/TASK-040523-sign-in-carries-a-budget-of-its-own.md) | Sign-in carries a budget of its own | **blocked** — `DEC-069` |
+| [TASK-040523](../tasks/TASK-040523-sign-in-carries-a-budget-of-its-own.md) | Sign-in carries a budget of its own | backlog |
 | [TASK-040524](../tasks/TASK-040524-signed-in-here-reading-there-against-the-database.md) | Signed in here, reading there — the whole flow against the database | backlog |
 
 ## Acceptance criteria
@@ -124,12 +124,19 @@ behind `STORY-0213` and `STORY-0214` — [`ADR-0045`](../../docs/adr/ADR-0045-pr
 
 ## Decisions raised by the split
 
-- **`DEC-069` — the architect's.** `ADR-0027` §6 requires a failed-sign-in budget and fixes its
-  mechanism, its key and its answer, but **no ADR fixes its two numbers**; `ADR-0055` §2's config
-  values are sign-up's and say so. It is not a tuning detail: `ADR-0048` accepts `password` and
-  records that this budget plus Argon2 is all that stands between a guesser and such an account,
-  and sign-in — unlike sign-up — is something a player does repeatedly from a shared address, so
-  `ADR-0055` §4's accepted fifteen-minute NAT lockout does not transfer. It blocks exactly one
-  ticket, `TASK-040523`, at the end of the chain. Sign-in itself ships unbudgeted, which is safe
-  only while `EPIC-07` hosts nothing — `ADR-0055`'s *"the deployment wins"* clause is the binding
-  constraint, not a story boundary.
+- **`DEC-069` — the architect's — answered on 2026-08-24 by
+  [`ADR-0074`](../../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md).**
+  `ADR-0027` §6 required a failed-sign-in budget and fixed its mechanism, its key and its answer,
+  but no ADR fixed its two numbers. They are now **ten failed sign-ins per remote address per
+  rolling sixty seconds** (`AUTH_SIGN_IN_MAX_ATTEMPTS` `10`, `AUTH_SIGN_IN_WINDOW_MILLIS` `60000`),
+  on a **second** `AttemptBudget` instance — `ADR-0022` §2's pair rather than sign-up's five per
+  fifteen minutes, because a fifteen-minute window combined with *over budget still counts* turns a
+  shared address's burst into an indefinite lockout, and because the guessing defence is nearly
+  insensitive across that range while the collateral is not. The budget is **reserved before the
+  hash and refunded when the password was right**, so `AttemptBudget` is born with a second method,
+  `refund`. Three tickets move: `TASK-040519` builds the type with both methods, `TASK-040520`
+  carries both config pairs, and `TASK-040523` is no longer blocked — five files, `atomic:`,
+  waiting only on `TASK-040522`. Sign-in
+  still ships unbudgeted until `TASK-040523` merges, which is safe only while `EPIC-07` hosts
+  nothing — `ADR-0055`'s *"the deployment wins"* clause is the binding constraint, not a story
+  boundary.

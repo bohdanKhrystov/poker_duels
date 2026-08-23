@@ -2,7 +2,7 @@
 id: STORY-0313
 title: The table names an absent opponent
 type: story
-status: blocked
+status: ready
 parent: EPIC-03
 module: web-client
 labels: [client, ui, presence, resilience]

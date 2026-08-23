@@ -70,9 +70,11 @@ Read `docs/adr/ADR-0027-the-session-outranks-the-device-id.md` §6,
 
 ## Out of scope
 
-- Any rate limit. `ADR-0027` §6's budget is `TASK-040523`, **blocked on `DEC-069`** — the numbers
-  are not decided anywhere. Shipping without it is safe only while `EPIC-07` hosts nothing, which
-  `ADR-0055`'s *"the deployment wins"* clause already covers; the blocked ticket is the record.
+- Any rate limit. `ADR-0027` §6's budget is `TASK-040523`, at the end of this chain, and
+  `ADR-0074` fixes its numbers and where the check sits. **Do not add it here**: the reserve goes
+  before the hash and the refund after the verification, which is a change to this handler's order
+  that its own ticket makes with its own tests. Shipping without it is safe only while `EPIC-07`
+  hosts nothing, which `ADR-0055`'s *"the deployment wins"* clause already covers.
 - Sign-out — `TASK-040515`. The document — `TASK-040516`.
 - Rehashing on a raised Argon2 cost — `ADR-0054`, not this story.
 
