@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030911
 title: The way back steps aside for the rematch
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: XS

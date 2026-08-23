@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030910
 title: The result screen hands over the control, and the press reaches the wire
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: S
