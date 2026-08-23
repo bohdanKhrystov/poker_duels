@@ -3,14 +3,14 @@ schema: 2
 id: TASK-021402
 title: OpponentPresence and ActedForAbsent reach the wire, and PROTOCOL_VERSION takes its step
 type: task
-status: ready
+status: done
 parent: STORY-0214
 module: poker-server
 estimate: S
 tier: sonnet
 review: standard
 labels: [server, protocol, presence, version-bump]
-files_touched: 13
+files_touched: 14
 atomic:
   - ProtocolVersionLedgerTest — a wire shape whose fingerprint no ledger row claims fails it
   - ProtocolDocumentationTest — a live type with no row, and a row with no live type, both fail
@@ -70,6 +70,7 @@ cost `TASK-021301` its third stall are untouched here, and so is `connection.tes
 | `web-client/src/e2e/scripted-duel.gen.json` | regenerate | `:poker-server:verifyDuelScript` — it embeds a `Welcome`'s `protocolVersion` |
 | `web-client/src/protocol/frames.ts` | modify | `npm run check` — `tsc` TS1360 at `frames.ts:17`, the `satisfies Record<ServerMessage["type"], true>` table; its header comment names the pre-`ADR-0071` type and is corrected in the same edit |
 | `web-client/src/protocol/version.ts` | modify | `npm run check` — `tsc` TS2322 at `version.ts:11`, `Type '3' is not assignable to type '4'` |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/PresenceFramesTest.kt` | create | no gate — the tests this ticket's *Tests* section names. Added at landing: the `ADR-0070` §3 probe cannot discover a test file that does not exist yet, because it reads the files a merged gate's failure *names* and no gate fails for an unwritten test. A planner must take these from the *Tests* section, as `TASK-021302` and `TASK-021401` already do |
 
 Read `protocol/ProtocolError.kt` (the enum style to copy), `protocol/ServerMessage.kt`,
 `docs/adr/ADR-0028-the-wire-names-an-absent-opponent.md` §§1–2 and §8, and
