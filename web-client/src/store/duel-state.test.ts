@@ -854,4 +854,53 @@ describe("the duel state", () => {
     expect(stateAfterOffer.rematchOffers).toEqual([1]);
     expect(stateAfterOffer.outcome).toEqual(outcome);
   });
+
+  it("the snapshot after a finish clears the result it replaces", () => {
+    const finishOutcome = {
+      winner: 0,
+      handsPlayed: 7,
+      finalStacks: [1500, 500],
+    } as const;
+    const stateAfterFinish = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "DuelFinished",
+        outcome: finishOutcome,
+      },
+    );
+    expect(stateAfterFinish.outcome).toEqual(finishOutcome);
+    const rematchView = samplePlayerView({ handNumber: 2 });
+    const stateAfterSnapshot = duelState.applyServerMessage(stateAfterFinish, {
+      type: "Snapshot",
+      view: rematchView,
+    });
+    expect(stateAfterSnapshot.outcome).toBeNull();
+    expect(stateAfterSnapshot.view).toEqual(rematchView);
+  });
+
+  it("the snapshot after a finish clears the offers that started it", () => {
+    const outcome = {
+      winner: 1,
+      handsPlayed: 3,
+      finalStacks: [500, 1500],
+    } as const;
+    const stateAfterFinish = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "DuelFinished",
+        outcome,
+      },
+    );
+    const stateAfterOffer = duelState.applyServerMessage(stateAfterFinish, {
+      type: "RematchOffered",
+      seat: 1,
+    });
+    expect(stateAfterOffer.rematchOffers).toEqual([1]);
+    const stateAfterSnapshot = duelState.applyServerMessage(stateAfterOffer, {
+      type: "Snapshot",
+      view: samplePlayerView(),
+    });
+    expect(stateAfterSnapshot.rematchOffers).toEqual([]);
+    expect(stateAfterSnapshot.outcome).toBeNull();
+  });
 });

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030904
 title: A rematch the room cannot take yet is recorded nowhere
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: XS
