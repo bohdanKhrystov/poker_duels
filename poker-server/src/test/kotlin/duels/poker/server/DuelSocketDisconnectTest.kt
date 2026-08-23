@@ -8,6 +8,7 @@ import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.JoinRoom
 import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ProtocolError
+import duels.poker.server.protocol.SeatPresence
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.room.RandomRoomCodeSource
@@ -26,6 +27,7 @@ import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
@@ -68,6 +70,18 @@ private suspend fun DefaultClientWebSocketSession.nextServerMessage(): ServerMes
 }
 
 /**
+ * Reads frames off [this] session until one is a [ServerMessage.Failure], discarding any that
+ * arrive first — a presence frame (`ADR-0028`) may legitimately precede the response a caller is
+ * actually waiting for, so the caller under test never assumes the failure is the next frame.
+ */
+private suspend fun DefaultClientWebSocketSession.nextFailure(): ServerMessage.Failure {
+    while (true) {
+        val message = nextServerMessage()
+        if (message is ServerMessage.Failure) return message
+    }
+}
+
+/**
  * Reads every [ServerMessage] already queued, or arriving within 300 milliseconds, for [this]
  * session — the opening hand's broadcast plus turn prompt arrive as a burst whose exact count this
  * file has no opinion on; see `DuelSocketRoomTest`'s copy of this helper.
@@ -76,6 +90,23 @@ private suspend fun DefaultClientWebSocketSession.drainServerMessages(): List<Se
     val messages = mutableListOf<ServerMessage>()
     while (true) {
         val frame = withTimeoutOrNull(300.milliseconds) { incoming.receive() } ?: break
+        messages.add(protocolJson.decodeFromString((frame as Frame.Text).readText()))
+    }
+    return messages
+}
+
+/**
+ * Reads every [ServerMessage] arriving for [this] session within the same 300-millisecond window
+ * [drainServerMessages] uses, but tolerates the channel already closing — this is read on a
+ * session that has itself just called `close()` or [cancel], and `receiveCatching` reports a
+ * closed channel as a result rather than throwing the way [drainServerMessages]'s plain
+ * `receive()` would.
+ */
+private suspend fun DefaultClientWebSocketSession.drainServerMessagesAfterOwnClose(): List<ServerMessage> {
+    val messages = mutableListOf<ServerMessage>()
+    while (true) {
+        val result = withTimeoutOrNull(300.milliseconds) { incoming.receiveCatching() } ?: break
+        val frame = result.getOrNull() ?: break
         messages.add(protocolJson.decodeFromString((frame as Frame.Text).readText()))
     }
     return messages
@@ -203,7 +234,7 @@ class DuelSocketDisconnectTest {
             awaitRoom(rooms, setup.code) { it.isPaused }
 
             setup.host.send(Frame.Text(ProtocolCodec.encode(Act(1, 0, PlayerAction.Fold(0)))))
-            val failure = setup.host.nextServerMessage() as ServerMessage.Failure
+            val failure = setup.host.nextFailure()
 
             assertEquals(ProtocolError.DUEL_PAUSED, failure.error)
             assertSame(runnerBefore, rooms.get(setup.code)!!.runner)
@@ -276,6 +307,100 @@ class DuelSocketDisconnectTest {
             awaitSize(sessions, 2)
 
             assertFalse(rooms.get(setup.code)!!.isPaused)
+        }
+    }
+
+    @Test
+    fun aClosingSocketTellsTheOpponentItIsAway(): Unit = testApplication {
+        val rooms = testRoomRegistry(MutableClock())
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val setup = client.startDuel()
+
+            setup.guest.close()
+            awaitRoom(rooms, setup.code) { it.isPaused }
+
+            val presence = setup.host.drainServerMessages().filterIsInstance<ServerMessage.OpponentPresence>()
+
+            assertEquals(1, presence.size)
+            assertEquals(SeatPresence.AWAY, presence.single().presence)
+            assertEquals(TEST_DISCONNECT_GRACE_MILLIS, presence.single().graceRemainingMillis)
+        }
+    }
+
+    @Test
+    fun theClosingSocketIsToldNothing(): Unit = testApplication {
+        val rooms = testRoomRegistry(MutableClock())
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val setup = client.startDuel()
+
+            setup.guest.close()
+            awaitRoom(rooms, setup.code) { it.isPaused }
+
+            val presence =
+                setup.guest.drainServerMessagesAfterOwnClose().filterIsInstance<ServerMessage.OpponentPresence>()
+
+            assertTrue(presence.isEmpty())
+        }
+    }
+
+    @Test
+    fun aThirdSocketInNoRoomIsToldNothing(): Unit = testApplication {
+        val rooms = testRoomRegistry(MutableClock())
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val setup = client.startDuel()
+
+            val third = client.webSocketSession("/ws")
+            third.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = "third"))))
+            third.nextServerMessage()
+
+            setup.guest.close()
+            awaitRoom(rooms, setup.code) { it.isPaused }
+
+            val presence = third.drainServerMessages().filterIsInstance<ServerMessage.OpponentPresence>()
+            assertTrue(presence.isEmpty())
+        }
+    }
+
+    @Test
+    fun theFrameIsWrittenEvenWhenTheCloseCancels(): Unit = testApplication {
+        val rooms = testRoomRegistry(MutableClock())
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val setup = client.startDuel()
+
+            // cancel(), not close(): it tears the session down without a WebSocket closing
+            // handshake, the abrupt drop DuelSocket's own finally-block comment distinguishes
+            // from the clean path every other test in this file takes.
+            setup.guest.cancel()
+            awaitRoom(rooms, setup.code) { it.isPaused }
+
+            val presence = setup.host.drainServerMessages().filterIsInstance<ServerMessage.OpponentPresence>()
+
+            assertEquals(1, presence.size)
+            assertEquals(SeatPresence.AWAY, presence.single().presence)
         }
     }
 }

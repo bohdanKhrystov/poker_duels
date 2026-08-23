@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021405
 title: The AWAY frame reaches the opponent's socket, from inside the NonCancellable block
 type: task
-status: ready
+status: done
 parent: STORY-0214
 module: poker-server
 estimate: S

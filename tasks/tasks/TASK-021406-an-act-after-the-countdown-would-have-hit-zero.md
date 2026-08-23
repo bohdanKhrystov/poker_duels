@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021406
 title: An Act sent after the client's countdown would have reached zero is still refused
 type: task
-status: backlog
+status: ready
 parent: STORY-0214
 module: poker-server
 estimate: XS
