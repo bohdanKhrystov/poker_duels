@@ -306,6 +306,7 @@ class DuelSocketRematchTest {
             val hostFailures = hostAfter.filterIsInstance<ServerMessage.Failure>()
             assertTrue(hostFailures.isEmpty(), "host saw a Failure on a repeat offer: $hostAfter")
             assertTrue(guestAfter.isEmpty(), "guest saw something on the host's repeat offer: $guestAfter")
+            assertTrue(noDuelStarted(hostAfter), "host saw a message only a started duel would send: $hostAfter")
         }
     }
 
