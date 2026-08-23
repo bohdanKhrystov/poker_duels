@@ -462,12 +462,13 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021215](tasks/TASK-021215-a-logging-backend-so-a-swallowed-failure-is-visible.md) A logging backend, so a swallowed sweep failure is visible | S | **done** |
 | **[STORY-0213](stories/STORY-0213-the-wire-carries-a-rematch.md)** The wire carries a rematch — *schema 2* | | | **ready** |
 | | [TASK-021301](tasks/TASK-021301-the-wire-gains-a-rematch-and-the-version-takes-its-step.md) OfferRematch and RematchOffered reach the wire, and PROTOCOL_VERSION takes its step | S | **done** |
-| | [TASK-021302](tasks/TASK-021302-one-offer-reaches-both-seats-and-starts-no-duel.md) One seat's offer puts RematchOffered on both sockets and starts no duel | S | **ready** |
-| | [TASK-021303](tasks/TASK-021303-the-second-offer-starts-the-duel-with-the-button-moved.md) The second offer starts a fresh duel, with the button on the other seat | S | backlog |
+| | [TASK-021302](tasks/TASK-021302-one-offer-reaches-both-seats-and-starts-no-duel.md) One seat's offer puts RematchOffered on both sockets and starts no duel | S | **done** |
+| | [TASK-021303](tasks/TASK-021303-the-second-offer-starts-the-duel-with-the-button-moved.md) The second offer starts a fresh duel, with the button on the other seat | S | **ready** |
 | | [TASK-021304](tasks/TASK-021304-a-repeat-offer-is-answered-and-records-nothing.md) A repeat offer is answered, not refused, and records nothing new | S | backlog |
 | | [TASK-021305](tasks/TASK-021305-three-ways-to-hold-no-seat-answer-one-frame.md) Three ways to hold no seat answer one indistinguishable UNKNOWN_ROOM | S | backlog |
 | | [TASK-021306](tasks/TASK-021306-rematch-unavailable-is-transient-and-provably-so.md) REMATCH_UNAVAILABLE is transient, and the same offer succeeds afterwards | S | backlog |
 | | [TASK-021307](tasks/TASK-021307-a-standing-offer-survives-a-reconnect.md) A standing offer is restated to a returning socket, after its DuelFinished | S | backlog |
+| | [TASK-021308](tasks/TASK-021308-the-guest-offers-and-the-frame-names-seat-one.md) The guest offers first, and both frames name seat 1 | XS | backlog |
 | [STORY-0214](stories/STORY-0214-the-wire-names-an-absent-opponent.md) | The wire names an absent opponent | | **ready** |
 
 `STORY-0214`'s tickets come from `/plan-story` when it is reached — after `STORY-0213` merges, since

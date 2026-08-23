@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021303
 title: The second offer starts a fresh duel, with the button on the other seat
 type: task
-status: backlog
+status: ready
 parent: STORY-0213
 module: poker-server
 estimate: S
