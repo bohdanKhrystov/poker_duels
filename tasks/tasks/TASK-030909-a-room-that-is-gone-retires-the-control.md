@@ -50,7 +50,9 @@ no other refusal touches it.
   a component branch for a value that cannot arrive is a branch no test can reach. `TASK-030914`
   proves it end to end, from the frame.
 - Navigating anywhere. Nothing here calls `window.location`, and no `useEffect` appears.
-- Forgetting the remembered room code. That is `boot.ts`'s, and `DEC-067` is open on it.
+- Forgetting the remembered room code. That is `boot.ts`'s and the way back's, decided by
+  [`ADR-0072`](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md)
+  and ticketed separately — nothing in this ticket touches storage.
 
 ## Tests
 

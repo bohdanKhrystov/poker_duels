@@ -44,9 +44,11 @@ of that are now assertions rather than prose.
 ## Out of scope
 
 - Whether the tab still remembers the room code after a `DuelFinished` and therefore rejoins at
-  all. It does not — `boot.ts` forgets it (`TASK-031009`) — and `DEC-067` is open on that. These
+  all. Today it does not — `boot.ts` forgets it (`TASK-031009`) — and
+  [`ADR-0072`](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md) has
+  since decided that the branch goes and the way back forgets instead, in a ticket of its own. These
   tests apply frames to the store directly, which is what every other screen test in this file
-  does, so they neither depend on that answer nor pre-empt it.
+  does, so they neither depend on that change nor pre-empt it, and they are unchanged by it.
 - `boot.ts`, `room-memory.ts` and the reconnecting transport. None of them is opened.
 
 ## Tests
