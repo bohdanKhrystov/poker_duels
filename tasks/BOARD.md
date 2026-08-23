@@ -1551,7 +1551,7 @@ written and is still true.
 | | [TASK-030807](tasks/TASK-030807-the-way-on-from-the-result-is-back-to-the-lobby.md) The way on is back to the lobby, and there is no dead rematch | XS | **done** |
 | | [TASK-030808](tasks/TASK-030808-the-result-derives-no-winner-and-no-figure.md) The result derives no winner and shows no figure the outcome did not carry | S | **done** |
 | | [TASK-030809](tasks/TASK-030809-the-duel-screen-shows-the-result-when-the-duel-ends.md) The duel screen shows the result when the duel ends | S | **done** |
-| **[STORY-0309](stories/STORY-0309-rematch.md)** Rematch from the result screen — *schema 2* | | **ready** |
+| **[STORY-0309](stories/STORY-0309-rematch.md)** Rematch from the result screen — *schema 2* | | **done** |
 | | [TASK-030901](tasks/TASK-030901-the-store-records-which-seats-have-offered.md) The store records which seats have offered a rematch | S | **done** |
 | | [TASK-030902](tasks/TASK-030902-a-finished-duel-begins-the-result-screen-with-no-offer-standing.md) A finished duel begins the result screen with no offer standing | XS | **done** |
 | | [TASK-030903](tasks/TASK-030903-the-snapshot-after-a-finish-is-the-rematch.md) The snapshot after a finish is the rematch, and clears the duel that ended | XS | **done** |
@@ -1571,7 +1571,7 @@ written and is still true.
 | | [TASK-030917](tasks/TASK-030917-the-way-back-calls-the-forget-it-is-handed.md) The way back calls the forget it is handed, and still navigates | XS | **done** |
 | | [TASK-030918](tasks/TASK-030918-the-result-screens-way-back-is-wired-to-boots-forget.md) The result screen's way back is wired to boot's forget | XS | **done** |
 | | [TASK-030919](tasks/TASK-030919-a-finished-duel-forgets-nothing-and-the-next-socket-rejoins.md) A finished duel forgets nothing, and the next socket rejoins that room | S | **done** |
-| | [TASK-030920](tasks/TASK-030920-from-a-resumed-sockets-frames-the-way-back-forgets-the-room.md) From a resumed socket's frames, the way back forgets the room | XS | **ready** |
+| | [TASK-030920](tasks/TASK-030920-from-a-resumed-sockets-frames-the-way-back-forgets-the-room.md) From a resumed socket's frames, the way back forgets the room | XS | **done** |
 | **[STORY-0310](stories/STORY-0310-reconnect-and-resume.md)** Reconnect — the client resumes its seat — *schema 2* | | **done** |
 | | [TASK-031001](tasks/TASK-031001-the-room-code-lives-under-one-key-this-module-owns.md) The room code lives under one storage key this module owns | XS | **done** |
 | | [TASK-031002](tasks/TASK-031002-the-retry-delay-doubles-to-a-ceiling-and-spends-the-jitter.md) The retry delay doubles to a ceiling and spends the jitter it is handed | XS | **done** |

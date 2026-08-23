@@ -2,7 +2,7 @@
 id: STORY-0309
 title: Rematch from the result screen
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, ui, rooms]
