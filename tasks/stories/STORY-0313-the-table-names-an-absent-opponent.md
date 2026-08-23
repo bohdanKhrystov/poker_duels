@@ -130,9 +130,33 @@ this is Lichess, not a casino: *opponent*, *disconnected*, *offline*, *left*, *q
 
 ## Tasks
 
+Split on 2026-08-24, the day `STORY-0214` merged. Fifteen tickets, one startable, in a single
+dependency chain — every one of them touches at least one file another touches, so nothing here may
+run in parallel.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Splittable the day `STORY-0214` merges — the copy is settled by `ADR-0046`.* | — |
+| [TASK-031301](../tasks/TASK-031301-the-seats-status-line-learns-away-and-timed-out.md) | The seat's status line learns `Away` and `Timed out`, and where they rank | **ready** |
+| [TASK-031302](../tasks/TASK-031302-the-line-that-explains-the-pause-and-the-one-that-says-nothing.md) | The line that explains the pause, and the one that says nothing | backlog |
+| [TASK-031303](../tasks/TASK-031303-the-store-holds-the-presence-the-server-stated.md) | The store holds the presence the server stated, and counts the frames | backlog |
+| [TASK-031304](../tasks/TASK-031304-a-rival-is-back-only-if-this-client-saw-them-go.md) | A rival is back only if this client saw them go | backlog |
+| [TASK-031305](../tasks/TASK-031305-whole-seconds-to-the-deadline-and-never-below-zero.md) | Whole seconds to the deadline, and never below zero | backlog |
+| [TASK-031306](../tasks/TASK-031306-the-notice-says-the-state-and-counts-the-window-down.md) | The notice says the state and counts the window down | backlog |
+| [TASK-031307](../tasks/TASK-031307-the-plate-carries-the-presence-it-is-handed.md) | The plate carries the presence it is handed | backlog |
+| [TASK-031308](../tasks/TASK-031308-the-presence-lands-on-the-rivals-plate-whichever-seat-that-is.md) | The presence lands on the rival's plate, whichever seat that is | backlog |
+| [TASK-031309](../tasks/TASK-031309-the-duel-screen-shows-the-notice-and-a-paused-action-has-a-reason.md) | The duel screen shows the notice, and a paused action has a reason | backlog |
+| [TASK-031310](../tasks/TASK-031310-a-resumed-client-renders-what-it-came-back-to.md) | A resumed client renders what it came back to, and invents no return | backlog |
+| [TASK-031311](../tasks/TASK-031311-the-countdown-reaching-zero-changes-nothing-the-client-does.md) | The countdown reaching zero changes nothing the client does | backlog |
+| [TASK-031312](../tasks/TASK-031312-the-duel-screen-says-none-of-the-words-this-copy-refuses.md) | The duel screen says none of the words this copy refuses | backlog |
+| [TASK-031313](../tasks/TASK-031313-the-server-is-the-subject-of-every-action-it-took.md) | The server is the subject of every action it took | backlog |
+| [TASK-031314](../tasks/TASK-031314-the-store-keeps-the-most-recent-action-the-server-took.md) | The store keeps the most recent action the server took | **blocked** — `DEC-070` |
+| [TASK-031315](../tasks/TASK-031315-the-duel-screen-names-the-server-as-the-actor.md) | The duel screen names the server as the actor | **blocked** — `DEC-070` |
+
+## Open decisions
+
+| ID | Question | For | Blocks |
+| --- | --- | --- | --- |
+| `DEC-070` | How long does the most recent mark stay on screen, and what takes it off? `ADR-0046` §4 settles *which* mark and settles its words, and is silent on its lifetime | product owner | `TASK-031314` and `TASK-031315` only — the thirteen presence tickets run without it |
 
 ## Acceptance criteria
 
