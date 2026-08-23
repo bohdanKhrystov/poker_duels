@@ -1552,8 +1552,8 @@ written and is still true.
 | | [TASK-030911](tasks/TASK-030911-the-way-back-steps-aside-for-the-rematch.md) The way back steps aside for the rematch | XS | **done** |
 | | [TASK-030912](tasks/TASK-030912-the-rematch-begins-and-the-button-changes-sides.md) The rematch begins, and the button is on the other side | S | **done** |
 | | [TASK-030913](tasks/TASK-030913-an-offer-restated-after-a-rejoin-reaches-the-result-screen.md) An offer restated after a rejoin reaches the result screen, and one stated before it does not | XS | **done** |
-| | [TASK-030914](tasks/TASK-030914-a-gone-room-ends-it-and-a-transient-refusal-does-not.md) A gone room ends the rematch, and a transient refusal leaves it live | XS | **ready** |
-| | [TASK-030915](tasks/TASK-030915-boot-can-forget-the-room-this-tab-remembers.md) Boot can forget the room this tab remembers | S | backlog |
+| | [TASK-030914](tasks/TASK-030914-a-gone-room-ends-it-and-a-transient-refusal-does-not.md) A gone room ends the rematch, and a transient refusal leaves it live | XS | **done** |
+| | [TASK-030915](tasks/TASK-030915-boot-can-forget-the-room-this-tab-remembers.md) Boot can forget the room this tab remembers | S | **ready** |
 | | [TASK-030916](tasks/TASK-030916-the-provider-carries-the-forget-down-to-the-screen.md) The provider carries the forget down to the screen | S | backlog |
 | | [TASK-030917](tasks/TASK-030917-the-way-back-calls-the-forget-it-is-handed.md) The way back calls the forget it is handed, and still navigates | XS | backlog |
 | | [TASK-030918](tasks/TASK-030918-the-result-screens-way-back-is-wired-to-boots-forget.md) The result screen's way back is wired to boot's forget | XS | backlog |

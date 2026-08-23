@@ -661,4 +661,55 @@ describe("the lobby", () => {
     expect(screen.queryByText("Your rival offers a rematch")).toBeNull();
     expect(screen.getByRole("button", { name: "Rematch" })).toBeDefined();
   });
+
+  it("says the room is gone, and keeps the way back", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 1, handsPlayed: 3, finalStacks: [0, 1000] },
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Rematch" }));
+
+    act(() => {
+      store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    });
+
+    expect(screen.getByText("That duel room is gone.")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Rematch" })).toBeNull();
+    const link = screen.getByRole("link", { name: "Back to the lobby" });
+    expect(link.getAttribute("href")).toBe("/");
+  });
+
+  it("leaves the rematch live when the room cannot take one yet", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    const { send } = renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 1, handsPlayed: 3, finalStacks: [0, 1000] },
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Rematch" }));
+
+    act(() => {
+      store.apply({ type: "Failure", error: "REMATCH_UNAVAILABLE" });
+    });
+
+    expect(screen.getByRole("button", { name: "Rematch" })).toBeDefined();
+    expect(screen.queryByText("That duel room is gone.")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Rematch" }));
+
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenLastCalledWith({ type: "OfferRematch" });
+  });
 });

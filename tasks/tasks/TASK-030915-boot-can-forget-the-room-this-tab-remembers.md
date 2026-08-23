@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030915
 title: Boot can forget the room this tab remembers
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: S
