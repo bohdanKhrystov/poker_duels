@@ -118,7 +118,7 @@ Every one of these is cheap to violate in a component and expensive to notice in
 | [STORY-0311](../stories/STORY-0311-profile-strip.md) | The profile strip: my coins and my recent duels | 0302, 0303 | backlog |
 | [STORY-0312](../stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | 0308, 0310 | backlog |
 | [STORY-0313](../stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent | 0307, 0310, `STORY-0214` | blocked |
-| [STORY-0314](../stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened | 0309, `DEC-068` | blocked |
+| [STORY-0314](../stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened | 0309 | ready |
 
 ## What can run in parallel
 
@@ -149,17 +149,17 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
-**Two remain — one the architect's, one the product owner's.** No decision here waits on a human.
+**One remains, and it is the architect's.** No decision here waits on a human.
 
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
 | `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a fourteenth story exists — but it is due **before this epic closes** |
-| `DEC-068` | Does the *waiting for your rival* screen offer a way out, and what does it say? A host is remembered in the room they opened, `resume` declines a `WAITING` room and the ordinary join re-answers `RoomJoined`, so a reload returns to the same screen; `ADR-0072` supplies `forgetRoom()` and leaves the words to the product | product owner | `STORY-0314`, and nothing else |
 
 ### Answered since this epic was written
 
 | ID | Answered by | What it means here |
 | --- | --- | --- |
+| `DEC-068` | [ADR-0073](../../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md) | The *waiting for your rival* screen gains a way out, and it reads **`Back to the lobby`** — the string `DuelResult.tsx` already renders for the same action on the same memory, so this epic keeps one phrase for one action. It calls `ADR-0072` §4's `forgetRoom()` from an event handler and **does nothing to the room**: still `WAITING`, seat 0 still the host's, the code still resolving, and `ADR-0022`'s idle timeout still the only thing that ends it. **Exactly one line says so** — *The room stays open. That link still works for your rival, and it brings you back.* — and it names no duration, because the client owns no clock against a server window. **No confirmation.** Those two strings are the whole addition; a third needs a new ADR. *Cancel*, *Close the room* and *Leave* are refused by name as untrue. `design/screens/create-duel.html`'s waiting frame gains both strings verbatim as `EPIC-06`'s work, and **`STORY-0314` does not wait on it**. No Kotlin, no frame, no protocol step — this epic's rules hold. **`STORY-0314` is `ready` and unsplit** |
 | `DEC-067` | [ADR-0072](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md) | A tab remembers the room it is **seated in** until the player leaves it or the server refuses its own rejoin. `boot.ts`'s `DuelFinished` branch (`TASK-031009`) is **deleted**, so a reopened socket rejoins and `ADR-0044` §5's restatement becomes reachable; the way back to the lobby is what forgets, through a third member on `DuelClient` (`forgetRoom`), an optional third prop on `DuelProvider` and `useForgetRoom()` beside `useSend()` — `ADR-0032` §3's *event handlers only* extends to it. `DuelResult` keeps its `<a href="/">` and stays a function of its props. No reducer field, no frame, no Kotlin. **`STORY-0310` keeps its thirteen tickets** and `TASK-031009` stays `done` and unrewritten; **`STORY-0309` keeps its fourteen** and gains the transport half of its fourth criterion as a split of its own |
 | `DEC-023` | [ADR-0044](../../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) | `ClientMessage.OfferRematch` (no fields) and `ServerMessage.RematchOffered(seat)` to both seats, idempotent on a repeat, restated after a reconnect's frames. No started frame: after a `DuelFinished`, a `Snapshot` **is** the rematch. Two refusals — `UNKNOWN_ROOM` (the room is gone, go to the lobby) and a transient `REMATCH_UNAVAILABLE` (not yet; nothing recorded). No deadline on the wire, so no countdown is rendered. `PROTOCOL_VERSION` moves one step, taking the next free number when it lands. **The server half is `EPIC-02`'s `STORY-0213`** — this epic's no-Kotlin rule holds, and `STORY-0309` is `ready` and consumes it |
 | `DEC-022` | [ADR-0026](../../docs/adr/ADR-0026-vite-and-npm-drive-the-web-client.md) | Vite + npm on Node 24, Vitest, ESLint + Prettier, and a parallel `client` CI job. `STORY-0301` shipped on it |

@@ -209,6 +209,7 @@ lands on a reaped room mid-duel — and is deliberately not taken here.
 - **A way out of the *waiting for your rival* screen.** `forgetRoom` is exactly what such a control
   would call, which is why `ADR-0072` names the gap while closing none of it — but a host who has
   created a room has never been in a duel, and this story is about the screen after one.
-  [`STORY-0314`](STORY-0314-a-host-can-leave-the-room-they-opened.md) owns it, blocked on `DEC-068`.
+  [`STORY-0314`](STORY-0314-a-host-can-leave-the-room-they-opened.md) owns it, and `ADR-0073` has
+  settled its words.
 - **Narrowing the modifier click** on the way back — see the design note above. `ADR-0072` left it,
   and a change there is a new decision, not a follow-up ticket.
