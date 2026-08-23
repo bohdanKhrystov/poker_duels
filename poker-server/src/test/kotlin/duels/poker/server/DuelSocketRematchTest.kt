@@ -272,4 +272,88 @@ class DuelSocketRematchTest {
             assertEquals(1, rematchOpeningSnapshot.view.buttonSeat)
         }
     }
+
+    /**
+     * `TASK-021304`: `ADR-0044` §3 over the wire. A second [OfferRematch] from a seat that already
+     * offered is answered exactly like the first — one [ServerMessage.RematchOffered] naming that
+     * seat, to that socket alone — never a [ServerMessage.Failure]: a double click cannot produce
+     * an error state.
+     */
+    @Test
+    fun aRepeatOfferIsAnsweredWithRematchOfferedAndNotAFailure() = testApplication {
+        val deps = testDeps(rooms = testRoomRegistry())
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val duel = client.finishedDuel(deps)
+
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            duel.host.drainServerMessages()
+            duel.guest.drainServerMessages()
+
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val hostAfter = duel.host.drainServerMessages()
+            val guestAfter = duel.guest.drainServerMessages()
+
+            val hostOffers = hostAfter.filterIsInstance<ServerMessage.RematchOffered>()
+            assertEquals(1, hostOffers.size)
+            assertEquals(0, hostOffers.single().seat)
+
+            val hostFailures = hostAfter.filterIsInstance<ServerMessage.Failure>()
+            assertTrue(hostFailures.isEmpty(), "host saw a Failure on a repeat offer: $hostAfter")
+            assertTrue(guestAfter.isEmpty(), "guest saw something on the host's repeat offer: $guestAfter")
+            assertTrue(noDuelStarted(hostAfter), "host saw a message only a started duel would send: $hostAfter")
+        }
+    }
+
+    /**
+     * `TASK-021304`: the flip side of the same rule. Had the repeat been recorded as a second,
+     * distinct offer, the room would have agreed on it and the fresh duel would have started right
+     * there, on the repeat — before the guest ever acted. Draining and asserting after every send,
+     * not only once at the end, is what tells "the repeat started nothing" apart from "the repeat
+     * started the duel, and the guest's own offer merely rode along with its opening frames".
+     */
+    @Test
+    fun aRepeatOfferRecordsNothingSoTheOpponentsOfferIsStillTheOneThatStarts() = testApplication {
+        val deps = testDeps(rooms = testRoomRegistry())
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val duel = client.finishedDuel(deps)
+
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            duel.host.drainServerMessages()
+            val guestAfterFirstHostOffer = duel.guest.drainServerMessages()
+            assertTrue(
+                noDuelStarted(guestAfterFirstHostOffer),
+                "guest saw a message only a started duel would send after the host's first offer: $guestAfterFirstHostOffer",
+            )
+
+            // the repeat is the case that matters: a bug that records it as a second, distinct
+            // offer would agree the room and start the fresh duel right here, before the guest
+            // has sent anything at all.
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            duel.host.drainServerMessages()
+            val guestAfterRepeatHostOffer = duel.guest.drainServerMessages()
+            assertTrue(
+                noDuelStarted(guestAfterRepeatHostOffer),
+                "guest saw a message only a started duel would send after the host's repeat offer: $guestAfterRepeatHostOffer",
+            )
+
+            duel.guest.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val guestAfterOwnOffer = duel.guest.drainServerMessages()
+            assertTrue(
+                guestAfterOwnOffer.any { it is ServerMessage.Snapshot },
+                "guest's own offer should be the one that starts the fresh duel: $guestAfterOwnOffer",
+            )
+        }
+    }
 }
