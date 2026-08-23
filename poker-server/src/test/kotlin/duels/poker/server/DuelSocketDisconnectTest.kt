@@ -241,6 +241,75 @@ class DuelSocketDisconnectTest {
         }
     }
 
+    /**
+     * `ADR-0028` §10, "the single most important test in the set": the countdown a client
+     * derives from `graceRemainingMillis` is not authority. The clock is advanced past the
+     * window the host was actually sent, `expireGracePeriods` is never called, and the host's
+     * `Act` is still refused — proving the refusal does not depend on the sweep having landed.
+     */
+    @Test
+    fun anActAfterTheCountdownWouldHaveEndedIsStillRefused(): Unit = testApplication {
+        val clock = MutableClock()
+        val rooms = testRoomRegistry(clock)
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val setup = client.startDuel()
+            val runnerBefore = rooms.get(setup.code)!!.runner
+
+            setup.guest.close()
+            awaitRoom(rooms, setup.code) { it.isPaused }
+
+            val graceRemaining = setup.host.drainServerMessages()
+                .filterIsInstance<ServerMessage.OpponentPresence>()
+                .single()
+                .graceRemainingMillis!!
+            clock.advance(graceRemaining + 1)
+
+            setup.host.send(Frame.Text(ProtocolCodec.encode(Act(1, 0, PlayerAction.Fold(0)))))
+            val failure = setup.host.nextFailure()
+
+            assertEquals(ProtocolError.DUEL_PAUSED, failure.error)
+            assertSame(runnerBefore, rooms.get(setup.code)!!.runner)
+        }
+    }
+
+    /**
+     * The companion to [anActAfterTheCountdownWouldHaveEndedIsStillRefused]: in the same state,
+     * the room itself is still paused and no seat has moved to `absentSeats` — the window's
+     * *duration* passing is not the window *expiring*; only the sweep moves a seat.
+     */
+    @Test
+    fun theRoomIsStillPausedAfterTheWindowHasElapsed(): Unit = testApplication {
+        val clock = MutableClock()
+        val rooms = testRoomRegistry(clock)
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val setup = client.startDuel()
+
+            setup.guest.close()
+            awaitRoom(rooms, setup.code) { it.isPaused }
+
+            val graceRemaining = setup.host.drainServerMessages()
+                .filterIsInstance<ServerMessage.OpponentPresence>()
+                .single()
+                .graceRemainingMillis!!
+            clock.advance(graceRemaining + 1)
+
+            assertTrue(rooms.get(setup.code)!!.isPaused)
+            assertTrue(rooms.get(setup.code)!!.absentSeats.isEmpty())
+        }
+    }
+
     @Test
     fun aSecondSocketForTheSameDeviceDoesNotPauseTheDuel(): Unit = testApplication {
         val rooms = testRoomRegistry(MutableClock())
