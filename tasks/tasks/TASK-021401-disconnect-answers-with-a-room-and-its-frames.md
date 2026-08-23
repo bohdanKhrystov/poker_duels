@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021401
 title: RoomRegistry.disconnect answers with a room and the frames it produced
 type: task
-status: ready
+status: done
 parent: STORY-0214
 module: poker-server
 estimate: S

@@ -216,18 +216,18 @@ public class RoomRegistry(
      *
      * @param code The room [player] disconnected from.
      * @param player The player whose connection is gone.
-     * @return The room after the transition, with [player]'s seat counting down in
-     *   [Room.gracePeriods]; or `null` for a code with no live room, or for a player this room
-     *   has not seated.
+     * @return A [Disconnection] naming the room after the transition (with [player]'s seat
+     *   counting down in [Room.gracePeriods]) and the frames the call produced; or `null` for a
+     *   code with no live room, or for a player this room has not seated.
      */
-    public suspend fun disconnect(code: RoomCode, player: PlayerId): Room? {
+    public suspend fun disconnect(code: RoomCode, player: PlayerId): Disconnection? {
         return mutate(
             code,
             absent = { null },
             block = { room ->
                 val seat = room.seatOf(player) ?: return@mutate Pair(null, null)
                 val disconnected = room.disconnect(seat, clock.nowMillis() + timeouts.disconnectGraceMillis)
-                Pair(disconnected, disconnected)
+                Pair(disconnected, Disconnection(disconnected, emptyList()))
             },
         )
     }
