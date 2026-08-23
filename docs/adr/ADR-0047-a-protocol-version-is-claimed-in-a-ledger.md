@@ -1,6 +1,6 @@
 # ADR-0047 — A protocol version is claimed in a ledger, and the second claim conflicts
 
-- **Status:** Accepted
+- **Status:** Accepted — §6's artifact count amended by [`ADR-0068`](ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)
 - **Date:** 2026-08-16
 - **Resolves:** `DEC-040`
 - **Extends** [`ADR-0045`](ADR-0045-presence-belongs-to-the-table.md) §4 with a fifth artifact the
@@ -160,6 +160,8 @@ docs/protocol-versions.md does not match the wire.
 The friction is the point, and it is bounded to one paste.
 
 ### 6. What a bump costs, and what `ADR-0045` §4 now reads as
+
+> **Amended by [`ADR-0068`](ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md) §5 on 2026-08-23.** The *"five artifacts"* below is wrong — the first bump after the web client and this ledger both existed carries **twelve**, and the set had already grown from `ADR-0045` §4's four. `ADR-0068` replaces the count with a procedure, so that the next gate added cannot make it stale again. The paragraph is left as written: an ADR records what was decided when it was decided.
 
 The bump is still the last ticket of its story, still rebased on `develop` immediately before it,
 still one commit. That commit now carries **five** artifacts rather than four: `PROTOCOL_VERSION`,

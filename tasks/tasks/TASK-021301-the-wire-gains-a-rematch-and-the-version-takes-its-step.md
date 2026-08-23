@@ -3,14 +3,20 @@ schema: 2
 id: TASK-021301
 title: OfferRematch and RematchOffered reach the wire, and PROTOCOL_VERSION takes its step
 type: task
-status: blocked
+status: ready
 parent: STORY-0213
 module: poker-server
 estimate: S
 tier: sonnet
 review: standard
 labels: [server, protocol, rooms, version-bump]
-files_touched: 3
+files_touched: 12
+atomic:
+  - ProtocolVersionLedgerTest — a wire shape whose fingerprint no ledger row claims fails it
+  - ProtocolDocumentationTest — a live type with no row, and a row with no live type, both fail
+  - the Kotlin compiler — two exhaustive when expressions in DuelSocket
+  - verifyProtocolTypes and verifyDuelScript — byte comparisons run on every check
+  - tsc TS1360 — the satisfies table in frames.ts, and the ProtocolVersion alias in version.ts
 depends_on: []
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.protocol.ProtocolDocumentationTest'
@@ -21,15 +27,6 @@ verify:
   - ./gradlew :poker-server:check
   - cd web-client && npm run check
 ---
-
-## Blocked on `DEC-063`
-
-**Do not start this ticket.** `files_touched` says `3` because that is the largest number
-`lint_tickets.py` accepts; the change below is **twelve** files and cannot honestly be fewer. Every
-one of them is forced by a gate that is already merged, and the proof is in *Files* below.
-[`DEC-063`](../../docs/adr/README.md#open-decisions) — the architect's — decides what a
-protocol-bump ticket does about that, and `STORY-0214` and `STORY-0405` hit the identical wall
-behind this one. Nothing else in `STORY-0213` can start until this merges.
 
 ## Goal
 
@@ -43,8 +40,12 @@ either.
 
 ## Files
 
-Twelve, and the *Why it cannot be fewer* column is the argument for each one. Two are produced by a
-Gradle task and must never be hand-edited.
+**Twelve, declared as twelve.** This is an `atomic:` ticket under
+[`ADR-0068`](../../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)
+§§3 and 5: the *Why it cannot be fewer* column names the merged gate holding each file, which is what
+earns the exemption from the three-file cap. There is no headroom — a thirteenth file is a decision,
+not a bigger ticket, so stop and raise one. Two files are produced by a Gradle task and must never be
+hand-edited.
 
 | File | Action | Why it cannot be fewer |
 | --- | --- | --- |
@@ -154,8 +155,9 @@ Follow `ADR-0045` §4 and `ADR-0047` §§5–6 exactly:
   player sees changes. That is `STORY-0309`.
 - `Room`, `RoomRegistry`, `RematchResult`, `RematchRefusal`, `RoomTimeouts`, `SeatDelivery` and
   `poker-engine`: untouched (`ADR-0044` §9).
-- Correcting `docs/protocol.md`'s *"a bump commit therefore carries **five** artifacts"* — this
-  change proves it is twelve, and the correction belongs to whatever answers `DEC-063`.
+- Correcting `docs/protocol.md`'s artifact count. **Already done** by `ADR-0068` §6: the document
+  now states the procedure rather than a number, and this ticket only adds the rows and the version
+  line that `ProtocolDocumentationTest` demands.
 
 ## Tests
 

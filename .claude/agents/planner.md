@@ -34,12 +34,20 @@ Ticket files under `tasks/tasks/`, schema 2, one per unit of work. Use
 | --- | --- |
 | `estimate: XS` | ≤ 40 changed lines |
 | `estimate: S` | ≤ 120 changed lines |
-| `files_touched` | ≤ 3 |
+| `files_touched` | ≤ 3 — the true count of the *Files* table's `create`/`modify` rows, never smaller |
 | files the ticket names to read | ≤ 5 |
 
 There is no `M`. If a unit of work does not fit in `S`, it is two tickets. Splitting is
 essentially always right — the failure mode of this project is tickets that grew, never tickets
 that were too small.
+
+**Never write a `files_touched` you know is false.** If the change is genuinely unsplittable because
+a **merged gate** refuses the intermediate state — a `PROTOCOL_VERSION` bump, an interface signature
+dragging its implementers, a `NOT NULL` column breaking every fixture — declare the true count (up
+to 12) and add `atomic:`, a block sequence naming one gate per line
+(`ADR-0068`, `tasks/README.md`). A gate fails an exit code; *"these belong together"* and a scope
+that grew after the ticket was written are not gates, and are still a split. Every *Files* row of an
+`atomic:` ticket carries a *why it cannot be fewer* reason.
 
 ### A ticket owns the tests its change invalidates
 
