@@ -10,13 +10,15 @@ estimate: S
 tier: sonnet
 review: standard
 labels: [server, protocol, rooms, version-bump]
-files_touched: 12
+files_touched: 15
 atomic:
   - ProtocolVersionLedgerTest — a wire shape whose fingerprint no ledger row claims fails it
   - ProtocolDocumentationTest — a live type with no row, and a row with no live type, both fail
   - the Kotlin compiler — two exhaustive when expressions in DuelSocket
+  - the Kotlin compiler again — two more in test sources, SocketDuel and SocketSecrecyTest
   - verifyProtocolTypes and verifyDuelScript — byte comparisons run on every check
   - tsc TS1360 — the satisfies table in frames.ts, and the ProtocolVersion alias in version.ts
+  - vitest — connection.test.ts feeds a Welcome through the client's own version comparison
 depends_on: []
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.protocol.ProtocolDocumentationTest'
@@ -40,12 +42,19 @@ either.
 
 ## Files
 
-**Twelve, declared as twelve.** This is an `atomic:` ticket under
+**Fifteen, declared as fifteen.** This is an `atomic:` ticket under
 [`ADR-0068`](../../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)
-§§3 and 5: the *Why it cannot be fewer* column names the merged gate holding each file, which is what
-earns the exemption from the three-file cap. There is no headroom — a thirteenth file is a decision,
-not a bigger ticket, so stop and raise one. Two files are produced by a Gradle task and must never be
-hand-edited.
+§§3 and 5 as amended by
+[`ADR-0069`](../../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md): the *Why it
+cannot be fewer* column names the merged gate holding each file, which is what earns the exemption
+from the three-file cap. **A file this table does not name is a decision, not a bigger ticket, so
+stop and raise one** — that rule is the count-independent one (`ADR-0069` §2), and it is what
+produced `ADR-0069` rather than a silent fifteen-file diff. Two files are produced by a Gradle task
+and must never be hand-edited.
+
+The last three rows were found by an implementation attempt, not by planning, and are why `ADR-0069`
+exists: the first twelve are what a reading of the protocol directories finds, and the last three are
+what running the gates finds. Nothing in them is new behaviour.
 
 | File | Action | Why it cannot be fewer |
 | --- | --- | --- |
@@ -61,6 +70,9 @@ hand-edited.
 | `web-client/src/protocol/version.ts` | modify | the literal is typed against the generated `ProtocolVersion` alias, so `tsc` fails until it moves (`ADR-0020`) |
 | `web-client/src/protocol/frames.ts` | modify | `SERVER_MESSAGE_TABLE ... satisfies Record<ServerMessage["type"], true>` — a missing key is TS1360. The file's own comment says this edit is what a new server message wants, and `docs/protocol.md` already documents it |
 | `web-client/src/e2e/scripted-duel.gen.json` | **regenerate** | it embeds `"protocolVersion":2` from a `Welcome`, and `:poker-server:verifyDuelScript` runs on every `check` |
+| `poker-server/src/test/kotlin/duels/poker/server/e2e/SocketDuel.kt` | modify | an exhaustive `when (message)` over `ServerMessage` with **no `else`**, ending in an ignore-group. `:poker-server:compileTestKotlin` — and so `check` — fails the moment the hierarchy gains a variant |
+| `poker-server/src/test/kotlin/duels/poker/server/e2e/SocketSecrecyTest.kt` | modify | the same shape in `leaks()`; its ignore-group ends `is ServerMessage.DuelFinished, -> Unit`. Same compiler failure |
+| `web-client/src/protocol/connection.test.ts` | modify | `vitest`, which `npm run check` runs. Four of its tests feed `protocolVersion: 2` through `connection.ts`'s `message.protocolVersion === PROTOCOL_VERSION`, and its *outdated version* case writes the absolute literal `3`, which this bump would turn into the current version |
 
 Read, not edited: `ADR-0044` §§1–4, §6; `ADR-0047` §§1–6; `poker-server/src/main/kotlin/duels/poker/server/room/RematchResult.kt`.
 
@@ -142,7 +154,34 @@ Follow `ADR-0045` §4 and `ADR-0047` §§5–6 exactly:
   alphabetical position. Nothing else in the client changes.
 - `ProtocolJsonTest.theProtocolVersionIsTwo`: rename to match the new number and move its expected
   value. Change nothing else in that file — `defaultValuesReachTheWire` and `unknownKeysAreRefused`
-  keep every assertion they have.
+  keep every assertion they have. **This literal stays a literal** (`ADR-0069` §4 rule 1): it is the
+  one Kotlin test whose subject *is* the number, and referencing `PROTOCOL_VERSION` here would make
+  it assert nothing.
+
+### 4. The three files a gate names and the twelve above do not
+
+**No behaviour changes in any of them.** Each is a merged gate refusing the smaller commit.
+
+- `SocketDuel.kt`: the `when (message)` at ~line 232 is exhaustive over `ServerMessage` with no
+  `else`. Add `is ServerMessage.RematchOffered,` to the existing ignore-group at ~274–278, in the
+  order the group already uses. One line. Nothing else in the file is touched — the group already
+  means *"a frame this driver does not act on"*, and a rematch offer is one.
+- `SocketSecrecyTest.kt`: the same, in `leaks()` at ~line 54. Add
+  `is ServerMessage.RematchOffered,` to the ignore-group at ~81–87. One line. `RematchOffered(seat)`
+  carries no card and cannot leak one, so the checker has nothing to say about it; the inner
+  `when (event)` over engine events is not touched.
+- `connection.test.ts`: **convert, do not re-number** (`ADR-0069` §4). Import `PROTOCOL_VERSION`
+  from `./version` and use it in every fixture in the file:
+  - the four tests whose `Welcome` must be *accepted* — at ~lines 86, 190, 204/207, 218 — take
+    `PROTOCOL_VERSION`, interpolated into the JSON string where the fixture is a raw frame. The
+    number is scenery there; each of those tests is about a device id, not about a version.
+  - *"refuses to trust a welcome at another version"* at ~line 239 takes `PROTOCOL_VERSION + 1`,
+    which is what `reconnecting.test.ts` and `HandshakeTest.kt` already do. Its absolute `3` is
+    **wrong today**, not merely stale: this bump makes it name the current version while the test
+    still claims to test an outdated one.
+
+  Every assertion in the file keeps its meaning and none is weakened or deleted. After this the file
+  is in no future bump's blast radius, which is the point.
 
 ## Out of scope
 
@@ -155,9 +194,17 @@ Follow `ADR-0045` §4 and `ADR-0047` §§5–6 exactly:
   player sees changes. That is `STORY-0309`.
 - `Room`, `RoomRegistry`, `RematchResult`, `RematchRefusal`, `RoomTimeouts`, `SeatDelivery` and
   `poker-engine`: untouched (`ADR-0044` §9).
-- Correcting `docs/protocol.md`'s artifact count. **Already done** by `ADR-0068` §6: the document
-  now states the procedure rather than a number, and this ticket only adds the rows and the version
-  line that `ProtocolDocumentationTest` demands.
+- Correcting `docs/protocol.md`'s artifact count. **Already done** by `ADR-0068` §6 and `ADR-0069`
+  §3: the document states the probe rather than a number or a list, and this ticket only adds the
+  rows and the version line that `ProtocolDocumentationTest` demands.
+- **The five client fixtures that carry `protocolVersion: 2` and do not break.**
+  `web-client/src/lobby/Lobby.test.tsx`, `src/store/duel-state.test.ts`,
+  `src/store/duel-provider.test.tsx`, `src/store/duel-store.test.ts` and
+  `src/protocol/frames.test.ts` never reach `connection.ts`'s version comparison and
+  `Welcome.protocolVersion` is generated as `number`, so `tsc` does not see them either. After this
+  bump they assert a version that no longer exists and **nothing fails**. That is known, filed, and
+  deliberately not fixed here: no gate holds them, so their *why it cannot be fewer* cell would have
+  to say something false (`ADR-0068` §4, `ADR-0069` §5). Do not open them.
 
 ## Tests
 
@@ -199,6 +246,11 @@ are unique.
       agreeing that both generated files were regenerated and committed
 - [ ] `cd web-client && npm run check` exits 0
 - [ ] `docs/protocol-versions.md` gained exactly one row, and no existing row changed
+- [ ] `SocketDuel.kt` and `SocketSecrecyTest.kt` each gained exactly one line, in an existing
+      ignore-group, and no assertion or behaviour in either file changed
+- [ ] `connection.test.ts` contains **no** numeric protocol version at all: every fixture reads
+      `PROTOCOL_VERSION`, and the *another version* case reads `PROTOCOL_VERSION + 1`. Its test
+      count and its assertions are unchanged
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

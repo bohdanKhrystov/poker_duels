@@ -10,9 +10,11 @@ and puts the rematch's wire half in `STORY-0213`, and
 [`ADR-0045`](../docs/adr/ADR-0045-presence-belongs-to-the-table.md) answers `DEC-038` and puts the
 pause state's wire half in `STORY-0214` — both where the code lives, rather than in `EPIC-03`. They
 land one at a time, `0213` first, because each moves `PROTOCOL_VERSION`. `STORY-0213` was split on
-2026-08-23 into seven tickets and **runs**: the wire step is twelve files, none of them separable,
+2026-08-23 into seven tickets and **runs**: the wire step is fifteen files, none of them separable,
 which `ADR-0068` settles by letting a ticket declare the true count and name the merged gates that
-forbid splitting it.
+forbid splitting it — and `ADR-0069`, after an implementation attempt found three more than the
+split had, by deleting the ceiling, checking the count against the ticket's own *Files* table, and
+sizing a bump by **probing** the gates rather than remembering a list.
 `EPIC-06` (design) runs in parallel on disjoint files, see `ADR-0023`. `EPIC-03` (web client) is
 in progress.
 
@@ -479,9 +481,19 @@ version row claims, and `ProtocolDocumentationTest` forbids the document moving 
 after the Kotlin. That was `DEC-063`, and
 [`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)
 answers it: the gates do not move, `files_touched` becomes a true count, and a ticket held together
-by a merged gate declares up to twelve files and names the gates in `atomic:`. The ticket is `ready`
-at `files_touched: 12`. The six tickets behind it are ordinary one- and two-file tickets and run
-straight through once it lands.
+by a merged gate declares the true count and names the gates in `atomic:`.
+
+**Twelve turned out to be fifteen, which was `DEC-064`.** The coder implemented all twelve declared
+files correctly — that work stands at `c904503` — then found three more the change forces: two
+exhaustive `when`s over `ServerMessage` in **test** sources (`SocketDuel.kt`, `SocketSecrecyTest.kt`)
+and `web-client/src/protocol/connection.test.ts`, whose fixtures run through the client's own version
+comparison. It stopped and raised a decision rather than growing the ticket, which is `ADR-0068` §3
+working exactly as designed.
+[`ADR-0069`](../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md) answers it: the
+ceiling is **deleted** rather than raised, `files_touched` must equal the ticket's own *Files* table,
+and a bump is sized by **probing** the gates rather than by remembering a list. The ticket is `ready`
+at `files_touched: 15`, and fifteen is written in that ticket and nowhere else. The six tickets
+behind it are ordinary one- and two-file tickets and run straight through once it lands.
 
 **`STORY-0213` reopened this epic on 2026-08-16.**
 [`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) answers `DEC-023`:
@@ -576,6 +588,37 @@ parallel with `EPIC-02`; no shared file.
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 
 `DEC-063` → [`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md) on 2026-08-23 (the gates that make a `PROTOCOL_VERSION` bump atomic do not move; `files_touched` becomes a true count, and a ticket held together by a merged gate declares up to twelve files and names its gates in `atomic:`. `ADR-0047` §6's *"five artifacts"* is replaced by a procedure rather than another number). **Unblocks `TASK-021301`, `STORY-0213`, `STORY-0214` and `STORY-0405`.**
+
+`DEC-064` → [`ADR-0069`](../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md)
+on 2026-08-23 — **registered and answered in the same PR**, because an implementation attempt raised
+it rather than a planner. `ADR-0068`'s own tripwire fired on the first ticket it governed: the coder
+implemented all twelve declared files correctly, found three more the change forces
+(`SocketDuel.kt` and `SocketSecrecyTest.kt` — exhaustive `when`s over `ServerMessage` in **test**
+sources — and `web-client/src/protocol/connection.test.ts`), stopped rather than deciding, and cited
+§5. **The blast radius is probed, not remembered, and a ticket's size is its own *Files* table.**
+The **ceiling is deleted, not raised**: the set is monotone in a gate count nobody controls — four,
+then five, then twelve, now fifteen — and `ADR-0068` §5 said *"whatever replaces the five must not
+be another number"* while its own §3 wrote twelve into the linter, which is the contradiction that
+stalled. In its place, on a ticket declaring `atomic:`, **`files_touched` must equal the edit-row
+count of that ticket's own *Files* table** (≥ 4), which is `ADR-0068` §7's unbuilt residual, built,
+and scoped to `atomic:` tickets so the nine merged under-declaring tickets stay green. **A file the
+*Files* table does not name stops the ticket, at any count** — the rule that actually fired.
+`ADR-0068` §5's enumeration was a *verification* procedure a planner could not run, so its twelve
+came from reading; it becomes a **probe** — a throwaway one-line change made only to be read and
+reverted — which finds test sources because the compiler and `vitest` do not know which directory a
+file is in. **And a version literal in a fixture references the constant**: exactly one test per
+side pins the number (`ProtocolJsonTest`, and the client's derived `version.test.ts`), a fixture
+needing a *different* version writes `PROTOCOL_VERSION ± 1`, and everything else reads the constant.
+Found while checking: **five client fixtures carry `protocolVersion: 2`, survive the bump silently
+and will assert a version that does not exist** — `Welcome.protocolVersion` is generated as `number`
+so `tsc` sees nothing. Costs: the guard surface narrows to two deliberate tests; **no mechanical
+brake on an atomic ticket's size remains**; the probe costs two `check` runs and must be reverted;
+and the rules moved twice in two days. **Unblocks `TASK-021301`** at `files_touched: 15` with the
+twelve files already implemented at `c904503` untouched, **and with it `STORY-0213`, `STORY-0214`
+and `STORY-0405`**. **Names one ticket** — convert the five silently-stale client fixtures
+(`Lobby.test.tsx`, `duel-state.test.ts`, `duel-provider.test.tsx`, `duel-store.test.ts`,
+`frames.test.ts`) to `PROTOCOL_VERSION` under `ADR-0069` §4; one XS client ticket, after
+`TASK-021301` lands — and raises no `DEC`.
 
 **Answered.** Seven product decisions were put to the human on 2026-08-15 and all seven
 answered, each recorded as its own ADR. `DEC-001` →

@@ -40,7 +40,8 @@ is not satisfied by deleting the command — it is satisfied by writing the test
 - **Never widen scope.** The ticket has an `## Out of scope` section. Respect it exactly. If you
   spot a bug, a bad name, or a missing abstraction outside this ticket, mention it in your final
   report so it can become its own ticket. Do not fix it.
-- **Never touch more files than `files_touched` allows.** If you cannot fit, stop and report it. That holds for an `atomic:` ticket too: its count is the whole change, not a starting point.
+- **Never touch a file the ticket's *Files* table does not name.** If you need one, **stop and report it** — it is a `DEC`, not a bigger ticket, at any count (`ADR-0069` §2). That holds for an `atomic:` ticket too: its table is the whole change, not a starting point. Stopping is the correct outcome and costs one agent run; `TASK-021301` did exactly this and produced `ADR-0069`.
+- **Never hard-code a protocol version in a fixture** (`ADR-0069` §4). Reference `PROTOCOL_VERSION`; if the test needs a *different* version, write `PROTOCOL_VERSION + 1` or `- 1`, never an absolute number. The single exception is a test whose subject **is** the number — there is exactly one per side and it already exists — where the literal is the assertion.
 - **Never weaken a test to make it pass.** If a test is wrong, say so and stop.
 - **Never edit the `verify` block** to make it easier.
 - **Never commit or push.** The driver does that.

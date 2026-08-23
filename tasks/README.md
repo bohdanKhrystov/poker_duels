@@ -83,7 +83,7 @@ verify:
 | `estimate` | — | — | required | **`XS` ≤ 40 lines, `S` ≤ 120.** No `M`, no `L` |
 | `tier` | — | — | required (schema 2) | `haiku` (default), `sonnet`, `opus` |
 | `review` | — | — | required (schema 2) | `light`, `standard`, `deep` |
-| `files_touched` | — | — | required (schema 2) | the true count of `create`/`modify` rows in *Files*. 1–3, enforced — 4–12 with `atomic:` |
+| `files_touched` | — | — | required (schema 2) | the true count of `create`/`modify` rows in *Files*. 1–3, enforced — with `atomic:`, at least 4 and **exactly** that table's count |
 | `atomic` | — | — | optional (schema 2) | a block sequence naming the merged gates that forbid splitting the ticket. See below |
 | `verify` | — | — | required (schema 2) | shell commands; **all must exit 0** |
 | `module` | optional | optional | optional | `poker-engine`, `poker-server`, `web-client`, … |
@@ -155,7 +155,7 @@ Tickets an agent workflow consumes carry `schema: 2` and four extra fields:
 | --- | --- |
 | `tier` | which model runs it — `haiku` (default), `sonnet`, `opus` |
 | `review` | `light`, `standard` or `deep` — effort priced by risk |
-| `files_touched` | the true count of the *Files* table's `create`/`modify` rows. 1–3, enforced by the linter |
+| `files_touched` | the true count of the *Files* table's `create`/`modify` rows. 1–3, enforced by the linter — with `atomic:`, at least 4 and exactly that table's count |
 | `verify` | shell commands that decide done. **All must exit 0.** |
 
 Plus one optional key, `atomic:` — see below.
@@ -163,17 +163,19 @@ Plus one optional key, `atomic:` — see below.
 ### An atomic ticket declares its gates
 
 `files_touched` is a **fact**, not a budget: it is the number of rows in the ticket's *Files* table
-whose action is `create`, `modify`, `regenerate`, `delete` or `rename`, and it may never be smaller
-than that table. Rows marked `read` do not count.
+whose action is `create`, `modify`, `regenerate`, `delete` or `rename`. Rows marked `read` do not
+count. With `atomic:` the linter checks the two against each other; without it, never write a number
+smaller than the table.
 
 Almost every ticket is 1–3 files. A few changes cannot be split at all, because a **merged gate**
 refuses the intermediate state — a `PROTOCOL_VERSION` bump, an interface signature dragging its
 implementers, a new `NOT NULL` column breaking every fixture that inserts a row. Such a ticket
 declares the true count and names its gates
-([`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)):
+([`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md),
+[`ADR-0069`](../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md)):
 
 ```yaml
-files_touched: 12
+files_touched: 15
 atomic:
   - ProtocolVersionLedgerTest — a wire shape whose fingerprint no ledger row claims fails it
   - the Kotlin compiler — two exhaustive when expressions in DuelSocket
@@ -181,15 +183,25 @@ atomic:
 
 | `atomic:` | `files_touched` the linter accepts |
 | --- | --- |
-| absent | 1–3 |
-| a non-empty sequence | 4–12 |
+| absent | 1–3, and the *Files* table is not read |
+| a non-empty sequence | **at least 4, and exactly the *Files* table's edit-row count** |
+
+**There is no ceiling** — `ADR-0069` deleted it. A ceiling can only ever be the size of the last
+atomic ticket anyone wrote, and every size published for a protocol bump — four, five, twelve,
+fifteen — was wrong within days, because the set grows every time an ordinary ticket adds a gate
+somewhere else and nothing couples the two.
+What stops an atomic ticket instead is **a file its *Files* table does not name** — at any count,
+that is a `DEC`, not a bigger ticket. Sizing one is done by **probing**: make a throwaway one-line
+change that trips the gates, run them, read the paths, revert (`ADR-0069` §3). A procedure that
+needs the finished work as its input can verify a ticket but cannot size one.
 
 A gate is something that **fails an exit code**: a compiler rule (an exhaustive `when`, an interface
 signature, a `satisfies` table), a merged test, a Gradle verify task, a database constraint. These
 earn nothing and a reviewer rejects them: *"these belong together"*, *"it is one feature"*, *"the
 reviewer will want the context"*, and — the one this is aimed at — **a scope that grew after the
 ticket was written**. That is still a split. When `atomic:` is set, every *Files* row carries a *why
-it cannot be fewer* reason naming its gate; the linter checks presence and range, never truth.
+it cannot be fewer* reason naming its gate; the linter checks presence and the count against the
+*Files* table, never truth.
 
 Legacy `schema: 1` tickets still validate, so stories migrate one at a time via
 `/plan-story`. Run it before starting a story whose tickets lack `schema: 2`.

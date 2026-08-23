@@ -33,10 +33,13 @@ REVIEW_LEVELS = {"light", "standard", "deep"}
 MAX_FILES_TOUCHED = 3
 # A change some merged gate refuses to let land in pieces — a protocol version bump, an
 # interface signature dragging its implementers, a NOT NULL column breaking every fixture.
-# ADR-0068: the ticket declares the true count and names the gate in `atomic:`. Twelve is the
-# largest atomic unit this repository has demonstrated, so a thirteenth file is a decision
-# rather than an escalation. Without `atomic:` nothing changes and the cap is still 3.
-MAX_FILES_TOUCHED_ATOMIC = 12
+# ADR-0068: the ticket declares the true count and names the gate in `atomic:`. There is no
+# ceiling (ADR-0069 deleted it — the set is monotone in a gate count nobody controls, so every
+# number written down has been wrong); instead the count must equal the ticket's own Files
+# table. Without `atomic:` nothing changes, the cap is 3, and the table is not read.
+MIN_FILES_TOUCHED_ATOMIC = 4
+FILES_TABLE_EDITS = {"create", "modify", "regenerate", "delete", "rename"}
+FILES_TABLE_ACTIONS = FILES_TABLE_EDITS | {"read"}
 
 ID_PATTERNS = {
     "epic": re.compile(r"^EPIC-\d{2}$"),
@@ -106,6 +109,42 @@ def parse_frontmatter(path: Path) -> dict[str, object] | None:
     return data
 
 
+def count_files_table_edits(where: str) -> int | None:
+    """Count the edit rows of a ticket's `## Files` table.
+
+    Read only for a ticket declaring `atomic:` (ADR-0069 §1): with no ceiling left, the one
+    thing still checkable mechanically is that `files_touched` equals the ticket's own table.
+    Deliberately positional rather than a markdown parser — the second cell is the action, and
+    an unrecognised one fails rather than being skipped, so a typo cannot quietly undercount.
+
+    Returns None when there is no Files table at all, which is its own failure.
+    """
+    lines = Path(where).read_text(encoding="utf-8").splitlines()
+    try:
+        start = next(i for i, line in enumerate(lines) if line.strip().lower() == "## files")
+    except StopIteration:
+        return None
+
+    edits = 0
+    for line in lines[start + 1 :]:
+        if line.startswith("## "):
+            break
+        if not line.lstrip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        action = cells[1].strip("*` ").lower()
+        if action in ("action", "") or set(action) <= {"-", ":"}:
+            continue  # header row, separator, or an empty cell
+        if action not in FILES_TABLE_ACTIONS:
+            fail(where, f"Files table row has an unknown action {cells[1]!r}: {line.strip()}")
+            continue
+        if action in FILES_TABLE_EDITS:
+            edits += 1
+    return edits
+
+
 def check_task_schema(where: str, data: dict[str, object]) -> None:
     """Validate a task against schema 1 or schema 2, whichever it declares.
 
@@ -137,8 +176,8 @@ def check_task_schema(where: str, data: dict[str, object]) -> None:
 
     # `atomic:` is the one declared exemption from the three-file cap (ADR-0068): a block
     # sequence naming, one per line, each merged gate that fails on a smaller commit. The linter
-    # checks that it is there and that the count is in range, never that the claim is true —
-    # that is the reviewer's, and the ADR says so rather than implying the check is mechanical.
+    # checks that it is there and that the count matches the Files table, never that the claim
+    # is true — that is the reviewer's, and the ADR says so rather than implying otherwise.
     atomic = data.get("atomic")
     claimed_atomic = atomic is not None
     if claimed_atomic and not (
@@ -154,12 +193,24 @@ def check_task_schema(where: str, data: dict[str, object]) -> None:
         fail(where, f"files_touched must be an integer, got {touched!r}")
     else:
         if claimed_atomic:
-            # Below four, `atomic:` buys nothing and only blurs what its presence means.
-            if not MAX_FILES_TOUCHED < touched_n <= MAX_FILES_TOUCHED_ATOMIC:
+            # Below four, `atomic:` buys nothing and only blurs what its presence means. Above
+            # it there is no ceiling: ADR-0069 replaced the number with an equality, because a
+            # ceiling can only ever be the size of the last atomic ticket anybody wrote.
+            if touched_n < MIN_FILES_TOUCHED_ATOMIC:
                 fail(
                     where,
-                    f"files_touched must be {MAX_FILES_TOUCHED + 1}..{MAX_FILES_TOUCHED_ATOMIC} "
-                    f"on a task declaring atomic:, got {touched_n}",
+                    f"files_touched must be at least {MIN_FILES_TOUCHED_ATOMIC} on a task "
+                    f"declaring atomic:, got {touched_n} — below that the key buys nothing",
+                )
+            table_edits = count_files_table_edits(where)
+            if table_edits is None:
+                fail(where, "a task declaring atomic: must have a '## Files' table")
+            elif table_edits != touched_n:
+                fail(
+                    where,
+                    f"files_touched is {touched_n} but the Files table has {table_edits} "
+                    f"create/modify/regenerate/delete/rename rows — the field is a fact about "
+                    f"the ticket and must equal its own table (ADR-0069)",
                 )
         elif not 1 <= touched_n <= MAX_FILES_TOUCHED:
             fail(

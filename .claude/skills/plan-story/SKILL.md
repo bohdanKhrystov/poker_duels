@@ -33,6 +33,7 @@ Then confirm by inspection of the frontmatter only — not the prose:
 - [ ] every new ticket has `schema: 2`, `tier`, `review`, `files_touched`, and a non-empty `verify`
 - [ ] every `estimate` is `XS` or `S` — **no `M`**
 - [ ] `files_touched` ≤ 3 everywhere — or the true count with `atomic:` naming the merged gates that forbid splitting (`ADR-0068`), and never a number smaller than the *Files* table
+- [ ] every `atomic:` ticket's `files_touched` **equals** its own *Files* table's edit-row count (the linter checks this; there is no ceiling — `ADR-0069`), and its file list came from **probing the gates**, not from another ticket's list
 - [ ] exactly one ticket is `status: ready`
 - [ ] `depends_on` forms a chain, and no two startable tickets touch the same file
 

@@ -34,7 +34,7 @@ Ticket files under `tasks/tasks/`, schema 2, one per unit of work. Use
 | --- | --- |
 | `estimate: XS` | ≤ 40 changed lines |
 | `estimate: S` | ≤ 120 changed lines |
-| `files_touched` | ≤ 3 — the true count of the *Files* table's `create`/`modify` rows, never smaller |
+| `files_touched` | ≤ 3 — the true count of the *Files* table's `create`/`modify` rows, never smaller. With `atomic:`, ≥ 4 and **exactly** that count |
 | files the ticket names to read | ≤ 5 |
 
 There is no `M`. If a unit of work does not fit in `S`, it is two tickets. Splitting is
@@ -43,11 +43,29 @@ that were too small.
 
 **Never write a `files_touched` you know is false.** If the change is genuinely unsplittable because
 a **merged gate** refuses the intermediate state — a `PROTOCOL_VERSION` bump, an interface signature
-dragging its implementers, a `NOT NULL` column breaking every fixture — declare the true count (up
-to 12) and add `atomic:`, a block sequence naming one gate per line
-(`ADR-0068`, `tasks/README.md`). A gate fails an exit code; *"these belong together"* and a scope
-that grew after the ticket was written are not gates, and are still a split. Every *Files* row of an
+dragging its implementers, a `NOT NULL` column breaking every fixture — declare the true count and
+add `atomic:`, a block sequence naming one gate per line (`ADR-0068`, `ADR-0069`,
+`tasks/README.md`). There is **no ceiling**, and the linter checks that the number equals the
+ticket's own *Files* table. A gate fails an exit code; *"these belong together"* and a scope that
+grew after the ticket was written are not gates, and are still a split. Every *Files* row of an
 `atomic:` ticket carries a *why it cannot be fewer* reason.
+
+**Size an `atomic:` ticket by probing, never by remembering** (`ADR-0069` §3). A procedure whose
+input is the finished change can verify a ticket but cannot size one — which is how a bump was
+planned at twelve and turned out to be fifteen, the three missing files being an exhaustive `when`
+in **test** sources, twice, and a client test fixture. Make a throwaway one-line change that trips
+the gates, run them, read the paths they print, revert:
+
+```
+# a PROTOCOL_VERSION bump: set the constant + 1, then
+./gradlew :poker-server:check && (cd web-client && npm run check)
+# a new sealed variant: add a throwaway one, then
+./gradlew :poker-server:compileTestKotlin && (cd web-client && npm run typecheck)
+git checkout -- <the probe files>
+```
+
+Do not reuse another ticket's file list or count, however recent. It is a fact about that ticket,
+not about the kind of change.
 
 ### A ticket owns the tests its change invalidates
 
