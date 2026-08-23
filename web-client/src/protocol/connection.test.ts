@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { openConnection } from "./connection";
 import { FakeSocket } from "./fake-socket";
 import type { ServerMessage } from "./protocol.gen";
+import { PROTOCOL_VERSION } from "./version";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -83,7 +84,7 @@ describe("the connection", () => {
     expect(JSON.parse(socket.sent[0])).toEqual({
       type: "Hello",
       deviceId: null,
-      protocolVersion: 2,
+      protocolVersion: PROTOCOL_VERSION,
     });
   });
 
@@ -187,7 +188,9 @@ describe("the connection", () => {
       onMessage: () => {},
     });
 
-    socket.receive('{"type":"Welcome","deviceId":"d-7","protocolVersion":2}');
+    socket.receive(
+      `{"type":"Welcome","deviceId":"d-7","protocolVersion":${PROTOCOL_VERSION}}`,
+    );
 
     expect(connection.status).toEqual({ kind: "ready", deviceId: "d-7" });
     expect(storage.getItem("pd.deviceId")).toBe("d-7");
@@ -201,10 +204,12 @@ describe("the connection", () => {
       onMessage: (message) => messages.push(message),
     });
 
-    socket.receive('{"type":"Welcome","deviceId":"d-7","protocolVersion":2}');
+    socket.receive(
+      `{"type":"Welcome","deviceId":"d-7","protocolVersion":${PROTOCOL_VERSION}}`,
+    );
 
     expect(messages).toEqual([
-      { type: "Welcome", deviceId: "d-7", protocolVersion: 2 },
+      { type: "Welcome", deviceId: "d-7", protocolVersion: PROTOCOL_VERSION },
     ]);
   });
 
@@ -215,7 +220,9 @@ describe("the connection", () => {
       onMessage: () => {},
     });
 
-    socket.receive('{"type":"Welcome","deviceId":"d-7","protocolVersion":2}');
+    socket.receive(
+      `{"type":"Welcome","deviceId":"d-7","protocolVersion":${PROTOCOL_VERSION}}`,
+    );
 
     const secondSocket = new FakeSocket();
     openConnection({
@@ -236,7 +243,9 @@ describe("the connection", () => {
       onMessage: () => {},
     });
 
-    socket.receive('{"type":"Welcome","deviceId":"d-7","protocolVersion":3}');
+    socket.receive(
+      `{"type":"Welcome","deviceId":"d-7","protocolVersion":${PROTOCOL_VERSION + 1}}`,
+    );
 
     expect(connection.status).toEqual({ kind: "outdated" });
     expect(storage.getItem("pd.deviceId")).toBeNull();

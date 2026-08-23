@@ -74,6 +74,21 @@ public sealed interface ServerMessage {
     }
 
     /**
+     * An offer from this seat to play again stands.
+     *
+     * Sent to **both** seats: the offering client learns its offer was recorded from the
+     * server rather than assuming it, and the opponent learns of it from the same frame.
+     * Each client already knows its own seat from [RoomJoined] and compares.
+     *
+     * @property seat The seat (0 or 1) whose offer stands.
+     */
+    @Serializable
+    @SerialName("RematchOffered")
+    public data class RematchOffered(val seat: Int) : ServerMessage {
+        init { require(seat in 0..1) { "seat must be 0 or 1, was $seat" } }
+    }
+
+    /**
      * Facts that just happened in the duel.
      *
      * Carries whatever `visibleTo(events, seat)` returned for that recipient — this type

@@ -42,4 +42,10 @@ public enum class ProtocolError {
      * [duels.poker.server.config.ServerConfig.DEFAULT_MAX_FRAME_NESTING_DEPTH] allows.
      */
     FRAME_LIMIT_EXCEEDED,
+
+    /**
+     * The room cannot accept a rematch offer yet. **Transient**: nothing was recorded, and
+     * the same offer may be sent again.
+     */
+    REMATCH_UNAVAILABLE,
 }

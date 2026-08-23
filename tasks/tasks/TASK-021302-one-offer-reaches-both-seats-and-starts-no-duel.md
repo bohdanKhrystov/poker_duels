@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021302
 title: One seat's offer puts RematchOffered on both sockets and starts no duel
 type: task
-status: backlog
+status: ready
 parent: STORY-0213
 module: poker-server
 estimate: S

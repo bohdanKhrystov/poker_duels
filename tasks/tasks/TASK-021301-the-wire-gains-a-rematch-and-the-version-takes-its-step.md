@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021301
 title: OfferRematch and RematchOffered reach the wire, and PROTOCOL_VERSION takes its step
 type: task
-status: ready
+status: done
 parent: STORY-0213
 module: poker-server
 estimate: S

@@ -53,6 +53,7 @@ class ServerMessageHandshakeTest {
             "NOT_IN_DUEL",
             "DUEL_PAUSED",
             "FRAME_LIMIT_EXCEEDED",
+            "REMATCH_UNAVAILABLE",
         )
         val actualNames = ProtocolError.entries.map { it.name }
         assertEquals(expectedNames, actualNames)
