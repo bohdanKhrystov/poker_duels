@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021410
 title: A resume tells the returning seat where its opponent stands, and the seat that stayed only if it changed
 type: task
-status: ready
+status: done
 parent: STORY-0214
 module: poker-server
 estimate: S
