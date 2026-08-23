@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021412
 title: Disconnection's KDoc says what outbound carries, not that it is empty
 type: task
-status: backlog
+status: ready
 parent: STORY-0214
 module: poker-server
 estimate: XS
