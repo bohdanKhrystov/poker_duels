@@ -9,9 +9,11 @@ import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.JoinRoom
 import duels.poker.server.protocol.OfferRematch
 import duels.poker.server.protocol.ProtocolCodec
+import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.room.RandomRoomCodeSource
+import duels.poker.server.room.RoomCode
 import duels.poker.server.room.RoomRegistry
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.SocketDependencies
@@ -30,6 +32,7 @@ import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.lang.reflect.Field
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,6 +42,15 @@ private val fixedSeeds = HandSeedSource { 7L }
 /** A [RoomRegistry] whose every hand draws from [seeds] — the room code itself is still random. */
 private fun testRoomRegistry(seeds: HandSeedSource = fixedSeeds): RoomRegistry =
     RoomRegistry(RandomRoomCodeSource(), SystemClock, seeds = seeds)
+
+/** Removes a room from the registry using reflection to access its internal state. */
+private fun RoomRegistry.removeRoom(code: RoomCode) {
+    val roomsField: Field = RoomRegistry::class.java.getDeclaredField("rooms")
+    roomsField.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    val roomsMap = roomsField.get(this) as? java.util.concurrent.ConcurrentHashMap<RoomCode, *>
+    roomsMap?.remove(code)
+}
 
 /** Reads the next frame off [this] session as a decoded [ServerMessage]. */
 private suspend fun DefaultClientWebSocketSession.nextServerMessage(): ServerMessage {
@@ -147,6 +159,33 @@ private suspend fun HttpClient.finishedDuelKeepingFirstOpeningSnapshot(
     guestSession.drainServerMessages()
 
     return FinishedDuel(hostSession, guestSession) to openingSnapshot
+}
+
+/**
+ * Like [finishedDuel], but keeps the room's own [RoomCode] instead of letting it fall away.
+ * `TASK-021305`'s reap needs that exact code to remove the exact room from the registry, and
+ * [finishedDuel] is a fixture other tests depend on staying exactly as it is, so it cannot be the
+ * one to hand it back.
+ */
+private suspend fun HttpClient.finishedDuelKeepingRoomCode(deps: SocketDependencies): Pair<FinishedDuel, RoomCode> {
+    val format = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
+    val host = deps.directory.resolve(DeviceId("host"))
+    val room = deps.rooms.create(host.id, format)
+
+    val (hostSession, _) = enterRoom("host", room.code.value)
+    val (guestSession, _) = enterRoom("guest", room.code.value)
+
+    // the room always opens with the host on the button (Room.open), hence on turn first.
+    val hostOpening = hostSession.drainServerMessages()
+    guestSession.drainServerMessages()
+    val yourTurn = hostOpening.filterIsInstance<ServerMessage.YourTurn>().single()
+
+    // folding hand 1's only decision ends that hand, and FixedHands(1) ends the duel there.
+    hostSession.sendAct(yourTurn.handNumber, yourTurn.actionSequence, PlayerAction.Fold(0))
+    hostSession.drainServerMessages()
+    guestSession.drainServerMessages()
+
+    return FinishedDuel(hostSession, guestSession) to room.code
 }
 
 /**
@@ -354,6 +393,83 @@ class DuelSocketRematchTest {
                 guestAfterOwnOffer.any { it is ServerMessage.Snapshot },
                 "guest's own offer should be the one that starts the fresh duel: $guestAfterOwnOffer",
             )
+        }
+    }
+
+    /**
+     * `TASK-021305`: `ADR-0044` §6's first bullet over the wire. Three different ways of holding
+     * no seat in any room — never having entered one, having been refused entry to one that was
+     * already full, and having been seated in one the registry no longer holds — all answer
+     * [OfferRematch] with exactly one [ServerMessage.Failure]`(`[ProtocolError.UNKNOWN_ROOM]`)`,
+     * and the three answers are indistinguishable from one another.
+     *
+     * The first two reach that refusal through the very same branch, and that is the point rather
+     * than a weakness: `RoomMembership.code` is set only on a path that actually seats the player,
+     * so a stranger who only knows a full room's code and a socket that never sent [duels.poker.server.protocol.JoinRoom]
+     * at all are, as far as `replyToOfferRematch` can tell, the same state by construction. For that
+     * same reason `RematchRefusal.NOT_A_PLAYER` is unreachable through the socket: its branch in
+     * `replyToOfferRematch` exists only because `RoomRegistry` can return it and the `when` must
+     * stay exhaustive, and this test does not attempt to reach it.
+     */
+    @Test
+    fun theThreeWaysToHoldNoSeatAnswerOneIndistinguishableUnknownRoom() = testApplication {
+        val deps = testDeps(rooms = testRoomRegistry())
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            // 1. Entered no room at all: handshake only.
+            val neverEntered = client.webSocketSession("/ws")
+            neverEntered.completeHandshake("neverentered")
+
+            // 2. Holds no seat: refused entry to a room that was already full when it tried —
+            // ROOM_FULL seats nobody, so this socket never acquires a RoomMembership.code either.
+            val fullRoomOwner = deps.directory.resolve(DeviceId("fullhost"))
+            val fullRoom = deps.rooms.create(fullRoomOwner.id, DuelFormat.DEFAULT)
+            client.enterRoom("fullhost", fullRoom.code.value)
+            client.enterRoom("fullguest", fullRoom.code.value)
+
+            val refusedEntry = client.webSocketSession("/ws")
+            refusedEntry.completeHandshake("outsider")
+            refusedEntry.send(Frame.Text(ProtocolCodec.encode(JoinRoom(fullRoom.code.value))))
+            val joinReply = refusedEntry.nextServerMessage() as ServerMessage.Failure
+            assertEquals(ProtocolError.ROOM_FULL, joinReply.error)
+
+            // 3. Held a seat, but the room was reaped out from under it once the duel finished.
+            val (reaped, reapedCode) = client.finishedDuelKeepingRoomCode(deps)
+            deps.rooms.removeRoom(reapedCode)
+
+            neverEntered.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val neverEnteredAfter = neverEntered.drainServerMessages()
+
+            refusedEntry.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val refusedEntryAfter = refusedEntry.drainServerMessages()
+
+            reaped.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val reapedAfter = reaped.host.drainServerMessages()
+
+            // the frame count is part of the claim: an extra frame on one of the three would itself
+            // be a way to tell it apart from the other two, even if every frame it sent were correct.
+            assertEquals(1, neverEnteredAfter.size, "entered no room: $neverEnteredAfter")
+            assertEquals(1, refusedEntryAfter.size, "holds no seat: $refusedEntryAfter")
+            assertEquals(1, reapedAfter.size, "room reaped: $reapedAfter")
+
+            val expected = ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)
+            val neverEnteredReply = neverEnteredAfter.single()
+            val refusedEntryReply = refusedEntryAfter.single()
+            val reapedReply = reapedAfter.single()
+
+            assertEquals(expected, neverEnteredReply)
+            assertEquals(expected, refusedEntryReply)
+            assertEquals(expected, reapedReply)
+
+            // the point of the ticket: not only is each of the three Failure(UNKNOWN_ROOM), none of
+            // them differs from either other — nothing on the wire tells the three apart.
+            assertEquals(neverEnteredReply, refusedEntryReply)
+            assertEquals(refusedEntryReply, reapedReply)
         }
     }
 }
