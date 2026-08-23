@@ -20,9 +20,8 @@ verify:
 ## Goal
 
 `aFinishedRoomResumesAsItsOutcome` checks the `DuelFinished` frame and nothing else, so the
-`OpponentPresence` frame a FINISHED resume also carries is unverified. A `seat`/`otherSeat` mixup
-confined to that path — `Addressed(seat, presenceOf(seat, now))`, a seat told about itself — passes
-every merged test in the repository.
+`OpponentPresence` frame a FINISHED resume also carries is unverified — its existence, its address
+and the total frame count are all unasserted on this path.
 
 ## Why it was not fixed where it was found
 
@@ -43,13 +42,26 @@ ticket rather than as a silent extra assertion — and this is its consequence.
 
 ## Scope
 
-- Extend `aFinishedRoomResumesAsItsOutcome` so the `OpponentPresence` frame in a FINISHED room's
-  resume is asserted: exactly one, and addressed to the seat that **stayed**, not the returning one.
-- That fixture resumes as the **host**, so the expected address is the guest's seat. Write it as a
-  literal, so a `presenceOf(seat, …)` mixup fails rather than agreeing with a derived value.
-- Assert the total `outbound` size too, so a stray third frame on this path is caught. `TASK-021410`
-  dropped the old size assertion because the count moved from one to two; restore it at the count
-  that is now correct.
+- Extend `aFinishedRoomResumesAsItsOutcome` so the `OpponentPresence` frame a FINISHED resume
+  carries is asserted at all: exactly one, addressed to the **returning** seat, carrying `PRESENT`.
+- That fixture resumes as the host, so the expected address is the literal `0`. Write it as a
+  literal.
+- Assert the total `outbound` size, so a stray third frame on this path is caught. `TASK-021410`
+  dropped the old size assertion because the count moved from one to two; restore it at two.
+
+**Corrected before dispatch, and the correction is the interesting part.** This ticket first asked
+for the frame to be addressed to the seat that *stayed*. That is backwards: `RoomRegistry.resume`
+always sends the returning seat a frame **about its opponent** — `Addressed(seat,
+presenceOf(otherSeat, now))` — and only tells the seat that stayed when the returner `wasAway`. The
+review that found this gap hypothesised `Addressed(seat, presenceOf(seat, now))`, a wrong *value*
+rather than a wrong address; `OpponentPresence` carries no seat field, so the two differ only in the
+presence they report.
+
+**And that mixup is undetectable in this fixture.** The host resumes without having been away, so
+`presenceOf(guest)` and `presenceOf(host)` are both `PRESENT`. Asserting the address and the count
+is all this fixture can prove. The value mixup is already caught on the running-room path by
+`TASK-021410`'s `theReturningSeatIsToldTheOpponentIsAway`, where the two presences differ — say so
+in the test's comment rather than implying this assertion closes it.
 
 ## Out of scope
 
@@ -64,11 +76,11 @@ ticket rather than as a silent extra assertion — and this is its consequence.
 
 | Test | Proves |
 | --- | --- |
-| `aFinishedRoomResumesAsItsOutcome` (extended) | a FINISHED room's resume carries exactly one `OpponentPresence`, addressed to the seat that stayed, alongside its one `DuelFinished` — so a seat told about itself on this path fails |
+| `aFinishedRoomResumesAsItsOutcome` (extended) | a FINISHED room's resume carries exactly one `OpponentPresence`, addressed to the returning seat and reading `PRESENT`, alongside its one `DuelFinished`, and nothing else |
 
 ## Acceptance criteria
 
-- [ ] `aFinishedRoomResumesAsItsOutcome` asserts the `OpponentPresence` frame's address as a literal
+- [ ] `aFinishedRoomResumesAsItsOutcome` asserts the `OpponentPresence` frame's address as the literal `0`
 - [ ] It asserts the total `outbound` size
 - [ ] Its existing `DuelFinished` and no-`Snapshot` assertions are unchanged
 - [ ] No production file changes
