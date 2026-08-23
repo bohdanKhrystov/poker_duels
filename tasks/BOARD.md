@@ -30,6 +30,18 @@ path — split into eighteen tickets. It starts with a migration rather than wit
 chain, because all three schema ADRs number their migration *at merge time* and one of them has to
 go first.
 
+**`STORY-0405` unparked on 2026-08-23** — `STORY-0213` and `STORY-0214` both merged, freeing
+`ADR-0047`'s one-bumping-branch-at-a-time lock — and split into **twenty-four** tickets. It is the
+root of the epic's remaining eight stories, so the split was sized by the `ADR-0070` probe rather
+than by estimate: **two** atomic tickets, each measured against the full gate set until it exited
+`0`. `TASK-040502` (the wire and the version) is **27** files; `TASK-040511` (`ADR-0030` §4's
+player-keyed profile read, and every route resolving identity through one resolver) is **25**. In
+both, failures appeared *after* the compiler was green — a golden TypeScript declaration, three
+`vitest` frame assertions, a route double's recorded key, and ten files' worth of ktlint — which is
+the clearest evidence yet that a red run names a prefix and not a set. The split also corrects two
+sentences in the story: the bump is `5`, not `3`, and it is the **second** ticket rather than the
+last, because `ProtocolVersionLedgerTest` will not let a wire field land before its number.
+
 `EPIC-05` (ranking, duel coins and leaderboard) was written on 2026-08-19, parked the same day, and
 **unparked the same day**: `DEC-055` — *what is a season, and what does one do to a duel coin?* — is
 answered by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md).
@@ -73,7 +85,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 11 of 14 stories done; `STORY-0309` is split into **twenty** and **runs** now that `STORY-0213` has merged; `STORY-0313` still waits on `EPIC-02`'s `STORY-0214`; `STORY-0314` is unblocked by `ADR-0073` and waits to be split | v0.1 |
-| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **parked** — 9 of 17 stories done (`STORY-0401`–`0404`, `0408`–`0411`, `0413`). The remaining 8 all trace to `STORY-0405`, which depends on `STORY-0213` and `STORY-0214` — EPIC-02 work this run was not authorised to start | v0.2 |
+| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **in progress** — 9 of 17 stories done; `STORY-0405` unparked on 2026-08-23 when `STORY-0213` and `STORY-0214` merged, and is **split into 24 tickets** with `TASK-040501` startable. It raised `DEC-069` (the sign-in budget's two numbers, the architect's), which blocks one ticket at the end of the chain and nothing else | v0.2 |
 | [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
@@ -646,6 +658,7 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
+| DEC-069 | **The architect's** — what are the two numbers of the **sign-in** attempt budget, and does an over-budget attempt still count against its own window? [`ADR-0027`](../docs/adr/ADR-0027-the-session-outranks-the-device-id.md) §6 fixes the mechanism, the key and the answer and fixes **no numbers**; [`ADR-0055`](../docs/adr/ADR-0055-sign-up-is-budgeted-by-address-and-over-budget-says-so.md) §2's pair is sign-up's alone and its *meter the spending, not the failure* is a stated departure. The size is load-bearing: [`ADR-0048`](../docs/adr/ADR-0048-a-password-has-one-rule-and-it-is-length.md) accepts `password` and names this budget plus Argon2id as the whole defence, and sign-in — unlike a once-in-a-lifetime sign-up — is repeated from shared addresses, so `ADR-0055` §4's accepted NAT lockout does not transfer. Blocks `TASK-040523` only | [`STORY-0405`](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) | before `EPIC-07` exposes the endpoint |
 
 `DEC-068` → [`ADR-0073`](../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md)
 on 2026-08-23 — **the waiting screen says *Back to the lobby*, and the room stays open.** Derived
@@ -1708,7 +1721,31 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040412](tasks/TASK-040412-one-credential-row-and-the-player-table-untouched.md) One credential row, and the player table untouched across it | S | **done** |
 | | [TASK-040413](tasks/TASK-040413-the-coin-a-duel-paid-survives-the-sign-up.md) The coin a duel paid is still there after the sign-up | S | **done** |
 | | [TASK-040414](tasks/TASK-040414-the-document-names-the-sign-up-endpoint.md) The document names the sign-up endpoint, and a test agrees with the code | S | **done** |
-| [STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md) Sign-in, the session, and what the socket presents (needs `STORY-0213`, `STORY-0214`) | | | backlog |
+| **[STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md)** Sign-in, the session, and what the socket presents | | | **ready** — split into 24 on 2026-08-23, raised `DEC-069` |
+| | [TASK-040501](tasks/TASK-040501-the-version-is-answered-before-an-identity-is-minted.md) The version question is answered before any identity is minted | S | ready |
+| | [TASK-040502](tasks/TASK-040502-the-wire-carries-a-token-names-the-player-and-the-version-takes-its-step.md) The wire carries a session token, names the player, and PROTOCOL_VERSION takes its step | S | backlog |
+| | [TASK-040503](tasks/TASK-040503-a-mismatched-version-mints-nothing.md) A version mismatch mints no device id and creates no profile | XS | backlog |
+| | [TASK-040504](tasks/TASK-040504-a-session-token-is-256-bits-url-safe-and-unpadded.md) A session token is 256 bits, URL-safe and unpadded | XS | backlog |
+| | [TASK-040505](tasks/TASK-040505-the-session-store-is-a-port-and-a-double-that-knows-nothing.md) The session store is a port, and a double that has issued nothing | XS | backlog |
+| | [TASK-040506](tasks/TASK-040506-issue-writes-one-row-a-digest-and-thirty-days.md) issue writes one row, a digest, and thirty days from the injected clock | S | backlog |
+| | [TASK-040507](tasks/TASK-040507-playerof-reads-through-the-expiry.md) playerOf reads through the expiry, and a clock thirty days on refuses | S | backlog |
+| | [TASK-040508](tasks/TASK-040508-delete-removes-the-row-and-says-the-same-thing-twice.md) delete removes the row, and says the same thing twice | XS | backlog |
+| | [TASK-040509](tasks/TASK-040509-the-directory-finds-a-profile-without-creating-one.md) The directory can find a profile without creating one | S | backlog |
+| | [TASK-040510](tasks/TASK-040510-one-resolver-and-an-invalid-session-never-falls-back.md) One resolver, and an invalid session never falls back to the device | S | backlog |
+| | [TASK-040511](tasks/TASK-040511-the-read-path-follows-the-resolved-player.md) The profile read follows the resolved player, and every route resolves the same way | S | backlog |
+| | [TASK-040512](tasks/TASK-040512-a-signed-in-request-reads-the-sessions-profile.md) A signed-in request reads the session's profile, and the device beside it is ignored | S | backlog |
+| | [TASK-040513](tasks/TASK-040513-the-sign-in-body-is-two-fields-and-the-answer-carries-the-token-once.md) The sign-in body is two fields, and its answer carries the token exactly once | XS | backlog |
+| | [TASK-040514](tasks/TASK-040514-sign-in-the-credential-decides-and-a-stranger-learns-nothing.md) POST /api/auth/sign-in — the credential decides, and a stranger learns nothing | S | backlog |
+| | [TASK-040515](tasks/TASK-040515-sign-out-is-one-delete-and-two-hundred-and-four-either-way.md) POST /api/auth/sign-out — one delete, 204 either way, and no socket closes | XS | backlog |
+| | [TASK-040516](tasks/TASK-040516-the-document-names-sign-in-and-sign-out.md) The document names sign-in and sign-out, and the test that reads it keeps its bearings | S | backlog |
+| | [TASK-040517](tasks/TASK-040517-the-socket-is-handed-the-resolver.md) The socket's dependencies carry the resolver | XS | backlog |
+| | [TASK-040518](tasks/TASK-040518-the-socket-presents-the-session-and-an-invalid-one-is-refused.md) The socket presents the session, and an invalid one is refused rather than downgraded | S | backlog |
+| | [TASK-040519](tasks/TASK-040519-a-budget-is-a-rolling-window-and-over-budget-still-counts.md) A budget is a rolling window, and an over-budget attempt still counts | S | backlog |
+| | [TASK-040520](tasks/TASK-040520-the-sign-up-budget-is-two-config-values.md) The sign-up budget is two configuration values with defaults | XS | backlog |
+| | [TASK-040521](tasks/TASK-040521-sign-up-over-budget-answers-429.md) Sign-up over budget answers 429, and the budget meters the hash | S | backlog |
+| | [TASK-040522](tasks/TASK-040522-the-document-names-the-seventh-answer.md) The document names sign-up's seventh answer | XS | backlog |
+| | [TASK-040523](tasks/TASK-040523-sign-in-carries-a-budget-of-its-own.md) Sign-in carries a budget of its own | S | **blocked** — `DEC-069` |
+| | [TASK-040524](tasks/TASK-040524-signed-in-here-reading-there-against-the-database.md) Signed in here, reading there — the whole flow against the database | S | backlog |
 | [STORY-0406](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) The claim proven, and the device binding revoked (needs `STORY-0405`) | | | backlog |
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
 | **[STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md)** Duel history, paged over the whole record | | | **done** |
