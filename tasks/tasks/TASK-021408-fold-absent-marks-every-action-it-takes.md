@@ -20,7 +20,7 @@ verify:
 ## Goal
 
 Every action the server submits for an absent seat is labelled as the server's:
-`ActedForAbsentSeat(seat, handNumber, actionSequence, action)`, to **both** seats, immediately
+`ActedForAbsent(seat, handNumber, actionSequence, action)`, to **both** seats, immediately
 before the frames that action produced — and only when the action actually moved the duel.
 
 This is the deliberate reversal `ADR-0028` records: `ADR-0023`'s wire-indistinguishability property
@@ -40,7 +40,7 @@ Read `duel/Addressed.kt`, `duel/DuelTurn.kt` (`decisionPointOf`), and
 
 - In `foldAbsent`'s loop, after `act` returns and **only when the runner moved**, prepend two
   frames — one `Addressed(0, mark)` and one `Addressed(1, mark)` carrying the same
-  `ActedForAbsentSeat` — before that call's own `outbound`. The mark's fields are the ones the loop
+  `ActedForAbsent` — before that call's own `outbound`. The mark's fields are the ones the loop
   already holds: the absent `seat`, `hand.state.handNumber`, the `actionSequence` it put on the
   `Act`, and `ActionType.FOLD` or `ActionType.CHECK` to match the `PlayerAction` it chose.
 - **The check is marked exactly as the fold is.** `ADR-0023` means a timeout is often a check;
@@ -81,11 +81,11 @@ also passes unchanged.
 
 | Test | Proves |
 | --- | --- |
-| `anAbsentFoldIsMarkedAsTheServersOwn` | on `oneHand` with `absent = setOf(seatToAct)`, the new frames contain an `ActedForAbsentSeat` whose `seat` is `seatToAct`, whose `action` is `FOLD`, and whose `handNumber` is `1` |
+| `anAbsentFoldIsMarkedAsTheServersOwn` | on `oneHand` with `absent = setOf(seatToAct)`, the new frames contain an `ActedForAbsent` whose `seat` is `seatToAct`, whose `action` is `FOLD`, and whose `handNumber` is `1` |
 | `theMarkGoesToBothSeats` | that same mark appears once addressed to seat `0` and once to seat `1`, and the two payloads are equal |
 | `theMarkPrecedesTheFramesTheActionProduced` | the index of the first mark is lower than the index of the first `Events` or `Snapshot` frame the same action produced — by index, not by presence |
 | `theMarkNamesTheDecisionPointTheActionWasSentFor` | the mark's `actionSequence` equals the sequence `foldAbsent` put on the `Act`, so a client can attach the label at coordinates it already holds |
-| `aStepThatFoldsNothingCarriesNoMark` | on the three left-alone fixtures, `result.outbound` contains no `ActedForAbsentSeat` at all — stated as its own assertion rather than left implicit in the equality |
+| `aStepThatFoldsNothingCarriesNoMark` | on the three left-alone fixtures, `result.outbound` contains no `ActedForAbsent` at all — stated as its own assertion rather than left implicit in the equality |
 | `everyActionInARunAwayDuelIsMarked` | on `threeHands` with `absent = setOf(0, 1)`, the number of marks addressed to seat `0` equals the number of actions in `runner.log.hands.flatMap { it.actions }` — every action taken, not just the last |
 
 ## Acceptance criteria

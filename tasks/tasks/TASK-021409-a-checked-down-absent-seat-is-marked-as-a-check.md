@@ -59,7 +59,7 @@ the two fixtures above keep passing as they are.
 
 | Test | Proves |
 | --- | --- |
-| `anAbsentBigBlindsOptionIsMarkedAsACheck` | at the big blind's option, with `FOLD` not legal, the frames `foldAbsent` added contain an `ActedForAbsentSeat` whose `action` is `ActionType.CHECK` and whose `seat` is `bigBlind` |
+| `anAbsentBigBlindsOptionIsMarkedAsACheck` | at the big blind's option, with `FOLD` not legal, the frames `foldAbsent` added contain an `ActedForAbsent` whose `action` is `ActionType.CHECK` and whose `seat` is `bigBlind` |
 | `anAbsentSeatOnACheckedStreetIsMarkedAsACheck` | first to act on the turn after a checked-through flop, with `FOLD` not legal, the mark's `action` is `CHECK` and its `seat` is `turnFirst` |
 | `theTwoOutcomesAreMarkedDifferently` | in one test, a fold spot yields a mark with `action == FOLD` and a check spot a mark with `action == CHECK` — two inputs, so a constant `action` cannot pass either |
 
