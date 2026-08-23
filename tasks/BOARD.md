@@ -481,6 +481,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021409](tasks/TASK-021409-a-checked-down-absent-seat-is-marked-as-a-check.md) A checked-down absent seat is marked as a check, where a fold is not legal | XS | backlog |
 | | [TASK-021410](tasks/TASK-021410-a-resume-tells-both-sides-where-they-stand.md) A resume tells the returning seat where its opponent stands, and the seat that stayed only if it changed | S | backlog |
 | | [TASK-021411](tasks/TASK-021411-the-other-seat-drops-and-every-frame-names-the-mirror.md) The host is the seat that goes, and every presence frame names the mirror image | S | backlog |
+| | [TASK-021412](tasks/TASK-021412-the-disconnection-kdoc-says-what-outbound-carries.md) Disconnection's KDoc says what outbound carries, not that it is empty | XS | backlog |
 
 **`STORY-0214` is split into eleven tickets and starts on `TASK-021401`.** The chain is linear.
 `TASK-021401` is startable today because it is the one ticket needing none of `ADR-0028`'s new
