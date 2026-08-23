@@ -1636,7 +1636,7 @@ written and is still true.
 | | [TASK-031207](tasks/TASK-031207-the-result-states-the-outcome-the-last-frame-carried.md) The result states the outcome the script's last frame carried, from either seat | S | **done** |
 | | [TASK-031208](tasks/TASK-031208-no-rival-card-reaches-the-screen-before-the-reveal.md) No rival card reaches the screen before the frame that reveals it | S | **done** |
 | | [TASK-031209](tasks/TASK-031209-a-hand-won-without-a-showdown-shows-no-rival-card.md) A hand won without a showdown shows no rival card at all | S | **done** |
-| [STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent (needs `STORY-0214`) | **blocked** |
+| [STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent (`STORY-0214` landed 2026-08-24) | **ready** |
 | [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (`ADR-0073` fixed its words) | **ready** — not yet split |
 
 ---
