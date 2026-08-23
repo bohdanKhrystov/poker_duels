@@ -1543,8 +1543,8 @@ written and is still true.
 | | [TASK-030903](tasks/TASK-030903-the-snapshot-after-a-finish-is-the-rematch.md) The snapshot after a finish is the rematch, and clears the duel that ended | XS | **done** |
 | | [TASK-030904](tasks/TASK-030904-a-rematch-the-room-cannot-take-yet-is-recorded-nowhere.md) A rematch the room cannot take yet is recorded nowhere | XS | **done** |
 | | [TASK-030905](tasks/TASK-030905-whose-rematch-offer-it-is.md) Whose rematch offer it is, read from the seat the server gave this client | XS | **done** |
-| | [TASK-030906](tasks/TASK-030906-the-result-panel-shows-the-rematch-it-is-handed.md) The result panel shows the rematch it is handed, and adds none of its own | S | **ready** |
-| | [TASK-030907](tasks/TASK-030907-the-rematch-control-offers-one-press.md) The rematch control offers one press, and a second press is harmless | S | backlog |
+| | [TASK-030906](tasks/TASK-030906-the-result-panel-shows-the-rematch-it-is-handed.md) The result panel shows the rematch it is handed, and adds none of its own | S | **done** |
+| | [TASK-030907](tasks/TASK-030907-the-rematch-control-offers-one-press.md) The rematch control offers one press, and a second press is harmless | S | **ready** |
 | | [TASK-030908](tasks/TASK-030908-the-control-says-who-has-offered.md) The control says who has offered, and reads it from either side | S | backlog |
 | | [TASK-030909](tasks/TASK-030909-a-room-that-is-gone-retires-the-control.md) A room that is gone retires the control and says so | XS | backlog |
 | | [TASK-030910](tasks/TASK-030910-the-result-screen-hands-over-the-control-and-the-press-reaches-the-wire.md) The result screen hands over the control, and the press reaches the wire | S | backlog |

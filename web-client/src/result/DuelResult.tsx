@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import type { DuelOutcome } from "../protocol";
 import { CoinMark } from "./CoinMark";
 import {
@@ -20,6 +20,13 @@ import { formatChips } from "../table/chips";
 export function DuelResult(props: {
   outcome: DuelOutcome;
   mySeat: number | null;
+  /**
+   * An optional rematch control. A panel with no control is a real state, not an
+   * omission — a client holding no seat has nothing to press, and every test
+   * that is about the verdict passes nothing. The panel does not know why;
+   * it renders what it is handed.
+   */
+  rematch?: ReactNode;
 }): ReactElement {
   const verdict = verdictOf(props.outcome, props.mySeat);
   const coin = coinLine(verdict);
@@ -42,6 +49,7 @@ export function DuelResult(props: {
       <p className="text-small text-text-muted">
         {metaLine(props.outcome, props.mySeat)}
       </p>
+      {props.rematch}
       <a
         className="rounded-medium bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         href="/"
