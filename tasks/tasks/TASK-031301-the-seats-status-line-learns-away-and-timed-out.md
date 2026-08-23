@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031301
 title: The seat's status line learns Away and Timed out, and where they rank
 type: task
-status: ready
+status: done
 parent: STORY-0313
 module: web-client
 estimate: S
