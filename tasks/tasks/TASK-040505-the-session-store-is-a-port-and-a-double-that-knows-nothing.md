@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040505
 title: The session store is a port, and a double that has issued nothing
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: XS
