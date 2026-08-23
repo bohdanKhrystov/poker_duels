@@ -903,4 +903,58 @@ describe("the duel state", () => {
     expect(stateAfterSnapshot.rematchOffers).toEqual([]);
     expect(stateAfterSnapshot.outcome).toBeNull();
   });
+
+  it("a rematch the room cannot take yet enters no state", () => {
+    const outcome = {
+      winner: 0,
+      handsPlayed: 5,
+      finalStacks: [1500, 500],
+    } as const;
+    const stateAfterFinish = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "DuelFinished",
+        outcome,
+      },
+    );
+    const stateAfterOffer = duelState.applyServerMessage(stateAfterFinish, {
+      type: "RematchOffered",
+      seat: 1,
+    });
+    expect(stateAfterOffer.rematchOffers).toEqual([1]);
+    const state = duelState.applyServerMessage(stateAfterOffer, {
+      type: "Failure",
+      error: "REMATCH_UNAVAILABLE",
+    });
+    expect(state).toBe(stateAfterOffer);
+    expect(state.refusal).toBeNull();
+    expect(state.rematchOffers).toEqual([1]);
+  });
+
+  it("every other refusal is still recorded", () => {
+    const outcome = {
+      winner: 0,
+      handsPlayed: 5,
+      finalStacks: [1500, 500],
+    } as const;
+    const stateAfterFinish = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "DuelFinished",
+        outcome,
+      },
+    );
+    const stateAfterOffer = duelState.applyServerMessage(stateAfterFinish, {
+      type: "RematchOffered",
+      seat: 1,
+    });
+    expect(stateAfterOffer.rematchOffers).toEqual([1]);
+    const state = duelState.applyServerMessage(stateAfterOffer, {
+      type: "Failure",
+      error: "ROOM_FULL",
+    });
+    expect(state).not.toBe(stateAfterOffer);
+    expect(state.refusal).toBe("ROOM_FULL");
+    expect(state.rematchOffers).toEqual([1]);
+  });
 });
