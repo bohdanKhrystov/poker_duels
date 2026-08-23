@@ -6,6 +6,7 @@ import duels.poker.engine.game.ActionType
 import duels.poker.engine.game.PlayerAction
 import duels.poker.engine.game.legalActions
 import duels.poker.server.protocol.Act
+import duels.poker.server.protocol.ServerMessage
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import kotlin.test.assertEquals
@@ -180,5 +181,114 @@ internal class AbsentSeatsTest {
 
         assertEquals(finished.runner, result.runner)
         assertEquals(finished.outbound, result.outbound)
+    }
+
+    @Test
+    fun anAbsentFoldIsMarkedAsTheServersOwn() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val seatToAct = step.runner.hand!!.state.seatToAct!!
+
+        val result = foldAbsent(step, setOf(seatToAct), seeds)
+        val newFrames = result.outbound.drop(step.outbound.size)
+        // Sent to both seats identically (proven separately by theMarkGoesToBothSeats), so the
+        // first copy speaks for both.
+        val mark = newFrames.map { it.message }
+            .filterIsInstance<ServerMessage.ActedForAbsent>()
+            .first()
+
+        assertEquals(seatToAct, mark.seat)
+        assertEquals(ActionType.FOLD, mark.action)
+        assertEquals(1, mark.handNumber)
+    }
+
+    @Test
+    fun theMarkGoesToBothSeats() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val seatToAct = step.runner.hand!!.state.seatToAct!!
+
+        val result = foldAbsent(step, setOf(seatToAct), seeds)
+        val marks = result.outbound.drop(step.outbound.size)
+            .filter { it.message is ServerMessage.ActedForAbsent }
+
+        val toSeat0 = marks.single { it.seat == 0 }
+        val toSeat1 = marks.single { it.seat == 1 }
+        assertEquals(toSeat0.message, toSeat1.message)
+    }
+
+    @Test
+    fun theMarkPrecedesTheFramesTheActionProduced() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val seatToAct = step.runner.hand!!.state.seatToAct!!
+
+        val result = foldAbsent(step, setOf(seatToAct), seeds)
+        val newFrames = result.outbound.drop(step.outbound.size)
+
+        val firstMark = newFrames.indexOfFirst { it.message is ServerMessage.ActedForAbsent }
+        val firstStateFrame = newFrames.indexOfFirst {
+            it.message is ServerMessage.Events || it.message is ServerMessage.Snapshot
+        }
+
+        assertTrue(firstMark >= 0)
+        assertTrue(firstStateFrame >= 0)
+        assertTrue(firstMark < firstStateFrame)
+    }
+
+    @Test
+    fun theMarkNamesTheDecisionPointTheActionWasSentFor() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val button = step.runner.hand!!.state.seatToAct!!
+        val bigBlind = 1 - button
+        val afterCall = actOn(step, button, PlayerAction.Call(button))
+        // Not the hand's very first decision point, so this is not zero — a mark that always
+        // carried 0 would pass a test that never checked anything else.
+        val decisionPointSequence = decisionPointOf(afterCall.runner.hand!!.log.events)!!.sequence
+        assertTrue(decisionPointSequence > 0)
+
+        val result = foldAbsent(afterCall, setOf(bigBlind), seeds)
+        val newFrames = result.outbound.drop(afterCall.outbound.size)
+        val mark = newFrames.map { it.message }
+            .filterIsInstance<ServerMessage.ActedForAbsent>()
+            .first()
+
+        assertEquals(decisionPointSequence, mark.actionSequence)
+        // Literal, not `bigBlind`: this test constructs the interesting seat (1) on purpose, and
+        // must actually check the mark's seat field to close the gap a hardcoded 0 would leave.
+        assertEquals(1, mark.seat)
+    }
+
+    @Test
+    fun aStepThatFoldsNothingCarriesNoMark() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val seatToAct = step.runner.hand!!.state.seatToAct!!
+        // Finished by a fold a seat sent for itself, through act(), never through foldAbsent — so
+        // this fixture's own history carries no mark for the third call to be left alone against.
+        val finished = actOn(step, seatToAct, PlayerAction.Fold(seatToAct))
+        assertNotNull(finished.runner.outcome)
+
+        val leftAlone = listOf(
+            foldAbsent(step, setOf(1 - seatToAct), seeds),
+            foldAbsent(step, emptySet(), seeds),
+            foldAbsent(finished, setOf(0, 1), seeds),
+        )
+
+        leftAlone.forEach { result ->
+            assertTrue(result.outbound.none { it.message is ServerMessage.ActedForAbsent })
+        }
+    }
+
+    @Test
+    fun everyActionInARunAwayDuelIsMarked() {
+        val step = startDuel(threeHands, buttonSeat = 0, seed = 7L)
+
+        val result = foldAbsent(step, setOf(0, 1), seeds)
+        val newFrames = result.outbound.drop(step.outbound.size)
+        val marks = newFrames.filter { it.message is ServerMessage.ActedForAbsent }
+        val totalActions = result.runner.log.hands.flatMap { it.actions }.size
+
+        assertEquals(totalActions, marks.count { it.seat == 0 })
+        // Both seats are absent through the whole run, and the button rotates hand to hand, so
+        // the mark's own seat field — not just its two delivery addresses — must take both values.
+        val markedSeats = marks.mapNotNull { (it.message as? ServerMessage.ActedForAbsent)?.seat }.toSet()
+        assertEquals(setOf(0, 1), markedSeats)
     }
 }

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021409
 title: A checked-down absent seat is marked as a check, where a fold is not legal
 type: task
-status: backlog
+status: ready
 parent: STORY-0214
 module: poker-server
 estimate: XS
