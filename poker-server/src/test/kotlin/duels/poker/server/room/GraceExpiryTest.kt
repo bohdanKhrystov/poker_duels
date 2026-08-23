@@ -323,6 +323,32 @@ internal class GraceExpiryTest {
         assertEquals(presenceFrame, expiries.single().outbound.first())
     }
 
+    /**
+     * The pairing half of [noFrameGoesToTheSeatThatExpired]: there, the seat that expires is on
+     * turn; here it is off turn, so between the two, "no presence reaches the seat that just
+     * expired" is proved for both concrete seat numbers, not just whichever the seed puts on turn.
+     */
+    @Test
+    fun theSeatOffTurnExpiringTellsTheSeatOnTurn() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        val onTurn = registry.get(room.code)!!.runner!!.hand!!.state.seatToAct!!
+        val offTurn = 1 - onTurn
+        registry.disconnect(room.code, seatedPlayer(offTurn, host, guest))
+
+        clock.advance(30_000)
+        val expiries = registry.expireGracePeriods()
+
+        assertEquals(1, expiries.size)
+        val outbound = expiries.single().outbound
+        assertTrue(outbound.contains(Addressed(onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT, null))))
+        assertTrue(outbound.none { (seat, message) -> seat == offTurn && message is ServerMessage.OpponentPresence })
+    }
+
     @Test
     fun theAbsentMarkPrecedesTheFramesTheFoldProduced() = runBlocking {
         val clock = MutableClock()

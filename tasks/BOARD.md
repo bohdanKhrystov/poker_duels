@@ -480,8 +480,8 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021408](tasks/TASK-021408-fold-absent-marks-every-action-it-takes.md) foldAbsent marks every action it takes for an absent seat, to both seats | S | **done** |
 | | [TASK-021409](tasks/TASK-021409-a-checked-down-absent-seat-is-marked-as-a-check.md) A checked-down absent seat is marked as a check, where a fold is not legal | XS | **done** |
 | | [TASK-021410](tasks/TASK-021410-a-resume-tells-both-sides-where-they-stand.md) A resume tells the returning seat where its opponent stands, and the seat that stayed only if it changed | S | **done** |
-| | [TASK-021411](tasks/TASK-021411-the-other-seat-drops-and-every-frame-names-the-mirror.md) The host is the seat that goes, and every presence frame names the mirror image | S | **ready** |
-| | [TASK-021412](tasks/TASK-021412-the-disconnection-kdoc-says-what-outbound-carries.md) Disconnection's KDoc says what outbound carries, not that it is empty | XS | backlog |
+| | [TASK-021411](tasks/TASK-021411-the-other-seat-drops-and-every-frame-names-the-mirror.md) The host is the seat that goes, and every presence frame names the mirror image | S | **done** |
+| | [TASK-021412](tasks/TASK-021412-the-disconnection-kdoc-says-what-outbound-carries.md) Disconnection's KDoc says what outbound carries, not that it is empty | XS | **ready** |
 | | [TASK-021413](tasks/TASK-021413-a-finished-resume-names-the-other-seat-too.md) A finished room's resume names the other seat, and the test says so | XS | backlog |
 
 **`STORY-0214` is split into eleven tickets and starts on `TASK-021401`.** The chain is linear.

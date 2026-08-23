@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021411
 title: The host is the seat that goes, and every presence frame names the mirror image
 type: task
-status: ready
+status: done
 parent: STORY-0214
 module: poker-server
 estimate: S
@@ -68,7 +68,7 @@ Read nothing new: every fixture these tests need is already in the three files.
 | Test | File | Proves |
 | --- | --- | --- |
 | `aClosingHostTellsTheGuestItIsAway` | `DuelSocketDisconnectTest` | after `setup.host.close()`, the **guest**'s drained frames carry exactly one `OpponentPresence(AWAY, TEST_DISCONNECT_GRACE_MILLIS)`, and the host's socket carried none — the mirror of `aClosingSocketTellsTheOpponentItIsAway` |
-| `theSeatOffTurnExpiringTellsTheSeatOnTurn` | `GraceExpiryTest` | dropping and expiring `seatedPlayer(offTurn, host, guest)` puts `OpponentPresence(ABSENT, null)` addressed to `onTurn`, and none addressed to `offTurn` — the mirror of `theSeatThatStayedIsToldTheOtherIsAbsent`, whose expired seat is `onTurn` |
+| `theSeatOffTurnExpiringTellsTheSeatOnTurn` | `GraceExpiryTest` | dropping and expiring `seatedPlayer(offTurn, host, guest)` puts `OpponentPresence(ABSENT, null)` addressed to `onTurn`, and none addressed to `offTurn` — the mirror of `theAbsentMarkPrecedesTheFramesTheFoldProduced`, whose expired seat is `onTurn` — corrected at landing: this row first named `theSeatThatStayedIsToldTheOtherIsAbsent`, whose expired seat is `offTurn`, so it was not the mirror of anything. The literal setup in this row was unambiguous and was built to |
 | `aReturningHostIsToldAndTellsTheGuest` | `RoomResumeTest` | with the **host** dropped and resuming, `outbound` carries `OpponentPresence` addressed to seat 0 (the returning host, about the guest) and one addressed to seat 1 (the guest, about the host) — the mirror of `theReturningSeatIsToldTheOpponentIsPresent` |
 
 ## Acceptance criteria

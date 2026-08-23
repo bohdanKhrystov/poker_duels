@@ -402,6 +402,38 @@ class DuelSocketDisconnectTest {
         }
     }
 
+    /**
+     * The mirror of [aClosingSocketTellsTheOpponentItIsAway]: every test above closes the guest,
+     * so this one closes the host instead — the address the guest receives on, and the host's own
+     * silence about itself, are what a socket-path fixed to seat 0 would get wrong.
+     */
+    @Test
+    fun aClosingHostTellsTheGuestItIsAway(): Unit = testApplication {
+        val rooms = testRoomRegistry(MutableClock())
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val setup = client.startDuel()
+
+            setup.host.close()
+            awaitRoom(rooms, setup.code) { it.isPaused }
+
+            val presence = setup.guest.drainServerMessages().filterIsInstance<ServerMessage.OpponentPresence>()
+
+            assertEquals(1, presence.size)
+            assertEquals(SeatPresence.AWAY, presence.single().presence)
+            assertEquals(TEST_DISCONNECT_GRACE_MILLIS, presence.single().graceRemainingMillis)
+
+            val hostPresence =
+                setup.host.drainServerMessagesAfterOwnClose().filterIsInstance<ServerMessage.OpponentPresence>()
+            assertTrue(hostPresence.isEmpty())
+        }
+    }
+
     @Test
     fun theClosingSocketIsToldNothing(): Unit = testApplication {
         val rooms = testRoomRegistry(MutableClock())
