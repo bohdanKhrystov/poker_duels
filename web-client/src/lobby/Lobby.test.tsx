@@ -61,14 +61,16 @@ afterEach(() => {
 
 function renderLobby(store: DuelStore = createDuelStore()): {
   send: ReturnType<typeof vi.fn>;
+  forgetRoom: ReturnType<typeof vi.fn>;
 } {
   const send = vi.fn();
+  const forgetRoom = vi.fn();
   render(
-    <DuelProvider store={store} send={send}>
+    <DuelProvider store={store} send={send} forgetRoom={forgetRoom}>
       <Lobby />
     </DuelProvider>,
   );
-  return { send };
+  return { send, forgetRoom };
 }
 
 function renderLobbyWithProfile(
@@ -711,5 +713,23 @@ describe("the lobby", () => {
 
     expect(send).toHaveBeenCalledTimes(2);
     expect(send).toHaveBeenLastCalledWith({ type: "OfferRematch" });
+  });
+
+  it("forgets the room when the player takes the way back", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    const { send, forgetRoom } = renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 1, handsPlayed: 3, finalStacks: [0, 1000] },
+      });
+    });
+
+    fireEvent.click(screen.getByRole("link", { name: "Back to the lobby" }));
+
+    expect(forgetRoom).toHaveBeenCalledOnce();
+    expect(send).not.toHaveBeenCalled();
   });
 });
