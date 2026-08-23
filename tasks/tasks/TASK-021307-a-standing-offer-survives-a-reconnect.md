@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021307
 title: A standing offer is restated to a returning socket, after its DuelFinished
 type: task
-status: backlog
+status: ready
 parent: STORY-0213
 module: poker-server
 estimate: S

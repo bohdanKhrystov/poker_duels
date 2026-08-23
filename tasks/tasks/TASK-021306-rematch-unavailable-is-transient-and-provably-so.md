@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021306
 title: REMATCH_UNAVAILABLE is transient, and the same offer succeeds afterwards
 type: task
-status: ready
+status: done
 parent: STORY-0213
 module: poker-server
 estimate: S
