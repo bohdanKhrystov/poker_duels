@@ -469,7 +469,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021306](tasks/TASK-021306-rematch-unavailable-is-transient-and-provably-so.md) REMATCH_UNAVAILABLE is transient, and the same offer succeeds afterwards | S | **done** |
 | | [TASK-021307](tasks/TASK-021307-a-standing-offer-survives-a-reconnect.md) A standing offer is restated to a returning socket, after its DuelFinished | S | **done** |
 | | [TASK-021308](tasks/TASK-021308-the-guest-offers-and-the-frame-names-seat-one.md) The guest offers first, and both frames name seat 1 | XS | **done** |
-| **[STORY-0214](stories/STORY-0214-the-wire-names-an-absent-opponent.md)** The wire names an absent opponent — *schema 2* | | | **ready** |
+| **[STORY-0214](stories/STORY-0214-the-wire-names-an-absent-opponent.md)** The wire names an absent opponent — *schema 2* | | | **done** |
 | | [TASK-021401](tasks/TASK-021401-disconnect-answers-with-a-room-and-its-frames.md) RoomRegistry.disconnect answers with a room and the frames it produced | S | **done** |
 | | [TASK-021402](tasks/TASK-021402-the-wire-names-presence-and-the-version-takes-its-step.md) OpponentPresence and ActedForAbsent reach the wire, and PROTOCOL_VERSION takes its step | S | **done** |
 | | [TASK-021403](tasks/TASK-021403-room-presence-of-projects-the-three-states.md) Room.presenceOf projects a seat's presence from state the room already keeps | S | **done** |
@@ -482,7 +482,7 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021410](tasks/TASK-021410-a-resume-tells-both-sides-where-they-stand.md) A resume tells the returning seat where its opponent stands, and the seat that stayed only if it changed | S | **done** |
 | | [TASK-021411](tasks/TASK-021411-the-other-seat-drops-and-every-frame-names-the-mirror.md) The host is the seat that goes, and every presence frame names the mirror image | S | **done** |
 | | [TASK-021412](tasks/TASK-021412-the-disconnection-kdoc-says-what-outbound-carries.md) Disconnection's KDoc says what outbound carries, not that it is empty | XS | **done** |
-| | [TASK-021413](tasks/TASK-021413-a-finished-resume-names-the-other-seat-too.md) A finished room's resume names the other seat, and the test says so | XS | **ready** |
+| | [TASK-021413](tasks/TASK-021413-a-finished-resume-names-the-other-seat-too.md) A finished room's resume names the other seat, and the test says so | XS | **done** |
 
 **`STORY-0214` is split into eleven tickets and starts on `TASK-021401`.** The chain is linear.
 `TASK-021401` is startable today because it is the one ticket needing none of `ADR-0028`'s new
