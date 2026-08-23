@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030917
 title: The way back calls the forget it is handed, and still navigates
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: XS
