@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021407
 title: Expiry says ABSENT before the fold it explains, and an abandoned room says nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0214
 module: poker-server
 estimate: S
