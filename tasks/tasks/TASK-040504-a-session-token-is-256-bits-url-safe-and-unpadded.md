@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040504
 title: A session token is 256 bits, URL-safe and unpadded
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: XS

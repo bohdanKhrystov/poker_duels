@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040503
 title: A version mismatch mints no device id and creates no profile
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: XS

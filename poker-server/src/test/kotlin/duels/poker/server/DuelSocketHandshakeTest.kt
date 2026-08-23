@@ -8,6 +8,7 @@ import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.protocolJson
+import duels.poker.server.session.InMemoryPlayerDirectory
 import duels.poker.server.session.fixedDeviceIds
 import duels.poker.server.session.testDeps
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -164,6 +165,70 @@ class DuelSocketHandshakeTest {
                 session.nextServerMessage(),
             )
             assertEquals(CloseReason.Codes.VIOLATED_POLICY.code, session.closeReason.await()?.code)
+        }
+    }
+
+    @Test
+    fun aMismatchedVersionCreatesNoProfileAndSpendsNoDeviceId() = testApplication {
+        val directory = InMemoryPlayerDirectory()
+
+        application {
+            module()
+            duelSocket(testDeps(directory = directory, deviceIds = fixedDeviceIds("issued-1")))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            // First connection - send mismatched version
+            val session1 = client.webSocketSession("/ws")
+            session1.send(
+                Frame.Text(
+                    ProtocolCodec.encode(Hello(deviceId = null, protocolVersion = PROTOCOL_VERSION + 1)),
+                ),
+            )
+
+            assertEquals(
+                ServerMessage.Failure(ProtocolError.VERSION_MISMATCH),
+                session1.nextServerMessage(),
+            )
+            assertEquals(PROTOCOL_VERSION_MISMATCH, session1.closeReason.await()?.message)
+
+            // No profile created
+            assertEquals(0, directory.profileCount)
+
+            // Second connection - device ID should still be available
+            val session2 = client.webSocketSession("/ws")
+            session2.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = null))))
+
+            val welcome = session2.nextServerMessage()
+            assertTrue(welcome is ServerMessage.Welcome)
+            if (welcome is ServerMessage.Welcome) {
+                assertEquals("issued-1", welcome.deviceId)
+            }
+
+            // Profile created on second connection
+            assertEquals(1, directory.profileCount)
+        }
+    }
+
+    @Test
+    fun aMatchingVersionWithNoDeviceIdCreatesExactlyOneProfile() = testApplication {
+        val directory = InMemoryPlayerDirectory()
+
+        application {
+            module()
+            duelSocket(testDeps(directory = directory, deviceIds = fixedDeviceIds("issued-1")))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val session = client.webSocketSession("/ws")
+            session.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = null))))
+
+            assertEquals(ServerMessage.Welcome("player-1", "issued-1", PROTOCOL_VERSION), session.nextServerMessage())
+            assertFalse(session.closeReason.isCompleted)
+
+            assertEquals(1, directory.profileCount)
         }
     }
 }
