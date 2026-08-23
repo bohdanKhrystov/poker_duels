@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021308
 title: The guest offers first, and both frames name seat 1
 type: task
-status: backlog
+status: ready
 parent: STORY-0213
 module: poker-server
 estimate: XS
