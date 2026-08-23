@@ -1,10 +1,10 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bootDuelClient } from "./boot";
 import { DuelProvider } from "./duel-provider";
 import { FakeSocket } from "../protocol/fake-socket";
 import { openReconnectingConnection } from "../protocol/reconnecting";
-import { PROTOCOL_VERSION } from "../protocol";
+import { PROTOCOL_VERSION, readRoomCode } from "../protocol";
 import { Lobby } from "../lobby/Lobby";
 import { aSeat, aView } from "../table/view-fixture";
 
@@ -86,7 +86,11 @@ function sentFrames(socket: FakeSocket): unknown[] {
  */
 function renderDuelScreen(client: ReturnType<typeof bootDuelClient>): void {
   render(
-    <DuelProvider store={client.store} send={client.send}>
+    <DuelProvider
+      store={client.store}
+      send={client.send}
+      forgetRoom={client.forgetRoom}
+    >
       <Lobby />
     </DuelProvider>,
   );
@@ -257,5 +261,37 @@ describe("a tab whose socket dropped", () => {
 
     expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
     expect(screen.queryByText("Pot 30")).toBeNull();
+  });
+
+  it("forgets the room when the player leaves the result screen", () => {
+    const { sockets, client, storage } = reconnectingClient("ABCDEFGH");
+    renderDuelScreen(client);
+
+    act(() => {
+      sockets[0].open();
+      sockets[0].receive(WELCOME);
+      sockets[0].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+      sockets[0].receive(JSON.stringify({ type: "Snapshot", view: aView() }));
+      sockets[0].close();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(250);
+      sockets[1].open();
+      sockets[1].receive(WELCOME);
+      sockets[1].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+      sockets[1].receive(
+        '{"type":"DuelFinished","outcome":{"winner":0,"handsPlayed":9,"finalStacks":[1000,0]}}',
+      );
+    });
+
+    expect(readRoomCode(storage)).toBe("ABCDEFGH");
+
+    const back = screen.getByRole("link", { name: "Back to the lobby" });
+    act(() => {
+      fireEvent.click(back);
+    });
+
+    expect(readRoomCode(storage)).toBeNull();
   });
 });
