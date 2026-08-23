@@ -809,4 +809,49 @@ describe("the duel state", () => {
     expect(state.rematchOffers).toEqual([0]);
     expect(state).toBe(stateAfterFirstOffer);
   });
+
+  it("an offer that arrived before the finish does not reach the result screen", () => {
+    const outcome = {
+      winner: 0,
+      handsPlayed: 5,
+      finalStacks: [1500, 500],
+    } as const;
+    const stateAfterOffer = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RematchOffered",
+        seat: 1,
+      },
+    );
+    expect(stateAfterOffer.rematchOffers).toEqual([1]);
+    const stateAfterFinish = duelState.applyServerMessage(stateAfterOffer, {
+      type: "DuelFinished",
+      outcome,
+    });
+    expect(stateAfterFinish.rematchOffers).toEqual([]);
+    expect(stateAfterFinish.outcome).toEqual(outcome);
+  });
+
+  it("an offer that arrives after the finish stands", () => {
+    const outcome = {
+      winner: 0,
+      handsPlayed: 5,
+      finalStacks: [1500, 500],
+    } as const;
+    const stateAfterFinish = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "DuelFinished",
+        outcome,
+      },
+    );
+    expect(stateAfterFinish.rematchOffers).toEqual([]);
+    expect(stateAfterFinish.outcome).toEqual(outcome);
+    const stateAfterOffer = duelState.applyServerMessage(stateAfterFinish, {
+      type: "RematchOffered",
+      seat: 1,
+    });
+    expect(stateAfterOffer.rematchOffers).toEqual([1]);
+    expect(stateAfterOffer.outcome).toEqual(outcome);
+  });
 });
