@@ -274,6 +274,7 @@ internal suspend fun SocketDuel.playToFinish(
                 is ServerMessage.Welcome,
                 is ServerMessage.Snapshot,
                 is ServerMessage.RoomJoined,
+                is ServerMessage.RematchOffered,
                 is ServerMessage.Events,
                 -> Unit
             }

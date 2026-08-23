@@ -80,6 +80,7 @@ internal class SocketSecrecyTest {
 
                 is ServerMessage.Welcome,
                 is ServerMessage.RoomJoined,
+                is ServerMessage.RematchOffered,
                 is ServerMessage.YourTurn,
                 is ServerMessage.Rejected,
                 is ServerMessage.Failure,
