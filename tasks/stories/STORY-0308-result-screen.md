@@ -2,7 +2,7 @@
 id: STORY-0308
 title: The result screen — who won, and the coin
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, ui, duel]
