@@ -2,12 +2,14 @@ import type { ClientMessage, ServerMessage } from "./protocol.gen";
 
 // Keyed by discriminator so `satisfies` makes the compiler prove the set is the
 // union: a missing key is TS1360, an extra key is TS2353. When `ADR-0028` adds
-// `OpponentPresence` and `ActedForAbsentSeat` to `ServerMessage`, `tsc` fails
+// `OpponentPresence` and `ActedForAbsent` to `ServerMessage`, `tsc` fails
 // here until they are added — which is the cheap, reviewed edit that change wants.
 const SERVER_MESSAGE_TABLE = {
+  ActedForAbsent: true,
   DuelFinished: true,
   Events: true,
   Failure: true,
+  OpponentPresence: true,
   Rejected: true,
   RematchOffered: true,
   RoomJoined: true,

@@ -1,6 +1,7 @@
 package duels.poker.server.protocol
 
 import duels.poker.engine.duel.DuelOutcome
+import duels.poker.engine.game.ActionType
 import duels.poker.engine.game.GameEvent
 import duels.poker.engine.game.LegalActions
 import duels.poker.engine.game.PlayerView
@@ -143,4 +144,59 @@ public sealed interface ServerMessage {
     @Serializable
     @SerialName("DuelFinished")
     public data class DuelFinished(val outcome: DuelOutcome) : ServerMessage
+
+    /**
+     * How present the recipient's opponent is, from the server's point of view alone.
+     *
+     * Addressed to exactly one seat and entirely about that seat's opponent, the same way
+     * [YourTurn] is about its own recipient — a seat field would be a second thing to get wrong
+     * at the one place that already decides where a frame goes (`ADR-0028` §1).
+     *
+     * @property presence How present the opponent is.
+     * @property graceRemainingMillis How much of the grace window remained when the server built
+     *   this frame. Present exactly when [presence] is [SeatPresence.AWAY], and never negative.
+     */
+    @Serializable
+    @SerialName("OpponentPresence")
+    public data class OpponentPresence(
+        val presence: SeatPresence,
+        val graceRemainingMillis: Long? = null,
+    ) : ServerMessage {
+        init {
+            require((presence == SeatPresence.AWAY) == (graceRemainingMillis != null)) {
+                "graceRemainingMillis is present exactly when presence is AWAY"
+            }
+            require(graceRemainingMillis == null || graceRemainingMillis >= 0) {
+                "graceRemainingMillis must not be negative, was $graceRemainingMillis"
+            }
+        }
+    }
+
+    /**
+     * A fact about the log both seats share: the server acted for an absent seat.
+     *
+     * Sent to **both** seats identically, so — unlike [OpponentPresence] — it names the seat it
+     * is about (`ADR-0028` §1).
+     *
+     * @property seat The seat (0 or 1) the server acted for.
+     * @property handNumber The 1-based hand index this action pertains to.
+     * @property actionSequence The event sequence number of the decision point.
+     * @property action The action the server took on this seat's behalf — always
+     *   [ActionType.FOLD] or [ActionType.CHECK], per `ADR-0023`.
+     */
+    @Serializable
+    @SerialName("ActedForAbsent")
+    public data class ActedForAbsent(
+        val seat: Int,
+        val handNumber: Int,
+        val actionSequence: Int,
+        val action: ActionType,
+    ) : ServerMessage {
+        init {
+            require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
+            require(action == ActionType.FOLD || action == ActionType.CHECK) {
+                "the server only ever folds or checks for an absent seat, never $action"
+            }
+        }
+    }
 }

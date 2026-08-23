@@ -162,6 +162,8 @@ private suspend fun DefaultWebSocketServerSession.serve(
         is ServerMessage.YourTurn,
         is ServerMessage.Rejected,
         is ServerMessage.DuelFinished,
+        is ServerMessage.OpponentPresence,
+        is ServerMessage.ActedForAbsent,
         ->
             error("handshake() returned $message; it may only return Welcome or Failure")
     }
