@@ -118,6 +118,7 @@ Every one of these is cheap to violate in a component and expensive to notice in
 | [STORY-0311](../stories/STORY-0311-profile-strip.md) | The profile strip: my coins and my recent duels | 0302, 0303 | backlog |
 | [STORY-0312](../stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | 0308, 0310 | backlog |
 | [STORY-0313](../stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent | 0307, 0310, `STORY-0214` | blocked |
+| [STORY-0314](../stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened | 0309, `DEC-068` | blocked |
 
 ## What can run in parallel
 
@@ -148,11 +149,12 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
-**One remains, the architect's.** No decision here waits on a human.
+**Two remain — one the architect's, one the product owner's.** No decision here waits on a human.
 
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
 | `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a fourteenth story exists — but it is due **before this epic closes** |
+| `DEC-068` | Does the *waiting for your rival* screen offer a way out, and what does it say? A host is remembered in the room they opened, `resume` declines a `WAITING` room and the ordinary join re-answers `RoomJoined`, so a reload returns to the same screen; `ADR-0072` supplies `forgetRoom()` and leaves the words to the product | product owner | `STORY-0314`, and nothing else |
 
 ### Answered since this epic was written
 

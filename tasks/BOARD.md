@@ -72,7 +72,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
-| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 11 of 13 stories done; `STORY-0309` is split into fourteen and **runs** now that `STORY-0213` has merged; `STORY-0313` still waits on `EPIC-02`'s `STORY-0214` | v0.1 |
+| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 11 of 14 stories done; `STORY-0309` is split into **twenty** and **runs** now that `STORY-0213` has merged; `STORY-0313` still waits on `EPIC-02`'s `STORY-0214`, and `STORY-0314` on `DEC-068` | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **parked** — 9 of 17 stories done (`STORY-0401`–`0404`, `0408`–`0411`, `0413`). The remaining 8 all trace to `STORY-0405`, which depends on `STORY-0213` and `STORY-0214` — EPIC-02 work this run was not authorised to start | v0.2 |
 | [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
@@ -644,6 +644,7 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
+| DEC-068 | **The product owner's** — does the *waiting for your rival* screen offer a way out, and what does it say? A host who creates a room is remembered in it and has no control that leaves it: `resume` declines a `WAITING` room, the ordinary join answers `ALREADY_SEATED` *exactly as a fresh seating would*, and a reload lands back on the same screen — so the routes out are a rival joining, the room being reaped after ten minutes, or clearing storage. [`ADR-0072`](../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md) names the gap, closes none of it because the screen is the product's, and supplies the mechanism (`forgetRoom()`), so only the words are missing. **Nothing is sent** — there is no leave on the wire and the room stands until it is reaped — so a control implying otherwise would be untrue. Blocks [`STORY-0314`](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) and nothing else | [`ADR-0072`](../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md) | before `STORY-0314` is split |
 
 `DEC-067` → [`ADR-0072`](../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md)
 on 2026-08-23 — **a tab remembers its room until the player leaves it, and the way back is what
@@ -1257,8 +1258,41 @@ Splitting it found two things the story could not have known and one it must not
   puts the forget on the way back instead — the memory names the room this tab is **seated in**, and
   only the player leaving or a refused rejoin clears it. It blocked **no ticket** — all fourteen
   apply frames to the store, as every screen test in `Lobby.test.tsx` already does — but the
-  transport half of the story's fourth acceptance criterion is its work, and the story is not done
-  until that lands.
+  transport half of the story's fourth acceptance criterion is its work, and it is now
+  `TASK-030915`–`TASK-030920`.
+
+**Six more joined `STORY-0309` the same day**, cumulative counts **569 → 576**, and they are the
+transport half `ADR-0072` decided: `boot.ts` gains `forgetRoom` and loses its `DuelFinished` branch,
+`DuelProvider` an optional third prop and `useForgetRoom()`, `DuelResult` an `onLeave` on the anchor
+it already had, and `Lobby.tsx` and `main.tsx` the wiring between them. Three things about that
+split are worth keeping:
+
+- **The blast radius was measured.** `ADR-0072`'s whole change was applied at once in a throwaway
+  tree and the client's gate set run in full — `tsc`, ESLint, `prettier --check`, Vitest and
+  `vite build`, which is what `build.yml` runs on a pull request. Exactly **two** merged tests turn
+  red, both `TASK-031009`'s, both named in `ADR-0072` §9; `reconnect.test.tsx`, `src/e2e/`,
+  `duel-provider.test.tsx`, `Lobby.test.tsx` and `DuelResult.test.tsx` are all untouched by it, and
+  nothing fails to typecheck. `TASK-030919` deletes those two in the diff that invalidates them and
+  replaces them with three.
+- **The reversal is last, not first.** `TASK-031009`'s reason for the branch holds until the way
+  back forgets: delete it any earlier and the way on from the result reloads straight back into the
+  result screen, leaving the lobby unreachable for as long as the remaining tickets take to merge.
+  So the screen is wired (`TASK-030918`) and only then is `boot.ts` reversed (`TASK-030919`).
+- **One of that ticket's three tests cannot detect the reversal**, and it says so: restoring the
+  branch turns two red and leaves the third green, because the branch has already forgotten the code
+  by the time `forgetRoom()` is called. Run both ways to find that out. Its job is that the forget
+  still reaches a finished room; the `! grep` on `boot.ts` is what proves the branch is gone.
+
+**`DEC-068` is raised and is the product owner's**, and it does not touch the rematch: the *waiting
+for your rival* screen has no way out, in `Lobby.tsx` or in `design/screens/create-duel.html`. The
+claim was checked rather than taken from the ADR — `RoomRegistry.resume` declines a `WAITING` room,
+`Room.join` refuses a seated player with `ALREADY_SEATED`, and `DuelSocket.replyToJoinRoom` answers
+that *exactly as a fresh seating would*, so a host's reload lands back on the same screen and the
+routes out are a rival joining, the ten-minute reap, or clearing storage. `forgetRoom()` is exactly
+what a control there would call, which is why it is cheap to close now; what that control **says**
+is not a planner's to invent, and a *Cancel* that implies the room is gone would be untrue, because
+nothing is sent and the room stands until it is reaped. It is [`STORY-0314`](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md),
+blocked on `DEC-068` and blocking nothing else — in particular not the transport half above.
 
 `STORY-0213`'s planning defect is carried across deliberately: eight of its nine tests passed against
 a hard-coded `seat = 0`, because every one drove the host into the offer. Here the seat comparison
@@ -1484,6 +1518,12 @@ written and is still true.
 | | [TASK-030912](tasks/TASK-030912-the-rematch-begins-and-the-button-changes-sides.md) The rematch begins, and the button is on the other side | S | backlog |
 | | [TASK-030913](tasks/TASK-030913-an-offer-restated-after-a-rejoin-reaches-the-result-screen.md) An offer restated after a rejoin reaches the result screen, and one stated before it does not | XS | backlog |
 | | [TASK-030914](tasks/TASK-030914-a-gone-room-ends-it-and-a-transient-refusal-does-not.md) A gone room ends the rematch, and a transient refusal leaves it live | XS | backlog |
+| | [TASK-030915](tasks/TASK-030915-boot-can-forget-the-room-this-tab-remembers.md) Boot can forget the room this tab remembers | S | backlog |
+| | [TASK-030916](tasks/TASK-030916-the-provider-carries-the-forget-down-to-the-screen.md) The provider carries the forget down to the screen | S | backlog |
+| | [TASK-030917](tasks/TASK-030917-the-way-back-calls-the-forget-it-is-handed.md) The way back calls the forget it is handed, and still navigates | XS | backlog |
+| | [TASK-030918](tasks/TASK-030918-the-result-screens-way-back-is-wired-to-boots-forget.md) The result screen's way back is wired to boot's forget | XS | backlog |
+| | [TASK-030919](tasks/TASK-030919-a-finished-duel-forgets-nothing-and-the-next-socket-rejoins.md) A finished duel forgets nothing, and the next socket rejoins that room | S | backlog |
+| | [TASK-030920](tasks/TASK-030920-from-a-resumed-sockets-frames-the-way-back-forgets-the-room.md) From a resumed socket's frames, the way back forgets the room | XS | backlog |
 | **[STORY-0310](stories/STORY-0310-reconnect-and-resume.md)** Reconnect — the client resumes its seat — *schema 2* | | **done** |
 | | [TASK-031001](tasks/TASK-031001-the-room-code-lives-under-one-key-this-module-owns.md) The room code lives under one storage key this module owns | XS | **done** |
 | | [TASK-031002](tasks/TASK-031002-the-retry-delay-doubles-to-a-ceiling-and-spends-the-jitter.md) The retry delay doubles to a ceiling and spends the jitter it is handed | XS | **done** |
@@ -1524,6 +1564,7 @@ written and is still true.
 | | [TASK-031208](tasks/TASK-031208-no-rival-card-reaches-the-screen-before-the-reveal.md) No rival card reaches the screen before the frame that reveals it | S | **done** |
 | | [TASK-031209](tasks/TASK-031209-a-hand-won-without-a-showdown-shows-no-rival-card.md) A hand won without a showdown shows no rival card at all | S | **done** |
 | [STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent (needs `STORY-0214`) | **blocked** |
+| [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (needs `DEC-068`) | **blocked** |
 
 ---
 
