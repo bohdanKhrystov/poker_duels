@@ -105,7 +105,13 @@ internal fun scriptedDuel(seed: Long = SCRIPT_SEED): ScriptedDuel {
  */
 private fun scriptedSeat(viewer: Int, played: PlayedDuel): ScriptedSeat {
     val steps = mutableListOf<ScriptStep>()
-    steps += serverStep(ServerMessage.Welcome(deviceId = "device-seat-$viewer", protocolVersion = PROTOCOL_VERSION))
+    steps += serverStep(
+        ServerMessage.Welcome(
+            playerId = "player-seat-$viewer",
+            deviceId = "device-seat-$viewer",
+            protocolVersion = PROTOCOL_VERSION,
+        ),
+    )
     steps += serverStep(ServerMessage.RoomJoined(SCRIPT_ROOM_CODE, viewer))
 
     val acts = played.acts.filter { it.seat == viewer }.map { it.act }.iterator()

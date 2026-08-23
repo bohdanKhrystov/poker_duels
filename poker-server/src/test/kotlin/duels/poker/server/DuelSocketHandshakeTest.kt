@@ -44,7 +44,7 @@ class DuelSocketHandshakeTest {
             val session = client.webSocketSession("/ws")
             session.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = null))))
 
-            assertEquals(ServerMessage.Welcome("issued-1", PROTOCOL_VERSION), session.nextServerMessage())
+            assertEquals(ServerMessage.Welcome("player-1", "issued-1", PROTOCOL_VERSION), session.nextServerMessage())
             assertFalse(session.closeReason.isCompleted)
         }
     }
@@ -61,7 +61,7 @@ class DuelSocketHandshakeTest {
             val session = client.webSocketSession("/ws")
             session.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = "d1"))))
 
-            assertEquals(ServerMessage.Welcome("d1", PROTOCOL_VERSION), session.nextServerMessage())
+            assertEquals(ServerMessage.Welcome("player-1", "d1", PROTOCOL_VERSION), session.nextServerMessage())
             assertFalse(session.closeReason.isCompleted)
         }
     }

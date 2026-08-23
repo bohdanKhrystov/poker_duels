@@ -23,13 +23,16 @@ public sealed interface ServerMessage {
     /**
      * The handshake message sent when a client connection is accepted.
      *
-     * @property deviceId The id the server issued or recognised for this device.
+     * @property playerId The player this connection was resolved to.
+     * @property deviceId The id the server issued or recognised for this device, or `null`
+     *   when this connection names none — unreachable until `TASK-040518`.
      * @property protocolVersion The wire protocol version. Defaults to [PROTOCOL_VERSION].
      */
     @Serializable
     @SerialName("Welcome")
     public data class Welcome(
-        val deviceId: String,
+        val playerId: String,
+        val deviceId: String?,
         val protocolVersion: Int = PROTOCOL_VERSION,
     ) : ServerMessage
 

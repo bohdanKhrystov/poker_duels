@@ -34,13 +34,15 @@ public sealed interface ClientMessage
  * The server uses `protocolVersion` to decide whether to accept the connection. `deviceId`,
  * if provided, is a claim of identity—the server will either accept that claim or reject it
  * if the device is already in a duel, but the server never allows a client to assert a game
- * fact simply by naming a device.
+ * fact simply by naming a device. `sessionToken`, if provided, will let a client resume an
+ * existing session — nothing reads it yet (`TASK-040518`).
  */
 @Serializable
 @SerialName("Hello")
 public data class Hello(
     val deviceId: String? = null,
     val protocolVersion: Int = PROTOCOL_VERSION,
+    val sessionToken: String? = null,
 ) : ClientMessage
 
 /**

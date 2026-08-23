@@ -27,6 +27,7 @@ class TypeScriptDeclarationsTest {
               type: "Hello";
               deviceId: string | null;
               protocolVersion: number;
+              sessionToken: string | null;
             }
         """.trimIndent()
         assertEquals(expected, result)

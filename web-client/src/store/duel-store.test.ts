@@ -4,6 +4,7 @@ import { initialState } from "./duel-state";
 
 const WELCOME = {
   type: "Welcome",
+  playerId: "p-1",
   deviceId: "d-1",
   protocolVersion: 2,
 } as const;

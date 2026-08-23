@@ -215,6 +215,7 @@ describe("a whole duel through the client", () => {
         type: "Hello",
         deviceId: null,
         protocolVersion: PROTOCOL_VERSION,
+        sessionToken: null,
       });
       expect(sent[1]).toEqual({ type: "JoinRoom", code: duel.roomCode });
 

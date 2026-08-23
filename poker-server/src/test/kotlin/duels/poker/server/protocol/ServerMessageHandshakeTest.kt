@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 class ServerMessageHandshakeTest {
     @Test
     fun welcomeRoundTrips() {
-        val original = ServerMessage.Welcome("device-1")
+        val original = ServerMessage.Welcome("player-1", "device-1")
         val encoded = protocolJson.encodeToString(ServerMessage.serializer(), original)
         val decoded = protocolJson.decodeFromString(ServerMessage.serializer(), encoded)
         assertEquals(original, decoded)
@@ -17,7 +17,7 @@ class ServerMessageHandshakeTest {
 
     @Test
     fun welcomeCarriesItsVersionEvenWhenDefaulted() {
-        val message = ServerMessage.Welcome("device-1")
+        val message = ServerMessage.Welcome("player-1", "device-1")
         val encoded = protocolJson.encodeToString(ServerMessage.serializer(), message)
         assertTrue(encoded.contains("\"protocolVersion\":$PROTOCOL_VERSION"), "Encoded message should contain protocolVersion: $encoded")
     }
@@ -32,7 +32,7 @@ class ServerMessageHandshakeTest {
 
     @Test
     fun theDiscriminatorsAreExplicit() {
-        val welcome = ServerMessage.Welcome("device-1")
+        val welcome = ServerMessage.Welcome("player-1", "device-1")
         val welcomeEncoded = protocolJson.encodeToString(ServerMessage.serializer(), welcome)
         assertTrue(welcomeEncoded.contains("\"type\":\"Welcome\""), "Welcome should have explicit type discriminator: $welcomeEncoded")
 
@@ -53,6 +53,7 @@ class ServerMessageHandshakeTest {
             "NOT_IN_DUEL",
             "DUEL_PAUSED",
             "FRAME_LIMIT_EXCEEDED",
+            "INVALID_SESSION",
             "REMATCH_UNAVAILABLE",
         )
         val actualNames = ProtocolError.entries.map { it.name }

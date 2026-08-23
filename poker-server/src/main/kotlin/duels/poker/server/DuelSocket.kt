@@ -121,7 +121,7 @@ private suspend fun DefaultWebSocketServerSession.serve(
     }
     val deviceId = hello.deviceId?.let(::DeviceId) ?: deps.deviceIds.newDeviceId()
     val player = deps.directory.resolve(deviceId)
-    val message = ServerMessage.Welcome(deviceId.value)
+    val message = ServerMessage.Welcome(playerId = player.id.value, deviceId = deviceId.value)
     val session = Session(SessionRegistry.newSessionId(), player)
     val room = RoomMembership()
     val eviction = seats.adopt(deps.sessions, session)

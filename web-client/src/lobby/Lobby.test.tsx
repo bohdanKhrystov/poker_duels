@@ -329,7 +329,7 @@ describe("the lobby", () => {
     // frame the test happened to name. DuelFinished and Failure are covered
     // separately by the two tests below.
     const NOT_A_SNAPSHOT: readonly ServerMessage[] = [
-      { type: "Welcome", deviceId: "d-1", protocolVersion: 2 },
+      { type: "Welcome", playerId: "p-1", deviceId: "d-1", protocolVersion: 2 },
       { type: "RoomJoined", code: "ABCDEFGH", seat: 0 },
       { type: "Events", events: [{ type: "ActionOn", sequence: 1, seat: 0 }] },
       {

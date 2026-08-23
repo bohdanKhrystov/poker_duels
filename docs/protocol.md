@@ -2,18 +2,18 @@
 
 This document is the contract for EPIC-03 (the game server's protocol). The Kotlin definitions in `duels.poker.server.protocol` are the source of truth for the wire protocol; the TypeScript client is generated from this schema (see `ADR-0003` and `STORY-0203`).
 
-Protocol version: **4**
+Protocol version: **5**
 
 ## Messages
 
 | Message | Direction | Payload | Sent when |
 | --- | --- | --- | --- |
-| `Hello` | client → server | `deviceId`, `protocolVersion` | Client initiates connection |
+| `Hello` | client → server | `deviceId`, `protocolVersion`, `sessionToken` | Client initiates connection |
 | `Act` | client → server | `handNumber`, `actionSequence`, `action` | Client attempts an action |
 | `CreateRoom` | client → server | (none) | Client attempts to open a room |
 | `JoinRoom` | client → server | `code` | Client attempts to join a room |
 | `OfferRematch` | client → server | (none) | Client attempts to offer a rematch after a finished duel |
-| `Welcome` | server → client | `deviceId`, `protocolVersion` | Server accepts the connection |
+| `Welcome` | server → client | `playerId`, `deviceId`, `protocolVersion` | Server accepts the connection |
 | `Failure` | server → client | `error` | Server refuses the connection |
 | `RoomJoined` | server → client | `code`, `seat` | The server seated you in a room |
 | `RematchOffered` | server → client | `seat` | An offer from this seat to play again stands |
@@ -270,6 +270,7 @@ continued into the new season; the reader restarts with no cursor (`ADR-0066` §
 - `NOT_IN_DUEL`: The client sent an action but is not participating in an active duel.
 - `DUEL_PAUSED`: The duel is paused; your action was not applied. The duel resumes when the opponent returns or when their grace period expires. Do not re-send your action.
 - `FRAME_LIMIT_EXCEEDED`: The frame was longer, or nested more deeply, than the server accepts, and was refused before parsing.
+- `INVALID_SESSION`: The client presented a session token that is invalid, expired or unknown.
 - `REMATCH_UNAVAILABLE`: The room cannot accept a rematch offer yet. Transient: nothing was recorded, and the same offer may be sent again.
 
 ## What a client does with a frame it cannot read

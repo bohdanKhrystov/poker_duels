@@ -9,7 +9,7 @@ import { PROTOCOL_VERSION } from "./version";
 
 export type ConnectionStatus =
   | { readonly kind: "connecting" }
-  | { readonly kind: "ready"; readonly deviceId: string }
+  | { readonly kind: "ready"; readonly deviceId: string | null }
   | { readonly kind: "refused"; readonly error: ProtocolError }
   | { readonly kind: "outdated" };
 
@@ -41,6 +41,7 @@ export function openConnection(options: ConnectionOptions): Connection {
         type: "Hello",
         deviceId: readDeviceId(options.storage),
         protocolVersion: PROTOCOL_VERSION,
+        sessionToken: null,
       }),
     );
   };
@@ -56,7 +57,13 @@ export function openConnection(options: ConnectionOptions): Connection {
     }
     if (message.type === "Welcome") {
       if (message.protocolVersion === PROTOCOL_VERSION) {
-        writeDeviceId(options.storage, message.deviceId);
+        // ADR-0030 §8's write-once rule: a null deviceId names no device yet,
+        // and writing it over one this browser already holds would make the
+        // client conclude it has none (ADR-0027 §5). Unreachable until
+        // TASK-040518 resolves a session and can answer with no device.
+        if (message.deviceId !== null) {
+          writeDeviceId(options.storage, message.deviceId);
+        }
         status = { kind: "ready", deviceId: message.deviceId };
       } else {
         status = { kind: "outdated" };
