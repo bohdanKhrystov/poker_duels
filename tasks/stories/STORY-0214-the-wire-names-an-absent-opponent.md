@@ -97,7 +97,39 @@ specification; nothing here goes beyond it, and `ADR-0045` adds no type, field o
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0214`.* | — |
+| [TASK-021401](../tasks/TASK-021401-disconnect-answers-with-a-room-and-its-frames.md) | `RoomRegistry.disconnect` answers with a room and the frames it produced | **ready** |
+| [TASK-021402](../tasks/TASK-021402-the-wire-names-presence-and-the-version-takes-its-step.md) | `OpponentPresence` and `ActedForAbsentSeat` reach the wire, and `PROTOCOL_VERSION` takes its step | **blocked** (`DEC-066`) |
+| [TASK-021403](../tasks/TASK-021403-room-presence-of-projects-the-three-states.md) | `Room.presenceOf` projects a seat's presence from state the room already keeps | backlog |
+| [TASK-021404](../tasks/TASK-021404-a-drop-builds-the-away-frame-for-the-other-seat.md) | A drop builds `AWAY` and the configured window, for the other seat only | backlog |
+| [TASK-021405](../tasks/TASK-021405-the-away-frame-reaches-the-opponents-socket.md) | The `AWAY` frame reaches the opponent's socket, from inside the `NonCancellable` block | backlog |
+| [TASK-021406](../tasks/TASK-021406-an-act-after-the-countdown-would-have-hit-zero.md) | An `Act` sent after the client's countdown would have reached zero is still refused | backlog |
+| [TASK-021407](../tasks/TASK-021407-expiry-says-absent-before-the-fold-it-explains.md) | Expiry says `ABSENT` before the fold it explains, and an abandoned room says nothing | backlog |
+| [TASK-021408](../tasks/TASK-021408-fold-absent-marks-every-action-it-takes.md) | `foldAbsent` marks every action it takes for an absent seat, to both seats | backlog |
+| [TASK-021409](../tasks/TASK-021409-a-checked-down-absent-seat-is-marked-as-a-check.md) | A checked-down absent seat is marked as a check, where a fold is not legal | backlog |
+| [TASK-021410](../tasks/TASK-021410-a-resume-tells-both-sides-where-they-stand.md) | A resume tells the returning seat where its opponent stands, and the seat that stayed only if it changed | backlog |
+| [TASK-021411](../tasks/TASK-021411-the-other-seat-drops-and-every-frame-names-the-mirror.md) | The host is the seat that goes, and every presence frame names the mirror image | backlog |
+
+The chain is linear: every ticket depends on the one before it, and several share a test file, so no
+two could overlap anyway.
+
+**`TASK-021401` is `ready` and starts the story.** It is the only ticket that needs none of
+`ADR-0028`'s new types: `Disconnection(room, outbound)` is built from `Room` and `Addressed`, which
+both exist. Putting it in front means the story moves while `DEC-066` is answered.
+
+**`TASK-021402` is `blocked` on `DEC-066`, and everything after it queues behind it.** The wire step
+was sized by the [`ADR-0070`](../../docs/adr/ADR-0070-a-blast-radius-is-complete-only-when-the-gates-are-green.md)
+§2 probe — a throwaway stub of every declaration this story adds, run through the commands
+`.github/workflows/build.yml` runs, iterated until the whole gate set exited **0**, then reverted.
+It is **thirteen** files, not `TASK-021301`'s seventeen: this story adds no `ProtocolError` value and
+no `ClientMessage` variant, so `ServerMessageHandshakeTest`'s golden error list,
+`TypeScriptDeclarationsTest`'s golden `ClientMessage` union and `connection.test.ts` are all
+untouched. Seventeen was a fact about that ticket, never about protocol bumps.
+
+The probe also found what no reading had: `ProtocolDiscriminatorTest.everyDiscriminatorIsShortAndUnique`
+has failed the build on any discriminator over 16 characters since `TASK-020210`, and `ADR-0028` §1
+specifies `@SerialName("ActedForAbsentSeat")` — **eighteen**. `OpponentPresence` is exactly sixteen
+and passes. Three edits satisfy that gate and they are not equivalent, so it is `DEC-066` and the
+architect's, not a propagation.
 
 ## Acceptance criteria
 
