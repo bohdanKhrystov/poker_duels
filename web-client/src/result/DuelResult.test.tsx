@@ -115,7 +115,7 @@ describe("the result screen", () => {
     expect(back.getAttribute("href")).toBe("/");
   });
 
-  it("offers no rematch it cannot honour", () => {
+  it("adds no rematch of its own", () => {
     const { container } = render(
       <DuelResult outcome={anOutcome()} mySeat={0} />,
     );
@@ -127,5 +127,25 @@ describe("the result screen", () => {
         .querySelector('[aria-label="the result"]')
         ?.textContent?.match(/rematch/i),
     ).toBeNull();
+  });
+
+  it("puts the rematch it is handed above the way back", () => {
+    const { container } = render(
+      <DuelResult
+        outcome={anOutcome()}
+        mySeat={0}
+        rematch={<button type="button">Rematch</button>}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Rematch" });
+    const back = screen.getByRole("link", { name: "Back to the lobby" });
+    const result = container.querySelector('[aria-label="the result"]');
+
+    expect(button).toBeDefined();
+    expect(result?.contains(button)).toBe(true);
+    expect(
+      button.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
