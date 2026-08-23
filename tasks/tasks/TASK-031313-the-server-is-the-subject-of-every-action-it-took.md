@@ -73,8 +73,10 @@ six sentences, every one of which has the server as its subject.
 ## Out of scope
 
 - Where the sentence goes, and how long it stays. `TASK-031314` records the mark and `TASK-031315`
-  renders it; **what takes it off the screen is `DEC-070`**, and neither of those two tickets may
-  start before it is answered.
+  renders it; **what takes it off the screen is
+  [`ADR-0075`](../../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md)**
+  — an `OpponentPresence` carrying `PRESENT`, a `DuelFinished`, and nothing else. This file is a
+  pure function of a frame and a seat, and knows none of it.
 - Matching the mark to an event in `narration`. `ADR-0046` §4 requires no action log and this story
   builds none; the mark carries `(handNumber, actionSequence)` so that a client *can* attach it by
   coordinate, and nothing here depends on the order it arrived in.

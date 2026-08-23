@@ -84,7 +84,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
-| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 12 of 14 stories done (`STORY-0309` closed on 2026-08-24); `STORY-0313` unblocked on 2026-08-24 when `STORY-0214` merged and is **split into fifteen** with `TASK-031301` startable — it raised `DEC-070` (how long the server's own action stays on screen, the **product owner's**), which blocks its last two tickets and none of the other thirteen; `STORY-0314` is unblocked by `ADR-0073` and waits to be split | v0.1 |
+| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 12 of 14 stories done (`STORY-0309` closed on 2026-08-24); `STORY-0313` unblocked on 2026-08-24 when `STORY-0214` merged and is **split into fifteen** with `TASK-031301` startable — it raised `DEC-070` (how long the server's own action stays on screen, the **product owner's**), answered on 2026-08-24 by [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md), so **nothing in the story is blocked**; `STORY-0314` is unblocked by `ADR-0073` and waits to be split | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **in progress** — 9 of 17 stories done; `STORY-0405` unparked on 2026-08-23 when `STORY-0213` and `STORY-0214` merged, and is **split into 24 tickets** with `TASK-040501` startable. It raised `DEC-069` (the sign-in budget's two numbers, the architect's), answered on 2026-08-24 by [`ADR-0074`](../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md) — nothing in the story is blocked | v0.2 |
 | [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
@@ -658,7 +658,52 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
-| DEC-070 | **The product owner's** — how long does the most recent *action the server took* stay on a player's screen, and what takes it off? Raised by the split of [`STORY-0313`](stories/STORY-0313-the-table-names-an-absent-opponent.md). [`ADR-0046`](../docs/adr/ADR-0046-the-table-says-away-timed-out-and-back.md) §4 settles the six sentences and settles that the **most recent** mark is enough; it says nothing about its lifetime, and the four candidates — never; on the next `Snapshot`, as `ADR-0043` clears a rejection; on the rival's return to `PRESENT`; on the next `YourTurn` — are each defensible and each a different product. Unanswered, the client ships *The server folded for your rival.* under a table where the rival came back twenty hands ago, beside *Your rival is back.* Blocks only `TASK-031314` and `TASK-031315`; the story's other thirteen tickets run | [`STORY-0313`](stories/STORY-0313-the-table-names-an-absent-opponent.md) | before TASK-031314 |
+
+`DEC-070` → [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md)
+on 2026-08-24 — **the server's mark lives as long as the absence that produced it.** Derived from
+`docs/vision.md`'s *Positioning* sentence — the same one `ADR-0046` derived its string set from —
+and from `ADR-0046` §2's already-shipped rule that a presence line clears on a frame and *never on a
+timer, never on a fade*. **Two of the four candidates died on the server's own code, not on taste.**
+`AbsentSeats.kt` returns `listOf(Addressed(0, mark), Addressed(1, mark)) + next.outbound`, and `act`
+composes that outbound through `framesFor` = `broadcast + turnFor`, where `broadcast` carries the
+comment *"Always emit Snapshot frame"* and does exactly that, for every applied action, to **both**
+seats. So the mark and the `Snapshot` describing the mark's own action are **consecutive frames in
+one delivery** — *clears on the next `Snapshot`*, and *clears on the next `YourTurn`*, which rides
+the same delivery, would each clear the mark microseconds after it was set, and `ADR-0046` §4 would
+be implemented, tested and never read by a human being. `ADR-0043` §3's precedent does not transfer:
+neither `rejection` nor `Your rival is back.` arrives welded to a `Snapshot`. **The mark is a
+status, not a notice** — `foldAbsent` gives up every turn that reaches an absent seat, so during an
+absence the mark replaces itself at nearly every decision point and can only go stale once the
+server stops acting. **Exactly two frames take it off**: an `OpponentPresence` carrying `PRESENT`,
+and `DuelFinished`. Two keys in two case bodies of `duel-state.ts`; every other frame —
+`Snapshot`, `Events`, `YourTurn`, `Rejected`, `RematchOffered`, `Failure`, `RoomJoined` — leaves it
+exactly as it was, and there is **no timer, no fade and no dismiss control**. It clears on the
+**frame**, not on a transition, so unlike `rivalReturned` it carries no bookkeeping: a `PRESENT` at
+a resuming client whose rival never left still clears it, and that is right, because the mark is
+about whether the server is *acting* — a state — while a return is a transition. **The words do not
+change**: `ADR-0046` §4's six sentences stand and no seventh string is added. The failure `DEC-070`
+was raised on becomes impossible by construction rather than unlikely — the single frame that puts
+*Your rival is back.* on screen is the same frame that takes the mark off, in the same reducer call.
+Costs recorded rather than discovered: **a mark can be older than the hand on screen** — the rival
+is absent, the present player is on the button and folds pre-flop, and the turn never reaches the
+absent seat, so a line from three hands ago sits under the current one; it stays true, it stays
+under a presence line that says the server is still acting, and nothing ties it to its hand. That is
+the price of §4's *no action log* and it **is the cost being chosen**. **A mark naming this client's
+own seat has no clearing frame but `DuelFinished`**, because `OpponentPresence` is
+recipient-relative and the wire has no *you are present again*; a protocol step was deliberately not
+requested for a race whose whole window is one delivery. **`serverAction` clears on `DuelFinished`
+as a boundary guard**, not because that frame says anything about absence, so that no mark survives
+into a rematch without resting on a three-link argument about `PRESENT` always arriving first. And
+**the store still has no room boundary** — `rivalPresence`, `graceRemainingMillis` and
+`rivalReturned` are cleared by nothing at a duel or room boundary, unreachable today only because
+`DuelResult.tsx`'s way back is an `<a href="/">` that rebuilds `initialState()`; the day `DEC-054`
+replaces it with a route, that is one ticket and not this decision's. Forecloses the *shape* rather
+than the wording: if an action log ever ships, the mark attaches to its line by `(handNumber,
+actionSequence)` and takes that line's lifetime, superseding this ADR — which is why the whole frame
+stays in the store. **Unblocks `TASK-031314` and `TASK-031315`**, both now `backlog` behind
+`TASK-031313` like the other twelve, with the clearing rule and four store tests written into
+`TASK-031314` and one screen test into `TASK-031315`. No Kotlin, no frame, no protocol step, no
+stored data. Raises no `DEC`.
 
 `DEC-069` → [`ADR-0074`](../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md)
 on 2026-08-24 — **sign-in is ten wrong passwords a minute per address, reserved before the hash and
@@ -1637,7 +1682,7 @@ written and is still true.
 | | [TASK-031207](tasks/TASK-031207-the-result-states-the-outcome-the-last-frame-carried.md) The result states the outcome the script's last frame carried, from either seat | S | **done** |
 | | [TASK-031208](tasks/TASK-031208-no-rival-card-reaches-the-screen-before-the-reveal.md) No rival card reaches the screen before the frame that reveals it | S | **done** |
 | | [TASK-031209](tasks/TASK-031209-a-hand-won-without-a-showdown-shows-no-rival-card.md) A hand won without a showdown shows no rival card at all | S | **done** |
-| **[STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md)** The table names an absent opponent — *schema 2*, split 2026-08-24 into **fifteen**, `TASK-031301` startable. Two are `blocked` on `DEC-070` (the mark's lifetime, the product owner's) | | **ready** |
+| **[STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md)** The table names an absent opponent — *schema 2*, split 2026-08-24 into **fifteen**, `TASK-031301` startable. `DEC-070` (the mark's lifetime) answered by [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md); **nothing is blocked** | | **ready** |
 | | [TASK-031301](tasks/TASK-031301-the-seats-status-line-learns-away-and-timed-out.md) The seat's status line learns Away and Timed out, and where they rank | S | **ready** |
 | | [TASK-031302](tasks/TASK-031302-the-line-that-explains-the-pause-and-the-one-that-says-nothing.md) The line that explains the pause, and the one that says nothing | S | backlog |
 | | [TASK-031303](tasks/TASK-031303-the-store-holds-the-presence-the-server-stated.md) The store holds the presence the server stated, and counts the frames | S | backlog |
@@ -1651,8 +1696,8 @@ written and is still true.
 | | [TASK-031311](tasks/TASK-031311-the-countdown-reaching-zero-changes-nothing-the-client-does.md) The countdown reaching zero changes nothing the client does | S | backlog |
 | | [TASK-031312](tasks/TASK-031312-the-duel-screen-says-none-of-the-words-this-copy-refuses.md) The duel screen says none of the words this copy refuses | S | backlog |
 | | [TASK-031313](tasks/TASK-031313-the-server-is-the-subject-of-every-action-it-took.md) The server is the subject of every action it took | S | backlog |
-| | [TASK-031314](tasks/TASK-031314-the-store-keeps-the-most-recent-action-the-server-took.md) The store keeps the most recent action the server took | S | **blocked** — `DEC-070` |
-| | [TASK-031315](tasks/TASK-031315-the-duel-screen-names-the-server-as-the-actor.md) The duel screen names the server as the actor | S | **blocked** — `DEC-070` |
+| | [TASK-031314](tasks/TASK-031314-the-store-keeps-the-most-recent-action-the-server-took.md) The store keeps the most recent action the server took, until the absence ends | S | backlog |
+| | [TASK-031315](tasks/TASK-031315-the-duel-screen-names-the-server-as-the-actor.md) The duel screen names the server as the actor | S | backlog |
 | [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (`ADR-0073` fixed its words) | **ready** — not yet split |
 
 ---

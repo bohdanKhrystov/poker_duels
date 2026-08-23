@@ -149,14 +149,22 @@ run in parallel.
 | [TASK-031311](../tasks/TASK-031311-the-countdown-reaching-zero-changes-nothing-the-client-does.md) | The countdown reaching zero changes nothing the client does | backlog |
 | [TASK-031312](../tasks/TASK-031312-the-duel-screen-says-none-of-the-words-this-copy-refuses.md) | The duel screen says none of the words this copy refuses | backlog |
 | [TASK-031313](../tasks/TASK-031313-the-server-is-the-subject-of-every-action-it-took.md) | The server is the subject of every action it took | backlog |
-| [TASK-031314](../tasks/TASK-031314-the-store-keeps-the-most-recent-action-the-server-took.md) | The store keeps the most recent action the server took | **blocked** — `DEC-070` |
-| [TASK-031315](../tasks/TASK-031315-the-duel-screen-names-the-server-as-the-actor.md) | The duel screen names the server as the actor | **blocked** — `DEC-070` |
+| [TASK-031314](../tasks/TASK-031314-the-store-keeps-the-most-recent-action-the-server-took.md) | The store keeps the most recent action the server took, until the absence ends | backlog |
+| [TASK-031315](../tasks/TASK-031315-the-duel-screen-names-the-server-as-the-actor.md) | The duel screen names the server as the actor | backlog |
 
 ## Open decisions
 
-| ID | Question | For | Blocks |
-| --- | --- | --- | --- |
-| `DEC-070` | How long does the most recent mark stay on screen, and what takes it off? `ADR-0046` §4 settles *which* mark and settles its words, and is silent on its lifetime | product owner | `TASK-031314` and `TASK-031315` only — the thirteen presence tickets run without it |
+**None.** `DEC-070` — how long the most recent mark stays on screen, and what takes it off — was
+answered on 2026-08-24 by
+[`ADR-0075`](../../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md):
+**the mark lives as long as the absence that produced it.** Exactly two frames take it off, an
+`OpponentPresence` carrying `PRESENT` and a `DuelFinished`; every other frame leaves it standing,
+and there is no timer, no fade and no dismiss control. *Clears on the next `Snapshot`* and *clears
+on the next `YourTurn`* were both eliminated on the server's own emission order — the mark and the
+`Snapshot` describing its own action are consecutive frames in one delivery — so neither would ever
+be read by a person. No new string: `ADR-0046` §4's six stand. `TASK-031314` carries the two reducer
+keys and four tests; `TASK-031315` carries one screen test that the two sentences are never on
+screen together. **The whole story is unblocked.**
 
 ## Acceptance criteria
 
