@@ -469,10 +469,44 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | | [TASK-021306](tasks/TASK-021306-rematch-unavailable-is-transient-and-provably-so.md) REMATCH_UNAVAILABLE is transient, and the same offer succeeds afterwards | S | **done** |
 | | [TASK-021307](tasks/TASK-021307-a-standing-offer-survives-a-reconnect.md) A standing offer is restated to a returning socket, after its DuelFinished | S | **done** |
 | | [TASK-021308](tasks/TASK-021308-the-guest-offers-and-the-frame-names-seat-one.md) The guest offers first, and both frames name seat 1 | XS | **ready** |
-| [STORY-0214](stories/STORY-0214-the-wire-names-an-absent-opponent.md) | The wire names an absent opponent | | **ready** |
+| **[STORY-0214](stories/STORY-0214-the-wire-names-an-absent-opponent.md)** The wire names an absent opponent — *schema 2* | | | **ready** |
+| | [TASK-021401](tasks/TASK-021401-disconnect-answers-with-a-room-and-its-frames.md) RoomRegistry.disconnect answers with a room and the frames it produced | S | **ready** |
+| | [TASK-021402](tasks/TASK-021402-the-wire-names-presence-and-the-version-takes-its-step.md) OpponentPresence and ActedForAbsentSeat reach the wire, and PROTOCOL_VERSION takes its step | S | **blocked** (`DEC-066`) |
+| | [TASK-021403](tasks/TASK-021403-room-presence-of-projects-the-three-states.md) Room.presenceOf projects a seat's presence from state the room already keeps | S | backlog |
+| | [TASK-021404](tasks/TASK-021404-a-drop-builds-the-away-frame-for-the-other-seat.md) A drop builds AWAY and the configured window, for the other seat only | S | backlog |
+| | [TASK-021405](tasks/TASK-021405-the-away-frame-reaches-the-opponents-socket.md) The AWAY frame reaches the opponent's socket, from inside the NonCancellable block | S | backlog |
+| | [TASK-021406](tasks/TASK-021406-an-act-after-the-countdown-would-have-hit-zero.md) An Act sent after the client's countdown would have reached zero is still refused | XS | backlog |
+| | [TASK-021407](tasks/TASK-021407-expiry-says-absent-before-the-fold-it-explains.md) Expiry says ABSENT before the fold it explains, and an abandoned room says nothing | S | backlog |
+| | [TASK-021408](tasks/TASK-021408-fold-absent-marks-every-action-it-takes.md) foldAbsent marks every action it takes for an absent seat, to both seats | S | backlog |
+| | [TASK-021409](tasks/TASK-021409-a-checked-down-absent-seat-is-marked-as-a-check.md) A checked-down absent seat is marked as a check, where a fold is not legal | XS | backlog |
+| | [TASK-021410](tasks/TASK-021410-a-resume-tells-both-sides-where-they-stand.md) A resume tells the returning seat where its opponent stands, and the seat that stayed only if it changed | S | backlog |
+| | [TASK-021411](tasks/TASK-021411-the-other-seat-drops-and-every-frame-names-the-mirror.md) The host is the seat that goes, and every presence frame names the mirror image | S | backlog |
 
-`STORY-0214`'s tickets come from `/plan-story` when it is reached — after `STORY-0213` merges, since
-both move `PROTOCOL_VERSION` and only one bumping branch is open at a time (`ADR-0045` §3).
+**`STORY-0214` is split into eleven tickets and starts on `TASK-021401`.** The chain is linear.
+`TASK-021401` is startable today because it is the one ticket needing none of `ADR-0028`'s new
+types — `Disconnection(room, outbound)` is built from `Room` and `Addressed`, both of which exist —
+so the story moves while `DEC-066` is answered.
+
+**The wire step is thirteen files, and thirteen was measured.** `TASK-021402` was sized by the
+[`ADR-0070`](../docs/adr/ADR-0070-a-blast-radius-is-complete-only-when-the-gates-are-green.md) §2
+probe: a throwaway stub of every declaration this story adds, run through the commands
+`.github/workflows/build.yml` runs — `./gradlew check -PrequireDocker=true`, then `npm ci`,
+`npm run check` and `npm run build` in `web-client/` — with the minimal propagation applied at every
+path a failure named, and run again. Seven iterations, stopping on **exit 0** with 1285 tests run
+and none skipped. Then reverted.
+
+It is deliberately **not** `TASK-021301`'s seventeen. That number is a fact about that ticket:
+`STORY-0214` adds no `ProtocolError` value and no `ClientMessage` variant, so
+`ServerMessageHandshakeTest`'s golden error list, `TypeScriptDeclarationsTest`'s golden
+`ClientMessage` union and `connection.test.ts` are all untouched here. Reusing it would have
+over-declared by four and taught the next planner to copy again.
+
+**The probe found what four readings had not.** `ProtocolDiscriminatorTest.everyDiscriminatorIsShortAndUnique`
+has failed the build on any discriminator over 16 characters since `TASK-020210`, and `ADR-0028` §1
+specifies `@SerialName("ActedForAbsentSeat")` — eighteen. `OpponentPresence` is exactly sixteen and
+passes. Shortening the serial name, renaming the type and raising the limit are three different
+answers with different consequences on the wire, so it is `DEC-066` and the architect's rather than
+a propagation a coder may take. It blocks `TASK-021402`, and behind it `STORY-0313` and `STORY-0405`.
 
 **`STORY-0213` is split and starts on its first ticket.** `TASK-021301` is the wire step — two
 message types, one `ProtocolError` value, the version, both documents and both generated client
@@ -600,6 +634,7 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
+| DEC-066 | **The architect's** — `ADR-0028` §1 specifies `@SerialName("ActedForAbsentSeat")` verbatim; `ProtocolDiscriminatorTest.everyDiscriminatorIsShortAndUnique` has failed the build on any discriminator over **16** characters since `TASK-020210`, and that name is 18. Found by the `ADR-0070` §2 probe, not by reading: `Discriminator longer than 16 characters: [ActedForAbsentSeat]`. `OpponentPresence` is exactly 16 and passes. Shorten the `@SerialName`, rename the type, or raise the limit — three edits with different consequences on the wire and on a merged gate, so it is a decision rather than a propagation. **Blocks `TASK-021402`, and behind it `STORY-0214`, `STORY-0313` and `STORY-0405`** | [`TASK-021402`](tasks/TASK-021402-the-wire-names-presence-and-the-version-takes-its-step.md) | before TASK-021402 |
 
 `DEC-063` → [`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md) on 2026-08-23 (the gates that make a `PROTOCOL_VERSION` bump atomic do not move; `files_touched` becomes a true count, and a ticket held together by a merged gate declares up to twelve files and names its gates in `atomic:`. `ADR-0047` §6's *"five artifacts"* is replaced by a procedure rather than another number). **Unblocks `TASK-021301`, `STORY-0213`, `STORY-0214` and `STORY-0405`.**
 
