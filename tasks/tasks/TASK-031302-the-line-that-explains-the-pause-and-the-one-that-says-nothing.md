@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031302
 title: The line that explains the pause, and the one that says nothing
 type: task
-status: ready
+status: done
 parent: STORY-0313
 module: web-client
 estimate: S

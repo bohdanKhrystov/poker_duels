@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031303
 title: The store holds the presence the server stated, and counts the frames
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: S

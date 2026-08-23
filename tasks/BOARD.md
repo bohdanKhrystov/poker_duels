@@ -1684,8 +1684,8 @@ written and is still true.
 | | [TASK-031209](tasks/TASK-031209-a-hand-won-without-a-showdown-shows-no-rival-card.md) A hand won without a showdown shows no rival card at all | S | **done** |
 | **[STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md)** The table names an absent opponent — *schema 2*, split 2026-08-24 into **fifteen**, `TASK-031302` startable. `DEC-070` (the mark's lifetime) answered by [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md); **nothing is blocked** | | **ready** |
 | | [TASK-031301](tasks/TASK-031301-the-seats-status-line-learns-away-and-timed-out.md) The seat's status line learns Away and Timed out, and where they rank | S | **done** |
-| | [TASK-031302](tasks/TASK-031302-the-line-that-explains-the-pause-and-the-one-that-says-nothing.md) The line that explains the pause, and the one that says nothing | S | **ready** |
-| | [TASK-031303](tasks/TASK-031303-the-store-holds-the-presence-the-server-stated.md) The store holds the presence the server stated, and counts the frames | S | backlog |
+| | [TASK-031302](tasks/TASK-031302-the-line-that-explains-the-pause-and-the-one-that-says-nothing.md) The line that explains the pause, and the one that says nothing | S | **done** |
+| | [TASK-031303](tasks/TASK-031303-the-store-holds-the-presence-the-server-stated.md) The store holds the presence the server stated, and counts the frames | S | **ready** |
 | | [TASK-031304](tasks/TASK-031304-a-rival-is-back-only-if-this-client-saw-them-go.md) A rival is back only if this client saw them go | S | backlog |
 | | [TASK-031305](tasks/TASK-031305-whole-seconds-to-the-deadline-and-never-below-zero.md) Whole seconds to the deadline, and never below zero | XS | backlog |
 | | [TASK-031306](tasks/TASK-031306-the-notice-says-the-state-and-counts-the-window-down.md) The notice says the state and counts the window down | S | backlog |
