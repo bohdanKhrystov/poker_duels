@@ -2,7 +2,7 @@
 id: STORY-0312
 title: A whole duel through the client, frame by frame
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, test, secrecy]

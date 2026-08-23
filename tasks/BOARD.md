@@ -70,7 +70,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
-| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **ready** | v0.1 |
+| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 11 of 13 stories done; `STORY-0309` and `STORY-0313` wait on `EPIC-02`'s `STORY-0213` and `STORY-0214` | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **parked** — 9 of 17 stories done (`STORY-0401`–`0404`, `0408`–`0411`, `0413`). The remaining 8 all trace to `STORY-0405`, which depends on `STORY-0213` and `STORY-0214` — EPIC-02 work this run was not authorised to start | v0.2 |
 | [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
@@ -1018,10 +1018,10 @@ every digit run from the DOM and asserts each is a field of the view, the other 
 
 `STORY-0307` is merged to its last ticket: twelve tickets, cumulative counts **194 → 232** from the
 measured baseline of 190, plus five follow-ups filed during the run (`TASK-030713`–`17`), which
-carry no count because they may land in any order. Sixteen are merged; `TASK-030717` is the one
-still open, filed on 2026-08-16 by `TASK-030716`'s own second red edit — delete `guard`'s
-`message.handNumber != state.handNumber` line and the whole of `DuelActionTest` stays green, because
-the suite's only staleness coverage replays a frame from the *same* hand. The chain is strictly
+carry no count because they may land in any order. All seventeen are merged. `TASK-030717` was
+filed on 2026-08-16 by `TASK-030716`'s own second red edit — deleting `guard`'s
+`message.handNumber != state.handNumber` line left the whole of `DuelActionTest` green, because
+the suite's only staleness coverage replayed a frame from the *same* hand. The chain is strictly
 linear. The bar it builds is
 the **only place this client asserts anything**, so the same constraint appears one level sharper:
 it draws `legalActions.allowed` and no other control, clamps its amount control to bounds the server
@@ -1256,7 +1256,7 @@ written and is still true.
 | | [TASK-030616](tasks/TASK-030616-the-table-names-no-card-the-view-did-not-send-and-no-hand.md) The table names no card the view did not send, and no hand | S | **done** |
 | | [TASK-030617](tasks/TASK-030617-the-lobby-hands-the-live-view-to-the-duel-table.md) The lobby hands the live view to the duel table | XS | **done** |
 | | [TASK-030618](tasks/TASK-030618-the-suit-glyphs-are-asserted-by-codepoint-not-by-a-matching-literal.md) The suit glyphs are asserted by codepoint, not by a matching literal | XS | **done** |
-| **[STORY-0307](stories/STORY-0307-action-bar.md)** The action bar — acting on your turn — *schema 2* | | **ready** |
+| **[STORY-0307](stories/STORY-0307-action-bar.md)** The action bar — acting on your turn — *schema 2* | | **done** |
 | | [TASK-030701](tasks/TASK-030701-a-turn-fixture-with-every-field-the-wire-declares.md) A turn fixture with every field the wire declares | XS | **done** |
 | | [TASK-030702](tasks/TASK-030702-each-action-says-its-verb-and-carries-the-servers-figure.md) Each action says its verb and carries the server's figure | S | **done** |
 | | [TASK-030703](tasks/TASK-030703-the-act-frame-echoes-the-turns-identity-verbatim.md) The Act frame echoes the turn's identity verbatim | S | **done** |
@@ -1274,7 +1274,7 @@ written and is still true.
 | | [TASK-030715](tasks/TASK-030715-the-derivation-guards-read-numeric-attributes.md) The derivation guards read the numbers that reach the DOM as attributes | S | **done** |
 | | [TASK-030716](tasks/TASK-030716-a-rejection-leaves-the-act-identity-valid.md) The server proves a rejection leaves the client's Act identity valid | S | **done** |
 | | [TASK-030717](tasks/TASK-030717-a-frame-from-an-earlier-hand-is-dropped.md) A frame from an earlier hand is dropped, though its sequence fits | XS | **done** |
-| **[STORY-0308](stories/STORY-0308-result-screen.md)** The result screen — who won, and the coin — *schema 2* | | **ready** |
+| **[STORY-0308](stories/STORY-0308-result-screen.md)** The result screen — who won, and the coin — *schema 2* | | **done** |
 | | [TASK-030801](tasks/TASK-030801-a-duel-outcome-fixture-with-every-field-the-wire-declares.md) A DuelOutcome fixture with every field the wire declares | S | **done** |
 | | [TASK-030802](tasks/TASK-030802-the-verdict-is-read-off-the-winner-and-your-seat.md) The verdict is read off the winner and your seat, and nothing else | S | **done** |
 | | [TASK-030803](tasks/TASK-030803-the-coin-line-states-the-one-coin-the-duel-moved.md) The coin line states the one coin the duel moved, and no balance | XS | **done** |
@@ -1285,7 +1285,7 @@ written and is still true.
 | | [TASK-030808](tasks/TASK-030808-the-result-derives-no-winner-and-no-figure.md) The result derives no winner and shows no figure the outcome did not carry | S | **done** |
 | | [TASK-030809](tasks/TASK-030809-the-duel-screen-shows-the-result-when-the-duel-ends.md) The duel screen shows the result when the duel ends | S | **done** |
 | [STORY-0309](stories/STORY-0309-rematch.md) | Rematch from the result screen (needs `STORY-0213`) | **ready** |
-| **[STORY-0310](stories/STORY-0310-reconnect-and-resume.md)** Reconnect — the client resumes its seat — *schema 2* | | **ready** |
+| **[STORY-0310](stories/STORY-0310-reconnect-and-resume.md)** Reconnect — the client resumes its seat — *schema 2* | | **done** |
 | | [TASK-031001](tasks/TASK-031001-the-room-code-lives-under-one-key-this-module-owns.md) The room code lives under one storage key this module owns | XS | **done** |
 | | [TASK-031002](tasks/TASK-031002-the-retry-delay-doubles-to-a-ceiling-and-spends-the-jitter.md) The retry delay doubles to a ceiling and spends the jitter it is handed | XS | **done** |
 | | [TASK-031003](tasks/TASK-031003-a-closed-socket-is-reopened-on-virtual-time.md) A closed socket is reopened, on virtual time, when the backoff says so | S | **done** |
@@ -1301,7 +1301,7 @@ written and is still true.
 | | [TASK-031013](tasks/TASK-031013-no-client-test-sleeps-on-a-real-clock.md) No client test sleeps on a real clock | XS | **done** |
 | | [TASK-031014](tasks/TASK-031014-the-reconnecting-connections-own-surface-is-proven.md) The reconnecting connection's own send, status and close are proven | S | **done** |
 | | [TASK-031015](tasks/TASK-031015-the-virtual-time-guard-exempts-itself-on-purpose.md) The virtual-time guard exempts itself on purpose, not by accident | XS | **done** |
-| **[STORY-0311](stories/STORY-0311-profile-strip.md)** The profile strip — my coins and my recent duels — *schema 2* | | ready |
+| **[STORY-0311](stories/STORY-0311-profile-strip.md)** The profile strip — my coins and my recent duels — *schema 2* | | **done** |
 | | [TASK-031101](tasks/TASK-031101-one-get-carrying-the-device-id-the-server-reads.md) One GET, carrying the device id, with three answers | S | **done** |
 | | [TASK-031102](tasks/TASK-031102-the-profile-read-states-the-balance-the-server-sent.md) The profile read states the balance the server sent, sign and all | S | **done** |
 | | [TASK-031103](tasks/TASK-031103-the-recent-duels-read-drops-the-opponent.md) The recent-duels read keeps every field but the opponent's identifier | S | **done** |
@@ -1314,7 +1314,7 @@ written and is still true.
 | | [TASK-031110](tasks/TASK-031110-the-lobby-shows-the-strip-and-the-duel-does-not.md) The lobby shows the strip, and a duel in progress does not | S | **done** |
 | | [TASK-031111](tasks/TASK-031111-the-strip-names-no-opponent-and-counts-no-coin.md) The strip names no opponent and counts no coin | S | **done** |
 | | [TASK-031112](tasks/TASK-031112-the-strip-keeps-the-order-the-server-sent.md) The strip lists recent duels in the order the server sent them | XS | **done** |
-| **[STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md)** A whole duel through the client, frame by frame — *schema 2* | | ready |
+| **[STORY-0312](stories/STORY-0312-whole-duel-through-the-client.md)** A whole duel through the client, frame by frame — *schema 2* | | **done** |
 | | [TASK-031201](tasks/TASK-031201-played-duel-records-the-acts-it-sent.md) A played duel records the Act it sent, and the seat it sent it from | XS | **done** |
 | | [TASK-031202](tasks/TASK-031202-a-whole-duel-as-one-seats-session-of-frames.md) A whole duel written down as each seat's own session of frames | S | **done** |
 | | [TASK-031203](tasks/TASK-031203-one-task-writes-the-script-another-fails-on-drift.md) One Gradle task writes the duel script, another fails the build on drift | S | **done** |

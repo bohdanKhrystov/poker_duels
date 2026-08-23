@@ -2,7 +2,7 @@
 id: STORY-0310
 title: Reconnect — the client resumes its seat
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, websocket, resilience]

@@ -2,7 +2,7 @@
 id: STORY-0311
 title: The profile strip — my coins and my recent duels
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, http, profile]
