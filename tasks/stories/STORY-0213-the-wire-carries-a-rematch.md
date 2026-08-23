@@ -92,11 +92,22 @@ shape with no ledger row fails `ProtocolVersionLedgerTest`, a documented message
 capped at three files, which is what `DEC-063` asked about.
 [`ADR-0068`](../../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)
 answers it: **the gates do not move** — a budgeting rule never rewrites a correctness gate — and
-instead `files_touched` becomes a true count, with a ticket held together by a merged gate declaring
-up to twelve files and naming those gates in a new `atomic:` key. The ticket carries
-`files_touched: 12` and has **no headroom**: a thirteenth file is a decision, not a bigger ticket.
+instead `files_touched` becomes a true count, with a ticket held together by a merged gate naming
+those gates in a new `atomic:` key.
+
+**It was fifteen, and that was `DEC-064`.** An implementation attempt got all twelve right and then
+found three more the change forces — `SocketDuel.kt` and `SocketSecrecyTest.kt`, exhaustive `when`s
+over `ServerMessage` in **test** sources, and `connection.test.ts`, whose fixtures run through the
+client's own version comparison. It stopped and raised a decision rather than growing the ticket.
+[`ADR-0069`](../../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md) answers it: the
+twelve-file ceiling is **deleted** rather than raised, `files_touched` must equal the ticket's own
+*Files* table, and **a file the table does not name stops the ticket at any count**. The ticket
+carries `files_touched: 15`.
+
 `STORY-0214` and `STORY-0405` are behind this story in the same queue and are written the same way,
-each recomputing its own set from `ADR-0068` §5's procedure rather than from a remembered number.
+each **probing** its own set per `ADR-0069` §3 — a throwaway `PROTOCOL_VERSION + 1` and a throwaway
+sealed variant, run through `:poker-server:check` and `npm run check`, then reverted — rather than
+reusing this story's number, which is a fact about one ticket and not about protocol bumps.
 
 Two of the twelve are files `ADR-0044` §9 did not foresee, and both are mechanical:
 `web-client/src/protocol/frames.ts` holds a `satisfies Record<ServerMessage["type"], true>` table

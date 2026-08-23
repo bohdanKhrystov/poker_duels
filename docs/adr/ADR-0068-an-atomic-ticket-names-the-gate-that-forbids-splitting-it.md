@@ -3,6 +3,10 @@
 - **Status:** Accepted
 - **Date:** 2026-08-23
 - **Resolves:** `DEC-063`
+- **Amended by** [`ADR-0069`](ADR-0069-the-blast-radius-is-probed-not-remembered.md) — §3's
+  twelve-file ceiling is **deleted** (the count must now equal the ticket's own *Files* table), and
+  §5's enumeration is replaced by a **probe** that runs before the change exists. §5's dated
+  twelve-row table is a historical record and is no longer a planning aid. §§1, 2 and 4 stand.
 - **Amends** [`ADR-0007`](ADR-0007-token-lean-agent-workflow.md) — *"Files touched ≤ 3"* gains one
   narrow, declared exemption. The default is unchanged and the context budget is not reversed.
 - **Amends** [`ADR-0047`](ADR-0047-a-protocol-version-is-claimed-in-a-ledger.md) §6, whose count of
