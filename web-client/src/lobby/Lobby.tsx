@@ -8,6 +8,7 @@ import { NameSurface } from "../profile/NameSurface";
 import { useSetName } from "../profile/set-name-provider";
 import { ActionBar } from "../table/ActionBar";
 import { DuelResult } from "../result/DuelResult";
+import { RematchControl } from "../result/RematchControl";
 import { DuelTable } from "../table/DuelTable";
 import { HistoryScreen } from "../history/HistoryScreen";
 import { HISTORY_HEADING } from "../history/history-text";
@@ -32,7 +33,20 @@ export function Lobby(): ReactElement {
   // frame established: `view` and `roomCode` both outlive the duel, so a result
   // branch placed after either is a branch that never runs.
   if (state.outcome !== null) {
-    return <DuelResult outcome={state.outcome} mySeat={state.mySeat} />;
+    return (
+      <DuelResult
+        outcome={state.outcome}
+        mySeat={state.mySeat}
+        rematch={
+          <RematchControl
+            offers={state.rematchOffers}
+            mySeat={state.mySeat}
+            refusal={state.refusal}
+            onOffer={() => send({ type: "OfferRematch" })}
+          />
+        }
+      />
+    );
   }
 
   // The first Snapshot is how the host learns the guest arrived: seating the

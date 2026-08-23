@@ -526,4 +526,53 @@ describe("the lobby", () => {
     const headings = screen.queryAllByRole("heading");
     expect(headings.length).toBe(0);
   });
+
+  it("sends one OfferRematch when the rematch is pressed", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    const { send } = renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 1, handsPlayed: 3, finalStacks: [0, 1000] },
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Rematch" }));
+
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledWith({ type: "OfferRematch" });
+  });
+
+  it("shows your own offer only once the server states it", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 1, handsPlayed: 3, finalStacks: [0, 1000] },
+      });
+    });
+
+    // Immediately after click, the Rematch button is still on screen
+    fireEvent.click(screen.getByRole("button", { name: "Rematch" }));
+    expect(screen.getByRole("button", { name: "Rematch" })).toBeDefined();
+    expect(
+      screen.queryByText("Rematch offered — waiting for your rival"),
+    ).toBeNull();
+
+    // Then the server sends RematchOffered
+    act(() => {
+      store.apply({ type: "RematchOffered", seat: 1 });
+    });
+
+    // The chip appears and the button is gone
+    expect(
+      screen.getByText("Rematch offered — waiting for your rival"),
+    ).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Rematch" })).toBeNull();
+  });
 });
