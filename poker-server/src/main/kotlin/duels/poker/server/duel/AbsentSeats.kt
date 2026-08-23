@@ -4,6 +4,7 @@ import duels.poker.engine.game.ActionType
 import duels.poker.engine.game.PlayerAction
 import duels.poker.engine.game.legalActions
 import duels.poker.server.protocol.Act
+import duels.poker.server.protocol.ServerMessage
 
 /**
  * Gives up the turn for every seat nobody is sitting in, each time the turn reaches it: folds
@@ -15,10 +16,13 @@ import duels.poker.server.protocol.Act
  * The give-up action is not a special case: for each absent seat on turn, this builds the same
  * [Act] frame that seat's own client would have had to send, and hands it to [act] exactly as an
  * inbound frame would be handled. That means the same [guard], the same engine call that decides
- * legality, the same [advance] at the hand boundary, and the same frames to both seats — a turn
- * given up for absence is, in the log and on the wire, indistinguishable from one a player acted
- * on themselves. Nothing here constructs a game state, an event, or a frame of its own; it only
- * returns what [act] gave it.
+ * legality, and the same [advance] at the hand boundary — a turn given up for absence is, in the
+ * log, indistinguishable from one a player acted on themselves, exactly as `ADR-0023` describes.
+ * `ADR-0028` deliberately reverses the other half of that property: on the wire, it is not. Every
+ * action this function actually applies is preceded, to **both** seats, by a
+ * [ServerMessage.ActedForAbsent] frame naming the absent seat, the decision point, and the action
+ * taken. That mark, and only that mark, is a frame this function constructs of its own; every
+ * other frame it returns is exactly what [act] gave it.
  *
  * Termination is guaranteed two ways:
  *  - the action is always the cheapest one [legalActions] allows for the seat this function acts
@@ -29,7 +33,7 @@ import duels.poker.server.protocol.Act
  *    ends the duel outright;
  *  - if a call to [act] ever returns a runner identical to the one it was given — a refusal, which
  *    would leave the seat on turn unchanged — the loop returns immediately instead of retrying an
- *    action that visibly made no progress.
+ *    action that visibly made no progress, and marks nothing for it.
  *
  * @param step The duel as it stands, together with the frames already queued before this call.
  * @param absent The seats nobody is sitting in right now. May be empty, hold one seat, or both.
@@ -45,9 +49,9 @@ public fun foldAbsent(step: DuelStep, absent: Set<Int>, seeds: HandSeedSource): 
         if (seat !in absent) return current
 
         val legal = legalActions(hand.state)
-        val giveUp = when {
-            legal.allows(ActionType.FOLD) -> PlayerAction.Fold(seat)
-            legal.allows(ActionType.CHECK) -> PlayerAction.Check(seat)
+        val (giveUp, actionType) = when {
+            legal.allows(ActionType.FOLD) -> PlayerAction.Fold(seat) to ActionType.FOLD
+            legal.allows(ActionType.CHECK) -> PlayerAction.Check(seat) to ActionType.CHECK
             // The engine does not produce an on-turn seat with neither action legal; stop rather
             // than send anything if it ever does.
             else -> return current
@@ -61,7 +65,21 @@ public fun foldAbsent(step: DuelStep, absent: Set<Int>, seeds: HandSeedSource): 
 
         val before = current.runner
         val next = act(before, seat, frame, seeds)
-        current = DuelStep(next.runner, current.outbound + next.outbound)
-        if (next.runner == before) return current
+        val moved = next.runner != before
+        val produced = if (moved) {
+            // Marked to both seats, per ADR-0028: this is a fact about the log they share, so
+            // unlike a per-recipient frame it must name the seat it is about.
+            val mark = ServerMessage.ActedForAbsent(
+                seat = seat,
+                handNumber = hand.state.handNumber,
+                actionSequence = frame.actionSequence,
+                action = actionType,
+            )
+            listOf(Addressed(0, mark), Addressed(1, mark)) + next.outbound
+        } else {
+            next.outbound
+        }
+        current = DuelStep(next.runner, current.outbound + produced)
+        if (!moved) return current
     }
 }
