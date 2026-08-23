@@ -2,7 +2,7 @@
 id: STORY-0214
 title: The wire names an absent opponent
 type: story
-status: ready
+status: done
 parent: EPIC-02
 module: poker-server
 labels: [server, protocol, rooms, presence]

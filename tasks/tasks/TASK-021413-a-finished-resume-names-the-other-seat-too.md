@@ -3,7 +3,7 @@ schema: 2
 id: TASK-021413
 title: A finished room's resume names the other seat, and the test says so
 type: task
-status: ready
+status: done
 parent: STORY-0214
 module: poker-server
 estimate: XS
