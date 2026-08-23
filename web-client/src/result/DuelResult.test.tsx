@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { DuelResult } from "./DuelResult";
 import { anOutcome } from "./outcome-fixture";
 
@@ -149,5 +149,26 @@ describe("the result screen", () => {
     expect(
       button.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it("calls onLeave when the way back is taken", () => {
+    const onLeave = vi.fn();
+    render(<DuelResult outcome={anOutcome()} mySeat={0} onLeave={onLeave} />);
+
+    const back = screen.getByRole("link", { name: "Back to the lobby" });
+    const clickReturn = fireEvent.click(back);
+
+    expect(onLeave).toHaveBeenCalledOnce();
+    expect(clickReturn).toBe(true);
+    expect(back.getAttribute("href")).toBe("/");
+  });
+
+  it("takes the way back with no onLeave to call", () => {
+    render(<DuelResult outcome={anOutcome()} mySeat={0} />);
+
+    const back = screen.getByRole("link", { name: "Back to the lobby" });
+
+    expect(() => fireEvent.click(back)).not.toThrow();
+    expect(back.getAttribute("href")).toBe("/");
   });
 });
