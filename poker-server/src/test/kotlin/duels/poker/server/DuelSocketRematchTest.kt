@@ -103,14 +103,25 @@ private data class FinishedDuel(
 )
 
 /**
- * Pre-creates a room directly on [deps]'s [RoomRegistry] — the only way a test picks a one-hand
- * format, since [duels.poker.server.protocol.CreateRoom] always opens [DuelFormat.DEFAULT] — hands
- * a host and a guest device onto it over the wire through [JoinRoom], exactly as real clients
- * would, then folds the host's only decision: hand 1's fold ends that hand, and
- * [EndCondition.FixedHands] `(1)` ends the duel there. Both sockets are drained before returning,
- * so a later read on either sees only what happens after this call.
+ * Two sockets seated on a fresh `FixedHands(1)` room, drained of their opening frames, with the
+ * host's only decision point captured but not yet answered — the duel is still running.
  */
-private suspend fun HttpClient.finishedDuel(deps: SocketDependencies): FinishedDuel {
+private data class RunningDuel(
+    val host: DefaultClientWebSocketSession,
+    val guest: DefaultClientWebSocketSession,
+    val yourTurn: ServerMessage.YourTurn,
+)
+
+/**
+ * Pre-creates a room directly on [deps]'s [RoomRegistry] — the only way a test picks a one-hand
+ * format, since [duels.poker.server.protocol.CreateRoom] always opens [DuelFormat.DEFAULT] — and
+ * hands a host and a guest device onto it over the wire through [JoinRoom], exactly as real clients
+ * would. Both sockets are drained of their opening frames before returning, so a later read on
+ * either sees only what happens after this call; the host's [ServerMessage.YourTurn] is handed back
+ * rather than answered, which is what leaves the duel still running for a caller that needs exactly
+ * that — [finishedDuel] is the caller that instead answers it right away.
+ */
+private suspend fun HttpClient.runningDuel(deps: SocketDependencies): RunningDuel {
     val format = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
     val host = deps.directory.resolve(DeviceId("host"))
     val room = deps.rooms.create(host.id, format)
@@ -123,12 +134,23 @@ private suspend fun HttpClient.finishedDuel(deps: SocketDependencies): FinishedD
     guestSession.drainServerMessages()
     val yourTurn = hostOpening.filterIsInstance<ServerMessage.YourTurn>().single()
 
-    // folding hand 1's only decision ends that hand, and FixedHands(1) ends the duel there.
-    hostSession.sendAct(yourTurn.handNumber, yourTurn.actionSequence, PlayerAction.Fold(0))
-    hostSession.drainServerMessages()
-    guestSession.drainServerMessages()
+    return RunningDuel(hostSession, guestSession, yourTurn)
+}
 
-    return FinishedDuel(hostSession, guestSession)
+/**
+ * Seats a duel via [runningDuel], then folds the host's only decision: hand 1's fold ends that
+ * hand, and [EndCondition.FixedHands] `(1)` ends the duel there. Both sockets are drained again
+ * before returning, so a later read on either sees only what happens after this call.
+ */
+private suspend fun HttpClient.finishedDuel(deps: SocketDependencies): FinishedDuel {
+    val duel = runningDuel(deps)
+
+    // folding hand 1's only decision ends that hand, and FixedHands(1) ends the duel there.
+    duel.host.sendAct(duel.yourTurn.handNumber, duel.yourTurn.actionSequence, PlayerAction.Fold(0))
+    duel.host.drainServerMessages()
+    duel.guest.drainServerMessages()
+
+    return FinishedDuel(duel.host, duel.guest)
 }
 
 /**
@@ -470,6 +492,98 @@ class DuelSocketRematchTest {
             // them differs from either other — nothing on the wire tells the three apart.
             assertEquals(neverEnteredReply, refusedEntryReply)
             assertEquals(refusedEntryReply, reapedReply)
+        }
+    }
+
+    /**
+     * `TASK-021306`: `ADR-0044` §6's second bullet over the wire. An [OfferRematch] sent while the
+     * duel is still running — the host has a decision pending, so hand 1 has not yet ended — is
+     * refused with exactly one [ServerMessage.Failure]`(`[ProtocolError.REMATCH_UNAVAILABLE]`)` on
+     * the offering socket, and the other socket sees nothing at all: unlike an accepted offer, which
+     * [oneOfferPutsOneRematchOfferedNamingThatSeatOnBothSockets] shows reaching both seats, a refusal
+     * stays private to whoever sent it.
+     */
+    @Test
+    fun anOfferWhileTheDuelIsRunningIsRefusedAsRematchUnavailable() = testApplication {
+        val deps = testDeps(rooms = testRoomRegistry())
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val duel = client.runningDuel(deps)
+
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+
+            val hostAfter = duel.host.drainServerMessages()
+            val guestAfter = duel.guest.drainServerMessages()
+
+            // the count rules out extra frames riding along with the refusal, and the equality rules
+            // out both a wrong error code and the offer silently succeeding mid-duel.
+            assertEquals(1, hostAfter.size, "host: $hostAfter")
+            assertEquals(ServerMessage.Failure(ProtocolError.REMATCH_UNAVAILABLE), hostAfter.single())
+
+            assertTrue(guestAfter.isEmpty(), "guest saw something while the duel was still running: $guestAfter")
+        }
+    }
+
+    /**
+     * `TASK-021306`: the other half of `ADR-0044` §6's second bullet — the refusal is transient, not
+     * permanent. The very socket [anOfferWhileTheDuelIsRunningIsRefusedAsRematchUnavailable] shows
+     * being refused sends the identical [OfferRematch] again after its own fold has ended that same
+     * duel, and this time it succeeds exactly as `TASK-021302` describes: one
+     * [ServerMessage.RematchOffered]`(seat = 0)` on both sockets, no [ServerMessage.Failure] on
+     * either. Nothing else changes between the two attempts — same socket, same seat, same room —
+     * only that the duel has since finished, which is what makes the difference in outcome a claim
+     * about time rather than about which client asked.
+     */
+    @Test
+    fun theSameOfferIsAcceptedOnceTheDuelHasFinished() = testApplication {
+        val deps = testDeps(rooms = testRoomRegistry())
+        application {
+            module()
+            duelSocket(deps)
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val duel = client.runningDuel(deps)
+
+            // refused once, while the duel is still running.
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val refusal = duel.host.drainServerMessages()
+            duel.guest.drainServerMessages()
+            assertEquals(ServerMessage.Failure(ProtocolError.REMATCH_UNAVAILABLE), refusal.single())
+
+            // folding hand 1's only decision ends that hand, and FixedHands(1) ends the duel there —
+            // the only thing this changes about the duel is that it is now finished.
+            duel.host.sendAct(duel.yourTurn.handNumber, duel.yourTurn.actionSequence, PlayerAction.Fold(0))
+            duel.host.drainServerMessages()
+            duel.guest.drainServerMessages()
+
+            // the same offer, resent on the same socket that was just refused.
+            duel.host.send(Frame.Text(ProtocolCodec.encode(OfferRematch)))
+            val hostAfter = duel.host.drainServerMessages()
+            val guestAfter = duel.guest.drainServerMessages()
+
+            val hostOffers = hostAfter.filterIsInstance<ServerMessage.RematchOffered>()
+            val guestOffers = guestAfter.filterIsInstance<ServerMessage.RematchOffered>()
+
+            // asserted per socket, not on the pooled total, and against both counts, not only the
+            // seat number: a rejection that still slipped a lone frame past the size check on one
+            // socket, or that misnamed the seat, would each fail a different one of these four.
+            assertEquals(1, hostOffers.size)
+            assertEquals(1, guestOffers.size)
+            assertEquals(0, hostOffers.single().seat)
+            assertEquals(0, guestOffers.single().seat)
+
+            // had the refusal been permanent rather than transient, this resend would answer with
+            // another Failure(REMATCH_UNAVAILABLE) instead — caught here, and independently by the
+            // two RematchOffered counts above coming back empty rather than one.
+            assertTrue(hostAfter.none { it is ServerMessage.Failure }, "host saw a Failure once the duel had finished: $hostAfter")
+            assertTrue(guestAfter.none { it is ServerMessage.Failure }, "guest saw a Failure once the duel had finished: $guestAfter")
         }
     }
 }
