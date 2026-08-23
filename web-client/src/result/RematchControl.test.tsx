@@ -6,7 +6,7 @@ import { RematchControl } from "./RematchControl";
 describe("the rematch control", () => {
   it("offers one press, labelled Rematch", () => {
     const onOffer = vi.fn();
-    render(<RematchControl mySeat={1} onOffer={onOffer} />);
+    render(<RematchControl mySeat={1} onOffer={onOffer} offers={[]} />);
 
     const buttons = screen.getAllByRole("button");
     expect(buttons).toHaveLength(1);
@@ -18,7 +18,7 @@ describe("the rematch control", () => {
 
   it("calls onOffer once for one press", () => {
     const onOffer = vi.fn();
-    render(<RematchControl mySeat={1} onOffer={onOffer} />);
+    render(<RematchControl mySeat={1} onOffer={onOffer} offers={[]} />);
 
     const button = screen.getByRole("button", { name: "Rematch" });
     fireEvent.click(button);
@@ -28,7 +28,7 @@ describe("the rematch control", () => {
 
   it("stays live for a second press", () => {
     const onOffer = vi.fn();
-    render(<RematchControl mySeat={1} onOffer={onOffer} />);
+    render(<RematchControl mySeat={1} onOffer={onOffer} offers={[]} />);
 
     const button = screen.getByRole("button", { name: "Rematch" });
     fireEvent.click(button);
@@ -41,10 +41,57 @@ describe("the rematch control", () => {
   it("offers nothing to a client that holds no seat", () => {
     const onOffer = vi.fn();
     const { container } = render(
-      <RematchControl mySeat={null} onOffer={onOffer} />,
+      <RematchControl mySeat={null} onOffer={onOffer} offers={[]} />,
     );
 
     expect(container.firstChild).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("shows your own offer standing, and takes the button away", () => {
+    const onOffer = vi.fn();
+    render(<RematchControl mySeat={1} onOffer={onOffer} offers={[1]} />);
+
+    expect(
+      screen.getByText("Rematch offered — waiting for your rival"),
+    ).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Rematch" })).toBeNull();
+  });
+
+  it("shows the same offer from the other side above a live button", () => {
+    const onOffer = vi.fn();
+    render(<RematchControl mySeat={0} onOffer={onOffer} offers={[1]} />);
+
+    const rivalLine = screen.getByText("Your rival offers a rematch");
+    const button = screen.getByRole("button", { name: "Rematch" });
+
+    expect(rivalLine).toBeDefined();
+    expect(button).toBeDefined();
+
+    // The rival line should precede the button in document order
+    expect(rivalLine.compareDocumentPosition(button)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("takes the button away for seat zero too", () => {
+    const onOffer = vi.fn();
+    render(<RematchControl mySeat={0} onOffer={onOffer} offers={[0]} />);
+
+    expect(
+      screen.getByText("Rematch offered — waiting for your rival"),
+    ).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Rematch" })).toBeNull();
+  });
+
+  it("keeps the button while nobody has offered", () => {
+    const onOffer = vi.fn();
+    render(<RematchControl mySeat={1} onOffer={onOffer} offers={[]} />);
+
+    expect(screen.getByRole("button", { name: "Rematch" })).toBeDefined();
+    expect(
+      screen.queryByText("Rematch offered — waiting for your rival"),
+    ).toBeNull();
+    expect(screen.queryByText("Your rival offers a rematch")).toBeNull();
   });
 });

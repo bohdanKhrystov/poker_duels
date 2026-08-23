@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030909
 title: A room that is gone retires the control and says so
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: XS
