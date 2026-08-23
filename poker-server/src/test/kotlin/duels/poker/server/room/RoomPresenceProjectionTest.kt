@@ -58,6 +58,7 @@ class RoomPresenceProjectionTest {
             ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 0L),
             room.presenceOf(1, 45_000L),
         )
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 45_000L))
     }
 
     @Test
@@ -68,6 +69,7 @@ class RoomPresenceProjectionTest {
             ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 0L),
             room.presenceOf(1, 30_000L),
         )
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 30_000L))
     }
 
     @Test
@@ -106,5 +108,6 @@ class RoomPresenceProjectionTest {
             ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 10_000L),
             room.presenceOf(1, 20_000L),
         )
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 20_000L))
     }
 }
