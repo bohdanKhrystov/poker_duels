@@ -1638,8 +1638,8 @@ written and is still true.
 | | [TASK-031208](tasks/TASK-031208-no-rival-card-reaches-the-screen-before-the-reveal.md) No rival card reaches the screen before the frame that reveals it | S | **done** |
 | | [TASK-031209](tasks/TASK-031209-a-hand-won-without-a-showdown-shows-no-rival-card.md) A hand won without a showdown shows no rival card at all | S | **done** |
 | **[STORY-0313](stories/STORY-0313-the-table-names-an-absent-opponent.md)** The table names an absent opponent — *schema 2*, split 2026-08-24 into **fifteen**, `TASK-031301` startable. Two are `blocked` on `DEC-070` (the mark's lifetime, the product owner's) | | **ready** |
-| | [TASK-031301](tasks/TASK-031301-the-seats-status-line-learns-away-and-timed-out.md) The seat's status line learns Away and Timed out, and where they rank | S | **ready** |
-| | [TASK-031302](tasks/TASK-031302-the-line-that-explains-the-pause-and-the-one-that-says-nothing.md) The line that explains the pause, and the one that says nothing | S | backlog |
+| | [TASK-031301](tasks/TASK-031301-the-seats-status-line-learns-away-and-timed-out.md) The seat's status line learns Away and Timed out, and where they rank | S | **done** |
+| | [TASK-031302](tasks/TASK-031302-the-line-that-explains-the-pause-and-the-one-that-says-nothing.md) The line that explains the pause, and the one that says nothing | S | **ready** |
 | | [TASK-031303](tasks/TASK-031303-the-store-holds-the-presence-the-server-stated.md) The store holds the presence the server stated, and counts the frames | S | backlog |
 | | [TASK-031304](tasks/TASK-031304-a-rival-is-back-only-if-this-client-saw-them-go.md) A rival is back only if this client saw them go | S | backlog |
 | | [TASK-031305](tasks/TASK-031305-whole-seconds-to-the-deadline-and-never-below-zero.md) Whole seconds to the deadline, and never below zero | XS | backlog |
