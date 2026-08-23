@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030916
 title: The provider carries the forget down to the screen
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: S

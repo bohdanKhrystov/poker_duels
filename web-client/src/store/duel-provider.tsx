@@ -13,19 +13,27 @@ import type { DuelStore } from "./duel-store";
 interface DuelClientContext {
   readonly store: DuelStore;
   readonly send: (message: ClientMessage) => void;
+  readonly forgetRoom: () => void;
 }
 
 const DuelContext = createContext<DuelClientContext | null>(null);
+
+const NO_FORGET = (): void => {};
 
 /** Puts the booted client's store and send within reach of every screen. */
 export function DuelProvider(props: {
   store: DuelStore;
   send: (message: ClientMessage) => void;
+  forgetRoom?: () => void;
   children: ReactNode;
 }): ReactElement {
   const value = useMemo(
-    () => ({ store: props.store, send: props.send }),
-    [props.store, props.send],
+    () => ({
+      store: props.store,
+      send: props.send,
+      forgetRoom: props.forgetRoom ?? NO_FORGET,
+    }),
+    [props.store, props.send, props.forgetRoom],
   );
   return (
     <DuelContext.Provider value={value}>{props.children}</DuelContext.Provider>
@@ -49,4 +57,9 @@ export function useDuelState(): DuelState {
 /** The boot-created send. Screens call it from event handlers, never effects. */
 export function useSend(): (message: ClientMessage) => void {
   return useDuelClient().send;
+}
+
+/** The boot-created forget. Screens call it from event handlers, never effects. */
+export function useForgetRoom(): () => void {
+  return useDuelClient().forgetRoom;
 }

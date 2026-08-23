@@ -1,7 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { act } from "react";
 import { describe, it, expect, vi } from "vitest";
-import { DuelProvider, useDuelState, useSend } from "./duel-provider";
+import {
+  DuelProvider,
+  useDuelState,
+  useSend,
+  useForgetRoom,
+} from "./duel-provider";
 import { createDuelStore, type DuelStore } from "./duel-store";
 import type { ClientMessage } from "../protocol";
 import type { ReactElement } from "react";
@@ -23,13 +28,23 @@ function CreateButton(): ReactElement {
   );
 }
 
+function LeaveButton(): ReactElement {
+  const forgetRoom = useForgetRoom();
+  return (
+    <button type="button" onClick={() => forgetRoom()}>
+      Leave
+    </button>
+  );
+}
+
 function renderUnder(
   store: DuelStore,
   send: (message: ClientMessage) => void,
   child: ReactElement,
+  forgetRoom?: () => void,
 ): void {
   render(
-    <DuelProvider store={store} send={send}>
+    <DuelProvider store={store} send={send} forgetRoom={forgetRoom}>
       {child}
     </DuelProvider>,
   );
@@ -97,5 +112,30 @@ describe("the duel provider", () => {
 
   it("refuses to render a duel component with no provider above it", () => {
     expect(() => render(<RoomCode />)).toThrow(/DuelProvider/);
+  });
+
+  it("hands a component the forget the client was booted with", () => {
+    const store = createDuelStore();
+    const send: (message: ClientMessage) => void = vi.fn();
+    const forgetRoom: () => void = vi.fn();
+
+    renderUnder(store, send, <LeaveButton />, forgetRoom);
+
+    const button = screen.getByText("Leave");
+    fireEvent.click(button);
+
+    expect(forgetRoom).toHaveBeenCalledOnce();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("hands a component a forget that does nothing where none was given", () => {
+    const store = createDuelStore();
+    const send: (message: ClientMessage) => void = vi.fn();
+
+    renderUnder(store, send, <LeaveButton />);
+
+    const button = screen.getByText("Leave");
+    expect(() => fireEvent.click(button)).not.toThrow();
+    expect(send).not.toHaveBeenCalled();
   });
 });
