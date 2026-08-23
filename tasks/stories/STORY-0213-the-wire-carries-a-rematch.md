@@ -71,7 +71,32 @@ against its own out-of-scope rule.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0213`.* | — |
+| [TASK-021301](../tasks/TASK-021301-the-wire-gains-a-rematch-and-the-version-takes-its-step.md) | `OfferRematch` and `RematchOffered` reach the wire, and `PROTOCOL_VERSION` takes its step | **blocked** — `DEC-063` |
+| [TASK-021302](../tasks/TASK-021302-one-offer-reaches-both-seats-and-starts-no-duel.md) | One seat's offer puts `RematchOffered` on both sockets and starts no duel | backlog |
+| [TASK-021303](../tasks/TASK-021303-the-second-offer-starts-the-duel-with-the-button-moved.md) | The second offer starts a fresh duel, with the button on the other seat | backlog |
+| [TASK-021304](../tasks/TASK-021304-a-repeat-offer-is-answered-and-records-nothing.md) | A repeat offer is answered, not refused, and records nothing new | backlog |
+| [TASK-021305](../tasks/TASK-021305-three-ways-to-hold-no-seat-answer-one-frame.md) | Three ways to hold no seat answer one indistinguishable `UNKNOWN_ROOM` | backlog |
+| [TASK-021306](../tasks/TASK-021306-rematch-unavailable-is-transient-and-provably-so.md) | `REMATCH_UNAVAILABLE` is transient, and the same offer succeeds afterwards | backlog |
+| [TASK-021307](../tasks/TASK-021307-a-standing-offer-survives-a-reconnect.md) | A standing offer is restated to a returning socket, after its `DuelFinished` | backlog |
+
+The chain is linear: every ticket after `TASK-021301` depends on the one before it, and all but
+`TASK-021302`–`TASK-021306` — which share one test file — could not overlap anyway.
+
+**`TASK-021301` is blocked on `DEC-063`, and nothing in this story can start until it merges.** The
+split found that the wire step is irreducibly **twelve** files: the three type files, the constant,
+`DuelSocket`'s two exhaustive `when`s, `ProtocolJsonTest`'s literal, `docs/protocol.md`,
+`docs/protocol-versions.md`, both generated client artifacts, `version.ts` and `frames.ts`. Every one
+is forced by a gate that is already merged, and no two of them can land in different commits: a wire
+shape with no ledger row fails `ProtocolVersionLedgerTest`, a documented message with no type fails
+`ProtocolDocumentationTest`, and a type with no row fails it the other way. A schema-2 ticket is
+capped at three files. `DEC-063` is the architect's, and `STORY-0214` and `STORY-0405` are behind
+this story in the same queue with the same problem.
+
+Two of the twelve are files `ADR-0044` §9 did not foresee, and both are mechanical:
+`web-client/src/protocol/frames.ts` holds a `satisfies Record<ServerMessage["type"], true>` table
+that stops compiling until the new discriminator is added — `docs/protocol.md` already documents
+that edit — and `web-client/src/e2e/scripted-duel.gen.json` embeds a `Welcome`'s `protocolVersion`
+and is byte-checked by `:poker-server:verifyDuelScript` on every `check`.
 
 ## Acceptance criteria
 
