@@ -149,11 +149,12 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
-**One remains, and it is the architect's.** No decision here waits on a human.
+**Two remain, and neither waits on a human.** One is the architect's, one the product owner's.
 
 | ID | Question | For | Blocks |
 | --- | --- | --- | --- |
 | `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a fourteenth story exists — but it is due **before this epic closes** |
+| `DEC-070` | How long does the most recent *action the server took* stay on a player's screen, and what takes it off? `ADR-0046` §4 settles the words and settles that the **most recent** one is enough, and is silent on its lifetime. *Never clears* is a complete answer and is worth saying out loud | product owner | `TASK-031314` and `TASK-031315` only. `STORY-0313`'s other thirteen tickets run without it, and `TASK-031301` is startable today |
 
 ### Answered since this epic was written
 
