@@ -491,9 +491,22 @@ comparison. It stopped and raised a decision rather than growing the ticket, whi
 working exactly as designed.
 [`ADR-0069`](../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md) answers it: the
 ceiling is **deleted** rather than raised, `files_touched` must equal the ticket's own *Files* table,
-and a bump is sized by **probing** the gates rather than by remembering a list. The ticket is `ready`
-at `files_touched: 15`, and fifteen is written in that ticket and nowhere else. The six tickets
-behind it are ordinary one- and two-file tickets and run straight through once it lands.
+and a bump is sized by **probing** the gates rather than by remembering a list.
+
+**Fifteen turned out to be seventeen, which was `DEC-065`.** The probe missed two more files on the
+same ticket one day later, both merged tests that fail at **execution** rather than compilation:
+`ServerMessageHandshakeTest.theErrorSetIsExactlyWhatIsDeclared` (nine hard-coded `ProtocolError`
+names) and `TypeScriptDeclarationsTest.aSealedHierarchyIsAUnionOfItsVariants` (the exact
+`ClientMessage` union string). `ADR-0069` §3's probe **(b)** runs compile-level commands, and its
+edit says *"each sealed hierarchy"* so an enum entry trips nothing.
+[`ADR-0070`](../docs/adr/ADR-0070-a-blast-radius-is-complete-only-when-the-gates-are-green.md)
+answers it: **one probe, the CI gate set by reference, run in a loop until it exits 0** — a red run
+names only a *prefix* of the blast radius, so the completeness of an enumeration is an exit code and
+nothing else. `ADR-0069` §2's stop stands with one bounded exception: **a merged gate may complete
+the *Files* table**, under four conditions, so a one-line propagation is a row and a quoted failure
+message rather than a third `DEC`. The ticket is `ready` at `files_touched: 17`, and seventeen is
+written in that ticket and nowhere else. The six tickets behind it are ordinary one- and two-file
+tickets and run straight through once it lands.
 
 **`STORY-0213` reopened this epic on 2026-08-16.**
 [`ADR-0044`](../docs/adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) answers `DEC-023`:
@@ -588,6 +601,32 @@ parallel with `EPIC-02`; no shared file.
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 
 `DEC-063` → [`ADR-0068`](../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md) on 2026-08-23 (the gates that make a `PROTOCOL_VERSION` bump atomic do not move; `files_touched` becomes a true count, and a ticket held together by a merged gate declares up to twelve files and names its gates in `atomic:`. `ADR-0047` §6's *"five artifacts"* is replaced by a procedure rather than another number). **Unblocks `TASK-021301`, `STORY-0213`, `STORY-0214` and `STORY-0405`.**
+
+`DEC-065` → [`ADR-0070`](../docs/adr/ADR-0070-a-blast-radius-is-complete-only-when-the-gates-are-green.md)
+on 2026-08-23 — **registered and answered in the same PR**, because an implementation attempt raised
+it rather than a planner, for the second time on one ticket. `ADR-0069` §3's probe missed two more
+files, both merged tests that fail at **execution**: `ServerMessageHandshakeTest` hard-codes nine
+`ProtocolError` names, `TypeScriptDeclarationsTest` hard-codes the exact `ClientMessage` union
+string, and probe **(b)** runs `compileTestKotlin` and `tsc` while §3's own justification sentence
+claims full checks. **The obvious repair — make (b) full — would still have missed both**: the
+probe's `ServerMessage` variant breaks `DuelSocket.kt` in *main* sources, so `check` dies at
+`compileKotlin` and never reaches `test`, and **a red run names only a prefix of the blast radius**.
+That is what happened in round one, where side **(a)** was already full. Four procedures have now
+failed the same way — a list of four files, of five, of twelve, and now of commands and of language
+constructs — and **every one was a copy**, which drifts from what it copies. So: **one probe**, all
+stub edits applied together; **its commands are `.github/workflows/build.yml`'s, by reference and
+verbatim**, so a check added to CI joins every probe with no ADR edited and no document may publish
+a narrower one; **the probe is a loop that ends on `exit 0`**, because **there is no prefix of
+green**; and the stub edit is the story's **declared surface** — every declaration added, removed,
+renamed or re-valued, an enum entry included. `ADR-0069` §2's stop stands with **one bounded
+exception**: a coder may add a *Files* row and continue when a merged gate fails naming the path,
+the ticket's own authorised edits are what make it fail, the edit is **propagation not decision**
+(no behaviour, no new test, **no assertion weakened or derived away**), and the full gate set then
+exits 0. Costs: the probe becomes the most expensive step in planning; the coder gains a unilateral
+edit of its own contract whose third condition is judgement; `files_touched` becomes
+as-implemented; a probe without Docker is quietly narrower than CI; and four documents now answer
+one question in three days. **Unblocks `TASK-021301` at `files_touched: 17`**, and with it
+`STORY-0213`, `STORY-0214` and `STORY-0405`. `lint_tickets.py` is deliberately untouched.
 
 `DEC-064` → [`ADR-0069`](../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md)
 on 2026-08-23 — **registered and answered in the same PR**, because an implementation attempt raised

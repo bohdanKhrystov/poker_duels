@@ -50,19 +50,26 @@ ticket's own *Files* table. A gate fails an exit code; *"these belong together"*
 grew after the ticket was written are not gates, and are still a split. Every *Files* row of an
 `atomic:` ticket carries a *why it cannot be fewer* reason.
 
-**Size an `atomic:` ticket by probing, never by remembering** (`ADR-0069` §3). A procedure whose
-input is the finished change can verify a ticket but cannot size one — which is how a bump was
-planned at twelve and turned out to be fifteen, the three missing files being an exhaustive `when`
-in **test** sources, twice, and a client test fixture. Make a throwaway one-line change that trips
-the gates, run them, read the paths they print, revert:
+**Size an `atomic:` ticket by probing, never by remembering** (`ADR-0070`). A procedure whose input
+is the finished change can verify a ticket but cannot size one — which is how one bump was planned
+at twelve, turned out to be fifteen, and then turned out to be seventeen. **One** probe, run in a
+loop:
 
-```
-# a PROTOCOL_VERSION bump: set the constant + 1, then
-./gradlew :poker-server:check && (cd web-client && npm run check)
-# a new sealed variant: add a throwaway one, then
-./gradlew :poker-server:compileTestKotlin && (cd web-client && npm run typecheck)
-git checkout -- <the probe files>
-```
+1. **Stub every declaration the change adds, removes, renames or re-values**, all in one tree: a
+   throwaway sealed variant *carrying the fields the story states*, a throwaway **enum entry** — an
+   enum entry is a declaration, and forgetting that is what missed a file last time — a changed
+   constant. Not one probe per construct; one probe.
+2. **Run the commands `.github/workflows/build.yml` runs on a pull request, verbatim and in full.**
+   Open that file and read them. They are not written here, because a copied command list drifts
+   from the gate set, and that is how the last procedure failed. A run that skips a suite (a missing
+   Docker daemon, a narrowed Gradle task) has not run the gate set — say so in the ticket if you
+   cannot fix it.
+3. Every path the run names becomes a *Files* row, with the failing gate as its *why it cannot be
+   fewer*. Apply at each the minimal propagation the gate demands — no behaviour — and **run again**.
+4. **Stop only when the gate set exits 0.** A red run names a *prefix*: Gradle stops at its first
+   failing task, so a broken exhaustive `when` in main sources hides every gate that fails at test
+   execution behind it. **There is no prefix of green.**
+5. Revert every path the loop touched; `git status` is the list.
 
 Do not reuse another ticket's file list or count, however recent. It is a fact about that ticket,
 not about the kind of change.

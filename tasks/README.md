@@ -188,12 +188,27 @@ atomic:
 
 **There is no ceiling** — `ADR-0069` deleted it. A ceiling can only ever be the size of the last
 atomic ticket anyone wrote, and every size published for a protocol bump — four, five, twelve,
-fifteen — was wrong within days, because the set grows every time an ordinary ticket adds a gate
-somewhere else and nothing couples the two.
+fifteen, seventeen — was wrong within days, because the set grows every time an ordinary ticket adds
+a gate somewhere else and nothing couples the two.
+
 What stops an atomic ticket instead is **a file its *Files* table does not name** — at any count,
-that is a `DEC`, not a bigger ticket. Sizing one is done by **probing**: make a throwaway one-line
-change that trips the gates, run them, read the paths, revert (`ADR-0069` §3). A procedure that
+that is a `DEC`, not a bigger ticket. Sizing one is done by **probing**
+([`ADR-0070`](../docs/adr/ADR-0070-a-blast-radius-is-complete-only-when-the-gates-are-green.md)):
+stub every declaration the change adds, removes, renames or re-values — an enum entry is a
+declaration — all in one tree; run **the commands `.github/workflows/build.yml` runs on a pull
+request, verbatim and in full**, read from that file rather than copied from anywhere; turn every
+path it names into a *Files* row; apply the minimal propagation at each; **run again, and keep going
+until the gate set exits 0**; then revert. A red run names only a *prefix* of the blast radius,
+because the build stops at its first failure and hides everything downstream — **there is no prefix
+of green**, so the exit code is the only thing that makes an enumeration complete. A procedure that
 needs the finished work as its input can verify a ticket but cannot size one.
+
+**One exception to the stop** (`ADR-0070` §4): a coder may add a *Files* row itself and continue
+when all four of these hold — a **merged gate** fails and its output names the path; the ticket's
+own declared edits are what make it fail; the edit is **propagation, not decision** (no behaviour,
+no new test, and no assertion weakened or derived away); and the full gate set then exits 0. The
+row names its gate like any other, `files_touched` moves with it, and the PR body quotes the
+failure. Anything else is still a `DEC`.
 
 A gate is something that **fails an exit code**: a compiler rule (an exhaustive `when`, an interface
 signature, a `satisfies` table), a merged test, a Gradle verify task, a database constraint. These
