@@ -85,6 +85,7 @@ describe("the connection", () => {
       type: "Hello",
       deviceId: null,
       protocolVersion: PROTOCOL_VERSION,
+      sessionToken: null,
     });
   });
 

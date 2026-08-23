@@ -43,6 +43,9 @@ public enum class ProtocolError {
      */
     FRAME_LIMIT_EXCEEDED,
 
+    /** The client presented a session token that is invalid, expired or unknown. */
+    INVALID_SESSION,
+
     /**
      * The room cannot accept a rematch offer yet. **Transient**: nothing was recorded, and
      * the same offer may be sent again.

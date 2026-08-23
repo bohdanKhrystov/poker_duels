@@ -37,7 +37,7 @@ internal class SeatDeliveryTest {
     }
 
     /** A message distinguishable by [label] alone — its content plays no part in delivery. */
-    private fun messageFor(label: String): ServerMessage = ServerMessage.Welcome(deviceId = label)
+    private fun messageFor(label: String): ServerMessage = ServerMessage.Welcome(playerId = label, deviceId = label)
 
     /**
      * Registers one [ConnectionWriter] per entry of [writers], runs [deliver] with [frames]

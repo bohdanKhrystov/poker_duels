@@ -33,6 +33,7 @@ function fakeStorage(): Storage {
 function welcomeFrame(deviceId: string): string {
   return JSON.stringify({
     type: "Welcome",
+    playerId: "player-1",
     deviceId,
     protocolVersion: PROTOCOL_VERSION,
   } satisfies Welcome);
@@ -41,6 +42,7 @@ function welcomeFrame(deviceId: string): string {
 function welcomeFrameWithDifferentVersion(deviceId: string): string {
   return JSON.stringify({
     type: "Welcome",
+    playerId: "player-1",
     deviceId,
     protocolVersion: PROTOCOL_VERSION + 1,
   } satisfies Welcome);

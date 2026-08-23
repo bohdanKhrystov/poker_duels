@@ -69,6 +69,7 @@ describe("the duel state", () => {
     });
     const welcomed = duelState.applyServerMessage(stateWithSeat, {
       type: "Welcome",
+      playerId: "test-player",
       deviceId: "test-device",
       protocolVersion: 2,
     });

@@ -118,7 +118,12 @@ describe("a tab whose socket dropped", () => {
     sockets[1].receive(WELCOME);
 
     expect(sockets[1].sent.map((frame) => JSON.parse(frame))).toEqual([
-      { type: "Hello", deviceId: "d-1", protocolVersion: PROTOCOL_VERSION },
+      {
+        type: "Hello",
+        deviceId: "d-1",
+        protocolVersion: PROTOCOL_VERSION,
+        sessionToken: null,
+      },
       { type: "JoinRoom", code: "ABCDEFGH" },
     ]);
 
@@ -132,7 +137,12 @@ describe("a tab whose socket dropped", () => {
     sockets[2].receive(WELCOME);
 
     expect(sockets[2].sent.map((frame) => JSON.parse(frame))).toEqual([
-      { type: "Hello", deviceId: "d-1", protocolVersion: PROTOCOL_VERSION },
+      {
+        type: "Hello",
+        deviceId: "d-1",
+        protocolVersion: PROTOCOL_VERSION,
+        sessionToken: null,
+      },
       { type: "JoinRoom", code: "ABCDEFGH" },
     ]);
   });
@@ -145,6 +155,7 @@ describe("a tab whose socket dropped", () => {
       type: "Hello",
       deviceId: null,
       protocolVersion: PROTOCOL_VERSION,
+      sessionToken: null,
     });
 
     sockets[0].receive(
@@ -163,6 +174,7 @@ describe("a tab whose socket dropped", () => {
       type: "Hello",
       deviceId: "d-7",
       protocolVersion: PROTOCOL_VERSION,
+      sessionToken: null,
     });
   });
 
@@ -179,7 +191,12 @@ describe("a tab whose socket dropped", () => {
     sockets[1].receive(WELCOME);
 
     expect(sentFrames(sockets[1])).toEqual([
-      { type: "Hello", deviceId: "d-1", protocolVersion: PROTOCOL_VERSION },
+      {
+        type: "Hello",
+        deviceId: "d-1",
+        protocolVersion: PROTOCOL_VERSION,
+        sessionToken: null,
+      },
       { type: "JoinRoom", code: "ABCDEFGH" },
     ]);
   });

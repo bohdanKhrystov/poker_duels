@@ -12,7 +12,12 @@ import type { ClientMessage } from "../protocol";
 import type { ReactElement } from "react";
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
-const WELCOME = { type: "Welcome", deviceId: "d", protocolVersion: 2 } as const;
+const WELCOME = {
+  type: "Welcome",
+  playerId: "p-1",
+  deviceId: "d",
+  protocolVersion: 2,
+} as const;
 
 function RoomCode(): ReactElement {
   const state = useDuelState();
