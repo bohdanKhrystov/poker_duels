@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030914
 title: A gone room ends the rematch, and a transient refusal leaves it live
 type: task
-status: backlog
+status: ready
 parent: STORY-0309
 module: web-client
 estimate: XS
