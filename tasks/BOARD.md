@@ -1555,8 +1555,8 @@ written and is still true.
 | | [TASK-030914](tasks/TASK-030914-a-gone-room-ends-it-and-a-transient-refusal-does-not.md) A gone room ends the rematch, and a transient refusal leaves it live | XS | **done** |
 | | [TASK-030915](tasks/TASK-030915-boot-can-forget-the-room-this-tab-remembers.md) Boot can forget the room this tab remembers | S | **done** |
 | | [TASK-030916](tasks/TASK-030916-the-provider-carries-the-forget-down-to-the-screen.md) The provider carries the forget down to the screen | S | **done** |
-| | [TASK-030917](tasks/TASK-030917-the-way-back-calls-the-forget-it-is-handed.md) The way back calls the forget it is handed, and still navigates | XS | **ready** |
-| | [TASK-030918](tasks/TASK-030918-the-result-screens-way-back-is-wired-to-boots-forget.md) The result screen's way back is wired to boot's forget | XS | backlog |
+| | [TASK-030917](tasks/TASK-030917-the-way-back-calls-the-forget-it-is-handed.md) The way back calls the forget it is handed, and still navigates | XS | **done** |
+| | [TASK-030918](tasks/TASK-030918-the-result-screens-way-back-is-wired-to-boots-forget.md) The result screen's way back is wired to boot's forget | XS | **ready** |
 | | [TASK-030919](tasks/TASK-030919-a-finished-duel-forgets-nothing-and-the-next-socket-rejoins.md) A finished duel forgets nothing, and the next socket rejoins that room | S | backlog |
 | | [TASK-030920](tasks/TASK-030920-from-a-resumed-sockets-frames-the-way-back-forgets-the-room.md) From a resumed socket's frames, the way back forgets the room | XS | backlog |
 | **[STORY-0310](stories/STORY-0310-reconnect-and-resume.md)** Reconnect — the client resumes its seat — *schema 2* | | **done** |

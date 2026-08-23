@@ -27,6 +27,13 @@ export function DuelResult(props: {
    * it renders what it is handed.
    */
   rematch?: ReactNode;
+  /**
+   * An optional handler called before the way back link navigates. The link
+   * stays an `<a href="/">`, so the handler runs and navigation stays the
+   * browser's. Storage operations are synchronous, so a handler that forgets
+   * has finished before the page leaves.
+   */
+  onLeave?: () => void;
 }): ReactElement {
   const verdict = verdictOf(props.outcome, props.mySeat);
   const coin = coinLine(verdict);
@@ -53,6 +60,7 @@ export function DuelResult(props: {
       <a
         className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
         href="/"
+        onClick={props.onLeave}
       >
         Back to the lobby
       </a>
