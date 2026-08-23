@@ -1,15 +1,19 @@
 package duels.poker.server
 
+import duels.poker.server.duel.Addressed
 import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.CreateRoom
 import duels.poker.server.protocol.Decoded
 import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.JoinRoom
+import duels.poker.server.protocol.OfferRematch
 import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.handshake
 import duels.poker.server.room.JoinResult
+import duels.poker.server.room.RematchRefusal
+import duels.poker.server.room.RematchResult
 import duels.poker.server.room.RoomCode
 import duels.poker.server.room.RoomRefusal
 import duels.poker.server.session.ConnectionWriter
@@ -152,6 +156,7 @@ private suspend fun DefaultWebSocketServerSession.serve(
         }
 
         is ServerMessage.RoomJoined,
+        is ServerMessage.RematchOffered,
         is ServerMessage.Snapshot,
         is ServerMessage.Events,
         is ServerMessage.YourTurn,
@@ -388,6 +393,7 @@ private suspend fun ConnectionWriter.replyTo(
             is Act -> replyToAct(message, deps, session, room)
             is CreateRoom -> replyToCreateRoom(deps, session, room)
             is JoinRoom -> replyToJoinRoom(message.code, deps, session, room)
+            is OfferRematch -> replyToOfferRematch(deps, session, room)
         }
     }
 }
@@ -516,6 +522,66 @@ private suspend fun ConnectionWriter.replyToJoinRoom(
 
             RoomRefusal.UNKNOWN_ROOM -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
             RoomRefusal.ROOM_FULL -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.ROOM_FULL)))
+        }
+    }
+}
+
+/**
+ * Answers an attempt to offer a rematch for the finished duel in the room [room] names — the
+ * whole of `ADR-0044` §§3, 4 and 6.
+ *
+ * A first offer is told to **both** seats through [deliver], built as
+ * [duels.poker.server.protocol.ServerMessage.RematchOffered] beside where
+ * [duels.poker.server.protocol.ServerMessage.RoomJoined] is built, never through the projection
+ * layer (`ADR-0044` §2) — the offering client learns its offer was recorded from the server
+ * rather than assuming it, and the opponent learns of it from the same frame. A repeat offer is
+ * not an error: it answers **only the socket that sent it**, with the same
+ * [duels.poker.server.protocol.ServerMessage.RematchOffered] already sent, the same precedent
+ * [replyToJoinRoom]'s `ALREADY_SEATED` branch sets for a seat a player already holds.
+ *
+ * The seat addressed is never taken from the request — `OfferRematch` carries none — and never
+ * cached; it comes off the [duels.poker.server.room.Room] the registry just returned, for
+ * `TASK-020731`'s reason.
+ *
+ * @param deps The collaborators this socket needs.
+ * @param session Identifies this connection's player; never trusted for its seat.
+ * @param room This connection's own record of which room, if any, it has entered.
+ */
+private suspend fun ConnectionWriter.replyToOfferRematch(
+    deps: SocketDependencies,
+    session: Session,
+    room: RoomMembership,
+) {
+    val code = room.code ?: run {
+        send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+        return
+    }
+    when (val result = deps.rooms.offerRematch(code, session.player.id)) {
+        is RematchResult.Offered -> {
+            val seat = result.room.seatOf(session.player.id) ?: run {
+                send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+                return
+            }
+            val offered = ServerMessage.RematchOffered(seat)
+            deliver(listOf(Addressed(0, offered), Addressed(1, offered)), result.room, deps.connections)
+        }
+
+        is RematchResult.Agreed -> deliver(result.outbound, result.room, deps.connections)
+
+        is RematchResult.Refused -> when (result.reason) {
+            RematchRefusal.UNKNOWN_ROOM, RematchRefusal.NOT_A_PLAYER ->
+                send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+
+            RematchRefusal.NOT_FINISHED ->
+                send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.REMATCH_UNAVAILABLE)))
+
+            RematchRefusal.ALREADY_OFFERED -> {
+                val seat = deps.rooms.get(code)?.seatOf(session.player.id) ?: run {
+                    send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
+                    return
+                }
+                send(ProtocolCodec.encode(ServerMessage.RematchOffered(seat)))
+            }
         }
     }
 }

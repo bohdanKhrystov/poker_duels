@@ -2,7 +2,7 @@
 
 This document is the contract for EPIC-03 (the game server's protocol). The Kotlin definitions in `duels.poker.server.protocol` are the source of truth for the wire protocol; the TypeScript client is generated from this schema (see `ADR-0003` and `STORY-0203`).
 
-Protocol version: **2**
+Protocol version: **3**
 
 ## Messages
 
@@ -12,9 +12,11 @@ Protocol version: **2**
 | `Act` | client → server | `handNumber`, `actionSequence`, `action` | Client attempts an action |
 | `CreateRoom` | client → server | (none) | Client attempts to open a room |
 | `JoinRoom` | client → server | `code` | Client attempts to join a room |
+| `OfferRematch` | client → server | (none) | Client attempts to offer a rematch after a finished duel |
 | `Welcome` | server → client | `deviceId`, `protocolVersion` | Server accepts the connection |
 | `Failure` | server → client | `error` | Server refuses the connection |
 | `RoomJoined` | server → client | `code`, `seat` | The server seated you in a room |
+| `RematchOffered` | server → client | `seat` | An offer from this seat to play again stands |
 | `Snapshot` | server → client | `view` (PlayerView) | Server sends current game state |
 | `Events` | server → client | `events` (List of GameEvent) | Server broadcasts game events |
 | `YourTurn` | server → client | `handNumber`, `actionSequence`, `legalActions` | Server requests an action from client |
@@ -38,6 +40,14 @@ engine. The server does **not** re-prompt after a rejection, and a client must n
 `Rejected` as closing its turn. A decision point closes only when a frame that reports state says so
 — a `Snapshot`, a `YourTurn` naming a different sequence, or a `DuelFinished`. See
 [ADR-0043](adr/ADR-0043-a-rejection-closes-no-decision-point.md).
+
+### What a `Snapshot` after a `DuelFinished` means
+
+There is no separate frame that announces a rematch's start. After a `DuelFinished`, a `Snapshot`
+means a new duel has begun in that room: the rematch. This holds because `resumeFrames` gives a
+finished duel `finishedFrames` alone, so a reconnect into a finished room carries a `DuelFinished`
+and never a `Snapshot` — nothing else in this protocol produces a `Snapshot` after a `DuelFinished`.
+See [ADR-0044](adr/ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) §4.
 
 ## Generated TypeScript
 
@@ -258,6 +268,7 @@ continued into the new season; the reader restarts with no cursor (`ADR-0066` §
 - `NOT_IN_DUEL`: The client sent an action but is not participating in an active duel.
 - `DUEL_PAUSED`: The duel is paused; your action was not applied. The duel resumes when the opponent returns or when their grace period expires. Do not re-send your action.
 - `FRAME_LIMIT_EXCEEDED`: The frame was longer, or nested more deeply, than the server accepts, and was refused before parsing.
+- `REMATCH_UNAVAILABLE`: The room cannot accept a rematch offer yet. Transient: nothing was recorded, and the same offer may be sent again.
 
 ## What a client does with a frame it cannot read
 

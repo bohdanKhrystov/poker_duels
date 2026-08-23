@@ -9,6 +9,7 @@ const SERVER_MESSAGE_TABLE = {
   Events: true,
   Failure: true,
   Rejected: true,
+  RematchOffered: true,
   RoomJoined: true,
   Snapshot: true,
   Welcome: true,

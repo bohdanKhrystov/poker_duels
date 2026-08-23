@@ -87,3 +87,14 @@ public data object CreateRoom : ClientMessage
 @Serializable
 @SerialName("JoinRoom")
 public data class JoinRoom(val code: String) : ClientMessage
+
+/**
+ * An attempt to offer a rematch after a finished duel.
+ *
+ * Names no room and no seat. The socket's own `RoomMembership` names the room and the
+ * handshake's session names the player, so a client cannot offer a rematch in a room it
+ * never entered — structurally, not by a check (`ADR-0044` §1).
+ */
+@Serializable
+@SerialName("OfferRematch")
+public data object OfferRematch : ClientMessage
