@@ -64,8 +64,15 @@ What the client gets:
   [`ADR-0072`](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md):
   `boot.ts`'s `DuelFinished` branch is deleted so a reopened socket rejoins, the memory is cleared
   by the way back instead (`DuelClient.forgetRoom`, `useForgetRoom`, one `onClick` on `DuelResult`'s
-  existing `<a href="/">`), and the fourteen tickets below are unchanged by it. **That work is not
-  in this table yet** — it is a split of its own, and this story is not `done` until it lands.
+  existing `<a href="/">`), and the first fourteen tickets below are unchanged by it. That work is
+  the last six, `TASK-030915`–`TASK-030920`, and this story is not `done` until they land.
+- **The way back stops being a plain link, and that costs something.** It keeps its `href="/"` and
+  gains one `onClick`, so a ctrl-, cmd- or shift-click fires the handler and opens the lobby in a
+  *new* tab while this one stays on the result screen having already forgotten its room — its
+  rematch control then answers `UNKNOWN_ROOM` on the next socket. `ADR-0072` prices that as *small,
+  real, and not fixable while keeping both the link and the forget*, and `TASK-030917` leaves it
+  exactly there. A guard on `event.metaKey` would narrow it in four lines; it is a behaviour the ADR
+  did not decide, so it is a new `DEC` rather than a coder's or a reviewer's call.
 - The button seat alternates on a rematch; the room owns that, and the client learns it from the
   `Snapshot` that follows. Nothing here computes who is on the button.
 - A rematch is the same room, not a new one. Faking it with `CreateRoom` plus a re-shared link
@@ -76,6 +83,12 @@ What the client gets:
 Split on 2026-08-23, from a **measured** baseline of 533 client tests; cumulative counts 536 → 566.
 `TASK-030901` is startable now. The chain is linear because every ticket's `verify` asserts the
 suite's whole count, so two of them in flight at once would each be wrong about the other.
+
+**Six more on the same day**, `TASK-030915`–`TASK-030920`, the transport half `ADR-0072` decided
+after the first split; the chain continues from 566 to **576**. They are last because five of them
+touch files the fourteen above are still editing, and because the order inside them matters: the
+way back learns to forget *before* `boot.ts` stops forgetting, so the lobby is never unreachable
+from a finished duel in between.
 
 | ID | Title | Status |
 | --- | --- | --- |
@@ -93,6 +106,12 @@ suite's whole count, so two of them in flight at once would each be wrong about 
 | [TASK-030912](../tasks/TASK-030912-the-rematch-begins-and-the-button-changes-sides.md) | The rematch begins, and the button is on the other side | backlog |
 | [TASK-030913](../tasks/TASK-030913-an-offer-restated-after-a-rejoin-reaches-the-result-screen.md) | An offer restated after a rejoin reaches the result screen, and one stated before it does not | backlog |
 | [TASK-030914](../tasks/TASK-030914-a-gone-room-ends-it-and-a-transient-refusal-does-not.md) | A gone room ends the rematch, and a transient refusal leaves it live | backlog |
+| [TASK-030915](../tasks/TASK-030915-boot-can-forget-the-room-this-tab-remembers.md) | Boot can forget the room this tab remembers | backlog |
+| [TASK-030916](../tasks/TASK-030916-the-provider-carries-the-forget-down-to-the-screen.md) | The provider carries the forget down to the screen | backlog |
+| [TASK-030917](../tasks/TASK-030917-the-way-back-calls-the-forget-it-is-handed.md) | The way back calls the forget it is handed, and still navigates | backlog |
+| [TASK-030918](../tasks/TASK-030918-the-result-screens-way-back-is-wired-to-boots-forget.md) | The result screen's way back is wired to boot's forget | backlog |
+| [TASK-030919](../tasks/TASK-030919-a-finished-duel-forgets-nothing-and-the-next-socket-rejoins.md) | A finished duel forgets nothing, and the next socket rejoins that room | backlog |
+| [TASK-030920](../tasks/TASK-030920-from-a-resumed-sockets-frames-the-way-back-forgets-the-room.md) | From a resumed socket's frames, the way back forgets the room | backlog |
 
 ### What the split found, and what it did not decide
 
@@ -118,7 +137,34 @@ suite's whole count, so two of them in flight at once would each be wrong about 
   is **seated in** and only the player leaving or a refused rejoin clears it. **It blocked no ticket
   in this story** — every one of the fourteen applies frames to the store, which is what every
   screen test in `Lobby.test.tsx` already does — but the *transport* half of the fourth acceptance
-  criterion below is its work, and needs tickets of its own before this story is `done`.
+  criterion below is its work, and it is `TASK-030915`–`TASK-030920`.
+
+### What the second pass found
+
+- **The blast radius was measured, not remembered.** `ADR-0072`'s whole change was applied at once
+  in a throwaway tree and the client's gate set run in full — `tsc`, ESLint, `prettier --check`,
+  Vitest and `vite build`, which is what `.github/workflows/build.yml` runs on a pull request.
+  Exactly **two** merged tests turn red, both in `boot.test.ts`, and both are the two `ADR-0072` §9
+  names; nothing in `reconnect.test.tsx`, `duel-provider.test.tsx`, `Lobby.test.tsx`,
+  `DuelResult.test.tsx`, `App.test.tsx`, `boot-strict-mode.test.tsx` or `src/e2e/` moves, and
+  nothing fails to typecheck. `TASK-030919` owns those two, deletes them in the diff that
+  invalidates them, and replaces them with three.
+- **§9's four replacement assertions are split across two tickets on purpose, and the story says
+  which owns each** — `TASK-030919`'s table is the map. The split is not cosmetic: at
+  `TASK-030915`, `boot.ts` still forgets on `DuelFinished`, so a test that finished a duel *before*
+  calling `forgetRoom()` would pass with `forgetRoom` implemented as `() => {}`. It would be
+  asserting the branch, not the new member. `TASK-030915` therefore proves the forget without a
+  finish in the frames, and `TASK-030919` proves it with one, once the branch is gone.
+- **The reversal comes last, after the wiring.** `TASK-031009`'s reason for the branch is still
+  true until the way back forgets: delete it first and the way on from the result reloads straight
+  back into the result screen, with the lobby unreachable — for as long as it takes the next four
+  tickets to merge. So `TASK-030918` wires the screen, and only then does `TASK-030919` reverse
+  `boot.ts`.
+- **One assertion in `TASK-030919` cannot detect the reversal, and the ticket says so.** Restoring
+  the deleted branch turns two of its three tests red and leaves the third green — the branch has
+  already forgotten the code by the time `forgetRoom()` is called. It was run both ways to find
+  that out. Its job is that the forget still reaches a room whose duel has ended, and the `! grep`
+  on `boot.ts`, not its green, is what proves the branch is gone.
 
 ## Acceptance criteria
 
@@ -131,6 +177,9 @@ suite's whole count, so two of them in flight at once would each be wrong about 
 - [ ] `Failure(UNKNOWN_ROOM)` after an offer returns the player to the lobby with the reason shown,
       rather than leaving a hanging button; `Failure(REMATCH_UNAVAILABLE)` leaves the control live
       and enters no error state.
+- [ ] A tab whose socket reopens onto a finished duel **rejoins the room**, and the way back to the
+      lobby is what forgets it: after the rejoin the code is still stored, and one press of `Back to
+      the lobby` removes it.
 
 ### Which ticket carries each
 
@@ -139,8 +188,9 @@ suite's whole count, so two of them in flight at once would each be wrong about 
 | 1 — this seat has offered, from the frame; two clicks are harmless | `TASK-030907` (no lock), `TASK-030908` (the chip), `TASK-030910` (nothing before the frame) |
 | 2 — the opponent has offered and this seat has not | `TASK-030908`, `TASK-030910` |
 | 3 — both have offered: the table returns, button on the other seat, no trace of the result | `TASK-030903` (the reducer), `TASK-030912` (the screen, both button seats read) |
-| 4 — a rejoin onto a result screen shows an offer already standing | `TASK-030913`. Its *transport* half — the tab rejoining at all after a `DuelFinished` — is [`ADR-0072`](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md)'s, and is not yet ticketed |
+| 4 — a rejoin onto a result screen shows an offer already standing | `TASK-030913` at the screen; its *transport* half — the tab rejoining at all after a `DuelFinished` — is `TASK-030919` |
 | 5 — the two refusals | `TASK-030904`, `TASK-030909`, `TASK-030914` |
+| 6 — the tab rejoins, and the way back forgets | `TASK-030915` (boot can forget), `TASK-030916` (the provider carries it), `TASK-030917` (the link calls it), `TASK-030918` (the screen and `main.tsx` wire it), `TASK-030919` (`DuelFinished` forgets nothing), `TASK-030920` (all of it in one assertion) |
 
 Criterion 5's *returns the player to the lobby* is delivered as `ADR-0044` §6 words it — **the
 client says so and offers the way back** — not as a navigation the client performs: the reason
@@ -156,3 +206,9 @@ lands on a reaped room mid-duel — and is deliberately not taken here.
 - Any countdown, timer or expiry rendering — the wire carries no deadline (`ADR-0044`).
 - Withdrawing an offer or declining one explicitly; neither exists on the wire.
 - A rematch invitation to anyone who was not seated.
+- **A way out of the *waiting for your rival* screen.** `forgetRoom` is exactly what such a control
+  would call, which is why `ADR-0072` names the gap while closing none of it — but a host who has
+  created a room has never been in a duel, and this story is about the screen after one.
+  [`STORY-0314`](STORY-0314-a-host-can-leave-the-room-they-opened.md) owns it, blocked on `DEC-068`.
+- **Narrowing the modifier click** on the way back — see the design note above. `ADR-0072` left it,
+  and a change there is a new decision, not a follow-up ticket.
