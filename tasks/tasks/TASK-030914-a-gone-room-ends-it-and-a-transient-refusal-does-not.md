@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030914
 title: A gone room ends the rematch, and a transient refusal leaves it live
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: XS
@@ -72,10 +72,18 @@ be sent again.
 
 **Name the edit that makes each assertion red:**
 
-1. Delete the reducer's `REMATCH_UNAVAILABLE` guard → `leaves the rematch live when the room cannot
-   take one yet` fails, because `state.refusal` reaches the control. Revert.
-2. Broaden `RematchControl`'s check to `props.refusal !== null` → the same test fails on the
-   surviving button. Revert.
+1. Delete the reducer's `REMATCH_UNAVAILABLE` guard **and** broaden `RematchControl`'s check to
+   `props.refusal !== null` → `leaves the rematch live when the room cannot take one yet` fails on
+   the vanished button. Revert both.
+
+**Corrected at landing.** This section first listed those two edits as *independently* fatal to that
+test. Neither is: run separately, the test still passes. The property is defended twice over — the
+reducer never lets `REMATCH_UNAVAILABLE` reach the control, and the control retires only on
+`UNKNOWN_ROOM` — so either guard alone keeps the button live, and only removing both makes it
+disappear. Confirmed by running all three combinations, by the coder and again in review.
+
+A test needing two simultaneous mutations reads like a test nothing can break, and is its opposite:
+it guards a property two independent layers protect.
 
 Quote both in the PR.
 
