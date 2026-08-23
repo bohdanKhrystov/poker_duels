@@ -10,7 +10,7 @@ estimate: S
 tier: sonnet
 review: standard
 labels: [server, protocol, rooms, version-bump]
-files_touched: 15
+files_touched: 17
 atomic:
   - ProtocolVersionLedgerTest — a wire shape whose fingerprint no ledger row claims fails it
   - ProtocolDocumentationTest — a live type with no row, and a row with no live type, both fail
@@ -19,6 +19,8 @@ atomic:
   - verifyProtocolTypes and verifyDuelScript — byte comparisons run on every check
   - tsc TS1360 — the satisfies table in frames.ts, and the ProtocolVersion alias in version.ts
   - vitest — connection.test.ts feeds a Welcome through the client's own version comparison
+  - ServerMessageHandshakeTest — a golden list of every ProtocolError name, asserted at run time
+  - TypeScriptDeclarationsTest — a golden ClientMessage union string, asserted at run time
 depends_on: []
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.protocol.ProtocolDocumentationTest'
@@ -42,19 +44,25 @@ either.
 
 ## Files
 
-**Fifteen, declared as fifteen.** This is an `atomic:` ticket under
+**Seventeen, declared as seventeen.** This is an `atomic:` ticket under
 [`ADR-0068`](../../docs/adr/ADR-0068-an-atomic-ticket-names-the-gate-that-forbids-splitting-it.md)
 §§3 and 5 as amended by
-[`ADR-0069`](../../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md): the *Why it
-cannot be fewer* column names the merged gate holding each file, which is what earns the exemption
-from the three-file cap. **A file this table does not name is a decision, not a bigger ticket, so
-stop and raise one** — that rule is the count-independent one (`ADR-0069` §2), and it is what
-produced `ADR-0069` rather than a silent fifteen-file diff. Two files are produced by a Gradle task
-and must never be hand-edited.
+[`ADR-0069`](../../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md) and
+[`ADR-0070`](../../docs/adr/ADR-0070-a-blast-radius-is-complete-only-when-the-gates-are-green.md):
+the *Why it cannot be fewer* column names the merged gate holding each file, which is what earns the
+exemption from the three-file cap. Two files are produced by a Gradle task and must never be
+hand-edited.
 
-The last three rows were found by an implementation attempt, not by planning, and are why `ADR-0069`
-exists: the first twelve are what a reading of the protocol directories finds, and the last three are
-what running the gates finds. Nothing in them is new behaviour.
+**A file this table does not name stops the ticket** (`ADR-0069` §2), with the one exception
+`ADR-0070` §4 grants: if a **merged gate** fails and names the path, the ticket's own declared edits
+are what make it fail, the edit is pure propagation (no behaviour, no new test, and **no assertion
+weakened or derived away**), and the full gate set then exits 0 — add the row, update
+`files_touched`, quote the failure in the PR body, and carry on. Anything else is a `DEC`.
+
+The last five rows were found by running the gates, not by planning, and are why `ADR-0069` and
+`ADR-0070` exist: the first twelve are what a reading of the protocol directories finds, rows 13–15
+are what the compiler finds, and rows 16–17 are what the **tests** find when the compiler is
+satisfied enough to let them run. Nothing in any of them is new behaviour.
 
 | File | Action | Why it cannot be fewer |
 | --- | --- | --- |
@@ -73,6 +81,8 @@ what running the gates finds. Nothing in them is new behaviour.
 | `poker-server/src/test/kotlin/duels/poker/server/e2e/SocketDuel.kt` | modify | an exhaustive `when (message)` over `ServerMessage` with **no `else`**, ending in an ignore-group. `:poker-server:compileTestKotlin` — and so `check` — fails the moment the hierarchy gains a variant |
 | `poker-server/src/test/kotlin/duels/poker/server/e2e/SocketSecrecyTest.kt` | modify | the same shape in `leaks()`; its ignore-group ends `is ServerMessage.DuelFinished, -> Unit`. Same compiler failure |
 | `web-client/src/protocol/connection.test.ts` | modify | `vitest`, which `npm run check` runs. Four of its tests feed `protocolVersion: 2` through `connection.ts`'s `message.protocolVersion === PROTOCOL_VERSION`, and its *outdated version* case writes the absolute literal `3`, which this bump would turn into the current version |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/ServerMessageHandshakeTest.kt` | modify | `theErrorSetIsExactlyWhatIsDeclared` asserts `ProtocolError.entries.map { it.name }` equals a **golden list of all nine names**. `REMATCH_UNAVAILABLE` fails it at test **execution**, so no compile-level command sees it |
+| `poker-server/src/test/kotlin/duels/poker/server/protocol/typescript/TypeScriptDeclarationsTest.kt` | modify | `aSealedHierarchyIsAUnionOfItsVariants` asserts the exact string `export type ClientMessage = Act \| CreateRoom \| Hello \| JoinRoom;`. `OfferRematch` fails it at test **execution** — this is the generator's independent witness, separate from `verifyProtocolTypes` |
 
 Read, not edited: `ADR-0044` §§1–4, §6; `ADR-0047` §§1–6; `poker-server/src/main/kotlin/duels/poker/server/room/RematchResult.kt`.
 
@@ -158,7 +168,7 @@ Follow `ADR-0045` §4 and `ADR-0047` §§5–6 exactly:
   one Kotlin test whose subject *is* the number, and referencing `PROTOCOL_VERSION` here would make
   it assert nothing.
 
-### 4. The three files a gate names and the twelve above do not
+### 4. The five files a gate names and the twelve above do not
 
 **No behaviour changes in any of them.** Each is a merged gate refusing the smaller commit.
 
@@ -182,6 +192,19 @@ Follow `ADR-0045` §4 and `ADR-0047` §§5–6 exactly:
 
   Every assertion in the file keeps its meaning and none is weakened or deleted. After this the file
   is in no future bump's blast radius, which is the point.
+
+- `ServerMessageHandshakeTest.kt`: `theErrorSetIsExactlyWhatIsDeclared` holds a **golden** list of
+  all nine `ProtocolError` names. Add `"REMATCH_UNAVAILABLE",` as the last entry, matching the
+  declaration order §1 requires. One line. **Do not derive the list from `ProtocolError.entries`** —
+  that would make the assertion `x == x` and delete the only thing that makes adding an error value
+  a deliberate act (`ADR-0070` §4). Nothing else in the file is touched.
+- `TypeScriptDeclarationsTest.kt`: `aSealedHierarchyIsAUnionOfItsVariants` holds the **golden**
+  string `export type ClientMessage = Act | CreateRoom | Hello | JoinRoom;`. Add `| OfferRematch` in
+  the position the generator emits — run the test and read its failure message rather than guessing
+  the order. One line, one string. **Do not derive it from the descriptor**, for the same reason:
+  this literal is the generator's independent witness, and `verifyProtocolTypes` is not a substitute
+  for it. Nothing else in the file is touched, and `theVariantsComeFromTheDescriptor` keeps every
+  assertion it has.
 
 ## Out of scope
 
@@ -208,7 +231,7 @@ Follow `ADR-0045` §4 and `ADR-0047` §§5–6 exactly:
 
 ## Tests
 
-No new test class. Five existing suites become the gate, and each covers something specific:
+No new test class. Seven existing suites become the gate, and each covers something specific:
 
 `ProtocolDocumentationTest`
 
@@ -235,6 +258,13 @@ are unique.
 
 `ProtocolJsonTest` — the renamed version test, and the two that must not change.
 
+`ServerMessageHandshakeTest` — `theErrorSetIsExactlyWhatIsDeclared` proves the new error value was
+added deliberately and in the declared position. Its list stays golden.
+
+`TypeScriptDeclarationsTest` — `aSealedHierarchyIsAUnionOfItsVariants` proves the generator emits
+`OfferRematch` into the `ClientMessage` union, independently of `verifyProtocolTypes`' byte
+comparison. Its expected string stays golden.
+
 ## Acceptance criteria
 
 - [ ] `ProtocolDocumentationTest` passes with all five of its tests, `ProtocolDocumentationTest.kt` unchanged
@@ -248,6 +278,10 @@ are unique.
 - [ ] `docs/protocol-versions.md` gained exactly one row, and no existing row changed
 - [ ] `SocketDuel.kt` and `SocketSecrecyTest.kt` each gained exactly one line, in an existing
       ignore-group, and no assertion or behaviour in either file changed
+- [ ] `ServerMessageHandshakeTest.kt` gained exactly one entry, `"REMATCH_UNAVAILABLE"`, in its
+      golden list — the list is still a literal, still hard-coded, and still ten names long
+- [ ] `TypeScriptDeclarationsTest.kt`'s expected `ClientMessage` union string gained
+      `| OfferRematch` and is still a literal string; no other test in either file changed
 - [ ] `connection.test.ts` contains **no** numeric protocol version at all: every fixture reads
       `PROTOCOL_VERSION`, and the *another version* case reads `PROTOCOL_VERSION + 1`. Its test
       count and its assertions are unchanged

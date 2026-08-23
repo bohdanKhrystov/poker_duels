@@ -101,13 +101,24 @@ over `ServerMessage` in **test** sources, and `connection.test.ts`, whose fixtur
 client's own version comparison. It stopped and raised a decision rather than growing the ticket.
 [`ADR-0069`](../../docs/adr/ADR-0069-the-blast-radius-is-probed-not-remembered.md) answers it: the
 twelve-file ceiling is **deleted** rather than raised, `files_touched` must equal the ticket's own
-*Files* table, and **a file the table does not name stops the ticket at any count**. The ticket
-carries `files_touched: 15`.
+*Files* table, and **a file the table does not name stops the ticket at any count**.
+
+**It was seventeen, and that was `DEC-065`.** The probe itself missed two more, both merged tests
+that fail at **execution** rather than compilation: `ServerMessageHandshakeTest` hard-codes the nine
+`ProtocolError` names, and `TypeScriptDeclarationsTest` hard-codes the exact `ClientMessage` union
+string. `ADR-0069` §3's probe **(b)** ran compile-level commands, and making them full would not
+have been enough — the probe's own `ServerMessage` variant stops `compileKotlin`, so `check` never
+reaches `test` and **a red run names only a prefix of the blast radius**.
+[`ADR-0070`](../../docs/adr/ADR-0070-a-blast-radius-is-complete-only-when-the-gates-are-green.md)
+answers it: **one probe, the CI gate set by reference, run in a loop until it exits 0**, and a
+merged gate may complete the *Files* table under four conditions rather than costing a third `DEC`.
+The ticket carries `files_touched: 17`.
 
 `STORY-0214` and `STORY-0405` are behind this story in the same queue and are written the same way,
-each **probing** its own set per `ADR-0069` §3 — a throwaway `PROTOCOL_VERSION + 1` and a throwaway
-sealed variant, run through `:poker-server:check` and `npm run check`, then reverted — rather than
-reusing this story's number, which is a fact about one ticket and not about protocol bumps.
+each **probing** its own set per `ADR-0070` — one throwaway stub of every declaration the story
+adds, run through the commands `.github/workflows/build.yml` runs, iterated until they are green,
+then reverted — rather than reusing this story's number, which is a fact about one ticket and not
+about protocol bumps.
 
 Two of the twelve are files `ADR-0044` §9 did not foresee, and both are mechanical:
 `web-client/src/protocol/frames.ts` holds a `satisfies Record<ServerMessage["type"], true>` table
