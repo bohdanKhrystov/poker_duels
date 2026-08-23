@@ -472,8 +472,8 @@ Critical path: `0201 → 0202 → 0205 → 0207 → 0210 → 0211 → 0212`.
 | **[STORY-0214](stories/STORY-0214-the-wire-names-an-absent-opponent.md)** The wire names an absent opponent — *schema 2* | | | **ready** |
 | | [TASK-021401](tasks/TASK-021401-disconnect-answers-with-a-room-and-its-frames.md) RoomRegistry.disconnect answers with a room and the frames it produced | S | **done** |
 | | [TASK-021402](tasks/TASK-021402-the-wire-names-presence-and-the-version-takes-its-step.md) OpponentPresence and ActedForAbsent reach the wire, and PROTOCOL_VERSION takes its step | S | **done** |
-| | [TASK-021403](tasks/TASK-021403-room-presence-of-projects-the-three-states.md) Room.presenceOf projects a seat's presence from state the room already keeps | S | **ready** |
-| | [TASK-021404](tasks/TASK-021404-a-drop-builds-the-away-frame-for-the-other-seat.md) A drop builds AWAY and the configured window, for the other seat only | S | backlog |
+| | [TASK-021403](tasks/TASK-021403-room-presence-of-projects-the-three-states.md) Room.presenceOf projects a seat's presence from state the room already keeps | S | **done** |
+| | [TASK-021404](tasks/TASK-021404-a-drop-builds-the-away-frame-for-the-other-seat.md) A drop builds AWAY and the configured window, for the other seat only | S | **ready** |
 | | [TASK-021405](tasks/TASK-021405-the-away-frame-reaches-the-opponents-socket.md) The AWAY frame reaches the opponent's socket, from inside the NonCancellable block | S | backlog |
 | | [TASK-021406](tasks/TASK-021406-an-act-after-the-countdown-would-have-hit-zero.md) An Act sent after the client's countdown would have reached zero is still refused | XS | backlog |
 | | [TASK-021407](tasks/TASK-021407-expiry-says-absent-before-the-fold-it-explains.md) Expiry says ABSENT before the fold it explains, and an abandoned room says nothing | S | backlog |
@@ -1471,8 +1471,8 @@ written and is still true.
 | | [TASK-030809](tasks/TASK-030809-the-duel-screen-shows-the-result-when-the-duel-ends.md) The duel screen shows the result when the duel ends | S | **done** |
 | **[STORY-0309](stories/STORY-0309-rematch.md)** Rematch from the result screen — *schema 2* | | **ready** |
 | | [TASK-030901](tasks/TASK-030901-the-store-records-which-seats-have-offered.md) The store records which seats have offered a rematch | S | **done** |
-| | [TASK-030902](tasks/TASK-030902-a-finished-duel-begins-the-result-screen-with-no-offer-standing.md) A finished duel begins the result screen with no offer standing | XS | **ready** |
-| | [TASK-030903](tasks/TASK-030903-the-snapshot-after-a-finish-is-the-rematch.md) The snapshot after a finish is the rematch, and clears the duel that ended | XS | backlog |
+| | [TASK-030902](tasks/TASK-030902-a-finished-duel-begins-the-result-screen-with-no-offer-standing.md) A finished duel begins the result screen with no offer standing | XS | **done** |
+| | [TASK-030903](tasks/TASK-030903-the-snapshot-after-a-finish-is-the-rematch.md) The snapshot after a finish is the rematch, and clears the duel that ended | XS | **ready** |
 | | [TASK-030904](tasks/TASK-030904-a-rematch-the-room-cannot-take-yet-is-recorded-nowhere.md) A rematch the room cannot take yet is recorded nowhere | XS | backlog |
 | | [TASK-030905](tasks/TASK-030905-whose-rematch-offer-it-is.md) Whose rematch offer it is, read from the seat the server gave this client | XS | backlog |
 | | [TASK-030906](tasks/TASK-030906-the-result-panel-shows-the-rematch-it-is-handed.md) The result panel shows the rematch it is handed, and adds none of its own | S | backlog |

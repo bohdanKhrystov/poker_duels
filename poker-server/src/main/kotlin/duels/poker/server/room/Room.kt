@@ -9,6 +9,7 @@ import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.foldAbsent
 import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.ProtocolError
+import duels.poker.server.protocol.SeatPresence
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
 import java.util.UUID
@@ -383,6 +384,41 @@ public data class Room(
      * @return this room with [lastActivityAt] set to [now].
      */
     public fun touch(now: Long): Room = copy(lastActivityAt = now)
+
+    /**
+     * Project [seat]'s presence as of [now]: the [ServerMessage.OpponentPresence] frame that
+     * describes it on the wire (`ADR-0028`).
+     *
+     * The three branches are exactly the three states [Room] already distinguishes: [seat]
+     * counting down in [gracePeriods] answers [SeatPresence.AWAY], carrying however much of that
+     * window is left; [seat] already moved into [absentSeats] answers [SeatPresence.ABSENT]; any
+     * other seat answers [SeatPresence.PRESENT]. The remaining grace is clamped at zero rather
+     * than let go negative — a deadline already past still answers [SeatPresence.AWAY] with
+     * nothing left, not a state the frame's own `require` would refuse anyway, and the clamp is
+     * what keeps this function total for any [now].
+     *
+     * Nothing is written back here: this call adds no field to [Room]. It only projects
+     * [gracePeriods] and [absentSeats] as they already stand, the same way [act] reads [isPaused]
+     * to build its `DUEL_PAUSED` failure without storing one.
+     *
+     * @param seat the seat to report on; must be 0 or 1.
+     * @param now the current time in milliseconds, on the same scale as [gracePeriods]'s
+     *   deadlines; `Room` reads no clock of its own.
+     * @return the frame describing [seat]'s presence.
+     * @throws IllegalArgumentException if [seat] is not 0 or 1.
+     */
+    public fun presenceOf(seat: Int, now: Long): ServerMessage.OpponentPresence {
+        require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
+        val deadline = gracePeriods[seat]
+        return when {
+            deadline != null -> ServerMessage.OpponentPresence(
+                presence = SeatPresence.AWAY,
+                graceRemainingMillis = (deadline - now).coerceAtLeast(0L),
+            )
+            seat in absentSeats -> ServerMessage.OpponentPresence(presence = SeatPresence.ABSENT)
+            else -> ServerMessage.OpponentPresence(presence = SeatPresence.PRESENT)
+        }
+    }
 
     /**
      * Start [seat]'s disconnect grace window (`ADR-0013`), or restart it if one was already

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-030902
 title: A finished duel begins the result screen with no offer standing
 type: task
-status: ready
+status: done
 parent: STORY-0309
 module: web-client
 estimate: XS
