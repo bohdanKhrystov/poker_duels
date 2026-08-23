@@ -6,6 +6,13 @@ import { createDuelStore, type DuelStore } from "./duel-store";
 export interface DuelClient {
   readonly store: DuelStore;
   readonly send: (message: ClientMessage) => void;
+  /**
+   * Forgets the room this tab remembers, so no socket opened after this one
+   * rejoins it. It tells the server nothing — there is no leave on the wire —
+   * and the socket that is open keeps its seat: the memory is about the next
+   * socket, never the current one.
+   */
+  readonly forgetRoom: () => void;
 }
 
 export interface BootOptions {
@@ -82,6 +89,11 @@ export function bootDuelClient(options: BootOptions): DuelClient {
     store,
     send: (message) => {
       connection.send(message);
+    },
+    forgetRoom: () => {
+      if (options.storage) {
+        forgetRoomCode(options.storage);
+      }
     },
   };
 }
