@@ -3,11 +3,14 @@ package duels.poker.server.room
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.EndCondition
 import duels.poker.engine.game.PlayerAction
+import duels.poker.server.duel.Addressed
 import duels.poker.server.duel.DuelResult
 import duels.poker.server.duel.DuelResultSink
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.decisionPointOf
 import duels.poker.server.protocol.Act
+import duels.poker.server.protocol.SeatPresence
+import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.MutableClock
 import kotlinx.coroutines.runBlocking
@@ -294,5 +297,112 @@ internal class GraceExpiryTest {
         assertEquals(okRoom.code, expiries.single().room.code)
         val okHandOneActions = registry.get(okRoom.code)!!.runner!!.log.hands.first().actions
         assertEquals(PlayerAction.Fold(okOnTurn), okHandOneActions.last())
+    }
+
+    @Test
+    fun theSeatThatStayedIsToldTheOtherIsAbsent() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        val onTurn = registry.get(room.code)!!.runner!!.hand!!.state.seatToAct!!
+        // The seat that runs out here is off turn, on purpose: this is the pairing half of
+        // `theAbsentMarkPrecedesTheFramesTheFoldProduced`'s on-turn seat, so between the two,
+        // both concrete seat numbers are exercised as both "the seat that expired" and "the seat
+        // that stayed" — not just whichever one the seed happens to put on turn.
+        val offTurn = 1 - onTurn
+        registry.disconnect(room.code, seatedPlayer(offTurn, host, guest))
+
+        clock.advance(30_000)
+        val expiries = registry.expireGracePeriods()
+
+        assertEquals(1, expiries.size)
+        val presenceFrame = Addressed(onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT, null))
+        assertEquals(presenceFrame, expiries.single().outbound.first())
+    }
+
+    @Test
+    fun theAbsentMarkPrecedesTheFramesTheFoldProduced() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host, oneHand)
+        registry.join(room.code, guest)
+        val onTurn = registry.get(room.code)!!.runner!!.hand!!.state.seatToAct!!
+        registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
+
+        clock.advance(30_000)
+        val expiries = registry.expireGracePeriods()
+
+        assertEquals(1, expiries.size)
+        val outbound = expiries.single().outbound
+        val presenceFrame = Addressed(1 - onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT, null))
+        // "Both arrived" is true of the wrong order too: a duel-ending fold produces frames of
+        // its own (`Events`, `Snapshot`), so only the position of the presence frame among them —
+        // not merely its presence in the list — says whether it came first.
+        assertTrue(outbound.size > 1)
+        assertEquals(0, outbound.indexOf(presenceFrame))
+    }
+
+    @Test
+    fun noFrameGoesToTheSeatThatExpired() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host, oneHand)
+        registry.join(room.code, guest)
+        val onTurn = registry.get(room.code)!!.runner!!.hand!!.state.seatToAct!!
+        registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
+
+        clock.advance(30_000)
+        val expiries = registry.expireGracePeriods()
+
+        assertEquals(1, expiries.size)
+        val outbound = expiries.single().outbound
+        // The expired seat is not left out of the fold's own frames — it still gets `Events` and
+        // `Snapshot` like any other recipient. It is only ever left out of the one frame that
+        // reports a seat's presence, because that frame is recipient-relative and the expired
+        // seat has no opponent of its own to be told about.
+        assertTrue(outbound.any { (seat, _) -> seat == onTurn })
+        assertTrue(outbound.none { (seat, message) -> seat == onTurn && message is ServerMessage.OpponentPresence })
+    }
+
+    @Test
+    fun aWindowStillRunningProducesNothing() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        val onTurn = registry.get(room.code)!!.runner!!.hand!!.state.seatToAct!!
+        registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
+
+        clock.advance(29_999)
+        val expiries = registry.expireGracePeriods()
+
+        assertEquals(emptyList<GraceExpiry>(), expiries)
+    }
+
+    @Test
+    fun bothSeatsGoneSendNoPresence() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, host)
+        registry.disconnect(room.code, guest)
+
+        clock.advance(30_000)
+        val expiries = registry.expireGracePeriods()
+
+        assertEquals(1, expiries.size)
+        assertTrue(expiries.single().outbound.none { (_, message) -> message is ServerMessage.OpponentPresence })
     }
 }
