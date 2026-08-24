@@ -1,5 +1,7 @@
 package duels.poker.server
 
+import duels.poker.server.auth.Identity
+import duels.poker.server.auth.SessionToken
 import duels.poker.server.duel.Addressed
 import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.CreateRoom
@@ -18,6 +20,7 @@ import duels.poker.server.room.RoomCode
 import duels.poker.server.room.RoomRefusal
 import duels.poker.server.session.ConnectionWriter
 import duels.poker.server.session.DeviceId
+import duels.poker.server.session.Player
 import duels.poker.server.session.PlayerId
 import duels.poker.server.session.Session
 import duels.poker.server.session.SessionId
@@ -51,6 +54,12 @@ public const val HANDSHAKE_REQUIRED: String = "handshake required"
 
 /** Close reason sent when a [Hello] names a protocol version this server does not speak. */
 public const val PROTOCOL_VERSION_MISMATCH: String = "protocol version mismatch"
+
+/**
+ * Close reason sent when a [Hello] carries a session token that is invalid, expired or unknown —
+ * `ADR-0027` §4. Never sent as a fall back to whatever device id came with it; see [serve].
+ */
+public const val INVALID_SESSION_PRESENTED: String = "invalid session presented"
 
 /**
  * Close reason sent to a socket whose seat a newer connection for the same device just took.
@@ -96,13 +105,42 @@ public fun Application.duelSocket(deps: SocketDependencies) {
 }
 
 /**
+ * The [DeviceId] behind the [Player] built for a connection whose [Identity] is
+ * [Identity.Session].
+ *
+ * `ADR-0027` §3: a session-borne connection presents no device id at all, so there is none to
+ * record here, and `ADR-0030` §2 is explicit that it must mint no `player` row either. [Player]'s
+ * shape still demands a [DeviceId]; nothing past this point ever reads it — [SeatOwnership.adopt],
+ * [duels.poker.server.session.ConnectionDirectory.register] and the `finally` block below all key
+ * on [Player.id] alone — and it never reaches the wire, since [ServerMessage.Welcome] is built
+ * with `deviceId = null` for this path independently of this value.
+ */
+private val SESSION_PLACEHOLDER_DEVICE_ID = DeviceId("session-identity-has-no-device-id")
+
+/**
  * Gates the connection behind [readHello], then [versionRefusalOrNull] before anything else runs.
  *
  * A non-null refusal is sent and the socket is closed with [PROTOCOL_VERSION_MISMATCH] —
  * [versionRefusalOrNull] answers only a protocol version mismatch — without ever minting or
  * reading a device id. Only once the version is accepted does this resolve the connection's
- * player and send [ServerMessage.Welcome]; the connection then waits for further frames, racing
- * them against eviction via [seats] — see [serveUntilEvictedOrClosed].
+ * identity via [SocketDependencies.identities], per `ADR-0027` §4's precedence, and branch on
+ * every [Identity] case:
+ *
+ * - [Identity.Session] seats the session's own player with no device id at all —
+ *   [SocketDependencies.directory] is not consulted, and [SESSION_PLACEHOLDER_DEVICE_ID] explains
+ *   why [Player] can still be built.
+ * - [Identity.Device] seats the device's player directly: the resolver already found both a
+ *   player id and a device id, so nothing further is looked up — today's path.
+ * - [Identity.UnknownDevice] and [Identity.Anonymous] mint or resolve a profile via
+ *   [SocketDependencies.directory] exactly as before `ADR-0027` — the socket creates where HTTP
+ *   would refuse.
+ * - [Identity.Refused] sends [ProtocolError.INVALID_SESSION] and closes with
+ *   [INVALID_SESSION_PRESENTED], in the same four-statement order as the version-mismatch
+ *   refusal just above: a refusal that tears down differently is a refusal that races
+ *   differently.
+ *
+ * Only once a [ServerMessage.Welcome] is built does the connection wait for further frames,
+ * racing them against eviction via [seats] — see [serveUntilEvictedOrClosed].
  */
 private suspend fun DefaultWebSocketServerSession.serve(
     deps: SocketDependencies,
@@ -119,9 +157,38 @@ private suspend fun DefaultWebSocketServerSession.serve(
         close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, PROTOCOL_VERSION_MISMATCH))
         return
     }
-    val deviceId = hello.deviceId?.let(::DeviceId) ?: deps.deviceIds.newDeviceId()
-    val player = deps.directory.resolve(deviceId)
-    val message = ServerMessage.Welcome(playerId = player.id.value, deviceId = deviceId.value)
+    val (player, message) =
+        when (
+            val identity =
+                deps.identities.resolve(hello.sessionToken?.let(::SessionToken), hello.deviceId?.let(::DeviceId))
+        ) {
+            is Identity.Session ->
+                Player(identity.playerId, SESSION_PLACEHOLDER_DEVICE_ID) to
+                    ServerMessage.Welcome(playerId = identity.playerId.value, deviceId = null)
+
+            is Identity.Device ->
+                Player(identity.playerId, identity.deviceId) to
+                    ServerMessage.Welcome(playerId = identity.playerId.value, deviceId = identity.deviceId.value)
+
+            is Identity.UnknownDevice -> {
+                val resolved = deps.directory.resolve(identity.deviceId)
+                resolved to ServerMessage.Welcome(playerId = resolved.id.value, deviceId = identity.deviceId.value)
+            }
+
+            Identity.Anonymous -> {
+                val issuedDeviceId = deps.deviceIds.newDeviceId()
+                val resolved = deps.directory.resolve(issuedDeviceId)
+                resolved to ServerMessage.Welcome(playerId = resolved.id.value, deviceId = issuedDeviceId.value)
+            }
+
+            Identity.Refused -> {
+                writer.send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.INVALID_SESSION)))
+                writer.close()
+                pump.join()
+                close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, INVALID_SESSION_PRESENTED))
+                return
+            }
+        }
     val session = Session(SessionRegistry.newSessionId(), player)
     val room = RoomMembership()
     val eviction = seats.adopt(deps.sessions, session)
