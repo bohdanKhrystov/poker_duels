@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040520
 title: The two auth budgets are four configuration values with defaults
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S

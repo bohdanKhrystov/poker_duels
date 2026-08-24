@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040519
 title: A budget is a rolling window, an over-budget attempt still counts, and a slot can be refunded
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -113,3 +113,19 @@ checking before believing it.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The concurrency test uses 500 callers, not the 50 this ticket named.** At 50, the mutation it
+exists to catch — dropping the `Mutex` from `admit` and `refund` — only failed **4 of 5** runs. At
+500 it failed 4 of 4 while the correct implementation passed 3 of 3. The measurement is in a comment
+beside the constant. A flaky gate is worse than no gate, because the first person it fails spuriously
+deletes it. `AttemptLimits(5, 60_000)` is unchanged.
+
+**Why `anOverBudgetAttemptStillCounts` uses the instants it does.** With `AttemptLimits(1, 1000)`:
+an admit at t=0, a **refused** admit at t=500 that must still be recorded, then an admit at t=1001.
+That instant is past the first attempt's tail (1000) and before the refused one's (1500). An
+implementation that stops recording once over budget has nothing at t=500, sees an empty window, and
+wrongly admits — which is a rate limiter that lets an attacker back in sooner than its own budget
+promises. Move t=1001 past 1500 or before 1000 and the test distinguishes nothing.
+
