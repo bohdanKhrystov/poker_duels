@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040520
 title: The two auth budgets are four configuration values with defaults
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -71,9 +71,12 @@ Read `ADR-0055` §2's config bullet and `ADR-0074` §1's table. Nothing else.
 
 ## Acceptance criteria
 
-- [ ] All five test methods above pass
-- [ ] `grep -rn "signIn" poker-server/src/main/kotlin/duels/poker/server/config/ServerConfig.kt`
-      finds nothing
+- [ ] All seven test methods above pass
+- [ ] ~~`grep -rn "signIn" .../config/ServerConfig.kt` finds nothing~~ — **struck.** Both this and
+      the count above were left over from when this ticket covered sign-up alone. Its title, Scope
+      and Tests table all require `signInMaxAttempts`, `signInWindowMillis` and `signInLimits()`, so
+      a criterion demanding the absence of `signIn` could not be satisfied alongside them, and
+      "five" was never the number of tests the table names.
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
