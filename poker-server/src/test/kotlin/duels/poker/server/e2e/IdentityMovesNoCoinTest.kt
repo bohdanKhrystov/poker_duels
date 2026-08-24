@@ -14,6 +14,7 @@ import duels.poker.server.protocol.protocolJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocketSession
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -27,24 +28,27 @@ import io.ktor.websocket.Frame
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.io.File
 import javax.sql.DataSource
 
 /**
  * `ADR-0030` §5's whole scenario, against a real database and the shipped composition: connect
  * anonymously, play a duel and win, set a name, sign up, sign in, reconnect with the token, sign
  * into a second account from the same device, play a duel as that account, sign out, reconnect
- * anonymously, read the profile back.
+ * anonymously, read the profile back, read the ladder, then sign in once more and revoke the
+ * device that token was issued to (`ADR-0050`) — the scenario's last step.
  *
  * [runScenario] is the one place the whole flow runs, and every test method below calls it and
  * asserts one aspect of the [ScenarioRecord] it returns — never its own copy of the setup or its
- * own re-derivation of the scenario. `dataSource.assertCoinInvariantHolds` runs twelve times
- * inside it — before the first step and after each of the eleven — so a coin that moves
- * mid-scenario reddens every method in this class, not only the one whose name happens to
- * describe that step (`ADR-0030` §5: "asserting only at the end is not enough — a mint and a burn
- * cancel").
+ * own re-derivation of the scenario. `dataSource.assertCoinInvariantHolds` runs fourteen times
+ * inside it — before the first step, after each of the eleven, and twice more across the closing
+ * sign-in-and-revoke — so a coin that moves mid-scenario reddens every method in this class, not
+ * only the one whose name happens to describe that step (`ADR-0030` §5: "asserting only at the
+ * end is not enough — a mint and a burn cancel").
  *
  * Steps five to eleven are written against `winner`/`loser`, never against the wire-level
  * `HOST_DEVICE`/`GUEST_DEVICE` constants: whichever device wins step 1's duel is the one with a
@@ -239,6 +243,113 @@ internal class IdentityMovesNoCoinTest {
         )
     }
 
+    @Test
+    fun revokingLeavesThePlayerTableByteIdentical() {
+        val record = runScenario()
+        assertEquals(
+            record.beforeRevoking,
+            record.afterRevoking,
+            "player table changed across revoking: before=${record.beforeRevoking} after=" +
+                "${record.afterRevoking}",
+        )
+    }
+
+    /**
+     * The positive control [revokingLeavesThePlayerTableByteIdentical] needs beside it: revoking
+     * writes nothing to `player` (`ADR-0050` §1), so that test alone cannot tell a `DELETE` that
+     * genuinely revoked the device apart from one that silently did nothing — both leave `player`
+     * untouched. This asserts the write landed somewhere: exactly one `device_binding` row
+     * changes, and within it exactly one column, `revoked_at`.
+     */
+    @Test
+    fun revokingChangesExactlyOneBindingColumn() {
+        val record = runScenario()
+        val before = record.deviceBindingBeforeRevoking
+        val after = record.deviceBindingAfterRevoking
+
+        assertEquals(
+            before.size,
+            after.size,
+            "device_binding row count changed across revoking: before=${before.size} rows, " +
+                "after=${after.size} rows",
+        )
+
+        val changedRows = before.indices.filter { index -> before[index] != after[index] }
+        assertEquals(
+            1,
+            changedRows.size,
+            "expected exactly one device_binding row to change when revoking, changed row " +
+                "indices $changedRows",
+        )
+        val revokedRowIndex = changedRows.single()
+
+        val beforeRow = before[revokedRowIndex]
+        val afterRow = after[revokedRowIndex]
+        val changedColumns = beforeRow.indices.filter { position -> beforeRow[position] != afterRow[position] }
+        assertEquals(
+            1,
+            changedColumns.size,
+            "expected the revoked row to differ in exactly one column, differing positions " +
+                "$changedColumns: before=$beforeRow after=$afterRow",
+        )
+        val changedColumnName = record.deviceBindingColumnNames[changedColumns.single()]
+        assertEquals(
+            "revoked_at",
+            changedColumnName,
+            "expected the one changed device_binding column to be revoked_at, was $changedColumnName",
+        )
+    }
+
+    /**
+     * Reads every `/api/…` string literal out of the four `poker-server/src/main/kotlin/duels/poker/server/http`
+     * files whose names end `Routes.kt`, and asserts that set equals [SCENARIO_ENDPOINTS] — the
+     * write path `ADR-0030` §5's "total over the schema" claim needs to hold at the endpoint
+     * level, not only at the row level: the coin properties are total over `player` and
+     * `duel_result`, but a new endpoint nobody adds to [SCENARIO_ENDPOINTS] is a write path the
+     * invariant checks in this class never reach, however total those checks are over the tables
+     * they do reach. Adding a new `/api/…` route makes this test fail the build until either the
+     * scenario calls it or [SCENARIO_ENDPOINTS] is extended with a comment recording why it does
+     * not move a coin.
+     *
+     * Two honest limits, named here rather than left for a reader to find:
+     * - This reads source text, not the compiled routing table, so a path assembled from
+     *   constants rather than written as a literal escapes it. Every route in the repository
+     *   today writes its path as a literal, and this test is the reason to keep doing so.
+     * - This says the scenario *calls* each path, not that it calls it in a state where a defect
+     *   would show. That is left to a reviewer's judgement.
+     */
+    @Test
+    fun everyApiPathInTheRouteSourcesIsExercisedByTheScenario() {
+        val sourcePaths = apiPathLiteralsInRouteSources()
+        assertEquals(
+            SCENARIO_ENDPOINTS,
+            sourcePaths,
+            "SCENARIO_ENDPOINTS ($SCENARIO_ENDPOINTS) must equal the /api/… literals found in the " +
+                "four *Routes.kt files ($sourcePaths): a path in one and not the other is either a " +
+                "route the scenario does not account for, or a stale entry naming a route that no " +
+                "longer exists",
+        )
+    }
+
+    /**
+     * The vacuity guard for [everyApiPathInTheRouteSourcesIsExercisedByTheScenario]: asserts
+     * against the *scanned* set, never against [SCENARIO_ENDPOINTS], because a regular expression
+     * that matched nothing would otherwise make that test pass with both sides empty.
+     */
+    @Test
+    fun theEnumerationFoundTheEndpointsItIsChecking() {
+        val sourcePaths = apiPathLiteralsInRouteSources()
+        assertTrue(
+            sourcePaths.isNotEmpty(),
+            "expected the route-source scan to find at least one /api/… literal, found none",
+        )
+        assertTrue(
+            setOf("/api/me/device", "/api/auth/sign-in", "/api/me").all { it in sourcePaths },
+            "expected the route-source scan to find /api/me/device, /api/auth/sign-in and /api/me, " +
+                "found $sourcePaths",
+        )
+    }
+
     /**
      * Boots the shipped composition against [dataSource] — `installDuelServer(dataSource)`, then
      * `createClient { install(WebSockets) }`, exactly as every `SocketCoinsTest` test does — and
@@ -430,6 +541,42 @@ internal class IdentityMovesNoCoinTest {
             val step11Profile = client.profileOf(winner.deviceId)
             dataSource.assertCoinInvariantHolds("after reading the profile back")
 
+            // GET /api/standings, once — a read that writes nothing. Calling it here is what
+            // makes SCENARIO_ENDPOINTS's inclusion of /api/standings a fact about this scenario
+            // itself, not only about the route sources.
+            val standingsResponse = client.get("/api/standings")
+            assertEquals(
+                HttpStatusCode.OK,
+                standingsResponse.status,
+                "GET /api/standings after step 11 returned ${standingsResponse.status}",
+            )
+
+            // Step 12: sign in again as the host's account for a fresh token, then revoke the
+            // device that token was issued to — the scenario's last step. `ADR-0050` §1's two
+            // statements touch `device_binding` and `auth_session` alone, so `player` is asserted
+            // byte-identical exactly as every earlier identity step asserts it
+            // (`revokingLeavesThePlayerTableByteIdentical`), and `device_binding` is asserted to
+            // have moved instead (`revokingChangesExactlyOneBindingColumn`) — the positive
+            // control a `DELETE` that revoked nothing would otherwise satisfy the byte-identical
+            // claim for free.
+            val beforeRevoking = dataSource.playerTableSnapshot()
+            val deviceBindingBeforeRevoking = dataSource.deviceBindingTableSnapshot()
+            val revocationToken = client.signIn("Winner_1", "password1")
+            dataSource.assertCoinInvariantHolds("after signing in again to revoke")
+            val revokeResponse = client.delete("/api/me/device") {
+                header(HttpHeaders.Authorization, "Bearer $revocationToken")
+            }
+            assertEquals(
+                HttpStatusCode.NoContent,
+                revokeResponse.status,
+                "DELETE /api/me/device with the host's freshly issued token returned " +
+                    "${revokeResponse.status}",
+            )
+            dataSource.assertCoinInvariantHolds("after revoking")
+            val afterRevoking = dataSource.playerTableSnapshot()
+            val deviceBindingAfterRevoking = dataSource.deviceBindingTableSnapshot()
+            val deviceBindingColumnNames = dataSource.deviceBindingColumnNames()
+
             record = ScenarioRecord(
                 hostPlayerId = hostPlayerId,
                 guestPlayerId = guestPlayerId,
@@ -458,6 +605,11 @@ internal class IdentityMovesNoCoinTest {
                 afterReconnectingAnonymously = afterReconnectingAnonymously,
                 step10WelcomePlayerId = step10Welcome.playerId,
                 step11ProfilePlayerId = step11Profile.playerId,
+                beforeRevoking = beforeRevoking,
+                afterRevoking = afterRevoking,
+                deviceBindingBeforeRevoking = deviceBindingBeforeRevoking,
+                deviceBindingAfterRevoking = deviceBindingAfterRevoking,
+                deviceBindingColumnNames = deviceBindingColumnNames,
             )
         }
         checkNotNull(record) { "runScenario: testApplication completed without producing a ScenarioRecord" }
@@ -564,6 +716,95 @@ internal class IdentityMovesNoCoinTest {
 private const val THIRD_DEVICE: String = "e2e-third"
 
 /**
+ * The `/api/…` paths this scenario answers for, over its own HTTP calls, so [SCENARIO_ENDPOINTS]
+ * stays a fact about what runs above rather than a copy of what the route sources declare.
+ *
+ * Every entry but one is a literal this class calls directly: `sign-up`, `sign-in` (used three
+ * times: steps 5, 7 and the closing revocation sign-in), `sign-out`, `GET /api/me`, `PUT
+ * /api/me/name`, `GET /api/standings` and `DELETE /api/me/device`. `/api/me/duels` is the one
+ * exception, written down rather than called: `ProfileRoutes.kt` hands its handler a `ProfileReads`
+ * port only, never a `ProfileWrites`, so it is a read that moves no coin, and adding a fresh HTTP
+ * call to it is outside this ticket's scope — the same "does not move coins" escape
+ * [everyApiPathInTheRouteSourcesIsExercisedByTheScenario]'s own KDoc names for a future endpoint.
+ */
+private val SCENARIO_ENDPOINTS: Set<String> = setOf(
+    "/api/auth/sign-up",
+    "/api/auth/sign-in",
+    "/api/auth/sign-out",
+    "/api/me",
+    "/api/me/duels",
+    "/api/me/name",
+    "/api/me/device",
+    "/api/standings",
+)
+
+/** Matches a double-quoted Kotlin string literal beginning `/api/`, capturing the path alone. */
+private val API_PATH_LITERAL: Regex = Regex("\"(/api/[^\"]*)\"")
+
+/**
+ * Every `/api/…` string literal found in the four files under
+ * `poker-server/src/main/kotlin/duels/poker/server/http` whose names end `Routes.kt`
+ * (`AuthRoutes.kt`, `DeviceRoutes.kt`, `ProfileRoutes.kt`, `StandingsRoutes.kt`), read as plain
+ * text and matched with [API_PATH_LITERAL] rather than parsed as Kotlin — so a path assembled
+ * from constants, rather than written as a literal, escapes this scan. Every route in the
+ * repository today writes its path as a literal.
+ *
+ * Walks upward from the working directory looking for the `http` package, the same technique
+ * `HttpEndpointDocumentationTest` uses to find `docs/protocol.md`, so this does not depend on
+ * whether Gradle's test working directory is the module root or the repository root.
+ */
+private fun apiPathLiteralsInRouteSources(): Set<String> {
+    val httpDirectory = generateSequence(File("").absoluteFile) { it.parentFile }
+        .map { File(it, "poker-server/src/main/kotlin/duels/poker/server/http") }
+        .firstOrNull { it.isDirectory }
+        ?: error(
+            "poker-server/src/main/kotlin/duels/poker/server/http not found above " +
+                File("").absolutePath,
+        )
+    val routeFiles = httpDirectory.listFiles { file -> file.name.endsWith("Routes.kt") }
+        ?: error("could not list $httpDirectory")
+    return routeFiles.flatMap { file -> API_PATH_LITERAL.findAll(file.readText()).map { it.groupValues[1] } }.toSet()
+}
+
+/**
+ * Every column of every `device_binding` row, ordered by `player_id` for a deterministic
+ * comparison — the same shape `duels.poker.server.db.playerTableSnapshot` gives `player`, but
+ * declared here rather than beside it: this ticket's *Files* table touches only this file.
+ * `ADR-0050` §1 gives the exact `UPDATE … WHERE player_id = ?` statement revocation runs, which is
+ * what makes `player_id` and `revoked_at` known-real columns to order and check by.
+ */
+private fun DataSource.deviceBindingTableSnapshot(): List<List<Any?>> {
+    connection.use { connection ->
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT * FROM device_binding ORDER BY player_id").use { rs ->
+                val columnCount = rs.metaData.columnCount
+                val rows = mutableListOf<List<Any?>>()
+                while (rs.next()) {
+                    rows.add((1..columnCount).map { rs.getObject(it) })
+                }
+                return rows
+            }
+        }
+    }
+}
+
+/**
+ * The column names of `device_binding`, in the same left-to-right order
+ * [deviceBindingTableSnapshot] reads its values in — read from the same query, so a test can name
+ * which position changed (`revokingChangesExactlyOneBindingColumn`) rather than only count how
+ * many did.
+ */
+private fun DataSource.deviceBindingColumnNames(): List<String> {
+    connection.use { connection ->
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT * FROM device_binding ORDER BY player_id").use { rs ->
+                return (1..rs.metaData.columnCount).map { rs.metaData.getColumnName(it) }
+            }
+        }
+    }
+}
+
+/**
  * What one run of [IdentityMovesNoCoinTest]'s scenario observed at each step, so every test method
  * can assert one aspect of a single run rather than re-deriving the whole scenario itself.
  *
@@ -610,6 +851,14 @@ private const val THIRD_DEVICE: String = "e2e-third"
  *   winner's own device id and no token.
  * @property step11ProfilePlayerId The player id step 11's `GET /api/me` named, for the winner's
  *   own device id.
+ * @property beforeRevoking The `player` table snapshot immediately before step 12's revocation.
+ * @property afterRevoking The `player` table snapshot immediately after step 12's revocation.
+ * @property deviceBindingBeforeRevoking The `device_binding` table snapshot immediately before
+ *   step 12's revocation.
+ * @property deviceBindingAfterRevoking The `device_binding` table snapshot immediately after
+ *   step 12's revocation.
+ * @property deviceBindingColumnNames The column names of `device_binding`, in the same order
+ *   [deviceBindingBeforeRevoking] and [deviceBindingAfterRevoking] read their values in.
  */
 private data class ScenarioRecord(
     val hostPlayerId: String,
@@ -639,4 +888,9 @@ private data class ScenarioRecord(
     val afterReconnectingAnonymously: List<List<Any?>>,
     val step10WelcomePlayerId: String,
     val step11ProfilePlayerId: String,
+    val beforeRevoking: List<List<Any?>>,
+    val afterRevoking: List<List<Any?>>,
+    val deviceBindingBeforeRevoking: List<List<Any?>>,
+    val deviceBindingAfterRevoking: List<List<Any?>>,
+    val deviceBindingColumnNames: List<String>,
 )
