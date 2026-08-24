@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040513
 title: The sign-in body is two fields, and its answer carries the token exactly once
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: XS

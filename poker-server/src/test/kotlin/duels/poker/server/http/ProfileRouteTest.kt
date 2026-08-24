@@ -126,6 +126,116 @@ class ProfileRouteTest {
     }
 
     @Test
+    fun aSessionOutranksTheDeviceBesideIt() = testApplication {
+        // Two profiles, not interchangeable: device d-anon owns p-anon at -1, and the session
+        // t-signed names p-signed at 7. A fixture with one profile could not tell "read the
+        // session" from "read the device" or from a route that answers a constant — every
+        // assertion below names both a player id and a balance for exactly that reason.
+        val reads = FakeProfileReads(
+            mapOf(
+                "d-anon" to profileResponse("p-anon", -1),
+                "p-signed" to profileResponse("p-signed", 7),
+            ),
+        )
+        val sessions = FixedAuthSessions(mapOf("t-signed" to "p-signed"))
+        application {
+            module()
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions))
+        }
+        val response = client.get("/api/me") {
+            header(HttpHeaders.Authorization, "Bearer t-signed")
+            header(DEVICE_ID_HEADER, "d-anon")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("\"playerId\":\"p-signed\""))
+        assertTrue(body.contains("\"coinBalance\":7"))
+        // Not just what came back: the device beside a valid session must never even be looked up
+        // (ADR-0027 §4), so p-anon must never appear here, and p-signed must appear exactly once.
+        assertEquals(listOf("p-signed"), reads.queried)
+    }
+
+    @Test
+    fun theSameDeviceAloneStillAnswersItsOwnProfile() = testApplication {
+        // The control for the test above: without it, a route that always answered the session
+        // fixture regardless of what was presented would pass aSessionOutranksTheDeviceBesideIt
+        // for the wrong reason. Same two-profile fixture, no Authorization header this time.
+        val reads = FakeProfileReads(
+            mapOf(
+                "d-anon" to profileResponse("p-anon", -1),
+                "p-signed" to profileResponse("p-signed", 7),
+            ),
+        )
+        val sessions = FixedAuthSessions(mapOf("t-signed" to "p-signed"))
+        application {
+            module()
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions))
+        }
+        val response = client.get("/api/me") {
+            header(DEVICE_ID_HEADER, "d-anon")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("\"playerId\":\"p-anon\""))
+        assertTrue(body.contains("\"coinBalance\":-1"))
+        assertEquals(listOf("p-anon"), reads.queried)
+    }
+
+    @Test
+    fun anUnknownSessionIsRefusedEvenWithAGoodDevice() = testApplication {
+        // The downgrade ADR-0027 §4 forbids: an invalid session must never fall back to the device
+        // beside it. d-anon resolves to a real, different profile, so a wrong implementation that
+        // fell through would answer 200 with p-anon rather than 401 — the device has to be usable
+        // for this to be a real test.
+        val reads = FakeProfileReads(
+            mapOf(
+                "d-anon" to profileResponse("p-anon", -1),
+                "p-signed" to profileResponse("p-signed", 7),
+            ),
+        )
+        val sessions = FixedAuthSessions(mapOf("t-signed" to "p-signed"))
+        application {
+            module()
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions))
+        }
+        val response = client.get("/api/me") {
+            header(HttpHeaders.Authorization, "Bearer nonsense")
+            header(DEVICE_ID_HEADER, "d-anon")
+        }
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals("", response.bodyAsText())
+        // Never p-anon: the refusal happens before any profile — either one — is read at all.
+        assertTrue(reads.queried.isEmpty())
+    }
+
+    @Test
+    fun aBlankBearerIsTreatedAsNoSessionAtAll() = testApplication {
+        // "Bearer " with nothing after the space strips to an empty string, which is treated as no
+        // session presented at all — the same treatment a blank X-Device-Id already gets — so the
+        // device beside it is consulted exactly as if no Authorization header had been sent.
+        val reads = FakeProfileReads(
+            mapOf(
+                "d-anon" to profileResponse("p-anon", -1),
+                "p-signed" to profileResponse("p-signed", 7),
+            ),
+        )
+        val sessions = FixedAuthSessions(mapOf("t-signed" to "p-signed"))
+        application {
+            module()
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions))
+        }
+        val response = client.get("/api/me") {
+            header(HttpHeaders.Authorization, "Bearer ")
+            header(DEVICE_ID_HEADER, "d-anon")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("\"playerId\":\"p-anon\""))
+        assertTrue(body.contains("\"coinBalance\":-1"))
+        assertEquals(listOf("p-anon"), reads.queried)
+    }
+
+    @Test
     fun aKnownDeviceGetsItsDuelsInTheOrderTheReaderReturnedThem() = testApplication {
         val duel1 = duelSummaryResponse(
             duelId = "duel-1",

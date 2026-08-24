@@ -58,6 +58,35 @@ internal fun identitiesFor(profiles: Map<String, ProfileResponse>): IdentityReso
     IdentityResolver(NoAuthSessions, FixedDirectory(profiles))
 
 /**
+ * An [AuthSessions] fixed to a caller-supplied token -> player id map, for a route test that needs
+ * a session to actually resolve to a player rather than being refused outright the way
+ * [NoAuthSessions] refuses every one. `issue` throws for the same reason [FixedDirectory.resolve]
+ * does: no route test built on [identitiesFor] signs a caller in, so nothing should ever ask this
+ * double to mint a token, and `delete` throws for the same reason — no route test built on it signs
+ * one out.
+ */
+internal class FixedAuthSessions(private val tokens: Map<String, String>) : AuthSessions {
+    override suspend fun issue(playerId: PlayerId): SessionToken {
+        throw UnsupportedOperationException("no route test built on identitiesFor issues a session")
+    }
+
+    override suspend fun playerOf(token: SessionToken): PlayerId? = tokens[token.value]?.let(::PlayerId)
+
+    override suspend fun delete(token: SessionToken) {
+        throw UnsupportedOperationException("no route test built on identitiesFor revokes a session")
+    }
+}
+
+/**
+ * Builds the [IdentityResolver] that pairs with a `ProfileReads` double built from the same
+ * [profiles] map, resolving a session token through the caller-supplied [sessions] instead of
+ * refusing every one — for a route test proving a session outranks the device beside it
+ * (`ADR-0027` §4).
+ */
+internal fun identitiesFor(profiles: Map<String, ProfileResponse>, sessions: AuthSessions): IdentityResolver =
+    IdentityResolver(sessions, FixedDirectory(profiles))
+
+/**
  * Builds the [IdentityResolver] a database-backed route test needs to install `profileRoutes`,
  * `authRoutes` or `standingsRoutes` against a real [dataSource] — the same kind of
  * [PostgresPlayerDirectory] `serverComponents` wires in production. None of these tests signs in,
