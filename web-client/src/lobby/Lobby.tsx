@@ -16,6 +16,7 @@ import { LadderScreen } from "../ladder/LadderScreen";
 import { LADDER_HEADING } from "../ladder/ladder-text";
 import { normalizeRoomCode, roomLink } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
+import { absentActionText } from "../table/absent-action-text";
 
 /** The first screen: open a duel room, or join one by the code on the invite. */
 export function Lobby(): ReactElement {
@@ -64,6 +65,11 @@ export function Lobby(): ReactElement {
           returned={state.rivalReturned}
           graceRemainingMillis={state.graceRemainingMillis}
         />
+        {state.serverAction !== null && (
+          <p className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-center text-small text-text-muted">
+            {absentActionText(state.serverAction, state.mySeat)}
+          </p>
+        )}
         <ActionBar
           turn={state.pendingTurn}
           rejection={state.rejection}
