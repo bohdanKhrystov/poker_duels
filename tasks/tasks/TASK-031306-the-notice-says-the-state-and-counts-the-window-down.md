@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031306
 title: The notice says the state and counts the window down
 type: task
-status: ready
+status: done
 parent: STORY-0313
 module: web-client
 estimate: S
