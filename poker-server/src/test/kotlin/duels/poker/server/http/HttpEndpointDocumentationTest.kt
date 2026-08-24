@@ -51,7 +51,9 @@ class HttpEndpointDocumentationTest {
     private val profileSection: String =
         sectionBetween("### Profile endpoint", "### Set display name")
     private val setNameSection: String =
-        sectionBetween("### Set display name", "### Recent duels endpoint")
+        sectionBetween("### Set display name", "### Revoke this device")
+    private val deviceSection: String =
+        sectionBetween("### Revoke this device", "### Recent duels endpoint")
     private val recentDuelsSection: String =
         sectionBetween("### Recent duels endpoint", "Each duel summary in the array contains:")
     private val duelSummarySection: String =
@@ -234,6 +236,25 @@ class HttpEndpointDocumentationTest {
     }
 
     @Test
+    fun theProfileSectionDocumentsDeviceRouteLive() {
+        val profileFields = documentedFieldNames(profileSection)
+        assertTrue(
+            "deviceRouteLive" in profileFields,
+            "The profile section must document the 'deviceRouteLive' field",
+        )
+
+        val deviceRouteLiveRow = rowFor(profileSection, "deviceRouteLive")
+            ?: error("Profile section must document the 'deviceRouteLive' field")
+        assertTrue(
+            deviceRouteLiveRow.contains("boolean", ignoreCase = true),
+            "The deviceRouteLive row must mention 'boolean' to indicate the type: $deviceRouteLiveRow",
+        )
+
+        val deviceRouteLiveProperty = ProfileResponse::class.memberProperties.firstOrNull { it.name == "deviceRouteLive" }
+            ?: error("ProfileResponse must have a 'deviceRouteLive' property")
+    }
+
+    @Test
     fun theDocumentMarksTheOpponentDisplayNameNullable() {
         val opponentDisplayNameProperty = DuelSummaryResponse::class.memberProperties.firstOrNull { it.name == "opponentDisplayName" }
             ?: error("DuelSummaryResponse must have an 'opponentDisplayName' property")
@@ -269,6 +290,79 @@ class HttpEndpointDocumentationTest {
         assertTrue(
             setNameSection.contains("consecutive") || setNameSection.contains("two or more"),
             "The document must describe the rule refusing consecutive spaces that canonicalDisplayNameOrNull enforces",
+        )
+    }
+
+    @Test
+    fun theSetNameSectionIsStillWhereItWas() {
+        // Re-chaining sectionBetween's end marker to make room for the new device section must not
+        // shrink setNameSection to nothing: this checks the section itself, not the whole document.
+        assertTrue(
+            setNameSection.contains("PUT /api/me/name"),
+            "The Set display name section must still contain 'PUT /api/me/name' after re-chaining",
+        )
+        assertTrue(
+            setNameSection.contains("409"),
+            "The Set display name section must still document its '409' row after re-chaining",
+        )
+    }
+
+    @Test
+    fun theDeviceSectionNamesItsMethodAndPath() {
+        assertTrue(
+            deviceSection.contains("DELETE /api/me/device"),
+            "The Revoke this device section must contain 'DELETE /api/me/device'",
+        )
+    }
+
+    @Test
+    fun theDeviceSectionNamesTheBearerHeaderAndRefusesTheDeviceFallback() {
+        assertTrue(
+            deviceSection.contains("Authorization: Bearer"),
+            "The Revoke this device section must name the 'Authorization: Bearer' header",
+        )
+        assertTrue(
+            deviceSection.contains("device id alone"),
+            "The Revoke this device section must say a caller presenting a device id alone is refused",
+        )
+    }
+
+    @Test
+    fun theDeviceSectionNamesAllThreeStatusCodes() {
+        val statusCodes = listOf("204", "401", "409")
+        for (statusCode in statusCodes) {
+            assertTrue(
+                deviceSection.contains(statusCode),
+                "The Revoke this device section must document status code '$statusCode'",
+            )
+        }
+    }
+
+    @Test
+    fun theDeviceSectionSaysRevocationIsPermanent() {
+        assertTrue(
+            deviceSection.contains("cannot be undone"),
+            "The Revoke this device section must say revocation cannot be undone",
+        )
+    }
+
+    @Test
+    fun theDeviceSectionSaysTheOtherSessionsEndAndThisOneDoesNot() {
+        assertTrue(
+            deviceSection.contains("every other session"),
+            "The Revoke this device section must say every other session the player holds ends",
+        )
+        assertTrue(
+            deviceSection.contains("survives"),
+            "The Revoke this device section must say the calling session survives",
+        )
+    }
+
+    @Test
+    fun theDeviceSectionSaysNoSocketIsClosed() {
+        assertTrue(
+            deviceSection.contains("No live socket is closed"),
+            "The Revoke this device section must say no live socket is closed",
         )
     }
 
@@ -630,6 +724,16 @@ class HttpEndpointDocumentationTest {
             standingsSection.contains("No known device", ignoreCase = true) &&
                 standingsSection.contains("in its entirety"),
             "The Standings section must state the absent-self answer for a request with no known device",
+        )
+    }
+
+    @Test
+    fun noSectionOfTheDocumentPromisesADeviceIdInAResponse() {
+        assertFalse(
+            "deviceId" in documentedFieldNames(doc),
+            "No field table row anywhere in the document may name a field called 'deviceId': a " +
+                "device id is a bearer credential and no read path returns one to a caller who did " +
+                "not already hold it (ADR-0049 §5)",
         )
     }
 }

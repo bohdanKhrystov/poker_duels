@@ -146,6 +146,7 @@ returned. There is no `X-Device-Id` fallback here; there is nothing to fall back
 | coinBalance | number | The player's current coin balance, computed as wins minus losses. This is a signed integer and may be negative per `ADR-0014` — a balance of `−1` is a correct answer, not an error. |
 | displayName | string or null | The player's chosen display name, or `null` if never set. Null means *never set*, and the server fabricates no placeholder per `ADR-0029` §6. |
 | displayNameRemoved | boolean | `true` when the player holds no display name **and** a name has been removed from them by an operator (`ADR-0052`). `false` for a player who never set one, and `false` again once they set a new one. Never says anything about another player. |
+| deviceRouteLive | boolean | `true` exactly when this player currently holds a live device binding (`ADR-0049` §5), `false` once `DELETE /api/me/device` has revoked it. This is the field the account screen reads to decide whether to offer that route at all (`ADR-0050` §3). |
 
 ### Set display name
 
@@ -180,6 +181,32 @@ A name that the player typed as, for example, `  Alice  ` becomes `Alice` (9 cod
 | `401 Unauthorized` | Empty | No device id was provided, it was blank, or it is unknown. The write is never attempted. | No, the client must log in first. |
 | `403 Forbidden` | Empty | This player already has a different name set. A display name is permanent once set (`ADR-0029` §4); a player who has chosen a name may never change it. Sending the identical name (exact bytes match) returns `200`, not `403`, so a retry is safe if the client is uncertain. | No, the name cannot be changed. |
 | `409 Conflict` | Empty | The requested name (after canonicalisation) collides with another player's name. Names are unique case-insensitively (`ADR-0029` §1); `bob` and `Bob` cannot both exist. The write is never attempted. | Yes, the client may try a different name. |
+
+### Revoke this device
+
+**Method and path:** `DELETE /api/me/device`
+
+**Authentication:** `Authorization: Bearer <token>` — the session token `POST /api/auth/sign-in`
+returned. There is no `X-Device-Id` fallback here: presenting a device id alone, with no valid
+session token, answers `401 Unauthorized`, the same as any other caller with no valid session. A
+session is required so this cannot sign the caller out of the screen they are standing on
+(`ADR-0037`), and it makes revocation a step-up operation for free — the password was proved
+minutes ago, by construction (`ADR-0049` §5).
+
+**Request body:** None.
+
+**Responses:** Every response body is empty.
+
+| Status | Meaning |
+| --- | --- |
+| `204 No Content` | The player's live device binding, if any, is revoked — the answer is `204` whether or not a binding was live, so a client cannot use the status to tell a live binding from an already-revoked or never-bound one. Revocation is **permanent** and cannot be undone: not by this route, not by an admin path, not by any other means (`ADR-0049` §2). In the same transaction, every other session this player holds is deleted; the calling session — the one whose token authenticated this request — survives, so the caller is signed out everywhere except here (`ADR-0050` §§1–2). No live socket is closed by this call: a duel already running on a swept device plays to its end (`ADR-0049` §6, `ADR-0050` §2). |
+| `401 Unauthorized` | No valid session was presented — including a request presenting only a device id and no `Authorization` header, and an invalid, expired, or unknown token. The write is never attempted. |
+| `409 Conflict` | This player holds no `password` credential. Revocation is offered only when another route into the profile exists (`ADR-0037`), so refusing here rather than stranding the profile. The write is never attempted. |
+
+**No device id appears in this or any other documented response.** A device id is a bearer
+credential: returning one to a caller who did not already hold it would hand over the ability to
+sign in as that profile. A "your devices" listing is refused for the same reason — refused, not
+merely absent (`ADR-0049` §5's last bullet).
 
 ### Recent duels endpoint
 
