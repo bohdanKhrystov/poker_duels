@@ -140,6 +140,24 @@ class DeviceRouteTest {
     }
 
     @Test
+    fun anUnknownDeviceWithNoSessionIsRefused() = testApplication {
+        // The session is absent and the device does not resolve: both halves of the condition are
+        // needed to reach the UnknownDevice branch. A valid token beside an unknown device
+        // (aValidTokenBesideAnUnknownDeviceStillRevokes above) is not enough; the session answers
+        // first, so the device is never looked up. This test must carry neither.
+        val bindings = RecordingDeviceBindings()
+        application {
+            deviceRoutes(identities, RecordingCredentials(holds = true), bindings)
+        }
+        val response = client.delete("/api/me/device") {
+            header(DEVICE_ID_HEADER, "no-such-device")
+        }
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals("", response.bodyAsText())
+        assertTrue(bindings.revokeCalls.isEmpty())
+    }
+
+    @Test
     fun theCredentialIsCheckedWithThisPlayerAndThePasswordKind() = testApplication {
         // Same request as above: the player the guard checks is the one the session named, never
         // one a header or a body could supply.
