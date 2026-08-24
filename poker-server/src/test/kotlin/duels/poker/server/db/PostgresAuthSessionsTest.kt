@@ -211,6 +211,71 @@ class PostgresAuthSessionsTest {
         }
     }
 
+    @Test
+    fun deletingRemovesThatRow() {
+        runBlocking {
+            val playerId = insertPlayer()
+
+            val token = authSessions.issue(playerId)
+            authSessions.delete(token)
+
+            assertNull(authSessions.playerOf(token), "after deleting a token, playerOf must return null")
+            assertEquals(0, countAuthSessionRows(), "after deleting a token, the count must be 0")
+        }
+    }
+
+    @Test
+    fun deletingTwiceIsTheSame() {
+        runBlocking {
+            val playerId = insertPlayer()
+
+            val token = authSessions.issue(playerId)
+            val countAfterIssue = countAuthSessionRows()
+            authSessions.delete(token)
+            val countAfterFirstDelete = countAuthSessionRows()
+            authSessions.delete(token)
+            val countAfterSecondDelete = countAuthSessionRows()
+
+            assertEquals(1, countAfterIssue, "issuing once must create one row")
+            assertEquals(0, countAfterFirstDelete, "deleting once must remove the row")
+            assertEquals(0, countAfterSecondDelete, "deleting twice must leave the count at 0")
+        }
+    }
+
+    @Test
+    fun deletingOneSessionLeavesTheOther() {
+        runBlocking {
+            val playerId = insertPlayer()
+
+            val token1 = authSessions.issue(playerId)
+            val token2 = authSessions.issue(playerId)
+
+            authSessions.delete(token1)
+
+            assertNull(authSessions.playerOf(token1), "the deleted token must return null")
+            assertEquals(playerId, authSessions.playerOf(token2), "the other token must still resolve")
+            assertEquals(1, countAuthSessionRows(), "there must be exactly one session left")
+        }
+    }
+
+    @Test
+    fun deletingLeavesThePlayerRowAlone() {
+        runBlocking {
+            val playerId = insertPlayer()
+
+            val token = authSessions.issue(playerId)
+            val playerBefore = playerRow(playerId)
+
+            authSessions.delete(token)
+
+            val playerAfter = playerRow(playerId)
+            assertEquals(playerBefore.id, playerAfter.id, "player id must be unchanged")
+            assertEquals(playerBefore.deviceId, playerAfter.deviceId, "device_id must be unchanged")
+            assertEquals(playerBefore.coinBalance, playerAfter.coinBalance, "coin_balance must be unchanged")
+            assertEquals(playerBefore.displayName, playerAfter.displayName, "display_name must be unchanged")
+        }
+    }
+
     private fun insertPlayer(): PlayerId {
         val id = UUID.randomUUID()
         dataSource.connection.use { connection ->
@@ -273,6 +338,24 @@ class PostgresAuthSessionsTest {
     private fun sha256(value: String): ByteArray =
         MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
 
+    private fun playerRow(playerId: PlayerId): PlayerRecord =
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT id, device_id, coin_balance, display_name FROM player WHERE id = ?",
+            ).use { statement ->
+                statement.setObject(1, UUID.fromString(playerId.value))
+                statement.executeQuery().use { rows ->
+                    check(rows.next()) { "no player row for id ${playerId.value}" }
+                    PlayerRecord(
+                        id = rows.getString("id"),
+                        deviceId = rows.getString("device_id"),
+                        coinBalance = rows.getInt("coin_balance"),
+                        displayName = rows.getString("display_name"),
+                    )
+                }
+            }
+        }
+
     // Plain class, not a data class: a data class over a ByteArray property gets a
     // reference-equality equals()/hashCode() the compiler warns about, and nothing here compares
     // two StoredSession instances — each field is asserted against directly.
@@ -281,5 +364,12 @@ class PostgresAuthSessionsTest {
         val playerId: String,
         val issuedAt: OffsetDateTime,
         val expiresAt: OffsetDateTime,
+    )
+
+    private class PlayerRecord(
+        val id: String,
+        val deviceId: String,
+        val coinBalance: Int,
+        val displayName: String?,
     )
 }

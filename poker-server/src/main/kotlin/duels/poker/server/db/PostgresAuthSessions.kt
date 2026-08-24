@@ -66,7 +66,15 @@ public class PostgresAuthSessions(
             }
         }
 
-    override suspend fun delete(token: SessionToken) = TODO("TASK-040508")
+    override suspend fun delete(token: SessionToken): Unit =
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(DELETE_SQL).use { statement ->
+                    statement.setBytes(1, tokenHash(token))
+                    statement.executeUpdate()
+                }
+            }
+        }
 
     private fun insertAuthSession(
         connection: Connection,
@@ -95,5 +103,8 @@ public class PostgresAuthSessions(
 
         private const val PLAYER_OF_SQL =
             "SELECT player_id FROM auth_session WHERE token_hash = ? AND expires_at > now()"
+
+        private const val DELETE_SQL =
+            "DELETE FROM auth_session WHERE token_hash = ?"
     }
 }
