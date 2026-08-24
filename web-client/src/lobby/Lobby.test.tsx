@@ -509,6 +509,102 @@ describe("the lobby", () => {
     expect(screen.getByText("47")).toBeDefined();
   });
 
+  it("the countdown reaching zero sends nothing and changes nothing", () => {
+    vi.useFakeTimers();
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    const { send } = renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "YourTurn",
+        handNumber: 4,
+        actionSequence: 9,
+        legalActions: {
+          seat: 1,
+          allowed: ["CHECK", "BET"],
+          callTo: 0,
+          minBetTo: 20,
+          minRaiseTo: 0,
+          allInTo: 500,
+        },
+      });
+      store.apply({
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      });
+    });
+
+    // Positive control: the countdown is live at 47 before anything is recorded. A
+    // screen that never rendered a real number would pass every clause below for
+    // the wrong reason.
+    expect(screen.getByText("47")).toBeDefined();
+
+    const barButtons = () =>
+      within(screen.getByRole("region", { name: "your move" }))
+        .getAllByRole<HTMLButtonElement>("button")
+        .map((button) => ({
+          name: button.textContent?.trim() ?? "",
+          disabled: button.disabled,
+        }));
+    const before = barButtons();
+    expect(before.length).toBeGreaterThan(0);
+
+    act(() => {
+      vi.advanceTimersByTime(20_000);
+    });
+
+    // Second positive control: still ticking partway through the window, so the
+    // final zero below is a crossing, not a value that was never moving.
+    expect(screen.getByText("27")).toBeDefined();
+
+    // The remaining 100 000 ms brings the total advance to 120 000 — more than
+    // twice the 47 000 ms window — well past the point the deadline was crossed.
+    act(() => {
+      vi.advanceTimersByTime(100_000);
+    });
+
+    // ADR-0028 §3, one assertion per clause.
+    // Sends nothing.
+    expect(send).toHaveBeenCalledTimes(0);
+    // Enables nothing: identical buttons, identical order, identical disabled flags.
+    expect(barButtons()).toEqual(before);
+    // Enters no state: the pause is still the pause.
+    expect(
+      screen.getByText("Your rival is away. The duel is paused."),
+    ).toBeDefined();
+    // Assumes no resumption: the plate still reads Away, never Timed out.
+    expect(screen.getByText("Away")).toBeDefined();
+    expect(screen.queryByText("Timed out")).toBeNull();
+    // The number stops: clamped at zero, scoped to the notice that carries it.
+    const notice = screen.getByText("Your rival is away. The duel is paused.");
+    expect(within(notice).getByText("0")).toBeDefined();
+  });
+
+  it("a window with nothing left of it renders as waiting", () => {
+    vi.useFakeTimers();
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    const { send } = renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 0,
+      });
+    });
+
+    const notice = screen.getByText("Your rival is away. The duel is paused.");
+    expect(within(notice).getByText("0")).toBeDefined();
+    expect(screen.queryByText("Timed out")).toBeNull();
+    expect(screen.queryByText("Your rival did not come back.")).toBeNull();
+    expect(send).toHaveBeenCalledTimes(0);
+  });
+
   it("shows the result when the duel finishes", () => {
     // Victory case: viewer at seat 1, winner is seat 1
     const store = createDuelStore();

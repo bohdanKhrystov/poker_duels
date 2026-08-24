@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031312
 title: The duel screen says none of the words this copy refuses
 type: task
-status: backlog
+status: done
 parent: STORY-0313
 module: web-client
 estimate: S
@@ -77,7 +77,9 @@ copy"`.
 | `puts none of the refused words in front of a player` | for each of the four states, the joined text **and** the joined `aria-label`/`title` sweep match none of the refused patterns. Both sweeps asserted separately, so a word that reaches only a screen reader still fails |
 | `reports every refused word when one is planted` | the sweep is not vacuous. For **each** refused pattern in turn, a detached `<p>` carrying a sentence containing that word is appended to the rendered container and the sweep reports it — a loop over the whole set, because a single planted word proves one pattern compiles and says nothing about the other thirteen. Asserted against the count of patterns, so adding a pattern without a plant fails |
 
-Three tests. Six hundred and sixteen exist after `TASK-031311`, so the suite reports **619**.
+Three tests. The suite grows by that many on top of whatever `TASK-031311` left, and every one
+of them passes. This line said **619** when the story was planned; the real figure at landing was
+630. The gate matches a pattern rather than a number for exactly that reason.
 
 ## Proof
 
