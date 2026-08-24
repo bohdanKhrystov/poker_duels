@@ -50,18 +50,24 @@ import kotlinx.coroutines.CancellationException
  * carry one, so a client can never assert who it is (`ADR-0002`).
  *
  * Also installs `POST /api/auth/sign-in`, which verifies a handle and a password and answers with
- * a freshly issued session token, in this fixed order: decode, then the handle, then the
- * credential, then the write. Every decode failure is `400`. An unusable handle — one
- * [loginHandleOrNull] refuses — answers the **same** `401` a wrong password does, never `400`:
- * telling a stranger their handle's shape alone was the problem would tell them the handle's
- * validity is knowable without a credential at all. [Credentials.verify] alone then decides
- * success or failure (`ADR-0027` §6) — there is no separate "does this handle exist" check,
- * because Argon2's own constant-time dummy-hash path is what makes the no-such-account case cost
- * what the wrong-password case costs; a pre-check here would defeat it, silently. Only a verified
- * credential reaches [AuthSessions.issue], and this endpoint writes to `auth_session` alone — no
- * `player` row is created or read. Like sign-up, it resolves no identity: no `X-Device-Id` header
- * and no `Authorization` header are read, so a browser that has never connected can still recover
- * an account (`ADR-0030` §2).
+ * a freshly issued session token, in this fixed order: decode, then the handle, then
+ * [signInBudget], then the credential, then — on success only — the refund and the write
+ * (`ADR-0074` §2). Every decode failure is `400`. An unusable handle — one [loginHandleOrNull]
+ * refuses — answers the **same** `401` a wrong password does, never `400`: telling a stranger
+ * their handle's shape alone was the problem would tell them the handle's validity is knowable
+ * without a credential at all. [signInBudget] is then consulted, **before** the identifier is
+ * looked up and before anything is hashed: over budget answers the same `401`, with no `429` and
+ * nothing new on the wire (`ADR-0074` §4). The key is [io.ktor.server.plugins.origin]'s remote
+ * address alone, exactly as sign-up's own budget; until `EPIC-07` installs the forwarded-header
+ * plugin this must never honour a client-supplied forwarding header. [Credentials.verify] alone
+ * then decides success or failure (`ADR-0027` §6) — there is no separate "does this handle exist"
+ * check, because Argon2's own constant-time dummy-hash path is what makes the no-such-account case
+ * cost what the wrong-password case costs; a pre-check here would defeat it, silently. Only on a
+ * verified credential is [signInBudget] refunded, before [AuthSessions.issue] is reached — a wrong
+ * password never returns its reservation, or the budget would meter nothing at all (`ADR-0074`
+ * §2). This endpoint writes to `auth_session` alone — no `player` row is created or read. Like
+ * sign-up, it resolves no identity: no `X-Device-Id` header and no `Authorization` header are
+ * read, so a browser that has never connected can still recover an account (`ADR-0030` §2).
  *
  * Finally installs `POST /api/auth/sign-out`, which deletes the presented session token and
  * answers `204 No Content` whether or not a session existed — an absent token is not an error
@@ -77,6 +83,9 @@ import kotlinx.coroutines.CancellationException
  *     deleting a session token on sign-out.
  * @param budget The sign-up rate limiter, checked immediately before [Credentials.create]. Sign-in
  *     and sign-out never consult it.
+ * @param signInBudget The sign-in rate limiter, reserved before [Credentials.verify] runs and
+ *     refunded only when it succeeds — a **second**, independent [AttemptBudget] instance, over
+ *     its own limits (`ADR-0074` §1). Sign-up and sign-out never consult it.
  */
 public fun Application.authRoutes(
     reads: ProfileReads,
@@ -84,6 +93,7 @@ public fun Application.authRoutes(
     identities: IdentityResolver,
     sessions: AuthSessions,
     budget: AttemptBudget,
+    signInBudget: AttemptBudget,
 ) {
     routing {
         post("/api/auth/sign-up") {
@@ -159,12 +169,27 @@ public fun Application.authRoutes(
                 call.respond(HttpStatusCode.Unauthorized)
                 return@post
             }
+            // Reserved here, before the identifier is looked up and before anything is hashed
+            // (ADR-0074 §2): a refusal at this point costs no Argon2, so it must answer exactly as
+            // a wrong password does — no 429, nothing new on the wire (ADR-0074 §4). The key is
+            // the remote address alone; until EPIC-07 installs the forwarded-header plugin this
+            // must never honour a client-supplied forwarding header, which would let a client pick
+            // its own budget key.
+            val remoteAddress = call.request.origin.remoteAddress
+            if (!signInBudget.admit(remoteAddress)) {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@post
+            }
             val secret = PresentedSecret(request.password)
             val playerId = credentials.verify(CredentialKind.PASSWORD, handle, secret)
             if (playerId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@post
             }
+            // Refunded only on this, the successful path (ADR-0074 §2): a wrong password keeps its
+            // reservation, so only failed guesses accumulate over the window, while the reservation
+            // above still bounds how many verifications one address can have in flight at once.
+            signInBudget.refund(remoteAddress)
             val token = sessions.issue(playerId)
             call.respond(HttpStatusCode.OK, SignInResponse(token.value))
         }
