@@ -153,10 +153,7 @@ class RetireDisplayNameTest {
         // asserted by value -- +1, -1, two duel_result rows -- before the takedown runs at all,
         // not only after.
         assertFixtureTook(alice, bob)
-        assertEquals(0, p1BrokenBalanceCount())
-        val before = p2LedgerSums()
-        assertEquals(0, before.playerBalanceSum)
-        assertEquals(0, before.duelResultDeltaSum)
+        dataSource.assertCoinInvariantHolds("before takedown")
 
         retireDisplayName(alice, "Ann")
 
@@ -164,10 +161,7 @@ class RetireDisplayNameTest {
         // Kotlin. These are exactly the two properties a second SET in its UPDATE would break --
         // and the balances are checked by value, not merely unchanged, because a change that
         // decrements both players together would still leave P1 and P2 holding.
-        assertEquals(0, p1BrokenBalanceCount())
-        val after = p2LedgerSums()
-        assertEquals(0, after.playerBalanceSum)
-        assertEquals(0, after.duelResultDeltaSum)
+        dataSource.assertCoinInvariantHolds("after takedown")
         assertFixtureTook(alice, bob)
     }
 
@@ -255,46 +249,4 @@ class RetireDisplayNameTest {
             }
         }
     }
-
-    /**
-     * P1 of `ADR-0030` §5, run with the exact SQL the ADR gives. Every row this returns names a
-     * player whose `coin_balance` no longer equals the sum of their `duel_result` deltas; P1 holds
-     * when this returns zero rows.
-     */
-    private fun p1BrokenBalanceCount(): Int =
-        dataSource.connection.use { connection ->
-            connection.createStatement().use { statement ->
-                statement.executeQuery(
-                    """
-                    SELECT p.id FROM player p
-                    LEFT JOIN duel_result r ON r.player_id = p.id
-                    GROUP BY p.id, p.coin_balance
-                    HAVING p.coin_balance <> COALESCE(SUM(r.coin_delta), 0)
-                    """.trimIndent(),
-                ).use { rows ->
-                    var count = 0
-                    while (rows.next()) count++
-                    count
-                }
-            }
-        }
-
-    /** The two sums P2 of `ADR-0030` §5 requires to both be `0`. */
-    private data class LedgerSums(val playerBalanceSum: Int, val duelResultDeltaSum: Int)
-
-    /** P2 of `ADR-0030` §5, run with the exact SQL the ADR gives. */
-    private fun p2LedgerSums(): LedgerSums =
-        dataSource.connection.use { connection ->
-            connection.createStatement().use { statement ->
-                statement.executeQuery(
-                    """
-                    SELECT (SELECT COALESCE(SUM(coin_balance), 0) FROM player),
-                           (SELECT COALESCE(SUM(coin_delta), 0) FROM duel_result)
-                    """.trimIndent(),
-                ).use { rows ->
-                    rows.next()
-                    LedgerSums(rows.getInt(1), rows.getInt(2))
-                }
-            }
-        }
 }

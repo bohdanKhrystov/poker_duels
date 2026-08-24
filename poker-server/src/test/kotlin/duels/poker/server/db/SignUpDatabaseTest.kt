@@ -246,15 +246,11 @@ class SignUpDatabaseTest {
 
                 // P2, before and after: a mint and a burn cancel, so an after-only assertion, or
                 // a delta assertion, would miss either one landing on the wrong side of a sign-up.
-                val before = dataSource.p2LedgerSums()
-                assertEquals(0, before.playerBalanceSum)
-                assertEquals(0, before.duelResultDeltaSum)
+                dataSource.assertCoinInvariantHolds("before sign-up")
 
                 assertEquals(HttpStatusCode.Created, client.signUp(SIGNING_UP_DEVICE, "Bob_1", PASSWORD))
 
-                val after = dataSource.p2LedgerSums()
-                assertEquals(0, after.playerBalanceSum)
-                assertEquals(0, after.duelResultDeltaSum)
+                dataSource.assertCoinInvariantHolds("after sign-up")
             }
         }
     }
@@ -277,11 +273,11 @@ class SignUpDatabaseTest {
                 // The wrong implementation this must fail against is any UPDATE player SET
                 // coin_balance, or the duel_result repointing ADR-0030 names, both of which
                 // leave a row whose balance no longer matches its deltas.
-                assertEquals(0, dataSource.p1BrokenBalanceCount())
+                dataSource.assertCoinInvariantHolds("before sign-up")
 
                 assertEquals(HttpStatusCode.Created, client.signUp(SIGNING_UP_DEVICE, "Bob_1", PASSWORD))
 
-                assertEquals(0, dataSource.p1BrokenBalanceCount())
+                dataSource.assertCoinInvariantHolds("after sign-up")
             }
         }
     }
@@ -455,50 +451,6 @@ private fun DataSource.balanceOf(player: UUID): Int {
             statement.executeQuery().use { rs ->
                 assertTrue(rs.next())
                 return rs.getInt("coin_balance")
-            }
-        }
-    }
-}
-
-/**
- * P1 of `ADR-0030` §5, run with the exact SQL the ADR gives. Every row this returns names a
- * player whose `coin_balance` no longer equals the sum of their `duel_result` deltas; P1 holds
- * when this returns zero rows.
- */
-private fun DataSource.p1BrokenBalanceCount(): Int {
-    connection.use { connection ->
-        connection.createStatement().use { statement ->
-            statement.executeQuery(
-                """
-                SELECT p.id FROM player p
-                LEFT JOIN duel_result r ON r.player_id = p.id
-                GROUP BY p.id, p.coin_balance
-                HAVING p.coin_balance <> COALESCE(SUM(r.coin_delta), 0)
-                """.trimIndent(),
-            ).use { rs ->
-                var count = 0
-                while (rs.next()) count++
-                return count
-            }
-        }
-    }
-}
-
-/** The two sums P2 of `ADR-0030` §5 requires to both be `0`. */
-private data class LedgerSums(val playerBalanceSum: Int, val duelResultDeltaSum: Int)
-
-/** P2 of `ADR-0030` §5, run with the exact SQL the ADR gives. */
-private fun DataSource.p2LedgerSums(): LedgerSums {
-    connection.use { connection ->
-        connection.createStatement().use { statement ->
-            statement.executeQuery(
-                """
-                SELECT (SELECT COALESCE(SUM(coin_balance), 0) FROM player),
-                       (SELECT COALESCE(SUM(coin_delta), 0) FROM duel_result)
-                """.trimIndent(),
-            ).use { rs ->
-                assertTrue(rs.next())
-                return LedgerSums(rs.getInt(1), rs.getInt(2))
             }
         }
     }
