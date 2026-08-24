@@ -3,13 +3,16 @@ schema: 2
 id: TASK-040517
 title: The socket's dependencies carry the resolver
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: XS
 tier: haiku
 review: light
-files_touched: 3
+files_touched: 4
+atomic:
+  - the Kotlin compiler — SocketDependencies gains a required constructor parameter, so ServerComponents and SocketFixtures stop compiling at the same instant
+  - the Kotlin compiler again — SocketFixturesTest constructs testDeps, so it compiles against the fixture's new default and cannot be split from it
 labels: [server, socket, wiring, identity]
 depends_on: [TASK-040516]
 verify:
@@ -31,6 +34,7 @@ edited.
 | `poker-server/src/main/kotlin/duels/poker/server/session/SocketDependencies.kt` | modify |
 | `poker-server/src/main/kotlin/duels/poker/server/ServerComponents.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/session/SocketFixtures.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/session/SocketFixturesTest.kt` | modify |
 
 ## Scope
 
@@ -65,7 +69,11 @@ edited.
 ## Acceptance criteria
 
 - [ ] `SocketFixturesTest.testDepsDefaultsAResolverOverItsOwnDirectory` passes
-- [ ] `git diff --name-only` names exactly three files, and none of them is a socket test
+- [ ] `git diff --name-only` names exactly four files, and none of them is an `e2e/` socket test
+      — this said *three* and *no socket test*, which contradicted the *Tests* section's own
+      requirement of a method in `SocketFixturesTest`. That file is the fixture's pre-existing unit
+      test in `session/`, not one of the `e2e/` socket tests the criterion meant to protect, and
+      without it nothing observes the wiring at all
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
