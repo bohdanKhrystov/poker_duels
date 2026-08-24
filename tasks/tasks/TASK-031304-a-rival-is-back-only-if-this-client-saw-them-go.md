@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031304
 title: A rival is back only if this client saw them go
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: S
