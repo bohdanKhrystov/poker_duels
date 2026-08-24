@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031405
 title: The press leaves nothing on the wire, and the next socket rejoins nothing
 type: task
-status: ready
+status: done
 parent: STORY-0314
 module: web-client
 estimate: S
