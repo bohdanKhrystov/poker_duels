@@ -84,7 +84,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-00](epics/EPIC-00-ways-of-working.md) | Ways of working | **in progress** | v0.1 |
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
-| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 12 of 14 stories done (`STORY-0309` closed on 2026-08-24); `STORY-0313` unblocked on 2026-08-24 when `STORY-0214` merged and is **split into fifteen**, three of them done, with `TASK-031304` startable — it raised `DEC-070` (how long the server's own action stays on screen, the **product owner's**), answered on 2026-08-24 by [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md), so **nothing in the story is blocked**; `STORY-0314` is unblocked by `ADR-0073` and is **split into five**, with `TASK-031401` startable | v0.1 |
+| [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **in progress** — 13 of 14 stories done (`STORY-0309` closed on 2026-08-24); `STORY-0313` unblocked on 2026-08-24 when `STORY-0214` merged and is **split into fifteen**, eight of them done, with `TASK-031309` startable — it raised `DEC-070` (how long the server's own action stays on screen, the **product owner's**), answered on 2026-08-24 by [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md), so **nothing in the story is blocked**; `STORY-0314` **closed on 2026-08-24**, five of five, leaving `STORY-0313` the only story left in the epic | v0.1 |
 | [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **in progress** — 9 of 17 stories done; `STORY-0405` unparked on 2026-08-23 when `STORY-0213` and `STORY-0214` merged, and is **split into 24 tickets** with `TASK-040501` startable. It raised `DEC-069` (the sign-in budget's two numbers, the architect's), answered on 2026-08-24 by [`ADR-0074`](../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md) — nothing in the story is blocked | v0.2 |
 | [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
@@ -1698,12 +1698,12 @@ written and is still true.
 | | [TASK-031313](tasks/TASK-031313-the-server-is-the-subject-of-every-action-it-took.md) The server is the subject of every action it took | S | backlog |
 | | [TASK-031314](tasks/TASK-031314-the-store-keeps-the-most-recent-action-the-server-took.md) The store keeps the most recent action the server took, until the absence ends | S | backlog |
 | | [TASK-031315](tasks/TASK-031315-the-duel-screen-names-the-server-as-the-actor.md) The duel screen names the server as the actor | S | backlog |
-| [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (`ADR-0073` fixed its words) | **in progress** — split into five |
+| [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (`ADR-0073` fixed its words) | **done** — five of five |
 | | [TASK-031401](tasks/TASK-031401-the-waiting-screen-offers-the-way-back-to-the-lobby.md) The waiting screen offers the way back to the lobby | S | done |
 | | [TASK-031402](tasks/TASK-031402-one-line-says-the-room-stays-open.md) One line says the room stays open | XS | done |
 | | [TASK-031403](tasks/TASK-031403-two-strings-are-the-whole-addition-and-nothing-stands-between-the-press-and-the-lobby.md) Two strings are the whole addition, and nothing stands between the press and the lobby | S | done |
 | | [TASK-031404](tasks/TASK-031404-the-waiting-screen-offers-none-of-the-words-adr-0073-refuses.md) The waiting screen offers none of the words `ADR-0073` refuses | S | done |
-| | [TASK-031405](tasks/TASK-031405-the-press-leaves-nothing-on-the-wire-and-the-next-socket-rejoins-nothing.md) The press leaves nothing on the wire, and the next socket rejoins nothing | S | **ready** |
+| | [TASK-031405](tasks/TASK-031405-the-press-leaves-nothing-on-the-wire-and-the-next-socket-rejoins-nothing.md) The press leaves nothing on the wire, and the next socket rejoins nothing | S | done |
 
 ---
 

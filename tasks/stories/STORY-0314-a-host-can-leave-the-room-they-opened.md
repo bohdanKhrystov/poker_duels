@@ -2,7 +2,7 @@
 id: STORY-0314
 title: A host can leave the room they opened
 type: story
-status: ready
+status: done
 parent: EPIC-03
 module: web-client
 labels: [client, ui, rooms]
