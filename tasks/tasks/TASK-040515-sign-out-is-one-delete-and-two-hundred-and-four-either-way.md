@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040515
 title: "POST /api/auth/sign-out: one delete, 204 either way, and no socket closes"
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: XS

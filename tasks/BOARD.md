@@ -1826,8 +1826,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040511](tasks/TASK-040511-the-read-path-follows-the-resolved-player.md) The profile read follows the resolved player, and every route resolves the same way | S | done |
 | | [TASK-040512](tasks/TASK-040512-a-signed-in-request-reads-the-sessions-profile.md) A signed-in request reads the session's profile, and the device beside it is ignored | S | done |
 | | [TASK-040513](tasks/TASK-040513-the-sign-in-body-is-two-fields-and-the-answer-carries-the-token-once.md) The sign-in body is two fields, and its answer carries the token exactly once | XS | done |
-| | [TASK-040514](tasks/TASK-040514-sign-in-the-credential-decides-and-a-stranger-learns-nothing.md) POST /api/auth/sign-in — the credential decides, and a stranger learns nothing | S | **ready** |
-| | [TASK-040515](tasks/TASK-040515-sign-out-is-one-delete-and-two-hundred-and-four-either-way.md) POST /api/auth/sign-out — one delete, 204 either way, and no socket closes | XS | backlog |
+| | [TASK-040514](tasks/TASK-040514-sign-in-the-credential-decides-and-a-stranger-learns-nothing.md) POST /api/auth/sign-in — the credential decides, and a stranger learns nothing | S | done |
+| | [TASK-040515](tasks/TASK-040515-sign-out-is-one-delete-and-two-hundred-and-four-either-way.md) POST /api/auth/sign-out — one delete, 204 either way, and no socket closes | XS | **ready** |
 | | [TASK-040516](tasks/TASK-040516-the-document-names-sign-in-and-sign-out.md) The document names sign-in and sign-out, and the test that reads it keeps its bearings | S | backlog |
 | | [TASK-040517](tasks/TASK-040517-the-socket-is-handed-the-resolver.md) The socket's dependencies carry the resolver | XS | backlog |
 | | [TASK-040518](tasks/TASK-040518-the-socket-presents-the-session-and-an-invalid-one-is-refused.md) The socket presents the session, and an invalid one is refused rather than downgraded | S | backlog |
