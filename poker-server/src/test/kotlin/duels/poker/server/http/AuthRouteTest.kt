@@ -1,7 +1,11 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.AuthSessions
 import duels.poker.server.auth.CreateCredentialResult
 import duels.poker.server.auth.CredentialKind
+import duels.poker.server.auth.Credentials
+import duels.poker.server.auth.PresentedSecret
+import duels.poker.server.auth.SessionToken
 import duels.poker.server.module
 import duels.poker.server.protocol.http.profileResponse
 import duels.poker.server.session.PlayerId
@@ -24,7 +28,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // A well-formed, entirely valid body: a wrong implementation that reached the guard
             // or the write would answer 201/409, not 401 — this 401 can only have come from the
@@ -47,7 +51,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // A header of only whitespace: DeviceId's init rejects a blank value, so without the
             // isNotBlank guard this would throw and answer 500, not 401.
@@ -68,7 +72,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // A malformed body: a wrong implementation that only checked the header's presence
             // before decoding, deferring the profile lookup until after, would answer 400 here —
@@ -93,7 +97,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -114,7 +118,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -135,7 +139,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // An unrecognised field: a client cannot assert an identity even by trying, because
             // SignUpRequest has no playerId field to decode one into.
@@ -158,7 +162,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // The single most important test in the ticket: no device id, and a body that cannot
             // even decode. The wrong implementation this must fail against is one that decodes
@@ -182,7 +186,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // The body decodes fine, but its handle fails signUpFieldsOf's own rule, which would
             // answer 400 once identity is known. A wrong implementation that judged fields before
@@ -206,7 +210,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -225,7 +229,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // Bob_1 changes under the fold, so a handler that skipped folding would fail here even
             // though it would pass with an already-lowercase handle. The player id must be the
@@ -254,7 +258,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials(holds = true)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // holds = true: the guard alone must stop the write. createCalls staying empty proves
             // no Argon2 work was spent (ADR-0030 §1); holdsCalls being non-empty proves the guard
@@ -278,7 +282,7 @@ class AuthRouteTest {
                 RecordingCredentials(createResult = CreateCredentialResult.IdentifierTaken)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // The guard passes (holds = false, the default) but the write itself reports the
             // identifier taken — the same 409 as the case above, reached by a different branch.
@@ -298,7 +302,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // "ab" fails signUpFieldsOf's own rule, after identity and decoding both already
             // succeeded. A refusal that still costs a round trip to either port is a refusal that
@@ -324,7 +328,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -342,7 +346,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -362,7 +366,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -373,5 +377,246 @@ class AuthRouteTest {
             assertEquals(1, credentials.holdsCalls.size)
             assertEquals(PlayerId("p-alice") to CredentialKind.PASSWORD, credentials.holdsCalls[0])
         }
+    }
+
+    @Test
+    fun aCorrectCredentialAnswersTwoHundredAndAToken() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("hunter2222" to PlayerId("p-alice"))))
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            // The exact token the double issued, read back from the double itself rather than
+            // hard-coded here, so a route that echoed some other string could not pass by accident.
+            val issuedToken = sessions.issued.single().second
+            assertEquals("""{"sessionToken":"${issuedToken.value}"}""", response.bodyAsText())
+        }
+    }
+
+    @Test
+    fun theTokenNamesThePlayerTheCredentialNamed() {
+        // Two credentials resolving to two different players, both driven below: a route that
+        // issued for a hard-coded player would still pass a single-credential version of this
+        // test, which is exactly why it drives two.
+        val alicePlayerId = PlayerId("p-alice")
+        val bobPlayerId = PlayerId("p-bob")
+        val credentials = SignInCredentials(
+            mapOf(
+                "alice" to ("alicepassword1" to alicePlayerId),
+                "bob" to ("bobpassword1" to bobPlayerId),
+            ),
+        )
+
+        testApplication {
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"alicepassword1"}""")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals(listOf(alicePlayerId), sessions.issued.map { it.first })
+            assertEquals(alicePlayerId, sessions.playerOf(sessions.issued.single().second))
+        }
+
+        testApplication {
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"bobpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals(listOf(bobPlayerId), sessions.issued.map { it.first })
+            assertEquals(bobPlayerId, sessions.playerOf(sessions.issued.single().second))
+        }
+    }
+
+    @Test
+    fun aWrongPasswordAndAnUnknownHandleAreIndistinguishable() {
+        val credentials = SignInCredentials(mapOf("alice" to ("correctpassword1" to PlayerId("p-alice"))))
+
+        lateinit var wrongPassword: SignInOutcome
+        testApplication {
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), RecordingAuthSessions())
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"wrongpassword1"}""")
+            }
+            wrongPassword = SignInOutcome(response.status, response.bodyAsText(), response.headers.names())
+        }
+
+        lateinit var unknownHandle: SignInOutcome
+        testApplication {
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), RecordingAuthSessions())
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"ghost","password":"whatever1"}""")
+            }
+            unknownHandle = SignInOutcome(response.status, response.bodyAsText(), response.headers.names())
+        }
+
+        // Two separate "is 401" checks would still pass for a route that told the two cases apart
+        // by body or header; comparing the outcomes to each other is what a stranger actually sees.
+        assertEquals(HttpStatusCode.Unauthorized, wrongPassword.status)
+        assertEquals(wrongPassword.status, unknownHandle.status)
+        assertEquals(wrongPassword.body, unknownHandle.body)
+        assertEquals(wrongPassword.headerNames, unknownHandle.headerNames)
+    }
+
+    @Test
+    fun anUnusableHandleAnswersTheSameFourHundredAndOne() {
+        testApplication {
+            val credentials = SignInCredentials(emptyMap())
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), RecordingAuthSessions())
+            }
+            // "!!" fails loginHandleOrNull's own character rule before any credential is consulted.
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"!!","password":"whatever1"}""")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            assertEquals("", response.bodyAsText())
+            assertTrue(credentials.verifyCalls.isEmpty())
+        }
+    }
+
+    @Test
+    fun aMalformedBodyIsFourHundred() {
+        testApplication {
+            val credentials = SignInCredentials(emptyMap())
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), RecordingAuthSessions())
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice"}""")
+            }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertEquals("", response.bodyAsText())
+            assertTrue(credentials.verifyCalls.isEmpty())
+        }
+    }
+
+    @Test
+    fun nothingIsWrittenWhenTheCredentialFails() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("correctpassword1" to PlayerId("p-alice"))))
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"wrongpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            assertTrue(sessions.issued.isEmpty())
+        }
+    }
+
+    @Test
+    fun theResponseNeverEchoesWhatWasSent() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("correctpassword1" to PlayerId("p-alice"))))
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"correctpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+            val body = response.bodyAsText()
+            assertTrue(!body.contains("alice"))
+            assertTrue(!body.contains("correctpassword1"))
+        }
+    }
+}
+
+/**
+ * The fields of a sign-in response worth comparing between two requests: status, body text and
+ * the set of header names — never full header equality, because a header like `Date` is expected
+ * to differ and asserting it would make this test flaky rather than meaningful.
+ */
+private data class SignInOutcome(val status: HttpStatusCode, val body: String, val headerNames: Set<String>)
+
+/**
+ * A credentials double for sign-in: [verify] answers from a fixture of correct identifier/password
+ * pairs, exactly as [duels.poker.server.db.PostgresCredentials.verify] does — a wrong password and
+ * an unknown identifier both answer `null`, indistinguishably, and every call is recorded so a test
+ * can prove [verify] was never reached. [create] and [holdsCredential] are never called by sign-in
+ * and throw if they ever are, the same idiom `RecordingCredentials.verify` used before this ticket
+ * while only sign-up existed.
+ */
+private class SignInCredentials(private val correct: Map<String, Pair<String, PlayerId>>) : Credentials {
+    val verifyCalls: MutableList<String> = mutableListOf()
+
+    override suspend fun verify(kind: CredentialKind, identifier: String, presented: PresentedSecret): PlayerId? {
+        verifyCalls.add(identifier)
+        val (password, playerId) = correct[identifier] ?: return null
+        return if (password == presented.value) playerId else null
+    }
+
+    override suspend fun create(
+        playerId: PlayerId,
+        kind: CredentialKind,
+        identifier: String,
+        secret: PresentedSecret,
+    ): CreateCredentialResult {
+        throw UnsupportedOperationException("sign-in never creates a credential")
+    }
+
+    override suspend fun holdsCredential(playerId: PlayerId, kind: CredentialKind): Boolean {
+        throw UnsupportedOperationException("sign-in never checks holdsCredential")
+    }
+}
+
+/**
+ * An [AuthSessions] double for sign-in: [issue] mints a token from nothing but a call counter —
+ * never from [playerId] itself, so a token this double returns can never accidentally echo a
+ * fixture's handle — and records the call, so a test can assert which player a token names without
+ * comparing against any string this double repeats. [playerOf] answers from that same recording, so
+ * a test can also confirm the token handed back in a response actually resolves to the player who
+ * signed in. [delete] is never called by sign-in and throws if it ever is.
+ */
+private class RecordingAuthSessions : AuthSessions {
+    val issued: MutableList<Pair<PlayerId, SessionToken>> = mutableListOf()
+
+    override suspend fun issue(playerId: PlayerId): SessionToken {
+        val token = SessionToken("issued-session-token-${issued.size}")
+        issued += playerId to token
+        return token
+    }
+
+    override suspend fun playerOf(token: SessionToken): PlayerId? = issued.find { it.second == token }?.first
+
+    override suspend fun delete(token: SessionToken) {
+        throw UnsupportedOperationException("sign-in never deletes a session")
     }
 }

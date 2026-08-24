@@ -1,5 +1,6 @@
 package duels.poker.server
 
+import duels.poker.server.auth.AuthSessions
 import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.config.ServerConfig
@@ -40,6 +41,7 @@ public data class ServerComponents(
     val standings: StandingsReads,
     val wallClock: Clock,
     val identities: IdentityResolver,
+    val sessions: AuthSessions,
 )
 
 /**
@@ -68,7 +70,10 @@ public fun serverComponents(
     val directory = PostgresPlayerDirectory(dataSource)
     val reads = PostgresProfileReads(dataSource)
     val writes = PostgresProfileWrites(dataSource)
-    val identities = IdentityResolver(PostgresAuthSessions(dataSource, wallClock), directory)
+    // The one AuthSessions instance this server runs on: the resolver and the sign-in route must
+    // share it, since two instances would be two stores only by accident of both being stateless.
+    val authSessions = PostgresAuthSessions(dataSource, wallClock)
+    val identities = IdentityResolver(authSessions, directory)
     val deviceIds: DeviceIdSource = RandomDeviceIdSource()
     val sessions = SessionRegistry()
     val connections = ConnectionDirectory()
@@ -101,5 +106,6 @@ public fun serverComponents(
         standings = standings,
         wallClock = wallClock,
         identities = identities,
+        sessions = authSessions,
     )
 }
