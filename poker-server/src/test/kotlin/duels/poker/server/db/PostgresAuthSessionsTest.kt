@@ -1,5 +1,6 @@
 package duels.poker.server.db
 
+import duels.poker.server.auth.SessionToken
 import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
@@ -16,6 +17,7 @@ import javax.sql.DataSource
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 private val FIXED_INSTANT: Instant = Instant.parse("2026-08-20T09:00:00Z")
 private val FIXED_CLOCK: Clock = Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC)
@@ -141,6 +143,71 @@ class PostgresAuthSessionsTest {
                 Duration.between(earlyExpiry, laterExpiry),
                 "a clock read 10 days later must write an expires_at 10 days later",
             )
+        }
+    }
+
+    @Test
+    fun aLiveTokenNamesItsPlayer() {
+        runBlocking {
+            val alice = insertPlayer()
+            val bob = insertPlayer()
+
+            val aliceToken = authSessions.issue(alice)
+            val bobToken = authSessions.issue(bob)
+
+            assertEquals(alice, authSessions.playerOf(aliceToken), "alice's token must resolve to alice")
+            assertEquals(bob, authSessions.playerOf(bobToken), "bob's token must resolve to bob")
+        }
+    }
+
+    @Test
+    fun anUnknownTokenIsNull() {
+        runBlocking {
+            assertNull(authSessions.playerOf(SessionToken("not-a-token")), "a token with no row must answer null")
+        }
+    }
+
+    // The issuing clock is fixed 31 days before the real "now" the database's own now() will
+    // compare against, so the row is already past its expires_at the moment it lands — no test
+    // here sleeps, and no test moves the database's clock.
+    @Test
+    fun anExpiredTokenIsNull() {
+        runBlocking {
+            val playerId = insertPlayer()
+            val expiredSessions = PostgresAuthSessions(dataSource, Clock.fixed(Instant.now().minus(31, DAYS), ZoneOffset.UTC))
+
+            val token = expiredSessions.issue(playerId)
+
+            assertNull(authSessions.playerOf(token), "a session issued 31 days ago must already be expired")
+        }
+    }
+
+    // One hour on the far side of the same 30-day boundary anExpiredTokenIsNull sits inside of:
+    // this proves the predicate above cannot be satisfied by one that refuses every row.
+    @Test
+    fun aTokenIssuedThirtyDaysAgoLessAnHourStillReads() {
+        runBlocking {
+            val playerId = insertPlayer()
+            val almostExpired = Instant.now().minus(Duration.ofDays(30)).plus(Duration.ofHours(1))
+            val almostExpiredSessions = PostgresAuthSessions(dataSource, Clock.fixed(almostExpired, ZoneOffset.UTC))
+
+            val token = almostExpiredSessions.issue(playerId)
+
+            assertEquals(playerId, authSessions.playerOf(token), "a session with an hour left must still read")
+        }
+    }
+
+    @Test
+    fun oneExpiredSessionDoesNotHideALiveOne() {
+        runBlocking {
+            val playerId = insertPlayer()
+            val expiredSessions = PostgresAuthSessions(dataSource, Clock.fixed(Instant.now().minus(31, DAYS), ZoneOffset.UTC))
+
+            val expiredToken = expiredSessions.issue(playerId)
+            val liveToken = authSessions.issue(playerId)
+
+            assertEquals(playerId, authSessions.playerOf(liveToken), "the live session for this player must still resolve")
+            assertNull(authSessions.playerOf(expiredToken), "the expired session for the same player must not resolve")
         }
     }
 
