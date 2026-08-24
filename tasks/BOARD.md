@@ -1847,8 +1847,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040605](tasks/TASK-040605-a-revoked-device-resolves-to-a-new-profile-never-the-one-it-left.md) A revoked device resolves to a new, empty profile — never the one it left | S | done |
 | | [TASK-040606](tasks/TASK-040606-the-session-token-digest-is-one-function-in-one-file.md) The session-token digest is one internal function, in one file | S | done |
 | | [TASK-040607](tasks/TASK-040607-the-device-binding-port-and-the-double-that-counts-its-calls.md) The device-binding port, and the double that counts what it was asked | S | done |
-| | [TASK-040608](tasks/TASK-040608-revoking-is-one-update-and-one-delete-in-one-transaction.md) Revoking is one UPDATE and one DELETE, in one transaction | S | **ready** |
-| | [TASK-040609](tasks/TASK-040609-delete-api-me-device-takes-a-session-or-nothing.md) DELETE /api/me/device takes a session, or it takes nothing | S | backlog |
+| | [TASK-040608](tasks/TASK-040608-revoking-is-one-update-and-one-delete-in-one-transaction.md) Revoking is one UPDATE and one DELETE, in one transaction | S | done |
+| | [TASK-040609](tasks/TASK-040609-delete-api-me-device-takes-a-session-or-nothing.md) DELETE /api/me/device takes a session, or it takes nothing | S | **ready** |
 | | [TASK-040610](tasks/TASK-040610-no-credential-no-revocation.md) No credential, no revocation — and the refusal writes nothing | S | backlog |
 | | [TASK-040611](tasks/TASK-040611-the-composition-root-installs-the-device-route.md) The composition root builds the bindings and installs the device route | XS | backlog |
 | | [TASK-040612](tasks/TASK-040612-the-document-names-the-device-endpoint.md) The document names the device endpoint, and the section markers still chain | S | backlog |

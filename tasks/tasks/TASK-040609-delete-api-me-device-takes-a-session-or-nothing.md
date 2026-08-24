@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040609
 title: DELETE /api/me/device takes a session, or it takes nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S

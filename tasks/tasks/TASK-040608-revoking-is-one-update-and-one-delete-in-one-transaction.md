@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040608
 title: Revoking is one UPDATE and one DELETE, in one transaction
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -115,3 +115,27 @@ Two mutations, each applied to `PostgresDeviceBindings` alone and reverted.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A seventh test shipped, and it belongs here.** The Tests table names six; none of them tests the
+transaction boundary, and the ticket's own Scope admits all six "still passed" under a
+two-transaction bug. The title, the Goal, and `DeviceBindings.revoke`'s KDoc all claim atomicity, and
+`## Out of scope` — which defers three other things to named tickets — never defers it. The test came
+from the dispatch brief rather than the Tests table, which is a widening by the driver; the reviewer
+was asked to judge it independently and found it in scope.
+
+**Why the test needs a wrapper rather than a real SQL failure.** No organic failure is reachable
+through `revoke()`: the finality trigger fires only when `OLD.revoked_at IS NOT NULL`, and the
+`UPDATE`'s own `WHERE revoked_at IS NULL` excludes every row that could raise; `auth_session` carries
+no `CHECK` or trigger at all. So the test wraps `DataSource`/`Connection`/`PreparedStatement` by
+delegation and counts `prepareStatement` calls at the **DataSource** level — call one, the `UPDATE`,
+reaches the real driver and executes; call two, the `DELETE`, throws before `executeUpdate()`.
+`rollback()` and `autoCommit` are not overridden, so they hit the real connection, and the assertions
+read back through a separate unwrapped `DataSource`.
+
+**It is positive-controlled.** Splitting `revoke()` into two auto-committing blocks reddens only this
+test, with `revoked_at` reading a real timestamp instead of `null`. The shipped assertion is
+`assertNull(revokedAt(...))` plus both tokens still resolving — not merely that an exception
+propagated, which any two-statement implementation would also satisfy.
+
