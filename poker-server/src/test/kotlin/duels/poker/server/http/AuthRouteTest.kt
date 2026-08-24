@@ -557,6 +557,121 @@ class AuthRouteTest {
             assertTrue(!body.contains("correctpassword1"))
         }
     }
+
+    @Test
+    fun signingOutAnswersTwoHundredAndFour() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("hunter2222" to PlayerId("p-alice"))))
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            // First sign in to get a token
+            val signInResponse = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.OK, signInResponse.status)
+            val token = sessions.issued.single().second
+
+            // Then sign out with that token
+            val signOutResponse = client.post("/api/auth/sign-out") {
+                header(HttpHeaders.Authorization, "Bearer ${token.value}")
+            }
+            assertEquals(HttpStatusCode.NoContent, signOutResponse.status)
+            assertEquals("", signOutResponse.bodyAsText())
+            // Exactly one delete was recorded, and it names the right token
+            assertEquals(1, sessions.deleted.size)
+            assertEquals(token, sessions.deleted.single())
+        }
+    }
+
+    @Test
+    fun signingOutTwiceAnswersTwoHundredAndFourTwice() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("hunter2222" to PlayerId("p-alice"))))
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            // First sign in to get a token
+            val signInResponse = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.OK, signInResponse.status)
+            val token = sessions.issued.single().second
+
+            // Sign out
+            val signOutResponse1 = client.post("/api/auth/sign-out") {
+                header(HttpHeaders.Authorization, "Bearer ${token.value}")
+            }
+            assertEquals(HttpStatusCode.NoContent, signOutResponse1.status)
+            assertEquals("", signOutResponse1.bodyAsText())
+
+            // Sign out again with the same token (idempotent)
+            val signOutResponse2 = client.post("/api/auth/sign-out") {
+                header(HttpHeaders.Authorization, "Bearer ${token.value}")
+            }
+            assertEquals(HttpStatusCode.NoContent, signOutResponse2.status)
+            assertEquals("", signOutResponse2.bodyAsText())
+
+            // Two deletes were recorded
+            assertEquals(2, sessions.deleted.size)
+            assertEquals(token, sessions.deleted[0])
+            assertEquals(token, sessions.deleted[1])
+        }
+    }
+
+    @Test
+    fun signingOutWithNoHeaderAnswersTwoHundredAndFour() {
+        testApplication {
+            val credentials = SignInCredentials(emptyMap())
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            // Sign out with no Authorization header at all
+            val response = client.post("/api/auth/sign-out")
+            assertEquals(HttpStatusCode.NoContent, response.status)
+            assertEquals("", response.bodyAsText())
+            // No delete was recorded (delete was called zero times)
+            assertEquals(0, sessions.deleted.size)
+        }
+    }
+
+    @Test
+    fun signingOutDeletesOnlyThePresentedToken() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("hunter2222" to PlayerId("p-alice"))))
+            val sessions = RecordingAuthSessions()
+            application {
+                module()
+                authRoutes(FixedProfileReads(emptyMap()), credentials, identitiesFor(emptyMap()), sessions)
+            }
+            // Issue two tokens: first one for alice, second one for alice again
+            sessions.issue(PlayerId("p-alice"))
+            sessions.issue(PlayerId("p-alice"))
+            val firstToken = sessions.issued[0].second
+            val secondToken = sessions.issued[1].second
+
+            // Sign out with the first token
+            val response = client.post("/api/auth/sign-out") {
+                header(HttpHeaders.Authorization, "Bearer ${firstToken.value}")
+            }
+            assertEquals(HttpStatusCode.NoContent, response.status)
+
+            // Exactly one delete was recorded with the first token
+            assertEquals(1, sessions.deleted.size)
+            assertEquals(firstToken, sessions.deleted.single())
+
+            // The second token is still resolvable through the double
+            assertEquals(PlayerId("p-alice"), sessions.playerOf(secondToken))
+        }
+    }
 }
 
 /**
@@ -598,15 +713,17 @@ private class SignInCredentials(private val correct: Map<String, Pair<String, Pl
 }
 
 /**
- * An [AuthSessions] double for sign-in: [issue] mints a token from nothing but a call counter —
- * never from [playerId] itself, so a token this double returns can never accidentally echo a
- * fixture's handle — and records the call, so a test can assert which player a token names without
- * comparing against any string this double repeats. [playerOf] answers from that same recording, so
- * a test can also confirm the token handed back in a response actually resolves to the player who
- * signed in. [delete] is never called by sign-in and throws if it ever is.
+ * An [AuthSessions] double for sign-in and sign-out: [issue] mints a token from nothing but a call
+ * counter — never from [playerId] itself, so a token this double returns can never accidentally
+ * echo a fixture's handle — and records the call, so a test can assert which player a token names
+ * without comparing against any string this double repeats. [playerOf] answers from that same
+ * recording, so a test can also confirm the token handed back in a response actually resolves to
+ * the player who signed in. [delete] records every call, including calls with tokens that were
+ * never issued.
  */
 private class RecordingAuthSessions : AuthSessions {
     val issued: MutableList<Pair<PlayerId, SessionToken>> = mutableListOf()
+    val deleted: MutableList<SessionToken> = mutableListOf()
 
     override suspend fun issue(playerId: PlayerId): SessionToken {
         val token = SessionToken("issued-session-token-${issued.size}")
@@ -617,6 +734,6 @@ private class RecordingAuthSessions : AuthSessions {
     override suspend fun playerOf(token: SessionToken): PlayerId? = issued.find { it.second == token }?.first
 
     override suspend fun delete(token: SessionToken) {
-        throw UnsupportedOperationException("sign-in never deletes a session")
+        deleted += token
     }
 }
