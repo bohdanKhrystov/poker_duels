@@ -1701,8 +1701,8 @@ written and is still true.
 | [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (`ADR-0073` fixed its words) | **in progress** — split into five |
 | | [TASK-031401](tasks/TASK-031401-the-waiting-screen-offers-the-way-back-to-the-lobby.md) The waiting screen offers the way back to the lobby | S | done |
 | | [TASK-031402](tasks/TASK-031402-one-line-says-the-room-stays-open.md) One line says the room stays open | XS | done |
-| | [TASK-031403](tasks/TASK-031403-two-strings-are-the-whole-addition-and-nothing-stands-between-the-press-and-the-lobby.md) Two strings are the whole addition, and nothing stands between the press and the lobby | S | **ready** |
-| | [TASK-031404](tasks/TASK-031404-the-waiting-screen-offers-none-of-the-words-adr-0073-refuses.md) The waiting screen offers none of the words `ADR-0073` refuses | S | backlog |
+| | [TASK-031403](tasks/TASK-031403-two-strings-are-the-whole-addition-and-nothing-stands-between-the-press-and-the-lobby.md) Two strings are the whole addition, and nothing stands between the press and the lobby | S | done |
+| | [TASK-031404](tasks/TASK-031404-the-waiting-screen-offers-none-of-the-words-adr-0073-refuses.md) The waiting screen offers none of the words `ADR-0073` refuses | S | **ready** |
 | | [TASK-031405](tasks/TASK-031405-the-press-leaves-nothing-on-the-wire-and-the-next-socket-rejoins-nothing.md) The press leaves nothing on the wire, and the next socket rejoins nothing | S | backlog |
 
 ---
