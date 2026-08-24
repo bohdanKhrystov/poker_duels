@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040522
 title: The document names sign-up's seventh answer
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: XS
