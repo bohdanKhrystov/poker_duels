@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040514
 title: "POST /api/auth/sign-in: the credential decides, and a stranger learns nothing"
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -112,3 +112,20 @@ test drives two credentials rather than one.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Landing note, from the deep review.** `aWrongPasswordAndAnUnknownHandleAreIndistinguishable`
+compares `headers.names()` — a name set — as this ticket's Tests row specifies, deliberately, to
+avoid `Date`-header flakiness. The reviewer ran the mutation: a header with the **same name and a
+different value** on each 401 branch is **not** detected. The shipped route adds no headers on
+either branch, so the gap is inert today; it becomes live the moment a 401 path gains a header whose
+value could differ between the two failures. Worth an assertion on values if that ever happens.
+
+**The Tests prose and the Files table disagreed.** The prose says the credentials double gains a
+`verify`, but `RecordingCredentials` lives in `AuthRouteDoubles.kt`, which the Files table excludes,
+and both `files_touched: 5` and an acceptance criterion pin exactly five files. The coder declined to
+touch a sixth file and defined `SignInCredentials`, `RecordingAuthSessions` and `SignInOutcome` inside
+`AuthRouteTest.kt` instead. The reviewer confirmed that cost nothing — every capability the seven
+tests need is present. The file table is machine-checked; the prose is not, so the table wins.
+

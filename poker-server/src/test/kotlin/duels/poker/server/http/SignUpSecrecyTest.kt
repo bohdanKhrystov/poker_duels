@@ -133,7 +133,7 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(HttpHeaders.ContentType, "application/json")
@@ -147,7 +147,7 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // SignUpRequest has no playerId field, so this fails to decode — the same mechanism
             // AuthRouteTest.aBodyCarryingAPlayerIdIsFourHundred proves — while still carrying both
@@ -167,7 +167,7 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // "ab" fails signUpFieldsOf's own rule (proven by
             // AuthRouteTest.aRefusedHandleReachesNeitherPortFunction). Bob_1 is proven valid
@@ -186,7 +186,7 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             // One code point under the floor (proven by
             // AuthRouteTest.aPasswordOutsideTheBoundsReachesNeitherPortFunction). hunter2222 is
@@ -206,7 +206,7 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials(holds = true)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -221,7 +221,7 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials(createResult = CreateCredentialResult.IdentifierTaken)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -236,7 +236,7 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles))
+                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
