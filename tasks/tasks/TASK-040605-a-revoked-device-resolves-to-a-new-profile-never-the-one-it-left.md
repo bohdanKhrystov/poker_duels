@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040605
 title: A revoked device resolves to a new, empty profile — never the one it left
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S

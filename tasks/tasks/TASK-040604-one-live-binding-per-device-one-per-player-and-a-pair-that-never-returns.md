@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040604
 title: One live binding per device, one per player, and a pair that never comes back
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -109,3 +109,19 @@ of the migration when the ticket is pushed.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The two indexes are independently gated, and the fixtures are why.** The device test uses one
+device with *two different players*; the player test uses one player with *two different devices*.
+Share both columns and either index catches the violation, so neither is separately proven. Dropping
+the `UNIQUE` from one index reddens exactly its own test and never the other — checked in both
+directions, beyond what the Proof asked for.
+
+**Why the Proof hedged, and what the answer is.** It said dropping `WHERE revoked_at IS NULL` from
+`device_binding_live_device` *may* also redden `theSamePairNeverBindsAgain`. It did not. The reason
+is that the mutation violates **both** that index and the primary key, and PostgreSQL's order of
+constraint checking is unspecified — so which one raises is arbitrary. The ticket's criterion is
+which *object* each test names, not how many tests a mutation reddens, so the observation is
+consistent rather than a gap.
+
