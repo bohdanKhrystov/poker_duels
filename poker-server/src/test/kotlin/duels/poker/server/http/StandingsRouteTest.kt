@@ -55,12 +55,12 @@ private class RecordingStandingsReads(
 /**
  * A [ProfileReads] double that records every `profileOf` call and answers from a fixed map.
  */
-private class RecordingProfileReads(private val profiles: Map<String, duels.poker.server.protocol.http.ProfileResponse> = emptyMap()) : ProfileReads {
+private class RecordingProfileReads(val profiles: Map<String, duels.poker.server.protocol.http.ProfileResponse> = emptyMap()) : ProfileReads {
     val profileOfCalls: MutableList<String> = mutableListOf()
 
-    override suspend fun profileOf(deviceId: duels.poker.server.session.DeviceId): duels.poker.server.protocol.http.ProfileResponse? {
-        profileOfCalls.add(deviceId.value)
-        return profiles[deviceId.value]
+    override suspend fun profileOf(playerId: PlayerId): duels.poker.server.protocol.http.ProfileResponse? {
+        profileOfCalls.add(playerId.value)
+        return profiles.values.find { it.playerId == playerId.value }
     }
 
     override suspend fun recentDuelsOf(
@@ -80,7 +80,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads()
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
         val response = client.get("/api/standings")
         assertEquals(HttpStatusCode.OK, response.status)
@@ -93,7 +93,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads()
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
         val response = client.get("/api/standings?limit=5")
         assertEquals(HttpStatusCode.OK, response.status)
@@ -108,7 +108,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads()
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
         // cursorAsOf sits inside August 2026 — CLOCK's own season — but earlier than CLOCK's own
         // instant, so a route that re-read the clock instead of the cursor is caught right here.
@@ -131,7 +131,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads(listOf(row1, row2, row3, row4))
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
         val response = client.get("/api/standings?limit=3")
         assertEquals(HttpStatusCode.OK, response.status)
@@ -160,7 +160,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads(listOf(row1, row2, row3))
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
         val response = client.get("/api/standings?limit=3")
         assertEquals(HttpStatusCode.OK, response.status)
@@ -177,7 +177,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads(emptyList())
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
         val response = client.get("/api/standings?limit=3")
         // Should be 200, not 404
@@ -233,7 +233,7 @@ class StandingsRouteTest {
 
         application {
             module()
-            standingsRoutes(profileReads, standings, CLOCK)
+            standingsRoutes(profileReads, standings, CLOCK, identitiesFor(profileReads.profiles))
         }
 
         // Test 1: No X-Device-Id header
@@ -281,7 +281,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads()
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
 
         // Test limit=0
@@ -308,7 +308,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads()
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
 
         val response = client.get("/api/standings?limit=999")
@@ -323,7 +323,7 @@ class StandingsRouteTest {
         val standings = RecordingStandingsReads()
         application {
             module()
-            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK)
+            standingsRoutes(FixedProfileReads(emptyMap()), standings, CLOCK, identitiesFor(emptyMap()))
         }
 
         // Test after=not-a-cursor
@@ -357,7 +357,7 @@ class StandingsRouteTest {
             val augustClock = Clock.fixed(Instant.parse("2026-08-20T09:00:00Z"), ZoneOffset.UTC)
             application {
                 module()
-                standingsRoutes(FixedProfileReads(emptyMap()), augustStandings, augustClock)
+                standingsRoutes(FixedProfileReads(emptyMap()), augustStandings, augustClock, identitiesFor(emptyMap()))
             }
             val augustUnderAugustResponse = client.get("/api/standings?after=$augustCursorString")
             assertEquals(HttpStatusCode.OK, augustUnderAugustResponse.status)
@@ -370,7 +370,7 @@ class StandingsRouteTest {
             val septemberClock = Clock.fixed(Instant.parse("2026-09-01T00:00:01Z"), ZoneOffset.UTC)
             application {
                 module()
-                standingsRoutes(FixedProfileReads(emptyMap()), septemberStandings, septemberClock)
+                standingsRoutes(FixedProfileReads(emptyMap()), septemberStandings, septemberClock, identitiesFor(emptyMap()))
             }
             val augustUnderSeptemberResponse = client.get("/api/standings?after=$augustCursorString")
             assertEquals(HttpStatusCode.BadRequest, augustUnderSeptemberResponse.status)
@@ -384,7 +384,7 @@ class StandingsRouteTest {
             val augustClock2 = Clock.fixed(Instant.parse("2026-08-20T09:00:00Z"), ZoneOffset.UTC)
             application {
                 module()
-                standingsRoutes(FixedProfileReads(emptyMap()), augustStandings2, augustClock2)
+                standingsRoutes(FixedProfileReads(emptyMap()), augustStandings2, augustClock2, identitiesFor(emptyMap()))
             }
             val septemberUnderAugustResponse = client.get("/api/standings?after=$septemberCursorString")
             assertEquals(HttpStatusCode.BadRequest, septemberUnderAugustResponse.status)
@@ -398,7 +398,7 @@ class StandingsRouteTest {
             val septemberClock2 = Clock.fixed(Instant.parse("2026-09-01T00:00:01Z"), ZoneOffset.UTC)
             application {
                 module()
-                standingsRoutes(FixedProfileReads(emptyMap()), septemberStandings2, septemberClock2)
+                standingsRoutes(FixedProfileReads(emptyMap()), septemberStandings2, septemberClock2, identitiesFor(emptyMap()))
             }
             val septemberUnderSeptemberResponse = client.get("/api/standings?after=$septemberCursorString")
             assertEquals(HttpStatusCode.OK, septemberUnderSeptemberResponse.status)

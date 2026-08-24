@@ -4,7 +4,6 @@ import duels.poker.server.auth.CreateCredentialResult
 import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.PresentedSecret
 import duels.poker.server.protocol.http.profileResponse
-import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -181,35 +180,35 @@ class AuthRouteDoublesTest {
     }
 
     @Test
-    fun theReadsDoubleAnswersOnlyForDeviceIdsItWasGiven() {
+    fun theReadsDoubleAnswersOnlyForPlayerIdsItWasGiven() {
         val aliceProfile = profileResponse("p-alice", 100)
         val reads = FixedProfileReads(mapOf("alice" to aliceProfile))
 
         val aliceResult = runBlocking {
-            reads.profileOf(DeviceId("alice"))
+            reads.profileOf(PlayerId("p-alice"))
         }
 
         val malloryResult = runBlocking {
-            reads.profileOf(DeviceId("mallory"))
+            reads.profileOf(PlayerId("p-mallory"))
         }
 
         assertEquals(aliceProfile, aliceResult)
         assertEquals(null, malloryResult)
-        assertEquals(listOf("alice", "mallory"), reads.queried)
+        assertEquals(listOf("p-alice", "p-mallory"), reads.queried)
     }
 
     @Test
-    fun theReadsDoubleRecordsAllQueriedDeviceIds() {
+    fun theReadsDoubleRecordsAllQueriedPlayerIds() {
         val reads = FixedProfileReads(emptyMap())
 
         runBlocking {
-            reads.profileOf(DeviceId("device1"))
-            reads.profileOf(DeviceId("device2"))
-            reads.profileOf(DeviceId("device3"))
+            reads.profileOf(PlayerId("player-1"))
+            reads.profileOf(PlayerId("player-2"))
+            reads.profileOf(PlayerId("player-3"))
         }
 
         assertEquals(3, reads.queried.size)
-        assertEquals(listOf("device1", "device2", "device3"), reads.queried)
+        assertEquals(listOf("player-1", "player-2", "player-3"), reads.queried)
     }
 
     @Test

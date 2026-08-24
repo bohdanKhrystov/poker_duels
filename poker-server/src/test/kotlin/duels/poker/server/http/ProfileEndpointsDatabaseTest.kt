@@ -75,7 +75,7 @@ class ProfileEndpointsDatabaseTest {
     fun aDuelThatJustFinishedAppearsInTheList() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
         }
 
         val response = client.get("/api/me/duels") {
@@ -101,7 +101,7 @@ class ProfileEndpointsDatabaseTest {
     fun theLosersBalanceComesBackOverTheWireAsMinusOne() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
         }
 
         val response = client.get("/api/me") {
@@ -119,7 +119,7 @@ class ProfileEndpointsDatabaseTest {
     fun anUnknownDeviceIsRefusedAndCreatesNoProfile() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
         }
 
         val countBefore = playerRowCount()
@@ -148,7 +148,7 @@ class ProfileEndpointsDatabaseTest {
     fun aNameSetOverHttpIsReadBackOnTheProfile() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
         }
 
         // PUT a name for alice
@@ -176,7 +176,7 @@ class ProfileEndpointsDatabaseTest {
     fun theStoredNameIsTheCanonicalOne() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
         }
 
         // Create a decomposed version of "Élodie" with surrounding spaces
@@ -209,7 +209,7 @@ class ProfileEndpointsDatabaseTest {
     fun aSecondDeviceCannotTakeTheSameName() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
         }
 
         // Alice sets her name
@@ -246,7 +246,7 @@ class ProfileEndpointsDatabaseTest {
     fun aSecondNameForTheSameProfileIsForbidden() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource))
+            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
         }
 
         // Alice sets her name

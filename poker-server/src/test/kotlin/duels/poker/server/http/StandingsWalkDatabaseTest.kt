@@ -100,7 +100,7 @@ class StandingsWalkDatabaseTest {
         testApplication {
             application {
                 module()
-                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), WALK_CLOCK)
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), WALK_CLOCK, identitiesFor(dataSource))
             }
 
             val pages = walkAllPages(client, PAGE_LIMIT)
@@ -128,7 +128,7 @@ class StandingsWalkDatabaseTest {
         testApplication {
             application {
                 module()
-                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), WALK_CLOCK)
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), WALK_CLOCK, identitiesFor(dataSource))
             }
 
             val pages = walkAllPages(client, PAGE_LIMIT)
@@ -164,6 +164,7 @@ class StandingsWalkDatabaseTest {
                     PostgresProfileReads(fixture.dataSource),
                     PostgresStandingsReads(fixture.dataSource),
                     WALK_CLOCK,
+                    identitiesFor(fixture.dataSource),
                 )
             }
 
@@ -215,6 +216,7 @@ class StandingsWalkDatabaseTest {
                     PostgresProfileReads(fixture.dataSource),
                     PostgresStandingsReads(fixture.dataSource),
                     WALK_CLOCK,
+                    identitiesFor(fixture.dataSource),
                 )
             }
 
@@ -260,6 +262,7 @@ class StandingsWalkDatabaseTest {
                     PostgresProfileReads(fixture.dataSource),
                     PostgresStandingsReads(fixture.dataSource),
                     WALK_CLOCK,
+                    identitiesFor(fixture.dataSource),
                 )
             }
 
@@ -312,6 +315,7 @@ class StandingsWalkDatabaseTest {
                     PostgresProfileReads(fixture.dataSource),
                     PostgresStandingsReads(fixture.dataSource),
                     WALK_CLOCK,
+                    identitiesFor(fixture.dataSource),
                 )
             }
 

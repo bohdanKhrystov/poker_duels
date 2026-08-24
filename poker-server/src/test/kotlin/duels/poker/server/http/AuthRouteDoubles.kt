@@ -6,7 +6,6 @@ import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.PresentedSecret
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
-import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 
 /**
@@ -55,19 +54,22 @@ internal class RecordingCredentials(
 }
 
 /**
- * A profile reads double that returns profiles from a fixed map and records every device id
+ * A profile reads double that returns profiles from a fixed map and records every player id
  * it is asked about.
  *
- * Returns `null` for unknown device ids and an empty list for any player's duels.
+ * The map itself stays keyed by device id — the fixture every call site already writes — and
+ * this double looks a query up by each entry's own `playerId` instead, so [identitiesFor] can
+ * build a matching [duels.poker.server.session.PlayerDirectory] from the identical [profiles].
+ * Returns `null` for unknown player ids and an empty list for any player's duels.
  */
 internal class FixedProfileReads(
-    private val profiles: Map<String, ProfileResponse>,
+    val profiles: Map<String, ProfileResponse>,
 ) : ProfileReads {
     val queried: MutableList<String> = mutableListOf()
 
-    override suspend fun profileOf(deviceId: DeviceId): ProfileResponse? {
-        queried.add(deviceId.value)
-        return profiles[deviceId.value]
+    override suspend fun profileOf(playerId: PlayerId): ProfileResponse? {
+        queried.add(playerId.value)
+        return profiles.values.find { it.playerId == playerId.value }
     }
 
     override suspend fun recentDuelsOf(

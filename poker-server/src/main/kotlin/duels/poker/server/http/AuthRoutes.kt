@@ -3,6 +3,7 @@ package duels.poker.server.http
 import duels.poker.server.auth.CreateCredentialResult
 import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.Credentials
+import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.auth.PresentedSecret
 import duels.poker.server.protocol.http.SignUpRequest
 import duels.poker.server.session.PlayerId
@@ -17,10 +18,10 @@ import kotlinx.coroutines.CancellationException
 
 /**
  * Installs `POST /api/auth/sign-up`, which attaches a password credential to the calling
- * device's profile: identity, then decode, then field rules, then the guard, then the write.
+ * identity's profile: identity, then decode, then field rules, then the guard, then the write.
  *
  * Identity is resolved first, **before the body is even read**, exactly as `PUT /api/me/name`
- * resolves it: an absent, blank or unknown device id answers `401` with an empty body, and
+ * resolves it through [identities]: an unresolved caller answers `401` with an empty body, and
  * neither [Credentials] method is called. Answering `409` or `422` before identity is confirmed
  * would let an anonymous caller learn whether a handle is taken. Only then is the body decoded as
  * [SignUpRequest] — every decode failure is `400`, the cause never changing the answer — and only
@@ -34,15 +35,16 @@ import kotlinx.coroutines.CancellationException
  * is always `profile.playerId`, the identity the server resolved; [SignUpRequest] has no field to
  * carry one, so a client can never assert who it is (`ADR-0002`).
  *
- * @param reads The port for resolving the calling device's profile.
+ * @param reads The port for resolving the calling identity's profile.
  * @param credentials The port for checking and creating password credentials.
+ * @param identities The port that resolves a session token or a device id into a player.
  */
-public fun Application.authRoutes(reads: ProfileReads, credentials: Credentials) {
+public fun Application.authRoutes(reads: ProfileReads, credentials: Credentials, identities: IdentityResolver) {
     routing {
         post("/api/auth/sign-up") {
-            // Identity first: an unauthenticated caller is refused before the body is read, so a
+            // Identity first: an unresolved caller is refused before the body is read, so a
             // stranger never reaches the 409/422 that would tell them whether a handle is taken.
-            val profile = call.deviceIdOrNull()?.let { reads.profileOf(it) }
+            val profile = call.resolvedPlayerOrNull(identities)?.let { reads.profileOf(it) }
             if (profile == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@post

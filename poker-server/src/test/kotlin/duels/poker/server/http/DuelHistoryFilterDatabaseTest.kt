@@ -83,7 +83,7 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource))
+                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
             }
 
             val wonPage = fetchDuels(client, outcome = "WON")
@@ -100,7 +100,7 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource))
+                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
             }
 
             // Lower-cased term against the stored "Halvardsen": proves the case fold, the
@@ -117,7 +117,7 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource))
+                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
             }
 
             val both = fetchDuels(client, outcome = "WON", opponent = "Halvardsen")
@@ -144,7 +144,7 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource))
+                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
             }
 
             val page = fetchDuels(client, opponent = "Sigrid")
@@ -159,7 +159,7 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource))
+                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
             }
 
             val response =

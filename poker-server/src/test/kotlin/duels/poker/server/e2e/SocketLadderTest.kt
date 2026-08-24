@@ -198,10 +198,12 @@ internal class SocketLadderTest {
             val duel = client.openSocketDuel()
 
             // Get the profiles of both players for comparison
-            val hostPlayerId = PostgresProfileReads(dataSource).profileOf(DeviceId(HOST_DEVICE))
+            val hostPlayer = PostgresPlayerDirectory(dataSource).resolve(DeviceId(HOST_DEVICE))
+            val guestPlayer = PostgresPlayerDirectory(dataSource).resolve(DeviceId(GUEST_DEVICE))
+            val hostPlayerId = PostgresProfileReads(dataSource).profileOf(hostPlayer.id)
                 ?.playerId
                 ?: error("Host profile not found")
-            val guestPlayerId = PostgresProfileReads(dataSource).profileOf(DeviceId(GUEST_DEVICE))
+            val guestPlayerId = PostgresProfileReads(dataSource).profileOf(guestPlayer.id)
                 ?.playerId
                 ?: error("Guest profile not found")
 

@@ -2,7 +2,6 @@ package duels.poker.server.http
 
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
-import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 
 /**
@@ -11,18 +10,22 @@ import duels.poker.server.session.PlayerId
  * This port exists so the routes can be tested without a database, and so no route ever holds
  * a `DataSource` (`ADR-0011`). It returns the response type rather than a parallel domain type
  * because the answer's shape *is* the wire's shape; a second identical type would be a copy nobody
- * reads. **Nothing on this port creates anything** — an unknown device is `null`, and profile
+ * reads. **Nothing on this port creates anything** — an unknown player is `null`, and profile
  * creation happens on the socket handshake only (`ADR-0012`), so a crawler cannot mint rows.
+ *
+ * Both functions are keyed by [PlayerId], and neither gains a device-keyed overload, now or later
+ * (`ADR-0030` §4): a caller resolves identity — session token or device id — into a player through
+ * `IdentityResolver` first, and only the resolved player ever reaches this port.
  */
 public interface ProfileReads {
     /**
-     * Read a device's profile and balance.
+     * Read a player's profile and balance.
      *
-     * @param deviceId The device identifier to look up.
-     * @return A profile response if the device is known, `null` otherwise. Does not create
-     *   anything on an unknown device.
+     * @param playerId The player identifier to look up.
+     * @return A profile response if the player is known, `null` otherwise. Does not create
+     *   anything on an unknown player.
      */
-    public suspend fun profileOf(deviceId: DeviceId): ProfileResponse?
+    public suspend fun profileOf(playerId: PlayerId): ProfileResponse?
 
     /**
      * Read a player's most recent completed duels, newest first.
