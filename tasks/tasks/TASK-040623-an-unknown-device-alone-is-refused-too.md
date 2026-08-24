@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040623
 title: An unknown device, alone, is refused too
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: XS
@@ -87,3 +87,22 @@ which is the whole reason it exists.
 **Run it.** Ten `## Proof` sections in this run were wrong or incomplete when actually executed,
 including one in `TASK-040609` itself, whose prediction of a clean `204` was actually an
 `IllegalStateException` reddening two tests rather than one.
+
+## Notes
+
+**The near miss is why this ticket exists.** `aValidTokenBesideAnUnknownDeviceStillRevokes` presents
+an unresolvable device id — but pairs it with a **valid token**, so `IdentityResolver.resolve` returns
+on the token branch before the device is looked up. The fixture reads as covering `UnknownDevice` and
+structurally cannot. Reaching that branch needs both halves at once: no token **and** an absent
+device.
+
+**The coder's mutation and the ticket's were not the same, and the reviewer ran the ticket's.**
+Returning a `PlayerId` from the `UnknownDevice` arm hits `checkNotNull(token)` and throws, so the test
+reddened via an exception. The ticket specifies answering `204` — a route quietly succeeding for a
+device nobody knows — which is the defect that matters. Applied, it fails the new test on the status
+assertion with all nine others green. The gate is sound; the substitute was a different route to the
+same red.
+
+**`revokeCalls.isEmpty()` is the assertion that carries it.** A route revoking for an unknown device
+would be revoking for a player that does not exist, and a status-only check would not see it.
+
