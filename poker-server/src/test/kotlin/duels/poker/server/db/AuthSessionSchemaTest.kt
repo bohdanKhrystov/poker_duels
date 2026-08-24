@@ -24,7 +24,7 @@ class AuthSessionSchemaTest {
 
     @Test
     fun aSecondRowWithTheSameTokenHashIsRefused() {
-        val playerId = insertPlayer("device-${UUID.randomUUID()}")
+        val playerId = insertPlayer()
         val tokenHash = byteArrayOf(0x01, 0x02, 0x03, 0x04)
         val issuedAt = Instant.now()
         val expiresAt = issuedAt.plusSeconds(3600)
@@ -44,7 +44,7 @@ class AuthSessionSchemaTest {
 
     @Test
     fun twoRowsWithDifferentTokenHashesForOnePlayerAreAccepted() {
-        val playerId = insertPlayer("device-${UUID.randomUUID()}")
+        val playerId = insertPlayer()
         val tokenHash1 = byteArrayOf(0x01, 0x02, 0x03, 0x04)
         val tokenHash2 = byteArrayOf(0x05, 0x06, 0x07, 0x08)
         val issuedAt = Instant.now()
@@ -111,7 +111,7 @@ class AuthSessionSchemaTest {
 
     @Test
     fun deletingAPlayerThatHoldsAnAuthSessionIsRefused() {
-        val playerId = insertPlayer("device-${UUID.randomUUID()}")
+        val playerId = insertPlayer()
         val tokenHash = byteArrayOf(0x01, 0x02, 0x03, 0x04)
         val issuedAt = Instant.now()
         val expiresAt = issuedAt.plusSeconds(3600)
@@ -172,15 +172,14 @@ class AuthSessionSchemaTest {
         }
     }
 
-    private fun insertPlayer(deviceId: String): UUID {
+    private fun insertPlayer(): UUID {
         val playerId = UUID.randomUUID()
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO player (id, device_id, coin_balance) VALUES (?, ?, ?)",
+                "INSERT INTO player (id, coin_balance) VALUES (?, ?)",
             ).use { statement ->
                 statement.setObject(1, playerId)
-                statement.setString(2, deviceId)
-                statement.setInt(3, 100)
+                statement.setInt(2, 100)
                 statement.executeUpdate()
             }
         }

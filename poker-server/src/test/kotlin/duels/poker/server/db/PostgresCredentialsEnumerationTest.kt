@@ -122,11 +122,10 @@ class PostgresCredentialsEnumerationTest {
         val id = UUID.randomUUID()
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO player (id, device_id, coin_balance) VALUES (?, ?, ?)",
+                "INSERT INTO player (id, coin_balance) VALUES (?, ?)",
             ).use { statement ->
                 statement.setObject(1, id)
-                statement.setString(2, "device-$id")
-                statement.setInt(3, 100)
+                statement.setInt(2, 100)
                 statement.executeUpdate()
             }
         }

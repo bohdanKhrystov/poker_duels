@@ -80,6 +80,7 @@ class PostgresPlayerDirectoryTest {
         }.awaitAll()
 
         assertEquals(1, playerRowCount())
+        assertEquals(1, deviceBindingRowCount())
         val firstPlayerId = players.first().id
         players.forEach { player ->
             assertEquals(firstPlayerId, player.id)
@@ -133,9 +134,22 @@ class PostgresPlayerDirectoryTest {
         }
     }
 
+    private fun deviceBindingRowCount(): Int {
+        return dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT COUNT(*) FROM device_binding").use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    resultSet.getInt(1)
+                }
+            }
+        }
+    }
+
     private fun deviceRowDeviceId(playerId: UUID): String {
         return dataSource.connection.use { connection ->
-            connection.prepareStatement("SELECT device_id FROM player WHERE id = ?").use { statement ->
+            connection.prepareStatement(
+                "SELECT device_id FROM device_binding WHERE player_id = ? AND revoked_at IS NULL",
+            ).use { statement ->
                 statement.setObject(1, playerId)
                 statement.executeQuery().use { resultSet ->
                     resultSet.next()
@@ -147,7 +161,9 @@ class PostgresPlayerDirectoryTest {
 
     private fun deviceRowUuid(deviceId: String): UUID {
         return dataSource.connection.use { connection ->
-            connection.prepareStatement("SELECT id FROM player WHERE device_id = ?").use { statement ->
+            connection.prepareStatement(
+                "SELECT player_id FROM device_binding WHERE device_id = ? AND revoked_at IS NULL",
+            ).use { statement ->
                 statement.setString(1, deviceId)
                 statement.executeQuery().use { resultSet ->
                     resultSet.next()

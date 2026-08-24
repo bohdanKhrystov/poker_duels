@@ -21,7 +21,7 @@ class CoinBalanceIsSignedTest {
 
     @Test
     fun aBalanceOfMinusOneRoundTripsThroughTheDatabase() {
-        val playerId = insertPlayer("device-1", -1)
+        val playerId = insertPlayer(-1)
 
         val readBalance = readPlayerCoinBalance(playerId)
 
@@ -30,7 +30,7 @@ class CoinBalanceIsSignedTest {
 
     @Test
     fun aCoinDeltaOfMinusOneRoundTripsThroughTheDatabase() {
-        val playerId = insertPlayer("device-2", 0)
+        val playerId = insertPlayer(0)
         val duelId = insertDuel()
 
         insertDuelResult(duelId, playerId, -1)
@@ -42,7 +42,7 @@ class CoinBalanceIsSignedTest {
 
     @Test
     fun theBalanceIsNotFlooredAtZero() {
-        val playerId = insertPlayer("device-3", 0)
+        val playerId = insertPlayer(0)
 
         updatePlayerCoinBalance(playerId, -10)
 
@@ -51,15 +51,14 @@ class CoinBalanceIsSignedTest {
         assertEquals(-10, readBalance)
     }
 
-    private fun insertPlayer(deviceId: String, coinBalance: Int): UUID {
+    private fun insertPlayer(coinBalance: Int): UUID {
         val playerId = UUID.randomUUID()
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO player (id, device_id, coin_balance) VALUES (?, ?, ?)",
+                "INSERT INTO player (id, coin_balance) VALUES (?, ?)",
             ).use { statement ->
                 statement.setObject(1, playerId)
-                statement.setString(2, deviceId)
-                statement.setInt(3, coinBalance)
+                statement.setInt(2, coinBalance)
                 statement.executeUpdate()
             }
         }

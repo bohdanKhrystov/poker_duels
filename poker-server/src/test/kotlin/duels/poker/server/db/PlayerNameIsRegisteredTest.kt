@@ -73,13 +73,11 @@ class PlayerNameIsRegisteredTest {
 
     private fun insertPlayerWithoutName(): UUID {
         val playerId = UUID.randomUUID()
-        val deviceId = "device-${UUID.randomUUID()}"
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO player (id, device_id, coin_balance) VALUES (?, ?, 0)",
+                "INSERT INTO player (id, coin_balance) VALUES (?, 0)",
             ).use { statement ->
                 statement.setObject(1, playerId)
-                statement.setString(2, deviceId)
                 statement.executeUpdate()
             }
         }

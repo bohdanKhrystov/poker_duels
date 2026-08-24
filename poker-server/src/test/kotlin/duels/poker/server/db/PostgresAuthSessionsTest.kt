@@ -270,7 +270,6 @@ class PostgresAuthSessionsTest {
 
             val playerAfter = playerRow(playerId)
             assertEquals(playerBefore.id, playerAfter.id, "player id must be unchanged")
-            assertEquals(playerBefore.deviceId, playerAfter.deviceId, "device_id must be unchanged")
             assertEquals(playerBefore.coinBalance, playerAfter.coinBalance, "coin_balance must be unchanged")
             assertEquals(playerBefore.displayName, playerAfter.displayName, "display_name must be unchanged")
         }
@@ -280,11 +279,10 @@ class PostgresAuthSessionsTest {
         val id = UUID.randomUUID()
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO player (id, device_id, coin_balance) VALUES (?, ?, ?)",
+                "INSERT INTO player (id, coin_balance) VALUES (?, ?)",
             ).use { statement ->
                 statement.setObject(1, id)
-                statement.setString(2, "device-$id")
-                statement.setInt(3, 100)
+                statement.setInt(2, 100)
                 statement.executeUpdate()
             }
         }
@@ -341,14 +339,13 @@ class PostgresAuthSessionsTest {
     private fun playerRow(playerId: PlayerId): PlayerRecord =
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "SELECT id, device_id, coin_balance, display_name FROM player WHERE id = ?",
+                "SELECT id, coin_balance, display_name FROM player WHERE id = ?",
             ).use { statement ->
                 statement.setObject(1, UUID.fromString(playerId.value))
                 statement.executeQuery().use { rows ->
                     check(rows.next()) { "no player row for id ${playerId.value}" }
                     PlayerRecord(
                         id = rows.getString("id"),
-                        deviceId = rows.getString("device_id"),
                         coinBalance = rows.getInt("coin_balance"),
                         displayName = rows.getString("display_name"),
                     )
@@ -368,7 +365,6 @@ class PostgresAuthSessionsTest {
 
     private class PlayerRecord(
         val id: String,
-        val deviceId: String,
         val coinBalance: Int,
         val displayName: String?,
     )
