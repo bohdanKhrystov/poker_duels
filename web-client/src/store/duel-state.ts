@@ -1,4 +1,5 @@
 import type {
+  ActedForAbsent,
   DuelOutcome,
   GameEvent,
   LegalActions,
@@ -61,6 +62,15 @@ export interface DuelState {
    * way this copy can state a falsehood.
    */
   readonly rivalReturned: boolean;
+  /**
+   * The most recent action the server took for an absent seat, or `null` if it has taken
+   * none — or if the absence that produced it has ended. The whole frame, kept rather than
+   * picked apart: `(handNumber, actionSequence)` identifies the decision point uniquely, so a
+   * screen that ever wants to attach the mark to an event can do it by coordinate rather than
+   * by the order the frames arrived in (`ADR-0028` §4). `ADR-0046` §4 asks for the most recent
+   * one and no log; `ADR-0075` fixes how long it lives.
+   */
+  readonly serverAction: ActedForAbsent | null;
 }
 
 export interface PendingTurn {
@@ -85,6 +95,7 @@ export function initialState(): DuelState {
     graceRemainingMillis: null,
     presenceCount: 0,
     rivalReturned: false,
+    serverAction: null,
   };
 }
 
@@ -152,6 +163,10 @@ export function applyServerMessage(
         rejection: null,
         refusal: null,
         rematchOffers: [],
+        // ADR-0075 §2: a boundary guard, not a statement about absence. At DuelFinished the mark
+        // renders nowhere either way; this is what stops one surviving into a rematch, since a
+        // Snapshot clears `outcome` and brings the table back (ADR-0044 §4).
+        serverAction: null,
       };
     case "Failure":
       // ADR-0044 §6 documents REMATCH_UNAVAILABLE as transient: nothing was recorded and the
@@ -175,7 +190,15 @@ export function applyServerMessage(
         rivalReturned:
           message.presence === "PRESENT" &&
           (state.rivalPresence === "AWAY" || state.rivalPresence === "ABSENT"),
+        // ADR-0075 §2: the mark lives as long as the absence that produced it. Cleared on the
+        // frame, not on a transition — unlike `rivalReturned`, this needs no memory of what the
+        // client held before, because it is about whether the server is still acting for that
+        // seat and not about whether a return happened.
+        serverAction:
+          message.presence === "PRESENT" ? null : state.serverAction,
       };
+    case "ActedForAbsent":
+      return { ...state, serverAction: message };
     default:
       return state;
   }

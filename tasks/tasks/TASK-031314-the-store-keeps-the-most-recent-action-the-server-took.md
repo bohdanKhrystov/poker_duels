@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031314
 title: The store keeps the most recent action the server took, until the absence ends
 type: task
-status: ready
+status: done
 parent: STORY-0313
 module: web-client
 estimate: S
@@ -154,8 +154,14 @@ Eight tests. Six hundred and twenty-three exist after `TASK-031313`, so the suit
 
 **Name the edit that makes each assertion red:**
 
-1. Store `{ ...state, serverAction: { ...state.serverAction, ...message } }` — merge rather than
-   replace → `a later mark replaces an earlier one` fails on the fields the first frame kept.
+1. ~~Store `{ ...state, serverAction: { ...state.serverAction, ...message } }` — merge rather than
+   replace → `a later mark replaces an earlier one` fails on the fields the first frame kept.~~
+   **This is not a mutation.** `ActedForAbsent` has no optional fields — `type`, `seat`,
+   `handNumber`, `actionSequence` and `action` are all required — so spreading a complete `message`
+   last over a complete prior frame overwrites every key, and the result is structurally identical
+   to a replace. No assertion over this wire shape could distinguish the two. Run, confirmed green;
+   the reviewer confirmed the field list independently. A merge in the **other** order
+   (`{ ...message, ...state.serverAction }`, old wins) is a real mutation and does fail the test.
    Revert.
 2. Guard the case with `if (state.serverAction !== null) return state;` — keep the first mark rather
    than the most recent → `a later mark replaces an earlier one` fails with the first frame against

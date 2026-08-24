@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031315
 title: The duel screen names the server as the actor
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: S
