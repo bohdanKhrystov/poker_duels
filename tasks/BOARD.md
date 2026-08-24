@@ -1843,8 +1843,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040601](tasks/TASK-040601-the-device-binding-is-a-row-and-player-loses-the-column.md) The device binding becomes a row of its own, and player loses its column | S | done |
 | | [TASK-040602](tasks/TASK-040602-the-profile-says-whether-the-device-route-is-live.md) The profile says whether the device route is still live | S | done |
 | | [TASK-040603](tasks/TASK-040603-a-revoked-binding-is-final-and-the-database-says-so.md) A revoked binding is final, and the database is what refuses to undo it | S | done |
-| | [TASK-040604](tasks/TASK-040604-one-live-binding-per-device-one-per-player-and-a-pair-that-never-returns.md) One live binding per device, one per player, and a pair that never comes back | S | **ready** |
-| | [TASK-040605](tasks/TASK-040605-a-revoked-device-resolves-to-a-new-profile-never-the-one-it-left.md) A revoked device resolves to a new, empty profile — never the one it left | S | backlog |
+| | [TASK-040604](tasks/TASK-040604-one-live-binding-per-device-one-per-player-and-a-pair-that-never-returns.md) One live binding per device, one per player, and a pair that never comes back | S | done |
+| | [TASK-040605](tasks/TASK-040605-a-revoked-device-resolves-to-a-new-profile-never-the-one-it-left.md) A revoked device resolves to a new, empty profile — never the one it left | S | **ready** |
 | | [TASK-040606](tasks/TASK-040606-the-session-token-digest-is-one-function-in-one-file.md) The session-token digest is one internal function, in one file | S | backlog |
 | | [TASK-040607](tasks/TASK-040607-the-device-binding-port-and-the-double-that-counts-its-calls.md) The device-binding port, and the double that counts what it was asked | S | backlog |
 | | [TASK-040608](tasks/TASK-040608-revoking-is-one-update-and-one-delete-in-one-transaction.md) Revoking is one UPDATE and one DELETE, in one transaction | S | backlog |
