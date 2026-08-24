@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031402
 title: One line says the room stays open and the link still works
 type: task
-status: backlog
+status: ready
 parent: STORY-0314
 module: web-client
 estimate: XS
