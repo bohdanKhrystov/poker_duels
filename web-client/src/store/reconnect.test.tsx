@@ -311,4 +311,62 @@ describe("a tab whose socket dropped", () => {
 
     expect(readRoomCode(storage)).toBeNull();
   });
+
+  it("sends nothing on the live socket when the host leaves the waiting screen", () => {
+    const { sockets, client } = reconnectingClient(null);
+    renderDuelScreen(client);
+
+    act(() => {
+      sockets[0].open();
+      sockets[0].receive(WELCOME);
+      sockets[0].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+    });
+
+    expect(screen.getByText("Waiting for your rival")).toBeDefined();
+
+    const before = sentFrames(sockets[0]);
+    expect(before).toHaveLength(1);
+    expect(before[0]).toMatchObject({ type: "Hello" });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("link", { name: "Back to the lobby" }));
+    });
+
+    expect(sentFrames(sockets[0])).toEqual(before);
+  });
+
+  it("opens the next socket at the lobby once the host has left the waiting room", () => {
+    const { sockets, client, storage } = reconnectingClient(null);
+    renderDuelScreen(client);
+
+    act(() => {
+      sockets[0].open();
+      sockets[0].receive(WELCOME);
+      sockets[0].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":0}');
+    });
+
+    expect(readRoomCode(storage)).toBe("ABCDEFGH");
+
+    act(() => {
+      fireEvent.click(screen.getByRole("link", { name: "Back to the lobby" }));
+    });
+
+    expect(readRoomCode(storage)).toBeNull();
+
+    act(() => {
+      sockets[0].close();
+      vi.advanceTimersByTime(250);
+      sockets[1].open();
+      sockets[1].receive(WELCOME);
+    });
+
+    expect(sentFrames(sockets[1])).toEqual([
+      {
+        type: "Hello",
+        deviceId: "d-1",
+        protocolVersion: PROTOCOL_VERSION,
+        sessionToken: null,
+      },
+    ]);
+  });
 });

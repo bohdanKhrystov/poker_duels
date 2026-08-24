@@ -168,4 +168,82 @@ describe("the duel table", () => {
     expect(commitLine).not.toBeNull();
     expect(commitLine?.textContent).toBe("");
   });
+
+  it("puts the presence on the rival, from either seat", () => {
+    // Test case 1: viewerSeat is 0, rival is at seat 1
+    const view0 = aView({
+      viewerSeat: 0,
+      seatToAct: 1,
+      seats: [
+        aSeat({ index: 0, stack: 3500 }),
+        aSeat({ index: 1, stack: 8200 }),
+      ],
+    });
+
+    const { rerender } = render(
+      <DuelTable view={view0} rivalPresence="AWAY" />,
+    );
+
+    expect(screen.getByText("Away")).toBeDefined();
+    expect(within(plateFor("Your rival")).getByText("Away")).toBeDefined();
+    expect(within(plateFor("Your rival")).getByText("8,200")).toBeDefined();
+    expect(screen.queryByText("Their turn")).toBeNull();
+
+    // Test case 2: viewerSeat is 1, rival is at seat 0
+    const view1 = aView({
+      viewerSeat: 1,
+      seatToAct: 0,
+      seats: [
+        aSeat({ index: 0, stack: 3500 }),
+        aSeat({ index: 1, stack: 8200 }),
+      ],
+    });
+
+    rerender(<DuelTable view={view1} rivalPresence="AWAY" />);
+
+    expect(screen.getByText("Away")).toBeDefined();
+    expect(within(plateFor("Your rival")).getByText("Away")).toBeDefined();
+    expect(within(plateFor("Your rival")).getByText("3,500")).toBeDefined();
+    expect(screen.queryByText("Their turn")).toBeNull();
+  });
+
+  it("puts no presence on your own plate, from either seat", () => {
+    // Test case 1: viewerSeat is 0, seatToAct is 0 (viewer's seat)
+    const view0 = aView({
+      viewerSeat: 0,
+      seatToAct: 0,
+      seats: [
+        aSeat({ index: 0, stack: 3500 }),
+        aSeat({ index: 1, stack: 8200 }),
+      ],
+    });
+
+    const { rerender } = render(
+      <DuelTable view={view0} rivalPresence="ABSENT" />,
+    );
+
+    expect(within(plateFor("You")).getByText("Your turn")).toBeDefined();
+    expect(within(plateFor("You")).getByText("3,500")).toBeDefined();
+    const timedOutElements = screen.queryAllByText("Timed out");
+    expect(timedOutElements).toHaveLength(1);
+    expect(within(plateFor("Your rival")).getByText("Timed out")).toBeDefined();
+
+    // Test case 2: viewerSeat is 1, seatToAct is 1 (viewer's seat)
+    const view1 = aView({
+      viewerSeat: 1,
+      seatToAct: 1,
+      seats: [
+        aSeat({ index: 0, stack: 3500 }),
+        aSeat({ index: 1, stack: 8200 }),
+      ],
+    });
+
+    rerender(<DuelTable view={view1} rivalPresence="ABSENT" />);
+
+    expect(within(plateFor("You")).getByText("Your turn")).toBeDefined();
+    expect(within(plateFor("You")).getByText("8,200")).toBeDefined();
+    const timedOutElements2 = screen.queryAllByText("Timed out");
+    expect(timedOutElements2).toHaveLength(1);
+    expect(within(plateFor("Your rival")).getByText("Timed out")).toBeDefined();
+  });
 });
