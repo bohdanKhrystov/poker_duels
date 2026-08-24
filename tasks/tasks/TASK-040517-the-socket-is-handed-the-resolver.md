@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040517
 title: The socket's dependencies carry the resolver
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: XS
