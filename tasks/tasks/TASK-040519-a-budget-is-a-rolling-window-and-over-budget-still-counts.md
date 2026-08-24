@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040519
 title: A budget is a rolling window, an over-budget attempt still counts, and a slot can be refunded
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
