@@ -539,8 +539,7 @@ class HttpEndpointDocumentationTest {
     @Test
     fun theSignUpSectionPromisesNoRetryAfter() {
         assertTrue(
-            signUpSection.contains("no `Retry-After`") || signUpSection.contains("no Retry-After") ||
-                signUpSection.contains("no Retry-After header"),
+            signUpSection.contains("No `Retry-After` header"),
             "The Sign up section must state there is no 'Retry-After' header for the 429 response",
         )
     }
