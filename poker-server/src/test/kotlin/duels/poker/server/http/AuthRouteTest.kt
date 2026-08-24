@@ -1525,6 +1525,72 @@ class AuthRouteTest {
             assertEquals(HttpStatusCode.Created, response.status)
         }
     }
+
+    @Test
+    fun aSuccessRefundsOneSlotNotTwo() {
+        // Two failures then a success from one address leave exactly two slots consumed.
+        // With a limit of ten in sixty seconds, this means:
+        // - 2 failures consume 2 slots (8 remaining)
+        // - 1 success refunds 1 slot (9 remaining, 2 slots net consumed)
+        // - Next 8 attempts are admitted (1 remaining)
+        // - The 9th attempt is refused by budget, without calling verify
+        val credentials = SignInCredentials(mapOf("alice" to ("correctpassword" to PlayerId("p-alice"))))
+        val signInBudget = AttemptBudget(AttemptLimits(10, 60_000L), MutableClock())
+
+        testApplication {
+            application {
+                module()
+                intercept(ApplicationCallPipeline.Plugins) {
+                    call.mutableOriginConnectionPoint.remoteAddress = "203.0.113.100"
+                }
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    freshSignUpBudget(),
+                    signInBudget,
+                )
+            }
+            // Two failed sign-in attempts
+            repeat(2) {
+                val response = client.post("/api/auth/sign-in") {
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"handle":"alice","password":"wrongpassword"}""")
+                }
+                assertEquals(HttpStatusCode.Unauthorized, response.status)
+            }
+            assertEquals(2, credentials.verifyCalls.size)
+
+            // One successful sign-in attempt (refunds 1 slot)
+            val successResponse = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"correctpassword"}""")
+            }
+            assertEquals(HttpStatusCode.OK, successResponse.status)
+            assertEquals(3, credentials.verifyCalls.size)
+
+            // Eight more failed attempts should be admitted (budget goes from 2 to 10)
+            repeat(8) {
+                val response = client.post("/api/auth/sign-in") {
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"handle":"alice","password":"wrongpassword"}""")
+                }
+                assertEquals(HttpStatusCode.Unauthorized, response.status)
+            }
+            assertEquals(11, credentials.verifyCalls.size)
+
+            // The ninth attempt should be refused by the budget, without calling verify.
+            // If refund were called twice, this would instead be admitted (budget would have 9 slots left).
+            val ninth = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"wrongpassword"}""")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, ninth.status)
+            // Still 11 verify calls, proving this attempt was refused by the budget
+            assertEquals(11, credentials.verifyCalls.size)
+        }
+    }
 }
 
 /**
