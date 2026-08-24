@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040514
 title: "POST /api/auth/sign-in: the credential decides, and a stranger learns nothing"
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S

@@ -64,4 +64,43 @@ class AuthDtosTest {
             "Redaction failures:\n${failures.joinToString("\n")}",
         )
     }
+
+    @Test
+    fun aSignInRequestPrintsNeitherField() {
+        val request = SignInRequest("alice", "hunter2")
+        val handle = "alice"
+        val password = "hunter2"
+
+        // Test that neither field appears in the string representation
+        val stringForm = request.toString()
+        assertTrue(!stringForm.contains(handle), "toString() should not contain handle '$handle', but was: $stringForm")
+        assertTrue(!stringForm.contains(password), "toString() should not contain password '$password', but was: $stringForm")
+    }
+
+    @Test
+    fun aSignInRequestStillRoundTrips() {
+        val decoded = protocolJson.decodeFromString(SignInRequest.serializer(), """{"handle":"alice","password":"hunter2"}""")
+        assertEquals(SignInRequest("alice", "hunter2"), decoded)
+    }
+
+    @Test
+    fun aSignInRequestRefusesAnUnknownField() {
+        assertThrows<IllegalArgumentException> {
+            protocolJson.decodeFromString(SignInRequest.serializer(), """{"handle":"alice","password":"hunter2","deviceId":"d-1"}""")
+        }
+    }
+
+    @Test
+    fun aSignInResponseCarriesOnlyTheToken() {
+        val response = SignInResponse("t")
+        val encoded = protocolJson.encodeToString(SignInResponse.serializer(), response)
+        assertEquals("""{"sessionToken":"t"}""", encoded)
+    }
+
+    @Test
+    fun aSignInResponsePrintsNoToken() {
+        val response = SignInResponse("supersecret")
+        val stringForm = response.toString()
+        assertTrue(!stringForm.contains("supersecret"), "toString() should not contain token, but was: $stringForm")
+    }
 }

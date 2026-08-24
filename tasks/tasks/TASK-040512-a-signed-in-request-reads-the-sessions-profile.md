@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040512
 title: A signed-in request reads the session's profile, and the device beside it is ignored
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -80,8 +80,17 @@ Read `docs/adr/ADR-0027-the-session-outranks-the-device-id.md` §4 and
 ## Proof
 
 Make `resolvedPlayerOrNull` fall through from `Refused` to the device branch and
-`anUnknownSessionIsRefusedEvenWithAGoodDevice` goes red alone. Make it prefer the device over the
-session and `aSessionOutranksTheDeviceBesideIt` goes red while the other three stay green.
+`anUnknownSessionIsRefusedEvenWithAGoodDevice` goes red alone. Run, confirmed.
+
+Make the **`Session` branch** prefer the device when both independently resolve, and
+`aSessionOutranksTheDeviceBesideIt` goes red while the other three stay green. Run, confirmed.
+
+That second mutation must be scoped inside the `Session` branch. This Proof previously said only
+*prefer the device over the session*, which read literally means checking the device first — and
+that also reddens `anUnknownSessionIsRefusedEvenWithAGoodDevice` and its malformed-header sibling,
+because *device wins whenever present* and *invalid session with a good device* are the same code
+path once the device is consulted first. The assertions are sound; the wording underspecified which
+mutation it meant. Found by running it.
 
 ## Notes
 
