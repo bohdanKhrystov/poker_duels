@@ -68,17 +68,29 @@ internal class SocketDuel(val code: String, val handSeed: Long, val clients: Lis
  * its handshake, sends `JoinRoom(code)`, and reads its `RoomJoined`. The seat of each client is
  * the one the server named in that frame — never assumed from the order they connected.
  *
+ * Both handshakes always carry their own `HOST_DEVICE`/`GUEST_DEVICE`, token or not — a real client
+ * keeps sending its device id whether or not it holds one (`ADR-0030` §8) — so [SocketClient]'s
+ * `deviceId` stays a plain, non-null `String` here: a token, when given, rides beside the device id
+ * rather than replacing it.
+ *
  * `received` on each client records every `ServerMessage` a client got after its `Welcome`,
  * starting with its own `RoomJoined`, in arrival order. Nothing else is read off either socket here;
  * the opening hand's frames are already queued on the guest's join and stay queued for the next task.
  *
  * @param handSeed The hand seed to use. Defaults to [HAND_SEED].
+ * @param hostToken A session token sent alongside `HOST_DEVICE` on the host's handshake. Defaults to
+ *   `null`, so a caller that omits it sends exactly the `Hello` this function always sent.
+ * @param guestToken The same, for the guest's handshake.
  * @return A [SocketDuel] with both clients seated.
  */
-internal suspend fun HttpClient.openSocketDuel(handSeed: Long = HAND_SEED): SocketDuel {
+internal suspend fun HttpClient.openSocketDuel(
+    handSeed: Long = HAND_SEED,
+    hostToken: String? = null,
+    guestToken: String? = null,
+): SocketDuel {
     // Open the host connection
     val hostSession = webSocketSession("/ws")
-    hostSession.completeHandshake(HOST_DEVICE)
+    hostSession.completeHandshake(HOST_DEVICE, hostToken)
 
     // Create the room
     hostSession.send(Frame.Text(ProtocolCodec.encode(CreateRoom)))
@@ -95,7 +107,7 @@ internal suspend fun HttpClient.openSocketDuel(handSeed: Long = HAND_SEED): Sock
 
     // Open the guest connection
     val guestSession = webSocketSession("/ws")
-    guestSession.completeHandshake(GUEST_DEVICE)
+    guestSession.completeHandshake(GUEST_DEVICE, guestToken)
 
     // Join the room
     guestSession.send(Frame.Text(ProtocolCodec.encode(JoinRoom(roomCode))))
