@@ -1,5 +1,6 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.DeviceBindings
 import duels.poker.server.auth.Identity
@@ -24,20 +25,26 @@ import io.ktor.server.routing.routing
  * Requiring a session also makes revocation a step-up operation for free, since the password
  * behind it was proved minutes ago, by construction. So [Identity.Device],
  * [Identity.UnknownDevice], [Identity.Refused] and [Identity.Anonymous] all answer
- * `401 Unauthorized` with an empty body; only [Identity.Session] reaches [bindings].
+ * `401 Unauthorized` with an empty body; only [Identity.Session] reaches [credentials].
  *
  * The request carries no body, and none is read.
+ *
+ * Once identity is confirmed, [credentials]' `holdsCredential` decides whether the player holds a
+ * password credential at all (`ADR-0049` §5). A player who holds none answers `409 Conflict` with
+ * an empty body, and [bindings] is never called — a profile whose only route in is the device can
+ * never be stranded by revoking it. The two guards answer different questions: the session
+ * requirement above is about not stranding the caller's *screen*, this one is about not stranding
+ * the *profile* — so the order is fixed, identity then credential then write, and neither guard
+ * may stand in for the other.
  *
  * On success, [bindings]' `revoke` is called for the resolved player, `keeping` the same session
  * token the caller presented, and the route answers `204 No Content` — whether or not a live
  * binding existed to revoke (`ADR-0049` §5), since a distinct answer would tell a caller which
  * bindings exist.
  *
- * [credentials] is accepted here but not yet read: the `409 Conflict` for a player holding no
- * other credential is `TASK-040610`. Until then this route answers `204` to any session-holder.
- *
  * @param identities The port that resolves a session token or a device id into a player.
- * @param credentials The port `TASK-040610` uses to refuse revoking a player's only credential.
+ * @param credentials The port checked, once identity is confirmed, for a password credential; a
+ *     player holding none is refused `409` before [bindings] is ever touched.
  * @param bindings The port that revokes a player's device binding and signs out its other sessions.
  */
 public fun Application.deviceRoutes(
@@ -61,6 +68,15 @@ public fun Application.deviceRoutes(
             }
             if (playerId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
+                return@delete
+            }
+            // Why here, and not before identity or after the write (ADR-0049 §5): the token
+            // guard above is about not stranding the caller's screen; this one is about not
+            // stranding the profile. Checked first, an unauthenticated caller would learn from a
+            // 409 that some profile holds no credential. Checked after the write, it would
+            // revoke before refusing.
+            if (!credentials.holdsCredential(playerId, CredentialKind.PASSWORD)) {
+                call.respond(HttpStatusCode.Conflict)
                 return@delete
             }
             // token is non-null here: identities.resolve only answers Identity.Session — the one

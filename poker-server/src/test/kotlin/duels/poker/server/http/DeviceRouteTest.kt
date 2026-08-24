@@ -1,5 +1,6 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.RecordingDeviceBindings
 import duels.poker.server.auth.SessionToken
 import duels.poker.server.protocol.http.profileResponse
@@ -119,5 +120,52 @@ class DeviceRouteTest {
         assertEquals("", deviceAlone.bodyAsText())
         assertEquals("", unknownToken.bodyAsText())
         assertEquals("", nothing.bodyAsText())
+    }
+
+    @Test
+    fun aPlayerWithNoCredentialGetsFourHundredAndNine() = testApplication {
+        // The session is valid and device-1 resolves, exactly as the positive control above, so
+        // the refusal is about the missing credential alone — never about identity. A count, not
+        // a status: 409 alone cannot say whether the write happened first.
+        val bindings = RecordingDeviceBindings()
+        application {
+            deviceRoutes(identities, RecordingCredentials(holds = false), bindings)
+        }
+        val response = client.delete("/api/me/device") {
+            header(HttpHeaders.Authorization, "Bearer t-1")
+        }
+        assertEquals(HttpStatusCode.Conflict, response.status)
+        assertEquals("", response.bodyAsText())
+        assertTrue(bindings.revokeCalls.isEmpty())
+    }
+
+    @Test
+    fun theCredentialIsCheckedWithThisPlayerAndThePasswordKind() = testApplication {
+        // Same request as above: the player the guard checks is the one the session named, never
+        // one a header or a body could supply.
+        val credentials = RecordingCredentials(holds = false)
+        val bindings = RecordingDeviceBindings()
+        application {
+            deviceRoutes(identities, credentials, bindings)
+        }
+        client.delete("/api/me/device") {
+            header(HttpHeaders.Authorization, "Bearer t-1")
+        }
+        assertEquals(1, credentials.holdsCalls.size)
+        assertEquals(PlayerId("player-1") to CredentialKind.PASSWORD, credentials.holdsCalls[0])
+    }
+
+    @Test
+    fun anUnauthenticatedCallerNeverReachesTheCredentialCheck() = testApplication {
+        // The ordering assertion: a guard placed before the identity check would answer 409 here
+        // — holds is false on this double — and holdsCalls would have size 1.
+        val credentials = RecordingCredentials(holds = false)
+        val bindings = RecordingDeviceBindings()
+        application {
+            deviceRoutes(identities, credentials, bindings)
+        }
+        val response = client.delete("/api/me/device")
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertTrue(credentials.holdsCalls.isEmpty())
     }
 }
