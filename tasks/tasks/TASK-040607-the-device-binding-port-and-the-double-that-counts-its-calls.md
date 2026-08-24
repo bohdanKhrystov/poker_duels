@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040607
 title: The device-binding port, and the double that counts what it was asked
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -98,3 +98,21 @@ implementation-there shape and the KDoc register to copy — and
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This double decides what the rest of the story can prove.** `revokeCalls` is an appending
+`MutableList<RevokeCall>` carrying **both** arguments — `playerId` and `keeping` — so a later ticket
+can assert "exactly one revocation, naming this session" rather than merely that something was
+revoked. Three mutations confirm it: removing the recording, swapping the list for a counter, and
+clearing before appending all redden.
+
+Two precedents made that explicit rather than incidental. `RecordingAuthSessions` had to be widened
+mid-story because it recorded `issued` but not `deleted`. And a permissive `SocketFixtures` default
+would have made every socket test pass regardless of identity. Here `revoke()` only records, and the
+port has no query method for a permissive default to hide in.
+
+**`keeping` is a `SessionToken`, not a flag.** `ADR-0050` ends every *other* session and keeps the
+revoking one, so a boolean could not express which. The port is `suspend`, matching `AuthSessions`
+and `PlayerDirectory`, so reaching Postgres later needs no signature change across every caller.
+
