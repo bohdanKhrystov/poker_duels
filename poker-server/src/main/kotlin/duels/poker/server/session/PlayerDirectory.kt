@@ -34,7 +34,7 @@ public data class Player(val id: PlayerId, val deviceId: DeviceId)
  * Implementations must be idempotent: the same `DeviceId` always returns a `Player`
  * with the same `PlayerId`.
  */
-public fun interface PlayerDirectory {
+public interface PlayerDirectory {
     /**
      * Resolve a device id to a player profile.
      *
@@ -45,4 +45,18 @@ public fun interface PlayerDirectory {
      * @return The player profile for this device.
      */
     public suspend fun resolve(deviceId: DeviceId): Player
+
+    /**
+     * Find the player profile bound to a device id, without creating one.
+     *
+     * `resolve` mints a profile on first contact, which is correct for a socket's first
+     * `Hello` but wrong for an HTTP route: a crawler hitting an endpoint that resolves
+     * identity must not be able to mint a row for every device id it tries. This is the read
+     * identity resolution outside the socket needs — one that can answer "no such device"
+     * instead of creating an answer.
+     *
+     * @param deviceId The device identifier to look up.
+     * @return The player profile for this device, or `null` if none exists.
+     */
+    public suspend fun findOrNull(deviceId: DeviceId): Player?
 }
