@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040616
 title: P1 and P2 in one helper, and the proof that neither subsumes the other
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -133,3 +133,28 @@ ticket, and it is the claim `ADR-0030` §5 and this story's design note both mak
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Independence is demonstrated, not asserted.** Two states were constructed:
+`moveACoinBetweenBalances` breaks P1 while `coinInvariantP2Sums()` still reads `(0, 0)`;
+`deleteLosersDeltaAndZeroTheirBalance` breaks P2 while `p1BrokenBalancePlayerIds()` is empty. The
+ticket's two mutations then redden **disjoint** test sets — P2's check reddens one test, P1's reddens
+two others, confirmed independently by coder and reviewer. Two properties that always failed together
+would be one property with two names, and the helper would be twice the code for one guarantee.
+
+**It is total, not per-endpoint.** The SQL is `ADR-0030` §5 verbatim and touches only
+`player.id`, `player.coin_balance`, `duel_result.player_id`, `duel_result.coin_delta`.
+`playerTableSnapshot` reads columns through `ResultSetMetaData.columnCount` rather than a hardcoded
+list, so a column added later is covered without editing it. Nothing in the file names a route or an
+endpoint. The only escape is a coin-bearing column outside those two — a new table with its own
+balance, which is the `season_award` case the ticket itself names.
+
+**A file-private function does not shield its own file from an `internal` sibling.**
+`SignUpDatabaseTest.kt` holds a file-private `DataSource.p2LedgerSums()`; an identically-named
+`internal` top-level function elsewhere in the module made **that untouched file** fail to compile
+with an overload-resolution ambiguity. Renamed to `coinInvariantP2Sums`. The trap is specific to two
+*top-level* functions sharing a receiver and name — `RetireDisplayNameTest`'s copies are class
+members and never collided. It bites exactly when promoting a duplicated private helper, which is
+what `TASK-040617` does next.
+
