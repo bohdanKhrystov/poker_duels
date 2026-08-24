@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031312
 title: The duel screen says none of the words this copy refuses
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: S
