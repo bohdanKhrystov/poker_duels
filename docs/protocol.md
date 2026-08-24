@@ -94,11 +94,48 @@ These endpoints are **plain HTTP** — they carry no `type` discriminator and ar
 | `409 Conflict` | The handle is taken, **or** this player already holds a `password` credential. |
 | `422 Unprocessable Entity` | The password is under 8 or over 128 code points. |
 
+### Sign in
+
+**Method and path:** `POST /api/auth/sign-in`
+
+**Authentication:** None. Sign-in is how a client obtains authentication in the first place, so it
+carries none of its own — no `X-Device-Id`, no `Authorization` header.
+
+**Request body:** A JSON object with two required fields:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| handle | string | The player's handle, as folded at sign-up (`ADR-0031` §1). |
+| password | string | The player's password, exactly as chosen at sign-up. |
+
+**Responses:**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200 OK` | `{"sessionToken": "…"}` | The handle and password matched. The token is returned here, in this one response, and never again — no other endpoint ever echoes it back (`ADR-0027`). |
+| `400 Bad Request` | Empty | The body could not be decoded. |
+| `401 Unauthorized` | Empty | The handle is unknown, **or** it is known but the password is wrong. The two answers are indistinguishable — same status, same empty body, same header names — with no way to tell them apart. |
+
+### Sign out
+
+**Method and path:** `POST /api/auth/sign-out`
+
+**Authentication:** `Authorization: Bearer <token>` — the session token `POST /api/auth/sign-in`
+returned. There is no `X-Device-Id` fallback here; there is nothing to fall back to sign out of.
+
+**Request body:** None.
+
+**Responses:** Every response body is empty.
+
+| Status | Meaning |
+| --- | --- |
+| `204 No Content` | The session the token names is deleted if it existed. The answer is `204` whether or not a session was deleted, so a client cannot use the status to tell a live token from an already-gone one. Deleting the session row is all this does: live sockets are not closed by this call. |
+
 ### Profile endpoint
 
 **Method and path:** `GET /api/me`
 
-**Authentication:** The `X-Device-Id` header (same authentication as the socket handshake, see `ADR-0012`). An absent, blank, or unknown value answers `401 Unauthorized` with an empty body. No distinction is made between absent, blank, and unknown — a bad device id cannot be used to probe for valid device ids.
+**Authentication:** The `X-Device-Id` header (same authentication as the socket handshake, see `ADR-0012`). An absent, blank, or unknown value answers `401 Unauthorized` with an empty body. No distinction is made between absent, blank, and unknown — a bad device id cannot be used to probe for valid device ids. A valid `Authorization: Bearer <token>` outranks `X-Device-Id` when both are present, and an invalid, expired, or unknown token answers `401 Unauthorized` rather than falling back to the device id (`ADR-0027`).
 
 **Response:** `200 OK` with a JSON object:
 
@@ -113,7 +150,7 @@ These endpoints are **plain HTTP** — they carry no `type` discriminator and ar
 
 **Method and path:** `PUT /api/me/name`
 
-**Authentication:** The `X-Device-Id` header (same as `GET /api/me`). Identity is verified **before** the body is read — an absent, blank, or unknown device id answers `401 Unauthorized` with an empty body, and the write is never attempted. This order is critical: confirming name availability without confirming identity would turn the endpoint into an enumeration oracle.
+**Authentication:** The `X-Device-Id` header (same as `GET /api/me`). Identity is verified **before** the body is read — an absent, blank, or unknown device id answers `401 Unauthorized` with an empty body, and the write is never attempted. This order is critical: confirming name availability without confirming identity would turn the endpoint into an enumeration oracle. A valid `Authorization: Bearer <token>` outranks `X-Device-Id` when both are present, and an invalid, expired, or unknown token answers `401 Unauthorized` rather than falling back to the device id (`ADR-0027`).
 
 **Request body:** A JSON object with a single required field:
 
@@ -156,7 +193,7 @@ A name that the player typed as, for example, `  Alice  ` becomes `Alice` (9 cod
 
 A parameter that is present but unusable refuses the whole request, so a request with a good `opponent` and a bad `outcome` is `400` rather than a page filtered by name alone.
 
-**Authentication:** The `X-Device-Id` header (same as above). Identity is verified **before** the `limit` parameter is parsed — an unauthenticated request answers `401` even if the limit is invalid. This prevents a bad limit from revealing whether a device id is valid.
+**Authentication:** The `X-Device-Id` header (same as above). Identity is verified **before** the `limit` parameter is parsed — an unauthenticated request answers `401` even if the limit is invalid. This prevents a bad limit from revealing whether a device id is valid. A valid `Authorization: Bearer <token>` outranks `X-Device-Id` when both are present, and an invalid, expired, or unknown token answers `401 Unauthorized` rather than falling back to the device id (`ADR-0027`).
 
 **Response:** `200 OK` with a JSON object containing:
 

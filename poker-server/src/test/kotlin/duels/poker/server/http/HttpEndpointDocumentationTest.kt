@@ -43,7 +43,11 @@ class HttpEndpointDocumentationTest {
     // `IllegalArgumentException` rather than quietly reading a different span. So this is a comment
     // about why the ordering is coupled to the document, not a warning about undetectable drift.
     private val signUpSection: String =
-        sectionBetween("### Sign up", "### Profile endpoint")
+        sectionBetween("### Sign up", "### Sign in")
+    private val signInSection: String =
+        sectionBetween("### Sign in", "### Sign out")
+    private val signOutSection: String =
+        sectionBetween("### Sign out", "### Profile endpoint")
     private val profileSection: String =
         sectionBetween("### Profile endpoint", "### Set display name")
     private val setNameSection: String =
@@ -309,6 +313,87 @@ class HttpEndpointDocumentationTest {
             assertTrue(
                 signUpSection.contains(statusCode),
                 "The Sign up section must document status code '$statusCode'",
+            )
+        }
+    }
+
+    @Test
+    fun theSignUpSectionIsStillWhereItWas() {
+        // Re-chaining sectionBetween's end markers to make room for Sign in/Sign out must not
+        // shrink signUpSection to nothing: this checks the section itself, not the whole document.
+        assertTrue(
+            signUpSection.contains("POST /api/auth/sign-up"),
+            "The Sign up section must still contain 'POST /api/auth/sign-up' after re-chaining",
+        )
+        assertTrue(
+            signUpSection.contains("201"),
+            "The Sign up section must still document its '201' row after re-chaining",
+        )
+    }
+
+    @Test
+    fun theSignInSectionNamesItsMethodAndPath() {
+        assertTrue(
+            signInSection.contains("POST /api/auth/sign-in"),
+            "The Sign in section must contain 'POST /api/auth/sign-in'",
+        )
+    }
+
+    @Test
+    fun theSignInSectionNamesBothRequestFields() {
+        assertTrue(
+            signInSection.contains("handle"),
+            "The Sign in section must name the 'handle' field",
+        )
+        assertTrue(
+            signInSection.contains("password"),
+            "The Sign in section must name the 'password' field",
+        )
+    }
+
+    @Test
+    fun theSignInSectionSaysTheTwoFailuresAreIndistinguishable() {
+        assertTrue(
+            signInSection.contains("401"),
+            "The Sign in section must document status code '401'",
+        )
+        assertTrue(
+            signInSection.contains("no way to tell them apart"),
+            "The Sign in section must say a wrong password and an unknown handle cannot be told apart",
+        )
+    }
+
+    @Test
+    fun theSignOutSectionSaysTwoHundredAndFourEitherWay() {
+        assertTrue(
+            signOutSection.contains("204"),
+            "The Sign out section must document status code '204'",
+        )
+        assertTrue(
+            signOutSection.contains("whether or not a session was deleted"),
+            "The Sign out section must say '204' is the answer whether or not a session was deleted",
+        )
+    }
+
+    @Test
+    fun theSignOutSectionSaysNoSocketIsClosed() {
+        assertTrue(
+            signOutSection.contains("live sockets are not closed"),
+            "The Sign out section must say live sockets are not closed",
+        )
+    }
+
+    @Test
+    fun everyAuthenticatedSectionNamesTheBearerHeader() {
+        val sections = mapOf(
+            "profile" to profileSection,
+            "set name" to setNameSection,
+            "recent duels" to recentDuelsSection,
+        )
+        for ((name, section) in sections) {
+            assertTrue(
+                section.contains("Authorization: Bearer"),
+                "The $name section must name the 'Authorization: Bearer' header",
             )
         }
     }
