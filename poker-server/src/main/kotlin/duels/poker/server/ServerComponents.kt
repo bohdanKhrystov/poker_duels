@@ -93,6 +93,7 @@ public fun serverComponents(
         connections = connections,
         maxFrameLength = config.maxFrameLength,
         maxFrameNestingDepth = config.maxFrameNestingDepth,
+        identities = identities,
     )
 
     val credentials = PostgresCredentials(dataSource)
