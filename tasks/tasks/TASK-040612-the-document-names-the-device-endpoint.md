@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040612
 title: The document names the device endpoint, and the section markers still chain
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
