@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040604
 title: One live binding per device, one per player, and a pair that never comes back
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
