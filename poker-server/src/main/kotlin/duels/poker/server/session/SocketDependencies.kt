@@ -1,5 +1,6 @@
 package duels.poker.server.session
 
+import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.room.RoomRegistry
 
 /**
@@ -21,4 +22,5 @@ public data class SocketDependencies(
     val connections: ConnectionDirectory,
     val maxFrameLength: Int,
     val maxFrameNestingDepth: Int,
+    val identities: IdentityResolver,
 )

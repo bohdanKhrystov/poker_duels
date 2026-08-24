@@ -1829,8 +1829,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040514](tasks/TASK-040514-sign-in-the-credential-decides-and-a-stranger-learns-nothing.md) POST /api/auth/sign-in — the credential decides, and a stranger learns nothing | S | done |
 | | [TASK-040515](tasks/TASK-040515-sign-out-is-one-delete-and-two-hundred-and-four-either-way.md) POST /api/auth/sign-out — one delete, 204 either way, and no socket closes | XS | done |
 | | [TASK-040516](tasks/TASK-040516-the-document-names-sign-in-and-sign-out.md) The document names sign-in and sign-out, and the test that reads it keeps its bearings | S | done |
-| | [TASK-040517](tasks/TASK-040517-the-socket-is-handed-the-resolver.md) The socket's dependencies carry the resolver | XS | **ready** |
-| | [TASK-040518](tasks/TASK-040518-the-socket-presents-the-session-and-an-invalid-one-is-refused.md) The socket presents the session, and an invalid one is refused rather than downgraded | S | backlog |
+| | [TASK-040517](tasks/TASK-040517-the-socket-is-handed-the-resolver.md) The socket's dependencies carry the resolver | XS | done |
+| | [TASK-040518](tasks/TASK-040518-the-socket-presents-the-session-and-an-invalid-one-is-refused.md) The socket presents the session, and an invalid one is refused rather than downgraded | S | **ready** |
 | | [TASK-040519](tasks/TASK-040519-a-budget-is-a-rolling-window-and-over-budget-still-counts.md) A budget is a rolling window, an over-budget attempt still counts, and a slot can be refunded | S | backlog |
 | | [TASK-040520](tasks/TASK-040520-the-sign-up-budget-is-two-config-values.md) The two auth budgets are four configuration values with defaults | S | backlog |
 | | [TASK-040521](tasks/TASK-040521-sign-up-over-budget-answers-429.md) Sign-up over budget answers 429, and the budget meters the hash | S | backlog |

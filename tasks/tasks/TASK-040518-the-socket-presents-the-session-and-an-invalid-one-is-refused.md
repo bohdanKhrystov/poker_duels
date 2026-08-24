@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040518
 title: The socket presents the session, and an invalid one is refused rather than downgraded
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S

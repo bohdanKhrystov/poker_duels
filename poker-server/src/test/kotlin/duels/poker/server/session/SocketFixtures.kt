@@ -1,5 +1,7 @@
 package duels.poker.server.session
 
+import duels.poker.server.auth.IdentityResolver
+import duels.poker.server.auth.NoAuthSessions
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.room.RandomRoomCodeSource
 import duels.poker.server.room.RoomRegistry
@@ -18,8 +20,9 @@ internal fun testDeps(
     connections: ConnectionDirectory = ConnectionDirectory(),
     maxFrameLength: Int = ServerConfig.DEFAULT_MAX_FRAME_LENGTH,
     maxFrameNestingDepth: Int = ServerConfig.DEFAULT_MAX_FRAME_NESTING_DEPTH,
+    identities: IdentityResolver = IdentityResolver(NoAuthSessions, directory),
 ): SocketDependencies =
-    SocketDependencies(directory, deviceIds, sessions, rooms, connections, maxFrameLength, maxFrameNestingDepth)
+    SocketDependencies(directory, deviceIds, sessions, rooms, connections, maxFrameLength, maxFrameNestingDepth, identities)
 
 internal fun fixedDeviceIds(vararg ids: String): DeviceIdSource {
     val queue = ArrayDeque(ids.toList())

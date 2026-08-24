@@ -1,5 +1,7 @@
 package duels.poker.server.session
 
+import duels.poker.server.auth.Identity
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -52,5 +54,30 @@ class SocketFixturesTest {
     fun theDefaultConnectionDirectoryStartsEmpty() {
         val deps = testDeps()
         assertEquals(0, deps.connections.size)
+    }
+
+    @Test
+    fun testDepsDefaultsAResolverOverItsOwnDirectory() {
+        val directory = InMemoryPlayerDirectory()
+        val deviceId = DeviceId("x")
+
+        val deps = testDeps(directory = directory)
+
+        // Before adding the device, resolve should answer UnknownDevice
+        val beforeResolve = runBlocking {
+            deps.identities.resolve(null, deviceId)
+        }
+        assert(beforeResolve is Identity.UnknownDevice)
+
+        // Add the device to the directory
+        runBlocking {
+            directory.resolve(deviceId)
+        }
+
+        // After adding, resolve should answer Device
+        val afterResolve = runBlocking {
+            deps.identities.resolve(null, deviceId)
+        }
+        assert(afterResolve is Identity.Device)
     }
 }
