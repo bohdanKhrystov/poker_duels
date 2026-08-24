@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040607
 title: The device-binding port, and the double that counts what it was asked
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
