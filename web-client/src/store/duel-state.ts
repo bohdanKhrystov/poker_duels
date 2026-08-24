@@ -51,6 +51,16 @@ export interface DuelState {
    * a re-render — only a count can.
    */
   readonly presenceCount: number;
+  /**
+   * Whether the rival came back from an absence **this client saw**. Client bookkeeping the
+   * store accumulates across frames, in the class of `rejectionCount`: no frame carries it.
+   *
+   * `ADR-0046` §2: a resuming client is always sent its rival's current presence, `PRESENT`
+   * included, so the frame alone cannot tell a return from a status quo. Telling a player who
+   * reloaded the page that their rival returned from an absence that never happened is the one
+   * way this copy can state a falsehood.
+   */
+  readonly rivalReturned: boolean;
 }
 
 export interface PendingTurn {
@@ -74,6 +84,7 @@ export function initialState(): DuelState {
     rivalPresence: null,
     graceRemainingMillis: null,
     presenceCount: 0,
+    rivalReturned: false,
   };
 }
 
@@ -113,6 +124,11 @@ export function applyServerMessage(
         refusal: null,
         outcome: null,
         rematchOffers: [],
+        // ADR-0046 §2: `Your rival is back.` clears on the next Snapshot and on nothing else —
+        // never on a timer, never on a fade. The presence itself is not cleared here: hands go on
+        // being dealt while a seat is ABSENT, and a Snapshot that wiped it would put the table
+        // back to normal under a rival who is not there.
+        rivalReturned: false,
       };
     case "Rejected":
       // A rejection reports on an attempt, not on state (ADR-0043): `pendingTurn` and `view` stay
@@ -156,6 +172,9 @@ export function applyServerMessage(
         rivalPresence: message.presence,
         graceRemainingMillis: message.graceRemainingMillis,
         presenceCount: state.presenceCount + 1,
+        rivalReturned:
+          message.presence === "PRESENT" &&
+          (state.rivalPresence === "AWAY" || state.rivalPresence === "ABSENT"),
       };
     default:
       return state;
