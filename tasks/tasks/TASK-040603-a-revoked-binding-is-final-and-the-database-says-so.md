@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040603
 title: A revoked binding is final, and the database is what refuses to undo it
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -112,3 +112,20 @@ condition. **Two tests**, in opposite directions, which is what the pair is for.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The `OF revoked_at` gate reads the catalog, and that is the point.** A behavioural test for it is
+vacuous: without the `OF`, the trigger still fires, but `IS DISTINCT FROM` returns false and nothing
+is raised — the observable result is identical. The planner caught that before the ticket was
+written; the coder confirmed it by running the mutation, where **only** the `pg_trigger`/`tgattr`
+assertion reddens and all three refusal tests stay green.
+
+**One vacuous assertion shipped and was caught in review.**
+`assertNotNull(exception.message?.contains(...))` cannot fail: `String.contains` returns a
+non-nullable `Boolean`, so the safe call only yields null when the message itself is null, and a
+thrown exception always has one. It passed for any message at all. Now
+`assertTrue(… ?: false)`, and proved by substituting a non-matching substring and watching it go red.
+The refusal tests were never resting on it — both assert `assertEquals("23001", exception.sqlState)`
+directly, which is what distinguishes the trigger from a typo'd column or a `NOT NULL` violation.
+
