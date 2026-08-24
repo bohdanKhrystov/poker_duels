@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040619
 title: A duel can be opened under a session token, not only a device id
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -96,3 +96,25 @@ never passes one. One test, and it is the only one in the repository that would 
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The asymmetry is in the `Welcome`, not the `Hello`.** A session-borne `Hello` carries **both**
+`deviceId` and `sessionToken` — `ADR-0030` §8: the device id always rides along, token or not,
+because that is what a real client sends. What distinguishes the session route is the `Welcome`
+coming back with `deviceId = null`, which the test asserts alongside the player id matching the
+token's owner and differing from the device's own.
+
+**No coalescing, which matters more in a helper than in production.** `completeHandshake` sends
+`Hello(deviceId = deviceId, sessionToken = sessionToken)` — exactly what its caller passed, with no
+substitution when one is absent. A helper that quietly supplied a device for a missing token would
+make every test built on it prove the wrong thing, and no production mutation would catch it.
+
+**`openSocketDuel`'s token parameters are unexercised here, by design.** The ticket's Out of scope
+defers the scenario to `TASK-040620`. They are threaded through to `completeHandshake` rather than
+dropped, so the next ticket builds on something real — the failure mode for scaffolding is compiling
+without ever reaching the wire.
+
+**All three defaults are `null` and change nothing that predates them**, verified by `SocketDuelTest`
+passing unmodified.
+

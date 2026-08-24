@@ -87,12 +87,18 @@ internal suspend fun DefaultClientWebSocketSession.nextServerMessage(): ServerMe
 }
 
 /**
- * Send a [Hello] handshake with the given device ID and return the server's [ServerMessage.Welcome],
- * failing loudly if the server sends anything else.
+ * Send a [Hello] handshake naming [deviceId], [sessionToken] or both, and return the server's
+ * [ServerMessage.Welcome], failing loudly if the server sends anything else.
+ *
+ * [sessionToken] defaults to `null`, so every call site that predates it sends exactly the `Hello`
+ * it always did and is unaffected by its addition.
  */
-internal suspend fun DefaultClientWebSocketSession.completeHandshake(deviceId: String): ServerMessage.Welcome =
+internal suspend fun DefaultClientWebSocketSession.completeHandshake(
+    deviceId: String?,
+    sessionToken: String? = null,
+): ServerMessage.Welcome =
     withTimeout(5.seconds) {
-        send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = deviceId))))
+        send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = deviceId, sessionToken = sessionToken))))
         val message = nextServerMessage()
         message as? ServerMessage.Welcome
             ?: error("Expected Welcome, got ${message::class.simpleName}")
