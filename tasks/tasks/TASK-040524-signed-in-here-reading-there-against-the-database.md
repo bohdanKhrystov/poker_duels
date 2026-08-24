@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040524
 title: Signed in here, reading there — the whole flow against the database
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -87,3 +87,23 @@ catches it — which is why the snapshot is a multiset comparison and not a spot
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The suite cannot silently skip.** `PostgresTestSupport.requireDocker()` throws
+`IllegalStateException` rather than calling `assumeTrue`, and this file adds no `@EnabledIf`, no
+try/catch around startup and no in-memory fallback. A missing daemon fails the build. The reviewer
+ran it live against Colima — 8 of 8, `skipped="0"` — rather than taking the report's word.
+
+**Expiry reaches Postgres's `now()`, not the JVM's.** The expired row is made expired by a past
+`expires_at` written at *issue* time through a fixed clock; nothing advances a clock at read time.
+Deleting `expires_at > now()` from the SQL reddens exactly
+`anExpiredSessionIsRefusedOverHttpAndOnTheSocket`. A test that moved an injected clock instead would
+never touch the database predicate.
+
+**What the doubles structurally cannot see**, found here and nowhere else: `auth_session.player_id`
+carries a real foreign key to `player.id` (`V4__credential_and_auth_session.sql`). A garbage session
+player id raises a `PSQLException` across every test in the file. **No test exercises that constraint
+deliberately** — the suite depends on it without pinning it, which is worth a ticket if the schema
+ever moves.
+
