@@ -309,9 +309,11 @@ class HttpEndpointDocumentationTest {
 
     @Test
     fun theDeviceSectionNamesItsMethodAndPath() {
+        // Pinned to the backtick-delimited code span the "Method and path" line actually uses, so a
+        // longer path sharing this prefix (`DELETE /api/me/devices`) does not satisfy this check.
         assertTrue(
-            deviceSection.contains("DELETE /api/me/device"),
-            "The Revoke this device section must contain 'DELETE /api/me/device'",
+            deviceSection.contains("`DELETE /api/me/device`"),
+            "The Revoke this device section must contain the exact code span '`DELETE /api/me/device`'",
         )
     }
 
@@ -329,11 +331,16 @@ class HttpEndpointDocumentationTest {
 
     @Test
     fun theDeviceSectionNamesAllThreeStatusCodes() {
-        val statusCodes = listOf("204", "401", "409")
-        for (statusCode in statusCodes) {
+        // Pinned to the table cell's own pipe-and-backtick boundary ("| `204 No Content` |"), not the
+        // bare digits: the responses table's own prose also says "the answer is `204` whether or not
+        // a binding was live", and `401` is echoed in the Authentication paragraph too, so a bare
+        // digit check would still pass with the status row itself deleted.
+        val statusRows = listOf("| `204 No Content` |", "| `401 Unauthorized` |", "| `409 Conflict` |")
+        for (statusRow in statusRows) {
             assertTrue(
-                deviceSection.contains(statusCode),
-                "The Revoke this device section must document status code '$statusCode'",
+                deviceSection.contains(statusRow),
+                "The Revoke this device section must document the status row '$statusRow', not merely " +
+                    "mention the code in prose",
             )
         }
     }
