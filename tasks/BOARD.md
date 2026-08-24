@@ -1813,8 +1813,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040503](tasks/TASK-040503-a-mismatched-version-mints-nothing.md) A version mismatch mints no device id and creates no profile | XS | **done** |
 | | [TASK-040504](tasks/TASK-040504-a-session-token-is-256-bits-url-safe-and-unpadded.md) A session token is 256 bits, URL-safe and unpadded | XS | **done** |
 | | [TASK-040505](tasks/TASK-040505-the-session-store-is-a-port-and-a-double-that-knows-nothing.md) The session store is a port, and a double that has issued nothing | XS | **done** |
-| | [TASK-040506](tasks/TASK-040506-issue-writes-one-row-a-digest-and-thirty-days.md) issue writes one row, a digest, and thirty days from the injected clock | S | **ready** |
-| | [TASK-040507](tasks/TASK-040507-playerof-reads-through-the-expiry.md) playerOf reads through the expiry, and a clock thirty days on refuses | S | backlog |
+| | [TASK-040506](tasks/TASK-040506-issue-writes-one-row-a-digest-and-thirty-days.md) issue writes one row, a digest, and thirty days from the injected clock | S | done |
+| | [TASK-040507](tasks/TASK-040507-playerof-reads-through-the-expiry.md) playerOf reads through the expiry, and a clock thirty days on refuses | S | **ready** |
 | | [TASK-040508](tasks/TASK-040508-delete-removes-the-row-and-says-the-same-thing-twice.md) delete removes the row, and says the same thing twice | XS | backlog |
 | | [TASK-040509](tasks/TASK-040509-the-directory-finds-a-profile-without-creating-one.md) The directory can find a profile without creating one | S | backlog |
 | | [TASK-040510](tasks/TASK-040510-one-resolver-and-an-invalid-session-never-falls-back.md) One resolver, and an invalid session never falls back to the device | S | backlog |

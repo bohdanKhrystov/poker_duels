@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040507
 title: playerOf reads through the expiry, and a clock thirty days on refuses
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
