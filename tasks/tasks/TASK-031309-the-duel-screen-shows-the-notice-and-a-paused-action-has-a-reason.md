@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031309
 title: The duel screen shows the notice, and a paused action has a reason
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: S
