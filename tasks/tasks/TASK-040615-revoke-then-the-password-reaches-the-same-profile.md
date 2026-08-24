@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040615
 title: Revoke, then the password reaches the same profile, coins and name
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -89,3 +89,29 @@ red run `TASK-040602` recorded that it could not produce on its own.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This closes the gap `TASK-040602` named thirteen tickets ago.** That ticket added `deviceRouteLive`
+and recorded in its own Proof that replacing the `EXISTS (...)` correlation with literal `true`
+reddened nothing, because it had no revoked binding row. Here that mutation reddens
+`theProfileSaysTheDeviceRouteIsNoLongerLive` **alone**, on its post-revocation `assertFalse` — the
+field is read twice, before and after, with opposing expected values. The deferral was a chain with a
+named receiver, not a hope.
+
+**Two tests still pass with the revocation deleted, and that is correct here.** This ticket's claim is
+that the password route is **unaffected** by revocation — and a test of "X is unaffected by Y" should
+pass with or without Y; that is what unaffected means. Both run *after* the revocation in the
+fixture, so they genuinely observe the post-revocation world. Contrast `TASK-040614`, where a test
+passing without the revocation *was* a limitation, because it claimed revocation did not close a
+socket and nothing in that path consults revocation at all. Same observation, opposite meaning,
+decided by what the test claims.
+
+**`assertNotEquals` was proven non-vacuous by experiment**: the two player ids are **equal** when the
+revocation is skipped and **differ** when it runs, so the assertion tracks the transition rather than
+a coincidence of fixtures.
+
+**Worth knowing for a later ticket:** `ADR-0029`'s permanence trigger means no code path can silently
+change a set `display_name` — a defect raises a `PSQLException` rather than corrupting data. That is a
+stronger guarantee than the before/after comparison used here for `coin_balance`.
+
