@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040620
 title: The scenario, steps five to eleven — the token, a second account, and back
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
