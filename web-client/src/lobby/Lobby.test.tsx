@@ -10,12 +10,17 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
+import { bootDuelClient } from "../store/boot";
 import { ProfileProvider } from "../profile/profile-provider";
 import { SetNameProvider } from "../profile/set-name-provider";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { SeatView, ServerMessage } from "../protocol";
 import type { SetNameOutcome } from "../profile/set-name";
 import { aProfile, aDuelLine } from "../profile/profile-fixture";
+import { PROTOCOL_VERSION } from "../protocol";
+import { FakeSocket } from "../protocol/fake-socket";
+import { openReconnectingConnection } from "../protocol/reconnecting";
+import { aView } from "../table/view-fixture";
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
 
@@ -96,6 +101,51 @@ function renderLobbyWithProfile(
 
 function typeCode(value: string): void {
   fireEvent.change(screen.getByLabelText("Room code"), { target: { value } });
+}
+
+function inMemoryStorage(): Storage {
+  const entries = new Map<string, string>();
+  return {
+    get length(): number {
+      return entries.size;
+    },
+    clear(): void {
+      entries.clear();
+    },
+    getItem(key: string): string | null {
+      return entries.has(key) ? (entries.get(key) as string) : null;
+    },
+    key(index: number): string | null {
+      return Array.from(entries.keys())[index] ?? null;
+    },
+    removeItem(key: string): void {
+      entries.delete(key);
+    },
+    setItem(key: string, value: string): void {
+      entries.set(key, value);
+    },
+  };
+}
+
+function reconnectingClient(joinRoomCode: string | null = null) {
+  const sockets: FakeSocket[] = [];
+  const storage = inMemoryStorage();
+  const client = bootDuelClient({
+    connect: (onMessage) =>
+      openReconnectingConnection({
+        openSocket: () => {
+          const socket = new FakeSocket();
+          sockets.push(socket);
+          return socket.asWebSocket();
+        },
+        storage,
+        onMessage,
+        jitter: () => 0,
+      }),
+    joinRoomCode,
+    storage,
+  });
+  return { sockets, client, storage };
 }
 
 describe("the lobby", () => {
@@ -977,5 +1027,83 @@ describe("the lobby", () => {
       /\b(second|seconds|minute|minutes|hour|hours|day|days|expire|expires|expired|expiry|countdown|remaining|timer|timeout|until)\b/i,
     );
     expect(text).not.toMatch(/\d{1,2}:\d{2}/);
+  });
+
+  it("renders the pause a resume came back to", () => {
+    vi.useFakeTimers();
+    const { sockets, client } = reconnectingClient("ABCDEFGH");
+    render(
+      <DuelProvider
+        store={client.store}
+        send={client.send}
+        forgetRoom={client.forgetRoom}
+      >
+        <Lobby />
+      </DuelProvider>,
+    );
+
+    const WELCOME = JSON.stringify({
+      type: "Welcome",
+      deviceId: "d-1",
+      protocolVersion: PROTOCOL_VERSION,
+    });
+
+    act(() => {
+      sockets[0].open();
+      sockets[0].receive(WELCOME);
+      sockets[0].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
+      sockets[0].receive(
+        JSON.stringify({
+          type: "Snapshot",
+          view: aView({ viewerSeat: 1 }),
+        }),
+      );
+      sockets[0].close();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(250);
+      sockets[1].open();
+      sockets[1].receive(WELCOME);
+      sockets[1].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
+      sockets[1].receive(
+        JSON.stringify({
+          type: "Snapshot",
+          view: aView({ viewerSeat: 1 }),
+        }),
+      );
+      sockets[1].receive(
+        JSON.stringify({
+          type: "OpponentPresence",
+          presence: "AWAY",
+          graceRemainingMillis: 47000,
+        }),
+      );
+    });
+
+    expect(
+      screen.getByText("Your rival is away. The duel is paused."),
+    ).toBeDefined();
+    expect(screen.getByText("47")).toBeDefined();
+    expect(screen.getByText("Away")).toBeDefined();
+  });
+
+  it("says nothing to a resumed client whose rival never left", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "OpponentPresence",
+        presence: "PRESENT",
+        graceRemainingMillis: null,
+      });
+    });
+
+    expect(screen.queryByText("Your rival is back.")).toBeNull();
+    expect(screen.queryByText("Away")).toBeNull();
+    expect(screen.queryByText("Timed out")).toBeNull();
   });
 });
