@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040509
 title: The directory can find a profile without creating one
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -90,8 +90,11 @@ existing edited.
 
 ## Proof
 
-Implement `findOrNull` as `resolve(deviceId)` and only the two *creates nothing* tests go red —
-which is why a bare *finds what it resolved* pair would not be enough on its own.
+Implement `findOrNull` as `resolve(deviceId)` and **three** tests go red: both *creates nothing*
+tests, and `findingAnUnknownDeviceIsNull` as well — `resolve` mints a profile and returns it, so the
+null assertion fails too. This Proof said two before the work was done; the coder ran the mutation
+and reported the third. The property it argues for is unchanged: a bare *finds what it resolved*
+pair would still not be enough on its own.
 
 ## Notes
 

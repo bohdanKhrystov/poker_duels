@@ -27,4 +27,11 @@ internal class InMemoryPlayerDirectory : PlayerDirectory {
             )
         }
     }
+
+    /**
+     * Find the player profile bound to a device id, without creating one.
+     *
+     * A plain map read: an unknown device id answers `null` and leaves [profileCount] unchanged.
+     */
+    override suspend fun findOrNull(deviceId: DeviceId): Player? = players[deviceId]
 }
