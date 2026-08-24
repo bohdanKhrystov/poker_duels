@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040621
 title: The scenario ends with a revocation, and no identity endpoint escapes it
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -131,3 +131,27 @@ Two mutations.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This closes the enumeration gap `TASK-040511` left open.** That ticket said plainly that nothing
+enumerated "every route", so a new route file reading headers ad hoc would fail no compiler check, no
+test and no lint rule. `apiPathLiteralsInRouteSources()` now reads the four `*Routes.kt` files with
+`File.readText()` **at every test run** and asserts **set equality** against `SCENARIO_ENDPOINTS` — so
+a path added *or removed* fails the build until someone exercises it or records why it moves no coin.
+A test rather than a `verify:` grep, deliberately: a grep gate runs once at landing, because CI runs
+`lint backlog`, `client` and `check` and never a ticket's verify block.
+
+**The vacuity guard was tested, not assumed.** A scanner that finds nothing would make the comparison
+trivially satisfiable. The reviewer mutated the path regex to match nothing: both the enumeration test
+and `theEnumerationFoundTheEndpointsItIsChecking` reddened, and the guard asserts against the
+**scanned** set (`sourcePaths.isNotEmpty()`), not the constant.
+
+**Two limits, both in the KDoc.** The test proves the scenario *calls* a path, not that the call would
+expose a defect; and a path built from constants rather than a literal escapes the scanner. No route
+file builds one today, so the second is a future risk rather than a live hole.
+
+**Most of the suite is indifferent to the binding write, by design.** Commenting out
+`revokeLiveBinding` reddens only `revokingChangesExactlyOneBindingColumn` — which is precisely why
+that test exists beside the byte-identical one, as the ticket's Proof states.
+
