@@ -44,6 +44,7 @@ public data class ServerComponents(
     val identities: IdentityResolver,
     val sessions: AuthSessions,
     val signUpBudget: AttemptBudget,
+    val signInBudget: AttemptBudget,
 )
 
 /**
@@ -102,7 +103,11 @@ public fun serverComponents(
     val standings = PostgresStandingsReads(dataSource)
     // The ServerClock this server already holds for room timeouts, not the wall clock: ADR-0055
     // §2 requires a monotonic source, since an NTP step must never widen or void a budget window.
+    // ADR-0074 §1 requires the same discipline for sign-in, over its own limits and its own
+    // AttemptBudget instance — one instance shared between the two endpoints would let sign-ups
+    // spend sign-in's budget and the reverse.
     val signUpBudget = AttemptBudget(config.signUpLimits(), clock)
+    val signInBudget = AttemptBudget(config.signInLimits(), clock)
 
     return ServerComponents(
         socket = socket,
@@ -114,5 +119,6 @@ public fun serverComponents(
         identities = identities,
         sessions = authSessions,
         signUpBudget = signUpBudget,
+        signInBudget = signInBudget,
     )
 }

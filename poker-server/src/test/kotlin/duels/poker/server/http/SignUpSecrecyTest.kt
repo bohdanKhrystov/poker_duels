@@ -142,6 +142,7 @@ class SignUpSecrecyTest {
                     identitiesFor(reads.profiles),
                     NoAuthSessions,
                     AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                    AttemptBudget(AttemptLimits(10, 60_000L), MutableClock()),
                 )
             }
             val response = client.post("/api/auth/sign-up") {
@@ -162,6 +163,7 @@ class SignUpSecrecyTest {
                     identitiesFor(reads.profiles),
                     NoAuthSessions,
                     AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                    AttemptBudget(AttemptLimits(10, 60_000L), MutableClock()),
                 )
             }
             // SignUpRequest has no playerId field, so this fails to decode — the same mechanism
@@ -188,6 +190,7 @@ class SignUpSecrecyTest {
                     identitiesFor(reads.profiles),
                     NoAuthSessions,
                     AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                    AttemptBudget(AttemptLimits(10, 60_000L), MutableClock()),
                 )
             }
             // "ab" fails signUpFieldsOf's own rule (proven by
@@ -213,6 +216,7 @@ class SignUpSecrecyTest {
                     identitiesFor(reads.profiles),
                     NoAuthSessions,
                     AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                    AttemptBudget(AttemptLimits(10, 60_000L), MutableClock()),
                 )
             }
             // One code point under the floor (proven by
@@ -239,6 +243,7 @@ class SignUpSecrecyTest {
                     identitiesFor(reads.profiles),
                     NoAuthSessions,
                     AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                    AttemptBudget(AttemptLimits(10, 60_000L), MutableClock()),
                 )
             }
             val response = client.post("/api/auth/sign-up") {
@@ -260,6 +265,7 @@ class SignUpSecrecyTest {
                     identitiesFor(reads.profiles),
                     NoAuthSessions,
                     AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                    AttemptBudget(AttemptLimits(10, 60_000L), MutableClock()),
                 )
             }
             val response = client.post("/api/auth/sign-up") {
@@ -281,6 +287,7 @@ class SignUpSecrecyTest {
                     identitiesFor(reads.profiles),
                     NoAuthSessions,
                     AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                    AttemptBudget(AttemptLimits(10, 60_000L), MutableClock()),
                 )
             }
             val response = client.post("/api/auth/sign-up") {

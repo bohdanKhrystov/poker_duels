@@ -34,7 +34,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // A well-formed, entirely valid body: a wrong implementation that reached the guard
             // or the write would answer 201/409, not 401 — this 401 can only have come from the
@@ -57,7 +64,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // A header of only whitespace: DeviceId's init rejects a blank value, so without the
             // isNotBlank guard this would throw and answer 500, not 401.
@@ -78,7 +92,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // A malformed body: a wrong implementation that only checked the header's presence
             // before decoding, deferring the profile lookup until after, would answer 400 here —
@@ -103,7 +124,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -124,7 +152,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -145,7 +180,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // An unrecognised field: a client cannot assert an identity even by trying, because
             // SignUpRequest has no playerId field to decode one into.
@@ -168,7 +210,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // The single most important test in the ticket: no device id, and a body that cannot
             // even decode. The wrong implementation this must fail against is one that decodes
@@ -192,7 +241,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // The body decodes fine, but its handle fails signUpFieldsOf's own rule, which would
             // answer 400 once identity is known. A wrong implementation that judged fields before
@@ -216,7 +272,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -235,7 +298,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // Bob_1 changes under the fold, so a handler that skipped folding would fail here even
             // though it would pass with an already-lowercase handle. The player id must be the
@@ -264,7 +334,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials(holds = true)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // holds = true: the guard alone must stop the write. createCalls staying empty proves
             // no Argon2 work was spent (ADR-0030 §1); holdsCalls being non-empty proves the guard
@@ -288,7 +365,14 @@ class AuthRouteTest {
                 RecordingCredentials(createResult = CreateCredentialResult.IdentifierTaken)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // The guard passes (holds = false, the default) but the write itself reports the
             // identifier taken — the same 409 as the case above, reached by a different branch.
@@ -308,7 +392,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             // "ab" fails signUpFieldsOf's own rule, after identity and decoding both already
             // succeeded. A refusal that still costs a round trip to either port is a refusal that
@@ -334,7 +425,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -352,7 +450,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -372,7 +477,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, freshSignUpBudget())
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -393,7 +505,14 @@ class AuthRouteTest {
             val budget = AttemptBudget(AttemptLimits(5, 900_000L), MutableClock())
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             // Five requests spend the whole budget; a route that never checked it would answer
             // 201 a sixth time too, which is exactly the attack ADR-0055 §1 closes.
@@ -423,7 +542,14 @@ class AuthRouteTest {
             val budget = AttemptBudget(AttemptLimits(5, 900_000L), MutableClock())
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             repeat(5) {
                 client.post("/api/auth/sign-up") {
@@ -458,7 +584,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials(holds = true)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             // Five requests that all stop at the guard, before the budget is ever consulted.
             repeat(5) {
@@ -476,7 +609,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             // The same shared budget, a sixth request, this time reaching create: 201, not 429,
             // proves the five 409s above spent none of the five slots.
@@ -500,7 +640,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             repeat(5) {
                 val response = client.post("/api/auth/sign-up") {
@@ -517,7 +664,14 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "carol")
@@ -529,7 +683,11 @@ class AuthRouteTest {
     }
 
     @Test
-    fun twoAddressesHaveTwoBudgets() {
+    fun twoAddressesHaveTwoSignUpBudgets() {
+        // Renamed from twoAddressesHaveTwoBudgets (its name before this ticket) to make room for
+        // this ticket's own twoAddressesHaveTwoBudgets, which proves the same property for sign-in;
+        // the two Tests tables would otherwise collide on one method name in one class.
+        //
         // AttemptBudget is keyed by call.request.origin.remoteAddress, which Ktor's test client
         // always reports as "localhost" — so each block below installs its own intercept that
         // overwrites the call's origin before authRoutes ever sees it. AuthRoutes.kt itself reads
@@ -545,7 +703,14 @@ class AuthRouteTest {
                 intercept(ApplicationCallPipeline.Plugins) {
                     call.mutableOriginConnectionPoint.remoteAddress = "203.0.113.10"
                 }
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             // Five requests exhaust this address's whole budget.
             repeat(5) {
@@ -566,7 +731,14 @@ class AuthRouteTest {
                 intercept(ApplicationCallPipeline.Plugins) {
                     call.mutableOriginConnectionPoint.remoteAddress = "203.0.113.20"
                 }
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             // A different address's first request, against the very same budget instance, still
             // reaches create — proving the key that separates them was actually read from the
@@ -589,7 +761,14 @@ class AuthRouteTest {
             val budget = AttemptBudget(AttemptLimits(5, 900_000L), clock)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions, budget)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    budget,
+                    freshSignInBudget(),
+                )
             }
             repeat(5) {
                 client.post("/api/auth/sign-up") {
@@ -632,6 +811,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             val response = client.post("/api/auth/sign-in") {
@@ -670,6 +850,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             val response = client.post("/api/auth/sign-in") {
@@ -691,6 +872,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             val response = client.post("/api/auth/sign-in") {
@@ -717,6 +899,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     RecordingAuthSessions(),
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             val response = client.post("/api/auth/sign-in") {
@@ -736,6 +919,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     RecordingAuthSessions(),
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             val response = client.post("/api/auth/sign-in") {
@@ -765,6 +949,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     RecordingAuthSessions(),
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             // "!!" fails loginHandleOrNull's own character rule before any credential is consulted.
@@ -790,6 +975,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     RecordingAuthSessions(),
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             val response = client.post("/api/auth/sign-in") {
@@ -815,6 +1001,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             val response = client.post("/api/auth/sign-in") {
@@ -839,6 +1026,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             val response = client.post("/api/auth/sign-in") {
@@ -865,6 +1053,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             // First sign in to get a token
@@ -900,6 +1089,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             // First sign in to get a token
@@ -944,6 +1134,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             // Sign out with no Authorization header at all
@@ -968,6 +1159,7 @@ class AuthRouteTest {
                     identitiesFor(emptyMap()),
                     sessions,
                     freshSignUpBudget(),
+                    freshSignInBudget(),
                 )
             }
             // Issue two tokens: first one for alice, second one for alice again
@@ -990,6 +1182,349 @@ class AuthRouteTest {
             assertEquals(PlayerId("p-alice"), sessions.playerOf(secondToken))
         }
     }
+
+    @Test
+    fun anOverBudgetSignInIsIndistinguishableFromAWrongPassword() {
+        val credentials = SignInCredentials(mapOf("alice" to ("correctpassword1" to PlayerId("p-alice"))))
+
+        lateinit var wrongPassword: SignInOutcome
+        testApplication {
+            application {
+                module()
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    freshSignUpBudget(),
+                    freshSignInBudget(),
+                )
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"wrongpassword1"}""")
+            }
+            wrongPassword = SignInOutcome(response.status, response.bodyAsText(), response.headers.names())
+        }
+
+        lateinit var overBudget: SignInOutcome
+        testApplication {
+            val signInBudget = AttemptBudget(AttemptLimits(10, 60_000L), MutableClock())
+            application {
+                module()
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    freshSignUpBudget(),
+                    signInBudget,
+                )
+            }
+            // Ten wrong passwords exhaust the budget; the eleventh is refused by the budget alone,
+            // never reaching the credential.
+            repeat(10) {
+                client.post("/api/auth/sign-in") {
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"handle":"alice","password":"wrongpassword1"}""")
+                }
+            }
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"wrongpassword1"}""")
+            }
+            overBudget = SignInOutcome(response.status, response.bodyAsText(), response.headers.names())
+        }
+
+        // Two separate "is 401" checks would still pass for a route that told the two cases apart
+        // by body or header; comparing the outcomes to each other is what a stranger actually sees.
+        assertEquals(HttpStatusCode.Unauthorized, wrongPassword.status)
+        assertEquals(wrongPassword.status, overBudget.status)
+        assertEquals(wrongPassword.body, overBudget.body)
+        assertEquals(wrongPassword.headerNames, overBudget.headerNames)
+    }
+
+    @Test
+    fun aSuccessfulSignInSpendsNoBudget() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("correctpassword1" to PlayerId("p-alice"))))
+            val signInBudget = AttemptBudget(AttemptLimits(10, 60_000L), MutableClock())
+            application {
+                module()
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    freshSignUpBudget(),
+                    signInBudget,
+                )
+            }
+            // Eleven correct sign-ins in a row: one more than signInMaxAttempts (10). Every
+            // success refunds its own reservation, so the budget never actually depletes — a
+            // missing `refund` would leave the tenth reservation spent and the eleventh over
+            // budget, answering 401 instead of 200.
+            repeat(11) {
+                val response = client.post("/api/auth/sign-in") {
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"handle":"alice","password":"correctpassword1"}""")
+                }
+                assertEquals(HttpStatusCode.OK, response.status)
+            }
+        }
+    }
+
+    @Test
+    fun theEleventhWrongPasswordInsideTheWindowIsRefusedWithoutHashing() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("correctpassword1" to PlayerId("p-alice"))))
+            val sessions = RecordingAuthSessions()
+            val signInBudget = AttemptBudget(AttemptLimits(10, 60_000L), MutableClock())
+            application {
+                module()
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    sessions,
+                    freshSignUpBudget(),
+                    signInBudget,
+                )
+            }
+            repeat(10) {
+                val response = client.post("/api/auth/sign-in") {
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"handle":"alice","password":"wrongpassword1"}""")
+                }
+                assertEquals(HttpStatusCode.Unauthorized, response.status)
+            }
+            assertEquals(10, credentials.verifyCalls.size)
+
+            // The eleventh attempt presents the RIGHT password. If the budget were consulted after
+            // verification instead of before it, this would answer 200 — the credential alone would
+            // decide, and the over-budget refusal this test exists to prove would never fire.
+            val eleventh = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"correctpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, eleventh.status)
+            // The call count is what proves it was the budget and not the credential: verify was
+            // never reached for the eleventh attempt, so no hash ran for it.
+            assertEquals(10, credentials.verifyCalls.size)
+            assertTrue(sessions.issued.isEmpty())
+        }
+    }
+
+    @Test
+    fun theWindowRollsForwardAfterSixtySeconds() {
+        testApplication {
+            val credentials = SignInCredentials(mapOf("alice" to ("correctpassword1" to PlayerId("p-alice"))))
+            val clock = MutableClock()
+            val signInBudget = AttemptBudget(AttemptLimits(10, 60_000L), clock)
+            application {
+                module()
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    freshSignUpBudget(),
+                    signInBudget,
+                )
+            }
+            repeat(10) {
+                client.post("/api/auth/sign-in") {
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"handle":"alice","password":"wrongpassword1"}""")
+                }
+            }
+            val stillInsideWindow = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"correctpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, stillInsideWindow.status)
+
+            // Past the window's own 60,000 ms: every wrong attempt recorded above is now stale, so
+            // the right password is admitted again.
+            clock.advance(60_000L)
+            val afterTheWindowRolls = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"correctpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.OK, afterTheWindowRolls.status)
+        }
+    }
+
+    @Test
+    fun twoAddressesHaveTwoBudgets() {
+        // AttemptBudget is keyed by call.request.origin.remoteAddress, which Ktor's test client
+        // always reports as "localhost" — so each block below installs its own intercept that
+        // overwrites the call's origin before authRoutes ever sees it, exactly as
+        // twoAddressesHaveTwoSignUpBudgets does for sign-up.
+        val credentials = SignInCredentials(mapOf("alice" to ("correctpassword1" to PlayerId("p-alice"))))
+        val signInBudget = AttemptBudget(AttemptLimits(10, 60_000L), MutableClock())
+
+        testApplication {
+            application {
+                module()
+                intercept(ApplicationCallPipeline.Plugins) {
+                    call.mutableOriginConnectionPoint.remoteAddress = "203.0.113.10"
+                }
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    freshSignUpBudget(),
+                    signInBudget,
+                )
+            }
+            // Ten wrong passwords exhaust this address's whole sign-in budget.
+            repeat(10) {
+                val response = client.post("/api/auth/sign-in") {
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"handle":"alice","password":"wrongpassword1"}""")
+                }
+                assertEquals(HttpStatusCode.Unauthorized, response.status)
+            }
+        }
+
+        testApplication {
+            application {
+                module()
+                intercept(ApplicationCallPipeline.Plugins) {
+                    call.mutableOriginConnectionPoint.remoteAddress = "203.0.113.20"
+                }
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    freshSignUpBudget(),
+                    signInBudget,
+                )
+            }
+            // A different address's first attempt, against the very same signInBudget instance,
+            // still succeeds on its own merits — proving the key that separates them was actually
+            // read from the request rather than being a single counter shared by everyone.
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"alice","password":"correctpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+        }
+    }
+
+    @Test
+    fun signUpAndSignInDoNotShareABudget() {
+        // Direction one: sign-up's budget exhausted, sign-in unaffected.
+        val exhaustedSignUpBudget = AttemptBudget(AttemptLimits(1, 900_000L), MutableClock())
+        val untouchedSignInBudget = AttemptBudget(AttemptLimits(1, 900_000L), MutableClock())
+
+        testApplication {
+            val reads = FixedProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+            val credentials = RecordingCredentials()
+            application {
+                module()
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    exhaustedSignUpBudget,
+                    untouchedSignInBudget,
+                )
+            }
+            val first = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"bob","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.Created, first.status)
+            val second = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"carol","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.TooManyRequests, second.status)
+        }
+
+        testApplication {
+            val credentials = SignInCredentials(mapOf("dave" to ("davepassword1" to PlayerId("p-dave"))))
+            application {
+                module()
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    exhaustedSignUpBudget,
+                    untouchedSignInBudget,
+                )
+            }
+            // The same exhaustedSignUpBudget instance from above; sign-in reads only
+            // untouchedSignInBudget, so it must still answer on its own merits.
+            val response = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"dave","password":"davepassword1"}""")
+            }
+            assertEquals(HttpStatusCode.OK, response.status)
+        }
+
+        // Direction two: sign-in's budget exhausted, sign-up unaffected.
+        val exhaustedSignInBudget = AttemptBudget(AttemptLimits(1, 900_000L), MutableClock())
+        val untouchedSignUpBudget = AttemptBudget(AttemptLimits(1, 900_000L), MutableClock())
+
+        testApplication {
+            val credentials = SignInCredentials(mapOf("erin" to ("erinpassword1" to PlayerId("p-erin"))))
+            application {
+                module()
+                authRoutes(
+                    FixedProfileReads(emptyMap()),
+                    credentials,
+                    identitiesFor(emptyMap()),
+                    RecordingAuthSessions(),
+                    untouchedSignUpBudget,
+                    exhaustedSignInBudget,
+                )
+            }
+            // A wrong password spends sign-in's only slot; a failure never refunds it.
+            val wrong = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"erin","password":"wrongpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, wrong.status)
+            val exhausted = client.post("/api/auth/sign-in") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"erin","password":"erinpassword1"}""")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, exhausted.status)
+        }
+
+        testApplication {
+            val reads = FixedProfileReads(mapOf("frank" to profileResponse("p-frank", 0)))
+            val credentials = RecordingCredentials()
+            application {
+                module()
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    untouchedSignUpBudget,
+                    exhaustedSignInBudget,
+                )
+            }
+            // The same exhaustedSignInBudget instance from above; sign-up reads only
+            // untouchedSignUpBudget, so it must still answer on its own merits.
+            val response = client.post("/api/auth/sign-up") {
+                header(DEVICE_ID_HEADER, "frank")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"handle":"gina","password":"hunter2222"}""")
+            }
+            assertEquals(HttpStatusCode.Created, response.status)
+        }
+    }
 }
 
 /**
@@ -997,6 +1532,13 @@ class AuthRouteTest {
  * itself about the budget — each sends at most one sign-up per address, so it never sees a `429`.
  */
 private fun freshSignUpBudget(): AttemptBudget = AttemptBudget(AttemptLimits(5, 900_000L), MutableClock())
+
+/**
+ * A fresh sign-in budget, never close to exhausted, for every test in this file that is not
+ * itself about sign-in's own budget — each sends at most a couple of sign-ins per address, so it
+ * never sees the over-budget answer.
+ */
+private fun freshSignInBudget(): AttemptBudget = AttemptBudget(AttemptLimits(10, 900_000L), MutableClock())
 
 /**
  * The fields of a sign-in response worth comparing between two requests: status, body text and

@@ -88,6 +88,7 @@ public fun Application.duelServer(
         components.identities,
         components.sessions,
         components.signUpBudget,
+        components.signInBudget,
     )
     profileRoutes(components.reads, components.writes, components.identities)
     standingsRoutes(components.reads, components.standings, components.wallClock, components.identities)

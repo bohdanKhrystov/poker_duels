@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040523
 title: Sign-in carries a budget of its own
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -112,3 +112,26 @@ right password on the eleventh attempt.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Refunding twice on success is caught by nothing, and that is `TASK-040526`.** The dangerous
+direction is gated — an unconditional refund on the *failure* path reddens three tests, so an
+attacker cannot hand themselves back every wrong password. The opposite is invisible:
+`AttemptBudget.refund` guards underflow, and every sequential request in this suite drains its window
+to empty via the first legitimate refund, so a second call finds nothing to remove. Catching it needs
+an under-budget success with **earlier attempts still live in the window** — a user who mistypes
+twice and then succeeds. The coder wrote the bug, got `BUILD SUCCESSFUL`, and reported it rather than
+adding a seventh test outside this ticket's table.
+
+**Metering is gated by `assertEquals(10, credentials.verifyCalls.size)`**, not by a status code.
+Moving `admit` after `credentials.verify` reddens only
+`theEleventhWrongPasswordInsideTheWindowIsRefusedWithoutHashing`, on that count — the adjacent 401
+assertion passes either way, because a 401 is a 401 whether the hash ran or not.
+
+**A pre-existing sign-up test was renamed.** `twoAddressesHaveTwoBudgets` collided with this ticket's
+required sign-in test of the same name, so the sign-up one became
+`twoAddressesHaveTwoSignUpBudgets`; the reviewer confirmed only the identifier and its comment
+changed. `TASK-040521`'s Tests table still names the old identifier, and is now stale in that one
+respect.
+

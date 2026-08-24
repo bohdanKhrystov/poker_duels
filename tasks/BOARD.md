@@ -1835,9 +1835,10 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040520](tasks/TASK-040520-the-sign-up-budget-is-two-config-values.md) The two auth budgets are four configuration values with defaults | S | done |
 | | [TASK-040521](tasks/TASK-040521-sign-up-over-budget-answers-429.md) Sign-up over budget answers 429, and the budget meters the hash | S | done |
 | | [TASK-040522](tasks/TASK-040522-the-document-names-the-seventh-answer.md) The document names sign-up's seventh answer | XS | done |
-| | [TASK-040523](tasks/TASK-040523-sign-in-carries-a-budget-of-its-own.md) Sign-in carries a budget of its own | S | **ready** |
-| | [TASK-040524](tasks/TASK-040524-signed-in-here-reading-there-against-the-database.md) Signed in here, reading there — the whole flow against the database | S | backlog |
+| | [TASK-040523](tasks/TASK-040523-sign-in-carries-a-budget-of-its-own.md) Sign-in carries a budget of its own | S | done |
+| | [TASK-040524](tasks/TASK-040524-signed-in-here-reading-there-against-the-database.md) Signed in here, reading there — the whole flow against the database | S | **ready** |
 | | [TASK-040525](tasks/TASK-040525-a-blank-credential-is-invalid-not-absent.md) A blank credential is invalid, not absent | XS | backlog |
+| | [TASK-040526](tasks/TASK-040526-a-refund-returns-one-slot-even-with-a-window-behind-it.md) A refund returns one slot even with a window behind it | XS | backlog |
 | [STORY-0406](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) The claim proven, and the device binding revoked (needs `STORY-0405`) | | | backlog |
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
 | **[STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md)** Duel history, paged over the whole record | | | **done** |
