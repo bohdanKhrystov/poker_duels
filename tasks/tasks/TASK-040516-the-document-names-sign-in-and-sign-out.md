@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040516
 title: The document names sign-in and sign-out, and the test that reads it keeps its bearings
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -81,9 +81,24 @@ methods are added in the shape the file already uses.
 
 ## Proof
 
-Add the two sections to `docs/protocol.md` **without** touching the test and
+~~Add the two sections to `docs/protocol.md` **without** touching the test and
 `theSignUpSectionIsStillWhereItWas` — or, before it exists, several of the merged sign-up
-assertions — go red immediately. That failure is the reason this ticket names the test file at all.
+assertions — go red immediately.~~ **Run, and the suite stays green at 24 of 24.**
+`sectionBetween` finds its end marker with `indexOf`, so an unchained `signUpSection` grows into a
+**superset** that swallows the new sections rather than emptying — and no pre-existing assertion
+checks for the absence of extra content, so nothing notices.
+
+That is worse than the Proof imagined, and it is the reason this ticket names the test file: a
+section that absorbs its neighbour lets *"the sign-up section says 201"* pass because the **sign-in**
+section says it. The markers must chain — each section ending where the next begins — and after this
+ticket they do: sign-up ends at `### Sign in`, sign-in at `### Sign out`, sign-out at
+`### Profile endpoint`. The reviewer confirmed no assertion can be satisfied by a neighbouring
+section.
+
+**Known gap, not fixed here.** This test asserts a hard-coded list of substrings and never
+enumerates the server's registered routes — unlike `ProtocolDocumentationTest`, which reflects over
+`ClientMessage`/`ServerMessage`. **A new endpoint left undocumented fails nothing.** Pre-existing,
+out of this ticket's scope, and worth its own ticket.
 
 ## Definition of done
 
