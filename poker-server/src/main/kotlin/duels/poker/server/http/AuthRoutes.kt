@@ -53,10 +53,18 @@ import kotlinx.coroutines.CancellationException
  * and no `Authorization` header are read, so a browser that has never connected can still recover
  * an account (`ADR-0030` §2).
  *
+ * Finally installs `POST /api/auth/sign-out`, which deletes the presented session token and
+ * answers `204 No Content` whether or not a session existed — an absent token is not an error
+ * (`ADR-0030` §3). It closes no sockets: a socket opened as player `Q` stays `Q` until it closes,
+ * because tearing one down would abandon a seat mid-duel and `ADR-0013`'s grace period would then
+ * fold it — an authentication operation that costs a coin. The client closes its own socket and
+ * reconnects; the server revokes future authentications only.
+ *
  * @param reads The port for resolving the calling identity's profile.
  * @param credentials The port for checking and creating password credentials.
  * @param identities The port that resolves a session token or a device id into a player.
- * @param sessions The port for issuing a session token once sign-in's credential succeeds.
+ * @param sessions The port for issuing a session token once sign-in's credential succeeds, and for
+ *     deleting a session token on sign-out.
  */
 public fun Application.authRoutes(
     reads: ProfileReads,
@@ -130,6 +138,16 @@ public fun Application.authRoutes(
             }
             val token = sessions.issue(playerId)
             call.respond(HttpStatusCode.OK, SignInResponse(token.value))
+        }
+        post("/api/auth/sign-out") {
+            // Delete the presented token, if any. An absent token is not an error: answering 204
+            // whether or not a row was deleted keeps sign-out idempotent, and a 404 for unknown
+            // would tell a caller which tokens exist (ADR-0030 §3).
+            val token = call.sessionTokenOrNull()
+            if (token != null) {
+                sessions.delete(token)
+            }
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }
