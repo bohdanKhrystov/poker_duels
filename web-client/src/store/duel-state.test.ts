@@ -50,6 +50,7 @@ describe("the duel state", () => {
       rivalPresence: null,
       graceRemainingMillis: null,
       presenceCount: 0,
+      rivalReturned: false,
     });
   });
 
@@ -1095,5 +1096,139 @@ describe("the duel state", () => {
     });
     expect(stateAfterTurn.rivalPresence).toBe("AWAY");
     expect(stateAfterTurn.graceRemainingMillis).toBe(47000);
+  });
+
+  it("a rival who was away and is present again has come back", () => {
+    const stateAfterAway = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      },
+    );
+    const state = duelState.applyServerMessage(stateAfterAway, {
+      type: "OpponentPresence",
+      presence: "PRESENT",
+      graceRemainingMillis: null,
+    });
+    expect(state.rivalReturned).toBe(true);
+    expect(state.rivalPresence).toBe("PRESENT");
+  });
+
+  it("a rival who timed out and is present again has come back", () => {
+    const stateAfterAbsent = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "OpponentPresence",
+        presence: "ABSENT",
+        graceRemainingMillis: null,
+      },
+    );
+    const state = duelState.applyServerMessage(stateAfterAbsent, {
+      type: "OpponentPresence",
+      presence: "PRESENT",
+      graceRemainingMillis: null,
+    });
+    expect(state.rivalReturned).toBe(true);
+  });
+
+  it("a presence that never changed is no return", () => {
+    // ADR-0046 §2's trap: a resuming client is always sent its rival's current presence,
+    // PRESENT included, with no AWAY or ABSENT before it in this client's history.
+    const stateAfterFirstPresent = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "OpponentPresence",
+        presence: "PRESENT",
+        graceRemainingMillis: null,
+      },
+    );
+    expect(stateAfterFirstPresent.rivalReturned).toBe(false);
+    const state = duelState.applyServerMessage(stateAfterFirstPresent, {
+      type: "OpponentPresence",
+      presence: "PRESENT",
+      graceRemainingMillis: null,
+    });
+    expect(state.rivalReturned).toBe(false);
+  });
+
+  it("the next snapshot ends the return and leaves the presence", () => {
+    const stateAfterAway = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      },
+    );
+    const stateAfterReturn = duelState.applyServerMessage(stateAfterAway, {
+      type: "OpponentPresence",
+      presence: "PRESENT",
+      graceRemainingMillis: null,
+    });
+    expect(stateAfterReturn.rivalReturned).toBe(true);
+    const stateAfterSnapshot = duelState.applyServerMessage(stateAfterReturn, {
+      type: "Snapshot",
+      view: samplePlayerView(),
+    });
+    expect(stateAfterSnapshot.rivalReturned).toBe(false);
+    expect(stateAfterSnapshot.rivalPresence).toBe("PRESENT");
+
+    // A snapshot applied after AWAY alone changes nothing else: rivalPresence and
+    // graceRemainingMillis stay exactly what the last OpponentPresence stated.
+    const stateAfterAwayAlone = duelState.applyServerMessage(stateAfterAway, {
+      type: "Snapshot",
+      view: samplePlayerView(),
+    });
+    expect(stateAfterAwayAlone.rivalPresence).toBe("AWAY");
+    expect(stateAfterAwayAlone.graceRemainingMillis).toBe(47000);
+  });
+
+  it("a resume states the presence after its own snapshot", () => {
+    // RoomRegistry.resume sends resumeFrames(runner, seat) + presence, so a resuming client
+    // sees the Snapshot before the OpponentPresence that reports the return.
+    const stateAfterAway = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      },
+    );
+    const stateAfterSnapshot = duelState.applyServerMessage(stateAfterAway, {
+      type: "Snapshot",
+      view: samplePlayerView(),
+    });
+    const state = duelState.applyServerMessage(stateAfterSnapshot, {
+      type: "OpponentPresence",
+      presence: "PRESENT",
+      graceRemainingMillis: null,
+    });
+    expect(state.rivalReturned).toBe(true);
+  });
+
+  it("going away again is not a return", () => {
+    const stateAfterAway = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      },
+    );
+    const stateAfterReturn = duelState.applyServerMessage(stateAfterAway, {
+      type: "OpponentPresence",
+      presence: "PRESENT",
+      graceRemainingMillis: null,
+    });
+    expect(stateAfterReturn.rivalReturned).toBe(true);
+    const state = duelState.applyServerMessage(stateAfterReturn, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 47000,
+    });
+    expect(state.rivalReturned).toBe(false);
+    expect(state.rivalPresence).toBe("AWAY");
   });
 });

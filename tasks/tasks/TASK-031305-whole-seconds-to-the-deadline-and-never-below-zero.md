@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031305
 title: Whole seconds to the deadline, and never below zero
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: XS

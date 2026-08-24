@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031304
 title: A rival is back only if this client saw them go
 type: task
-status: ready
+status: done
 parent: STORY-0313
 module: web-client
 estimate: S
@@ -14,7 +14,7 @@ labels: [client, store, presence]
 depends_on: [TASK-031303]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +596 passed \(596\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +597 passed \(597\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'a rival who was away and is present again has come back'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'a rival who timed out and is present again has come back'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'a presence that never changed is no return'
@@ -118,13 +118,13 @@ modified.
 | `a resume states the presence after its own snapshot` | `AWAY(47000)`, then `Snapshot`, then `PRESENT(null)` — the order `RoomRegistry.resume` actually sends — leaves `rivalReturned` `true`. A reducer that cleared the flag on the frame *after* the presence would fail; so would one that read the presence from before the snapshot wrongly |
 | `going away again is not a return` | after `AWAY` → `PRESENT` (flag `true`), a further `AWAY(47000)` leaves `rivalReturned` `false` and `rivalPresence` `"AWAY"` |
 
-Six tests. Five hundred and ninety exist after `TASK-031303`, so the suite reports **596**.
+Six tests. Five hundred and ninety-one exist after `TASK-031303`, so the suite reports **597**.
 
 ## Proof
 
 | Command | Proves |
 | --- | --- |
-| `Tests 596 passed (596)` | six ran, the modified one still runs, and nothing else moved |
+| `Tests 597 passed (597)` | six ran, the modified one still runs, and nothing else moved |
 | the six `--reporter=verbose` greps | each exists by name |
 | `npm run check` | `rivalReturned` typechecks as `boolean` at every read |
 
@@ -137,7 +137,10 @@ Six tests. Five hundred and ninety exist after `TASK-031303`, so the suite repor
    present again has come back` fails with `false` against `true`, and every other test still
    passes. Revert.
 3. Add `rivalPresence: null` to the `Snapshot` case → `the next snapshot ends the return and leaves
-   the presence` fails on its second assertion, `null` against `"PRESENT"`. Revert.
+   the presence` fails on its second assertion, `null` against `"PRESENT"`. Two further tests fail
+   with it — `presence persists through snapshot and turn` and `a resume states the presence after
+   its own snapshot` — because this edit breaks `ADR-0075`'s rule outright rather than only this
+   ticket's half of it. Revert.
 
 Quote all three in the PR: edits 1 and 2 are opposite directions of the same condition, and one of
 them alone leaves half of it unpinned.
@@ -155,7 +158,7 @@ them alone leaves half of it unpinned.
 - [ ] The four tests `TASK-031303` added are byte-identical to what it merged
 - [ ] `duel-state.ts` sets `rivalReturned` from `message.presence` and `state.rivalPresence` only —
       no literal, no `mySeat`, no clock
-- [ ] `npm run --silent test` reports `Tests  596 passed (596)`
+- [ ] `npm run --silent test` reports `Tests  597 passed (597)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
