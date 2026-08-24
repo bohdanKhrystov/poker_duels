@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040608
 title: Revoking is one UPDATE and one DELETE, in one transaction
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
