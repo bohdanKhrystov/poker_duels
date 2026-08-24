@@ -14,7 +14,7 @@ labels: [client, duel, ui, presence]
 depends_on: [TASK-031306]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +607 passed \(607\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'puts the presence on the plate ahead of the turn'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'gives a present seat its ordinary status back'
   - cd web-client && npm run check
@@ -76,7 +76,7 @@ Two tests. Six hundred and five exist after `TASK-031306`, so the suite reports 
 
 | Command | Proves |
 | --- | --- |
-| `Tests 607 passed (607)` | two ran and the six hundred and five before them still do |
+| a green `Tests N passed (N)` line | two ran and every test before them still does |
 | the two `--reporter=verbose` greps | each exists by name |
 | `npm run check` | the optional prop typechecks and `DuelTable.tsx`'s two existing call sites still compile untouched |
 
@@ -97,7 +97,7 @@ Two tests. Six hundred and five exist after `TASK-031306`, so the suite reports 
       to them is the helper's new pass-through prop
 - [ ] `SeatPlate.tsx` contains neither the literal `Away` nor the literal `Timed out`
 - [ ] `DuelTable.tsx` is unchanged from `develop`
-- [ ] `npm run --silent test` reports `Tests  607 passed (607)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

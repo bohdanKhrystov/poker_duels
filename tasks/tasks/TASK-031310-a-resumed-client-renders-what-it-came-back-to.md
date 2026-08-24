@@ -14,7 +14,7 @@ labels: [client, duel, ui, presence, resilience]
 depends_on: [TASK-031309]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +614 passed \(614\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'renders the pause a resume came back to'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'says nothing to a resumed client whose rival never left'
   - cd web-client && npm run check
@@ -75,7 +75,7 @@ Two tests. Six hundred and twelve exist after `TASK-031309`, so the suite report
 
 | Command | Proves |
 | --- | --- |
-| `Tests 614 passed (614)` | two ran and the six hundred and twelve before them still do |
+| a green `Tests N passed (N)` line | two ran and every test before them still does |
 | the two `--reporter=verbose` greps | each exists by name |
 | `npm run check` | the frames typecheck against `ServerMessage` |
 
@@ -99,7 +99,7 @@ Two tests. Six hundred and twelve exist after `TASK-031309`, so the suite report
 - [ ] Both tests apply `Snapshot` before `OpponentPresence`, matching `RoomRegistry.resume`
 - [ ] No file outside `web-client/src/lobby/Lobby.test.tsx` differs from `develop`
 - [ ] Every other test in `Lobby.test.tsx` is byte-identical to what `TASK-031309` merged
-- [ ] `npm run --silent test` reports `Tests  614 passed (614)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

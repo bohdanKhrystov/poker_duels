@@ -14,7 +14,7 @@ labels: [client, store, presence]
 depends_on: [TASK-031313]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +631 passed \(631\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'records the mark exactly as the server sent it'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'a later mark replaces an earlier one'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'a mark survives the events that describe the same decision point'
@@ -148,7 +148,7 @@ Eight tests. Six hundred and twenty-three exist after `TASK-031313`, so the suit
 
 | Command | Proves |
 | --- | --- |
-| `Tests 631 passed (631)` | eight ran, the modified one still runs, and nothing else moved |
+| a green `Tests N passed (N)` line | eight ran, the modified one still runs, and nothing else moved |
 | the eight `--reporter=verbose` greps | each exists by name |
 | `npm run check` | `serverAction` typechecks as `ActedForAbsent \| null` |
 

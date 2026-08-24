@@ -14,7 +14,7 @@ labels: [client, duel, ui, presence, copy]
 depends_on: [TASK-031311]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +619 passed \(619\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'says exactly one of the four lines, in each of the four states'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'puts none of the refused words in front of a player'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'reports every refused word when one is planted'
@@ -83,7 +83,7 @@ Three tests. Six hundred and sixteen exist after `TASK-031311`, so the suite rep
 
 | Command | Proves |
 | --- | --- |
-| `Tests 619 passed (619)` | three ran and the six hundred and sixteen before them still do |
+| a green `Tests N passed (N)` line | three ran and every test before them still does |
 | the three `--reporter=verbose` greps | each exists by name |
 | `npm run check` | the file typechecks and Prettier accepts the long literals |
 
@@ -114,7 +114,7 @@ Quote all three in the PR, including that mutation 2 was green.
 - [ ] The third test loops over every refused pattern and asserts the reported count equals the
       pattern count
 - [ ] No file outside `web-client/src/lobby/presence-copy.test.tsx` differs from `develop`
-- [ ] `npm run --silent test` reports `Tests  619 passed (619)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

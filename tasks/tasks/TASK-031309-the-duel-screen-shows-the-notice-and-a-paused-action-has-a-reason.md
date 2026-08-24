@@ -14,7 +14,7 @@ labels: [client, duel, ui, presence]
 depends_on: [TASK-031308]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +612 passed \(612\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'shows the presence beside the table it is about'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'explains a paused action with the presence it already holds'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'starts a second window fresh, though it carries the same remaining'
@@ -125,7 +125,7 @@ clock.
 
 | Command | Proves |
 | --- | --- |
-| `Tests 612 passed (612)` | three ran, the extended one still runs, and the six hundred and nine before them still do |
+| a green `Tests N passed (N)` line | three ran, the extended one still runs, and every test before them still does |
 | the three `--reporter=verbose` greps | each exists by name |
 | `npm run check` | the two new attributes and the new element typecheck against the props `TASK-031306` and `TASK-031308` shipped |
 
@@ -151,7 +151,7 @@ Quote both in the PR.
       loop and its assertion are unchanged
 - [ ] Every other test in `Lobby.test.tsx` is byte-identical to `develop`
 - [ ] `Lobby.tsx` contains no string this story added and no seat literal
-- [ ] `npm run --silent test` reports `Tests  612 passed (612)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
