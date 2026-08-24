@@ -46,4 +46,30 @@ public class PostgresPlayerDirectory(private val dataSource: DataSource) : Playe
             }
         }
     }
+
+    /**
+     * Find the player profile bound to a device id, without creating one.
+     *
+     * A plain `SELECT`: no row is written, so an HTTP route resolving identity through this
+     * method cannot be used to mint a profile.
+     *
+     * @param deviceId The device identifier to look up.
+     * @return The player profile for this device, or `null` if none exists.
+     */
+    override suspend fun findOrNull(deviceId: DeviceId): Player? = withContext(Dispatchers.IO) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT id FROM player WHERE device_id = ?",
+            ).use { statement ->
+                statement.setString(1, deviceId.value)
+                statement.executeQuery().use { resultSet ->
+                    if (resultSet.next()) {
+                        Player(PlayerId(resultSet.getString(1)), deviceId)
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+    }
 }

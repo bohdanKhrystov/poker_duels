@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class PostgresPlayerDirectoryTest {
     private lateinit var dataSource: DataSource
@@ -83,6 +84,42 @@ class PostgresPlayerDirectoryTest {
         players.forEach { player ->
             assertEquals(firstPlayerId, player.id)
         }
+    }
+
+    @Test
+    fun findingAKnownDeviceAnswersTheSamePlayerResolveDid() = runBlocking {
+        val deviceId1 = DeviceId("d1")
+        val deviceId2 = DeviceId("d2")
+        val resolved1 = directory.resolve(deviceId1)
+        val resolved2 = directory.resolve(deviceId2)
+
+        val found1 = directory.findOrNull(deviceId1)
+        val found2 = directory.findOrNull(deviceId2)
+
+        assertEquals(resolved1.id, found1?.id)
+        assertEquals(resolved2.id, found2?.id)
+        assert(found1?.id != found2?.id)
+    }
+
+    @Test
+    fun findingAnUnknownDeviceIsNull() = runBlocking {
+        val found = directory.findOrNull(DeviceId("ghost"))
+
+        assertNull(found)
+    }
+
+    @Test
+    fun findingAnUnknownDeviceCreatesNothing() = runBlocking {
+        val deviceId = DeviceId("ghost")
+        val before = playerRowCount()
+
+        assertNull(directory.findOrNull(deviceId))
+        assertEquals(before, playerRowCount())
+
+        // A second lookup after the first proves the first call left no row behind for the
+        // second call to find — the property a single call cannot distinguish from a fluke.
+        assertNull(directory.findOrNull(deviceId))
+        assertEquals(before, playerRowCount())
     }
 
     private fun playerRowCount(): Int {
