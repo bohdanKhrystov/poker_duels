@@ -19,6 +19,12 @@ import kotlinx.serialization.Serializable
  *   `protocolJson`, which sets `encodeDefaults = true`, but a defaulted property would be present
  *   in every test's JSON and absent from the real response for the ~100% of players whose answer
  *   is `false`.
+ * @property deviceRouteLive Whether the caller has a live `device_binding` row: `true` when one
+ *   exists with `revoked_at IS NULL`. `false` covers two cases this field does not distinguish —
+ *   revoked, and never created — exactly as `ADR-0049` §5's uniform `204` from
+ *   `DELETE /api/me/device` does not distinguish them either. It carries no device id: a device
+ *   id is a bearer credential and never travels to a caller who did not present it. No default
+ *   value, for the same `encodeDefaults` reason as `displayNameRemoved` above.
  */
 @Serializable
 public data class ProfileResponse(
@@ -26,6 +32,7 @@ public data class ProfileResponse(
     val coinBalance: Int,
     val displayName: String?,
     val displayNameRemoved: Boolean,
+    val deviceRouteLive: Boolean,
 )
 
 /**

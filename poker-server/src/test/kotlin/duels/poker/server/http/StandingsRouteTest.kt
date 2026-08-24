@@ -205,12 +205,14 @@ class StandingsRouteTest {
                     coinBalance = 1000,
                     displayName = "Alice",
                     displayNameRemoved = false,
+                    deviceRouteLive = true,
                 ),
                 "device-2" to duels.poker.server.protocol.http.ProfileResponse(
                     "player-2",
                     coinBalance = 500,
                     displayName = "Bob",
                     displayNameRemoved = false,
+                    deviceRouteLive = true,
                 ),
             ),
         )
