@@ -1812,7 +1812,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040412](tasks/TASK-040412-one-credential-row-and-the-player-table-untouched.md) One credential row, and the player table untouched across it | S | **done** |
 | | [TASK-040413](tasks/TASK-040413-the-coin-a-duel-paid-survives-the-sign-up.md) The coin a duel paid is still there after the sign-up | S | **done** |
 | | [TASK-040414](tasks/TASK-040414-the-document-names-the-sign-up-endpoint.md) The document names the sign-up endpoint, and a test agrees with the code | S | **done** |
-| **[STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md)** Sign-in, the session, and what the socket presents | | | **ready** — split into 24 on 2026-08-23; `DEC-069` raised and answered by `ADR-0074` |
+| **[STORY-0405](stories/STORY-0405-sign-in-the-session-and-what-the-socket-presents.md)** Sign-in, the session, and what the socket presents | | | **done** — 26 merged (24 split on 2026-08-23, plus `TASK-040525` and `TASK-040526` filed on 2026-08-24 from gaps found by mutation); `DEC-069` answered by `ADR-0074` |
 | | [TASK-040501](tasks/TASK-040501-the-version-is-answered-before-an-identity-is-minted.md) The version question is answered before any identity is minted | S | **done** |
 | | [TASK-040502](tasks/TASK-040502-the-wire-carries-a-token-names-the-player-and-the-version-takes-its-step.md) The wire carries a session token, names the player, and PROTOCOL_VERSION takes its step | S | **done** |
 | | [TASK-040503](tasks/TASK-040503-a-mismatched-version-mints-nothing.md) A version mismatch mints no device id and creates no profile | XS | **done** |
@@ -1838,7 +1838,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040523](tasks/TASK-040523-sign-in-carries-a-budget-of-its-own.md) Sign-in carries a budget of its own | S | done |
 | | [TASK-040524](tasks/TASK-040524-signed-in-here-reading-there-against-the-database.md) Signed in here, reading there — the whole flow against the database | S | done |
 | | [TASK-040525](tasks/TASK-040525-a-blank-credential-is-invalid-not-absent.md) A blank credential is invalid, not absent | XS | done |
-| | [TASK-040526](tasks/TASK-040526-a-refund-returns-one-slot-even-with-a-window-behind-it.md) A refund returns one slot even with a window behind it | XS | **ready** |
+| | [TASK-040526](tasks/TASK-040526-a-refund-returns-one-slot-even-with-a-window-behind-it.md) A refund returns one slot even with a window behind it | XS | done |
 | [STORY-0406](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md) The claim proven, and the device binding revoked (needs `STORY-0405`) | | | backlog |
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
 | **[STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md)** Duel history, paged over the whole record | | | **done** |
