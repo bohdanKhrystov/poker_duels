@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040524
 title: Signed in here, reading there — the whole flow against the database
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
