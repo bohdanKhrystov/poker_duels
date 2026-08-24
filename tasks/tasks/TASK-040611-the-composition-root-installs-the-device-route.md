@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040611
 title: The composition root builds the bindings and installs the device route
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: XS
@@ -87,3 +87,20 @@ inequalities — which is why the first test asserts a specific status rather th
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The uninstalled-route case is caught, which is the whole point of a wiring ticket.**
+`theDeviceRouteIsInstalled` asserts `401` specifically, not "not 404" — commenting out the
+`deviceRoutes(...)` call makes it fail with `404`. `TASK-040517` was the same shape and nothing
+observed the wiring there; here something does.
+
+**The second test proves a narrower thing than its name suggests.** `GET /api/me/device` returning
+neither OK nor Unauthorized passes for `404` *or* `405`, so it says nothing about whether the route
+is installed — that is the first test's job. What it does catch is someone routing the wrong verb,
+which is real if narrow.
+
+**One `dataSource`, one `authSessions`, one `identities`.** Every Postgres collaborator receives the
+same single value, so a throwaway would have to be constructed deliberately; `bindings` is exposed as
+the `DeviceBindings` port rather than the concrete class, matching its siblings.
+

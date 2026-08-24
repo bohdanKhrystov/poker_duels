@@ -13,6 +13,7 @@ import duels.poker.server.protocol.http.StandingsResponse
 import duels.poker.server.protocol.protocolJson
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocketSession
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -173,5 +174,22 @@ class DuelServerRoutesTest {
         assertEquals(null, standings.self)
         // Season should match YYYY-MM format
         assert(standings.season.matches(Regex("""\d{4}-\d{2}""")))
+    }
+
+    @Test
+    fun theDeviceRouteIsInstalled(): Unit = testApplication {
+        application { duelServer(serverComponents(config, dataSource)) }
+        val response = client.delete("/api/me/device")
+        // A route that was never installed answers 404, which makes this falsifiable
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+    }
+
+    @Test
+    fun theDeviceRouteIsNotInstalledOnAnyOtherVerb(): Unit = testApplication {
+        application { duelServer(serverComponents(config, dataSource)) }
+        val response = client.get("/api/me/device")
+        // Only DELETE was asked for (ADR-0049 §5); assert not OK and not Unauthorized
+        assert(response.status != HttpStatusCode.OK)
+        assert(response.status != HttpStatusCode.Unauthorized)
     }
 }

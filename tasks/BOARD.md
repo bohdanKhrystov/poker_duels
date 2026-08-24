@@ -1850,8 +1850,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040608](tasks/TASK-040608-revoking-is-one-update-and-one-delete-in-one-transaction.md) Revoking is one UPDATE and one DELETE, in one transaction | S | done |
 | | [TASK-040609](tasks/TASK-040609-delete-api-me-device-takes-a-session-or-nothing.md) DELETE /api/me/device takes a session, or it takes nothing | S | done |
 | | [TASK-040610](tasks/TASK-040610-no-credential-no-revocation.md) No credential, no revocation — and the refusal writes nothing | S | done |
-| | [TASK-040611](tasks/TASK-040611-the-composition-root-installs-the-device-route.md) The composition root builds the bindings and installs the device route | XS | **ready** |
-| | [TASK-040612](tasks/TASK-040612-the-document-names-the-device-endpoint.md) The document names the device endpoint, and the section markers still chain | S | backlog |
+| | [TASK-040611](tasks/TASK-040611-the-composition-root-installs-the-device-route.md) The composition root builds the bindings and installs the device route | XS | done |
+| | [TASK-040612](tasks/TASK-040612-the-document-names-the-device-endpoint.md) The document names the device endpoint, and the section markers still chain | S | **ready** |
 | | [TASK-040613](tasks/TASK-040613-signed-out-everywhere-still-signed-in-here.md) Signed out everywhere, and still signed in here | S | backlog |
 | | [TASK-040614](tasks/TASK-040614-the-revoked-device-says-hello-and-is-a-stranger.md) The revoked device says Hello and is seated as a stranger | S | backlog |
 | | [TASK-040615](tasks/TASK-040615-revoke-then-the-password-reaches-the-same-profile.md) Revoke, then the password reaches the same profile, coins and name | S | backlog |

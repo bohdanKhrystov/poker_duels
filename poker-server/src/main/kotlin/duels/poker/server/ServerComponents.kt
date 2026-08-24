@@ -3,10 +3,12 @@ package duels.poker.server
 import duels.poker.server.auth.AttemptBudget
 import duels.poker.server.auth.AuthSessions
 import duels.poker.server.auth.Credentials
+import duels.poker.server.auth.DeviceBindings
 import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.db.PostgresAuthSessions
 import duels.poker.server.db.PostgresCredentials
+import duels.poker.server.db.PostgresDeviceBindings
 import duels.poker.server.db.PostgresDuelResultSink
 import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
@@ -45,6 +47,7 @@ public data class ServerComponents(
     val sessions: AuthSessions,
     val signUpBudget: AttemptBudget,
     val signInBudget: AttemptBudget,
+    val bindings: DeviceBindings,
 )
 
 /**
@@ -108,6 +111,7 @@ public fun serverComponents(
     // spend sign-in's budget and the reverse.
     val signUpBudget = AttemptBudget(config.signUpLimits(), clock)
     val signInBudget = AttemptBudget(config.signInLimits(), clock)
+    val bindings = PostgresDeviceBindings(dataSource)
 
     return ServerComponents(
         socket = socket,
@@ -120,5 +124,6 @@ public fun serverComponents(
         sessions = authSessions,
         signUpBudget = signUpBudget,
         signInBudget = signInBudget,
+        bindings = bindings,
     )
 }
