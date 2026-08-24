@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040603
 title: A revoked binding is final, and the database is what refuses to undo it
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
