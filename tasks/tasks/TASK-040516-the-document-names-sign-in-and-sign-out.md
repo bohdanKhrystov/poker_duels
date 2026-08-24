@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040516
 title: The document names sign-in and sign-out, and the test that reads it keeps its bearings
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
