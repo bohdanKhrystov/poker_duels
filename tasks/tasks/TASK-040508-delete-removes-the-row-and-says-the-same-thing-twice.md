@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040508
 title: delete removes the row, and says the same thing twice
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: XS
