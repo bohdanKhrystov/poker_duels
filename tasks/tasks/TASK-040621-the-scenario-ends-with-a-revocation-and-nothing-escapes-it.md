@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040621
 title: The scenario ends with a revocation, and no identity endpoint escapes it
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
