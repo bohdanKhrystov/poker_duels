@@ -757,4 +757,28 @@ describe("the lobby", () => {
     expect(forgetRoom).toHaveBeenCalledOnce();
     expect(send).not.toHaveBeenCalled();
   });
+
+  it("says the room stays open and the link still works", () => {
+    const text =
+      "The room stays open. That link still works for your rival, and it brings you back.";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    expect(screen.getByText(text)).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: "Back to the lobby" }),
+    ).toBeDefined();
+  });
+
+  it("keeps that line off the screen where there is no room", () => {
+    const text =
+      "The room stays open. That link still works for your rival, and it brings you back.";
+    renderLobby();
+
+    expect(screen.queryByText(text)).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Create a duel room" }),
+    ).toBeDefined();
+  });
 });
