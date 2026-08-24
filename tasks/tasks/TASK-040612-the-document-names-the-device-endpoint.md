@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040612
 title: The document names the device endpoint, and the section markers still chain
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -108,3 +108,24 @@ and `setNameSection` must end at `### Revoke this device`, and a reviewer reads 
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A mutation that fails to redden is evidence about the assertion.** This shipped once with that
+backwards. Two mutations did not redden — `/device` → `/devices` still contains `/device`, and
+deleting the `204` status cell left another `204` in the same row's prose — and the first response
+was to *strengthen the mutations* until they failed, which proves only that some wrong document is
+caught, not the wrong documents most likely to occur. A path gaining a plural and a table row being
+dropped are exactly the likely ones.
+
+The assertions now pin the document's own delimiting syntax: the backtick code span
+`` `DELETE /api/me/device` `` and the table-cell form `` | `204 No Content` | ``. Both original
+mutations redden. A **third** instance was found unprompted — `401` is echoed in the Authentication
+paragraph as well as the table — and `409` was pinned the same way for consistency. The reviewer
+swept all nine assertions and found no fourth.
+
+**The chain is repaired and independently verified.** Only `setNameSection`'s end marker moved, to
+`### Revoke this device`. `sectionBetween`'s slices were recomputed outside the test, confirming
+`DELETE /api/me/device` occurs once in the document and only inside `deviceSection` — so no
+assertion about a neighbour can be satisfied by this section's text.
+
