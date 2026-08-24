@@ -69,7 +69,7 @@ export function Lobby(): ReactElement {
   }
 
   if (state.roomCode !== null) {
-    return <WaitingForRival code={state.roomCode} />;
+    return <WaitingForRival code={state.roomCode} onLeave={forgetRoom} />;
   }
 
   // A player is not in a duel (view is null and roomCode is null).
@@ -156,7 +156,10 @@ function refusalMessage(error: ProtocolError): string {
  * The invite is selectable text before it is anything else: the one interaction
  * this product depends on cannot need a working clipboard.
  */
-function WaitingForRival(props: { code: string }): ReactElement {
+function WaitingForRival(props: {
+  code: string;
+  onLeave: () => void;
+}): ReactElement {
   const link = roomLink(window.location.origin, props.code);
   return (
     <section>
@@ -171,6 +174,13 @@ function WaitingForRival(props: { code: string }): ReactElement {
         onFocus={(event) => event.currentTarget.select()}
       />
       <CopyLink link={link} />
+      <a
+        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        href="/"
+        onClick={props.onLeave}
+      >
+        Back to the lobby
+      </a>
     </section>
   );
 }

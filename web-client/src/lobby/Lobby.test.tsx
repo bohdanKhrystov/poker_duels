@@ -715,6 +715,31 @@ describe("the lobby", () => {
     expect(send).toHaveBeenLastCalledWith({ type: "OfferRematch" });
   });
 
+  it("offers the way back to the lobby while the room is still waiting", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    const link = screen.getByRole("link", { name: "Back to the lobby" });
+    expect(link).toBeDefined();
+    expect(link.getAttribute("href")).toBe("/");
+    expect(link.className.split(" ")).toContain("border-hairline");
+    expect(screen.getByText("Waiting for your rival")).toBeDefined();
+  });
+
+  it("forgets the room and sends nothing when the host leaves the waiting screen", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    const { send, forgetRoom } = renderLobby(store);
+
+    const link = screen.getByRole("link", { name: "Back to the lobby" });
+    const clickReturn = fireEvent.click(link);
+
+    expect(forgetRoom).toHaveBeenCalledOnce();
+    expect(clickReturn).toBe(true);
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("forgets the room when the player takes the way back", () => {
     const store = createDuelStore();
     store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
