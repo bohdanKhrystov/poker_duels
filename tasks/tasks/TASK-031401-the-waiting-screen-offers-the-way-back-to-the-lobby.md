@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031401
 title: The waiting screen offers the way back to the lobby, and the press forgets the room
 type: task
-status: ready
+status: done
 parent: STORY-0314
 module: web-client
 estimate: S
