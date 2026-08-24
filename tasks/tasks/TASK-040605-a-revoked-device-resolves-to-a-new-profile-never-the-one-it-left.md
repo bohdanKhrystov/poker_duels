@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040605
 title: A revoked device resolves to a new, empty profile — never the one it left
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -94,3 +94,22 @@ survival as the test being dead. It guards the tombstone, not the predicate.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Idempotence is what stops a mint-always resolver, and it is genuinely proven.** "A revoked device
+gets a new profile" is satisfied by an implementation that mints a brand-new profile on *every*
+resolve — badly wrong, and invisible unless a test resolves twice and compares. The reviewer built
+that mutant and ran it: `aSecondResolveOfTheRevokedDeviceIsIdempotent` catches it, because it
+resolves twice after the revocation and asserts both calls answer the same new id.
+
+**One narrative correction.** The coder's report claimed `theRevokedBindingIsUntouchedByTheReResolve`
+also catches a mint-always resolver. It does not — it reads only the tombstone row captured before
+the revocation and never the resolve's return value, so the bug is outside what it can observe. The
+conclusion was right and the mechanism was wrong; nothing in the shipped tests asserts the wrong
+claim.
+
+**The Proof's corrected count held.** The planner's audit changed this Proof from three reddening
+tests to four before any coder saw it. Coder and reviewer independently observed exactly four, with
+`theRevokedBindingIsUntouchedByTheReResolve` green, matching line for line.
+
