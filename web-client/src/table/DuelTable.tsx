@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { PlayerView } from "../protocol";
+import type { PlayerView, SeatPresence } from "../protocol";
 import { BoardCards } from "./BoardCards";
 import { PotStrip } from "./PotStrip";
 import { SeatPlate } from "./SeatPlate";
@@ -13,7 +13,10 @@ import { formatChips } from "./chips";
  * worked out here — not the pot, not the street, not whose cards these are, and
  * not what anyone may do next.
  */
-export function DuelTable(props: { view: PlayerView }): ReactElement {
+export function DuelTable(props: {
+  view: PlayerView;
+  rivalPresence?: SeatPresence | null;
+}): ReactElement {
   const { view } = props;
   const you = view.seats.find((seat) => seat.index === view.viewerSeat);
   const rival = view.seats.find((seat) => seat.index !== view.viewerSeat);
@@ -27,6 +30,7 @@ export function DuelTable(props: { view: PlayerView }): ReactElement {
             hasButton={view.buttonSeat === rival.index}
             isToAct={view.seatToAct === rival.index}
             isViewer={false}
+            presence={props.rivalPresence ?? null}
           />
           <div className="flex justify-center gap-2 [--w:40px]">
             <Hand

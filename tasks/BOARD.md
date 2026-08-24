@@ -1690,8 +1690,8 @@ written and is still true.
 | | [TASK-031305](tasks/TASK-031305-whole-seconds-to-the-deadline-and-never-below-zero.md) Whole seconds to the deadline, and never below zero | XS | done |
 | | [TASK-031306](tasks/TASK-031306-the-notice-says-the-state-and-counts-the-window-down.md) The notice says the state and counts the window down | S | done |
 | | [TASK-031307](tasks/TASK-031307-the-plate-carries-the-presence-it-is-handed.md) The plate carries the presence it is handed | XS | done |
-| | [TASK-031308](tasks/TASK-031308-the-presence-lands-on-the-rivals-plate-whichever-seat-that-is.md) The presence lands on the rival's plate, whichever seat that is | S | **ready** |
-| | [TASK-031309](tasks/TASK-031309-the-duel-screen-shows-the-notice-and-a-paused-action-has-a-reason.md) The duel screen shows the notice, and a paused action has a reason | S | backlog |
+| | [TASK-031308](tasks/TASK-031308-the-presence-lands-on-the-rivals-plate-whichever-seat-that-is.md) The presence lands on the rival's plate, whichever seat that is | S | done |
+| | [TASK-031309](tasks/TASK-031309-the-duel-screen-shows-the-notice-and-a-paused-action-has-a-reason.md) The duel screen shows the notice, and a paused action has a reason | S | **ready** |
 | | [TASK-031310](tasks/TASK-031310-a-resumed-client-renders-what-it-came-back-to.md) A resumed client renders what it came back to, and invents no return | XS | backlog |
 | | [TASK-031311](tasks/TASK-031311-the-countdown-reaching-zero-changes-nothing-the-client-does.md) The countdown reaching zero changes nothing the client does | S | backlog |
 | | [TASK-031312](tasks/TASK-031312-the-duel-screen-says-none-of-the-words-this-copy-refuses.md) The duel screen says none of the words this copy refuses | S | backlog |
