@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040609
 title: DELETE /api/me/device takes a session, or it takes nothing
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -138,3 +138,31 @@ this route.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**`Identity.UnknownDevice` is unexercised by all six tests, and that is `TASK-040623`.** The near
+miss is instructive: `aValidTokenBesideAnUnknownDeviceStillRevokes` does present an unresolvable
+device id, but pairs it with a **valid token**, so `IdentityResolver.resolve` returns on the token
+branch before the device is looked up. Reaching `UnknownDevice` needs both halves at once — no token
+**and** an absent device. Coder and reviewer confirmed the branch is dead in tests independently.
+
+**A redundant guard was removed to restore testability.** The first draft carried
+`|| token == null` beside the `playerId == null` gate. It silently swallowed single-arm mutations of
+`Device`, `UnknownDevice` and `Anonymous` — all green — because those variants only arise when
+`token` is already null. It is now one gate plus `checkNotNull(token)` at the point of use, and the
+mutations redden. The reviewer confirmed the invariant is **structural**: `IdentityResolver` is a
+`final` concrete class with no other implementation, and those three arms are only reachable after
+the `token != null` branch falls through, so the assertion cannot throw on a real request.
+
+**The Proof's narrative is stale; its conclusion errs safe.** It predicts the `resolvedPlayerOrNull`
+mutation answers `204` with one reddened test. Applied, it throws `IllegalStateException` at the
+`checkNotNull` and reddens **two** — `aDeviceIdAloneIsRefused` and `everyRefusalHasAnEmptyBody`,
+which also issues a device-alone request. Two catch the regression where one was predicted, never
+zero.
+
+**No malformed-`Authorization` test exists, deliberately.** At this route such a header refuses
+identically whether it parses as an invalid token or as absent, because everything but
+`Identity.Session` is refused unconditionally. The planner caught that before the ticket was written
+and added a criterion forbidding the shape.
+

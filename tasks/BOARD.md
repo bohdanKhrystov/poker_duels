@@ -1848,8 +1848,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040606](tasks/TASK-040606-the-session-token-digest-is-one-function-in-one-file.md) The session-token digest is one internal function, in one file | S | done |
 | | [TASK-040607](tasks/TASK-040607-the-device-binding-port-and-the-double-that-counts-its-calls.md) The device-binding port, and the double that counts what it was asked | S | done |
 | | [TASK-040608](tasks/TASK-040608-revoking-is-one-update-and-one-delete-in-one-transaction.md) Revoking is one UPDATE and one DELETE, in one transaction | S | done |
-| | [TASK-040609](tasks/TASK-040609-delete-api-me-device-takes-a-session-or-nothing.md) DELETE /api/me/device takes a session, or it takes nothing | S | **ready** |
-| | [TASK-040610](tasks/TASK-040610-no-credential-no-revocation.md) No credential, no revocation — and the refusal writes nothing | S | backlog |
+| | [TASK-040609](tasks/TASK-040609-delete-api-me-device-takes-a-session-or-nothing.md) DELETE /api/me/device takes a session, or it takes nothing | S | done |
+| | [TASK-040610](tasks/TASK-040610-no-credential-no-revocation.md) No credential, no revocation — and the refusal writes nothing | S | **ready** |
 | | [TASK-040611](tasks/TASK-040611-the-composition-root-installs-the-device-route.md) The composition root builds the bindings and installs the device route | XS | backlog |
 | | [TASK-040612](tasks/TASK-040612-the-document-names-the-device-endpoint.md) The document names the device endpoint, and the section markers still chain | S | backlog |
 | | [TASK-040613](tasks/TASK-040613-signed-out-everywhere-still-signed-in-here.md) Signed out everywhere, and still signed in here | S | backlog |
@@ -1862,6 +1862,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040620](tasks/TASK-040620-the-scenario-the-token-a-second-account-and-back-to-anonymous.md) The scenario, steps five to eleven — the token, a second account, and back | S | backlog |
 | | [TASK-040621](tasks/TASK-040621-the-scenario-ends-with-a-revocation-and-nothing-escapes-it.md) The scenario ends with a revocation, and no identity endpoint escapes it | S | backlog |
 | | [TASK-040622](tasks/TASK-040622-the-backfill-moves-a-row-that-was-already-there.md) The backfill moves a row that was already there | XS | backlog |
+| | [TASK-040623](tasks/TASK-040623-an-unknown-device-alone-is-refused-too.md) An unknown device, alone, is refused too | XS | backlog |
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
 | **[STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md)** Duel history, paged over the whole record | | | **done** |
 | | [TASK-040801](tasks/TASK-040801-a-cursor-is-a-duels-place-in-the-list.md) A cursor is one duel's place in the list, and it survives the round trip | S | **done** |
