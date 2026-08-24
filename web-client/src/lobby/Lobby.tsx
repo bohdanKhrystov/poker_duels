@@ -15,6 +15,7 @@ import { HISTORY_HEADING } from "../history/history-text";
 import { LadderScreen } from "../ladder/LadderScreen";
 import { LADDER_HEADING } from "../ladder/ladder-text";
 import { normalizeRoomCode, roomLink } from "./room-link";
+import { PresenceNotice } from "../table/PresenceNotice";
 
 /** The first screen: open a duel room, or join one by the code on the invite. */
 export function Lobby(): ReactElement {
@@ -56,7 +57,13 @@ export function Lobby(): ReactElement {
   if (state.view !== null) {
     return (
       <div className="mx-auto flex max-w-[560px] flex-col gap-5">
-        <DuelTable view={state.view} />
+        <DuelTable view={state.view} rivalPresence={state.rivalPresence} />
+        <PresenceNotice
+          key={state.presenceCount}
+          presence={state.rivalPresence}
+          returned={state.rivalReturned}
+          graceRemainingMillis={state.graceRemainingMillis}
+        />
         <ActionBar
           turn={state.pendingTurn}
           rejection={state.rejection}

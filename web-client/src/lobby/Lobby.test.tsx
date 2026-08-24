@@ -58,6 +58,7 @@ function withClipboard(writeText: () => Promise<void>): void {
 
 afterEach(() => {
   Reflect.deleteProperty(navigator, "clipboard");
+  vi.useRealTimers();
 });
 
 function renderLobby(store: DuelStore = createDuelStore()): {
@@ -355,6 +356,19 @@ describe("the lobby", () => {
         },
       },
       { type: "Failure", error: "NOT_YOUR_TURN" },
+      { type: "RematchOffered", seat: 1 },
+      {
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      },
+      {
+        type: "ActedForAbsent",
+        seat: 1,
+        handNumber: 3,
+        actionSequence: 7,
+        action: "CHECK",
+      },
     ];
 
     for (const frame of NOT_A_SNAPSHOT) {
@@ -363,6 +377,86 @@ describe("the lobby", () => {
       });
       expect(screen.getByText("Waiting for your rival")).toBeDefined();
     }
+  });
+
+  it("shows the presence beside the table it is about", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      });
+    });
+
+    expect(
+      screen.getByText("Your rival is away. The duel is paused."),
+    ).toBeDefined();
+    expect(screen.getByText("47")).toBeDefined();
+    expect(screen.getByText("Away")).toBeDefined();
+  });
+
+  it("explains a paused action with the presence it already holds", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      });
+      store.apply({ type: "Failure", error: "DUEL_PAUSED" });
+    });
+
+    expect(
+      screen.getByText("Your rival is away. The duel is paused."),
+    ).toBeDefined();
+    expect(
+      screen.getByText("The duel is paused. That action was not applied."),
+    ).toBeDefined();
+  });
+
+  it("starts a second window fresh, though it carries the same remaining", () => {
+    vi.useFakeTimers();
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      });
+    });
+
+    expect(screen.getByText("47")).toBeDefined();
+
+    // Advance time by 20 seconds
+    act(() => {
+      vi.advanceTimersByTime(20000);
+    });
+
+    expect(screen.getByText("27")).toBeDefined();
+
+    // Apply the same OpponentPresence frame again
+    act(() => {
+      store.apply({
+        type: "OpponentPresence",
+        presence: "AWAY",
+        graceRemainingMillis: 47000,
+      });
+    });
+
+    expect(screen.getByText("47")).toBeDefined();
   });
 
   it("shows the result when the duel finishes", () => {
