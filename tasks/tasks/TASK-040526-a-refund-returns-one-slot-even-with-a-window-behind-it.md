@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040526
 title: A refund returns one slot even with a window behind it
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: XS

@@ -2,7 +2,7 @@
 id: STORY-0405
 title: Sign-in, the session, and what the socket presents
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, http, protocol, wire]
