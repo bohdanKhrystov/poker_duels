@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040610
 title: No credential, no revocation — and the refusal writes nothing
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -99,3 +99,22 @@ is the only one in the class whose subject is the order.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The refusal is isolated to the credential.** The failing request carries the same
+`Authorization: Bearer t-1` and the same `identities` fixture as the passing one; only
+`RecordingCredentials(holds = false)` differs. Change anything else between the two and the refusal
+could be for that reason instead.
+
+**Guard order is a disclosure property, not only a correctness one.** An endpoint that consults the
+credential store before authenticating leaks whether a given player has a password.
+`anUnauthenticatedCallerNeverReachesTheCredentialCheck` catches the reordering: the reviewer applied
+it and got `409` instead of `401` with `holdsCalls` non-empty, while the credential test stayed
+green.
+
+**No redundant guard, deliberately.** `TASK-040609`'s first draft carried `|| token == null` beside
+its real gate and silently swallowed single-arm mutations of three `Identity` branches, because those
+variants only arise with a null token. This ticket has one condition and a smart-cast, so no mutant
+can hide behind a second arm.
+

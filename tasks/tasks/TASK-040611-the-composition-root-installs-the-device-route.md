@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040611
 title: The composition root builds the bindings and installs the device route
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: XS
