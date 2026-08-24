@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040511
 title: The profile read follows the resolved player, and every route resolves the same way
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -129,7 +129,9 @@ endpoints, and this ticket's claim is that **none of it changes**.
       `DuelHistoryPagingDatabaseTest`, `StandingsSelfDatabaseTest`, `StandingsWalkDatabaseTest` and
       `PostgresProfileReadsTest` all pass
 - [ ] `PostgresProfileReadsTest.readingAnUnknownPlayerIsNullAndCreatesNothing` passes
-- [ ] `grep -rn "profileOf(deviceId" poker-server/src` finds nothing
+- [ ] `grep -rn "profileOf(DeviceId(" poker-server/src` finds nothing — the loose form
+      `profileOf(deviceId` also matches four unrelated `HttpClient.profileOf(deviceId: String)`
+      test helpers, one of which this ticket's own Files table preserves
 - [ ] `ProfileReads` declares no function taking a `DeviceId`
 - [ ] Exactly one assertion changed in `ProfileRouteTest`, and it changed a string rather than a
       predicate — no `assertEquals` became an `assertTrue`, no count became a `>=`
@@ -138,10 +140,19 @@ endpoints, and this ticket's claim is that **none of it changes**.
 
 ## Proof
 
-Make `resolvedPlayerOrNull` answer `Identity.UnknownDevice`'s player — it has none, so answer the
-device id as a player id — and `ProfileRouteTest`'s unknown-device tests go red. Make
-`PostgresProfileReads` select `WHERE p.device_id = ?` again and `PostgresProfileReadsTest` goes red
-on every read. Both were run.
+Make `PostgresProfileReads` select `WHERE p.device_id = ?` again and `PostgresProfileReadsTest`
+goes red — eleven of forty-eight, exactly the tests that call `profileOf`. Run, confirmed.
+
+Make `sessionTokenOrNull` return `null` for a header that does not start with the bearer prefix, so
+a malformed credential arrives as *absent* rather than invalid, and
+`aMalformedAuthorizationHeaderIsRefusedNotDowngradedToTheDevice` goes red — **alone**, out of
+eighty-five tests across five classes. No pre-existing test catches this class. Run, confirmed.
+
+This Proof previously offered a third mutation — answer `Identity.UnknownDevice`'s device id as a
+player id — and claimed `ProfileRouteTest`'s unknown-device tests go red. **They do not.** Every
+unknown-device fixture there is `FakeProfileReads(emptyMap())` with no positive control, so the
+leaked value fails to find a profile either way and the response stays 401. The property holds; that
+falsification does not exercise it. Found by running it.
 
 ## Notes
 
