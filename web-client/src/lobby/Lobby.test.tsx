@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
@@ -821,5 +822,66 @@ describe("the lobby", () => {
 
     confirmSpy.mockRestore();
     alertSpy.mockRestore();
+  });
+
+  it("offers none of the words ADR-0073 refuses", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    const waiting = screen
+      .getByText("Waiting for your rival")
+      .closest("section");
+    expect(waiting).toBeDefined();
+    expect(
+      within(waiting!).getByRole("link", { name: "Back to the lobby" }),
+    ).toBeDefined();
+
+    const refusedWords = [
+      "Cancel",
+      "Cancel the room",
+      "Cancel the duel",
+      "Close the room",
+      "Delete the room",
+      "End the room",
+      "Leave",
+      "Leave the room",
+      "Leave the duel",
+      "Give up",
+      "Abandon",
+      "Withdraw",
+      "Forfeit",
+      "Back",
+      "Cash out",
+      "Exit table",
+      "Stand up",
+      "Sit out",
+    ] as const;
+
+    for (const word of refusedWords) {
+      expect(within(waiting!).queryByText(word)).toBeNull();
+      expect(within(waiting!).queryByRole("button", { name: word })).toBeNull();
+      expect(within(waiting!).queryByRole("link", { name: word })).toBeNull();
+    }
+  });
+
+  it("prints no duration, countdown or expiry", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    const waiting = screen
+      .getByText("Waiting for your rival")
+      .closest("section");
+    const text = waiting?.textContent ?? "";
+
+    expect(text).toContain("Back to the lobby");
+    expect(text).toContain(
+      "The room stays open. That link still works for your rival, and it brings you back.",
+    );
+    expect(text).not.toMatch(
+      /\b(second|seconds|minute|minutes|hour|hours|day|days|expire|expires|expired|expiry|countdown|remaining|timer|timeout|until)\b/i,
+    );
+    expect(text).not.toMatch(/\d{1,2}:\d{2}/);
   });
 });
