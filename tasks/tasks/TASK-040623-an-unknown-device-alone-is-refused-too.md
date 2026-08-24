@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040623
 title: An unknown device, alone, is refused too
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: XS

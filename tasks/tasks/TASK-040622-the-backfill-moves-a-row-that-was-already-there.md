@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040622
 title: The backfill moves a row that was already there
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: XS
@@ -31,7 +31,7 @@ deep review checked all of that.
 What it also found is that **nothing ever runs it against data.** Every database test calls
 `PostgresTestSupport.freshDatabase()` and then `Migrations.migrate()`, which applies V1→V7 to an
 empty schema in one shot, so the backfill always selects zero rows. `MigrationsTest` bootstraps an
-empty database in both of its tests. The `SELECT` could be `WHERE false`, or name the wrong column,
+empty database in every one of its tests. The `SELECT` could be `WHERE false`, or name the wrong column,
 and every test in the repository would still pass.
 
 That is tolerable while there is no production data and intolerable the moment there is — and the
@@ -86,3 +86,22 @@ nothing red anywhere in the repository**, which is the whole reason it exists.
 
 **Run it.** Nine `## Proof` sections in this run were wrong or incomplete when actually executed,
 including one describing an edit that could not change behaviour at all.
+
+## Notes
+
+**The gap is closed, and the Proof held.** Mutating `V7`'s backfill `SELECT` to `WHERE false` reddens
+the new test alone — nine ran, one failed, on the row-presence assertion — while every pre-existing
+`MigrationsTest` test stayed green. Before this ticket that mutation reddened nothing anywhere in the
+repository.
+
+**The two-stage migration exercises the shipped path.** Flyway is configured directly in the test
+with `.target("6")`, so the `player` row is inserted while `device_id` still exists; V7 is then
+applied by the **production** `Migrations.migrate(dataSource)`, not a second hand-rolled Flyway call.
+A test applying V7 its own way would prove the migration works when invoked by the test, not that the
+real path applies it.
+
+**Correction to this ticket's own text.** Its "Why this exists" said `MigrationsTest` had two tests.
+It has eight — the text was written from `TASK-040601`'s review and predates several tickets that
+added V3–V5 assertions to the same file. Fixed above. The gap it described was real regardless: all
+eight bootstrap an empty database.
+

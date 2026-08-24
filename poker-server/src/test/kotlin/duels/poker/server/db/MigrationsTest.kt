@@ -2,6 +2,7 @@ package duels.poker.server.db
 
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -268,6 +269,69 @@ class MigrationsTest {
                 statement.executeQuery().use { resultSet ->
                     assertEquals(true, resultSet.next(), "name_registry_retired_from_idx index should exist")
                     assertTrue(resultSet.getString("indexdef").contains("WHERE (retired_from IS NOT NULL)"))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun theDeviceBindingBackfillCarriesAnExistingRow() {
+        val dataSource = PostgresTestSupport.freshDatabase()
+
+        // Stop at V6: device_binding does not exist yet and player.device_id is still live, so
+        // the row below is written the way every pre-V7 row actually was.
+        Flyway.configure()
+            .dataSource(dataSource)
+            .locations("classpath:db/migration")
+            .target("6")
+            .load()
+            .migrate()
+
+        val playerId = UUID.randomUUID()
+        val deviceId = "device-$playerId"
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("INSERT INTO player (id, device_id) VALUES (?, ?)").use { statement ->
+                statement.setObject(1, playerId)
+                statement.setString(2, deviceId)
+                statement.executeUpdate()
+            }
+        }
+
+        val playerCountBeforeV7 = dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT count(*) FROM player").use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    resultSet.getInt(1)
+                }
+            }
+        }
+        assertEquals(1, playerCountBeforeV7)
+
+        // Migrations.migrate applies whatever is still pending -- V7 alone, from here -- so the
+        // backfill runs against the row just written, exactly as it would against production data.
+        Migrations.migrate(dataSource)
+
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT device_id, player_id FROM device_binding").use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    assertEquals(true, resultSet.next(), "device_binding should hold the backfilled row")
+                    assertEquals(deviceId, resultSet.getString("device_id"))
+                    assertEquals(playerId, resultSet.getObject("player_id", UUID::class.java))
+                    assertEquals(false, resultSet.next(), "device_binding should hold exactly one row")
+                }
+            }
+
+            connection.prepareStatement("SELECT id FROM player WHERE id = ?").use { statement ->
+                statement.setObject(1, playerId)
+                statement.executeQuery().use { resultSet ->
+                    assertEquals(true, resultSet.next(), "the player row should still be there")
+                }
+            }
+
+            connection.prepareStatement("SELECT count(*) FROM player").use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    resultSet.next()
+                    assertEquals(playerCountBeforeV7, resultSet.getInt(1), "player count should be unchanged by V7")
                 }
             }
         }
