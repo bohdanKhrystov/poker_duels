@@ -1833,8 +1833,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040518](tasks/TASK-040518-the-socket-presents-the-session-and-an-invalid-one-is-refused.md) The socket presents the session, and an invalid one is refused rather than downgraded | S | done |
 | | [TASK-040519](tasks/TASK-040519-a-budget-is-a-rolling-window-and-over-budget-still-counts.md) A budget is a rolling window, an over-budget attempt still counts, and a slot can be refunded | S | done |
 | | [TASK-040520](tasks/TASK-040520-the-sign-up-budget-is-two-config-values.md) The two auth budgets are four configuration values with defaults | S | done |
-| | [TASK-040521](tasks/TASK-040521-sign-up-over-budget-answers-429.md) Sign-up over budget answers 429, and the budget meters the hash | S | **ready** |
-| | [TASK-040522](tasks/TASK-040522-the-document-names-the-seventh-answer.md) The document names sign-up's seventh answer | XS | backlog |
+| | [TASK-040521](tasks/TASK-040521-sign-up-over-budget-answers-429.md) Sign-up over budget answers 429, and the budget meters the hash | S | done |
+| | [TASK-040522](tasks/TASK-040522-the-document-names-the-seventh-answer.md) The document names sign-up's seventh answer | XS | **ready** |
 | | [TASK-040523](tasks/TASK-040523-sign-in-carries-a-budget-of-its-own.md) Sign-in carries a budget of its own | S | backlog — unblocked by `ADR-0074`, behind `TASK-040522` |
 | | [TASK-040524](tasks/TASK-040524-signed-in-here-reading-there-against-the-database.md) Signed in here, reading there — the whole flow against the database | S | backlog |
 | | [TASK-040525](tasks/TASK-040525-a-blank-credential-is-invalid-not-absent.md) A blank credential is invalid, not absent | XS | backlog |

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040521
 title: Sign-up over budget answers 429, and the budget meters the hash
 type: task
-status: ready
+status: done
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -96,3 +96,29 @@ one this ticket exists to make impossible, and it is invisible to a test that on
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The metering property rests on one assertion.** `ADR-0074` §2 exists so the budget is checked
+*before* the Argon2 hash — otherwise an attacker floods the endpoint and burns CPU regardless of the
+429. Moving the check to after `credentials.create` reddens exactly **one** test:
+`anOverBudgetSignUpWritesNothing`, through its `credentials.createCalls.size` count.
+`theSixthSignUpFromOneAddressIsFourHundredAndTwentyNine` stays green, because a status code is the
+same either way. Delete or weaken that count and the property ships ungated while every remaining
+test still passes.
+
+**A stray `refund` after the 429 is caught by nothing**, and that is deliberate: sign-up never
+refunds — this ticket's Scope defers refunding to sign-in (`TASK-040523`). The coder mutated one in
+to check, and reported that nothing caught it rather than quietly adding a seventh test.
+
+**The 429 is indistinguishable by construction, not by assertion.** No test compares an over-budget
+response for a known handle against one for an unknown handle, the way
+`aWrongPasswordAndAnUnknownHandleAreIndistinguishable` does for sign-in. `ADR-0055` §3 sets no such
+rule, and the 429 branch reads only `call.request.origin.remoteAddress` — never the body or the
+handle — so it cannot leak. If that branch ever grows a body or a reason, it needs the assertion.
+
+**The KDoc caveat was reworded, not dropped.** This ticket asked for a note about the
+forwarded-header caveat while an acceptance criterion required
+`grep -rn "X-Forwarded-For" poker-server/src/main` to find nothing. Both cannot hold literally. The
+comment now names `EPIC-07` and the risk without the header's literal spelling.
+

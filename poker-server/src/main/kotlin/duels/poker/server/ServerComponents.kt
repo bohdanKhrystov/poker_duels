@@ -1,5 +1,6 @@
 package duels.poker.server
 
+import duels.poker.server.auth.AttemptBudget
 import duels.poker.server.auth.AuthSessions
 import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.IdentityResolver
@@ -42,6 +43,7 @@ public data class ServerComponents(
     val wallClock: Clock,
     val identities: IdentityResolver,
     val sessions: AuthSessions,
+    val signUpBudget: AttemptBudget,
 )
 
 /**
@@ -98,6 +100,9 @@ public fun serverComponents(
 
     val credentials = PostgresCredentials(dataSource)
     val standings = PostgresStandingsReads(dataSource)
+    // The ServerClock this server already holds for room timeouts, not the wall clock: ADR-0055
+    // §2 requires a monotonic source, since an NTP step must never widen or void a budget window.
+    val signUpBudget = AttemptBudget(config.signUpLimits(), clock)
 
     return ServerComponents(
         socket = socket,
@@ -108,5 +113,6 @@ public fun serverComponents(
         wallClock = wallClock,
         identities = identities,
         sessions = authSessions,
+        signUpBudget = signUpBudget,
     )
 }

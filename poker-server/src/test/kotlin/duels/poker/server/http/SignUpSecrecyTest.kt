@@ -1,8 +1,11 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.AttemptBudget
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.auth.CreateCredentialResult
 import duels.poker.server.module
 import duels.poker.server.protocol.http.profileResponse
+import duels.poker.server.time.MutableClock
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -133,7 +136,13 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(HttpHeaders.ContentType, "application/json")
@@ -147,7 +156,13 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                )
             }
             // SignUpRequest has no playerId field, so this fails to decode — the same mechanism
             // AuthRouteTest.aBodyCarryingAPlayerIdIsFourHundred proves — while still carrying both
@@ -167,7 +182,13 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                )
             }
             // "ab" fails signUpFieldsOf's own rule (proven by
             // AuthRouteTest.aRefusedHandleReachesNeitherPortFunction). Bob_1 is proven valid
@@ -186,7 +207,13 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                )
             }
             // One code point under the floor (proven by
             // AuthRouteTest.aPasswordOutsideTheBoundsReachesNeitherPortFunction). hunter2222 is
@@ -206,7 +233,13 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials(holds = true)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -221,7 +254,13 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials(createResult = CreateCredentialResult.IdentifierTaken)
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -236,7 +275,13 @@ class SignUpSecrecyTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials, identitiesFor(reads.profiles), NoAuthSessions)
+                authRoutes(
+                    reads,
+                    credentials,
+                    identitiesFor(reads.profiles),
+                    NoAuthSessions,
+                    AttemptBudget(AttemptLimits(5, 900_000L), MutableClock()),
+                )
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
