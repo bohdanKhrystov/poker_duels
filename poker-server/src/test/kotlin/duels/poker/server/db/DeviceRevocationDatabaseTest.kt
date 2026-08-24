@@ -17,6 +17,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -28,6 +29,7 @@ import io.ktor.websocket.readText
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -274,6 +276,104 @@ class DeviceRevocationDatabaseTest {
             }
         }
     }
+
+    @Test
+    fun theSecondSignInReachesTheSameProfile() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                val fixture = client.establishNamedOwnerThenRevoke(dataSource)
+
+                // A fresh POST /api/auth/sign-in, after the revocation: the token it answers with
+                // is not the one that revoked, so this reads the password route on its own merits.
+                val newToken = client.signIn(OWNER_HANDLE, PASSWORD)
+
+                val response = client.meWithToken(newToken)
+                assertEquals(HttpStatusCode.OK, response.status)
+                val profile = protocolJson.decodeFromString<ProfileResponse>(response.bodyAsText())
+
+                // Three fields, each against what the fixture actually recorded before the
+                // revocation ran, never a literal — an empty-but-different profile would also
+                // answer 200 here, and only a comparison against the recorded identity catches it.
+                assertEquals(fixture.profileBeforeRevocation.playerId, profile.playerId)
+                assertEquals(fixture.profileBeforeRevocation.coinBalance, profile.coinBalance)
+                assertEquals(fixture.profileBeforeRevocation.displayName, profile.displayName)
+            }
+        }
+    }
+
+    @Test
+    fun theNewTokenIsNotTheRevokingToken() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                val fixture = client.establishNamedOwnerThenRevoke(dataSource)
+                val ownerId = UUID.fromString(fixture.profileBeforeRevocation.playerId)
+
+                // Only the revoking session survives revocation (ADR-0050 §1): one row, before the
+                // second sign-in mints a second.
+                assertEquals(1L, dataSource.authSessionCountFor(ownerId))
+
+                val newToken = client.signIn(OWNER_HANDLE, PASSWORD)
+
+                assertEquals(2L, dataSource.authSessionCountFor(ownerId))
+                // Without this, theSecondSignInReachesTheSameProfile could be reading its answer
+                // through the surviving, revoking token rather than a genuinely new one.
+                assertNotEquals(fixture.token, newToken)
+            }
+        }
+    }
+
+    @Test
+    fun theProfileSaysTheDeviceRouteIsNoLongerLive() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                val fixture = client.establishNamedOwnerThenRevoke(dataSource)
+                // Read before the revocation, through the very token that goes on to revoke it —
+                // captured by the fixture as part of its snapshot, in this same test's call chain.
+                assertTrue(fixture.profileBeforeRevocation.deviceRouteLive)
+
+                val newToken = client.signIn(OWNER_HANDLE, PASSWORD)
+                val response = client.meWithToken(newToken)
+                assertEquals(HttpStatusCode.OK, response.status)
+                val profile = protocolJson.decodeFromString<ProfileResponse>(response.bodyAsText())
+
+                // Same field, the opposite value, read after the revocation.
+                assertFalse(profile.deviceRouteLive)
+            }
+        }
+    }
+
+    @Test
+    fun theDeviceItselfIsStillARouteToNothing() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                val fixture = client.establishNamedOwnerThenRevoke(dataSource)
+
+                // GET /api/me never mints — only the socket's Hello does (ADR-0012) — so the
+                // revoked device's fresh profile has to be seated once before the HTTP read below
+                // can find it.
+                client.handshake(OWNER_DEVICE)
+
+                val freshProfile = client.profileOf(OWNER_DEVICE)
+                // The device is not refused — it simply is not this account any more (ADR-0049
+                // §3): a different, freshly minted player, owing nobody a coin and holding no name.
+                assertNotEquals(fixture.profileBeforeRevocation.playerId, freshProfile.playerId)
+                assertEquals(0, freshProfile.coinBalance)
+                assertEquals(null, freshProfile.displayName)
+            }
+        }
+    }
 }
 
 /**
@@ -346,6 +446,75 @@ private suspend fun HttpClient.establishOwnerWithABalance(dataSource: DataSource
     return OwnerFixture(welcome.playerId, token)
 }
 
+/** The owner's whole profile, read through [token] immediately before it went on to revoke the device. */
+private data class NamedOwnerFixture(val profileBeforeRevocation: ProfileResponse, val token: String)
+
+/**
+ * Seeds the fixture the four password-route tests below share: `d-owner` completes the socket
+ * handshake, minting its `player` row; `PUT /api/me/name` sets the display name `"Owner"` while the
+ * device id is still the only identity route in, since no credential exists yet; a `duel_result`
+ * pair, written with raw SQL against a bare opponent row minted the same way, lands the balance at
+ * `1`; `signUp` attaches the credential; a sign-in yields the token that revokes. The whole profile
+ * is read back through that same token immediately before the revoking `DELETE`, so every assertion
+ * afterwards compares against a value this fixture actually observed rather than a literal.
+ * Deliberately a new helper, not [establishOwnerWithABalance]: that one is shared by `TASK-040613`'s
+ * and `TASK-040614`'s tests, and editing it would edit two suites this ticket does not own.
+ */
+private suspend fun HttpClient.establishNamedOwnerThenRevoke(dataSource: DataSource): NamedOwnerFixture {
+    val welcome = helloWith(deviceId = OWNER_DEVICE, sessionToken = null) as ServerMessage.Welcome
+    assertEquals(OWNER_DEVICE, welcome.deviceId)
+    val ownerId = UUID.fromString(welcome.playerId)
+
+    assertEquals(HttpStatusCode.OK, setName(OWNER_DEVICE, "Owner"))
+
+    val loserId = UUID.randomUUID()
+    val duelId = UUID.randomUUID()
+    val now = OffsetDateTime.now(ZoneOffset.UTC)
+    dataSource.connection.use { connection ->
+        connection.prepareStatement("INSERT INTO player (id) VALUES (?)").use { statement ->
+            statement.setObject(1, loserId)
+            statement.executeUpdate()
+        }
+        connection.prepareStatement(
+            "INSERT INTO duel (id, format, started_at, finished_at, hands_played) VALUES (?, ?, ?, ?, ?)",
+        ).use { statement ->
+            statement.setObject(1, duelId)
+            statement.setString(2, "heads-up-no-limit")
+            statement.setObject(3, now)
+            statement.setObject(4, now)
+            statement.setInt(5, 1)
+            statement.executeUpdate()
+        }
+        listOf(ownerId to 1, loserId to -1).forEach { (player, delta) ->
+            connection.prepareStatement(
+                "INSERT INTO duel_result (duel_id, player_id, coin_delta) VALUES (?, ?, ?)",
+            ).use { statement ->
+                statement.setObject(1, duelId)
+                statement.setObject(2, player)
+                statement.setInt(3, delta)
+                statement.executeUpdate()
+            }
+            connection.prepareStatement("UPDATE player SET coin_balance = coin_balance + ? WHERE id = ?")
+                .use { statement ->
+                    statement.setInt(1, delta)
+                    statement.setObject(2, player)
+                    statement.executeUpdate()
+                }
+        }
+    }
+
+    assertEquals(HttpStatusCode.Created, signUp(OWNER_DEVICE, OWNER_HANDLE, PASSWORD))
+    val token = signIn(OWNER_HANDLE, PASSWORD)
+
+    val beforeResponse = meWithToken(token)
+    assertEquals(HttpStatusCode.OK, beforeResponse.status)
+    val profileBeforeRevocation = protocolJson.decodeFromString<ProfileResponse>(beforeResponse.bodyAsText())
+
+    assertEquals(HttpStatusCode.NoContent, revokeDevice(token))
+
+    return NamedOwnerFixture(profileBeforeRevocation, token)
+}
+
 /** Completes the WebSocket handshake for [deviceId], minting its `player` row. */
 private suspend fun HttpClient.handshake(deviceId: String) {
     val welcome = helloWith(deviceId = deviceId, sessionToken = null) as ServerMessage.Welcome
@@ -381,6 +550,21 @@ private suspend fun HttpClient.meWithToken(token: String, deviceId: String? = nu
         header(HttpHeaders.Authorization, "Bearer $token")
         deviceId?.let { header(DEVICE_ID_HEADER, it) }
     }
+
+/**
+ * Sets the resolved caller's display name to [name] over `PUT /api/me/name`, presenting
+ * [deviceIdOrToken] as `X-Device-Id`, and returns the response status. This file's one call site
+ * uses it right after the handshake, before any credential exists, when the device id is the only
+ * identity route available.
+ */
+private suspend fun HttpClient.setName(deviceIdOrToken: String, name: String): HttpStatusCode {
+    val response = put("/api/me/name") {
+        header(DEVICE_ID_HEADER, deviceIdOrToken)
+        header(HttpHeaders.ContentType, "application/json")
+        setBody("""{"name":"$name"}""")
+    }
+    return response.status
+}
 
 /** Signs [deviceId] up with [handle] and [password], returning the response status. */
 private suspend fun HttpClient.signUp(deviceId: String, handle: String, password: String): HttpStatusCode {
