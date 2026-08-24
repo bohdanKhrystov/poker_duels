@@ -1,12 +1,18 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import type { SeatPresence } from "../protocol";
 import { SeatPlate } from "./SeatPlate";
 import { aSeat } from "./view-fixture";
 
 describe("a seat plate", () => {
   function plate(
     overrides: Parameters<typeof aSeat>[0] = {},
-    props: { hasButton?: boolean; isToAct?: boolean; isViewer?: boolean } = {},
+    props: {
+      hasButton?: boolean;
+      isToAct?: boolean;
+      isViewer?: boolean;
+      presence?: SeatPresence | null;
+    } = {},
   ) {
     return render(
       <SeatPlate
@@ -15,6 +21,7 @@ describe("a seat plate", () => {
         hasButton={props.hasButton ?? false}
         isToAct={props.isToAct ?? false}
         isViewer={props.isViewer ?? true}
+        presence={props.presence ?? null}
       />,
     );
   }
@@ -36,5 +43,49 @@ describe("a seat plate", () => {
   it("puts the status the seat is in on the plate", () => {
     const { getByText } = plate({ hasFolded: true });
     getByText("Folded");
+  });
+
+  it("puts the presence on the plate ahead of the turn", () => {
+    const { getByText, queryByText, unmount } = plate(
+      {},
+      { presence: "AWAY", isToAct: true, isViewer: false },
+    );
+    getByText("Away");
+    expect(queryByText("Their turn")).toBeNull();
+    expect(queryByText("Your turn")).toBeNull();
+    unmount();
+
+    const {
+      getByText: getByText2,
+      queryByText: queryByText2,
+      unmount: unmount2,
+    } = plate({}, { presence: "AWAY", isToAct: true, isViewer: true });
+    getByText2("Away");
+    expect(queryByText2("Your turn")).toBeNull();
+    unmount2();
+
+    const { getByText: getByText3 } = plate(
+      {},
+      { presence: "ABSENT", isToAct: true },
+    );
+    getByText3("Timed out");
+  });
+
+  it("gives a present seat its ordinary status back", () => {
+    const { getByText, queryByText } = plate(
+      {},
+      { presence: "PRESENT", isToAct: true, isViewer: false },
+    );
+    getByText("Their turn");
+    expect(queryByText("Away")).toBeNull();
+    expect(queryByText("Timed out")).toBeNull();
+
+    const { getByText: getByText2, queryByText: queryByText2 } = plate(
+      { hasFolded: true },
+      { presence: "PRESENT" },
+    );
+    getByText2("Folded");
+    expect(queryByText2("Away")).toBeNull();
+    expect(queryByText2("Timed out")).toBeNull();
   });
 });
