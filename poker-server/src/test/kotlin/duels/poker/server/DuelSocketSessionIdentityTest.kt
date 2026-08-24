@@ -219,6 +219,31 @@ class DuelSocketSessionIdentityTest {
     }
 
     @Test
+    fun aBlankTokenIsRefusedNotTreatedAsAbsent() = testApplication {
+        val directory = InMemoryPlayerDirectory()
+        // The device id must be one that *would* resolve, or this test cannot see a fallback.
+        val anonPlayer = directory.resolve(DeviceId("d-anon"))
+        val resolver = IdentityResolver(FixedAuthSessions(SessionToken("t-signed"), PlayerId("p-signed")), directory)
+        application {
+            module()
+            duelSocket(testDeps(directory = directory, identities = resolver))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val session = client.webSocketSession("/ws")
+            session.send(
+                Frame.Text(ProtocolCodec.encode(Hello(deviceId = "d-anon", sessionToken = ""))),
+            )
+
+            val response = session.nextServerMessage()
+            assertEquals(ServerMessage.Failure(ProtocolError.INVALID_SESSION), response)
+            assertNotEquals(ServerMessage.Welcome(anonPlayer.id.value, "d-anon", PROTOCOL_VERSION), response)
+            assertEquals(INVALID_SESSION_PRESENTED, session.closeReason.await()?.message)
+        }
+    }
+
+    @Test
     fun anInvalidTokenCreatesNoProfile() = testApplication {
         val directory = InMemoryPlayerDirectory()
         directory.resolve(DeviceId("d-anon"))
