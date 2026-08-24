@@ -20,17 +20,23 @@ import javax.sql.DataSource
 /**
  * Implements [AuthSessions] against the `auth_session` table.
  *
- * [issue] is the one member this ticket gives a real body: it mints a fresh [SessionToken] from
- * [tokens], inserts one row keyed by the SHA-256 of that token, and hands the plaintext token back
- * to the caller — the only moment it is ever readable in plaintext again. The digest is computed
- * by a private function and is never returned, logged, or put into an exception message.
+ * [issue] mints a fresh [SessionToken] from [tokens], inserts one row keyed by the SHA-256 of that
+ * token, and hands the plaintext token back to the caller — the only moment it is ever readable in
+ * plaintext again. The digest is computed by a private function and is never returned, logged, or
+ * put into an exception message.
+ *
+ * [playerOf] answers the player a live row names, and `null` both for a token with no row and for
+ * one whose row has expired — the two are indistinguishable here, because telling them apart would
+ * tell a caller which tokens once existed. Expiry is decided by the database's own `now()`,
+ * compared against the same `TIMESTAMPTZ` scale the row was written on; the injected [clock] never
+ * enters this read, it is only how a test manufactures an already-expired row to issue against.
  *
  * [clock] is a [Clock], never `ServerClock`: `ServerClock` reports elapsed milliseconds from an
  * arbitrary epoch, so a `TIMESTAMPTZ` stamped from it would land every row in 1970, and every
  * session would be dead the moment it was written (`ADR-0062`).
  *
- * [playerOf] and [delete] are `TASK-040507` and `TASK-040508`'s scope and throw until those land —
- * the Kotlin compiler will not accept a class that implements [AuthSessions] only partly.
+ * [delete] is `TASK-040508`'s scope and throws until it lands — the Kotlin compiler will not accept
+ * a class that implements [AuthSessions] only partly.
  */
 public class PostgresAuthSessions(
     private val dataSource: DataSource,
@@ -48,7 +54,17 @@ public class PostgresAuthSessions(
             token
         }
 
-    override suspend fun playerOf(token: SessionToken): PlayerId? = TODO("TASK-040507")
+    override suspend fun playerOf(token: SessionToken): PlayerId? =
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(PLAYER_OF_SQL).use { statement ->
+                    statement.setBytes(1, tokenHash(token))
+                    statement.executeQuery().use { rows ->
+                        if (rows.next()) PlayerId(rows.getObject(1, UUID::class.java).toString()) else null
+                    }
+                }
+            }
+        }
 
     override suspend fun delete(token: SessionToken) = TODO("TASK-040508")
 
@@ -76,5 +92,8 @@ public class PostgresAuthSessions(
 
         private const val ISSUE_SQL =
             "INSERT INTO auth_session (token_hash, player_id, issued_at, expires_at) VALUES (?, ?, ?, ?)"
+
+        private const val PLAYER_OF_SQL =
+            "SELECT player_id FROM auth_session WHERE token_hash = ? AND expires_at > now()"
     }
 }
