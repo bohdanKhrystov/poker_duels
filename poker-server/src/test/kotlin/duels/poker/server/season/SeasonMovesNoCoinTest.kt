@@ -31,8 +31,8 @@ class SeasonMovesNoCoinTest {
 
     @Test
     fun theFixtureItComparesIsNotEmpty() {
-        val playerId1 = insertPlayer("device-1", 3)
-        val playerId2 = insertPlayer("device-2", -1)
+        val playerId1 = insertPlayer(3)
+        val playerId2 = insertPlayer(-1)
         val duelId = insertDuel()
         insertDuelResult(duelId, playerId1, 1)
         insertDuelResult(duelId, playerId2, -1)
@@ -47,8 +47,8 @@ class SeasonMovesNoCoinTest {
     @Test
     fun noSeasonFunctionMovesACoin() {
         // Insert fixture: two players and one duel with its results.
-        val playerId1 = insertPlayer("device-1", 3)
-        val playerId2 = insertPlayer("device-2", -1)
+        val playerId1 = insertPlayer(3)
+        val playerId2 = insertPlayer(-1)
         val duelId = insertDuel()
         insertDuelResult(duelId, playerId1, 1)
         insertDuelResult(duelId, playerId2, -1)
@@ -104,8 +104,8 @@ class SeasonMovesNoCoinTest {
     @Test
     fun theSnapshotComparisonDetectsMovedCoins() {
         // Insert fixture: two players and one duel with its results.
-        val playerId1 = insertPlayer("device-1", 3)
-        val playerId2 = insertPlayer("device-2", -1)
+        val playerId1 = insertPlayer(3)
+        val playerId2 = insertPlayer(-1)
         val duelId = insertDuel()
         insertDuelResult(duelId, playerId1, 1)
         insertDuelResult(duelId, playerId2, -1)
@@ -138,8 +138,8 @@ class SeasonMovesNoCoinTest {
     @Test
     fun theSnapshotComparisonDetectsDuelResultMovedCoins() {
         // Insert fixture: two players and one duel with its results.
-        val playerId1 = insertPlayer("device-1", 3)
-        val playerId2 = insertPlayer("device-2", -1)
+        val playerId1 = insertPlayer(3)
+        val playerId2 = insertPlayer(-1)
         val duelId = insertDuel()
         insertDuelResult(duelId, playerId1, 1)
         insertDuelResult(duelId, playerId2, -1)
@@ -167,15 +167,14 @@ class SeasonMovesNoCoinTest {
         )
     }
 
-    private fun insertPlayer(deviceId: String, coinBalance: Int): UUID {
+    private fun insertPlayer(coinBalance: Int): UUID {
         val playerId = UUID.randomUUID()
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO player (id, device_id, coin_balance) VALUES (?, ?, ?)",
+                "INSERT INTO player (id, coin_balance) VALUES (?, ?)",
             ).use { statement ->
                 statement.setObject(1, playerId)
-                statement.setString(2, deviceId)
-                statement.setInt(3, coinBalance)
+                statement.setInt(2, coinBalance)
                 statement.executeUpdate()
             }
         }

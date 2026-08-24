@@ -53,8 +53,8 @@ class SchemaConstraintsTest {
 
         assertEquals("23505", exception.sqlState)
         assertTrue(
-            exception.message?.contains("player_device_id_unique") ?: false,
-            "Exception message should contain constraint name 'player_device_id_unique', got: ${exception.message}",
+            exception.message?.contains("device_binding_live_device") ?: false,
+            "Exception message should contain constraint name 'device_binding_live_device', got: ${exception.message}",
         )
     }
 
@@ -235,15 +235,23 @@ class SchemaConstraintsTest {
         )
     }
 
+    // Two statements, not one: the schema no longer has anywhere on `player` to name a device, so
+    // the live binding this test collides on lives in `device_binding`, one insert down.
     private fun insertPlayer(deviceId: String, coinBalance: Int): UUID {
         val playerId = UUID.randomUUID()
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO player (id, device_id, coin_balance) VALUES (?, ?, ?)",
+                "INSERT INTO player (id, coin_balance) VALUES (?, ?)",
             ).use { statement ->
                 statement.setObject(1, playerId)
-                statement.setString(2, deviceId)
-                statement.setInt(3, coinBalance)
+                statement.setInt(2, coinBalance)
+                statement.executeUpdate()
+            }
+            connection.prepareStatement(
+                "INSERT INTO device_binding (device_id, player_id) VALUES (?, ?)",
+            ).use { statement ->
+                statement.setString(1, deviceId)
+                statement.setObject(2, playerId)
                 statement.executeUpdate()
             }
         }

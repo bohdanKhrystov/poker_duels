@@ -1840,8 +1840,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040525](tasks/TASK-040525-a-blank-credential-is-invalid-not-absent.md) A blank credential is invalid, not absent | XS | done |
 | | [TASK-040526](tasks/TASK-040526-a-refund-returns-one-slot-even-with-a-window-behind-it.md) A refund returns one slot even with a window behind it | XS | done |
 | **[STORY-0406](stories/STORY-0406-the-claim-proven-and-the-device-revoked.md)** The claim proven, and the device binding revoked | | | **in progress** — split into twenty-one on 2026-08-24; `DEC-041` (`ADR-0049`) and `DEC-045` (`ADR-0050`) settle the schema, the endpoint, both guards and the session sweep |
-| | [TASK-040601](tasks/TASK-040601-the-device-binding-is-a-row-and-player-loses-the-column.md) The device binding becomes a row of its own, and player loses its column | S | **ready** |
-| | [TASK-040602](tasks/TASK-040602-the-profile-says-whether-the-device-route-is-live.md) The profile says whether the device route is still live | S | backlog |
+| | [TASK-040601](tasks/TASK-040601-the-device-binding-is-a-row-and-player-loses-the-column.md) The device binding becomes a row of its own, and player loses its column | S | done |
+| | [TASK-040602](tasks/TASK-040602-the-profile-says-whether-the-device-route-is-live.md) The profile says whether the device route is still live | S | **ready** |
 | | [TASK-040603](tasks/TASK-040603-a-revoked-binding-is-final-and-the-database-says-so.md) A revoked binding is final, and the database is what refuses to undo it | S | backlog |
 | | [TASK-040604](tasks/TASK-040604-one-live-binding-per-device-one-per-player-and-a-pair-that-never-returns.md) One live binding per device, one per player, and a pair that never comes back | S | backlog |
 | | [TASK-040605](tasks/TASK-040605-a-revoked-device-resolves-to-a-new-profile-never-the-one-it-left.md) A revoked device resolves to a new, empty profile — never the one it left | S | backlog |
@@ -1861,6 +1861,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040619](tasks/TASK-040619-a-duel-opened-under-a-session-token.md) A duel can be opened under a session token, not only a device id | S | backlog |
 | | [TASK-040620](tasks/TASK-040620-the-scenario-the-token-a-second-account-and-back-to-anonymous.md) The scenario, steps five to eleven — the token, a second account, and back | S | backlog |
 | | [TASK-040621](tasks/TASK-040621-the-scenario-ends-with-a-revocation-and-nothing-escapes-it.md) The scenario ends with a revocation, and no identity endpoint escapes it | S | backlog |
+| | [TASK-040622](tasks/TASK-040622-the-backfill-moves-a-row-that-was-already-there.md) The backfill moves a row that was already there | XS | backlog |
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
 | **[STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md)** Duel history, paged over the whole record | | | **done** |
 | | [TASK-040801](tasks/TASK-040801-a-cursor-is-a-duels-place-in-the-list.md) A cursor is one duel's place in the list, and it survives the round trip | S | **done** |

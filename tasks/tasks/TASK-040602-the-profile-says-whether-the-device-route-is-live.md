@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040602
 title: The profile says whether the device route is still live
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S

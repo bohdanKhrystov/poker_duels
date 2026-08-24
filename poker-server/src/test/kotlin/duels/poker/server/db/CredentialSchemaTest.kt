@@ -21,7 +21,7 @@ class CredentialSchemaTest {
 
     @Test
     fun aSecondCredentialWithTheSameKindAndIdentifierIsRefused() {
-        val playerId = insertPlayer("device-${UUID.randomUUID()}")
+        val playerId = insertPlayer()
         insertCredential(playerId, "passkey", "user@example.com", "hash123")
 
         val exception = assertFailsWith<SQLException> {
@@ -37,7 +37,7 @@ class CredentialSchemaTest {
 
     @Test
     fun theSameIdentifierUnderADifferentKindIsAccepted() {
-        val playerId = insertPlayer("device-${UUID.randomUUID()}")
+        val playerId = insertPlayer()
         val identifier = "user@example.com"
 
         // First insert with kind = 'passkey'
@@ -92,7 +92,7 @@ class CredentialSchemaTest {
 
     @Test
     fun deletingAPlayerThatHoldsACredentialIsRefused() {
-        val playerId = insertPlayer("device-${UUID.randomUUID()}")
+        val playerId = insertPlayer()
         insertCredential(playerId, "passkey", "user@example.com", "hash123")
 
         val exception = assertFailsWith<SQLException> {
@@ -104,7 +104,7 @@ class CredentialSchemaTest {
 
     @Test
     fun aCredentialRowMayHaveNoSecretHash() {
-        val playerId = insertPlayer("device-${UUID.randomUUID()}")
+        val playerId = insertPlayer()
         insertCredential(playerId, "passkey", "user@example.com", null)
 
         dataSource.connection.use { connection ->
@@ -121,15 +121,14 @@ class CredentialSchemaTest {
         }
     }
 
-    private fun insertPlayer(deviceId: String): UUID {
+    private fun insertPlayer(): UUID {
         val playerId = UUID.randomUUID()
         dataSource.connection.use { connection ->
             connection.prepareStatement(
-                "INSERT INTO player (id, device_id, coin_balance) VALUES (?, ?, ?)",
+                "INSERT INTO player (id, coin_balance) VALUES (?, ?)",
             ).use { statement ->
                 statement.setObject(1, playerId)
-                statement.setString(2, deviceId)
-                statement.setInt(3, 100)
+                statement.setInt(2, 100)
                 statement.executeUpdate()
             }
         }
