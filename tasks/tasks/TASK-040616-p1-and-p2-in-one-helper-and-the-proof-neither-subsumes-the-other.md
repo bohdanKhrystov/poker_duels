@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040616
 title: P1 and P2 in one helper, and the proof that neither subsumes the other
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
