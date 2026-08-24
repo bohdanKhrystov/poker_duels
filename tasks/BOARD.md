@@ -1822,8 +1822,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040507](tasks/TASK-040507-playerof-reads-through-the-expiry.md) playerOf reads through the expiry, and a clock thirty days on refuses | S | done |
 | | [TASK-040508](tasks/TASK-040508-delete-removes-the-row-and-says-the-same-thing-twice.md) delete removes the row, and says the same thing twice | XS | done |
 | | [TASK-040509](tasks/TASK-040509-the-directory-finds-a-profile-without-creating-one.md) The directory can find a profile without creating one | S | done |
-| | [TASK-040510](tasks/TASK-040510-one-resolver-and-an-invalid-session-never-falls-back.md) One resolver, and an invalid session never falls back to the device | S | **ready** |
-| | [TASK-040511](tasks/TASK-040511-the-read-path-follows-the-resolved-player.md) The profile read follows the resolved player, and every route resolves the same way | S | backlog |
+| | [TASK-040510](tasks/TASK-040510-one-resolver-and-an-invalid-session-never-falls-back.md) One resolver, and an invalid session never falls back to the device | S | done |
+| | [TASK-040511](tasks/TASK-040511-the-read-path-follows-the-resolved-player.md) The profile read follows the resolved player, and every route resolves the same way | S | **ready** |
 | | [TASK-040512](tasks/TASK-040512-a-signed-in-request-reads-the-sessions-profile.md) A signed-in request reads the session's profile, and the device beside it is ignored | S | backlog |
 | | [TASK-040513](tasks/TASK-040513-the-sign-in-body-is-two-fields-and-the-answer-carries-the-token-once.md) The sign-in body is two fields, and its answer carries the token exactly once | XS | backlog |
 | | [TASK-040514](tasks/TASK-040514-sign-in-the-credential-decides-and-a-stranger-learns-nothing.md) POST /api/auth/sign-in — the credential decides, and a stranger learns nothing | S | backlog |
