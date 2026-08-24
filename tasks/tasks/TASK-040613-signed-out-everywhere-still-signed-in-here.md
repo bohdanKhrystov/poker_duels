@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040613
 title: Signed out everywhere, and still signed in here
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -94,3 +94,21 @@ Two mutations on `PostgresDeviceBindings`, each reverted after.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Three sessions, not two.** With one kept and one ended, "ends the others" and "ends exactly one"
+are the same observation. `t0`, `t1`, `t2` are issued through real sign-ins, and `t1`/`t2` are each
+asserted `401` individually rather than by an aggregate count.
+
+**The control carries no row count, deliberately, and that survives scrutiny.** The dispatch brief
+asked for one on the second player; the ticket's Proof says this test must stay green under "drop the
+whole `DELETE`", which is what makes it the control rather than the criterion. The reviewer ran the
+stronger mutation the brief implied — dropping the `player_id` predicate entirely, so the sweep
+crosses players — and it **is** caught, by the other player's identity checks answering `401`. The
+failure is resolution-based, so a row count would have added nothing even there.
+
+**Resolution and rows are both checked, and they agree.** The sweep is asserted through
+`GET /api/me` with each token, and separately by a row count — a session gone from the table but
+still resolving, or present and not, would show as a disagreement between the two.
+

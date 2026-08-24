@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040614
 title: The revoked device says Hello and is seated as a stranger
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
