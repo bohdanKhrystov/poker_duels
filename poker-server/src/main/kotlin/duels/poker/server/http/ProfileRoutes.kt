@@ -1,10 +1,14 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.Identity
+import duels.poker.server.auth.IdentityResolver
+import duels.poker.server.auth.SessionToken
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.SetNameRequest
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -19,18 +23,25 @@ import java.util.UUID
 
 public const val DEVICE_ID_HEADER: String = "X-Device-Id"
 
+private const val BEARER_PREFIX: String = "Bearer "
+
 /**
- * Installs the `GET /api/me`, `GET /api/me/duels`, and `PUT /api/me/name` routes that return a
- * device's profile and recent duels, and let it set its display name.
+ * Installs the `GET /api/me`, `GET /api/me/duels`, and `PUT /api/me/name` routes that return the
+ * calling identity's profile and recent duels, and let it set its display name.
  *
- * `GET /api/me` returns the device's profile as JSON if the `X-Device-Id` header is present and
- * names a known device, otherwise `401 Unauthorized` with an empty body. Absent, blank and unknown
- * device ids all receive the same response — `401` instead of `404` — because the device id is the
- * only credential v0.1 has, an unknown one is an invalid credential, and answering `404` for
- * unknown would tell a caller which device ids exist.
+ * Every identity step here goes through [identities]: `Authorization: Bearer <token>` and
+ * `X-Device-Id` are both read, [ApplicationCall.resolvedPlayerOrNull] resolves the one player they
+ * name — a session wins outright when one is presented, per `ADR-0027` §4 — and the routes below
+ * act on that player, never on a device id or a body field directly.
  *
- * `GET /api/me/duels?limit=N&after=C&outcome=O&opponent=P` returns the device's recent duels as
- * a JSON array, optionally narrowed by outcome and opponent. The limit defaults to
+ * `GET /api/me` returns the resolved player's profile as JSON, or `401 Unauthorized` with an empty
+ * body when nothing resolves. An absent credential, a malformed or unknown session token, and a
+ * blank or unknown device id all receive the same response — `401` instead of `404` — because an
+ * unknown or refused credential is still an invalid one, and answering `404` for unknown would tell
+ * a caller which devices or accounts exist.
+ *
+ * `GET /api/me/duels?limit=N&after=C&outcome=O&opponent=P` returns the resolved player's recent
+ * duels as a JSON array, optionally narrowed by outcome and opponent. The limit defaults to
  * [DEFAULT_DUEL_LIMIT] when absent, is clamped to [MAX_DUEL_LIMIT] when above the cap, and is
  * rejected with `400 Bad Request` when non-numeric, negative, or zero. The `after` cursor is
  * optional: absent, it asks for the newest page and `null` reaches `ProfileReads.recentDuelsOf`;
@@ -41,47 +52,48 @@ public const val DEVICE_ID_HEADER: String = "X-Device-Id"
  * substring of the opponent's display name, refused when blank or over 32 code points. An empty
  * value of either `outcome` or `opponent` is present-and-unusable, not absent, and is
  * `400 Bad Request` before `ProfileReads.recentDuelsOf` is ever called — the same rule the cursor
- * already follows. An unauthenticated request is refused with `401 Unauthorized` before the query
- * string is looked at, so none of the limit, the cursor, or the filter ever tells a stranger that
- * their device id was the problem; among the three, the limit is checked first, then the filter,
- * then the cursor, and a cursor decoded under a filter other than the one that issued it is
- * refused with the same `400 Bad Request` and the same empty body as a cursor that does not
- * decode (`ADR-0057` §5). A device with no duels receives `200 OK` and an empty array, not `404`.
+ * already follows. An unresolved caller is refused with `401 Unauthorized` before the query string
+ * is looked at, so none of the limit, the cursor, or the filter ever tells a stranger that their
+ * credential was the problem; among the three, the limit is checked first, then the filter, then
+ * the cursor, and a cursor decoded under a filter other than the one that issued it is refused with
+ * the same `400 Bad Request` and the same empty body as a cursor that does not decode (`ADR-0057`
+ * §5). A player with no duels receives `200 OK` and an empty array, not `404`.
  *
- * `PUT /api/me/name` sets the device's display name. Identity is resolved first — exactly as the
- * other two routes resolve it, and **before the body is even read**: an absent, blank or unknown
- * device id answers `401 Unauthorized` with an empty body, and [writes] is never invoked. This
- * order is the whole point, not an optimisation: answering `409` or `403` for a name before
- * identity is confirmed would let an anonymous caller learn whether a name is taken or already
- * held, which makes the endpoint an enumeration oracle. Only once identity is confirmed is the
- * body decoded as `SetNameRequest`; a body that fails to decode — a missing `name`, an
- * unrecognised field, or invalid JSON — answers `400 Bad Request`, still before [writes] is
- * called. The decoded name is then run through `canonicalDisplayNameOrNull`; a name the rules
- * refuse is a client error and also answers `400`, again before [writes] is called. Only a
- * canonical name reaches [ProfileWrites.setDisplayName]: `NameSet` answers `200 OK` with the
- * updated profile, `NameTaken` answers `409 Conflict`, and `AlreadyNamed` answers `403 Forbidden`
- * (`ADR-0029` §5).
+ * `PUT /api/me/name` sets the resolved player's display name. Identity is resolved first — exactly
+ * as the other two routes resolve it, and **before the body is even read**: an unresolved caller
+ * answers `401 Unauthorized` with an empty body, and [writes] is never invoked. This order is the
+ * whole point, not an optimisation: answering `409` or `403` for a name before identity is
+ * confirmed would let an anonymous caller learn whether a name is taken or already held, which
+ * makes the endpoint an enumeration oracle. Only once identity is confirmed is the body decoded as
+ * `SetNameRequest`; a body that fails to decode — a missing `name`, an unrecognised field, or
+ * invalid JSON — answers `400 Bad Request`, still before [writes] is called. The decoded name is
+ * then run through `canonicalDisplayNameOrNull`; a name the rules refuse is a client error and also
+ * answers `400`, again before [writes] is called. Only a canonical name reaches
+ * [ProfileWrites.setDisplayName]: `NameSet` answers `200 OK` with the updated profile, `NameTaken`
+ * answers `409 Conflict`, and `AlreadyNamed` answers `403 Forbidden` (`ADR-0029` §5).
  *
- * These routes hold a `ProfileReads` and a `ProfileWrites` and nothing else — no `PlayerDirectory`,
- * no `DataSource`, no `resolve`. Profile creation happens on the socket handshake only
+ * These routes hold a `ProfileReads`, a `ProfileWrites` and an [IdentityResolver] — never a
+ * `PlayerDirectory` or a `DataSource` directly; resolving a credential into a player is
+ * [IdentityResolver]'s job, not this file's. Profile creation happens on the socket handshake only
  * (`ADR-0012`), so a crawler hitting this endpoint mints no rows. The routes are installed in
  * production by `Application.duelServer` against a shared set of `ServerComponents` that backs all
  * routes; a test may still install them directly with its own collaborators.
  *
  * @param reads The port for reading player profiles and balances.
  * @param writes The port for writing player profiles, used by `PUT /api/me/name` only.
+ * @param identities The port that resolves a session token or a device id into a player.
  */
-public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites) {
+public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites, identities: IdentityResolver) {
     routing {
         get("/api/me") {
-            val profile = call.deviceIdOrNull()?.let { reads.profileOf(it) }
+            val profile = call.resolvedPlayerOrNull(identities)?.let { reads.profileOf(it) }
             if (profile == null) call.respond(HttpStatusCode.Unauthorized) else call.respond(profile)
         }
-        get("/api/me/duels") { call.respondWithDuels(reads) }
+        get("/api/me/duels") { call.respondWithDuels(reads, identities) }
         put("/api/me/name") {
-            // Identity first: an unauthenticated request is refused before the body is read, so a
+            // Identity first: an unresolved caller is refused before the body is read, so a
             // stranger never reaches the 409/403 that would tell them whether a name is taken.
-            val profile = call.deviceIdOrNull()?.let { reads.profileOf(it) }
+            val profile = call.resolvedPlayerOrNull(identities)?.let { reads.profileOf(it) }
             if (profile == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@put
@@ -119,10 +131,13 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites)
  * KDoc for the endpoint's documented behaviour; this function is its implementation, not a second
  * source of truth for it.
  */
-private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(reads: ProfileReads) {
-    // Identity first: an unauthenticated request is refused before its query string is parsed, so
-    // a bad limit, cursor, or filter never tells a stranger that their device id was the problem.
-    val profile = deviceIdOrNull()?.let { reads.profileOf(it) }
+private suspend fun io.ktor.server.application.ApplicationCall.respondWithDuels(
+    reads: ProfileReads,
+    identities: IdentityResolver,
+) {
+    // Identity first: an unresolved caller is refused before its query string is parsed, so a bad
+    // limit, cursor, or filter never tells a stranger that their credential was the problem.
+    val profile = resolvedPlayerOrNull(identities)?.let { reads.profileOf(it) }
     if (profile == null) {
         respond(HttpStatusCode.Unauthorized)
         return
@@ -188,3 +203,45 @@ private fun List<DuelSummaryResponse>.recentDuelsPage(limit: Int, filter: DuelFi
  */
 internal fun io.ktor.server.application.ApplicationCall.deviceIdOrNull(): DeviceId? =
     request.headers[DEVICE_ID_HEADER]?.takeIf { it.isNotBlank() }?.let(::DeviceId)
+
+/**
+ * Extracts the session token from the `Authorization: Bearer <token>` header, or `null` if the
+ * header is absent, or blank once the `Bearer ` prefix is stripped — the same treatment
+ * [deviceIdOrNull] gives a blank `X-Device-Id`.
+ *
+ * A header present but **not** shaped `Bearer <token>` is not absent: [String.removePrefix] hands
+ * back an unmatched string unchanged, so the whole header value becomes the token. That token then
+ * reaches [IdentityResolver.resolve] as *present and invalid* — the same outcome an unknown token
+ * gets — rather than being silently read as "no credential", which would let a device id presented
+ * beside it be resolved instead. That silent downgrade is exactly the bug `TASK-040510`'s review
+ * named: a caller that mis-parses a malformed header into "absent" reintroduces it one layer above
+ * the resolver that was built to refuse it (`ADR-0027` §4).
+ */
+internal fun io.ktor.server.application.ApplicationCall.sessionTokenOrNull(): SessionToken? {
+    val header = request.headers[HttpHeaders.Authorization] ?: return null
+    return header.removePrefix(BEARER_PREFIX).takeIf { it.isNotBlank() }?.let(::SessionToken)
+}
+
+/**
+ * Resolves this call's identity through [identities] and answers the player behind it, or `null`
+ * when there is none to answer for.
+ *
+ * [Identity.Session] and [Identity.Device] both name a player and both answer it here — past this
+ * point, a request under a valid session and a request from a known device read identically
+ * (`ADR-0027` §4). [Identity.UnknownDevice], [Identity.Refused] and [Identity.Anonymous] all answer
+ * `null`: unknown, refused and absent alike get the same `401` an unauthenticated caller always
+ * got, never a hint about which of the three it was.
+ *
+ * The `when` below is exhaustive and takes no `else` and no `as?`: a sixth [Identity] case must
+ * fail this file to compile rather than silently fall through to `401`.
+ */
+internal suspend fun io.ktor.server.application.ApplicationCall.resolvedPlayerOrNull(
+    identities: IdentityResolver,
+): PlayerId? =
+    when (val identity = identities.resolve(sessionTokenOrNull(), deviceIdOrNull())) {
+        is Identity.Session -> identity.playerId
+        is Identity.Device -> identity.playerId
+        is Identity.UnknownDevice -> null
+        is Identity.Refused -> null
+        is Identity.Anonymous -> null
+    }

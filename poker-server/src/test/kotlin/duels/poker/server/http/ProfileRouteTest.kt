@@ -8,7 +8,6 @@ import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.duelSummaryResponse
 import duels.poker.server.protocol.http.profileResponse
 import duels.poker.server.protocol.protocolJson
-import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -34,7 +33,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "alice")
@@ -43,7 +42,7 @@ class ProfileRouteTest {
         val body = response.bodyAsText()
         assertTrue(body.contains("\"playerId\":\"p-alice\""))
         assertTrue(body.contains("\"coinBalance\":4"))
-        assertTrue(reads.queried.contains("alice"))
+        assertTrue(reads.queried.contains("p-alice"))
     }
 
     @Test
@@ -55,7 +54,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "bob")
@@ -70,7 +69,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me")
         assertEquals(HttpStatusCode.Unauthorized, response.status)
@@ -82,7 +81,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "  ")
@@ -96,13 +95,34 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "ghost")
         }
         assertEquals(HttpStatusCode.Unauthorized, response.status)
         assertEquals("", response.bodyAsText())
+    }
+
+    @Test
+    fun aMalformedAuthorizationHeaderIsRefusedNotDowngradedToTheDevice() = testApplication {
+        // TASK-040510's review, made concrete one layer up: a header that does not parse as
+        // `Bearer <token>` must still reach the resolver as a *presented*, invalid token — never
+        // silently become "no token", which would let this device, resolvable and sitting right
+        // beside it, answer instead of a 401. The device is the positive control: without it,
+        // this test could not tell a real fix from a fixture that would have answered 401 anyway.
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 4)))
+        application {
+            module()
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+        }
+        val response = client.get("/api/me") {
+            header(HttpHeaders.Authorization, "not-a-bearer-token")
+            header(DEVICE_ID_HEADER, "alice")
+        }
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals("", response.bodyAsText())
+        assertTrue(reads.queried.isEmpty())
     }
 
     @Test
@@ -129,7 +149,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -158,7 +178,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -184,7 +204,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -201,7 +221,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -221,7 +241,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -240,7 +260,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -261,7 +281,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me/duels?limit=999") {
             header(DEVICE_ID_HEADER, "alice")
@@ -280,7 +300,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me/duels?limit=abc") {
             header(DEVICE_ID_HEADER, "alice")
@@ -297,7 +317,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -312,7 +332,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites())
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
         }
         val response = client.get("/api/me/duels?limit=abc") {
             header(DEVICE_ID_HEADER, "ghost")
@@ -329,7 +349,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val cursor =
                 DuelCursor(
@@ -353,7 +373,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?after=not-a-cursor") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -373,7 +393,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?after=") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -389,7 +409,7 @@ class ProfileRouteTest {
             val reads = FakeProfileReads(emptyMap())
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?after=not-a-cursor") {
                 header(DEVICE_ID_HEADER, "ghost")
@@ -408,7 +428,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?outcome=WON") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -427,7 +447,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?opponent=Halvard") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -446,7 +466,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?outcome=won") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -466,7 +486,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?opponent=") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -483,7 +503,7 @@ class ProfileRouteTest {
             val reads = FakeProfileReads(emptyMap())
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?outcome=won")
             assertEquals(HttpStatusCode.Unauthorized, response.status)
@@ -535,7 +555,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?limit=3") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -584,7 +604,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             // The fake holds exactly `limit` rows: the probe finds nothing. A naive
             // returned == limit ⇒ there is more would get this wrong.
@@ -623,7 +643,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?limit=3") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -644,7 +664,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val response = client.get("/api/me/duels?limit=3") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -702,7 +722,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val firstPage = client.get("/api/me/duels?limit=3") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -735,7 +755,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val firstPage = client.get("/api/me/duels?limit=1&outcome=WON") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -773,7 +793,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val mintingPage = client.get("/api/me/duels?limit=1&outcome=WON") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -805,7 +825,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val mintingPage = client.get("/api/me/duels?limit=1") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -835,7 +855,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites())
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
             }
             val mintingPage = client.get("/api/me/duels?limit=1&opponent=Halvard") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -862,7 +882,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.NameSet(profileResponse("p-alice", 4, "Alice")))
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -882,7 +902,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.NameSet(profileResponse("p-alice", 0, "Bob")))
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -899,7 +919,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         // A valid body, so a wrong implementation that answered on the body would answer 200,
         // not 401 — the identity refusal below, not the body one.
@@ -917,7 +937,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         // A body that cannot even decode: if identity were checked after the body were read,
         // this would answer 400 — the same wrong answer the body's own defect would produce —
@@ -937,7 +957,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "ghost")
@@ -954,7 +974,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -971,7 +991,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -988,7 +1008,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.NameTaken)
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1005,7 +1025,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.AlreadyNamed)
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1025,7 +1045,7 @@ class ProfileRouteTest {
             val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(SetNameResult.NameTaken))
+                profileRoutes(reads, FakeProfileWrites(SetNameResult.NameTaken), identitiesFor(reads.profiles))
             }
             val response = client.put("/api/me/name") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -1040,7 +1060,7 @@ class ProfileRouteTest {
             val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(SetNameResult.AlreadyNamed))
+                profileRoutes(reads, FakeProfileWrites(SetNameResult.AlreadyNamed), identitiesFor(reads.profiles))
             }
             val response = client.put("/api/me/name") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -1063,7 +1083,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.NameSet(profile))
         application {
             module()
-            profileRoutes(reads, writes)
+            profileRoutes(reads, writes, identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1099,7 +1119,7 @@ class ProfileRouteTest {
         )
 
     private class FakeProfileReads(
-        private val profiles: Map<String, ProfileResponse>,
+        val profiles: Map<String, ProfileResponse>,
         private val duels: Map<String, List<DuelSummaryResponse>> = emptyMap(),
     ) : ProfileReads {
         val queried: MutableList<String> = mutableListOf()
@@ -1107,9 +1127,9 @@ class ProfileRouteTest {
         val filtersRequested: MutableList<DuelFilter> = mutableListOf()
         var lastLimitRequested: Int = 0
 
-        override suspend fun profileOf(deviceId: DeviceId): ProfileResponse? {
-            queried.add(deviceId.value)
-            return profiles[deviceId.value]
+        override suspend fun profileOf(playerId: PlayerId): ProfileResponse? {
+            queried.add(playerId.value)
+            return profiles.values.find { it.playerId == playerId.value }
         }
 
         override suspend fun recentDuelsOf(

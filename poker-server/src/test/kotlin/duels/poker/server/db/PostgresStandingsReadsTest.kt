@@ -294,8 +294,8 @@ class PostgresStandingsReadsTest {
 
             // The same path the profile strip reads, per the ticket -- not raw SQL, so the
             // comparison is between the two answers the product actually gives.
-            val aliceProfile = assertNotNull(profileReads.profileOf(DeviceId("alice")))
-            val carolProfile = assertNotNull(profileReads.profileOf(DeviceId("carol")))
+            val aliceProfile = assertNotNull(profileReads.profileOf(alice.id))
+            val carolProfile = assertNotNull(profileReads.profileOf(carol.id))
 
             val page = standingsReads.standingsPage(season, asOf, limit = 10)
             val aliceStanding = page.first { it.playerId == alice.id.value }

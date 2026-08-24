@@ -7,7 +7,6 @@ import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.outcomeOf
-import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,10 +26,10 @@ import javax.sql.DataSource
  * type escapes through the [ProfileReads] port.
  */
 public class PostgresProfileReads(private val dataSource: DataSource) : ProfileReads {
-    override suspend fun profileOf(deviceId: DeviceId): ProfileResponse? = withContext(Dispatchers.IO) {
+    override suspend fun profileOf(playerId: PlayerId): ProfileResponse? = withContext(Dispatchers.IO) {
         dataSource.connection.use { connection ->
             connection.prepareStatement(PROFILE_OF_SQL).use { statement ->
-                statement.setString(1, deviceId.value)
+                statement.setObject(1, UUID.fromString(playerId.value))
                 statement.executeQuery().use { rows ->
                     if (rows.next()) {
                         ProfileResponse(
@@ -148,7 +147,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         // so a join would return one row per retired name for a single profile and
         // `if (rows.next())` would silently take the first. EXISTS is a semijoin — one boolean
         // per profile row whatever name_registry holds. Correlated to p.id, never to a second
-        // `?`: the statement binds the caller's device id exactly once, so a later edit cannot
+        // `?`: the statement binds the caller's player id exactly once, so a later edit cannot
         // make the boolean describe a different player than the row does.
         // `r.reason = 'RETIRED'` is redundant under the partial index
         // name_registry_retired_from, and stays — the statement should read correctly without
@@ -162,7 +161,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                     AND EXISTS (SELECT 1 FROM name_registry r
                                  WHERE r.retired_from = p.id AND r.reason = 'RETIRED')) AS display_name_removed
             FROM player p
-            WHERE p.device_id = ?
+            WHERE p.id = ?
             """
 
         // ADR-0015: every participant of every completed duel has exactly one `duel_result`

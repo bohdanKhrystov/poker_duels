@@ -24,7 +24,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // A well-formed, entirely valid body: a wrong implementation that reached the guard
             // or the write would answer 201/409, not 401 — this 401 can only have come from the
@@ -47,7 +47,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // A header of only whitespace: DeviceId's init rejects a blank value, so without the
             // isNotBlank guard this would throw and answer 500, not 401.
@@ -68,7 +68,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // A malformed body: a wrong implementation that only checked the header's presence
             // before decoding, deferring the profile lookup until after, would answer 400 here —
@@ -93,7 +93,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -114,7 +114,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -135,7 +135,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // An unrecognised field: a client cannot assert an identity even by trying, because
             // SignUpRequest has no playerId field to decode one into.
@@ -158,7 +158,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // The single most important test in the ticket: no device id, and a body that cannot
             // even decode. The wrong implementation this must fail against is one that decodes
@@ -182,7 +182,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // The body decodes fine, but its handle fails signUpFieldsOf's own rule, which would
             // answer 400 once identity is known. A wrong implementation that judged fields before
@@ -206,7 +206,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -225,7 +225,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // Bob_1 changes under the fold, so a handler that skipped folding would fail here even
             // though it would pass with an already-lowercase handle. The player id must be the
@@ -254,7 +254,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials(holds = true)
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // holds = true: the guard alone must stop the write. createCalls staying empty proves
             // no Argon2 work was spent (ADR-0030 §1); holdsCalls being non-empty proves the guard
@@ -278,7 +278,7 @@ class AuthRouteTest {
                 RecordingCredentials(createResult = CreateCredentialResult.IdentifierTaken)
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // The guard passes (holds = false, the default) but the write itself reports the
             // identifier taken — the same 409 as the case above, reached by a different branch.
@@ -298,7 +298,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             // "ab" fails signUpFieldsOf's own rule, after identity and decoding both already
             // succeeded. A refusal that still costs a round trip to either port is a refusal that
@@ -324,7 +324,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -342,7 +342,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -362,7 +362,7 @@ class AuthRouteTest {
             val credentials = RecordingCredentials()
             application {
                 module()
-                authRoutes(reads, credentials)
+                authRoutes(reads, credentials, identitiesFor(reads.profiles))
             }
             val response = client.post("/api/auth/sign-up") {
                 header(DEVICE_ID_HEADER, "alice")

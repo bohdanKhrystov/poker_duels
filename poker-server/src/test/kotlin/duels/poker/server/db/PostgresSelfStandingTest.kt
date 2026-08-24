@@ -106,7 +106,7 @@ class PostgresSelfStandingTest {
 
             // The win is real and on the books -- coin_balance carries it -- so a null standing
             // below is about the season window, never about whether the player has ever played.
-            val julyProfile = assertNotNull(profileReads.profileOf(DeviceId("july-player")))
+            val julyProfile = assertNotNull(profileReads.profileOf(julyPlayer.id))
             assertEquals(1, julyProfile.coinBalance)
 
             assertNull(standingsReads.standingOf(julyPlayer.id, season, asOf))
