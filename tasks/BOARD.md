@@ -1856,8 +1856,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040614](tasks/TASK-040614-the-revoked-device-says-hello-and-is-a-stranger.md) The revoked device says Hello and is seated as a stranger | S | done |
 | | [TASK-040615](tasks/TASK-040615-revoke-then-the-password-reaches-the-same-profile.md) Revoke, then the password reaches the same profile, coins and name | S | done |
 | | [TASK-040616](tasks/TASK-040616-p1-and-p2-in-one-helper-and-the-proof-neither-subsumes-the-other.md) P1 and P2 in one helper, and the proof that neither subsumes the other | S | done |
-| | [TASK-040617](tasks/TASK-040617-both-copies-of-the-ledger-assertions-come-from-the-shared-helper.md) Both copies of the ledger assertions come from the shared helper | S | **ready** |
-| | [TASK-040618](tasks/TASK-040618-the-scenario-anonymous-a-duel-a-name-an-account.md) The scenario, steps one to four — anonymous, a duel, a name, an account | S | backlog |
+| | [TASK-040617](tasks/TASK-040617-both-copies-of-the-ledger-assertions-come-from-the-shared-helper.md) Both copies of the ledger assertions come from the shared helper | S | done |
+| | [TASK-040618](tasks/TASK-040618-the-scenario-anonymous-a-duel-a-name-an-account.md) The scenario, steps one to four — anonymous, a duel, a name, an account | S | **ready** |
 | | [TASK-040619](tasks/TASK-040619-a-duel-opened-under-a-session-token.md) A duel can be opened under a session token, not only a device id | S | backlog |
 | | [TASK-040620](tasks/TASK-040620-the-scenario-the-token-a-second-account-and-back-to-anonymous.md) The scenario, steps five to eleven — the token, a second account, and back | S | backlog |
 | | [TASK-040621](tasks/TASK-040621-the-scenario-ends-with-a-revocation-and-nothing-escapes-it.md) The scenario ends with a revocation, and no identity endpoint escapes it | S | backlog |

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040618
 title: The scenario, steps one to four — anonymous, a duel, a name, an account
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
