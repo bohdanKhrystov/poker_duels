@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040617
 title: Both copies of the ledger assertions come from the shared helper
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -105,3 +105,26 @@ misdiagnosis the before-call exists to prevent.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A consolidation's failure mode is asserting less than the copies it replaced**, with every test
+still green because the assertion that used to catch something is simply gone. The coder did not run
+a mutation, so the review did the comparison assertion for assertion:
+`assertEquals(0, p1BrokenBalanceCount())` ↔ `check(brokenPlayers.isEmpty())` — equivalent, since a
+count of zero and an empty list are the same claim; two separate `assertEquals(0, sum)` ↔ one
+conjoined `check(playerBalanceSum == 0 && duelResultDeltaSum == 0)` — also equivalent.
+
+**The before/after pairs survived.** `ADR-0030` §5 needs the invariant on both sides of the operation
+under test, and all three tests keep exactly two calls with distinct step strings — "before sign-up"
+/ "after sign-up", "before takedown" / "after takedown". Collapsing a pair into one post-operation
+check is the silent loss this shape invites.
+
+**The consolidation strengthened the tests.** Each call site now checks **both** properties, where
+the private copies checked whichever their file happened to need.
+
+**The collision resolved itself by deletion.** While the file-private `p2LedgerSums` and the
+`internal` helper both existed, an untouched file failed to compile with overload-resolution
+ambiguity — `TASK-040616` renamed its helper to sidestep it. Removing the copies here removes the
+ambiguity entirely; neither name survives anywhere in the module.
+
