@@ -4,10 +4,16 @@ import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.db.assertCoinInvariantHolds
 import duels.poker.server.db.playerTableSnapshot
 import duels.poker.server.http.DEVICE_ID_HEADER
+import duels.poker.server.protocol.CreateRoom
+import duels.poker.server.protocol.JoinRoom
+import duels.poker.server.protocol.ProtocolCodec
+import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.SignInResponse
 import duels.poker.server.protocol.protocolJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -17,6 +23,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
+import io.ktor.websocket.Frame
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,15 +33,25 @@ import org.junit.jupiter.api.Timeout
 import javax.sql.DataSource
 
 /**
- * `ADR-0030` §5's scenario, the first four steps, against a real database and the shipped
- * composition: connect anonymously, play a duel and win, set a name, sign up.
+ * `ADR-0030` §5's whole scenario, against a real database and the shipped composition: connect
+ * anonymously, play a duel and win, set a name, sign up, sign in, reconnect with the token, sign
+ * into a second account from the same device, play a duel as that account, sign out, reconnect
+ * anonymously, read the profile back.
  *
  * [runScenario] is the one place the whole flow runs, and every test method below calls it and
  * asserts one aspect of the [ScenarioRecord] it returns — never its own copy of the setup or its
- * own re-derivation of the scenario. `dataSource.assertCoinInvariantHolds` runs five times inside
- * it, before the first step and after each of the four, so a coin that moves mid-scenario reddens
- * every method in this class, not only the one whose name happens to describe that step
- * (`ADR-0030` §5: "asserting only at the end is not enough — a mint and a burn cancel").
+ * own re-derivation of the scenario. `dataSource.assertCoinInvariantHolds` runs twelve times
+ * inside it — before the first step and after each of the eleven — so a coin that moves
+ * mid-scenario reddens every method in this class, not only the one whose name happens to
+ * describe that step (`ADR-0030` §5: "asserting only at the end is not enough — a mint and a burn
+ * cancel").
+ *
+ * Steps five to eleven are written against `winner`/`loser`, never against the wire-level
+ * `HOST_DEVICE`/`GUEST_DEVICE` constants: whichever device wins step 1's duel is the one with a
+ * credential once step 4 runs, so it is *that* device — "the host" throughout the rest of this
+ * scenario, in the role sense the story's steps use the word, not the connection-order sense
+ * `HOST_DEVICE` names — that signs in first and carries the token. The loser signs up under its
+ * own handle here, becoming the "second account" step 7 signs into from the winner's device.
  *
  * The winner's player id, read over `GET /api/me` right after step 1, is carried through
  * [ScenarioRecord] and re-asserted after every later step, together with the display name step 3
@@ -53,7 +70,7 @@ internal class IdentityMovesNoCoinTest {
     }
 
     @Test
-    fun theFirstFourStepsMoveNoCoin() {
+    fun theWholeScenarioMovesNoCoin() {
         runScenario()
     }
 
@@ -137,11 +154,96 @@ internal class IdentityMovesNoCoinTest {
         )
     }
 
+    @Test
+    fun theSecondAccountIsSeatedFromTheFirstsDevice() {
+        val record = runScenario()
+        assertEquals(
+            record.winnerPlayerId,
+            record.step6WelcomePlayerId,
+            "step 6: Hello carrying the winner's own token named ${record.step6WelcomePlayerId}, " +
+                "expected the winner's own player ${record.winnerPlayerId}",
+        )
+        assertEquals(
+            record.loserPlayerId,
+            record.step7WelcomePlayerId,
+            "step 7: Hello carrying the second account's token, sent from the winner's device, " +
+                "named ${record.step7WelcomePlayerId}, expected the second account's player " +
+                "${record.loserPlayerId}",
+        )
+    }
+
+    @Test
+    fun theSecondDuelPaidTheAccountAndNotTheDevice() {
+        val record = runScenario()
+        val expectedSecondAccountDelta = if (record.secondDuelWonByTheAccount) 1 else -1
+        assertEquals(
+            record.guestAccountBalanceBeforeSecondDuel + expectedSecondAccountDelta,
+            record.guestAccountBalanceAfterSecondDuel,
+            "second account playerId=${record.loserPlayerId}: expected coinBalance to move by " +
+                "$expectedSecondAccountDelta across the second duel, was " +
+                "${record.guestAccountBalanceBeforeSecondDuel}, is now " +
+                "${record.guestAccountBalanceAfterSecondDuel}",
+        )
+        assertEquals(
+            record.winnerBalanceAfterDuel,
+            record.hostBalanceAfterSecondDuel,
+            "winner's own deviceId, playerId=${record.winnerPlayerId}: expected coinBalance to " +
+                "stay at ${record.winnerBalanceAfterDuel} (its value at the end of step 2) across " +
+                "the second duel, is now ${record.hostBalanceAfterSecondDuel}",
+        )
+    }
+
+    @Test
+    fun signingInAndOutLeavesThePlayerTableByteIdentical() {
+        val record = runScenario()
+        assertEquals(
+            record.beforeSigningIn,
+            record.afterSigningIn,
+            "player table changed across signing in: before=${record.beforeSigningIn} after=" +
+                "${record.afterSigningIn}",
+        )
+        assertEquals(
+            record.beforeSigningIntoSecondAccount,
+            record.afterSigningIntoSecondAccount,
+            "player table changed across signing into the second account: before=" +
+                "${record.beforeSigningIntoSecondAccount} after=${record.afterSigningIntoSecondAccount}",
+        )
+        assertEquals(
+            record.beforeSigningOut,
+            record.afterSigningOut,
+            "player table changed across signing out: before=${record.beforeSigningOut} after=" +
+                "${record.afterSigningOut}",
+        )
+        assertEquals(
+            record.beforeReconnectingAnonymously,
+            record.afterReconnectingAnonymously,
+            "player table changed across reconnecting anonymously: before=" +
+                "${record.beforeReconnectingAnonymously} after=${record.afterReconnectingAnonymously}",
+        )
+    }
+
+    @Test
+    fun theDeviceIsItselfAgainAfterSigningOut() {
+        val record = runScenario()
+        assertEquals(
+            record.winnerPlayerId,
+            record.step10WelcomePlayerId,
+            "step 10: Welcome named ${record.step10WelcomePlayerId}, expected the winner's " +
+                "original player ${record.winnerPlayerId}, the one recorded at step 1",
+        )
+        assertEquals(
+            record.winnerPlayerId,
+            record.step11ProfilePlayerId,
+            "step 11: GET /api/me named ${record.step11ProfilePlayerId}, expected the winner's " +
+                "original player ${record.winnerPlayerId}, the one recorded at step 1",
+        )
+    }
+
     /**
      * Boots the shipped composition against [dataSource] — `installDuelServer(dataSource)`, then
      * `createClient { install(WebSockets) }`, exactly as every `SocketCoinsTest` test does — and
-     * drives `ADR-0030` §5's first four steps over the one client it opens, asserting
-     * [dataSource]'s coin invariant before the first step and after each of the four, and the
+     * drives `ADR-0030` §5's whole eleven-step scenario over the one client it opens, asserting
+     * [dataSource]'s coin invariant before the first step and after each of the eleven, and the
      * winner's player id, display name and coin balance after every step from the second onward.
      *
      * Every test method in this class calls this and asserts one fact off the returned
@@ -257,6 +359,77 @@ internal class IdentityMovesNoCoinTest {
                     "coinBalance is now ${profileAfterSigningUp.coinBalance}",
             )
 
+            // The scenario's "second account": whichever device did not win step 1's duel holds
+            // no credential yet, so it signs up under its own handle here — the only change to
+            // the first four steps (`TASK-040620`). This is what step 7 later signs into from the
+            // winner's own device.
+            assertEquals(
+                HttpStatusCode.Created,
+                client.signUp(loser.deviceId, "Second_2", "password2"),
+                "POST /api/auth/sign-up for the loser's deviceId=${loser.deviceId}",
+            )
+
+            // Step 5: sign in as the winner's own account.
+            val beforeSigningIn = dataSource.playerTableSnapshot()
+            val winnerToken = client.signIn("Winner_1", "password1")
+            dataSource.assertCoinInvariantHolds("after signing in")
+            val afterSigningIn = dataSource.playerTableSnapshot()
+
+            // Step 6: reconnect with the token, from the winner's own device — device id and
+            // token agree, so the Welcome names the same player either way.
+            val step6Welcome = client.webSocketSession("/ws").completeHandshake(winner.deviceId, winnerToken)
+            dataSource.assertCoinInvariantHolds("after reconnecting with the token")
+
+            // Step 7: sign into the second account from the same device — the winner's own
+            // device presents the second account's token, which `ADR-0030` §6 makes legal, and
+            // this step is the whole reason the scenario exists.
+            val beforeSigningIntoSecondAccount = dataSource.playerTableSnapshot()
+            val secondAccountToken = client.signIn("Second_2", "password2")
+            val step7Welcome = client.webSocketSession("/ws").completeHandshake(winner.deviceId, secondAccountToken)
+            dataSource.assertCoinInvariantHolds("after signing into the second account")
+            val afterSigningIntoSecondAccount = dataSource.playerTableSnapshot()
+
+            // Step 8: play a duel as the second account — the winner's own device presents the
+            // second account's token, and the opponent presents a third, plain device id,
+            // unrelated to either account.
+            val guestAccountBalanceBeforeSecondDuel = client.profileOf(loser.deviceId).coinBalance
+            val secondDuel = client.openSocketDuelAs(
+                hostDeviceId = winner.deviceId,
+                hostToken = secondAccountToken,
+                opponentDeviceId = THIRD_DEVICE,
+            )
+            val secondOutcome = secondDuel.playToFinish()
+            val secondWinnerSeat = checkNotNull(secondOutcome.winner) {
+                "handSeed=${secondDuel.handSeed} policySeed=$POLICY_SEED: second duel outcome has " +
+                    "no winner, outcome=$secondOutcome"
+            }
+            val secondDuelWinner = secondDuel.seat(secondWinnerSeat)
+            val secondDuelWonByTheAccount = secondDuelWinner.deviceId == winner.deviceId
+            dataSource.assertCoinInvariantHolds("after playing the second duel")
+            val guestAccountBalanceAfterSecondDuel = client.profileOf(loser.deviceId).coinBalance
+            val hostBalanceAfterSecondDuel = client.profileOf(winner.deviceId).coinBalance
+
+            // Step 9: sign out.
+            val beforeSigningOut = dataSource.playerTableSnapshot()
+            assertEquals(
+                HttpStatusCode.NoContent,
+                client.signOut(secondAccountToken),
+                "POST /api/auth/sign-out with the second account's token",
+            )
+            dataSource.assertCoinInvariantHolds("after signing out")
+            val afterSigningOut = dataSource.playerTableSnapshot()
+
+            // Step 10: reconnect anonymously — a Hello with the winner's own device id and no
+            // token names the winner's original player again.
+            val beforeReconnectingAnonymously = dataSource.playerTableSnapshot()
+            val step10Welcome = client.webSocketSession("/ws").completeHandshake(winner.deviceId)
+            dataSource.assertCoinInvariantHolds("after reconnecting anonymously")
+            val afterReconnectingAnonymously = dataSource.playerTableSnapshot()
+
+            // Step 11: read the profile back.
+            val step11Profile = client.profileOf(winner.deviceId)
+            dataSource.assertCoinInvariantHolds("after reading the profile back")
+
             record = ScenarioRecord(
                 hostPlayerId = hostPlayerId,
                 guestPlayerId = guestPlayerId,
@@ -269,6 +442,22 @@ internal class IdentityMovesNoCoinTest {
                 afterSettingName = afterSettingName,
                 beforeSigningUp = beforeSigningUp,
                 afterSigningUp = afterSigningUp,
+                beforeSigningIn = beforeSigningIn,
+                afterSigningIn = afterSigningIn,
+                step6WelcomePlayerId = step6Welcome.playerId,
+                beforeSigningIntoSecondAccount = beforeSigningIntoSecondAccount,
+                afterSigningIntoSecondAccount = afterSigningIntoSecondAccount,
+                step7WelcomePlayerId = step7Welcome.playerId,
+                guestAccountBalanceBeforeSecondDuel = guestAccountBalanceBeforeSecondDuel,
+                guestAccountBalanceAfterSecondDuel = guestAccountBalanceAfterSecondDuel,
+                secondDuelWonByTheAccount = secondDuelWonByTheAccount,
+                hostBalanceAfterSecondDuel = hostBalanceAfterSecondDuel,
+                beforeSigningOut = beforeSigningOut,
+                afterSigningOut = afterSigningOut,
+                beforeReconnectingAnonymously = beforeReconnectingAnonymously,
+                afterReconnectingAnonymously = afterReconnectingAnonymously,
+                step10WelcomePlayerId = step10Welcome.playerId,
+                step11ProfilePlayerId = step11Profile.playerId,
             )
         }
         checkNotNull(record) { "runScenario: testApplication completed without producing a ScenarioRecord" }
@@ -308,7 +497,71 @@ internal class IdentityMovesNoCoinTest {
         }
         return response.status
     }
+
+    /**
+     * Signs in with [handle] and [password] over `POST /api/auth/sign-in`, asserting the response
+     * is `200`, and returns the issued session token.
+     *
+     * Carries no device id header: sign-in resolves no identity of its own — no `X-Device-Id` and
+     * no `Authorization` header are read (`ADR-0030` §2, `AuthRoutes.kt`'s own KDoc) — so a device
+     * id here would be misleading, since it is never read.
+     */
+    private suspend fun HttpClient.signIn(handle: String, password: String): String {
+        val response = post("/api/auth/sign-in") {
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"handle":"$handle","password":"$password"}""")
+        }
+        assertEquals(
+            HttpStatusCode.OK,
+            response.status,
+            "POST /api/auth/sign-in for handle=$handle returned ${response.status}",
+        )
+        return protocolJson.decodeFromString<SignInResponse>(response.bodyAsText()).sessionToken
+    }
+
+    /** Signs [token] out over `POST /api/auth/sign-out`, returning the response status. */
+    private suspend fun HttpClient.signOut(token: String): HttpStatusCode {
+        val response = post("/api/auth/sign-out") { header(HttpHeaders.Authorization, "Bearer $token") }
+        return response.status
+    }
+
+    /**
+     * Opens a two-socket duel exactly as [openSocketDuel] does — a `Hello`, then `CreateRoom` on
+     * the first socket, then a second `Hello`, then `JoinRoom` on the second — but lets the caller
+     * choose each socket's own device id, needed for step 8: [openSocketDuel] always seats
+     * `HOST_DEVICE`/`GUEST_DEVICE`, which cannot express a duel between the winner's own device
+     * (presenting the second account's token) and a third device unrelated to either account.
+     */
+    private suspend fun HttpClient.openSocketDuelAs(
+        hostDeviceId: String,
+        hostToken: String?,
+        opponentDeviceId: String,
+        handSeed: Long = HAND_SEED,
+    ): SocketDuel {
+        val hostSession = webSocketSession("/ws")
+        hostSession.completeHandshake(hostDeviceId, hostToken)
+        hostSession.send(Frame.Text(ProtocolCodec.encode(CreateRoom)))
+        val hostMessage = hostSession.nextServerMessage()
+        val hostRoomJoined = hostMessage as? ServerMessage.RoomJoined
+            ?: error("Expected RoomJoined from host, got ${hostMessage::class.simpleName}")
+        val hostClient = SocketClient(hostDeviceId, hostRoomJoined.seat, hostSession)
+        hostClient.received.add(hostRoomJoined)
+
+        val opponentSession = webSocketSession("/ws")
+        opponentSession.completeHandshake(opponentDeviceId)
+        opponentSession.send(Frame.Text(ProtocolCodec.encode(JoinRoom(hostRoomJoined.code))))
+        val opponentMessage = opponentSession.nextServerMessage()
+        val opponentRoomJoined = opponentMessage as? ServerMessage.RoomJoined
+            ?: error("Expected RoomJoined from opponent, got ${opponentMessage::class.simpleName}")
+        val opponentClient = SocketClient(opponentDeviceId, opponentRoomJoined.seat, opponentSession)
+        opponentClient.received.add(opponentRoomJoined)
+
+        return SocketDuel(hostRoomJoined.code, handSeed, listOf(hostClient, opponentClient))
+    }
 }
+
+/** The third device in step 8's duel: a fresh, plain device unrelated to either account. */
+private const val THIRD_DEVICE: String = "e2e-third"
 
 /**
  * What one run of [IdentityMovesNoCoinTest]'s scenario observed at each step, so every test method
@@ -332,6 +585,31 @@ internal class IdentityMovesNoCoinTest {
  * @property afterSettingName The `player` table snapshot immediately after step 3.
  * @property beforeSigningUp The `player` table snapshot immediately before step 4.
  * @property afterSigningUp The `player` table snapshot immediately after step 4.
+ * @property beforeSigningIn The `player` table snapshot immediately before step 5.
+ * @property afterSigningIn The `player` table snapshot immediately after step 5.
+ * @property step6WelcomePlayerId The player id step 6's `Welcome` named, reconnecting with the
+ *   winner's own token from the winner's own device.
+ * @property beforeSigningIntoSecondAccount The `player` table snapshot immediately before step 7.
+ * @property afterSigningIntoSecondAccount The `player` table snapshot immediately after step 7.
+ * @property step7WelcomePlayerId The player id step 7's `Welcome` named, presenting the second
+ *   account's token from the winner's own device.
+ * @property guestAccountBalanceBeforeSecondDuel The second account's `coinBalance`, read for the
+ *   loser's own device, immediately before step 8.
+ * @property guestAccountBalanceAfterSecondDuel The second account's `coinBalance`, read for the
+ *   loser's own device, immediately after step 8.
+ * @property secondDuelWonByTheAccount Whether step 8's duel was won by the socket presenting the
+ *   second account's token — the winner's own device — rather than by the third, plain device.
+ * @property hostBalanceAfterSecondDuel The winner's own `coinBalance`, read for the winner's own
+ *   device, immediately after step 8 — expected to equal [winnerBalanceAfterDuel] unchanged, since
+ *   step 8's coin moves the second account, not the winner's own device.
+ * @property beforeSigningOut The `player` table snapshot immediately before step 9.
+ * @property afterSigningOut The `player` table snapshot immediately after step 9.
+ * @property beforeReconnectingAnonymously The `player` table snapshot immediately before step 10.
+ * @property afterReconnectingAnonymously The `player` table snapshot immediately after step 10.
+ * @property step10WelcomePlayerId The player id step 10's `Welcome` named, reconnecting with the
+ *   winner's own device id and no token.
+ * @property step11ProfilePlayerId The player id step 11's `GET /api/me` named, for the winner's
+ *   own device id.
  */
 private data class ScenarioRecord(
     val hostPlayerId: String,
@@ -345,4 +623,20 @@ private data class ScenarioRecord(
     val afterSettingName: List<List<Any?>>,
     val beforeSigningUp: List<List<Any?>>,
     val afterSigningUp: List<List<Any?>>,
+    val beforeSigningIn: List<List<Any?>>,
+    val afterSigningIn: List<List<Any?>>,
+    val step6WelcomePlayerId: String,
+    val beforeSigningIntoSecondAccount: List<List<Any?>>,
+    val afterSigningIntoSecondAccount: List<List<Any?>>,
+    val step7WelcomePlayerId: String,
+    val guestAccountBalanceBeforeSecondDuel: Int,
+    val guestAccountBalanceAfterSecondDuel: Int,
+    val secondDuelWonByTheAccount: Boolean,
+    val hostBalanceAfterSecondDuel: Int,
+    val beforeSigningOut: List<List<Any?>>,
+    val afterSigningOut: List<List<Any?>>,
+    val beforeReconnectingAnonymously: List<List<Any?>>,
+    val afterReconnectingAnonymously: List<List<Any?>>,
+    val step10WelcomePlayerId: String,
+    val step11ProfilePlayerId: String,
 )
