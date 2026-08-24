@@ -1,5 +1,6 @@
 package duels.poker.server.config
 
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.room.RoomTimeouts
 import io.ktor.server.config.MapApplicationConfig
 import org.junit.jupiter.api.Test
@@ -195,5 +196,108 @@ class ServerConfigTest {
         val config = MapApplicationConfig()
         val serverConfig = ServerConfig.from(config) { null }
         assertEquals(1_000L, serverConfig.sweepPeriodMillis)
+    }
+
+    @Test
+    fun theSignUpBudgetDefaults() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(5, serverConfig.signUpMaxAttempts)
+        assertEquals(900_000L, serverConfig.signUpWindowMillis)
+    }
+
+    @Test
+    fun theSignUpBudgetComesFromTheEnvironment() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { name ->
+            when (name) {
+                ServerConfig.AUTH_SIGN_UP_MAX_ATTEMPTS -> "9"
+                ServerConfig.AUTH_SIGN_UP_WINDOW_MILLIS -> "1000"
+                else -> null
+            }
+        }
+        assertEquals(9, serverConfig.signUpMaxAttempts)
+        assertEquals(1000L, serverConfig.signUpWindowMillis)
+    }
+
+    @Test
+    fun theSignUpBudgetComesFromTheConfigFile() {
+        val config = MapApplicationConfig(
+            ServerConfig.SIGN_UP_MAX_ATTEMPTS_KEY to "8",
+            ServerConfig.SIGN_UP_WINDOW_MILLIS_KEY to "2000",
+        )
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(8, serverConfig.signUpMaxAttempts)
+        assertEquals(2000L, serverConfig.signUpWindowMillis)
+    }
+
+    @Test
+    fun theSignInBudgetDefaults() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(10, serverConfig.signInMaxAttempts)
+        assertEquals(60_000L, serverConfig.signInWindowMillis)
+    }
+
+    @Test
+    fun theSignInBudgetComesFromTheEnvironment() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { name ->
+            when (name) {
+                ServerConfig.AUTH_SIGN_IN_MAX_ATTEMPTS -> "7"
+                ServerConfig.AUTH_SIGN_IN_WINDOW_MILLIS -> "1234"
+                else -> null
+            }
+        }
+        assertEquals(7, serverConfig.signInMaxAttempts)
+        assertEquals(1234L, serverConfig.signInWindowMillis)
+    }
+
+    @Test
+    fun theSignInBudgetComesFromTheConfigFile() {
+        val config = MapApplicationConfig(
+            ServerConfig.SIGN_IN_MAX_ATTEMPTS_KEY to "6",
+            ServerConfig.SIGN_IN_WINDOW_MILLIS_KEY to "5678",
+        )
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(6, serverConfig.signInMaxAttempts)
+        assertEquals(5678L, serverConfig.signInWindowMillis)
+    }
+
+    @Test
+    fun theTwoBudgetsAreSeparateValues() {
+        val config1 = MapApplicationConfig()
+        val serverConfig1 = ServerConfig.from(config1) { name ->
+            if (name == ServerConfig.AUTH_SIGN_UP_MAX_ATTEMPTS) "12" else null
+        }
+        assertEquals(12, serverConfig1.signUpMaxAttempts)
+        assertEquals(10, serverConfig1.signInMaxAttempts)
+
+        val config2 = MapApplicationConfig()
+        val serverConfig2 = ServerConfig.from(config2) { name ->
+            if (name == ServerConfig.AUTH_SIGN_IN_WINDOW_MILLIS) "3000" else null
+        }
+        assertEquals(900_000L, serverConfig2.signUpWindowMillis)
+        assertEquals(3000L, serverConfig2.signInWindowMillis)
+    }
+
+    @Test
+    fun signUpLimitsCarriesBothNumbers() {
+        val config = MapApplicationConfig(
+            ServerConfig.SIGN_UP_MAX_ATTEMPTS_KEY to "3",
+            ServerConfig.SIGN_UP_WINDOW_MILLIS_KEY to "500000",
+        )
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(AttemptLimits(3, 500_000L), serverConfig.signUpLimits())
+    }
+
+    @Test
+    fun aNonNumericBudgetIsRefused() {
+        val config = MapApplicationConfig()
+        assertThrows<IllegalArgumentException> {
+            ServerConfig.from(config) { name ->
+                if (name == ServerConfig.AUTH_SIGN_UP_MAX_ATTEMPTS) "many" else null
+            }
+        }
     }
 }

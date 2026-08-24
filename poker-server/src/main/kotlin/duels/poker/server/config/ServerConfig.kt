@@ -1,5 +1,6 @@
 package duels.poker.server.config
 
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.room.RoomTimeouts
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.ConfigLoader
@@ -33,9 +34,21 @@ public data class ServerConfig(
     // This field has a default for the same reason as disconnectGraceMillis, allowing existing
     // construction sites to compile without specifying the sweep period.
     val sweepPeriodMillis: Long = 1_000L,
+    // These four fields have defaults so that existing construction sites can compile without
+    // specifying auth budgets, which are only used by TASK-040521 and TASK-040523.
+    val signUpMaxAttempts: Int = 5,
+    val signUpWindowMillis: Long = 900_000L,
+    val signInMaxAttempts: Int = 10,
+    val signInWindowMillis: Long = 60_000L,
 ) {
     /** Bundles the three room timeouts so callers do not reassemble them. */
     public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(roomWaitingTimeoutMillis, roomFinishedTimeoutMillis, disconnectGraceMillis)
+
+    /** Bundles the sign-up budget's two numbers so callers do not reassemble them. */
+    public fun signUpLimits(): AttemptLimits = AttemptLimits(signUpMaxAttempts, signUpWindowMillis)
+
+    /** Bundles the sign-in budget's two numbers so callers do not reassemble them. */
+    public fun signInLimits(): AttemptLimits = AttemptLimits(signInMaxAttempts, signInWindowMillis)
 
     public companion object {
         public const val DEFAULT_PORT: Int = 8080
@@ -92,6 +105,22 @@ public data class ServerConfig(
         public const val DEFAULT_SWEEP_PERIOD_MILLIS: Long = 1_000L
         public const val SWEEP_PERIOD_MILLIS_KEY: String = "server.sweepPeriodMillis"
         public const val SWEEP_PERIOD_MILLIS_ENV: String = "SWEEP_PERIOD_MILLIS"
+
+        public const val DEFAULT_SIGN_UP_MAX_ATTEMPTS: Int = 5
+        public const val SIGN_UP_MAX_ATTEMPTS_KEY: String = "auth.signUpMaxAttempts"
+        public const val AUTH_SIGN_UP_MAX_ATTEMPTS: String = "AUTH_SIGN_UP_MAX_ATTEMPTS"
+
+        public const val DEFAULT_SIGN_UP_WINDOW_MILLIS: Long = 900_000L
+        public const val SIGN_UP_WINDOW_MILLIS_KEY: String = "auth.signUpWindowMillis"
+        public const val AUTH_SIGN_UP_WINDOW_MILLIS: String = "AUTH_SIGN_UP_WINDOW_MILLIS"
+
+        public const val DEFAULT_SIGN_IN_MAX_ATTEMPTS: Int = 10
+        public const val SIGN_IN_MAX_ATTEMPTS_KEY: String = "auth.signInMaxAttempts"
+        public const val AUTH_SIGN_IN_MAX_ATTEMPTS: String = "AUTH_SIGN_IN_MAX_ATTEMPTS"
+
+        public const val DEFAULT_SIGN_IN_WINDOW_MILLIS: Long = 60_000L
+        public const val SIGN_IN_WINDOW_MILLIS_KEY: String = "auth.signInWindowMillis"
+        public const val AUTH_SIGN_IN_WINDOW_MILLIS: String = "AUTH_SIGN_IN_WINDOW_MILLIS"
 
         /**
          * Build a [ServerConfig] from a Ktor [ApplicationConfig] with environment variable
@@ -196,6 +225,50 @@ public data class ServerConfig(
                 "sweep period must be an integer, got: $sweepPeriodMillisString"
             }
 
+            val signUpMaxAttemptsString = resolve(
+                config,
+                env,
+                AUTH_SIGN_UP_MAX_ATTEMPTS,
+                SIGN_UP_MAX_ATTEMPTS_KEY,
+                DEFAULT_SIGN_UP_MAX_ATTEMPTS.toString(),
+            )
+            val signUpMaxAttempts = requireNotNull(signUpMaxAttemptsString.toIntOrNull()) {
+                "sign-up max attempts must be an integer, got: $signUpMaxAttemptsString"
+            }
+
+            val signUpWindowMillisString = resolve(
+                config,
+                env,
+                AUTH_SIGN_UP_WINDOW_MILLIS,
+                SIGN_UP_WINDOW_MILLIS_KEY,
+                DEFAULT_SIGN_UP_WINDOW_MILLIS.toString(),
+            )
+            val signUpWindowMillis = requireNotNull(signUpWindowMillisString.toLongOrNull()) {
+                "sign-up window must be an integer, got: $signUpWindowMillisString"
+            }
+
+            val signInMaxAttemptsString = resolve(
+                config,
+                env,
+                AUTH_SIGN_IN_MAX_ATTEMPTS,
+                SIGN_IN_MAX_ATTEMPTS_KEY,
+                DEFAULT_SIGN_IN_MAX_ATTEMPTS.toString(),
+            )
+            val signInMaxAttempts = requireNotNull(signInMaxAttemptsString.toIntOrNull()) {
+                "sign-in max attempts must be an integer, got: $signInMaxAttemptsString"
+            }
+
+            val signInWindowMillisString = resolve(
+                config,
+                env,
+                AUTH_SIGN_IN_WINDOW_MILLIS,
+                SIGN_IN_WINDOW_MILLIS_KEY,
+                DEFAULT_SIGN_IN_WINDOW_MILLIS.toString(),
+            )
+            val signInWindowMillis = requireNotNull(signInWindowMillisString.toLongOrNull()) {
+                "sign-in window must be an integer, got: $signInWindowMillisString"
+            }
+
             return ServerConfig(
                 port = port,
                 maxFrameLength = maxFrameLength,
@@ -208,6 +281,10 @@ public data class ServerConfig(
                 roomFinishedTimeoutMillis = roomFinishedTimeoutMillis,
                 disconnectGraceMillis = disconnectGraceMillis,
                 sweepPeriodMillis = sweepPeriodMillis,
+                signUpMaxAttempts = signUpMaxAttempts,
+                signUpWindowMillis = signUpWindowMillis,
+                signInMaxAttempts = signInMaxAttempts,
+                signInWindowMillis = signInWindowMillis,
             )
         }
 
