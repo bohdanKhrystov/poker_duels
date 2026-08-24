@@ -1852,8 +1852,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040610](tasks/TASK-040610-no-credential-no-revocation.md) No credential, no revocation — and the refusal writes nothing | S | done |
 | | [TASK-040611](tasks/TASK-040611-the-composition-root-installs-the-device-route.md) The composition root builds the bindings and installs the device route | XS | done |
 | | [TASK-040612](tasks/TASK-040612-the-document-names-the-device-endpoint.md) The document names the device endpoint, and the section markers still chain | S | done |
-| | [TASK-040613](tasks/TASK-040613-signed-out-everywhere-still-signed-in-here.md) Signed out everywhere, and still signed in here | S | **ready** |
-| | [TASK-040614](tasks/TASK-040614-the-revoked-device-says-hello-and-is-a-stranger.md) The revoked device says Hello and is seated as a stranger | S | backlog |
+| | [TASK-040613](tasks/TASK-040613-signed-out-everywhere-still-signed-in-here.md) Signed out everywhere, and still signed in here | S | done |
+| | [TASK-040614](tasks/TASK-040614-the-revoked-device-says-hello-and-is-a-stranger.md) The revoked device says Hello and is seated as a stranger | S | **ready** |
 | | [TASK-040615](tasks/TASK-040615-revoke-then-the-password-reaches-the-same-profile.md) Revoke, then the password reaches the same profile, coins and name | S | backlog |
 | | [TASK-040616](tasks/TASK-040616-p1-and-p2-in-one-helper-and-the-proof-neither-subsumes-the-other.md) P1 and P2 in one helper, and the proof that neither subsumes the other | S | backlog |
 | | [TASK-040617](tasks/TASK-040617-both-copies-of-the-ledger-assertions-come-from-the-shared-helper.md) Both copies of the ledger assertions come from the shared helper | S | backlog |
