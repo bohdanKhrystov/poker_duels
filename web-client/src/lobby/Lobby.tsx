@@ -181,6 +181,8 @@ function WaitingForRival(props: {
       >
         Back to the lobby
       </a>
+      {/* prettier-ignore */}
+      <p className="text-small text-text-muted">The room stays open. That link still works for your rival, and it brings you back.</p>
     </section>
   );
 }

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031403
 title: Two strings are the whole addition, and nothing stands between the press and the lobby
 type: task
-status: backlog
+status: ready
 parent: STORY-0314
 module: web-client
 estimate: S
