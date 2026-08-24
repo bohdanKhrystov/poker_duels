@@ -1689,8 +1689,8 @@ written and is still true.
 | | [TASK-031304](tasks/TASK-031304-a-rival-is-back-only-if-this-client-saw-them-go.md) A rival is back only if this client saw them go | S | done |
 | | [TASK-031305](tasks/TASK-031305-whole-seconds-to-the-deadline-and-never-below-zero.md) Whole seconds to the deadline, and never below zero | XS | done |
 | | [TASK-031306](tasks/TASK-031306-the-notice-says-the-state-and-counts-the-window-down.md) The notice says the state and counts the window down | S | done |
-| | [TASK-031307](tasks/TASK-031307-the-plate-carries-the-presence-it-is-handed.md) The plate carries the presence it is handed | XS | **ready** |
-| | [TASK-031308](tasks/TASK-031308-the-presence-lands-on-the-rivals-plate-whichever-seat-that-is.md) The presence lands on the rival's plate, whichever seat that is | S | backlog |
+| | [TASK-031307](tasks/TASK-031307-the-plate-carries-the-presence-it-is-handed.md) The plate carries the presence it is handed | XS | done |
+| | [TASK-031308](tasks/TASK-031308-the-presence-lands-on-the-rivals-plate-whichever-seat-that-is.md) The presence lands on the rival's plate, whichever seat that is | S | **ready** |
 | | [TASK-031309](tasks/TASK-031309-the-duel-screen-shows-the-notice-and-a-paused-action-has-a-reason.md) The duel screen shows the notice, and a paused action has a reason | S | backlog |
 | | [TASK-031310](tasks/TASK-031310-a-resumed-client-renders-what-it-came-back-to.md) A resumed client renders what it came back to, and invents no return | XS | backlog |
 | | [TASK-031311](tasks/TASK-031311-the-countdown-reaching-zero-changes-nothing-the-client-does.md) The countdown reaching zero changes nothing the client does | S | backlog |
@@ -1822,8 +1822,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040507](tasks/TASK-040507-playerof-reads-through-the-expiry.md) playerOf reads through the expiry, and a clock thirty days on refuses | S | done |
 | | [TASK-040508](tasks/TASK-040508-delete-removes-the-row-and-says-the-same-thing-twice.md) delete removes the row, and says the same thing twice | XS | done |
 | | [TASK-040509](tasks/TASK-040509-the-directory-finds-a-profile-without-creating-one.md) The directory can find a profile without creating one | S | done |
-| | [TASK-040510](tasks/TASK-040510-one-resolver-and-an-invalid-session-never-falls-back.md) One resolver, and an invalid session never falls back to the device | S | **ready** |
-| | [TASK-040511](tasks/TASK-040511-the-read-path-follows-the-resolved-player.md) The profile read follows the resolved player, and every route resolves the same way | S | backlog |
+| | [TASK-040510](tasks/TASK-040510-one-resolver-and-an-invalid-session-never-falls-back.md) One resolver, and an invalid session never falls back to the device | S | done |
+| | [TASK-040511](tasks/TASK-040511-the-read-path-follows-the-resolved-player.md) The profile read follows the resolved player, and every route resolves the same way | S | **ready** |
 | | [TASK-040512](tasks/TASK-040512-a-signed-in-request-reads-the-sessions-profile.md) A signed-in request reads the session's profile, and the device beside it is ignored | S | backlog |
 | | [TASK-040513](tasks/TASK-040513-the-sign-in-body-is-two-fields-and-the-answer-carries-the-token-once.md) The sign-in body is two fields, and its answer carries the token exactly once | XS | backlog |
 | | [TASK-040514](tasks/TASK-040514-sign-in-the-credential-decides-and-a-stranger-learns-nothing.md) POST /api/auth/sign-in — the credential decides, and a stranger learns nothing | S | backlog |

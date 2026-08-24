@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { SeatView } from "../protocol";
+import type { SeatView, SeatPresence } from "../protocol";
 import { formatChips } from "./chips";
 import { seatStatus } from "./seat-status";
 
@@ -10,8 +10,14 @@ export function SeatPlate(props: {
   hasButton: boolean;
   isToAct: boolean;
   isViewer: boolean;
+  presence?: SeatPresence | null;
 }): ReactElement {
-  const status = seatStatus(props.seat, props.isToAct, props.isViewer);
+  const status = seatStatus(
+    props.seat,
+    props.isToAct,
+    props.isViewer,
+    props.presence ?? null,
+  );
   const onTurn = status === "Your turn" || status === "Their turn";
   return (
     <div

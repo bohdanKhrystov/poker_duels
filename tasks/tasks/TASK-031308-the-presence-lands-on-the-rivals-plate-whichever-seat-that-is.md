@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031308
 title: The presence lands on the rival's plate, whichever seat that is
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: S
