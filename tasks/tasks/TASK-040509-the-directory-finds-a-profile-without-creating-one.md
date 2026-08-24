@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040509
 title: The directory can find a profile without creating one
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
