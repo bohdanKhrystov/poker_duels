@@ -1,5 +1,6 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.AttemptBudget
 import duels.poker.server.auth.AuthSessions
 import duels.poker.server.auth.CreateCredentialResult
 import duels.poker.server.auth.CredentialKind
@@ -14,6 +15,7 @@ import duels.poker.server.session.PlayerId
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
+import io.ktor.server.plugins.origin
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.post
@@ -32,9 +34,17 @@ import kotlinx.coroutines.CancellationException
  * then does [signUpFieldsOf] judge the handle and password; a `Refused` answers its status (`400`
  * or `422`) and stops, still before [Credentials] is touched.
  *
- * [Credentials.holdsCredential] then answers `409` without writing (`ADR-0030` §1), and
- * [Credentials.create] answers `201 Created` — not `204`, because exactly one row is created and
- * that is this endpoint's entire purpose — or `409` if the handle was taken concurrently. There
+ * [Credentials.holdsCredential] then answers `409` without writing (`ADR-0030` §1). Only past that
+ * guard is [budget] consulted — last, immediately before the write, because it meters *spending*
+ * rather than failure (`ADR-0055` §1): a request refused by identity, decoding, the field rules or
+ * the guard costs no Argon2, so it must cost no budget either. Over [budget], the answer is `429
+ * Too Many Requests` with an empty body, nothing written and no hash computed (`ADR-0055` §3). The
+ * key is [io.ktor.server.plugins.origin]'s remote address alone; until `EPIC-07` installs the
+ * forwarded-header plugin, this must never honour a client-supplied forwarding header, which would
+ * let a client pick its own budget key.
+ *
+ * [Credentials.create] then answers `201 Created` — not `204`, because exactly one row is created
+ * and that is this endpoint's entire purpose — or `409` if the handle was taken concurrently. There
  * is no `Location` header: no credential is ever read back (`ADR-0027` §1). The player id written
  * is always `profile.playerId`, the identity the server resolved; [SignUpRequest] has no field to
  * carry one, so a client can never assert who it is (`ADR-0002`).
@@ -65,12 +75,15 @@ import kotlinx.coroutines.CancellationException
  * @param identities The port that resolves a session token or a device id into a player.
  * @param sessions The port for issuing a session token once sign-in's credential succeeds, and for
  *     deleting a session token on sign-out.
+ * @param budget The sign-up rate limiter, checked immediately before [Credentials.create]. Sign-in
+ *     and sign-out never consult it.
  */
 public fun Application.authRoutes(
     reads: ProfileReads,
     credentials: Credentials,
     identities: IdentityResolver,
     sessions: AuthSessions,
+    budget: AttemptBudget,
 ) {
     routing {
         post("/api/auth/sign-up") {
@@ -102,6 +115,22 @@ public fun Application.authRoutes(
             val playerId = PlayerId(profile.playerId)
             if (credentials.holdsCredential(playerId, CredentialKind.PASSWORD)) {
                 call.respond(HttpStatusCode.Conflict)
+                return@post
+            }
+            // Last, immediately before the write: the budget meters spending, not failure
+            // (ADR-0055 §1), so every refusal above this line — identity, decode, fields, the
+            // guard — must cost none of the five slots. Getting this order wrong is the whole
+            // defect: a budget checked earlier turns a 401 into a 429 and vice versa.
+            // Last, immediately before the write: the budget meters spending, not failure
+            // (ADR-0055 §1), so every refusal above this line — identity, decode, fields, the
+            // guard — must cost none of the five slots. Getting this order wrong is the whole
+            // defect: a budget checked earlier turns a 401 into a 429 and vice versa.
+            // Last, immediately before the write: the budget meters spending, not failure
+            // (ADR-0055 §1), so every refusal above this line — identity, decode, fields, the
+            // guard — must cost none of the five slots. Getting this order wrong is the whole
+            // defect: a budget checked earlier turns a 401 into a 429 and vice versa.
+            if (!budget.admit(call.request.origin.remoteAddress)) {
+                call.respond(HttpStatusCode.TooManyRequests)
                 return@post
             }
             val secret = PresentedSecret(request.password)
