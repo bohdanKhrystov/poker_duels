@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { LegalActions, PlayerView, SeatView } from "../protocol";
+import type {
+  ActedForAbsent,
+  LegalActions,
+  PlayerView,
+  SeatView,
+} from "../protocol";
 import * as duelState from "./duel-state";
 
 function sampleSeat(overrides: Partial<SeatView> = {}): SeatView {
@@ -51,6 +56,7 @@ describe("the duel state", () => {
       graceRemainingMillis: null,
       presenceCount: 0,
       rivalReturned: false,
+      serverAction: null,
     });
   });
 
@@ -1230,5 +1236,237 @@ describe("the duel state", () => {
     });
     expect(state.rivalReturned).toBe(false);
     expect(state.rivalPresence).toBe("AWAY");
+  });
+
+  it("records the mark exactly as the server sent it", () => {
+    const mark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 1,
+      handNumber: 3,
+      actionSequence: 7,
+      action: "FOLD",
+    };
+    const state = duelState.applyServerMessage(duelState.initialState(), mark);
+    expect(state.serverAction).toEqual(mark);
+  });
+
+  it("a later mark replaces an earlier one", () => {
+    const firstMark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 1,
+      handNumber: 3,
+      actionSequence: 7,
+      action: "FOLD",
+    };
+    const secondMark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 0,
+      handNumber: 41,
+      actionSequence: 2,
+      action: "CHECK",
+    };
+    const stateAfterFirst = duelState.applyServerMessage(
+      duelState.initialState(),
+      firstMark,
+    );
+    const state = duelState.applyServerMessage(stateAfterFirst, secondMark);
+    expect(state.serverAction).toEqual(secondMark);
+  });
+
+  it("a mark survives the events that describe the same decision point", () => {
+    const mark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 1,
+      handNumber: 3,
+      actionSequence: 7,
+      action: "FOLD",
+    };
+    const playerFolded = {
+      type: "PlayerFolded",
+      sequence: 7,
+      seat: 1,
+    } as const;
+    const stateWithMark = duelState.applyServerMessage(
+      duelState.initialState(),
+      mark,
+    );
+    const markThenEvents = duelState.applyServerMessage(stateWithMark, {
+      type: "Events",
+      events: [playerFolded],
+    });
+    expect(markThenEvents.serverAction).toEqual(mark);
+
+    const stateWithEvents = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Events",
+        events: [playerFolded],
+      },
+    );
+    const eventsThenMark = duelState.applyServerMessage(stateWithEvents, mark);
+    expect(eventsThenMark.serverAction).toEqual(markThenEvents.serverAction);
+  });
+
+  it("a mark changes nothing a snapshot or a turn established", () => {
+    const view = samplePlayerView();
+    const legalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 10,
+      minRaiseTo: 20,
+      allInTo: 100,
+    } as const;
+    const stateWithView = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "Snapshot",
+        view,
+      },
+    );
+    const stateWithPending = duelState.applyServerMessage(stateWithView, {
+      type: "YourTurn",
+      handNumber: 1,
+      actionSequence: 1,
+      legalActions,
+    });
+    const mark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 1,
+      handNumber: 1,
+      actionSequence: 1,
+      action: "FOLD",
+    };
+    const state = duelState.applyServerMessage(stateWithPending, mark);
+    expect(state.view).toEqual(view);
+    expect(state.pendingTurn).toEqual({
+      handNumber: 1,
+      actionSequence: 1,
+      legalActions,
+    });
+    expect(state.narration).toEqual([]);
+    expect(state.rejection).toBeNull();
+    expect(state.rejectionCount).toBe(0);
+    expect(state.outcome).toBeNull();
+    expect(state.refusal).toBeNull();
+    expect(state.rematchOffers).toEqual([]);
+    expect(state.rivalPresence).toBeNull();
+    expect(state.graceRemainingMillis).toBeNull();
+    expect(state.presenceCount).toBe(0);
+    expect(state.rivalReturned).toBe(false);
+  });
+
+  it("a snapshot and a turn after the mark leave it standing", () => {
+    // ADR-0075 §2 & Context: AbsentSeats.kt prepends the mark to the outbound its own action
+    // produced, and that outbound is broadcast + turnFor — so the mark, the Snapshot describing
+    // its own action, and the next YourTurn all arrive in one delivery. A reducer that cleared on
+    // either would erase the mark microseconds after setting it. The mark goes first here, then
+    // the two frames that must not touch it.
+    const mark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 1,
+      handNumber: 1,
+      actionSequence: 1,
+      action: "FOLD",
+    };
+    const stateWithMark = duelState.applyServerMessage(
+      duelState.initialState(),
+      mark,
+    );
+    const stateAfterSnapshot = duelState.applyServerMessage(stateWithMark, {
+      type: "Snapshot",
+      view: samplePlayerView(),
+    });
+    const legalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 10,
+      minRaiseTo: 20,
+      allInTo: 100,
+    } as const;
+    const state = duelState.applyServerMessage(stateAfterSnapshot, {
+      type: "YourTurn",
+      handNumber: 2,
+      actionSequence: 5,
+      legalActions,
+    });
+    expect(state.serverAction).toEqual(mark);
+  });
+
+  it("a rival still away or still absent keeps the mark", () => {
+    const mark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 1,
+      handNumber: 1,
+      actionSequence: 1,
+      action: "FOLD",
+    };
+    const stateWithMark = duelState.applyServerMessage(
+      duelState.initialState(),
+      mark,
+    );
+    const stateAfterAway = duelState.applyServerMessage(stateWithMark, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 60000,
+    });
+    expect(stateAfterAway.serverAction).toEqual(mark);
+
+    const stateAfterAbsent = duelState.applyServerMessage(stateWithMark, {
+      type: "OpponentPresence",
+      presence: "ABSENT",
+      graceRemainingMillis: null,
+    });
+    expect(stateAfterAbsent.serverAction).toEqual(mark);
+  });
+
+  it("a rival's return takes the mark off", () => {
+    const stateAfterAbsent = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "OpponentPresence",
+        presence: "ABSENT",
+        graceRemainingMillis: null,
+      },
+    );
+    const mark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 1,
+      handNumber: 1,
+      actionSequence: 1,
+      action: "FOLD",
+    };
+    const stateWithMark = duelState.applyServerMessage(stateAfterAbsent, mark);
+    const state = duelState.applyServerMessage(stateWithMark, {
+      type: "OpponentPresence",
+      presence: "PRESENT",
+      graceRemainingMillis: null,
+    });
+    expect(state.serverAction).toBeNull();
+    expect(state.rivalReturned).toBe(true);
+  });
+
+  it("the duel ending takes the mark off", () => {
+    const mark: ActedForAbsent = {
+      type: "ActedForAbsent",
+      seat: 1,
+      handNumber: 1,
+      actionSequence: 1,
+      action: "FOLD",
+    };
+    const stateWithMark = duelState.applyServerMessage(
+      duelState.initialState(),
+      mark,
+    );
+    const state = duelState.applyServerMessage(stateWithMark, {
+      type: "DuelFinished",
+      outcome: {
+        winner: 1,
+        handsPlayed: 12,
+        finalStacks: [0, 2000],
+      },
+    });
+    expect(state.serverAction).toBeNull();
   });
 });
