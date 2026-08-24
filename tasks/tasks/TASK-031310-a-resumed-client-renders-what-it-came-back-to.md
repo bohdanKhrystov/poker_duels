@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031310
 title: A resumed client renders what it came back to, and invents no return
 type: task
-status: ready
+status: done
 parent: STORY-0313
 module: web-client
 estimate: XS

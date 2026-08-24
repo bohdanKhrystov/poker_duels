@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031311
 title: The countdown reaching zero changes nothing the client does
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: S
