@@ -791,23 +791,20 @@ describe("the lobby", () => {
       .getByText("Waiting for your rival")
       .closest("section");
     expect(waiting).not.toBeNull();
-    const texts = Array.from(
-      waiting?.querySelectorAll("h2, p, a, button, label") ?? [],
-    ).map((element) => element.textContent?.trim());
+    const normalizedText = waiting?.textContent?.trim().replace(/\s+/g, " ");
 
-    expect(texts).toEqual([
-      "Waiting for your rival",
-      "ABCDEFGH",
-      "Invite link",
-      "Back to the lobby",
-      "The room stays open. That link still works for your rival, and it brings you back.",
-    ]);
+    expect(normalizedText).toBe(
+      "Waiting for your rivalABCDEFGHInvite linkBack to the lobbyThe room stays open. That link still works for your rival, and it brings you back.",
+    );
   });
 
   it("puts no confirmation between the press and the lobby", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
     const { forgetRoom } = renderLobby(store);
+
+    const confirmSpy = vi.spyOn(window, "confirm");
+    const alertSpy = vi.spyOn(window, "alert");
 
     const back = screen.getByRole("link", { name: "Back to the lobby" });
     const clickReturn = fireEvent.click(back);
@@ -819,5 +816,10 @@ describe("the lobby", () => {
     expect(
       screen.queryByRole("button", { name: /sure|confirm|really|yes/i }),
     ).toBeNull();
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(alertSpy).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+    alertSpy.mockRestore();
   });
 });
