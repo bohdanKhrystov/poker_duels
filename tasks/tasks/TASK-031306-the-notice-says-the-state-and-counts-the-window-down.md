@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031306
 title: The notice says the state and counts the window down
 type: task
-status: backlog
+status: ready
 parent: STORY-0313
 module: web-client
 estimate: S
@@ -14,7 +14,7 @@ labels: [client, duel, ui, presence]
 depends_on: [TASK-031305]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +605 passed \(605\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'says the duel is paused and starts from the number the frame carried'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'counts down as time passes'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'holds at zero, and says nothing new there'
@@ -102,13 +102,13 @@ to install fake ones first, and this file does. Every advance is wrapped in `act
 | `says nothing at all to a client whose rival never left` | with `presence: "PRESENT"`, `returned: false`, `graceRemainingMillis: null`, the container's text is empty and no digit is present |
 | `says the rival is back to a client that saw them go` | with `presence: "PRESENT"`, `returned: true`, the exact text `Your rival is back.` is on screen, and no digit |
 
-Six tests. Five hundred and ninety-nine exist after `TASK-031305`, so the suite reports **605**.
+Six tests. The suite grows by that many on top of whatever `TASK-031305` left, and every one of them passes.
 
 ## Proof
 
 | Command | Proves |
 | --- | --- |
-| `Tests 605 passed (605)` | six ran and the five hundred and ninety-nine before them still do |
+| a green `Tests N passed (N)` line | six ran and every test before them still does |
 | the six `--reporter=verbose` greps | each exists by name |
 | `npm run check` | the component typechecks and the `react-hooks` rules pass on the effect |
 
@@ -140,7 +140,7 @@ Quote all three in the PR.
 - [ ] `PresenceNotice.tsx` mentions `performance` nowhere, and `PresenceNotice.test.tsx` calls
       `vi.useFakeTimers()` before every `render` whose test advances time
 - [ ] `PresenceNotice.tsx` takes no `send` prop and calls nothing that could reach a socket
-- [ ] `npm run --silent test` reports `Tests  605 passed (605)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

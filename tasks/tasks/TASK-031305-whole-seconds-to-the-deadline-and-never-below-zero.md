@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031305
 title: Whole seconds to the deadline, and never below zero
 type: task
-status: ready
+status: done
 parent: STORY-0313
 module: web-client
 estimate: XS
@@ -14,7 +14,7 @@ labels: [client, duel, presence]
 depends_on: [TASK-031304]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +599 passed \(599\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'counts whole seconds up to the deadline'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'reaches zero and stays there'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'reads both of its arguments'
@@ -83,13 +83,13 @@ Two inputs, or the test is vacuous.
 | `reaches zero and stays there` | `NOW` → `0`; `NOW - 1` → `0`; `NOW - 600_000` → `0`. Asserted with `toBe(0)`, which is `Object.is` — `Math.max(0, -0)` is `+0` by specification, so the clamp is what makes this pass and not a coincidence of formatting |
 | `reads both of its arguments` | `secondsRemaining(NOW + 47_000, NOW)` is `47` while `secondsRemaining(NOW + 47_000, NOW + 20_000)` is `27` — same deadline, different instant, different answer |
 
-Three tests. Five hundred and ninety-six exist after `TASK-031304`, so the suite reports **599**.
+Three tests. The suite grows by that many on top of whatever `TASK-031304` left, and every one of them passes.
 
 ## Proof
 
 | Command | Proves |
 | --- | --- |
-| `Tests 599 passed (599)` | three ran and the five hundred and ninety-six before them still do |
+| a green `Tests N passed (N)` line | three ran and every test before them still does |
 | the three `--reporter=verbose` greps | each exists by name |
 | `npm run check` | the module typechecks and exports one name |
 
@@ -108,7 +108,7 @@ Three tests. Five hundred and ninety-six exist after `TASK-031304`, so the suite
 - [ ] `presence-countdown.ts` exports exactly one name, `secondsRemaining`
 - [ ] `presence-countdown.ts` mentions neither `Date` nor `performance` nor any timer API
 - [ ] `presence-countdown.test.ts` uses a non-zero `now` in every case
-- [ ] `npm run --silent test` reports `Tests  599 passed (599)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

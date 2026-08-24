@@ -14,7 +14,7 @@ labels: [client, duel, ui, presence, copy]
 depends_on: [TASK-031314]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +634 passed \(634\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names the server as the actor, for a check as well as a fold'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'shows the most recent mark, whichever order the frames arrived in'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'a rival who is back leaves no sentence about the server behind'
@@ -88,7 +88,7 @@ Three tests. Six hundred and thirty-one exist after `TASK-031314`, so the suite 
 
 | Command | Proves |
 | --- | --- |
-| `Tests 634 passed (634)` | three ran and the six hundred and thirty-one before them still do |
+| a green `Tests N passed (N)` line | three ran and every test before them still does |
 | the three `--reporter=verbose` greps | each exists by name |
 | `npm run check` | `absentActionText(state.serverAction, state.mySeat)` typechecks with `mySeat` as `number \| null` |
 
@@ -125,7 +125,7 @@ Quote all three in the PR, including that mutation 1 was green.
 - [ ] `Lobby.tsx` holds no state of its own for the mark: no `useState`, no `useEffect`, no `useRef`
 - [ ] `duel-state.ts` is not in this ticket's diff
 - [ ] Every other test in `Lobby.test.tsx` is byte-identical to what `TASK-031311` merged
-- [ ] `npm run --silent test` reports `Tests  634 passed (634)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

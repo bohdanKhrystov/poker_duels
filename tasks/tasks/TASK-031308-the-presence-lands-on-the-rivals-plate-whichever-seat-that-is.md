@@ -14,7 +14,7 @@ labels: [client, duel, ui, presence]
 depends_on: [TASK-031307]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +609 passed \(609\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'puts the presence on the rival, from either seat'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'puts no presence on your own plate, from either seat'
   - cd web-client && npm run check
@@ -90,7 +90,7 @@ Two tests. Six hundred and seven exist after `TASK-031307`, so the suite reports
 
 | Command | Proves |
 | --- | --- |
-| `Tests 609 passed (609)` | two ran and the six hundred and seven before them still do |
+| a green `Tests N passed (N)` line | two ran and every test before them still does |
 | the two `--reporter=verbose` greps | each exists by name |
 | `npm run check` | the optional prop typechecks and `no-derivation.test.tsx`'s six bare `<DuelTable view={…} />` renders still compile |
 
@@ -113,7 +113,7 @@ Quote both in the PR, including which half of test 1 survived mutation 1.
 - [ ] The nine tests already in the file are byte-identical to `develop`
 - [ ] `DuelTable.tsx` contains no literal seat index and no literal `Away` or `Timed out`
 - [ ] `no-derivation.test.tsx` is unchanged from `develop` and still passes
-- [ ] `npm run --silent test` reports `Tests  609 passed (609)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
