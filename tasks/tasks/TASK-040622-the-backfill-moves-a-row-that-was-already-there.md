@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040622
 title: The backfill moves a row that was already there
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: XS
