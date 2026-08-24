@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040601
 title: The device binding becomes a row of its own, and player loses its column
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -220,3 +220,28 @@ the added binding count catches the mirror-image defect, not this one.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**`V7`'s backfill is never exercised against data, and that is `TASK-040622`.** The
+`INSERT INTO device_binding … SELECT … FROM player` is correct SQL, correctly ordered before the
+`DROP COLUMN`, inside Flyway's transaction — the deep review confirmed all of that. But every
+database test calls `PostgresTestSupport.freshDatabase()` and then applies V1→V7 to an **empty**
+schema in one shot, so the backfill always selects zero rows, and `MigrationsTest` bootstraps empty
+in both of its tests. The `SELECT` could be `WHERE false` and nothing in the repository would fail.
+This ticket named that out of scope; the follow-up carries it.
+
+**A near-miss worth recording.** The coder's first attempt to mutate the constraint name chose a
+replacement that **contained the original as a substring**, so the golden check passed vacuously. It
+noticed, re-ran with a distinct name, and reported both. The shipped assertion is a substring match
+because the acceptance criteria require exactly that and it mirrors the style of the constraint it
+replaces — so a rename that merely *extends* the name would still pass. Anchored to spec, not a new
+weakening, but the shape is worth knowing.
+
+**What a real database caught that a double could not:** the `ON CONFLICT (device_id) WHERE
+revoked_at IS NULL` arbiter must match the partial unique index **by exact predicate**; Flyway's real
+transactional DDL is what makes the backfill-then-drop ordering meaningful; the trigger's
+`BEFORE UPDATE OF revoked_at` and the `23001` SQLSTATE are genuine `plpgsql` semantics; and the
+sixteen-way concurrency test runs on an unpooled `PGSimpleDataSource`, one physical connection per
+coroutine, so the `ON CONFLICT` race is real rather than serialised.
+
