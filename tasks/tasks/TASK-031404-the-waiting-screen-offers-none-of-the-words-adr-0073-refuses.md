@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031404
 title: The waiting screen offers none of the words ADR-0073 refuses, and names no deadline
 type: task
-status: backlog
+status: ready
 parent: STORY-0314
 module: web-client
 estimate: S

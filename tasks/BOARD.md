@@ -1688,9 +1688,9 @@ written and is still true.
 | | [TASK-031303](tasks/TASK-031303-the-store-holds-the-presence-the-server-stated.md) The store holds the presence the server stated, and counts the frames | S | done |
 | | [TASK-031304](tasks/TASK-031304-a-rival-is-back-only-if-this-client-saw-them-go.md) A rival is back only if this client saw them go | S | done |
 | | [TASK-031305](tasks/TASK-031305-whole-seconds-to-the-deadline-and-never-below-zero.md) Whole seconds to the deadline, and never below zero | XS | done |
-| | [TASK-031306](tasks/TASK-031306-the-notice-says-the-state-and-counts-the-window-down.md) The notice says the state and counts the window down | S | **ready** |
-| | [TASK-031307](tasks/TASK-031307-the-plate-carries-the-presence-it-is-handed.md) The plate carries the presence it is handed | XS | backlog |
-| | [TASK-031308](tasks/TASK-031308-the-presence-lands-on-the-rivals-plate-whichever-seat-that-is.md) The presence lands on the rival's plate, whichever seat that is | S | backlog |
+| | [TASK-031306](tasks/TASK-031306-the-notice-says-the-state-and-counts-the-window-down.md) The notice says the state and counts the window down | S | done |
+| | [TASK-031307](tasks/TASK-031307-the-plate-carries-the-presence-it-is-handed.md) The plate carries the presence it is handed | XS | done |
+| | [TASK-031308](tasks/TASK-031308-the-presence-lands-on-the-rivals-plate-whichever-seat-that-is.md) The presence lands on the rival's plate, whichever seat that is | S | **ready** |
 | | [TASK-031309](tasks/TASK-031309-the-duel-screen-shows-the-notice-and-a-paused-action-has-a-reason.md) The duel screen shows the notice, and a paused action has a reason | S | backlog |
 | | [TASK-031310](tasks/TASK-031310-a-resumed-client-renders-what-it-came-back-to.md) A resumed client renders what it came back to, and invents no return | XS | backlog |
 | | [TASK-031311](tasks/TASK-031311-the-countdown-reaching-zero-changes-nothing-the-client-does.md) The countdown reaching zero changes nothing the client does | S | backlog |
@@ -1701,8 +1701,8 @@ written and is still true.
 | [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (`ADR-0073` fixed its words) | **in progress** — split into five |
 | | [TASK-031401](tasks/TASK-031401-the-waiting-screen-offers-the-way-back-to-the-lobby.md) The waiting screen offers the way back to the lobby | S | done |
 | | [TASK-031402](tasks/TASK-031402-one-line-says-the-room-stays-open.md) One line says the room stays open | XS | done |
-| | [TASK-031403](tasks/TASK-031403-two-strings-are-the-whole-addition-and-nothing-stands-between-the-press-and-the-lobby.md) Two strings are the whole addition, and nothing stands between the press and the lobby | S | **ready** |
-| | [TASK-031404](tasks/TASK-031404-the-waiting-screen-offers-none-of-the-words-adr-0073-refuses.md) The waiting screen offers none of the words `ADR-0073` refuses | S | backlog |
+| | [TASK-031403](tasks/TASK-031403-two-strings-are-the-whole-addition-and-nothing-stands-between-the-press-and-the-lobby.md) Two strings are the whole addition, and nothing stands between the press and the lobby | S | done |
+| | [TASK-031404](tasks/TASK-031404-the-waiting-screen-offers-none-of-the-words-adr-0073-refuses.md) The waiting screen offers none of the words `ADR-0073` refuses | S | **ready** |
 | | [TASK-031405](tasks/TASK-031405-the-press-leaves-nothing-on-the-wire-and-the-next-socket-rejoins-nothing.md) The press leaves nothing on the wire, and the next socket rejoins nothing | S | backlog |
 
 ---

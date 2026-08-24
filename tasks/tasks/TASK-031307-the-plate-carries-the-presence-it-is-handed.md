@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031307
 title: The plate carries the presence it is handed
 type: task
-status: backlog
+status: done
 parent: STORY-0313
 module: web-client
 estimate: XS
