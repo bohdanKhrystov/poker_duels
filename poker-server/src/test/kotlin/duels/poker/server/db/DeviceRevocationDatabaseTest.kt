@@ -28,9 +28,13 @@ import io.ktor.websocket.readText
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.time.Duration.Companion.seconds
@@ -180,6 +184,96 @@ class DeviceRevocationDatabaseTest {
             }
         }
     }
+
+    @Test
+    fun aRevokedDeviceIsSeatedAsSomebodyElse() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                val owner = client.establishOwnerWithABalance(dataSource)
+                val controlBefore =
+                    client.helloWith(deviceId = OTHER_DEVICE, sessionToken = null) as ServerMessage.Welcome
+
+                assertEquals(HttpStatusCode.NoContent, client.revokeDevice(owner.token))
+
+                // The owner's own device, presenting no token: with the live binding revoked, this
+                // is a stranger's Hello, and the stranger it seats must not be the player who just
+                // revoked it.
+                val revoked = client.helloWith(deviceId = OWNER_DEVICE, sessionToken = null) as ServerMessage.Welcome
+                assertNotEquals(owner.ownerId, revoked.playerId)
+
+                // A device revocation never touched still resolves to exactly the player it always
+                // did — without this half, a Hello that had stopped resolving anything at all would
+                // also pass the assertion above.
+                val controlAfter =
+                    client.helloWith(deviceId = OTHER_DEVICE, sessionToken = null) as ServerMessage.Welcome
+                assertEquals(controlBefore.playerId, controlAfter.playerId)
+            }
+        }
+    }
+
+    @Test
+    fun theRevokedDevicesNewProfileHasNoCoins() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                val owner = client.establishOwnerWithABalance(dataSource)
+
+                assertEquals(HttpStatusCode.NoContent, client.revokeDevice(owner.token))
+
+                // GET /api/me never mints — only the socket's Hello does (ADR-0012) — so the
+                // revoked device's fresh profile has to be seated once before the HTTP read below
+                // can find it. This is the same mint aRevokedDeviceIsSeatedAsSomebodyElse proves by
+                // identity; here it only sets up the profile whose balance this test reads.
+                client.handshake(OWNER_DEVICE)
+
+                // The revoked device id, over HTTP: its fresh profile owes nobody a coin.
+                val freshProfile = client.profileOf(OWNER_DEVICE)
+                assertEquals(0, freshProfile.coinBalance)
+
+                // The account the device left behind, read by the token that revoked it rather than
+                // by the device id: still the same player, and still holding the coin it won.
+                val survivor = client.meWithToken(owner.token)
+                assertEquals(HttpStatusCode.OK, survivor.status)
+                val survivorProfile = protocolJson.decodeFromString<ProfileResponse>(survivor.bodyAsText())
+                assertEquals(owner.ownerId, survivorProfile.playerId)
+                assertEquals(1, survivorProfile.coinBalance)
+            }
+        }
+    }
+
+    @Test
+    fun aSocketOpenedBeforeTheRevocationIsNotClosed() {
+        testApplication {
+            application { duelServer(serverComponents(config, dataSource)) }
+            val client = createClient { install(WebSockets) }
+
+            withTimeout(5.seconds) {
+                val owner = client.establishOwnerWithABalance(dataSource)
+
+                val session = client.webSocketSession("/ws")
+                session.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = OWNER_DEVICE, sessionToken = null))))
+                val welcome =
+                    protocolJson.decodeFromString<ServerMessage>(
+                        (session.incoming.receive() as Frame.Text).readText(),
+                    ) as ServerMessage.Welcome
+                assertEquals(owner.ownerId, welcome.playerId)
+
+                assertEquals(HttpStatusCode.NoContent, client.revokeDevice(owner.token))
+
+                // ADR-0049 §6: revocation closes no live socket. A frame sent on this same session,
+                // after the revoking DELETE has already committed, must still get an answer rather
+                // than the channel having gone dead underneath a player who could be mid-duel.
+                session.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = OWNER_DEVICE, sessionToken = null))))
+                val stillAnswers = session.incoming.receive()
+                assertTrue(stillAnswers is Frame.Text)
+            }
+        }
+    }
 }
 
 /**
@@ -193,6 +287,63 @@ private suspend fun HttpClient.setUpOwner(): UUID {
     val ownerId = UUID.fromString(profileOf(OWNER_DEVICE).playerId)
     assertEquals(HttpStatusCode.Created, signUp(OWNER_DEVICE, OWNER_HANDLE, PASSWORD))
     return ownerId
+}
+
+/** The owner's player id, read from its own [ServerMessage.Welcome], and the token that revokes it. */
+private data class OwnerFixture(val ownerId: String, val token: String)
+
+/**
+ * Seeds the fixture the three revocation-outcome tests below share: `d-owner` completes the socket
+ * handshake, minting its `player` row; a `duel_result` pair, written with raw SQL against a bare
+ * opponent row minted the same way, lands its balance at `1`; `signUp` attaches the credential; a
+ * sign-in yields the token that revokes. [setUpOwner] deliberately has neither a duel nor a balance
+ * behind it — these tests need both, because a device sitting at `0` both before and after
+ * revocation could not tell a fresh, empty profile from the one it left.
+ */
+private suspend fun HttpClient.establishOwnerWithABalance(dataSource: DataSource): OwnerFixture {
+    val welcome = helloWith(deviceId = OWNER_DEVICE, sessionToken = null) as ServerMessage.Welcome
+    assertEquals(OWNER_DEVICE, welcome.deviceId)
+    val ownerId = UUID.fromString(welcome.playerId)
+
+    val loserId = UUID.randomUUID()
+    val duelId = UUID.randomUUID()
+    val now = OffsetDateTime.now(ZoneOffset.UTC)
+    dataSource.connection.use { connection ->
+        connection.prepareStatement("INSERT INTO player (id) VALUES (?)").use { statement ->
+            statement.setObject(1, loserId)
+            statement.executeUpdate()
+        }
+        connection.prepareStatement(
+            "INSERT INTO duel (id, format, started_at, finished_at, hands_played) VALUES (?, ?, ?, ?, ?)",
+        ).use { statement ->
+            statement.setObject(1, duelId)
+            statement.setString(2, "heads-up-no-limit")
+            statement.setObject(3, now)
+            statement.setObject(4, now)
+            statement.setInt(5, 1)
+            statement.executeUpdate()
+        }
+        listOf(ownerId to 1, loserId to -1).forEach { (player, delta) ->
+            connection.prepareStatement(
+                "INSERT INTO duel_result (duel_id, player_id, coin_delta) VALUES (?, ?, ?)",
+            ).use { statement ->
+                statement.setObject(1, duelId)
+                statement.setObject(2, player)
+                statement.setInt(3, delta)
+                statement.executeUpdate()
+            }
+            connection.prepareStatement("UPDATE player SET coin_balance = coin_balance + ? WHERE id = ?")
+                .use { statement ->
+                    statement.setInt(1, delta)
+                    statement.setObject(2, player)
+                    statement.executeUpdate()
+                }
+        }
+    }
+
+    assertEquals(HttpStatusCode.Created, signUp(OWNER_DEVICE, OWNER_HANDLE, PASSWORD))
+    val token = signIn(OWNER_HANDLE, PASSWORD)
+    return OwnerFixture(welcome.playerId, token)
 }
 
 /** Completes the WebSocket handshake for [deviceId], minting its `player` row. */
