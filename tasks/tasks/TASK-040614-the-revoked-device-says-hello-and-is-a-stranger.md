@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040614
 title: The revoked device says Hello and is seated as a stranger
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -89,3 +89,25 @@ not reach it. Revert the mutation.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**`aSocketOpenedBeforeTheRevocationIsNotClosed` cannot fail for the reason its name gives.** The
+reviewer deleted the `revokeDevice(...)` call outright — so no revocation happens at all — and the
+test still passed. `DuelSocket` answers every second `Hello` with `Failure(MALFORMED_MESSAGE)`
+unconditionally and never consults revocation state, so the property holds because **no mechanism to
+close on revocation exists**. The ticket's own Proof asks only that this test stay green, so this is
+a ticket-level limit on proving an absence, not a shortcut. Its value is prospective: if socket
+closing on revocation is ever added, this test reddens.
+
+**The identity assertion is the load-bearing one.** Three behaviours look like success — seating a
+new player, refusing the connection, and **reseating the original account**. Only
+`assertNotEquals(owner.ownerId, revoked.playerId)` separates the third, and the third is the one that
+would mean revocation never severed the route. Both sides read `Welcome.playerId`, never a device id,
+and the pre-revocation id is captured before any of the seeding, sign-up or revocation.
+
+**Reconnect idempotence is covered elsewhere, genuinely.** `DuelSocket` resolves through the same
+`PostgresPlayerDirectory.resolve()` that `TASK-040605`'s
+`aSecondResolveOfTheRevokedDeviceIsIdempotent` already pins — there is no separate minting path for
+sockets, so declining to re-test it here left no gap.
+

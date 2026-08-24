@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040615
 title: Revoke, then the password reaches the same profile, coins and name
 type: task
-status: backlog
+status: ready
 parent: STORY-0406
 module: poker-server
 estimate: S
