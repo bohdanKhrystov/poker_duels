@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040618
 title: The scenario, steps one to four — anonymous, a duel, a name, an account
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -126,3 +126,28 @@ would have missed. Revert.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Identity continuity is asserted against step one, not step by step.** `winnerPlayerId` is read
+before either client knows who wins, and steps 2, 3 and 4 each compare a freshly-read id against
+*that* value — never against each other's re-reads, which would let identity drift one step at a
+time and pass every adjacent comparison.
+
+**Two honest disclosures, both resolved by looking.** The coder could not construct a mutation
+isolating the continuity checks without also perturbing the coin or name. The reviewer built one in
+principle — mutating `PROFILE_OF_SQL`'s `id` column — and found the property already asserted by
+pre-existing `PostgresProfileReadsTest`; and for the write-path bug this ticket targets, the
+scenario's own data makes a wrong rebind unable to read back correct values by coincidence. Second:
+`signingUpLeavesThePlayerTableByteIdentical` would pass if sign-up wrote nothing at all, since it
+only asserts `player` is untouched — but `SignUpDatabaseTest.aSignUpWritesExactlyOneCredentialRow`
+already closes that. Neither needed a follow-up.
+
+**A protective layer nobody had documented.** Mutating the display name by SQL concatenation raised
+`violates foreign key constraint "player_display_name_registered"` — `ADR-0051` §2's registry FK
+catching the divergence before any assertion ran, underneath `ADR-0029`'s permanence trigger.
+
+**The seat defect is forbidden by criterion.** The winner comes from `checkNotNull(outcome.winner)`;
+`duel.seat(0)`, `clients[0]` and `clients.first()` appear nowhere. `STORY-0213` shipped that defect
+once, where a hard-coded seat passed eight of nine tests.
+
