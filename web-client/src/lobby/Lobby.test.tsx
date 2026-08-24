@@ -1202,4 +1202,169 @@ describe("the lobby", () => {
     expect(screen.queryByText("Away")).toBeNull();
     expect(screen.queryByText("Timed out")).toBeNull();
   });
+
+  it("names the server as the actor, for a check as well as a fold", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    const SNAPSHOT_SEAT_1: ServerMessage = {
+      type: "Snapshot",
+      view: {
+        viewerSeat: 1,
+        handNumber: 1,
+        buttonSeat: 0,
+        street: "PREFLOP",
+        board: { cards: [] },
+        pot: 30,
+        betToMatch: 20,
+        minRaiseTo: 40,
+        seatToAct: 0,
+        smallBlind: 10,
+        bigBlind: 20,
+        seats: [seatView(0), seatView(1)],
+      },
+    };
+
+    act(() => {
+      store.apply(SNAPSHOT_SEAT_1);
+      store.apply({
+        type: "ActedForAbsent",
+        seat: 0,
+        handNumber: 3,
+        actionSequence: 7,
+        action: "FOLD",
+      });
+    });
+
+    expect(screen.getByText("The server folded for your rival.")).toBeDefined();
+    expect(screen.queryByText("Your rival folded")).toBeNull();
+
+    act(() => {
+      store.apply({
+        type: "ActedForAbsent",
+        seat: 1,
+        handNumber: 3,
+        actionSequence: 9,
+        action: "CHECK",
+      });
+    });
+
+    expect(screen.getByText("The server checked for you.")).toBeDefined();
+    expect(screen.queryByText("The server folded for your rival.")).toBeNull();
+  });
+
+  it("shows the most recent mark, whichever order the frames arrived in", () => {
+    const SNAPSHOT_SEAT_1: ServerMessage = {
+      type: "Snapshot",
+      view: {
+        viewerSeat: 1,
+        handNumber: 1,
+        buttonSeat: 0,
+        street: "PREFLOP",
+        board: { cards: [] },
+        pot: 30,
+        betToMatch: 20,
+        minRaiseTo: 40,
+        seatToAct: 0,
+        smallBlind: 10,
+        bigBlind: 20,
+        seats: [seatView(0), seatView(1)],
+      },
+    };
+
+    const ACTED_FOLD: ServerMessage = {
+      type: "ActedForAbsent",
+      seat: 0,
+      handNumber: 3,
+      actionSequence: 7,
+      action: "FOLD",
+    };
+
+    const EVENTS_FRAME: ServerMessage = {
+      type: "Events",
+      events: [{ type: "ActionOn", sequence: 7, seat: 0 }],
+    };
+
+    // First scenario: ActedForAbsent, then Events
+    const store1 = createDuelStore();
+    store1.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store1);
+
+    act(() => {
+      store1.apply(SNAPSHOT_SEAT_1);
+      store1.apply(ACTED_FOLD);
+      store1.apply(EVENTS_FRAME);
+    });
+
+    expect(screen.getByText("The server folded for your rival.")).toBeDefined();
+
+    cleanup();
+
+    // Second scenario: Events, then ActedForAbsent
+    const store2 = createDuelStore();
+    store2.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store2);
+
+    act(() => {
+      store2.apply(SNAPSHOT_SEAT_1);
+      store2.apply(EVENTS_FRAME);
+      store2.apply(ACTED_FOLD);
+    });
+
+    expect(screen.getByText("The server folded for your rival.")).toBeDefined();
+  });
+
+  it("a rival who is back leaves no sentence about the server behind", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    const SNAPSHOT_SEAT_1: ServerMessage = {
+      type: "Snapshot",
+      view: {
+        viewerSeat: 1,
+        handNumber: 1,
+        buttonSeat: 0,
+        street: "PREFLOP",
+        board: { cards: [] },
+        pot: 30,
+        betToMatch: 20,
+        minRaiseTo: 40,
+        seatToAct: 0,
+        smallBlind: 10,
+        bigBlind: 20,
+        seats: [seatView(0), seatView(1)],
+      },
+    };
+
+    act(() => {
+      store.apply(SNAPSHOT_SEAT_1);
+      store.apply({
+        type: "OpponentPresence",
+        presence: "ABSENT",
+        graceRemainingMillis: 60000,
+      });
+      store.apply({
+        type: "ActedForAbsent",
+        seat: 0,
+        handNumber: 3,
+        actionSequence: 7,
+        action: "FOLD",
+      });
+    });
+
+    expect(screen.getByText("The server folded for your rival.")).toBeDefined();
+
+    act(() => {
+      store.apply({
+        type: "OpponentPresence",
+        presence: "PRESENT",
+        graceRemainingMillis: null,
+      });
+    });
+
+    expect(screen.getByText("Your rival is back.")).toBeDefined();
+    expect(screen.queryByText("The server folded for your rival.")).toBeNull();
+  });
 });
