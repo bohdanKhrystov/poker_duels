@@ -58,7 +58,7 @@ class ServerComponentsTest {
         }
 
         val profile = runBlocking {
-            components.reads.profileOf(DeviceId("wired"))
+            components.reads.profileOf(player.id)
         }
 
         assertNotNull(profile, "Profile should exist after directory resolve")
@@ -108,7 +108,7 @@ class ServerComponentsTest {
         assertTrue(setResult is SetNameResult.NameSet, "setDisplayName should succeed")
 
         val profile = runBlocking {
-            components.reads.profileOf(DeviceId("writes-test"))
+            components.reads.profileOf(player.id)
         }
 
         assertNotNull(profile, "Profile should exist after writes")

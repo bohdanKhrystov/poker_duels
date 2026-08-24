@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040512
 title: A signed-in request reads the session's profile, and the device beside it is ignored
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -82,6 +82,19 @@ Read `docs/adr/ADR-0027-the-session-outranks-the-device-id.md` §4 and
 Make `resolvedPlayerOrNull` fall through from `Refused` to the device branch and
 `anUnknownSessionIsRefusedEvenWithAGoodDevice` goes red alone. Make it prefer the device over the
 session and `aSessionOutranksTheDeviceBesideIt` goes red while the other three stay green.
+
+## Notes
+
+**`TASK-040511` left a universal claim with no gate.** That ticket wired every route through
+`IdentityResolver`, and *every route* is three named functions — `profileRoutes`, `authRoutes`,
+`standingsRoutes` — each individually wired and individually tested. Nothing enumerates them.
+`deviceIdOrNull` and `sessionTokenOrNull` are `internal`, so a fourth route file in the same package
+can read `X-Device-Id` or `Authorization` ad hoc and skip the resolver entirely: **no compiler check,
+no test, and no lint rule would fail.**
+
+A `! grep` gate is the only mechanism that catches this class — the same reason `TASK-031404` carries
+twelve of them. If this ticket adds a route, add the gate with it; if it does not, the gap stays open
+and belongs to whichever ticket adds the fourth route.
 
 ## Definition of done
 

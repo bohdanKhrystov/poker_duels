@@ -1,5 +1,6 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.protocol.http.SelfStandingResponse
 import duels.poker.server.protocol.http.StandingRow
 import duels.poker.server.protocol.http.StandingsResponse
@@ -42,27 +43,33 @@ import java.util.UUID
  * way [duelLimitOrNull]'s sibling ports read it — never a season the client names, since there is
  * no `season` parameter to name one with.
  *
- * `self` is the caller's own standing, resolved from the `X-Device-Id` header alone. Its three
- * shapes (`ADR-0065` §4) are: a rank and a coin standing when the header names a known device that
- * has finished a duel this season; both `null` when the header names a known device that has
- * finished none; and the whole `self` object `null` when the header is absent, blank, or names no
- * device this server knows — decided before [StandingsReads.standingOf] is ever called
- * (`ADR-0066` §6).
+ * `self` is the caller's own standing, resolved through [identities] from `Authorization` and
+ * `X-Device-Id` exactly as the other routes resolve identity. Its three shapes (`ADR-0065` §4)
+ * are: a rank and a coin standing when the caller resolves to a player who has finished a duel
+ * this season; both `null` when the caller resolves to a player who has finished none; and the
+ * whole `self` object `null` when nothing resolves — decided before [StandingsReads.standingOf]
+ * is ever called (`ADR-0066` §6).
  *
  * Unlike every other route in this package, **this route never answers `401`**: the ladder is
  * the same page for every reader, named or anonymous (`ADR-0065` §4), so there is no identity to
- * refuse before serving it.
+ * refuse before serving it — an unresolved caller simply draws a `null` `self`.
  *
- * @param reads The port for resolving `X-Device-Id` into a profile, used only to find [self]'s
- *   player id.
+ * @param reads The port for resolving the caller's identity into a profile, used only to find
+ *   [self]'s player id.
  * @param standings The port for reading a season's ladder and one player's place on it.
  * @param clock The wall clock (`ADR-0062`) a cursorless request reads, at most once, to mint the
  *   walk's cutoff. Has no default: the one production instance of it lives at the composition
  *   root (`TASK-050201`), not here.
+ * @param identities The port that resolves a session token or a device id into a player.
  */
-public fun Application.standingsRoutes(reads: ProfileReads, standings: StandingsReads, clock: Clock) {
+public fun Application.standingsRoutes(
+    reads: ProfileReads,
+    standings: StandingsReads,
+    clock: Clock,
+    identities: IdentityResolver,
+) {
     routing {
-        get("/api/standings") { call.respondWithStandings(reads, standings, clock) }
+        get("/api/standings") { call.respondWithStandings(reads, standings, clock, identities) }
     }
 }
 
@@ -75,6 +82,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondWithStandi
     reads: ProfileReads,
     standings: StandingsReads,
     clock: Clock,
+    identities: IdentityResolver,
 ) {
     val season = currentSeason(clock)
     val limit = duelLimitOrNull(request.queryParameters["limit"])
@@ -93,7 +101,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondWithStandi
     // the clock is read, and it is read at most once.
     val asOf = cursor?.asOf ?: clock.instant()
     val rows = standings.standingsPage(season, asOf, limit + 1, cursor)
-    val profile = deviceIdOrNull()?.let { reads.profileOf(it) }
+    val profile = resolvedPlayerOrNull(identities)?.let { reads.profileOf(it) }
     val self =
         profile?.let {
             standings.standingOf(PlayerId(it.playerId), season, asOf)

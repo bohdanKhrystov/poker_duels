@@ -1,6 +1,7 @@
 package duels.poker.server.e2e
 
 import duels.poker.engine.duel.DuelOutcome
+import duels.poker.server.db.PostgresPlayerDirectory
 import duels.poker.server.db.PostgresProfileReads
 import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.protocol.ServerMessage
@@ -49,9 +50,10 @@ internal class SocketDuelTest {
             val duel = client.openSocketDuel()
 
             // Both devices have profiles
+            val playerDirectory = PostgresPlayerDirectory(dataSource)
             val profileReads = PostgresProfileReads(dataSource)
-            val hostProfile = profileReads.profileOf(DeviceId(HOST_DEVICE))
-            val guestProfile = profileReads.profileOf(DeviceId(GUEST_DEVICE))
+            val hostProfile = profileReads.profileOf(playerDirectory.resolve(DeviceId(HOST_DEVICE)).id)
+            val guestProfile = profileReads.profileOf(playerDirectory.resolve(DeviceId(GUEST_DEVICE)).id)
 
             assert(hostProfile != null) { "Host device profile should exist" }
             assert(guestProfile != null) { "Guest device profile should exist" }

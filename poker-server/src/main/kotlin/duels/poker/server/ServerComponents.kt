@@ -1,7 +1,9 @@
 package duels.poker.server
 
 import duels.poker.server.auth.Credentials
+import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.config.ServerConfig
+import duels.poker.server.db.PostgresAuthSessions
 import duels.poker.server.db.PostgresCredentials
 import duels.poker.server.db.PostgresDuelResultSink
 import duels.poker.server.db.PostgresDuelResultStore
@@ -37,6 +39,7 @@ public data class ServerComponents(
     val credentials: Credentials,
     val standings: StandingsReads,
     val wallClock: Clock,
+    val identities: IdentityResolver,
 )
 
 /**
@@ -65,6 +68,7 @@ public fun serverComponents(
     val directory = PostgresPlayerDirectory(dataSource)
     val reads = PostgresProfileReads(dataSource)
     val writes = PostgresProfileWrites(dataSource)
+    val identities = IdentityResolver(PostgresAuthSessions(dataSource, wallClock), directory)
     val deviceIds: DeviceIdSource = RandomDeviceIdSource()
     val sessions = SessionRegistry()
     val connections = ConnectionDirectory()
@@ -89,5 +93,13 @@ public fun serverComponents(
     val credentials = PostgresCredentials(dataSource)
     val standings = PostgresStandingsReads(dataSource)
 
-    return ServerComponents(socket = socket, reads = reads, writes = writes, credentials = credentials, standings = standings, wallClock = wallClock)
+    return ServerComponents(
+        socket = socket,
+        reads = reads,
+        writes = writes,
+        credentials = credentials,
+        standings = standings,
+        wallClock = wallClock,
+        identities = identities,
+    )
 }

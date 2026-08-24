@@ -87,7 +87,7 @@ class DuelHistoryPagingDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource))
+                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
             }
 
             val pages = walkAllPages(client, "alice", PAGE_LIMIT)
@@ -108,7 +108,7 @@ class DuelHistoryPagingDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource))
+                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
             }
 
             val firstPage = fetchPage(client, "alice", PAGE_LIMIT, after = null)
@@ -128,7 +128,7 @@ class DuelHistoryPagingDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource))
+                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
             }
 
             val alicesFirstPage = fetchPage(client, "alice", PAGE_LIMIT, after = null)

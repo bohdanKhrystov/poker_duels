@@ -92,7 +92,7 @@ class StandingsSelfDatabaseTest {
         testApplication {
             application {
                 module()
-                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK)
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK, identitiesFor(dataSource))
             }
 
             val page = fetchPage(client, "e", PAGE_LIMIT, after = null)
@@ -112,7 +112,7 @@ class StandingsSelfDatabaseTest {
         testApplication {
             application {
                 module()
-                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK)
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK, identitiesFor(dataSource))
             }
 
             val page = fetchPage(client, "a", PAGE_LIMIT, after = null)
@@ -134,7 +134,7 @@ class StandingsSelfDatabaseTest {
         testApplication {
             application {
                 module()
-                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK)
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK, identitiesFor(dataSource))
             }
 
             val pageOne = fetchPage(client, "e", PAGE_LIMIT, after = null)
@@ -165,6 +165,7 @@ class StandingsSelfDatabaseTest {
                     PostgresProfileReads(fixtureBDataSource),
                     PostgresStandingsReads(fixtureBDataSource),
                     CLOCK,
+                    identitiesFor(fixtureBDataSource),
                 )
             }
 
@@ -188,7 +189,7 @@ class StandingsSelfDatabaseTest {
         testApplication {
             application {
                 module()
-                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK)
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK, identitiesFor(dataSource))
             }
 
             val knownPage = fetchPage(client, "a", PAGE_LIMIT, after = null)
@@ -208,7 +209,7 @@ class StandingsSelfDatabaseTest {
         testApplication {
             application {
                 module()
-                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK)
+                standingsRoutes(PostgresProfileReads(dataSource), PostgresStandingsReads(dataSource), CLOCK, identitiesFor(dataSource))
             }
 
             val before = playerRowCount(dataSource)

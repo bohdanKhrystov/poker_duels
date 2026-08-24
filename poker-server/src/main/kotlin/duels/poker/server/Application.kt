@@ -82,9 +82,9 @@ public fun Application.duelServer(
 ) {
     module()
     duelSocket(components.socket)
-    authRoutes(components.reads, components.credentials)
-    profileRoutes(components.reads, components.writes)
-    standingsRoutes(components.reads, components.standings, components.wallClock)
+    authRoutes(components.reads, components.credentials, components.identities)
+    profileRoutes(components.reads, components.writes, components.identities)
+    standingsRoutes(components.reads, components.standings, components.wallClock, components.identities)
     scheduleSweeps(components.socket.rooms, components.socket.connections, sweepPeriodMillis)
 }
 

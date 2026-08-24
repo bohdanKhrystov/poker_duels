@@ -68,25 +68,26 @@ class PostgresProfileReadsTest {
         val deviceId = DeviceId("alice")
         val player = playerDirectory.resolve(deviceId)
 
-        val profile = profileReads.profileOf(deviceId)
+        val profile = profileReads.profileOf(player.id)
 
         assertEquals(player.id.value, profile?.playerId)
         assertEquals(0, profile?.coinBalance)
     }
 
     @Test
-    fun anUnknownDeviceReadsBackNull() = runBlocking {
-        val profile = profileReads.profileOf(DeviceId("ghost"))
+    fun anUnknownPlayerReadsBackNull() = runBlocking {
+        val profile = profileReads.profileOf(PlayerId(UUID.randomUUID().toString()))
 
         assertNull(profile)
     }
 
     @Test
-    fun readingAnUnknownDeviceCreatesNoProfile() = runBlocking {
+    fun readingAnUnknownPlayerIsNullAndCreatesNothing() = runBlocking {
         val countBefore = playerRowCount()
 
-        profileReads.profileOf(DeviceId("ghost"))
+        val profile = profileReads.profileOf(PlayerId(UUID.randomUUID().toString()))
 
+        assertNull(profile)
         val countAfter = playerRowCount()
         assertEquals(countBefore, countAfter)
     }
@@ -98,8 +99,8 @@ class PostgresProfileReadsTest {
         val alice = playerDirectory.resolve(aliceDeviceId)
         val bob = playerDirectory.resolve(bobDeviceId)
 
-        val aliceProfile = profileReads.profileOf(aliceDeviceId)
-        val bobProfile = profileReads.profileOf(bobDeviceId)
+        val aliceProfile = profileReads.profileOf(alice.id)
+        val bobProfile = profileReads.profileOf(bob.id)
 
         assertEquals(alice.id.value, aliceProfile?.playerId)
         assertEquals(bob.id.value, bobProfile?.playerId)
@@ -112,7 +113,7 @@ class PostgresProfileReadsTest {
 
         duelResultStore.record(duel)
 
-        val profile = profileReads.profileOf(DeviceId("alice"))
+        val profile = profileReads.profileOf(alice.id)
         assertEquals(1, profile?.coinBalance)
     }
 
@@ -122,7 +123,7 @@ class PostgresProfileReadsTest {
 
         duelResultStore.record(duel)
 
-        val profile = profileReads.profileOf(DeviceId("bob"))
+        val profile = profileReads.profileOf(bob.id)
         assertEquals(-1, profile?.coinBalance)
     }
 
@@ -315,7 +316,7 @@ class PostgresProfileReadsTest {
         val carol = playerDirectory.resolve(DeviceId("carol"))
         setPlayerDisplayName(carol.id.value, "bob")
 
-        val profile = profileReads.profileOf(DeviceId("carol"))
+        val profile = profileReads.profileOf(carol.id)
 
         assertEquals("bob", profile?.displayName)
     }
@@ -325,7 +326,7 @@ class PostgresProfileReadsTest {
         val dave = playerDirectory.resolve(DeviceId("dave"))
         setPlayerDisplayName(dave.id.value, null)
 
-        val profile = profileReads.profileOf(DeviceId("dave"))
+        val profile = profileReads.profileOf(dave.id)
 
         assertNull(profile?.displayName)
     }
@@ -342,8 +343,8 @@ class PostgresProfileReadsTest {
     fun aRemovedNameReadsTrueAndANeverNamedPlayerInTheSameDatabaseReadsFalse() = runBlocking {
         givenARetiredName(alice, "Ann")
 
-        val aliceProfile = profileReads.profileOf(DeviceId("alice"))
-        val bobProfile = profileReads.profileOf(DeviceId("bob"))
+        val aliceProfile = profileReads.profileOf(alice.id)
+        val bobProfile = profileReads.profileOf(bob.id)
 
         assertNull(aliceProfile?.displayName)
         assertEquals(true, aliceProfile?.displayNameRemoved)
@@ -362,7 +363,7 @@ class PostgresProfileReadsTest {
         givenARetiredName(alice, "Ann")
         profileWrites.setDisplayName(alice.id, "Bea")
 
-        val profile = profileReads.profileOf(DeviceId("alice"))
+        val profile = profileReads.profileOf(alice.id)
 
         assertEquals("Bea", profile?.displayName)
         assertEquals(false, profile?.displayNameRemoved)
@@ -376,7 +377,7 @@ class PostgresProfileReadsTest {
     fun aNamedPlayerNeverReadsTrue() = runBlocking {
         profileWrites.setDisplayName(alice.id, "Cid")
 
-        val profile = profileReads.profileOf(DeviceId("alice"))
+        val profile = profileReads.profileOf(alice.id)
 
         assertEquals("Cid", profile?.displayName)
         assertEquals(false, profile?.displayNameRemoved)
