@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040523
 title: Sign-in carries a budget of its own
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
