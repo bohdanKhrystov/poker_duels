@@ -3,7 +3,7 @@ schema: 2
 id: TASK-031311
 title: The countdown reaching zero changes nothing the client does
 type: task
-status: ready
+status: done
 parent: STORY-0313
 module: web-client
 estimate: S
@@ -66,7 +66,10 @@ with no number `SNAPSHOT` carries.
 | `the countdown reaching zero sends nothing and changes nothing` | with `RoomJoined(seat 1)`, `SNAPSHOT`, a `YourTurn` allowing `["CHECK", "BET"]` so the bar is **live**, and `OpponentPresence(AWAY, 47000)`: record the bar's buttons — their accessible names in order, and each one's `disabled` — then advance virtual time by `120_000`, more than twice the window. Afterwards: `send` was called **zero** times; the buttons' names, order and `disabled` flags are identical to what was recorded; `Your rival is away. The duel is paused.` is still the line; the plate named `Your rival` still reads `Away` and **not** `Timed out`; and the countdown reads `0`. Five assertions, one per clause of `ADR-0028` §3 — *sends nothing*, *enables nothing*, *enters no state*, *assumes no resumption*, *the number stops* |
 | `a window with nothing left of it renders as waiting` | `OpponentPresence(AWAY, 0)` — a frame the server legitimately sends when the window has run out but the sweep has not landed. `Your rival is away. The duel is paused.` is on screen, `0` is on screen, `Timed out` is nowhere, `Your rival did not come back.` is nowhere, and `send` was called zero times. `AWAY` with zero remaining is waiting, not an event and not an error |
 
-Two tests. Six hundred and fourteen exist after `TASK-031310`, so the suite reports **616**.
+Two tests. The suite grows by that many on top of whatever `TASK-031310` left, and every one
+of them passes. This line said **616** when the story was planned; the real figure at landing was
+627, because `STORY-0314` wrote into the same suite meanwhile. The gate matches a pattern rather
+than a number for exactly that reason.
 
 ## Proof
 
