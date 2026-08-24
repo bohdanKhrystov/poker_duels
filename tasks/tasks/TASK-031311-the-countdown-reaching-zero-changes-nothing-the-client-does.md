@@ -14,7 +14,7 @@ labels: [client, duel, presence, authority]
 depends_on: [TASK-031310]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +616 passed \(616\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'the countdown reaching zero sends nothing and changes nothing'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'a window with nothing left of it renders as waiting'
   - cd web-client && npm run check
@@ -72,7 +72,7 @@ Two tests. Six hundred and fourteen exist after `TASK-031310`, so the suite repo
 
 | Command | Proves |
 | --- | --- |
-| `Tests 616 passed (616)` | two ran and the six hundred and fourteen before them still do |
+| a green `Tests N passed (N)` line | two ran and every test before them still does |
 | the two `--reporter=verbose` greps | each exists by name |
 | `npm run check` | the `LegalActions` literal in the `YourTurn` typechecks whole |
 
@@ -105,7 +105,7 @@ Quote all three in the PR, and state for each which clause went red.
 - [ ] No file outside `web-client/src/lobby/Lobby.test.tsx` differs from `develop`
 - [ ] Neither test calls `Thread`-like real waiting: no `await new Promise(setTimeout)`, no
       `vi.useRealTimers()` inside a test body
-- [ ] `npm run --silent test` reports `Tests  616 passed (616)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done

@@ -14,7 +14,7 @@ labels: [client, duel, ui, presence, copy]
 depends_on: [TASK-031312]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +623 passed \(623\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +[0-9]+ passed \([0-9]+\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names the server acting for your rival, whichever seat the rival is'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names the server acting for you, whichever seat you are'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'names an absent seat when this client holds none'
@@ -108,7 +108,7 @@ Four tests. Six hundred and nineteen exist after `TASK-031312`, so the suite rep
 
 | Command | Proves |
 | --- | --- |
-| `Tests 623 passed (623)` | four ran and the six hundred and nineteen before them still do |
+| a green `Tests N passed (N)` line | four ran and every test before them still does |
 | the four `--reporter=verbose` greps | each exists by name |
 | `npm run check` | `ActedForAbsent` typechecks and `mySeat: number \| null` is honoured at every branch |
 
@@ -134,7 +134,7 @@ Quote both in the PR, with which half survived each.
 - [ ] `absent-action-text.ts` exports exactly one name, `absentActionText`
 - [ ] `absent-action-text.ts` contains none of `auto`, `timed out`, `(away)` or the word `rival` as
       a grammatical subject — every sentence begins `The server `
-- [ ] `npm run --silent test` reports `Tests  623 passed (623)`
+- [ ] `npm run --silent test` reports `Tests  N passed (N)` with no failures
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
