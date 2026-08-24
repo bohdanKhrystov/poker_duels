@@ -93,6 +93,7 @@ These endpoints are **plain HTTP** — they carry no `type` discriminator and ar
 | `401 Unauthorized` | No resolvable identity; nothing is written, and sign-up creates no profile. |
 | `409 Conflict` | The handle is taken, **or** this player already holds a `password` credential. |
 | `422 Unprocessable Entity` | The password is under 8 or over 128 code points. |
+| `429 Too Many Requests` | Too many sign-ups have recently reached the hashing step from this address; nothing was written and no field was refused. No `Retry-After` header is present, and the body is empty. This rate limit does not apply to sign-in (`ADR-0056` §1): a client that maps both responses with the same handler must not infer throttling from a sign-in `401`. |
 
 ### Sign in
 

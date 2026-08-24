@@ -529,6 +529,31 @@ class HttpEndpointDocumentationTest {
     }
 
     @Test
+    fun theSignUpSectionNamesTheThrottledAnswer() {
+        assertTrue(
+            signUpSection.contains("429"),
+            "The Sign up section must document status code '429'",
+        )
+    }
+
+    @Test
+    fun theSignUpSectionPromisesNoRetryAfter() {
+        assertTrue(
+            signUpSection.contains("no `Retry-After`") || signUpSection.contains("no Retry-After") ||
+                signUpSection.contains("no Retry-After header"),
+            "The Sign up section must state there is no 'Retry-After' header for the 429 response",
+        )
+    }
+
+    @Test
+    fun theSignInSectionHasNoThrottledAnswer() {
+        assertFalse(
+            signInSection.contains("429"),
+            "The Sign in section must not document status code '429'",
+        )
+    }
+
+    @Test
     fun theDocumentedStandingsFieldNamesAllExist() {
         // The section holds two tables (the response, and each row in `rows`), so one scan of the
         // whole section against all three DTOs mirrors theDocumentedFieldNamesAllExist's approach.
