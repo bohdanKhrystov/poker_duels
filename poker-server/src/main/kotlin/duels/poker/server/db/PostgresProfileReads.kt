@@ -37,6 +37,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                             rows.getInt(2),
                             rows.getString(3),
                             rows.getBoolean(4),
+                            rows.getBoolean(5),
                         )
                     } else {
                         null
@@ -152,6 +153,10 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         // `r.reason = 'RETIRED'` is redundant under the partial index
         // name_registry_retired_from, and stays — the statement should read correctly without
         // the constraint in hand.
+        // device_route_live is a second, independent correlated EXISTS on the same reasoning: a
+        // player has at most one live device_binding row but may hold several revoked ones, so a
+        // JOIN would again multiply the profile row. Correlated to p.id, never to a second `?`,
+        // so this boolean cannot drift to describe a different player than the row it rides on.
         private const val PROFILE_OF_SQL =
             """
             SELECT p.id,
@@ -159,7 +164,9 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                    p.display_name,
                    (p.display_name IS NULL
                     AND EXISTS (SELECT 1 FROM name_registry r
-                                 WHERE r.retired_from = p.id AND r.reason = 'RETIRED')) AS display_name_removed
+                                 WHERE r.retired_from = p.id AND r.reason = 'RETIRED')) AS display_name_removed,
+                   EXISTS (SELECT 1 FROM device_binding b
+                            WHERE b.player_id = p.id AND b.revoked_at IS NULL) AS device_route_live
             FROM player p
             WHERE p.id = ?
             """

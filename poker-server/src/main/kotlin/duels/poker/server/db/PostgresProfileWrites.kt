@@ -103,9 +103,20 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
 
     // SetNameResult.NameSet describes a player who now holds a name — including ADR-0051 §2's
     // idempotent retry — so displayNameRemoved is false by construction on every 200 from
-    // PUT /api/me/name. Never a second query, never a subquery in RETURNING (ADR-0053 §6).
+    // PUT /api/me/name. Never a second query, never a subquery in RETURNING (ADR-0053 §6). That
+    // prohibition is scoped to displayNameRemoved and does not transfer to deviceRouteLive: a
+    // player renaming themselves may or may not still have a live binding, so a literal here
+    // would be a lie. Both statements below carry the same correlated EXISTS PostgresProfileReads
+    // uses — correlated to player.id, the row each statement already returns — so this stays one
+    // round trip with no conditional read.
     private fun ResultSet.toProfile(): ProfileResponse =
-        ProfileResponse(getString("id"), getInt("coin_balance"), getString("display_name"), false)
+        ProfileResponse(
+            getString("id"),
+            getInt("coin_balance"),
+            getString("display_name"),
+            false,
+            getBoolean("device_route_live"),
+        )
 
     private companion object {
         private const val UNIQUE_VIOLATION_SQLSTATE = "23505"
@@ -113,11 +124,15 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
         private const val INSERT_NAME_REGISTRY_SQL =
             "INSERT INTO name_registry (name, reason) VALUES (?, 'TAKEN')"
 
+        private const val DEVICE_ROUTE_LIVE_EXISTS =
+            "EXISTS (SELECT 1 FROM device_binding b WHERE b.player_id = player.id AND b.revoked_at IS NULL)"
+
         private const val SET_NAME_SQL =
             "UPDATE player SET display_name = ? WHERE id = ? AND display_name IS NULL " +
-                "RETURNING id, coin_balance, display_name"
+                "RETURNING id, coin_balance, display_name, $DEVICE_ROUTE_LIVE_EXISTS AS device_route_live"
 
         private const val CURRENT_PROFILE_SQL =
-            "SELECT id, coin_balance, display_name FROM player WHERE id = ?"
+            "SELECT id, coin_balance, display_name, $DEVICE_ROUTE_LIVE_EXISTS AS device_route_live " +
+                "FROM player WHERE id = ?"
     }
 }
