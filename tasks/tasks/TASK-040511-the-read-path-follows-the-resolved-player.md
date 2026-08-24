@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040511
 title: The profile read follows the resolved player, and every route resolves the same way
 type: task
-status: backlog
+status: ready
 parent: STORY-0405
 module: poker-server
 estimate: S
@@ -144,6 +144,20 @@ device id as a player id — and `ProfileRouteTest`'s unknown-device tests go re
 on every read. Both were run.
 
 ## Notes
+
+**`TASK-040510`'s deep review left this ticket a warning.** The no-fall-back property — an invalid
+session is `Refused`, never downgraded to the device — is proven today **only at the `IdentityResolver`
+unit**. The reviewer confirmed it by writing the realistic downgrade bug (fall back only when the
+device lookup *succeeds*) and watching exactly one test go red. That test's power rests on one seeded
+line: without `directory.resolve(deviceId)` before the call, the same bug passes all eight tests.
+
+A caller that mis-parses a malformed `Authorization` header into *no token presented*, rather than a
+present-but-invalid `SessionToken`, reintroduces that exact bug one layer up — outside the diff that
+proved it. An empty token is already correct (`resolve()` gates on `!= null`, so `SessionToken("")`
+takes the invalid path), but a header the parser drops entirely is not the same case. **Where this
+ticket wires a caller to the resolver, assert that a malformed credential reaches the resolver as
+present-and-invalid, with a resolvable device beside it.**
+
 
 **Twenty-four was measured** (`ADR-0069`, `ADR-0070`). On a clean tree, `PlayerDirectory.findOrNull`
 (`TASK-040509`), `AuthSessions` (`TASK-040505`), `IdentityResolver` (`TASK-040510`) and a stub
