@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 
 class InMemoryPlayerDirectoryTest {
     @Test
@@ -55,6 +56,37 @@ class InMemoryPlayerDirectoryTest {
         assertFailsWith<IllegalArgumentException> {
             DeviceId("   ")
         }
+    }
+
+    @Test
+    fun theDoubleFindsWhatItResolved(): Unit = runBlocking {
+        val directory = InMemoryPlayerDirectory()
+        val d1 = DeviceId("d1")
+        val d2 = DeviceId("d2")
+        val resolved1 = directory.resolve(d1)
+        val resolved2 = directory.resolve(d2)
+
+        val found1 = directory.findOrNull(d1)
+        val found2 = directory.findOrNull(d2)
+
+        assertEquals(resolved1, found1)
+        assertEquals(resolved2, found2)
+        assertNotEquals(found1?.id, found2?.id)
+    }
+
+    @Test
+    fun theDoubleCreatesNothingOnAMiss(): Unit = runBlocking {
+        val directory = InMemoryPlayerDirectory()
+        val deviceId = DeviceId("ghost")
+        val before = directory.profileCount
+
+        assertNull(directory.findOrNull(deviceId))
+        assertEquals(before, directory.profileCount)
+
+        // A second lookup after the first proves the first call left nothing behind for the
+        // second call to find — the property a single call cannot distinguish from a fluke.
+        assertNull(directory.findOrNull(deviceId))
+        assertEquals(before, directory.profileCount)
     }
 
     @Test

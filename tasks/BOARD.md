@@ -1700,8 +1700,8 @@ written and is still true.
 | | [TASK-031315](tasks/TASK-031315-the-duel-screen-names-the-server-as-the-actor.md) The duel screen names the server as the actor | S | backlog |
 | [STORY-0314](stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened (`ADR-0073` fixed its words) | **in progress** — split into five |
 | | [TASK-031401](tasks/TASK-031401-the-waiting-screen-offers-the-way-back-to-the-lobby.md) The waiting screen offers the way back to the lobby | S | done |
-| | [TASK-031402](tasks/TASK-031402-one-line-says-the-room-stays-open.md) One line says the room stays open | XS | **ready** |
-| | [TASK-031403](tasks/TASK-031403-two-strings-are-the-whole-addition-and-nothing-stands-between-the-press-and-the-lobby.md) Two strings are the whole addition, and nothing stands between the press and the lobby | S | backlog |
+| | [TASK-031402](tasks/TASK-031402-one-line-says-the-room-stays-open.md) One line says the room stays open | XS | done |
+| | [TASK-031403](tasks/TASK-031403-two-strings-are-the-whole-addition-and-nothing-stands-between-the-press-and-the-lobby.md) Two strings are the whole addition, and nothing stands between the press and the lobby | S | **ready** |
 | | [TASK-031404](tasks/TASK-031404-the-waiting-screen-offers-none-of-the-words-adr-0073-refuses.md) The waiting screen offers none of the words `ADR-0073` refuses | S | backlog |
 | | [TASK-031405](tasks/TASK-031405-the-press-leaves-nothing-on-the-wire-and-the-next-socket-rejoins-nothing.md) The press leaves nothing on the wire, and the next socket rejoins nothing | S | backlog |
 
@@ -1821,8 +1821,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040506](tasks/TASK-040506-issue-writes-one-row-a-digest-and-thirty-days.md) issue writes one row, a digest, and thirty days from the injected clock | S | done |
 | | [TASK-040507](tasks/TASK-040507-playerof-reads-through-the-expiry.md) playerOf reads through the expiry, and a clock thirty days on refuses | S | done |
 | | [TASK-040508](tasks/TASK-040508-delete-removes-the-row-and-says-the-same-thing-twice.md) delete removes the row, and says the same thing twice | XS | done |
-| | [TASK-040509](tasks/TASK-040509-the-directory-finds-a-profile-without-creating-one.md) The directory can find a profile without creating one | S | **ready** |
-| | [TASK-040510](tasks/TASK-040510-one-resolver-and-an-invalid-session-never-falls-back.md) One resolver, and an invalid session never falls back to the device | S | backlog |
+| | [TASK-040509](tasks/TASK-040509-the-directory-finds-a-profile-without-creating-one.md) The directory can find a profile without creating one | S | done |
+| | [TASK-040510](tasks/TASK-040510-one-resolver-and-an-invalid-session-never-falls-back.md) One resolver, and an invalid session never falls back to the device | S | **ready** |
 | | [TASK-040511](tasks/TASK-040511-the-read-path-follows-the-resolved-player.md) The profile read follows the resolved player, and every route resolves the same way | S | backlog |
 | | [TASK-040512](tasks/TASK-040512-a-signed-in-request-reads-the-sessions-profile.md) A signed-in request reads the session's profile, and the device beside it is ignored | S | backlog |
 | | [TASK-040513](tasks/TASK-040513-the-sign-in-body-is-two-fields-and-the-answer-carries-the-token-once.md) The sign-in body is two fields, and its answer carries the token exactly once | XS | backlog |
