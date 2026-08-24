@@ -5,6 +5,7 @@ import type {
   PlayerView,
   ProtocolError,
   Rejection,
+  SeatPresence,
   ServerMessage,
 } from "../protocol";
 
@@ -30,6 +31,26 @@ export interface DuelState {
    * `rejectionCount` — no single frame carries it (`ADR-0044`, Consequences).
    */
   readonly rematchOffers: readonly number[];
+  /**
+   * The rival's presence, as the last `OpponentPresence` stated it, or `null` before the
+   * server has stated one. Presence is state, not an event (`ADR-0028` §2): nothing but
+   * another `OpponentPresence` moves it, and a `Snapshot` in particular does not — the duel
+   * goes on being played while a seat is absent.
+   */
+  readonly rivalPresence: SeatPresence | null;
+  /**
+   * How much of the grace window was left at the instant the server built the frame, or
+   * `null` whenever the presence is not `AWAY`. A duration, never a deadline: the two sides
+   * share no epoch (`ADR-0028` §2). The reducer never reads it back and never counts it down.
+   */
+  readonly graceRemainingMillis: number | null;
+  /**
+   * How many `OpponentPresence` frames the server has sent. Client bookkeeping in the class of
+   * `rejectionCount`, and the same job: something that always changes. Two grace windows in one
+   * duel carry the same `graceRemainingMillis`, so the value cannot tell a second window from
+   * a re-render — only a count can.
+   */
+  readonly presenceCount: number;
 }
 
 export interface PendingTurn {
@@ -50,6 +71,9 @@ export function initialState(): DuelState {
     outcome: null,
     refusal: null,
     rematchOffers: [],
+    rivalPresence: null,
+    graceRemainingMillis: null,
+    presenceCount: 0,
   };
 }
 
@@ -125,6 +149,13 @@ export function applyServerMessage(
       return {
         ...state,
         rematchOffers: [...state.rematchOffers, message.seat],
+      };
+    case "OpponentPresence":
+      return {
+        ...state,
+        rivalPresence: message.presence,
+        graceRemainingMillis: message.graceRemainingMillis,
+        presenceCount: state.presenceCount + 1,
       };
     default:
       return state;
