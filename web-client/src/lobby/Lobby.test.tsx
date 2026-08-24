@@ -781,4 +781,43 @@ describe("the lobby", () => {
       screen.getByRole("button", { name: "Create a duel room" }),
     ).toBeDefined();
   });
+
+  it("adds exactly two strings to the waiting screen and no third", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    const waiting = screen
+      .getByText("Waiting for your rival")
+      .closest("section");
+    expect(waiting).not.toBeNull();
+    const texts = Array.from(
+      waiting?.querySelectorAll("h2, p, a, button, label") ?? [],
+    ).map((element) => element.textContent?.trim());
+
+    expect(texts).toEqual([
+      "Waiting for your rival",
+      "ABCDEFGH",
+      "Invite link",
+      "Back to the lobby",
+      "The room stays open. That link still works for your rival, and it brings you back.",
+    ]);
+  });
+
+  it("puts no confirmation between the press and the lobby", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    const { forgetRoom } = renderLobby(store);
+
+    const back = screen.getByRole("link", { name: "Back to the lobby" });
+    const clickReturn = fireEvent.click(back);
+
+    expect(forgetRoom).toHaveBeenCalledOnce();
+    expect(clickReturn).toBe(true);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /sure|confirm|really|yes/i }),
+    ).toBeNull();
+  });
 });
