@@ -92,7 +92,19 @@ What the decision did **not** have to settle, because it was already settled:
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Splittable now: `ADR-0073` fixed the words and `ADR-0072` §4 shipped the mechanism.* | — |
+| [TASK-031401](../tasks/TASK-031401-the-waiting-screen-offers-the-way-back-to-the-lobby.md) | The waiting screen offers the way back to the lobby, and the press forgets the room | ready |
+| [TASK-031402](../tasks/TASK-031402-one-line-says-the-room-stays-open.md) | One line says the room stays open and the link still works | backlog |
+| [TASK-031403](../tasks/TASK-031403-two-strings-are-the-whole-addition-and-nothing-stands-between-the-press-and-the-lobby.md) | Two strings are the whole addition, and nothing stands between the press and the lobby | backlog |
+| [TASK-031404](../tasks/TASK-031404-the-waiting-screen-offers-none-of-the-words-adr-0073-refuses.md) | The waiting screen offers none of the words `ADR-0073` refuses, and names no deadline | backlog |
+| [TASK-031405](../tasks/TASK-031405-the-press-leaves-nothing-on-the-wire-and-the-next-socket-rejoins-nothing.md) | The press leaves nothing on the wire, and the next socket rejoins nothing | backlog |
+
+One chain, one startable ticket: every ticket after the first waits on the one above it, because
+four of the five touch `Lobby.test.tsx` and the run is sequential.
+
+Each acceptance criterion below is somebody's: the first is `TASK-031401`'s control and
+`TASK-031405`'s next socket, the second is `TASK-031401`'s `send` and `TASK-031405`'s frame count,
+the third is `TASK-031402`'s line and `TASK-031403`'s enumeration, the fourth is `TASK-031403`'s
+press and `TASK-031404`'s vocabulary.
 
 ## Acceptance criteria
 
@@ -112,3 +124,12 @@ What the decision did **not** have to settle, because it was already settled:
 - Telling the rival anything. Nobody is in the room to tell, and no frame could carry it.
 - The result screen's way back, which already exists and already forgets (`TASK-030918`).
 - URL-addressable routes and browser *Back*, which are `DEC-054`'s for the whole client.
+- **The `mySeat`/`roomCode` gap this control makes reachable.** A host who presses this with their
+  tab still open, and whose rival then follows the link, is pulled into the duel on a socket whose
+  store never saw `RoomJoined`: `deliver` addresses frames by player id, so the opening `Snapshot`
+  arrives, `Lobby.tsx`'s `state.view !== null` branch renders the table, and `duel-state.ts` sets
+  `mySeat` and `roomCode` only on `RoomJoined` — so the duel plays with `mySeat` null and a reload
+  does not rejoin. [`ADR-0073`](../../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md)
+  records it in Consequences as *"a defect and a ticket, not a decision"*: closing the tab reaches it
+  too, so this story does not create it, and none of the five tickets touches it. **It is not
+  ticketed anywhere yet** and needs a home of its own.
