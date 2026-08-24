@@ -2,7 +2,7 @@
 id: STORY-0406
 title: The claim proven, and the device binding revoked
 type: story
-status: backlog
+status: ready
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, coins, security]
@@ -38,7 +38,7 @@ two partial unique indexes, revocation is one `UPDATE ... SET revoked_at` plus a
 the mint is not rolled back whole, and §8 lists everything that moves with the migration.
 
 `DEC-045` (does revoking also end every other session?) came out of the same ADR and is **answered**
-by [`ADR-0050`](../../docs/adr/ADR-0050-revoking-the-device-signs-the-player-out-everywhere-but-here.md):
+by [`ADR-0050`](../../docs/adr/ADR-0050-revoking-the-device-signs-out-everywhere-but-here.md):
 one button, and revoking ends every other session. The answer arrived before this story was split,
 so the `DELETE FROM auth_session WHERE player_id = ? AND token_hash <> ?` ships **with** the endpoint
 in the same transaction rather than as a later PR, and the two-token criterion is this story's.
@@ -68,13 +68,45 @@ byte-identical-`player` criterion is not.
   device they are holding and presents the password next time.
 - **Revocation is offered only when a credential exists**, since revoking the sole route to a
   profile would strand it. That is a server rule, not only a hidden button.
-- The account screens' half of `ADR-0037` — stating which routes are live — is `STORY-0412`.
+- The account screens' half of `ADR-0037` — stating which routes are live — is `STORY-0412`. The
+  server fact those screens read, `ProfileResponse.deviceRouteLive`, is **this** story's
+  (`ADR-0049` §5, and `ADR-0050` §4's *"it needs no new server fact"*).
+- **What "total over the schema" buys, and what it does not.** P1 and P2 are total over `player` and
+  `duel_result`, so any endpoint written later trips them without its author having heard of them —
+  but only in a state some test actually reaches. `TASK-040621` closes that half with a test that
+  enumerates every `/api/…` literal in the route sources and fails when the scenario does not
+  exercise one. What neither catches is a coin column on a *new table*; adding one obliges its author
+  to widen the two statements, and `CoinInvariant.kt`'s KDoc says so.
 
 ## Tasks
 
+Twenty-one, in a single dependency chain: each one is startable when the one above it merges, and no
+two startable tickets touch the same file. The two `atomic:` tickets were sized by the `ADR-0070`
+probe — the gate set run to `exit 0` and then reverted — not by reading imports.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not split yet. `DEC-041` is answered; the split follows `ADR-0049`.* | — |
+| `TASK-040601` | The device binding becomes a row of its own, and `player` loses its column | ready |
+| `TASK-040602` | The profile says whether the device route is still live | backlog |
+| `TASK-040603` | A revoked binding is final, and the database is what refuses to undo it | backlog |
+| `TASK-040604` | One live binding per device, one per player, and a pair that never comes back | backlog |
+| `TASK-040605` | A revoked device resolves to a new, empty profile — never the one it left | backlog |
+| `TASK-040606` | The session-token digest is one internal function, in one file | backlog |
+| `TASK-040607` | The device-binding port, and the double that counts what it was asked | backlog |
+| `TASK-040608` | Revoking is one `UPDATE` and one `DELETE`, in one transaction | backlog |
+| `TASK-040609` | `DELETE /api/me/device` takes a session, or it takes nothing | backlog |
+| `TASK-040610` | No credential, no revocation — and the refusal writes nothing | backlog |
+| `TASK-040611` | The composition root builds the bindings and installs the device route | backlog |
+| `TASK-040612` | The document names the device endpoint, and the section markers still chain | backlog |
+| `TASK-040613` | Signed out everywhere, and still signed in here | backlog |
+| `TASK-040614` | The revoked device says `Hello` and is seated as a stranger | backlog |
+| `TASK-040615` | Revoke, then the password reaches the same profile, coins and name | backlog |
+| `TASK-040616` | P1 and P2 in one helper, and the proof that neither subsumes the other | backlog |
+| `TASK-040617` | Both copies of the ledger assertions come from the shared helper | backlog |
+| `TASK-040618` | The scenario, steps one to four — anonymous, a duel, a name, an account | backlog |
+| `TASK-040619` | A duel can be opened under a session token, not only a device id | backlog |
+| `TASK-040620` | The scenario, steps five to eleven — the token, a second account, and back | backlog |
+| `TASK-040621` | The scenario ends with a revocation, and no identity endpoint escapes it | backlog |
 
 ## Acceptance criteria
 
@@ -87,6 +119,10 @@ byte-identical-`player` criterion is not.
 - [ ] Revocation is refused for a player holding no credential, and the refusal is tested.
 - [ ] A player who revokes and then signs in with their password reaches the same profile, coins and
       name.
+- [ ] A second session held by the same player stops working immediately after revocation, while the
+      revoking session still works — both asserted by using both tokens (`ADR-0050` §4).
+- [ ] `ProfileResponse.deviceRouteLive` reads `true` before the revocation and `false` after, for the
+      same player, in one test (`ADR-0049` §5).
 
 ## Out of scope
 
