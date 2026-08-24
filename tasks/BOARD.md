@@ -1859,8 +1859,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040617](tasks/TASK-040617-both-copies-of-the-ledger-assertions-come-from-the-shared-helper.md) Both copies of the ledger assertions come from the shared helper | S | done |
 | | [TASK-040618](tasks/TASK-040618-the-scenario-anonymous-a-duel-a-name-an-account.md) The scenario, steps one to four — anonymous, a duel, a name, an account | S | done |
 | | [TASK-040619](tasks/TASK-040619-a-duel-opened-under-a-session-token.md) A duel can be opened under a session token, not only a device id | S | done |
-| | [TASK-040620](tasks/TASK-040620-the-scenario-the-token-a-second-account-and-back-to-anonymous.md) The scenario, steps five to eleven — the token, a second account, and back | S | **ready** |
-| | [TASK-040621](tasks/TASK-040621-the-scenario-ends-with-a-revocation-and-nothing-escapes-it.md) The scenario ends with a revocation, and no identity endpoint escapes it | S | backlog |
+| | [TASK-040620](tasks/TASK-040620-the-scenario-the-token-a-second-account-and-back-to-anonymous.md) The scenario, steps five to eleven — the token, a second account, and back | S | done |
+| | [TASK-040621](tasks/TASK-040621-the-scenario-ends-with-a-revocation-and-nothing-escapes-it.md) The scenario ends with a revocation, and no identity endpoint escapes it | S | **ready** |
 | | [TASK-040622](tasks/TASK-040622-the-backfill-moves-a-row-that-was-already-there.md) The backfill moves a row that was already there | XS | backlog |
 | | [TASK-040623](tasks/TASK-040623-an-unknown-device-alone-is-refused-too.md) An unknown device, alone, is refused too | XS | backlog |
 | [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |

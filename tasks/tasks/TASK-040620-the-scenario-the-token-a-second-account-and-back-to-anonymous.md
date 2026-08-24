@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040620
 title: The scenario, steps five to eleven — the token, a second account, and back
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
@@ -112,3 +112,30 @@ what cover the difference. Revert both edits.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The ticket's prose contradicts its own fixture, and the resolution is forced rather than chosen.**
+Under the fixed seeds `GUEST_DEVICE` is the deterministic winner of step 1's duel — `SocketLadderTest`
+already pins that seat independently. So "the guest of step 1's duel signs up under its own handle",
+read literally, targets the player step 4 already signed up: `AuthRoutes` answers `409` for a second
+sign-up by an already-credentialed player **regardless of handle**, and no ordering avoids it.
+Separately, "sign in as the host's account" is meaningless under a literal reading, because at that
+point only the winner holds a credential. Both literal readings fail independently.
+
+The reviewer looked for a third reading and found none available: step 4 is fixed, and `SocketDuel.kt`
+— which fixes connection order and therefore which literal device wins — is a file this ticket is
+forbidden to touch. "Host" and "guest" in steps 5–11 are therefore role labels for winner and loser,
+which is what the code's own generic `winner`/`loser` variables already express. Recorded in the
+file's KDoc.
+
+**The invariant checkpoints are live, not decorative.** A phantom coin write in
+`PostgresAuthSessions.issue` reddens **all nine** tests, and reddens them *through* the invariant —
+`IllegalStateException: [after signing in] P1 violated…` — rather than by crashing.
+
+**Two assertions would hold without their preceding step, both structurally.** Step 7's resolution is
+self-contained; and steps 10–11 would hold without step 9's sign-out, because step 10's `Hello`
+carries no token and device resolution is indifferent to whether a session was revoked. Step 9 is not
+unproven, though: its `204` is asserted inline and its snapshot pair in
+`signingInAndOutLeavesThePlayerTableByteIdentical`.
+
