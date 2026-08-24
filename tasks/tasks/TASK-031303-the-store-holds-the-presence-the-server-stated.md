@@ -14,11 +14,12 @@ labels: [client, store, presence]
 depends_on: [TASK-031302]
 verify:
   - cd web-client && npm ci
-  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +590 passed \(590\)'
+  - cd web-client && NO_COLOR=1 npm run --silent test 2>&1 | grep -qE 'Tests +591 passed \(591\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'records the presence and the window the server sent'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'records a window that ran out, with nothing left of it'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'counts two windows that carry the same remaining as two'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'a presence changes nothing a snapshot or a turn established'
+  - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'presence persists through snapshot and turn'
   - cd web-client && npm run check
 ---
 
@@ -117,13 +118,13 @@ modified.
 | `counts two windows that carry the same remaining as two` | two `OpponentPresence(AWAY, 47000)` frames, byte-identical, leave `presenceCount` `2`. This is the whole reason the field exists: the two frames differ in nothing else, so a counter derived from the payload cannot see the second one |
 | `a presence changes nothing a snapshot or a turn established` | after a `Snapshot` and a `YourTurn`, an `OpponentPresence(AWAY, 47000)` leaves `view`, `pendingTurn`, `narration`, `rejection`, `rejectionCount`, `outcome`, `refusal`, `mySeat`, `roomCode` and `rematchOffers` all identical to what they were |
 
-Four tests. Five hundred and eighty-six exist after `TASK-031302`, so the suite reports **590**.
+Five tests. Five hundred and eighty-six exist after `TASK-031302`, so the suite reports **591**.
 
 ## Proof
 
 | Command | Proves |
 | --- | --- |
-| `Tests 590 passed (590)` | four ran, the modified one still runs, and nothing else moved |
+| `Tests 591 passed (591)` | five ran, the modified one still runs, and nothing else moved |
 | the four `--reporter=verbose` greps | each exists by name |
 | `npm run check` | `graceRemainingMillis` typechecks as `number \| null` and `rivalPresence` as `SeatPresence \| null` |
 
@@ -146,7 +147,7 @@ Quote both in the PR.
       that differ from `develop` are the three added above
 - [ ] `duel-state.ts` imports nothing from `react` and reads no clock — no `Date`, no `performance`
 - [ ] No other test in `duel-state.test.ts` differs from `develop`
-- [ ] `npm run --silent test` reports `Tests  590 passed (590)`
+- [ ] `npm run --silent test` reports `Tests  591 passed (591)`
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
