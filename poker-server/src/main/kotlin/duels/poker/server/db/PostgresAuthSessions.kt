@@ -6,8 +6,6 @@ import duels.poker.server.auth.SessionTokens
 import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.charset.StandardCharsets.UTF_8
-import java.security.MessageDigest
 import java.sql.Connection
 import java.time.Clock
 import java.time.Instant
@@ -58,7 +56,7 @@ public class PostgresAuthSessions(
         withContext(Dispatchers.IO) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(PLAYER_OF_SQL).use { statement ->
-                    statement.setBytes(1, tokenHash(token))
+                    statement.setBytes(1, sessionTokenDigest(token))
                     statement.executeQuery().use { rows ->
                         if (rows.next()) PlayerId(rows.getObject(1, UUID::class.java).toString()) else null
                     }
@@ -70,7 +68,7 @@ public class PostgresAuthSessions(
         withContext(Dispatchers.IO) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(DELETE_SQL).use { statement ->
-                    statement.setBytes(1, tokenHash(token))
+                    statement.setBytes(1, sessionTokenDigest(token))
                     statement.executeUpdate()
                 }
             }
@@ -84,16 +82,13 @@ public class PostgresAuthSessions(
         expiresAt: Instant,
     ) {
         connection.prepareStatement(ISSUE_SQL).use { statement ->
-            statement.setBytes(1, tokenHash(token))
+            statement.setBytes(1, sessionTokenDigest(token))
             statement.setObject(2, UUID.fromString(playerId.value))
             statement.setObject(3, OffsetDateTime.ofInstant(issuedAt, ZoneOffset.UTC))
             statement.setObject(4, OffsetDateTime.ofInstant(expiresAt, ZoneOffset.UTC))
             statement.executeUpdate()
         }
     }
-
-    private fun tokenHash(token: SessionToken): ByteArray =
-        MessageDigest.getInstance("SHA-256").digest(token.value.toByteArray(UTF_8))
 
     private companion object {
         private const val SESSION_LIFETIME_DAYS = 30L

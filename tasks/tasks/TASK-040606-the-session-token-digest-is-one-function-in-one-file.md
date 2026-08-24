@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040606
 title: The session-token digest is one internal function, in one file
 type: task
-status: ready
+status: done
 parent: STORY-0406
 module: poker-server
 estimate: S
