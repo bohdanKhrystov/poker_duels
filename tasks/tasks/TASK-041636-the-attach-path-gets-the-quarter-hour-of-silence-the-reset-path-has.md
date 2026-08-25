@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041636
 title: The attach path gets the quarter hour of silence the reset path has
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -184,3 +184,34 @@ Each mutation is applied, the suite is run, and the mutation is reverted.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The suppression caps mail rather than renaming the outcome, and one assertion is what separates
+those.** Making the suppressed path return `Suppressed` while still running the `DELETE`/`INSERT`
+reddens `aSecondClaimInsideAQuarterHourLeavesTheFirstTokenLive` on its `token_hash` and `address`
+assertions. A row-count assertion alone would pass that mutation: exactly one pending row would still
+exist, but it would be the *second* one, the first `issued_at` would be gone, and the next read would
+mail. Coder and reviewer each ran it.
+
+**The exact fifteen-minute boundary is unasserted, by the ticket's own design.** Fixtures sit at 14 and
+16 minutes, so flipping `<` to `<=` at exactly fifteen reddens nothing — the coder found this and said
+so. The acceptance criteria ask for 14 and 16 rather than 15, and the boundary is what those two
+fixtures bracket, so this is scoping and not a gap. Recorded because *"no fixture at the boundary"* is
+usually the defect and here it is the specification.
+
+**The ticket engineered the collision away in advance.** Suppression makes a second claim a no-op,
+which would ordinarily break `TASK-041608`'s `aSecondClaimLeavesExactlyOnePendingRow` — a merged test
+claiming twice for one player. `TASK-041608` deliberately set that test's gap to **16** minutes so it
+survives untouched. The diff is pure addition, with no `-` line inside any of the four pre-existing
+tests; quietly editing one to keep a new test green is how a story loses a gate it already had.
+
+**Three `## Proof` steps say "reddens alone" and redden two tests.** Steps 2, 4 and 5 each also redden
+a pre-existing test that shares the fixture shape — `aSecondClaimLeavesExactlyOnePendingRow` also
+advances 16 minutes, `oneClaimNeverDisturbsAnotherPlayers` also claims a second player immediately.
+The extra red is sound in each case. Twenty-second `## Proof` examined this run: imprecise, not wrong.
+
+**Left for a later pass:** this file's class KDoc still reads *"answers `Claimed` unconditionally …
+until `TASK-041636` lands"*, which this ticket makes stale. The coder left it because the ticket forbids
+changing existing tests and a docstring is not one — defensible, and worth correcting when something
+next touches the file.
