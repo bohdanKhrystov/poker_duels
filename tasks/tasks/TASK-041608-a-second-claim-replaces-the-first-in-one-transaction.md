@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041608
 title: A second claim replaces the first, in one transaction
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
