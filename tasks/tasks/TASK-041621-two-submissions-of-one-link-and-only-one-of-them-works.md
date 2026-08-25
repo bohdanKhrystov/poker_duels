@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041621
 title: Two submissions of one link, and only one of them works
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

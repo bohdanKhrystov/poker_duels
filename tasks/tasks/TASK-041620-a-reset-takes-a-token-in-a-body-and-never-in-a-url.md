@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041620
 title: A reset takes a token in a body, and never in a URL
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -153,3 +153,37 @@ stands unchanged, and the one fixture constraint it must satisfy.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**All six `## Proof` mutations matched exactly** — the second ticket in this story for which that held,
+against a run base of twelve wrong or incomplete out of thirty-five examined.
+
+**The ambiguous mutation was disambiguated, not tuned.** Proof step 5 says *"`consume` returns `true`
+without writing"*, which admits two readings. The coder's first attempt — ignore the token entirely —
+reddened three tests; it narrowed to *spend the token but skip the credential rewrite* and got one. The
+reviewer ran **both** readings and observed that the Proof's own text, *"`aGoodTokenAnswersTwoHundredAndFour`
+reddens alone"*, is satisfied only by the narrow one. So the ticket's wording decided it. That
+distinction matters because narrowing a mutation until it matches a prediction is exactly what tuning
+looks like from outside, and this was the opposite.
+
+**The URL refusal is asserted, and structurally impossible besides.** `theTokenIsNotAcceptedAsAQueryParameter`
+puts a **real, issued** token in the query string and a different, unknown one in the body — so a route
+that preferred the query would answer `204` on a valid token. Adding that fallback reddens it alone,
+`400 → 204`. And the route is registered at a literal path with no `{token}` segment, with no
+`call.parameters` or `queryParameters` anywhere in the handler, so a path read has nothing to bind.
+Both halves checked.
+
+**The ungated fixture constraint was left ungated, deliberately.** Shortening a `newPassword` to seven
+code points reddens nothing, exactly as the Proof predicts: `ADR-0080` puts the policy check in front of
+the token lookup only when `TASK-041629` lands, and this file must pass **unchanged** that day. The
+reviewer scanned every string literal in the test — the only ones under eight characters are three
+empty-string body assertions.
+
+**The enumeration gate was handled in the same commit, not discovered by CI.** `TASK-041618` failed
+`check` on `everyApiPathInTheRouteSourcesIsExercisedByTheScenario` after adding the story's first route;
+this ticket adds the second, and the amendment — a `SCENARIO_ENDPOINTS` entry recording that `consume`
+writes `credential` and deletes from `password_reset` and `auth_session` while touching neither
+`player.coin_balance` nor `duel_result`, plus a fourth Files row and an `atomic:` item — went in
+up front. **Every remaining route ticket in this story has the same shape**: `files_touched: 3` and a
+verify block without `check`, so each will trip the same gate.
