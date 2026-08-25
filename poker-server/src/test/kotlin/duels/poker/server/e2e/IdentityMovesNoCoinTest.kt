@@ -2,6 +2,7 @@ package duels.poker.server.e2e
 
 import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.db.assertCoinInvariantHolds
+import duels.poker.server.db.deviceBindingTableSnapshot
 import duels.poker.server.db.playerTableSnapshot
 import duels.poker.server.http.DEVICE_ID_HEADER
 import duels.poker.server.protocol.CreateRoom
@@ -764,28 +765,6 @@ private fun apiPathLiteralsInRouteSources(): Set<String> {
     val routeFiles = httpDirectory.listFiles { file -> file.name.endsWith("Routes.kt") }
         ?: error("could not list $httpDirectory")
     return routeFiles.flatMap { file -> API_PATH_LITERAL.findAll(file.readText()).map { it.groupValues[1] } }.toSet()
-}
-
-/**
- * Every column of every `device_binding` row, ordered by `player_id` for a deterministic
- * comparison — the same shape `duels.poker.server.db.playerTableSnapshot` gives `player`, but
- * declared here rather than beside it: this ticket's *Files* table touches only this file.
- * `ADR-0050` §1 gives the exact `UPDATE … WHERE player_id = ?` statement revocation runs, which is
- * what makes `player_id` and `revoked_at` known-real columns to order and check by.
- */
-private fun DataSource.deviceBindingTableSnapshot(): List<List<Any?>> {
-    connection.use { connection ->
-        connection.createStatement().use { statement ->
-            statement.executeQuery("SELECT * FROM device_binding ORDER BY player_id").use { rs ->
-                val columnCount = rs.metaData.columnCount
-                val rows = mutableListOf<List<Any?>>()
-                while (rs.next()) {
-                    rows.add((1..columnCount).map { rs.getObject(it) })
-                }
-                return rows
-            }
-        }
-    }
 }
 
 /**

@@ -61,6 +61,29 @@ internal fun DataSource.playerTableSnapshot(): List<List<Any?>> {
 }
 
 /**
+ * Every column of every `device_binding` row, ordered by `player_id` for a deterministic
+ * comparison. The `device_binding` counterpart of [playerTableSnapshot]: after `ADR-0049`,
+ * a profile occupies both `player` and `device_binding` tables. Column count comes from
+ * [java.sql.ResultSetMetaData], never a hard-coded column list, so this keeps comparing
+ * correctly across a migration that adds or drops one — the same durability [playerTableSnapshot]
+ * itself gives `player`.
+ */
+internal fun DataSource.deviceBindingTableSnapshot(): List<List<Any?>> {
+    connection.use { connection ->
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT * FROM device_binding ORDER BY player_id").use { rs ->
+                val columnCount = rs.metaData.columnCount
+                val rows = mutableListOf<List<Any?>>()
+                while (rs.next()) {
+                    rows.add((1..columnCount).map { rs.getObject(it) })
+                }
+                return rows
+            }
+        }
+    }
+}
+
+/**
  * P1 of `ADR-0030` §5, run with the exact SQL the ADR gives. Every id this returns names a player
  * whose `coin_balance` no longer equals the sum of their `duel_result` deltas; P1 holds when this
  * returns no ids. [assertCoinInvariantHolds] uses this, and [CoinInvariantTest] also calls it

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040702
 title: A duel the recovered account will remember
 type: task
-status: backlog
+status: ready
 parent: STORY-0407
 module: poker-server
 estimate: S
