@@ -22,10 +22,11 @@ import javax.sql.DataSource
  * Implements [RecoveryEmails] against the `email_verification` and `recovery_email` tables
  * (`ADR-0031` §2, §3).
  *
- * [claimPending] (`TASK-041608`) and [verifyPending] (`TASK-041609`) are implemented. The other
- * four members throw [NotImplementedError] via `TODO()`, each naming the ticket that fills it
- * in — the Kotlin compiler will not accept a class that implements [RecoveryEmails] only partly,
- * the same shape [PostgresAuthSessions] used before its own `delete` landed.
+ * [claimPending] (`TASK-041608`), [verifyPending] (`TASK-041609`), and [hasRecoveryEmail] and
+ * [verifiedOwnerOf] (`TASK-041610`) are implemented. The other two members throw
+ * [NotImplementedError] via `TODO()`, each naming the ticket that fills it in — the Kotlin
+ * compiler will not accept a class that implements [RecoveryEmails] only partly, the same shape
+ * [PostgresAuthSessions] used before its own `delete` landed.
  *
  * [clock] is a [Clock], never `ServerClock`: `ServerClock` reports elapsed nanoseconds from an
  * arbitrary epoch, so a `TIMESTAMPTZ` stamped from it would land every row near 1970
@@ -123,11 +124,32 @@ internal class PostgresRecoveryEmails(
             }
         }
 
+    /**
+     * `SELECT EXISTS (SELECT 1 FROM recovery_email WHERE player_id = ?)` — one statement, one
+     * table. A pending row in `email_verification` answers `false` here exactly as no row at all
+     * does (`ADR-0031` §3's *"nothing"*): the two tables are separate so this statement cannot
+     * select the dangerous state by accident.
+     */
     override suspend fun hasRecoveryEmail(playerId: PlayerId): Boolean =
-        TODO("TASK-041610 implements hasRecoveryEmail")
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection -> selectHasRecoveryEmail(connection, playerId) }
+        }
 
+    /**
+     * `SELECT player_id FROM recovery_email WHERE lower(address COLLATE "und-x-icu") = lower(?
+     * COLLATE "und-x-icu")` — the fold is applied in SQL, under the same pinned collation as
+     * `recovery_email_address_unique`, never as a Kotlin `lowercase()`. A Kotlin fold would use a
+     * different rule from the one that decided uniqueness at write time, so a case-varying
+     * address could be accepted as unique and then never be found by this lookup.
+     *
+     * Answers `null` for an address that is unknown, one that is only pending, and one that is
+     * verified for a different player, indistinguishably — this statement never reads
+     * `email_verification`.
+     */
     override suspend fun verifiedOwnerOf(address: EmailAddress): PlayerId? =
-        TODO("TASK-041610 implements verifiedOwnerOf")
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection -> selectVerifiedOwner(connection, address) }
+        }
 
     override suspend fun detach(playerId: PlayerId): Unit =
         TODO("TASK-041611 implements detach")
@@ -198,6 +220,23 @@ internal class PostgresRecoveryEmails(
         }
     }
 
+    private fun selectHasRecoveryEmail(connection: Connection, playerId: PlayerId): Boolean =
+        connection.prepareStatement(HAS_RECOVERY_EMAIL_SQL).use { statement ->
+            statement.setObject(1, UUID.fromString(playerId.value))
+            statement.executeQuery().use { rows ->
+                rows.next()
+                rows.getBoolean(1)
+            }
+        }
+
+    private fun selectVerifiedOwner(connection: Connection, address: EmailAddress): PlayerId? =
+        connection.prepareStatement(SELECT_VERIFIED_OWNER_SQL).use { statement ->
+            statement.setString(1, address.value)
+            statement.executeQuery().use { rows ->
+                if (rows.next()) PlayerId(rows.getObject("player_id", UUID::class.java).toString()) else null
+            }
+        }
+
     // Holds only what verifyPending needs between the DELETE and the INSERT. Never returned from
     // this class, never logged: RecoveryEmails' contract is that an address crosses this
     // package's boundary into nothing but RecoveryMailer.
@@ -227,6 +266,17 @@ internal class PostgresRecoveryEmails(
 
         private const val INSERT_RECOVERY_EMAIL_SQL =
             "INSERT INTO recovery_email (player_id, address, verified_at) VALUES (?, ?, ?)"
+
+        private const val HAS_RECOVERY_EMAIL_SQL =
+            "SELECT EXISTS (SELECT 1 FROM recovery_email WHERE player_id = ?)"
+
+        // The fold is applied in SQL under the same collation recovery_email_address_unique is
+        // built on, never a Kotlin lowercase() — a fold outside SQL would use a different rule
+        // from the one that decided uniqueness, so a case-varying address could be unique at
+        // write time and unfindable here.
+        private const val SELECT_VERIFIED_OWNER_SQL =
+            "SELECT player_id FROM recovery_email " +
+                "WHERE lower(address COLLATE \"und-x-icu\") = lower(? COLLATE \"und-x-icu\")"
 
         // 23505 = unique_violation. recovery_email_address_unique (someone else verified this
         // address first) and recovery_email_pkey (this player already holds one) land here
