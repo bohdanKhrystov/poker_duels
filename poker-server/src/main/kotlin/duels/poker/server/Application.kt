@@ -1,6 +1,7 @@
 package duels.poker.server
 
 import com.zaxxer.hikari.HikariDataSource
+import duels.poker.server.auth.RecoveryEmails
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.db.Database
 import duels.poker.server.db.Migrations
@@ -94,7 +95,12 @@ public fun Application.duelServer(
     profileRoutes(components.reads, components.writes, components.identities)
     deviceRoutes(components.identities, components.credentials, components.bindings)
     standingsRoutes(components.reads, components.standings, components.wallClock, components.identities)
-    scheduleSweeps(components.socket.rooms, components.socket.connections, sweepPeriodMillis)
+    scheduleSweeps(
+        components.socket.rooms,
+        components.socket.connections,
+        components.recoveryEmails,
+        sweepPeriodMillis,
+    )
 }
 
 /**
@@ -107,6 +113,7 @@ public fun Application.duelServer(
  *
  * @param rooms The registry [sweepPass] sweeps.
  * @param connections Where a grace expiry's outbound frames are delivered.
+ * @param recoveryEmails The port [sweepPass] sweeps expired `email_verification` rows from.
  * @param sweepPeriodMillis The fixed delay between the end of one pass and the start of the next;
  *   fixed-*delay*, not fixed-rate, so passes never overlap and an overrun stretches the interval
  *   instead of piling up.
@@ -114,32 +121,41 @@ public fun Application.duelServer(
 private fun Application.scheduleSweeps(
     rooms: RoomRegistry,
     connections: ConnectionDirectory,
+    recoveryEmails: RecoveryEmails,
     sweepPeriodMillis: Long,
 ) {
     launch {
         while (true) {
             delay(sweepPeriodMillis)
-            sweepPass(rooms, connections, log)
+            sweepPass(rooms, connections, recoveryEmails, log)
         }
     }
 }
 
 /**
- * Runs one pass of both sweeps `ADR-0025` assigns this loop, in order: expire every disconnect
- * grace window that has run out and deliver the frames each expiry produced, then reap every room
- * idle past its configured limit.
+ * Runs one pass of the three sweeps `ADR-0025` assigns this loop, in order: expire every
+ * disconnect grace window that has run out and deliver the frames each expiry produced, reap
+ * every room idle past its configured limit, then delete every expired `email_verification` row
+ * (`ADR-0031` §3). The database step runs last, so a database outage can never delay a
+ * grace-period expiry that decides a duel.
  *
- * The two steps are guarded independently: each catches every [Throwable] except
- * [CancellationException], logs it to [log], and moves on. A failing grace pass does not skip
- * reaping, and either step failing here is simply retried the next time [scheduleSweeps]'s loop
+ * The three steps are guarded independently: each catches every [Throwable] except
+ * [CancellationException], logs it to [log], and moves on. A failing step does not skip the ones
+ * after it, and any step failing here is simply retried the next time [scheduleSweeps]'s loop
  * calls this function. [CancellationException] always rethrows — that, and nothing else, is how
  * the loop that calls this ever ends.
  *
- * @param rooms The registry both sweeps run against.
+ * @param rooms The registry the first two sweeps run against.
  * @param connections Where each [GraceExpiry]'s outbound frames are delivered.
+ * @param recoveryEmails The port the third sweep deletes expired verification rows from.
  * @param log Where a failing pass is logged; the caller's own [Application.log].
  */
-private suspend fun sweepPass(rooms: RoomRegistry, connections: ConnectionDirectory, log: Logger) {
+private suspend fun sweepPass(
+    rooms: RoomRegistry,
+    connections: ConnectionDirectory,
+    recoveryEmails: RecoveryEmails,
+    log: Logger,
+) {
     try {
         for (expiry in rooms.expireGracePeriods()) {
             deliver(expiry.outbound, expiry.room, connections)
@@ -156,5 +172,13 @@ private suspend fun sweepPass(rooms: RoomRegistry, connections: ConnectionDirect
         throw cancellation
     } catch (failure: Throwable) {
         log.error("sweep: reaping idle rooms failed", failure)
+    }
+
+    try {
+        recoveryEmails.deleteExpiredVerifications()
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (failure: Throwable) {
+        log.error("sweep: deleting expired email verifications failed", failure)
     }
 }
