@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041625
 title: Attaching an address costs the current password
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -119,12 +119,13 @@ identity-then-password guard order and the fixture this class mirrors;
 | `noSessionAnswersFourHundredAndOne` | No `Authorization` header: `401`, and no row is recorded |
 | `aStringThatIsNotAnAddressAnswersFourHundred` | Using a refused form from `ADR-0078` §6's refused table: `400`, and no row is recorded |
 | `theResponseNeverCarriesTheAddress` | Across the `202`, `400`, `401` and `403` responses, no body and no header value contains the address or any substring of it longer than three characters |
+| `aDeviceIdentityAloneAnswersFourHundredAndOne` | A device-recognised caller with no session: `401`, an empty body, and no row recorded. Added after review — it is the only guard against accepting `Identity.Device`, the defect that failed `TASK-041623` on the sibling `DELETE` |
 
 ## Acceptance criteria
 
 - [ ] `ADR-0078` and `ADR-0077` are merged — both are, as of 2026-08-25; the `blocked` label in the
       front matter is a historical marker and this ticket's `status:` is not `blocked`
-- [ ] All six `AttachRecoveryEmailRouteTest` tests pass
+- [ ] All seven `AttachRecoveryEmailRouteTest` tests pass
 - [ ] The handler skips the send when `verifiedOwnerOf(address)` is non-null, and
       `anAddressAlreadyProvenElsewhereStillAnswersTwoOhTwo` asserts through `ADR-0077`'s recording
       double that `mailer.sent` is empty for that request
@@ -164,3 +165,32 @@ identity-then-password guard order and the fixture this class mirrors;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A Proof step that reddened nothing turned out to be a fixture problem, not a Proof problem.** Step 3
+swaps the identity check and the address check. Against the first draft it reddened **nothing**, because
+`noSessionAnswersFourHundredAndOne` used a **well-formed** address — and for a well-formed address both
+orderings answer `401`, so the test was blind to the swap. The coder changed the fixture to an address
+`emailAddressOrNull` refuses. The reviewer confirmed both halves: with a well-formed address the mutated
+build is `BUILD SUCCESSFUL`, and with the malformed one the same mutation reddens that test alone with
+`expected 401, was 400`. An ordering assertion whose fixture cannot separate the two orders is vacuous,
+and this one was.
+
+**The sibling route was checked for the same trap and is not vulnerable** — `DELETE` has no syntax-only
+gate between identity and the credential check, since `verifyCurrent` needs a resolved `playerId`.
+
+**A seventh test was added beyond the six this ticket named, and it stays.** Mutating
+`is Identity.Device -> null` to `-> identity.playerId` reddens **only**
+`aDeviceIdentityAloneAnswersFourHundredAndOne`; the other six stay green. It is the sole guard against
+the defect class that failed `TASK-041623` in review on this same path. The ticket's Tests table and
+acceptance criterion are amended above to say seven, so the ticket matches what shipped. The sentence
+warning that a seventh test would push this past `S` refers to a `ClaimPendingResult`-branching test —
+which was correctly **not** added, since `claimResult` is bound once and never read, so `Claimed` and
+`Suppressed` cannot be distinguished by construction.
+
+**The real server currently attaches addresses and mails nothing, deliberately.** `recoveryRoutes` gained
+`mailer` and `tokens` as defaulted trailing parameters, so `Application.kt`'s single call site needed no
+edit and stayed untouched; the default is `NoRecoveryMailer`, whose bodies are empty. That is
+`ADR-0031` §7's valid no-sender state, named in Out of scope and closed by `TASK-041634` — documented
+rather than silent.

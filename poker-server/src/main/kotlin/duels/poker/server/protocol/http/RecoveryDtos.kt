@@ -60,6 +60,40 @@ public data class ResetPasswordRequest(val token: String, val newPassword: Strin
 }
 
 /**
+ * The body of `POST /api/auth/recovery-email`, carrying the address to attach and the caller's
+ * current password so the claim can be gated on it.
+ *
+ * No default value: a missing field must be refused with `400` rather than silently becoming
+ * `""`, which would ask [duels.poker.server.auth.emailAddressOrNull] to judge the empty string as
+ * an address, or [duels.poker.server.auth.Credentials.verifyCurrent] to check the empty string
+ * against a live credential, instead of the request never reaching either port at all.
+ *
+ * The `toString()` method returns a fixed redaction, because a plaintext password in a log line
+ * or exception message is exactly the leak no amount of endpoint care can repair afterward — the
+ * same reason [DetachRecoveryEmailRequest], [ResetPasswordRequest] and [VerifyEmailRequest]
+ * redact. The address is withheld too, for the reason `ADR-0031` §6.3 keeps it out of every
+ * response body, `ServerMessage` and log line: it is personal data this system was given for one
+ * purpose only.
+ *
+ * @property address The address to attach, exactly as the player typed it — nothing here
+ *   canonicalises it; `duels.poker.server.auth.emailAddressOrNull` judges and stores it unchanged.
+ * @property currentPassword The password to verify against the caller's current credential before
+ *   the claim is recorded.
+ */
+@Serializable
+public data class AttachRecoveryEmailRequest(val address: String, val currentPassword: String) {
+    override fun toString(): String = REDACTION
+
+    public companion object {
+        /**
+         * The fixed string returned by `toString()` to prevent accidental leaks into logs or
+         * exception messages.
+         */
+        public const val REDACTION: String = "AttachRecoveryEmailRequest(redacted)"
+    }
+}
+
+/**
  * The body of `DELETE /api/auth/recovery-email`, carrying the caller's current password so the
  * erase can be gated on it.
  *
