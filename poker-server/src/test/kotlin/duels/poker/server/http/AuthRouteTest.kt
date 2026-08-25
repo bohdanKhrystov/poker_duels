@@ -1630,6 +1630,10 @@ private class SignInCredentials(private val correct: Map<String, Pair<String, Pl
         return if (password == presented.value) playerId else null
     }
 
+    override suspend fun verifyCurrent(playerId: PlayerId, kind: CredentialKind, presented: PresentedSecret): Boolean {
+        throw UnsupportedOperationException("sign-in never checks verifyCurrent")
+    }
+
     override suspend fun create(
         playerId: PlayerId,
         kind: CredentialKind,

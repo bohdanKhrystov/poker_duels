@@ -3,13 +3,17 @@ schema: 2
 id: TASK-041615
 title: A session holder proves the password they already have
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 3
+files_touched: 6
+atomic:
+  - the Kotlin compiler — Credentials gains the abstract member verifyCurrent, so PostgresCredentials must implement it in the same commit
+  - the Kotlin compiler again — TestDoubleCredentials, RecordingCredentials and SignInCredentials implement Credentials and fail with "is not abstract and does not implement abstract member 'verifyCurrent'" without it
+  - CredentialsPortTest.noFunctionOnThePortReturnsAString — a golden set of Credentials' member names, asserted at run time, reddens once verifyCurrent exists
 labels: [server, db, auth, security]
 depends_on: [TASK-041614]
 verify:
@@ -44,6 +48,15 @@ needs and which makes `credential.identifier` readable.
 | `poker-server/src/main/kotlin/duels/poker/server/auth/Credentials.kt` | modify |
 | `poker-server/src/main/kotlin/duels/poker/server/db/PostgresCredentials.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/db/PostgresCredentialsCurrentPasswordTest.kt` | create |
+| `poker-server/src/test/kotlin/duels/poker/server/auth/CredentialsPortTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/http/AuthRouteDoubles.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/http/AuthRouteTest.kt` | modify |
+
+The last three rows are `ADR-0070` §4 propagation, forced by the gates `atomic:` names above: each
+implements the new member (`RecordingCredentials` and `SignInCredentials` throw, matching their
+own existing out-of-scope idiom; `TestDoubleCredentials` returns `true`, matching its existing
+unconditional-success `verify`), and `CredentialsPortTest`'s golden set of member names gains
+`verifyCurrent`.
 
 Read, and do not edit:
 `poker-server/src/main/kotlin/duels/poker/server/auth/PasswordPolicy.kt` — `passwordIsWithinTheWork
@@ -129,3 +142,35 @@ Bound`, which this path must apply before hashing;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Six files, and the compiler is the gate.** Adding an abstract `verifyCurrent` to `Credentials`
+breaks `PostgresCredentials` and three test doubles in the same compilation, so a three-file version
+cannot land. The first push failed `lint backlog` — `files_touched: 6` without an `atomic:` block —
+and the fix was the declaration, not a smaller change. The coder found a **third** gate my own example
+missed: `CredentialsPortTest.noFunctionOnThePortReturnsAString` asserts a golden set of the port's
+member names at run time, so it reddens the moment the member exists. Named JUnit gates belong in
+`atomic:` alongside compiler ones.
+
+**Why the rows were not counted the first time.** `count_files_table_edits` reads the Action cell
+**positionally** and matches it exactly, so `modify — explanation` is an unknown action and the row
+does not count. The rationale moved to prose below the table. That is the second time this trap has
+cost a push on this run.
+
+**The timing asymmetry is real, deliberate, and unreachable.** `verify` always spends one Argon2
+verification, real or dummy; `verifyCurrent` returns the instant `secret_hash` is null, so a missing
+credential is fast and a wrong password is slow. The reviewer checked the callers rather than the
+prose: no route calls `verifyCurrent` today, and both planned callers (`TASK-041623`, `TASK-041625`)
+resolve identity and `401` **before** reaching it, passing the session's own resolved `playerId` and
+never a caller-supplied one. So the only party who can observe the timing is the account's own session
+holder — who already knows the answer — or someone holding a stolen session, who has full control
+regardless.
+
+**Proof #3 and #5 under-predict; Proof #4 is inert and says so.** Both #3 and #5 claim
+`theRightPasswordIsAccepted` reddens alone, and `anotherPlayersPasswordIsRefused` reddens too, because
+its own-secret assertions are genuine positive controls — anything breaking a "yes" answer trips them.
+Sound, and the test file has more independent coverage than its own ticket credits. Proof #4 removes
+the work-bound guard and reddens nothing, exactly as written: a 129-code-point secret fails to match a
+real stored hash with or without the guard, so no return-value assertion can see it. It stays a review
+criterion rather than a manufactured gate, on the `DELETE /api/me/device` precedent.

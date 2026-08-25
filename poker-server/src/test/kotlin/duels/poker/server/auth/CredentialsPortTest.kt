@@ -42,9 +42,9 @@ class CredentialsPortTest {
         // Assert the sweep is non-empty by checking we found the expected functions
         val functionNames = allPublicFunctions.map { it.name }.toSet()
         assertEquals(
-            setOf("verify", "create", "holdsCredential"),
+            setOf("verify", "verifyCurrent", "create", "holdsCredential"),
             functionNames,
-            "Expected exactly verify, create, and holdsCredential functions",
+            "Expected exactly verify, verifyCurrent, create, and holdsCredential functions",
         )
 
         // Collect offenders that return String or ByteArray from functions
@@ -139,6 +139,12 @@ class CredentialsPortTest {
             identifier: String,
             presented: PresentedSecret,
         ): PlayerId? = playerId
+
+        override suspend fun verifyCurrent(
+            playerId: PlayerId,
+            kind: CredentialKind,
+            presented: PresentedSecret,
+        ): Boolean = true
 
         override suspend fun create(
             playerId: PlayerId,
