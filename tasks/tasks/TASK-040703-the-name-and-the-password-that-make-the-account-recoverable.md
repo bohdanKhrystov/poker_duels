@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040703
 title: The name and the password that make the account recoverable
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: XS
@@ -120,3 +120,16 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 **`originalProfile` is read after the sign-up, not before.** Every later ticket compares what the
 fresh browser reads against *this* value, so it has to be the profile as it stands the instant before
 recovery begins — name set, credential attached, coin won.
+
+**The password is inert in this ticket, by design, and the deferral has a destination.** Nothing here
+fails if the credential is never stored server-side: `RECOVERY_HANDLE` and `RECOVERY_PASSWORD` are
+passed to `signUp` and only the `201` is asserted. The reviewer ran both mutations — changing either
+constant reddens nothing — and this ticket's `## Tests` table promises only the naming assertions, so
+the diff is exactly what was asked for. The password becomes load-bearing twice later: `TASK-040704`
+signs in with both constants asserting `200 OK`, and `TASK-040707` pairs the **real** handle with a
+wrong password asserting `401`. Recorded because a deferral nobody checks is how a gate goes missing.
+
+**The loser's `null` display name is a genuine second input, not a fixture default.** The reviewer
+added a `setName()` for the loser and the assertion reddened, so it would catch a `setName` that named
+both players. One fixture default cannot tell a copy from a constant; this one was checked rather than
+assumed.
