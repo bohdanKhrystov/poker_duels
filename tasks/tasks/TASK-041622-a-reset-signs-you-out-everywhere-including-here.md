@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041622
 title: A reset signs you out everywhere, including here
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
