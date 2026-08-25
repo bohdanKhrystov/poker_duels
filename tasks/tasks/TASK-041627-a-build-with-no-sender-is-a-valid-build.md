@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041627
 title: A build with no sender is a valid build
 type: task
-status: blocked
+status: backlog
 parent: STORY-0416
 module: poker-server
 estimate: S

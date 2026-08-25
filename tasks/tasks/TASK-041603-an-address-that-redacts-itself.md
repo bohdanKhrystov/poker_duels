@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041603
 title: An address that redacts itself
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: XS
@@ -98,3 +98,23 @@ exact shape this copies, down to the `REDACTION` companion constant;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Both halves are gated, which is the thing this shape usually gets half right.** Deleting the
+`toString()` override reddens `printingOneRevealsNothing` and `twoDifferentAddressesPrintTheSameThing`
+while `theValueIsTheAddressAsTyped` stays green; a *derived* redaction (`value.take(1)`) reddens both,
+the second reporting `expected EmailAddress(a…), got EmailAddress(z…)`. So a class that discarded the
+address would fail the third test, and one with no redaction would fail the first two. Coder and
+reviewer each ran all of it.
+
+**The assertion uses both forms, not one.** Equality against `EmailAddress.REDACTION` catches a
+wrong-but-constant string; `assertFalse(stringRepresentation.contains(…))` catches a leak the constant
+form would miss. Either alone is weaker: equality reddens on a harmless rewording and passes for any
+constant, absence passes for a redaction that happens not to contain this fixture.
+
+**`copy()` and destructuring are not a surface here.** `EmailAddress` is a `@JvmInline value class`
+following `SessionToken`, and value classes generate no `copy()` and no `componentN()`, so the
+interpolation route that defeats a `data class` redaction does not exist. Checked rather than assumed —
+had it been a `data class`, `"${addr.component1()}"` would print the raw value with the override
+intact.

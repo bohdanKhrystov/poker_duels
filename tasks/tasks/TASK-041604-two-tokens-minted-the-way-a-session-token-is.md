@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041604
 title: Two tokens, minted the way a session token is
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
