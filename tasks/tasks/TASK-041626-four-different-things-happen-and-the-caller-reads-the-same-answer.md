@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041626
 title: Four different things happen, and the caller reads the same answer
 type: task
-status: blocked
+status: backlog
 parent: STORY-0416
 module: poker-server
 estimate: S

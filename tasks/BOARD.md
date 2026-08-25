@@ -2112,11 +2112,11 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041316](tasks/TASK-041316-the-app-test-hands-the-history-read-a-storage.md) The App test hands the history read a Storage | XS | **done** |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
 | [STORY-0415](stories/STORY-0415-the-offer-after-a-first-win.md) The offer — an account after a first win, dismissed for good | | | backlog |
-| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | **in progress** — split into **29** on 2026-08-25, out of numerical order because it depends only on `STORY-0405`. **23 are unblocked** and six wait on `DEC-071` (the product owner's), `DEC-072`, `DEC-073`, `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) — the mail seam, its scope and lifetime, its failure semantics, `baseUrl`, and what a test can await. **Nothing is the human's**: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
+| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | **in progress** — split into **29** on 2026-08-25, out of numerical order because it depends only on `STORY-0405`. **23 are unblocked** and two wait on `DEC-073` and `DEC-074` (the architect's); `DEC-071` and `DEC-072` were answered on 2026-08-25 by [`ADR-0078`](../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md) and [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), unblocking four. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) — the mail seam, its scope and lifetime, its failure semantics, `baseUrl`, and what a test can await. **Nothing is the human's**: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | | [TASK-041601](tasks/TASK-041601-three-tables-that-cannot-become-a-mailing-list.md) Three tables that cannot become a mailing list | S | done |
 | | [TASK-041602](tasks/TASK-041602-two-strangers-may-both-claim-one-address-and-nothing-cascades.md) Two strangers may both claim one address, and nothing cascades | S | done |
-| | [TASK-041603](tasks/TASK-041603-an-address-that-redacts-itself.md) An address that redacts itself | XS | **ready** |
-| | [TASK-041604](tasks/TASK-041604-two-tokens-minted-the-way-a-session-token-is.md) Two tokens, minted the way a session token is | S | backlog |
+| | [TASK-041603](tasks/TASK-041603-an-address-that-redacts-itself.md) An address that redacts itself | XS | done |
+| | [TASK-041604](tasks/TASK-041604-two-tokens-minted-the-way-a-session-token-is.md) Two tokens, minted the way a session token is | S | **ready** |
 | | [TASK-041605](tasks/TASK-041605-one-digest-for-both-recovery-tokens.md) One digest for both recovery tokens | XS | backlog |
 | | [TASK-041606](tasks/TASK-041606-a-port-that-can-send-exactly-two-mails.md) A port that can send exactly two mails | S | backlog |
 | | [TASK-041607](tasks/TASK-041607-the-port-where-a-pending-address-and-a-proven-one-both-live.md) The port where a pending address and a proven one both live | S | backlog |
@@ -2136,10 +2136,10 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041621](tasks/TASK-041621-two-submissions-of-one-link-and-only-one-of-them-works.md) Two submissions of one link, and only one of them works | S | backlog |
 | | [TASK-041622](tasks/TASK-041622-a-reset-signs-you-out-everywhere-including-here.md) A reset signs you out everywhere, including here | S | backlog |
 | | [TASK-041623](tasks/TASK-041623-taking-the-address-back-costs-the-password.md) Taking the address back costs the password | S | backlog |
-| | [TASK-041624](tasks/TASK-041624-which-strings-are-an-address.md) Which strings are an address | XS | blocked |
-| | [TASK-041625](tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) Attaching an address costs the current password | S | blocked |
-| | [TASK-041626](tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) Four different things happen, and the caller reads the same answer | S | blocked |
-| | [TASK-041627](tasks/TASK-041627-a-build-with-no-sender-is-a-valid-build.md) A build with no sender is a valid build | S | blocked |
+| | [TASK-041624](tasks/TASK-041624-which-strings-are-an-address.md) Which strings are an address | XS | backlog |
+| | [TASK-041625](tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) Attaching an address costs the current password | S | backlog |
+| | [TASK-041626](tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) Four different things happen, and the caller reads the same answer | S | backlog |
+| | [TASK-041627](tasks/TASK-041627-a-build-with-no-sender-is-a-valid-build.md) A build with no sender is a valid build | S | backlog |
 | | [TASK-041628](tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) Two budgets that say nothing when they refuse | S | blocked |
 | | [TASK-041629](tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) A good token, and a password the policy refuses | S | blocked |
 | [STORY-0417](stories/STORY-0417-the-recovery-screens.md) The recovery screens — attach an address, and reset a password | | | backlog |
