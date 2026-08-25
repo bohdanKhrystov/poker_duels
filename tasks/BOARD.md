@@ -2334,7 +2334,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041632](tasks/TASK-041632-the-origin-every-recovery-link-is-built-from-is-configuration.md) The origin every recovery link is built from is configuration | S | backlog |
 | | [TASK-041633](tasks/TASK-041633-one-function-builds-both-recovery-links-and-no-header-reaches-it.md) One function builds both recovery links, and no header reaches it | S | backlog |
 | | [TASK-041634](tasks/TASK-041634-a-build-with-no-sender-is-a-valid-build.md) A build with no sender is a valid build | S | backlog |
-| | [TASK-041635](tasks/TASK-041635-the-fold-the-address-index-depends-on-written-down-in-the-catalog.md) The fold the address index depends on, written down in the catalog | S | **ready** |
+| | [TASK-041635](tasks/TASK-041635-the-fold-the-address-index-depends-on-written-down-in-the-catalog.md) The fold the address index depends on, written down in the catalog | S | done |
 | | [TASK-041636](tasks/TASK-041636-the-attach-path-gets-the-quarter-hour-of-silence-the-reset-path-has.md) The attach path gets the quarter hour of silence the reset path has | S | done |
 | | [TASK-041637](tasks/TASK-041637-the-second-attach-in-a-quarter-hour-is-answered-the-same-and-mails-nothing.md) The second attach in a quarter hour is answered the same, and mails nothing | S | backlog |
 | | [TASK-041638](tasks/TASK-041638-the-shape-gate-holds-for-four-more-shapes-and-names-the-one-it-cannot.md) The shape gate holds for four more shapes, and names the one it cannot | S | backlog |

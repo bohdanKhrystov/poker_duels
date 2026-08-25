@@ -10,6 +10,7 @@ import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 internal class RecoveryEmailSchemaTest {
@@ -104,6 +105,106 @@ internal class RecoveryEmailSchemaTest {
             "Exception message should contain constraint name 'password_reset_one_per_player', got: ${exception.message}",
         )
     }
+
+    @Test
+    fun theAddressIndexIsPinnedToTheIcuRootCollation() {
+        // Query pg_index joined by the *table*, never the index name: one row per index key,
+        // via unnest(indcollation) WITH ORDINALITY, LEFT JOINed to pg_collation so a
+        // non-collatable key (collation OID 0, recovery_email_pkey's UUID) stays a row instead
+        // of being dropped by an INNER JOIN and silently corrupting the count below.
+        val indexKeys =
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(
+                    """
+                    SELECT ic.relname AS index_name,
+                           k.ord AS key_position,
+                           coll.collname,
+                           coll.collprovider::text AS coll_provider
+                    FROM pg_index i
+                    JOIN pg_class ic ON ic.oid = i.indexrelid
+                    JOIN pg_class tc ON tc.oid = i.indrelid
+                    CROSS JOIN LATERAL unnest(i.indcollation) WITH ORDINALITY AS k(collation_oid, ord)
+                    LEFT JOIN pg_collation coll ON coll.oid = k.collation_oid
+                    WHERE tc.relname = 'recovery_email'
+                    ORDER BY ic.relname, k.ord
+                    """.trimIndent(),
+                ).use { statement ->
+                    statement.executeQuery().use { resultSet ->
+                        val rows = mutableListOf<IndexKeyCollation>()
+                        while (resultSet.next()) {
+                            rows.add(
+                                IndexKeyCollation(
+                                    indexName = resultSet.getString("index_name"),
+                                    keyPosition = resultSet.getInt("key_position"),
+                                    collationName = resultSet.getString("collname"),
+                                    collationProvider = resultSet.getString("coll_provider"),
+                                ),
+                            )
+                        }
+                        rows
+                    }
+                }
+            }
+
+        // Count and names, read from the catalog, before any collation is examined: the
+        // vacuity guard. A filter that matched nothing would satisfy neither of these.
+        assertEquals(
+            2,
+            indexKeys.size,
+            "Expected exactly one collation-bearing key per index on recovery_email, found $indexKeys",
+        )
+        assertEquals(
+            setOf("recovery_email_address_unique", "recovery_email_pkey"),
+            indexKeys.map { it.indexName }.toSet(),
+        )
+
+        val addressUniqueKey = indexKeys.single { it.indexName == "recovery_email_address_unique" }
+        assertEquals(
+            "und-x-icu",
+            addressUniqueKey.collationName,
+            "recovery_email_address_unique should be pinned to the ICU root collation",
+        )
+        assertEquals(
+            "i",
+            addressUniqueKey.collationProvider,
+            "recovery_email_address_unique's collation provider should be ICU ('i')",
+        )
+
+        val primaryKeyKey = indexKeys.single { it.indexName == "recovery_email_pkey" }
+        assertNull(primaryKeyKey.collationName, "recovery_email_pkey is on a UUID and should carry no collation")
+        assertNull(primaryKeyKey.collationProvider, "recovery_email_pkey is on a UUID and should carry no collation")
+    }
+
+    @Test
+    fun twoSpellingsOnlyIcuFoldsTogetherAreOneAddress() {
+        val player1Id = insertPlayer()
+        val player2Id = insertPlayer()
+
+        // U+0130 LATIN CAPITAL LETTER I WITH DOT ABOVE, i.e. "\u0130@example.com". Written as an
+        // escape, not the literal glyph, so the fixture survives any editor.
+        insertRecoveryEmail(player1Id, "\u0130@example.com")
+
+        // "i" (U+0069) followed by U+0307 COMBINING DOT ABOVE, i.e. "i\u0307@example.com" -- the
+        // exact sequence "und-x-icu" folds U+0130 to. The container's default fold (musl libc)
+        // instead folds U+0130 to a bare "i", so only the pinned collation collides this pair.
+        val exception =
+            assertFailsWith<SQLException> {
+                insertRecoveryEmail(player2Id, "i\u0307@example.com")
+            }
+
+        assertEquals("23505", exception.sqlState)
+        assertTrue(
+            exception.message?.contains("recovery_email_address_unique") ?: false,
+            "Exception message should contain constraint name 'recovery_email_address_unique', got: ${exception.message}",
+        )
+    }
+
+    private data class IndexKeyCollation(
+        val indexName: String,
+        val keyPosition: Int,
+        val collationName: String?,
+        val collationProvider: String?,
+    )
 
     private fun insertPlayer(): UUID {
         val playerId = UUID.randomUUID()
