@@ -3,6 +3,8 @@ package duels.poker.server.db
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
 import duels.poker.engine.duel.EndCondition
+import duels.poker.server.auth.EmailAddress
+import duels.poker.server.auth.VerificationToken
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
 import duels.poker.server.http.DuelCursor
@@ -19,7 +21,9 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Proxy
 import java.sql.Connection
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
@@ -38,6 +42,12 @@ import kotlin.test.fail
  * exist to catch. The tests `aDrawnDuelAppearsInBothPlayersLists` and
  * `aDrawnDuelReadsBackAsDrewWithAZeroDeltaAndAnOpponent` guard this invariant by asserting
  * that a drawn duel is visible to both players with the correct outcome and delta.
+ *
+ * `theProfileReadsTrueForAPlayerWithAVerifiedAddress` and `aPendingAddressIsNotARecoveryEmail`
+ * test that the `hasRecoveryEmail` flag is per-player — an uncorrelated `EXISTS` over the recovery
+ * email table would redden these tests — and that only the `recovery_email` table decides it,
+ * not pending claims in `email_verification`. Each method holds two players in the same database
+ * asserting opposite values, so a constant flag in either direction reddens here.
  */
 class PostgresProfileReadsTest {
     private lateinit var dataSource: DataSource
@@ -45,6 +55,7 @@ class PostgresProfileReadsTest {
     private lateinit var profileReads: PostgresProfileReads
     private lateinit var profileWrites: PostgresProfileWrites
     private lateinit var duelResultStore: PostgresDuelResultStore
+    private lateinit var recoveryEmails: PostgresRecoveryEmails
     private lateinit var alice: Player
     private lateinit var bob: Player
 
@@ -56,6 +67,7 @@ class PostgresProfileReadsTest {
         profileReads = PostgresProfileReads(dataSource)
         profileWrites = PostgresProfileWrites(dataSource)
         duelResultStore = PostgresDuelResultStore(dataSource)
+        recoveryEmails = PostgresRecoveryEmails(dataSource, Clock.fixed(Instant.now(), ZoneOffset.UTC))
 
         runBlocking {
             alice = playerDirectory.resolve(DeviceId("alice"))
@@ -965,6 +977,35 @@ class PostgresProfileReadsTest {
                 duelsWithoutSearch.map { it.duelId },
             )
         }
+    }
+
+    @Test
+    fun theProfileReadsTrueForAPlayerWithAVerifiedAddress() = runBlocking {
+        val token = VerificationToken("verify-token")
+        recoveryEmails.claimPending(alice.id, EmailAddress("alice@example.com"), token)
+        recoveryEmails.verifyPending(token)
+
+        val aliceProfile = profileReads.profileOf(alice.id)
+        val bobProfile = profileReads.profileOf(bob.id)
+
+        assertEquals(true, aliceProfile?.hasRecoveryEmail, "alice with verified address must read true")
+        assertEquals(false, bobProfile?.hasRecoveryEmail, "bob with no address must read false")
+    }
+
+    @Test
+    fun aPendingAddressIsNotARecoveryEmail() = runBlocking {
+        val pendingToken = VerificationToken("pending-token")
+        recoveryEmails.claimPending(alice.id, EmailAddress("alice@example.com"), pendingToken)
+
+        val aliceProfile = profileReads.profileOf(alice.id)
+        val bobProfile = profileReads.profileOf(bob.id)
+
+        assertEquals(false, aliceProfile?.hasRecoveryEmail, "alice with pending address must read false")
+        assertEquals(
+            bobProfile?.hasRecoveryEmail,
+            aliceProfile?.hasRecoveryEmail,
+            "a pending player's hasRecoveryEmail must equal a never-claiming player's, not merely also be false",
+        )
     }
 
     private fun privateSqlConstant(name: String): String {

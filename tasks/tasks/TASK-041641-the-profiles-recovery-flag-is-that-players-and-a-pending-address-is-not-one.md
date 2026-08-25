@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041641
 title: The profile's recovery flag is that player's, and a pending address is not one
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: XS
@@ -170,3 +170,28 @@ Each step mutates `PostgresProfileReads.kt` only, and each ends with a revert.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The gap `TASK-041616` recorded is closed in both directions.** No constant value of
+`hasRecoveryEmail` passes both tests: a literal `false` fails
+`theProfileReadsTrueForAPlayerWithAVerifiedAddress` on the verified player, and a literal `true` fails
+**both** — the never-claiming player in the first and the pending player's literal in the second. Before
+this ticket, either constant reddened nothing anywhere in the repository.
+
+**Two players in one database per test is what makes that possible.** One player can kill one constant;
+opposite expected values in a single method kill both. The verified state is reached through
+`claimPending` then `verifyPending` rather than a direct `INSERT INTO recovery_email`, so the fixture
+matches what production actually writes.
+
+**The method-level `verify:` filter is the general fix, and it was measured rather than assumed.**
+`--tests 'SomeClass'` exits 0 whether or not a named method inside it exists — exactly how two missing
+methods cleared every gate `TASK-041616` had. The reviewer ran
+`--tests 'PostgresProfileReadsTest.aMethodThatDoesNotExist'` and confirmed it **fails**. Every ticket in
+this repo whose verify block filters by class has the same hole; naming methods closes it.
+
+**The equality assertion earns less than the literal, and the ticket is honest about which.** Under a
+*constant* mutation the equality catches nothing the literal misses, since both players read the same
+constant either way. What it adds is a defence against a selective bug — one that treats pending and
+never-claimed differently — and a statement that the two states must be indistinguishable, which is
+`TASK-041610`'s property carried up to this layer.
