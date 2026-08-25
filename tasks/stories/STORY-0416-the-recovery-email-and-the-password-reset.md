@@ -241,8 +241,14 @@ sent* are list comparisons with no join, no channel and no timeout — absence i
 shape, since no await proves a negative. §5's `202`-before-the-send ordering stays a **review
 criterion** and is gated by nothing, as `TASK-041626`'s Proof step 3 predicted. `TASK-041627` was
 **bigger than its Files table** and has been re-cut into six, above. The ADR raises `DEC-075` — whether the
-mailed link survives a static host with no rewrite rule, given `ADR-0076` §4 — which blocks nothing
-here, because no sender is configured and no link is delivered to anybody.
+mailed link survives a static host with no rewrite rule, given `ADR-0076` §4 — which blocked nothing
+here, because no sender is configured and no link is delivered to anybody. It was **answered on
+2026-08-25** by
+[`ADR-0081`](../../docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md):
+both links become fragment routes — `"$baseUrl/#/reset/$token"` and `"$baseUrl/#/verify/$token"` —
+so **`TASK-041633` changes in two string literals and its `DEC-075` note, and nothing else in this
+story moves.** `TASK-041632` and `TASK-041620` are unchanged; the token is still read from a body and
+still never reaches a server in a URL.
 
 **Nothing here is the human's, and nothing here is about money.** `ADR-0031` §7 already defers the
 transport — SMTP relay or provider API, and therefore any bill — to `EPIC-07`, and every ticket in

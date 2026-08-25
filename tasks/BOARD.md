@@ -657,7 +657,51 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
-| DEC-075 | **The architect's** — does the mailed recovery link survive a static host with no rewrite rule, and if it becomes a fragment route, what is the slug? `ADR-0031` §4 mails `<baseUrl>/reset#token=…`, a **path segment**, and was right about the fragment for the *token*. [`ADR-0076`](../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §4 has since made the opposite call for **every** client address — *"a fragment never 404s… no host, proxy or rewrite rule has an opinion about it"* — which is `room-link.ts`'s already-merged call, and `EPIC-07` still has no file in `tasks/epics/`. A recovery link is the one URL here whose failure is unrecoverable: a `404` on `/reset` and the player never reaches the client, which `ADR-0031` makes a **total, permanent** loss of the account. `<baseUrl>/verify#token=…` has the same exposure. Raised by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which transcribed §4 rather than reinterpreting it and put both links in **one function**, so the answer is a one-function change; the **slug**, if it lands as a fragment route, is `STORY-0417`'s under `ADR-0076` §1. **Blocks nothing today** — no sender is configured, so no link is delivered to anybody | [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) §6 | before `EPIC-07` configures a sender, and before `STORY-0417` builds the screen the link lands on |
+
+`DEC-075` → [`ADR-0081`](../docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md)
+on 2026-08-25 — **a mailed link is a fragment route, and the token is the segment behind the slug.**
+**Both mailed links become fragment routes on the client's single address**: `RecoveryLinks` returns
+`"$baseUrl/#/reset/$token"` and `"$baseUrl/#/verify/$token"`, so recovery works on an object store
+serving one file at `/` and **`EPIC-07` needs no rewrite rule**. **The token has not left the
+fragment** — it is now the second segment of one, which is *not* a URL path segment and is still
+never transmitted, never logged and never in a `Referer`. `ADR-0031` §4's entropy, SHA-256 at rest,
+one hour, single use and refusal of a query string stand **byte-unchanged**, and `TASK-041620` is
+untouched and uncontradicted: the server still decodes the token from a body and contains no
+`queryParameters`. **A recovery link contains no `?` at all** — kept absolute rather than
+conditional, which is what decided the close call against `#/reset?token=…`: *a `?` is fine, but only
+after the first `#`* is a rule broken by deleting two characters from a string that still looks
+ordinary, inside a function no test outside its own file exercises. **The slugs are `reset` and
+`verify`, fixed here rather than left to `STORY-0417`.** The register's premise cut the other way,
+because these two addresses are **minted by the server into a mail**: a slug one module writes and
+another parses is a contract with no shared artifact, and a story picking it later has to reach back
+into `RecoveryLinks` to keep the ends equal. Neither word is coined — `ADR-0031` §4 wrote `reset` and
+`ADR-0077` §6 wrote `verify` — and `STORY-0417` keeps every other address `ADR-0076` §1 gives it,
+including the account screen's and the *forgot password* screen's. **`verify` and `reset` are
+answered the same way**: a `404` is deterministic, so the immediate second attempt mails the same
+dead link, and a failed verification is what *creates* the total-loss state, since `ADR-0031` §3
+makes an unverified address recover nothing while the player believes they have opted in. **A stale
+or already-spent link is a screen that renders and a `400` on submission, never a routing outcome** —
+the client never inspects the token and must not learn how, because `ADR-0080` deliberately left no
+liveness oracle for `password_reset`; a **missing** token is an empty input rather than an unknown
+address, so `#/reset` after the replace and after a reload renders the same screen; and the sentence
+a player reads is already `STORY-0417`'s under `ADR-0080` and `ADR-0031`, so **nothing here is the
+product owner's**. On the client, `screen.ts` gains `tokenFromHash`, matches on the **first fragment
+segment**, and the token is read **once at mount** into component state before the address is
+replaced with `hashForScreen(screen)` — a screen that re-derives it afterwards finds nothing, which
+is `ADR-0076` §5's trap in a second place. Costs recorded rather than discovered: **the two ends
+agree by two literals in two modules and nothing mechanical**, since a fragment crosses no wire and
+`protocol.gen.ts` cannot carry it, so a divergence lands every mailed link on the lobby silently and
+costs the player one of four recovery mails an hour; `#/duels/anything` now renders the record, a
+real widening of `ADR-0076` §7; **a reset link opened in a tab already seated is destroyed** by
+`ADR-0076` §3's store-outranks-the-address rule, at fifteen minutes' cost, and §3 is not carved out
+for it; `/reset` and `/verify` become dead addresses a host with a rewrite rule will happily serve;
+and two player-facing words are fixed in a URL before `STORY-0412` names the screens. **Erred toward
+the `404` being unacceptable rather than toward the most recent ADR**: `ADR-0076`'s six costs are
+legible and survivable, while a `404` here is silent, deterministic, invisible to every test in this
+repository — Vite serves `index.html` for unknown paths — and permanent. **Blocked nothing**, and it
+was a one-function change exactly as `ADR-0077` §6 promised. **`TASK-041633` changes in two string
+literals and its `DEC-075` note**; its other four tests, its no-`?` criterion, its no-encoder refusal
+and its `Host`-header sweep survive verbatim. `TASK-041632` and `TASK-041620` are unchanged.
 
 `DEC-074` → [`ADR-0080`](../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md)
 on 2026-08-25 — **the password is judged before the token is touched, so a refusal costs no link.**
@@ -852,7 +896,7 @@ to run; three new files whose combined behaviour is to do nothing; and **`TASK-0
 than its Files table**, which is the planner's to re-cut. **Chose no transport, and named the one
 clause that could not be answered provider-independently** — the retry policy — leaving it to
 `EPIC-07` rather than guessing it. **Unblocks `TASK-041625`, `TASK-041626` and `TASK-041627`. Raises
-`DEC-075`.**
+`DEC-075`, answered above by `ADR-0081`.**
 
 `DEC-054` → [`ADR-0076`](../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md)
 on 2026-08-25 — **a screen the player chose has an address; a screen the server gave has none.**

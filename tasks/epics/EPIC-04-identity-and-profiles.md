@@ -209,8 +209,12 @@ without adding a story.
 architect's.** `DEC-054`, raised on 2026-08-19 by the ADR that answered `DEC-053` and the last
 decision `STORY-0412` was waiting on, was answered the same day and is recorded below. `DEC-069`,
 raised on 2026-08-23 when `STORY-0405` was split, was answered on 2026-08-24 and is recorded below
-too. **`STORY-0412` is still gated by no decision at all**, and the four new ones block six tickets
+too. **`STORY-0412` is still gated by no decision at all**, and the four new ones blocked six tickets
 inside `STORY-0416` and nothing else in this epic.
+
+**The table below is empty: this epic carries no open decision.** `DEC-075` — a fifth, raised on
+2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
+rather than by the split, and blocking nothing — was answered the same day and is recorded below.
 
 `DEC-054` — *does the web client grow URL-addressable routes and a working browser Back, and what
 carries them?* — was answered on 2026-08-25 by
@@ -250,7 +254,45 @@ answered `DEC-027`, and these four apply that choice rather than revisiting it.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
-| `DEC-075` | **The architect's** — does the mailed recovery link survive a static host with no rewrite rule, and if it becomes a fragment route, what is the slug? `ADR-0031` §4 mails `<baseUrl>/reset#token=…`, a **path segment**; [`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §4 has since made the opposite call for every client address on the ground that *"a fragment never 404s"*, which is `room-link.ts`'s already-merged call, and `EPIC-07` still has no file. A `404` on `/reset` means the player never reaches the client, and `ADR-0031` makes no recovery a **total, permanent** loss. `<baseUrl>/verify#token=…` has the same exposure. Raised by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which transcribed §4 rather than reinterpreting it and put both links in **one function**, so the answer is a one-function change; the slug, if it lands as a fragment route, is `STORY-0417`'s under `ADR-0076` §1 | nothing today — no sender is configured, so no link is delivered. Due before `EPIC-07` configures one, and before `STORY-0417` builds the screen |
+
+`DEC-075` — raised on 2026-08-25 by `ADR-0077`, blocking nothing — was answered on the same day by
+[`ADR-0081`](../../docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md):
+**a mailed link is a fragment route, and the token is the segment behind the slug.** `RecoveryLinks`
+returns `"$baseUrl/#/reset/$token"` and `"$baseUrl/#/verify/$token"`, so recovery works on an object
+store serving one file at `/` and **`EPIC-07` inherits no rewrite rule**. **The token has not left
+the fragment**: it is the second segment of one, which is *not* a URL path segment and is still never
+transmitted, never logged and never in a `Referer`, so `ADR-0031` §4's entropy, hash at rest, one
+hour, single use and refusal of a query string stand **byte-unchanged** and `TASK-041620` is
+untouched — the server still decodes the token from a body and contains no `queryParameters`. **A
+recovery link contains no `?` at all**, absolute rather than conditional, which is what beat a query
+section inside the fragment (`#/reset?token=…`) in the closest call here: *a `?` is fine, but only
+after the first `#`* is broken by deleting two characters from a string that still looks ordinary.
+**The slugs are `reset` and `verify`, fixed by the ADR rather than left to `STORY-0417`** — the
+register's own premise cut the other way, because these two addresses are **minted by the server into
+a mail**, so a slug one module writes and another parses cannot be chosen later without reaching back
+into `RecoveryLinks`; neither word is coined, `ADR-0031` §4 and `ADR-0077` §6 wrote them, and
+`STORY-0417` keeps every other address `ADR-0076` §1 gives it, the account screen's and the *forgot
+password* screen's included. **`verify` and `reset` are answered the same way**: the `404` is
+deterministic, so the immediate second attempt mails the same dead link, and a failed verification is
+what *creates* the total-loss state, since `ADR-0031` §3 makes an unverified address recover nothing
+while the player believes they have opted in. **A stale or spent link is a screen that renders and a
+`400` on submission, never a routing outcome** — the client never inspects the token and must not
+learn how, `ADR-0080` having deliberately left no liveness oracle; a missing token is an empty input
+rather than an unknown address; and the sentence a player reads is already `STORY-0417`'s, so nothing
+here is the product owner's. `screen.ts` gains `tokenFromHash`, matches on the **first fragment
+segment**, and the token is read once at mount before the address is replaced with
+`hashForScreen(screen)`. Costs recorded rather than discovered: **the two ends agree by two literals
+in two modules and nothing mechanical**, since a fragment crosses no wire and `protocol.gen.ts`
+cannot carry it, so a divergence lands every mailed link on the lobby silently; `#/duels/anything`
+now renders the record, a real widening of `ADR-0076` §7; **a reset link opened in a tab already
+seated is destroyed** by `ADR-0076` §3, at fifteen minutes' cost; `/reset` and `/verify` become dead
+addresses a host with a rewrite rule will serve; and two player-facing words are fixed in a URL before
+`STORY-0412` names the screens. **Erred toward the `404` being unacceptable rather than toward the
+most recent ADR**: `ADR-0076`'s six costs are legible and survivable, while a `404` here is silent,
+deterministic, invisible to every test in this repository and permanent. **`TASK-041633` changes in
+two string literals and its `DEC-075` note** — its other four tests, its no-`?` criterion, its
+no-encoder refusal and its `Host`-header sweep survive verbatim — and `TASK-041632` and `TASK-041620`
+are unchanged.
 
 `DEC-074` — raised on 2026-08-25 when `STORY-0416` was split, blocking `TASK-041629` — was answered
 on the same day by
@@ -283,7 +325,8 @@ code points. **`TASK-041629` gains the check and loses one named test**,
 `aBadTokenStillAnswersFourHundredNotFourHundredAndTwentyTwo`, whose order this reverses; what it
 defended is asserted the other way round — a fabricated token and a live one produce
 indistinguishable `422`s. `TASK-041617` transcribes the corrected sentence rather than §5's.
-**Unblocks `TASK-041629`**, and leaves `DEC-075` as the only decision this epic still carries open.
+**Unblocks `TASK-041629`**, and left `DEC-075` as the only decision this epic still carried open —
+itself answered the same day by `ADR-0081`, above, which is why the table is empty.
 Nothing is the product owner's or the human's: the words a form uses are already `STORY-0412`'s
 under `ADR-0031`'s *What this does not settle* and `ADR-0048` §7.
 
@@ -380,7 +423,7 @@ suppresses the retry. `TASK-041625`, `TASK-041626` and `TASK-041627` are unblock
 decision goes — `TASK-041625` still waits on `DEC-071` — and `TASK-041627` is now **bigger than its
 Files table**, which is the planner's to re-cut. No transport was chosen and no bill implied; the one
 clause that could not be answered provider-independently, the retry policy, was named and left to
-`EPIC-07`. Raises `DEC-075`, above.
+`EPIC-07`. Raises `DEC-075`, answered above.
 
 `DEC-069` — raised on 2026-08-23 when `STORY-0405` was split, blocking `TASK-040523` and nothing
 else — was answered on 2026-08-24 by
