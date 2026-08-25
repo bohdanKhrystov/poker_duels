@@ -160,7 +160,64 @@ Split on 2026-08-25 into 29 tickets, of which `TASK-041601` was the one startabl
 were `blocked`. Four decisions were raised and none was answered inside a ticket. `ADR-0077` and
 `ADR-0078` then merged and were folded back in, taking the story to **35 tickets** — six from
 re-cutting `TASK-041627`, one from unparking `TASK-041601`'s conditional follow-up. **All four are
-now answered and this story carries no open decision.**
+now answered and this story carries no open decision.** A fifth, `DEC-076`, was raised on 2026-08-26
+by a coder implementing `TASK-041626` — not by the split and not by an ADR — and was **registered and
+answered in the same PR**, so it too leaves nothing open.
+
+`DEC-076` was **raised and answered on 2026-08-26** by
+[`ADR-0082`](../../docs/adr/ADR-0082-a-handle-is-read-from-a-proven-address-never-from-a-player-id.md)
+— *a handle is read from a proven address, never from a player id.*
+`RecoveryMailer.sendPasswordReset(address, token, handle)` requires a login handle, and **nothing in
+this codebase could obtain one from a `PlayerId`**: `PasswordResets.issue` answers a `Boolean`,
+`RecoveryEmails.verifiedOwnerOf` a `PlayerId?`, `PostgresPlayerDirectory` resolves device ids only,
+and `Credentials` declares exactly `verify`, `verifyCurrent`, `create` and `holdsCredential` — with
+`verifyCurrent`'s KDoc recording that a reverse lookup was deliberately **not** added. `sendPasswordReset` has **no production caller** — the only call anywhere is
+`NoRecoveryMailerTest`'s literal `"handle"` — so `TASK-041626` is its first real one, and
+`TASK-041630` passes `handle` through its decorator without sourcing it, so no later ticket here
+filled the gap. **`RecoveryEmails` gains
+one member, keyed by an address**: `resetRecipientOf(address: EmailAddress): ResetRecipient?`,
+answering `ResetRecipient(playerId, handle)` — everything the endpoint needs to send one mail — in
+one statement joining `recovery_email` to `credential`. Its `WHERE` clause is
+`SELECT_VERIFIED_OWNER_SQL`'s **character for character**, pinned `und-x-icu` fold and all, and
+`c.kind = 'password'` matches `REWRITE_CREDENTIAL_SQL` verbatim, so the reset path spells the kind
+one way. **There is no `PlayerId` overload and there must never be one**: the fence is the argument
+type rather than the member name, because obtaining a handle requires already holding a **verified**
+recovery address — the exact secret the endpoint refuses to disclose — which is `ADR-0031` §5's own
+test for `verify-email`'s `409`, applied to a lookup. A **`JOIN`, never a `LEFT JOIN`**: an unknown
+address, a pending-only address and a verified address whose owner holds no `password` credential all
+answer `null`, so the third (unreachable under §3, which requires the current password to attach) is
+answered rather than handed to the route as a null handle. **`verifyCurrent`'s refusal is upheld, not
+overturned**, and gated for the first time — a test asserts `Credentials` declares no member
+returning `String` or `String?`, green today and reddening on exactly `handleOf(playerId): String?`.
+**`PasswordResets.issue` keeps its `Boolean`**: `TASK-041613` is untouched, `ADR-0031` §5's two
+outcomes stay two outcomes, `PostgresPasswordResetsIssueTest`'s seven assertions stand and the four
+`PasswordResets` doubles are not edited. That was the closest call — `Issued(handle)` / `Suppressed`
+is the direction `ClaimPendingResult`'s KDoc recommends and the read would have been free inside a
+transaction that already writes `credential` — and it lost because `issue(playerId,
+newResetToken())` **is** a `PlayerId → handle` function with a side effect, and because a
+credential-less owner leaves `Issued` nothing honest to put in a non-null `String`. **The read need
+not share `issue`'s transaction**: the only `UPDATE credential` in this repository sets `secret_hash`,
+so a handle cannot go stale, which is the precise difference from §5's suppression window. **A
+handle-less owner mints no token**, the route returning before `issue`. **Costs**: a read whose
+product is a login handle now exists and did not yesterday; `RecoveryEmails` reads a third table, so
+its *"two recovery tables"* charter and its *"no member returns a `String` that could be one"*
+sentence are both amended; `ResetRecipient` is a plain `data class`, so `"$recipient"` prints the
+handle — deliberately unredacted, with the trigger named as the first log line anywhere on the reset
+path; two reads of `recovery_email` now carry one `WHERE` clause in two constants; and the
+`'password'` literal goes ambiguous the day `DEC-027` admits a second kind carrying an identifier.
+**`TASK-041626` changes in four ways**: the port read replaces `verifiedOwnerOf` in its *Read, and do
+not edit* list and in its *Scope* and acceptance criterion (`resetRecipientOf` is what the `202` must
+precede); **its fixture's verified owner must actually hold a `password` credential**, which today's
+`insertPlayer` helpers do not create, or `onlyTheVerifiedCaseMintsAToken` reddens on a row count of
+zero; it gains `theMailCarriesTheOwnersOwnHandle` over **two** verified addresses owned by **two**
+players with **different** handles, so a constant handle cannot pass; and
+`theResponseNeverCarriesTheAddress` gains a handle clause, since `ADR-0031` §1 forbids the handle in
+any response body and the handler now holds one. The port member, its Postgres statement, the
+`ThrowingRecoveryEmails` double and the `Credentials` gate are **a ticket in front of it**, not an
+eighth file on a three-file `S`. **`TASK-041630` changes in one criterion**: *"uses an address and a
+token that are different strings"* becomes three distinct strings including the handle — the
+decorator itself is unchanged, and it was never the ticket that should have sourced the handle.
+Raises no `DEC`, and nothing is the product owner's or the human's.
 
 `DEC-074` was **answered on 2026-08-25** by
 [`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md) — *the

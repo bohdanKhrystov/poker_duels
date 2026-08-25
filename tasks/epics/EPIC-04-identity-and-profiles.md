@@ -215,6 +215,8 @@ inside `STORY-0416` and nothing else in this epic.
 **The table below is empty: this epic carries no open decision.** `DEC-075` — a fifth, raised on
 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
 rather than by the split, and blocking nothing — was answered the same day and is recorded below.
+`DEC-076` — a sixth, raised on 2026-08-26 by an implementation attempt on `TASK-041626` rather than
+by a planner or an ADR — was **registered and answered in the same PR** and is recorded below too.
 
 `DEC-054` — *does the web client grow URL-addressable routes and a working browser Back, and what
 carries them?* — was answered on 2026-08-25 by
@@ -254,6 +256,46 @@ answered `DEC-027`, and these four apply that choice rather than revisiting it.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
+
+`DEC-076` — raised on 2026-08-26 by a coder on `TASK-041626` who blocked rather than guessing, and
+blocking that one ticket — was **registered and answered in the same PR** by
+[`ADR-0082`](../../docs/adr/ADR-0082-a-handle-is-read-from-a-proven-address-never-from-a-player-id.md):
+**a handle is read from a proven address, never from a player id.**
+`RecoveryMailer.sendPasswordReset(address, token, handle)` requires a login handle and **nothing in
+this codebase could obtain one from a `PlayerId`** — `PasswordResets.issue` answers a `Boolean`,
+`RecoveryEmails.verifiedOwnerOf` a `PlayerId?`, `PostgresPlayerDirectory` resolves device ids only,
+and `Credentials` declares exactly four members, with `verifyCurrent`'s own KDoc recording that a
+reverse lookup was deliberately refused *"for no other reason than this one check."* **`RecoveryEmails`
+gains one member, keyed by an address**: `resetRecipientOf(address: EmailAddress): ResetRecipient?`,
+answering `ResetRecipient(playerId, handle)` in one statement joining `recovery_email` to
+`credential`, with `SELECT_VERIFIED_OWNER_SQL`'s `WHERE` clause **character for character** and
+`REWRITE_CREDENTIAL_SQL`'s `kind = 'password'` verbatim. **There is no `PlayerId` overload and there
+must never be one** — the fence is the argument type, not the member name: obtaining a handle
+requires already holding a **verified** recovery address, the exact secret this endpoint refuses to
+disclose, which is `ADR-0031` §5's own test for `verify-email`'s `409` applied to a lookup rather
+than to a status code. A **`JOIN`, never a `LEFT JOIN`**, so an unknown address, a pending-only one
+and a verified address whose owner holds no `password` credential all answer `null` and the third —
+unreachable under §3 — is answered rather than handed to the route as a null handle.
+**`verifyCurrent`'s refusal is upheld rather than overturned**, and becomes a build failure for the
+first time: a test asserts `Credentials` declares no member returning `String` or `String?`, green
+today and reddening on exactly `handleOf(playerId): String?`. **`PasswordResets.issue` keeps its
+`Boolean`**, with §5's two outcomes, seven merged assertions and four test doubles untouched — the
+closest call, lost by `Issued(handle)`/`Suppressed` because `issue(playerId, newResetToken())` **is**
+a `PlayerId → handle` function with a side effect and because a credential-less owner leaves `Issued`
+no honest `String`. **Costs**: a read whose product is a login handle now exists, fenced by an
+argument type and a KDoc rather than by an impossibility proof; `RecoveryEmails` reads a third table,
+so two of its own KDoc sentences are amended with it; `ResetRecipient` is a plain `data class`, so
+`"$recipient"` prints the handle — deliberately unredacted, with the trigger named as the first log
+line anywhere on the reset path; two reads of `recovery_email` now carry one `WHERE` clause in two
+constants; the join adds a third caller to an unindexed `credential (player_id)` scan; and the
+`'password'` literal goes ambiguous the day `DEC-027` admits a second kind carrying an identifier.
+The gate is a **tripwire, not a proof** — a value-class-wrapped handle passes it, since Kotlin
+reflection reports the wrapper rather than `String`. **No migration, no index, no protocol version,
+no `recoveryRoutes` parameter, and `RecoveryMailer` byte-unchanged.** **Unblocks `TASK-041626`**,
+which needs a fixture whose verified owner actually holds a `password` credential and a
+`theMailCarriesTheOwnersOwnHandle` test over two players with different handles; **`TASK-041630`
+needs one acceptance criterion widened** from two distinct argument strings to three. Raises no
+`DEC`, and nothing is the product owner's or the human's.
 
 `DEC-075` — raised on 2026-08-25 by `ADR-0077`, blocking nothing — was answered on the same day by
 [`ADR-0081`](../../docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md):

@@ -702,6 +702,69 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 
+`DEC-076` → [`ADR-0082`](../docs/adr/ADR-0082-a-handle-is-read-from-a-proven-address-never-from-a-player-id.md)
+on 2026-08-26 — **a handle is read from a proven address, never from a player id.** Raised and
+answered in one PR, because an implementation attempt found the gap rather than a planner:
+`RecoveryMailer.sendPasswordReset(address, token, handle)` needs a login handle and **nothing in this
+codebase could obtain one from a `PlayerId`** — `issue` answers a `Boolean`, `verifiedOwnerOf` a
+`PlayerId?`, `PostgresPlayerDirectory` resolves device ids only, and `Credentials` declares four
+members with `verifyCurrent`'s KDoc recording that a reverse lookup was deliberately refused.
+**`RecoveryEmails` gains one member and it is keyed by an address**: `resetRecipientOf(address:
+EmailAddress): ResetRecipient?`, answering `ResetRecipient(playerId, handle)` in one statement that
+joins `recovery_email` to `credential`. **There is no `PlayerId` overload and there must never be
+one** — the fence is the argument type rather than the member name, because obtaining a handle
+requires already holding a **verified** recovery address, which is the exact secret the endpoint
+exists to refuse to disclose. That is `ADR-0031` §5's own test for `verify-email`'s `409` (*"a `409`
+is acceptable exactly when the caller already holds the secret it would otherwise disclose"*),
+applied to a lookup instead of a status code. The `WHERE` clause is `SELECT_VERIFIED_OWNER_SQL`'s
+**character for character**, pinned `und-x-icu` fold included, so two reads of one table can never
+disagree about which row an address names; `c.kind = 'password'` matches `REWRITE_CREDENTIAL_SQL`
+verbatim; and it is a **`JOIN`, never a `LEFT JOIN`**, so an unknown address, a pending-only address
+and a verified address whose owner holds no `password` credential all answer `null` and the third —
+unreachable under §3 — is answered rather than handed to the route as a null handle.
+**`verifyCurrent`'s refusal is upheld, not overturned**, and becomes a build failure for the first
+time: a test asserts **`Credentials` declares no member returning `String` or `String?`**, green
+today and reddening on exactly `handleOf(playerId): String?` in the one file anybody would write it.
+**`PasswordResets.issue` keeps its `Boolean`** — `ADR-0031` §5's two outcomes, seven merged
+assertions and four test doubles untouched. That was the closest call, and it is recorded rather than
+skated over: `Issued(handle)` / `Suppressed` is the direction `ClaimPendingResult`'s own KDoc
+recommends and the read would have been free inside a transaction that already writes `credential`,
+but `issue(playerId, newResetToken())` **is** a `PlayerId → handle` function with a side effect, and
+a verified address whose owner holds no password credential leaves `Issued` nothing honest to put in
+a non-null `String`. **The read need not share `issue`'s transaction**: verified in source, the only
+`UPDATE credential` in this repository sets `secret_hash`, so a handle cannot go stale — the precise
+difference from §5's suppression window, which must share a connection because a pre-check on a
+separate one is a read-then-write window. **A handle-less owner mints no token**, the route returning
+before `issue`, so no row spends a fifteen-minute window for a mail that cannot be sent. Costs
+recorded rather than discovered: **a read whose product is a login handle now exists and did not
+yesterday**, fenced by an argument type and a KDoc rather than by an impossibility proof;
+**`RecoveryEmails` reads a third table**, so both its *"two recovery tables"* charter and its *"no
+member returns a `String` that could be one"* sentence are amended in the same commit;
+**`ResetRecipient` is a plain `data class`, so `"$recipient"` prints the handle** — deliberately not
+redacted, since `ADR-0031` §6.3 protects the *address* and inventing a rule it did not make would
+also make every `assertEquals` failure in its tests unreadable, **with the trigger written down**
+(the first log line anywhere on the reset path); **two reads of `recovery_email` now carry one
+`WHERE` clause in two string constants** and nothing fails if one is edited alone; the join adds a
+third caller to an unindexed `credential (player_id)` scan, with the index named as one later ticket
+rather than three; and **`kind = 'password'` as a literal goes ambiguous** the day `DEC-027` admits a
+second kind carrying an identifier. **The gate is a tripwire, not a proof**, and says so: a handle
+read added to another type passes it, and so does one wrapped in a value class, since Kotlin
+reflection reports a `@JvmInline` return type as the wrapper rather than as `String`. Chosen partly
+because it is the cheapest to unwind — one member and one `data class`, deleted in a single commit —
+and the more emphatic answer, a dedicated `ResetMailRecipients` port, stays available at the cost of
+moving two declarations; it lost on blast radius, being a new port, a new implementation, a new
+`recoveryRoutes` parameter, two wiring edits and **four new stub objects** in the four route-test
+files that call `recoveryRoutes` positionally. **No migration, no index, no protocol version, no
+`recoveryRoutes` parameter, and `RecoveryMailer` byte-unchanged** — `handle` stays a `String` and its
+merged KDoc reason is not disturbed for one call site. **Unblocks `TASK-041626`**, which sources the
+handle from the port read, needs a fixture whose verified owner actually holds a `password`
+credential (today's `insertPlayer` helpers do not), and gains
+`theMailCarriesTheOwnersOwnHandle` over **two** players with **different** handles, so a constant
+cannot pass; **`TASK-041630` needs one acceptance criterion widened** from two distinct argument
+strings to three, and nothing else. **Raises no `DEC`, and nothing here is the product owner's or the
+human's** — `ADR-0031` §1 already settled that the handle belongs in this mail, and §5 already
+deferred its wording to `STORY-0412`.
+
 `DEC-075` → [`ADR-0081`](../docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md)
 on 2026-08-25 — **a mailed link is a fragment route, and the token is the segment behind the slug.**
 **Both mailed links become fragment routes on the client's single address**: `RecoveryLinks` returns
