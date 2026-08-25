@@ -2019,7 +2019,36 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041316](tasks/TASK-041316-the-app-test-hands-the-history-read-a-storage.md) The App test hands the history read a Storage | XS | **done** |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
 | [STORY-0415](stories/STORY-0415-the-offer-after-a-first-win.md) The offer — an account after a first win, dismissed for good | | | backlog |
-| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | **ready** — split into **29** on 2026-08-25, out of numerical order because it depends only on `STORY-0405`. `TASK-041601` is the one startable ticket; **23 are unblocked** and six wait on `DEC-071` (the product owner's), `DEC-072`, `DEC-073`, `DEC-074` (the architect's). **Nothing is the human's**: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
+| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | **in progress** — split into **29** on 2026-08-25, out of numerical order because it depends only on `STORY-0405`. **23 are unblocked** and six wait on `DEC-071` (the product owner's), `DEC-072`, `DEC-073`, `DEC-074` (the architect's). **Nothing is the human's**: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
+| | [TASK-041601](tasks/TASK-041601-three-tables-that-cannot-become-a-mailing-list.md) Three tables that cannot become a mailing list | S | done |
+| | [TASK-041602](tasks/TASK-041602-two-strangers-may-both-claim-one-address-and-nothing-cascades.md) Two strangers may both claim one address, and nothing cascades | S | **ready** |
+| | [TASK-041603](tasks/TASK-041603-an-address-that-redacts-itself.md) An address that redacts itself | XS | backlog |
+| | [TASK-041604](tasks/TASK-041604-two-tokens-minted-the-way-a-session-token-is.md) Two tokens, minted the way a session token is | S | backlog |
+| | [TASK-041605](tasks/TASK-041605-one-digest-for-both-recovery-tokens.md) One digest for both recovery tokens | XS | backlog |
+| | [TASK-041606](tasks/TASK-041606-a-port-that-can-send-exactly-two-mails.md) A port that can send exactly two mails | S | backlog |
+| | [TASK-041607](tasks/TASK-041607-the-port-where-a-pending-address-and-a-proven-one-both-live.md) The port where a pending address and a proven one both live | S | backlog |
+| | [TASK-041608](tasks/TASK-041608-a-second-claim-replaces-the-first-in-one-transaction.md) A second claim replaces the first, in one transaction | S | backlog |
+| | [TASK-041609](tasks/TASK-041609-the-first-to-verify-takes-the-address.md) The first to verify takes the address | S | backlog |
+| | [TASK-041610](tasks/TASK-041610-a-pending-address-answers-exactly-as-an-unknown-one.md) A pending address answers exactly as an unknown one | S | backlog |
+| | [TASK-041611](tasks/TASK-041611-erasing-an-address-is-one-statement-and-so-is-forgetting-a-stale-one.md) Erasing an address is one statement, and so is forgetting a stale one | S | backlog |
+| | [TASK-041612](tasks/TASK-041612-the-existing-ticker-forgets-unproven-addresses-too.md) The existing ticker forgets unproven addresses too | S | backlog |
+| | [TASK-041613](tasks/TASK-041613-one-live-reset-token-and-a-quarter-hour-of-silence.md) One live reset token, and a quarter hour of silence | S | backlog |
+| | [TASK-041614](tasks/TASK-041614-one-statement-spends-the-token-and-the-same-transaction-ends-every-session.md) One statement spends the token, and the same transaction ends every session | S | backlog |
+| | [TASK-041615](tasks/TASK-041615-a-session-holder-proves-the-password-they-already-have.md) A session holder proves the password they already have | S | backlog |
+| | [TASK-041616](tasks/TASK-041616-the-profile-says-recovery-is-on-and-never-what-the-address-is.md) The profile says recovery is on, and never what the address is | S | backlog |
+| | [TASK-041617](tasks/TASK-041617-five-endpoints-and-a-field-written-down.md) Five endpoints and a field, written down | S | backlog |
+| | [TASK-041618](tasks/TASK-041618-a-token-from-the-mailbox-proves-the-address.md) A token from the mailbox proves the address | S | backlog |
+| | [TASK-041619](tasks/TASK-041619-three-ways-to-fail-verification-and-one-answer-for-all-of-them.md) Three ways to fail verification, and one answer for all of them | S | backlog |
+| | [TASK-041620](tasks/TASK-041620-a-reset-takes-a-token-in-a-body-and-never-in-a-url.md) A reset takes a token in a body, and never in a URL | S | backlog |
+| | [TASK-041621](tasks/TASK-041621-two-submissions-of-one-link-and-only-one-of-them-works.md) Two submissions of one link, and only one of them works | S | backlog |
+| | [TASK-041622](tasks/TASK-041622-a-reset-signs-you-out-everywhere-including-here.md) A reset signs you out everywhere, including here | S | backlog |
+| | [TASK-041623](tasks/TASK-041623-taking-the-address-back-costs-the-password.md) Taking the address back costs the password | S | backlog |
+| | [TASK-041624](tasks/TASK-041624-which-strings-are-an-address.md) Which strings are an address | XS | blocked |
+| | [TASK-041625](tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) Attaching an address costs the current password | S | blocked |
+| | [TASK-041626](tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) Four different things happen, and the caller reads the same answer | S | blocked |
+| | [TASK-041627](tasks/TASK-041627-a-build-with-no-sender-is-a-valid-build.md) A build with no sender is a valid build | S | blocked |
+| | [TASK-041628](tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) Two budgets that say nothing when they refuse | S | blocked |
+| | [TASK-041629](tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) A good token, and a password the policy refuses | S | blocked |
 | [STORY-0417](stories/STORY-0417-the-recovery-screens.md) The recovery screens — attach an address, and reset a password | | | backlog |
 
 `STORY-0413` was split on 2026-08-19 into **fourteen**, on top of what `STORY-0409` and `STORY-0411`

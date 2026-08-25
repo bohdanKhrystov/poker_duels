@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041601
 title: Three tables that cannot become a mailing list
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -117,3 +117,23 @@ Run each mutation against `V8` alone, then revert.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The Proof predicted its own null result, and was right.** Dropping `COLLATE "und-x-icu"` reddens
+nothing — ASCII addresses fold identically under both collations — and this ticket said so in advance,
+framing it as *a finding to record in review, not a failure of this ticket*. Coder and reviewer each
+ran it and confirmed. That is the thirteenth `## Proof` examined in this run and the first to correctly
+predict a mutation that would **not** redden; the other twelve were wrong or incomplete by claiming a
+red that did not appear.
+
+**The clause is defended by an ADR, not by a gate.** `ADR-0029` §1 requires the test container and the
+deployment to fold alike, which is the argument for keeping the collation explicit. `V7` set the
+precedent for gating an unobservable clause on the system catalog — its `BEFORE UPDATE OF revoked_at`
+is held by a `pg_trigger`/`tgattr` assertion because behaviour cannot reach it — and the same move is
+available here via `information_schema.columns.collation_name`.
+
+**Not filed as a follow-up yet, deliberately.** `DEC-071` — which strings count as an address — is
+still open, so whether a non-ASCII address ever reaches this collation is undecided. A catalog
+assertion written now would gate a clause whose reason may change when that decision lands. Revisit
+when `DEC-071` merges; if the answer admits non-ASCII, this becomes a ticket.
