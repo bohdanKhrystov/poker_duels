@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041615
 title: A session holder proves the password they already have
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -142,3 +142,35 @@ Bound`, which this path must apply before hashing;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Six files, and the compiler is the gate.** Adding an abstract `verifyCurrent` to `Credentials`
+breaks `PostgresCredentials` and three test doubles in the same compilation, so a three-file version
+cannot land. The first push failed `lint backlog` — `files_touched: 6` without an `atomic:` block —
+and the fix was the declaration, not a smaller change. The coder found a **third** gate my own example
+missed: `CredentialsPortTest.noFunctionOnThePortReturnsAString` asserts a golden set of the port's
+member names at run time, so it reddens the moment the member exists. Named JUnit gates belong in
+`atomic:` alongside compiler ones.
+
+**Why the rows were not counted the first time.** `count_files_table_edits` reads the Action cell
+**positionally** and matches it exactly, so `modify — explanation` is an unknown action and the row
+does not count. The rationale moved to prose below the table. That is the second time this trap has
+cost a push on this run.
+
+**The timing asymmetry is real, deliberate, and unreachable.** `verify` always spends one Argon2
+verification, real or dummy; `verifyCurrent` returns the instant `secret_hash` is null, so a missing
+credential is fast and a wrong password is slow. The reviewer checked the callers rather than the
+prose: no route calls `verifyCurrent` today, and both planned callers (`TASK-041623`, `TASK-041625`)
+resolve identity and `401` **before** reaching it, passing the session's own resolved `playerId` and
+never a caller-supplied one. So the only party who can observe the timing is the account's own session
+holder — who already knows the answer — or someone holding a stolen session, who has full control
+regardless.
+
+**Proof #3 and #5 under-predict; Proof #4 is inert and says so.** Both #3 and #5 claim
+`theRightPasswordIsAccepted` reddens alone, and `anotherPlayersPasswordIsRefused` reddens too, because
+its own-secret assertions are genuine positive controls — anything breaking a "yes" answer trips them.
+Sound, and the test file has more independent coverage than its own ticket credits. Proof #4 removes
+the work-bound guard and reddens nothing, exactly as written: a 129-code-point secret fails to match a
+real stored hash with or without the guard, so no return-value assertion can see it. It stays a review
+criterion rather than a manufactured gate, on the `DELETE /api/me/device` precedent.

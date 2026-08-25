@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041616
 title: The profile says recovery is on, and never what the address is
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
