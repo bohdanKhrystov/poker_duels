@@ -250,10 +250,46 @@ answered `DEC-027`, and these four apply that choice rather than revisiting it.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
-| `DEC-071` | **The product owner's** — which strings does `POST /api/auth/recovery-email` accept as an address, and what is the player told when one is refused? `ADR-0031` §5 answers `400` for *"an address that is not syntactically an address"* and states no rule; §2 already settles storage and the fold, so only the acceptance predicate is open. That `400` is the **only** thing the endpoint ever tells a player about their address — every other outcome is a silent `202` — and the cost runs one way: a rule that refuses a real mailbox denies that player recovery, which `ADR-0031`'s Consequences make a total, permanent loss of the account, its coins and its ladder place. Routed on `DEC-043`'s precedent (*what may a password be*) | `TASK-041624` and `TASK-041625`; nothing else in the story |
 | `DEC-073` | **The architect's** — what are the two numbers for each of the `recovery-email` and `forgot-password` budgets, and does an over-budget attempt still count against its own window? `DEC-069`'s shape one endpoint pair later: §5 fixes the mechanism, the key and the answer (`202`, identical to success) and fixes no numbers. `ADR-0074`'s argument does **not** transfer — it turned on shared-address collateral being *visible*, so a throttled player could pace; here over budget is indistinguishable from success and they are told nothing. §5 also already carries a second, durable limiter (no mail within fifteen minutes of a live token), so the answer must say what the address budget is still for | `TASK-041628` |
 | `DEC-074` | **The architect's** — does a good reset token survive a `422`, and by what mechanism? `ADR-0031` §5 gives `reset-password` a `422` *"when the token was good and the new password fails policy"*, which presupposes knowing the token is good before the password is judged and implies a retry; §4 makes consumption one `DELETE ... RETURNING` with *"no read-then-write window"*, under which knowing **is** spending. A conflict between two sections of a merged ADR rather than an acknowledged gap — §*What this does not settle* does not mention it | `TASK-041629`; `TASK-041620` ships the route with no policy and no `422` |
 | `DEC-075` | **The architect's** — does the mailed recovery link survive a static host with no rewrite rule, and if it becomes a fragment route, what is the slug? `ADR-0031` §4 mails `<baseUrl>/reset#token=…`, a **path segment**; [`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §4 has since made the opposite call for every client address on the ground that *"a fragment never 404s"*, which is `room-link.ts`'s already-merged call, and `EPIC-07` still has no file. A `404` on `/reset` means the player never reaches the client, and `ADR-0031` makes no recovery a **total, permanent** loss. `<baseUrl>/verify#token=…` has the same exposure. Raised by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which transcribed §4 rather than reinterpreting it and put both links in **one function**, so the answer is a one-function change; the slug, if it lands as a fragment route, is `STORY-0417`'s under `ADR-0076` §1 | nothing today — no sender is configured, so no link is delivered. Due before `EPIC-07` configures one, and before `STORY-0417` builds the screen |
+
+`DEC-071` — raised on 2026-08-25 when `STORY-0416` was split, blocking `TASK-041624` and
+`TASK-041625` — was answered the same day by
+[`ADR-0078`](../../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md): **the mail is
+the only real check on an address, so the syntax rule refuses almost nothing.** The asymmetry the
+register row named was resolved on `ADR-0031`'s own text rather than on taste — §3 requires
+verification before an address can do anything, and §2 notes that *"a player whose address is stored
+has, by construction, received mail at it"*, so an exact deliverability check already exists and a
+syntax rule can only report earlier and can only be wrong in the direction that costs an account.
+**The predicate is four clauses**: at least one `@`, the first code point is not `@`, the last is not
+`@`, no ASCII control character, and at most **254 code points** — RFC 5321's path limit in the unit
+`ADR-0029` §2 and `ADR-0048` §1 already fixed. No separate minimum: `a@b` is the shortest string that
+passes. The control-character clause is **not a syntax rule and says so**; no `addr-spec` holds one
+in any position, so it denies no mailbox, and it exists because a line terminator inside an address
+is the one thing this predicate could hand `EPIC-07`'s unwritten transport that would harm somebody
+outside this game. **The rule runs where an address enters and nowhere else** — `forgot-password`
+keeps its unconditional `202` and consults no predicate, which is `ADR-0048` §2's *never on the
+lookup path* one endpoint pair over and the single property that keeps a later tightening free.
+**Nothing is canonicalised**: `emailAddressOrNull` returns the input unchanged, deliberately
+departing from `ADR-0048` §5 and `ADR-0029` §2, because those strings are compared and an address is
+a delivery target whose stored form §2 already fixed. Deliverability, DNS and MX, domain spelling,
+disposable-address lists, role addresses, plus-address stripping, unicode conversion, a dot in the
+domain, quoting, and any whitespace that is not a control character are all **deliberately not
+checked**, each written down as a decision. The refusal is **`400` with an empty body**, identical to
+a failed decode, and the client says one sentence naming no mailbox, no domain and no other account;
+the one constraint on the silent path is that **a `202` may not be rendered as recovery being on**,
+since §3 leaves `hasRecoveryEmail` false. Both fixture tables ship in §6. The costs, recorded rather
+than discovered: **this endpoint's only feedback now fires almost never**, so nearly every mistake
+becomes `202` and silence; `Bob Smith <bob@example.com>` and a trailing space are accepted and
+undeliverable; the predicate is **never an invariant over `recovery_email`**, which is the price of
+the reversibility; two rows can be one mailbox via plus-addressing or normalisation, which `ADR-0063`
+tolerates until the ladder is public; and a permissive rule hands `EPIC-07` a higher bounce rate,
+which is where `ADR-0031` §7 already put deliverability. **`TASK-041601`'s parked catalog assertion
+now has its condition met** — the answer admits non-ASCII — so the follow-up it declined to file
+becomes a ticket, and that is the planner's. Unblocks `TASK-041624` and `TASK-041625`. Nothing in it
+was the human's: no clause needs a paid service, the one alternative that would is refused on that
+ground, and nothing is sent to any address under any answer. Raises no `DEC`.
 
 `DEC-072` — raised on 2026-08-25 when `STORY-0416` was split, blocking `TASK-041625`, `TASK-041626`
 and `TASK-041627` — was answered the same day by

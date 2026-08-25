@@ -102,9 +102,36 @@ are `blocked`. Four decisions were raised and none was answered inside a ticket.
 
 | ID | Kind | Blocks | In one sentence |
 | --- | --- | --- | --- |
-| `DEC-071` | **Product owner's** | `TASK-041624`, `TASK-041625` | Which strings does `POST /api/auth/recovery-email` accept as an address, and what is the player told when one is refused? |
 | `DEC-073` | **Architect's** | `TASK-041628` | What are the two numbers for each of the `recovery-email` and `forgot-password` budgets, and does an over-budget attempt still count? |
 | `DEC-074` | **Architect's** | `TASK-041629` | Does a good reset token survive a `422`? `ADR-0031` §5's status table and §4's single-use `DELETE ... RETURNING` cannot both hold as written |
+
+`DEC-071` was **answered on 2026-08-25** by
+[`ADR-0078`](../../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md) — *the mail is
+the only real check on an address, so the syntax rule refuses almost nothing.* An address is accepted
+when it holds at least one `@`, its first code point is not `@`, its last code point is not `@`, it
+holds no ASCII control character, and it is at most **254 code points** long. There is no separate
+minimum: `a@b` is the shortest string that passes, and `bob` is the refusal that earns the `400`. The
+asymmetry was settled on `ADR-0031`'s own text — §3 requires verification and §2 notes that a stored
+address has *"by construction, received mail at it"*, so the deliverability check already exists and
+a syntax rule can only report earlier and only be wrong in the direction that loses an account. The
+control-character clause is a **security clause, not a syntax clause**, and is labelled so: no
+`addr-spec` holds one, and a line terminator is what would harm somebody outside this game once
+`EPIC-07` has a transport. **The predicate runs only where an address enters** —
+`POST /api/auth/recovery-email` — so `forgot-password` keeps its unconditional `202`, no stored
+address is ever re-judged, and a later tightening costs nothing. `emailAddressOrNull` returns the
+input **unchanged**: no trim, no fold, no `Normalizer`, confirming `TASK-041624`'s scope and
+`TASK-041603`'s *no `init`, no `require`, no regex*. Deliverability, DNS and MX, domain spelling,
+disposable-address lists, plus-address stripping, unicode conversion, a dot in the domain, quoting,
+and any whitespace that is not a control character are all **deliberately unchecked**. The refusal is
+`400` with an **empty body**, identical to a failed decode; the client says one sentence naming no
+mailbox, no domain and no other account; and **a `202` may not be rendered as recovery being on**,
+since §3 leaves `hasRecoveryEmail` false. Both fixture tables are in the ADR's §6, each holding the
+entry that distinguishes the answer from `.+@.+\..+`, which is what `TASK-041624`'s Proof step 4
+predicts. The cost being chosen: **this endpoint's only feedback now fires almost never**, so a
+pasted `Bob Smith <bob@example.com>`, a trailing space and a dead domain are all answered `202` and
+silence — and the honesty of that silence is `STORY-0417`'s to carry. `TASK-041624` and
+`TASK-041625` are unblocked as far as this decision goes. Nothing in it was the human's, and nothing
+is sent to any address under any answer.
 
 `DEC-072` was **answered on 2026-08-25** by
 [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
