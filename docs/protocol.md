@@ -132,6 +132,93 @@ returned. There is no `X-Device-Id` fallback here; there is nothing to fall back
 | --- | --- |
 | `204 No Content` | The session the token names is deleted if it existed. The answer is `204` whether or not a session was deleted, so a client cannot use the status to tell a live token from an already-gone one. Deleting the session row is all this does: live sockets are not closed by this call. |
 
+### Forgot password
+
+**Method and path:** `POST /api/auth/forgot-password`
+
+**Authentication:** None. This endpoint accepts any caller.
+
+**Request body:** A JSON object with a single required field:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| address | string | The email address to send a reset link to, or an address that may not exist or be known to the server. |
+
+**Responses:** Every response body is empty.
+
+| Status | Meaning |
+| --- | --- |
+| `202 Accepted` | The request was accepted and any mail work has been scheduled. **This is answered in every case**: the address is unknown; the address is pending but unverified; the address is verified and a mail is sent; the request is over budget; no mail sender is configured at all. The response is written before any mail work, and delivery runs on a detached coroutine, so response latency does not vary with whether an address matched — the timing side channel is closed for the same reason `ADR-0027` §6 verifies unknown identifiers against a dummy hash (`ADR-0031` §5). |
+
+**Note:** `forgot-password` answers `202` in every case — unknown, pending, verified, over budget, no sender — with an identical empty body. A client may not infer anything from it.
+
+### Recovery email
+
+**Method and path:** `POST /api/auth/recovery-email`
+
+**Authentication:** The `X-Device-Id` header or `Authorization: Bearer <token>` (see `ADR-0012` and `ADR-0027`). An absent, blank, or unknown device id, or an invalid, expired, or unknown token, answers `401 Unauthorized` with an empty body.
+
+**Request body:** A JSON object with two required fields:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| address | string | An email address to attach to this player's profile for recovery. Must be syntactically valid. |
+| currentPassword | string | The password for the authenticated player, exactly as chosen at sign-up. Required even inside a valid session: a session token is a bearer credential in web storage, so without this, a minute at an unattended browser converts into permanent ownership of the account (`ADR-0031` §3). |
+
+**Responses:** Every response body is empty.
+
+| Status | Meaning |
+| --- | --- |
+| `202 Accepted` | The address has been recorded for verification, and a verification mail has been scheduled. If the address already belongs to another player, it is still answered as `202` and nothing is sent in that case — the alternative would tell a stranger that an address is registered, or send unsolicited mail to a mailbox whose owner did nothing (`ADR-0031` §5). |
+| `400 Bad Request` | The body could not be decoded, or the address is not syntactically an address. |
+| `401 Unauthorized` | No resolvable identity. |
+| `403 Forbidden` | The current password is wrong. |
+
+### Verify email
+
+**Method and path:** `POST /api/auth/verify-email`
+
+**Authentication:** None. This endpoint accepts any caller holding a token.
+
+**Request body:** A JSON object with a single required field:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| token | string | The verification token from the mailed link, in the same form as received. |
+
+**Responses:** Every response body is empty.
+
+| Status | Meaning |
+| --- | --- |
+| `204 No Content` | The token was valid and not yet consumed, and the pending address is now verified and moved into `recovery_email`. The player's next call to `GET /api/me` will show `hasRecoveryEmail: true`. |
+| `400 Bad Request` | The body could not be decoded, or the token is unknown, expired, or already consumed — the three are indistinguishable. |
+| `409 Conflict` | The token was valid and the address it names has already been verified to another player. The address is taken, and the caller cannot claim it. |
+
+### Reset password
+
+**Method and path:** `POST /api/auth/reset-password`
+
+**Authentication:** None. This endpoint accepts any caller holding a token.
+
+**Request body:** A JSON object with two required fields:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| token | string | The reset token from the mailed link, in the same form as received. **Accepted only in the request body, never as a query parameter**. The mailed link is `<baseUrl>/#/reset/<token>` and the verification link is `<baseUrl>/#/verify/<token>` (`ADR-0081` §1): the token is the second segment of the fragment, so it reaches no server, no access log, no proxy record and no `Referer`. The client reads it once from `location.hash` and then replaces the fragment with `#/reset` through `history.replaceState`. **Neither link contains a `?`.** |
+| newPassword | string | The player's new password. Must be 8–128 code points, the same rule as sign-up (`ADR-0048` §2). |
+
+**Responses:** Every response body is empty.
+
+| Status | Meaning |
+| --- | --- |
+| `204 No Content` | The token was valid and not yet consumed, the new password was accepted, and the account's password has been changed. **No session is issued and no token is returned.** The player signs in afterwards, including on the device they just used. In the same transaction, every `auth_session` row for that player is deleted, so a reset changes the credential and ends every other session, but issues none of its own (`ADR-0031` §4). |
+| `400 Bad Request` | The body could not be decoded, or the token is unknown, expired, or already consumed — the three are indistinguishable. This answer is reached only once the password has been accepted. |
+| `422 Unprocessable Entity` | The new password fails policy — it is under 8 or over 128 code points. **This is answered whether or not the token is good, and without the token being looked at** (`ADR-0080` §2). A `400` for a bad token is answered only once the password has passed. A `422` and a `400` are answered in a fixed order the caller cannot choose — the password first, the token second — so a caller holding both a dead link and a short password needs two requests to learn it, and the first tells them nothing about the link (`ADR-0080` §Consequences). |
+
+**Note:** `reset-password` accepts its token **only in a request body**, never as a query parameter. The mailed link is `<baseUrl>/#/reset/<token>` and the verification link is `<baseUrl>/#/verify/<token>` (`ADR-0081` §1): the token is the second segment **of the fragment**, so it reaches no server, no access log, no proxy record and no `Referer`. The client reads it once from `location.hash` and then replaces the fragment with `#/reset` through `history.replaceState`. **Neither link contains a `?`.**
+
+**Note:** `reset-password` issues **no session** and returns **no token**. The player signs in afterwards, including on the device they just used.
+
 ### Profile endpoint
 
 **Method and path:** `GET /api/me`
@@ -147,6 +234,7 @@ returned. There is no `X-Device-Id` fallback here; there is nothing to fall back
 | displayName | string or null | The player's chosen display name, or `null` if never set. Null means *never set*, and the server fabricates no placeholder per `ADR-0029` §6. |
 | displayNameRemoved | boolean | `true` when the player holds no display name **and** a name has been removed from them by an operator (`ADR-0052`). `false` for a player who never set one, and `false` again once they set a new one. Never says anything about another player. |
 | deviceRouteLive | boolean | `true` exactly when this player currently holds a live device binding (`ADR-0049` §5), `false` once `DELETE /api/me/device` has revoked it. This is the field the account screen reads to decide whether to offer that route at all (`ADR-0050` §3). |
+| hasRecoveryEmail | boolean | `true` when the caller has a **verified** recovery address. `false` covers three cases this field does not distinguish — never attached, attached but not yet verified, and detached. The address itself is returned by no endpoint (`ADR-0031` §6.3). |
 
 ### Set display name
 
@@ -371,3 +459,4 @@ When the client encounters a frame or version it cannot process, it behaves as f
 - Every message on the wire carries a `type` field whose value is the message discriminator (e.g., `"Hello"`, `"Act"`, `"Welcome"`).
 - The server always writes default values, so fields like `protocolVersion` and zero amounts in `LegalActions` appear in every message that carries them.
 - A frame the server cannot decode produces a `Failure` message; it never silently drops the connection, as the other players depend on continuous feedback to know their duel remains active.
+
