@@ -11,9 +11,11 @@ import duels.poker.server.auth.VerifyEmailResult
 import duels.poker.server.db.Migrations
 import duels.poker.server.db.PostgresAuthSessions
 import duels.poker.server.db.PostgresCredentials
+import duels.poker.server.db.PostgresPlayerDirectory
 import duels.poker.server.db.PostgresRecoveryEmails
 import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.module
+import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
@@ -186,6 +188,45 @@ class DetachRecoveryEmailRouteTest {
             assertTrue(
                 recoveryEmails.hasRecoveryEmail(playerId),
                 "expected the address to survive an unauthenticated request",
+            )
+        }
+    }
+
+    @Test
+    fun aDeviceIdentityAloneAnswersFourHundredAndOne() {
+        testApplication {
+            application {
+                module()
+                recoveryRoutes(recoveryEmails, PasswordResetsNeverCalled, identitiesFor(dataSource), credentials)
+            }
+            // The device genuinely resolves to a real player, minted the same way production
+            // mints one on first contact (PostgresPlayerDirectory.resolve): a 401 below must be
+            // about the guard refusing a resolvable device, never about a fixture that failed to
+            // resolve at all.
+            val deviceId = DeviceId("detach-route-test-device-${UUID.randomUUID()}")
+            val playerId = PostgresPlayerDirectory(dataSource).resolve(deviceId).id
+            credentials.create(
+                playerId,
+                CredentialKind.PASSWORD,
+                handleFor(playerId),
+                PresentedSecret("a password nobody presents in this test"),
+            )
+            attachVerifiedAddress(playerId, "survives-a-device-identity@detach-route-test.example")
+
+            // X-Device-Id only, no Authorization header: a route resolving identity through the
+            // shared resolvedPlayerOrNull helper (Identity.Session or Identity.Device) would
+            // resolve this caller and reach 403 or 204 instead of refusing it outright.
+            val response = client.delete("/api/auth/recovery-email") {
+                header(DEVICE_ID_HEADER, deviceId.value)
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"currentPassword":"whatever a device identity might present"}""")
+            }
+
+            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            assertEquals("", response.bodyAsText())
+            assertTrue(
+                recoveryEmails.hasRecoveryEmail(playerId),
+                "expected the address to survive a device-identity-only request",
             )
         }
     }

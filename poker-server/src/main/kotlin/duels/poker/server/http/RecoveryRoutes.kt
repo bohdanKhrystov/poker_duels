@@ -2,6 +2,7 @@ package duels.poker.server.http
 
 import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.Credentials
+import duels.poker.server.auth.Identity
 import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.auth.PasswordResets
 import duels.poker.server.auth.PresentedSecret
@@ -74,11 +75,14 @@ import kotlinx.coroutines.CancellationException
  * `DELETE /api/me/device` uses (`ADR-0049` §5) — identity, then the credential, then the write —
  * in this fixed order:
  *
- * 1. [identities] resolves the caller through the shared `resolvedPlayerOrNull` helper,
- *    **before the body is even read** — exactly the order `POST /api/auth/sign-up` resolves it
- *    (`ADR-0027` §4). An unresolved caller answers `401 Unauthorized` with an empty body and
- *    never reaches [credentials], so a stranger can never learn from a `403` whether a password
- *    they do not hold was right.
+ * 1. [identities] resolves the caller, **before the body is even read** — the same order `POST
+ *    /api/auth/sign-up` resolves its own caller (`ADR-0027` §4), so a stranger never reaches the
+ *    `403`. But only [Identity.Session] counts as resolved here: the narrower guard `DELETE
+ *    /api/me/device` uses (`ADR-0049` §5), not sign-up's more permissive one. A device identity,
+ *    however well it resolves, is not a credential-bearing session, and this route is gated on a
+ *    credential — [Identity.Device], [Identity.UnknownDevice], [Identity.Refused] and
+ *    [Identity.Anonymous] all answer `401 Unauthorized` with an empty body and never reach
+ *    [credentials].
  * 2. The body decodes as [DetachRecoveryEmailRequest]; every decode failure is `400`, the specific
  *    cause never changing the answer, exactly as `verify-email`'s and `reset-password`'s own
  *    decode steps above.
@@ -100,8 +104,8 @@ import kotlinx.coroutines.CancellationException
  * @param recoveryEmails The port `verify-email`'s and `recovery-email`'s handlers call:
  *   [RecoveryEmails.verifyPending] and [RecoveryEmails.detach] respectively.
  * @param passwordResets The port `reset-password`'s handler calls: [PasswordResets.consume] alone.
- * @param identities The port `recovery-email`'s handler calls to resolve the caller before the
- *   body is read.
+ * @param identities The port `recovery-email`'s handler calls to resolve the caller's session
+ *   before the body is read; a device identity does not count as resolved here.
  * @param credentials The port `recovery-email`'s handler calls, once identity is confirmed, to
  *   verify the presented current password: [Credentials.verifyCurrent] alone.
  */
@@ -159,8 +163,19 @@ public fun Application.recoveryRoutes(
         delete("/api/auth/recovery-email") {
             // Identity first, before the body is read: the same order sign-up uses (ADR-0027
             // §4), so a stranger never reaches the 403 that would tell them a password they do
-            // not hold was right or wrong.
-            val playerId = call.resolvedPlayerOrNull(identities)
+            // not hold was right or wrong. Only a session counts as resolved here, though —
+            // the narrower guard DELETE /api/me/device uses (ADR-0049 §5), not sign-up's own
+            // resolvedPlayerOrNull: a device identity is not a credential-bearing session, and
+            // this route is gated on one.
+            val playerId = when (
+                val identity = identities.resolve(call.sessionTokenOrNull(), call.deviceIdOrNull())
+            ) {
+                is Identity.Session -> identity.playerId
+                is Identity.Device -> null
+                is Identity.UnknownDevice -> null
+                is Identity.Refused -> null
+                is Identity.Anonymous -> null
+            }
             if (playerId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@delete
