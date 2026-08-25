@@ -91,14 +91,42 @@ an **optional, verified-only** address in its own table.
 | [TASK-041624](../tasks/TASK-041624-which-strings-are-an-address.md) | Which strings are an address | **blocked — `DEC-071`** |
 | [TASK-041625](../tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) | Attaching an address costs the current password | **blocked — `DEC-071`, `DEC-072`** |
 | [TASK-041626](../tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) | Four different things happen, and the caller reads the same answer | **blocked — `DEC-072`** |
-| [TASK-041627](../tasks/TASK-041627-a-build-with-no-sender-is-a-valid-build.md) | A build with no sender is a valid build | **blocked — `DEC-072`** |
+| [TASK-041627](../tasks/TASK-041627-a-sender-that-sends-nothing.md) | A sender that sends nothing | backlog |
 | [TASK-041628](../tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) | Two budgets that say nothing when they refuse | **blocked — `DEC-073`** |
 | [TASK-041629](../tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) | A good token, and a password the policy refuses | **blocked — `DEC-074`** |
+| [TASK-041630](../tasks/TASK-041630-a-decorator-that-detaches-over-the-same-port.md) | A decorator that detaches, over the same port | backlog |
+| [TASK-041631](../tasks/TASK-041631-a-failed-send-stays-inside-the-scope-and-names-a-class.md) | A failed send stays inside the scope, and its log line names a class | backlog |
+| [TASK-041632](../tasks/TASK-041632-the-origin-every-recovery-link-is-built-from-is-configuration.md) | The origin every recovery link is built from is configuration | backlog |
+| [TASK-041633](../tasks/TASK-041633-one-function-builds-both-recovery-links-and-no-header-reaches-it.md) | One function builds both recovery links, and no header reaches it | backlog |
+| [TASK-041634](../tasks/TASK-041634-a-build-with-no-sender-is-a-valid-build.md) | A build with no sender is a valid build | backlog |
+| [TASK-041635](../tasks/TASK-041635-the-fold-the-address-index-depends-on-written-down-in-the-catalog.md) | The fold the address index depends on, written down in the catalog | backlog |
+
+**The table is in id order; `depends_on` is the sequence.** They stopped coinciding when `ADR-0077`
+and `ADR-0078` merged and their answers were folded back in:
+
+`…041623 → 041624 → 041627 → 041625 → 041626 → 041630 → 041631 → 041632 → 041633 → 041634 →
+041628 → 041629`, with `041635` hanging off the merged `041602`.
+
+`TASK-041627` was **re-cut into six**, which `ADR-0077` §Consequences called for by name: *"Three
+implementation files, `ServerConfig`, `ServerComponents`, `Application.kt` and its tests exceed what
+one ticket carries; that is the planner's to re-cut."* `MAX_FILES_TOUCHED` is 3 and no merged gate
+forbids splitting any of the seams, so no piece of it is `atomic:` — `RecoveryLinks` takes an origin
+string and compiles without `ServerConfig.baseUrl`; the decorator compiles without the wiring.
+**One edge moved**: `TASK-041627` now ships `NoRecoveryMailer` alone and runs *before*
+`TASK-041625`, because `TASK-041626`'s fourth case binds that object and `TASK-041625` asserts
+through the same seam. An inline no-op written in a route test would be a copy of the seam rather
+than the seam, and the property both tickets assert would then be about a fixture.
+
+`TASK-041635` is `TASK-041601`'s parked follow-up, unparked. That ticket's Notes made it conditional
+— *"if the answer admits non-ASCII, this becomes a ticket"* — and `ADR-0078` §1 admits it.
 
 ## Open decisions
 
-Split on 2026-08-25 into **29 tickets**, of which `TASK-041601` is the one startable ticket and six
-are `blocked`. Four decisions were raised and none was answered inside a ticket.
+Split on 2026-08-25 into 29 tickets, of which `TASK-041601` was the one startable ticket and six
+were `blocked`. Four decisions were raised and none was answered inside a ticket. `ADR-0077` and
+`ADR-0078` then merged and were folded back in, taking the story to **35 tickets** — six from
+re-cutting `TASK-041627`, one from unparking `TASK-041601`'s conditional follow-up. Two decisions
+remain open and each blocks exactly one ticket.
 
 | ID | Kind | Blocks | In one sentence |
 | --- | --- | --- | --- |
@@ -148,8 +176,8 @@ URL is built. **What a test can await: the test binds an undecorated recording d
 is an ordinary suspend call in the handler and both *a mail was sent, with this link* and *no mail was
 sent* are list comparisons with no join, no channel and no timeout — absence is what forced the
 shape, since no await proves a negative. §5's `202`-before-the-send ordering stays a **review
-criterion** and is gated by nothing, as `TASK-041626`'s Proof step 3 predicted. `TASK-041627` is now
-**bigger than its Files table** and is the planner's to re-cut. The ADR raises `DEC-075` — whether the
+criterion** and is gated by nothing, as `TASK-041626`'s Proof step 3 predicted. `TASK-041627` was
+**bigger than its Files table** and has been re-cut into six, above. The ADR raises `DEC-075` — whether the
 mailed link survives a static host with no rewrite rule, given `ADR-0076` §4 — which blocks nothing
 here, because no sender is configured and no link is delivered to anybody.
 

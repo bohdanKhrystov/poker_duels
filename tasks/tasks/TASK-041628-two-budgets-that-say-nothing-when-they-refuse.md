@@ -11,7 +11,7 @@ tier: sonnet
 review: deep
 files_touched: 3
 labels: [server, http, auth, security, config, blocked]
-depends_on: [TASK-041627]
+depends_on: [TASK-041634]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.http.RecoveryBudgetsTest' -PrequireDocker=true
   - ./gradlew :poker-server:test --tests 'duels.poker.server.config.ServerConfigTest'
