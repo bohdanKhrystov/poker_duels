@@ -205,13 +205,35 @@ without adding a story.
 
 ## Open decisions
 
-**One, the architect's.** `DEC-054` was raised on 2026-08-19 by the ADR that answered
-`DEC-053`. `DEC-069`, raised on 2026-08-23 when `STORY-0405` was split, was answered on 2026-08-24
-and is recorded below. Everything else this epic has raised is answered.
+**None.** `DEC-054`, raised on 2026-08-19 by the ADR that answered `DEC-053` and the last decision
+this epic was waiting on, was answered on 2026-08-25 and is recorded below. `DEC-069`, raised on
+2026-08-23 when `STORY-0405` was split, was answered on 2026-08-24 and is recorded below too.
+Everything this epic has raised is answered, and **`STORY-0412` is gated by no decision at all**.
 
-| ID | Question | Blocks |
-| --- | --- | --- |
-| `DEC-054` | Does the web client grow **URL-addressable routes and a working browser *Back***, and what carries them — the History API behind the store, a router library, or neither for now? [`ADR-0060`](../../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) makes the duel record a screen the client swaps to and which has **no address**: nothing links to it, a reload lands on the first screen, and *Back* leaves the client rather than returning to the lobby. The answer settles what owns *which screen is showing*, what a route does to `ADR-0032`'s out-of-tree boot and single socket, what the dev proxy and `EPIC-07`'s deployment must serve so a deep link is not a `404`, and whether `?room=` becomes a route | nothing today; due before `STORY-0412` is split, which is when the second and third screens arrive |
+`DEC-054` — *does the web client grow URL-addressable routes and a working browser Back, and what
+carries them?* — was answered on 2026-08-25 by
+[`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md): **a screen the
+player chose has an address; a screen the server gave has none.** The client gets addresses, and an
+address is a URL **fragment** — `/`, `/#/duels`, `/#/leaderboard`, and **one slug per screen for
+`STORY-0412`, however many screens that story turns out to have**, which is the story's call and not
+the ADR's. A slug is the lowercase form of a word the product already says to a player, written as a
+literal so a restyled heading cannot break a link. The waiting screen, the table and the result
+screen get **no address, ever** — all three are chosen by frames, and an address claiming a seat is a
+client asserting a game fact — and the **store outranks the address** wherever they disagree.
+`Lobby.tsx` keeps its branch order and loses its two `useState` flags; `HistoryScreen` and
+`LadderScreen` do not change at all, which is `ADR-0060` §4 paying off. What carries it is **two
+owned files and no new dependency**: a pure `screen.ts` and a `use-screen.ts` over
+`useSyncExternalStore`, the primitive `ADR-0032` §3 already chose. The fragment beat a path segment
+on the sentence already merged in `room-link.ts` — a path segment 404s on a static host with no
+rewrite rule, and `EPIC-07` has no file — and beat a query parameter because a query reaches every
+host's access log and would ride along in the invite link. Browser *Back* now **returns to the first
+screen in the same document**; `ADR-0060` §4's in-page control replaces rather than pushes; and
+`DuelResult`'s `<a href="/">` and the waiting screen's *Back to the lobby* **stay real page loads**,
+because routing them would ship `ADR-0075`'s four-field presence leak. No address is gated, and an
+unknown fragment renders the first screen with no error. **A separate word, worth naming here because
+this epic uses both:** `STORY-0412`'s *"which routes are live"* means the **sign-in** routes of
+`ADR-0037` — the device binding and the credential — and nothing about that acceptance criterion
+changes because a screen gained an address.
 
 `DEC-069` — raised on 2026-08-23 when `STORY-0405` was split, blocking `TASK-040523` and nothing
 else — was answered on 2026-08-24 by
