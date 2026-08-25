@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041617
 title: Five endpoints and a field, written down
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -140,3 +140,32 @@ says otherwise fails there.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Correction: this ticket claimed a gate it does not have.** Its `## Tests` section says
+`HttpEndpointDocumentationTest` enforces **documented ⇒ exists** — *"a path written here that no route
+serves fails the build, which is the one automatic check this ticket can fail."* That is false. The
+test reads `docs/protocol.md` and nothing else: its only file access is a `readText()` of that one
+path, and it never opens a route source. This PR documents four endpoints — `forgot-password`,
+`recovery-email`, `verify-email`, `reset-password` — that **no route serves**, and the build passes.
+The class KDoc's *"checked against what the code actually exposes, rather than trusted at face value"*
+describes an intention, not the implementation.
+
+**So these rows are gated by nothing, and the reviewer's own experiment showed it** before its
+conclusion said otherwise: deleting an entire endpoint section left both verify commands green. The
+coder had it right — internal consistency only.
+
+**The content is correct, and that was checked against the amended ADRs rather than the originals**,
+which is where a faithful transcription would have gone wrong. `reset-password`'s `422` reads *"answered
+whether or not the token is good, and without the token being looked at (`ADR-0080` §2)"* — the
+inversion `ADR-0080` made of §5's original parenthetical. The links read `<baseUrl>/#/reset/<token>`
+and `<baseUrl>/#/verify/<token>`, `ADR-0081`'s fragment routes, not §4's path-segment form. And
+`hasRecoveryEmail` documents the boolean and the three cases `false` does not distinguish, with the
+address returned by no endpoint.
+
+**What this leaves.** Prose that a reviewer must read is the only thing standing between
+`docs/protocol.md` and `ADR-0031` §5 drifting apart, and the routes will not exist to check against
+until `STORY-0417`. That is acceptable for documentation written ahead of its implementation — but it
+is worth knowing as a fact rather than believing the ticket's claim, because the difference decides
+whether anyone reads the prose next time.

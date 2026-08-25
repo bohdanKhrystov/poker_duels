@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041618
 title: A token from the mailbox proves the address
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
