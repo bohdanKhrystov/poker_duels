@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041614
 title: One statement spends the token, and the same transaction ends every session
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

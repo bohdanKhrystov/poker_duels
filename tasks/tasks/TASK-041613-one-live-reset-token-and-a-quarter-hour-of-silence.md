@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041613
 title: One live reset token, and a quarter hour of silence
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -122,3 +122,30 @@ stubbed `SecureRandom` so each minted token is pinned.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**All six `## Proof` mutations reddened exactly as written**, each hitting one test, with the failure
+messages checked rather than the pass counts. That makes this the sixth fully-correct Proof of
+twenty-seven examined in this run — the base rate is twelve wrong or incomplete.
+
+**The hash assertion is what makes the suppression real.** Returning `false` while still running the
+`DELETE`/`INSERT` reddens **only** *"a suppressed request must leave the first token's hash live, not
+the second's"*; the return-value assertion stays green throughout. So a suppression that renamed the
+outcome while destroying the outstanding token would have shipped on a return-value test alone. This
+is the same shape `TASK-041636` established on the attach side, and it was worth copying rather than
+re-deriving.
+
+**The clock mutation reddens two assertions, and one of them is not obvious.** Swapping
+`clock.instant()` for `SELECT now()` fails the absolute-instant check in
+`issuingStoresTheHashAndAnHoursExpiry` — expected, since `TASK-041608` proved a duration-only
+assertion cannot see it — and *also* the return value in
+`aSecondRequestAfterAQuarterHourSupersedesTheFirst`, because a test clock's sixteen-minute advance no
+longer moves the real database's `now()`. The second failure is the one that would confuse a reader
+debugging it later.
+
+**`tokens` is a forward-declared constructor parameter and the ticket asked for it.** `issue` never
+reads it; `TASK-041614`'s `consume` will. The Scope names the three-parameter constructor explicitly,
+so `@Suppress("unused")` follows the ticket and is the minimum that holds detekt at zero. Recorded
+because a suppressed warning is a permanent small cost and the next reader should know it was
+deliberate rather than inherited.
