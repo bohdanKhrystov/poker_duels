@@ -11,7 +11,7 @@ tier: sonnet
 review: deep
 files_touched: 3
 labels: [server, http, auth, security, blocked]
-depends_on: [TASK-041625]
+depends_on: [TASK-041637]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.http.ForgotPasswordRouteTest' -PrequireDocker=true
   - ./gradlew :poker-server:ktlintCheck

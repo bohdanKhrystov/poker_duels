@@ -18,22 +18,24 @@ verify:
   - ./gradlew :poker-server:detekt
 ---
 
-## Blocked
+## Unblocked
 
-**Two decisions, and both must be merged.**
+**Both decisions are answered and merged**, so this section is history rather than a gate.
 
-- **`DEC-071` — the product owner's.** The `400` for an address that is not an address is this
-  endpoint's only refusal about what the player typed, and the rule does not exist yet.
-  `TASK-041624` builds `emailAddressOrNull` once it does.
-- **`DEC-072` — the architect's.** This endpoint sends `RecoveryMailer.sendVerification` on the
-  success path, and nothing yet settles what the wiring holds when no sender is configured, what
-  the detached coroutine is a child of, what happens when `send` throws after the pending row is
-  committed, or what a test can await. The last of those decides whether *a mail was sent* is
-  assertable at all, and two of this ticket's criteria need it.
+- **`DEC-071` — the product owner's** — by
+  [`ADR-0078`](../../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md) §1, whose
+  four-clause predicate `TASK-041624` builds as `emailAddressOrNull`, and whose §6 carries the
+  fixture table this ticket's `400` test draws from.
+- **`DEC-072` — the architect's** — by
+  [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md),
+  which settles the seam, the scope, the failure semantics and — the clause two of this ticket's
+  criteria needed — **what a test can await**: the test binds an *undecorated recording double*, so
+  the send is an ordinary suspend call in the handler and `assertEquals(emptyList(), mailer.sent)`
+  is decidable with no join, no channel and no timeout.
 
-**Neither is the human's, and neither is about money.** `ADR-0031` §7 defers the transport — SMTP
-relay or provider API, and therefore any bill — to `EPIC-07`, and this ticket sends nothing under
-any answer to `DEC-072`.
+**Neither was the human's, and neither was about money.** `ADR-0031` §7 defers the transport — SMTP
+relay or provider API, and therefore any bill — to `EPIC-07`, and this ticket sends nothing that
+reaches a real mailbox under any answer.
 
 ## Goal
 
@@ -65,8 +67,17 @@ the ADRs answering `DEC-071` and `DEC-072`.
   2. Decode. Any failure ⇒ `400`.
   3. `emailAddressOrNull` ⇒ `400` on `null`.
   4. `credentials.verifyCurrent` ⇒ `403` on `false`.
-  5. `recoveryEmails.claimPending(playerId, address, newVerificationToken())`, then `202`.
-  6. The send, per `DEC-072`'s answer.
+  5. `recoveryEmails.claimPending(playerId, address, newVerificationToken())`, holding its
+     `ClaimPendingResult`, then `202`.
+  6. The send — `mailer.sendVerification(address, token)` over `ADR-0077`'s port — **skipped when
+     `verifiedOwnerOf(address)` is non-null**, because §5 answers `202` even when the address
+     already belongs to another player *and sends nothing in that case*. That skip is this
+     ticket's: `anAddressAlreadyProvenElsewhereStillAnswersTwoOhTwo` and Proof step 5 both already
+     depend on it, and the step list previously left the call that performs it unnamed.
+- **The send is not yet conditioned on the `ClaimPendingResult` — that is `TASK-041637`**, the next
+  ticket. Hold the value, do not branch on it here, and do not discard it into `_`: the branch and
+  the test that gates it arrive together one ticket later, and adding a seventh test to this file
+  is what pushes this ticket past `S`.
 - **`202` even when the address already belongs to another player**, sending nothing in that case.
   `ADR-0031` §5: the alternatives either tell a stranger an address is registered, or send
   unsolicited mail to a mailbox whose owner did nothing, and the second is forbidden outright by
@@ -77,8 +88,19 @@ the ADRs answering `DEC-071` and `DEC-072`.
 
 ## Out of scope
 
-- The budget — `TASK-041628`, blocked on `DEC-073`. Until it lands this endpoint is unbudgeted, and
-  `ADR-0055`'s condition applies: **no deployment may expose it without one.** Say so in the PR.
+- **`ADR-0031` §5's fifteen-minute resend suppression on this path — `TASK-041637`.** Until it
+  merges, this endpoint sends a verification mail on **every** successful attach, for ever, which
+  is the defect `ADR-0079` §Consequences names against this ticket. The storage half is already in
+  place by then (`TASK-041636`), so the only missing piece is the branch. `ADR-0079` fixes the
+  deadline — before `EPIC-07` configures a sender — and `TASK-041637` is the next ticket in the
+  chain. **Say so in the PR.**
+- The budget — `TASK-041628`, unblocked by
+  [`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md)
+  §2 and §3: five per rolling sixty seconds, keyed by `origin.remoteAddress`, admitted **after**
+  step 3 and **before** step 4, over budget answering `202`. That is one line in a place the ADR
+  names, and it is `TASK-041628`'s line, not this ticket's. Until it lands this endpoint is
+  unbudgeted, and `ADR-0055`'s condition applies: **no deployment may expose it without one.** Say
+  so in the PR.
 - `DELETE /api/auth/recovery-email` — `TASK-041623`, already merged by the time this runs.
 - `verify-email`, which consumes the token this endpoint mints — `TASK-041618`.
 - Returning the address, a masked form of it, or anything about it. §6.3: it is in no response
@@ -100,8 +122,14 @@ the ADRs answering `DEC-071` and `DEC-072`.
 
 ## Acceptance criteria
 
-- [ ] `DEC-071` **and** `DEC-072` are answered by merged ADRs before this leaves `blocked`
+- [ ] `ADR-0078` and `ADR-0077` are merged — both are, as of 2026-08-25; the `blocked` label in the
+      front matter is a historical marker and this ticket's `status:` is not `blocked`
 - [ ] All six `AttachRecoveryEmailRouteTest` tests pass
+- [ ] The handler skips the send when `verifiedOwnerOf(address)` is non-null, and
+      `anAddressAlreadyProvenElsewhereStillAnswersTwoOhTwo` asserts through `ADR-0077`'s recording
+      double that `mailer.sent` is empty for that request
+- [ ] The handler binds `claimPending`'s `ClaimPendingResult` to a named value and does not discard
+      it — `TASK-041637` branches on it
 - [ ] `anAddressAlreadyProvenElsewhereStillAnswersTwoOhTwo` compares its triple to the success
       triple, not merely to `202`
 - [ ] `theRightPasswordRecordsAPendingClaim` asserts `hasRecoveryEmail` is still `false`

@@ -11,7 +11,7 @@ tier: sonnet
 review: deep
 files_touched: 2
 labels: [server, db, auth, security, invariant]
-depends_on: [TASK-041608]
+depends_on: [TASK-041636]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.db.PostgresRecoveryEmailsVerifyTest' -PrequireDocker=true
   - ./gradlew :poker-server:ktlintCheck
