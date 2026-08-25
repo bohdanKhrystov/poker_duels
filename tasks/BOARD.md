@@ -85,7 +85,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **done** — 14 of 14 stories done (`STORY-0309` closed on 2026-08-24); `STORY-0313` unblocked on 2026-08-24 when `STORY-0214` merged and is **split into fifteen**, all fifteen done, closing the epic on 2026-08-24 — it raised `DEC-070` (how long the server's own action stays on screen, the **product owner's**), answered on 2026-08-24 by [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md), so **nothing in the story is blocked**; `STORY-0314` **closed on 2026-08-24**, five of five, leaving `STORY-0313` the only story left in the epic | v0.1 |
-| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **in progress** — 9 of 17 stories done; `STORY-0405` unparked on 2026-08-23 when `STORY-0213` and `STORY-0214` merged, and is **split into 24 tickets** with `TASK-040501` startable. It raised `DEC-069` (the sign-in budget's two numbers, the architect's), answered on 2026-08-24 by [`ADR-0074`](../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md) — nothing in the story is blocked. `STORY-0416` was split out of numerical order on 2026-08-25 into **29 tickets**, since it depends only on the finished `STORY-0405` while `0412`, `0414`, `0415` and `0417` all trace through `DEC-054`; it raised `DEC-071` (the product owner's) and `DEC-072`, `DEC-073`, `DEC-074` (the architect's), blocking six of its own tickets and nothing else. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which also raised `DEC-075` — blocking nothing. Both answers were then folded back into the split: `TASK-041627` was re-cut into six tickets as `ADR-0077` §Consequences required, and `ADR-0078` turned `TASK-041601`'s conditionally-parked collation follow-up into `TASK-041635`, taking the story to **35 tickets** | v0.2 |
+| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **in progress** — 9 of 17 stories done; `STORY-0405` unparked on 2026-08-23 when `STORY-0213` and `STORY-0214` merged, and is **split into 24 tickets** with `TASK-040501` startable. It raised `DEC-069` (the sign-in budget's two numbers, the architect's), answered on 2026-08-24 by [`ADR-0074`](../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md) — nothing in the story is blocked. `STORY-0416` was split out of numerical order on 2026-08-25 into **29 tickets**, since it depends only on the finished `STORY-0405` while `0412`, `0414`, `0415` and `0417` all trace through `DEC-054`; it raised `DEC-071` (the product owner's) and `DEC-072`, `DEC-073`, `DEC-074` (the architect's), blocking six of its own tickets and nothing else. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which also raised `DEC-075` — blocking nothing — and `DEC-073` the same day by [`ADR-0079`](../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), leaving `DEC-074` the only one of the four still open. Both answers were then folded back into the split: `TASK-041627` was re-cut into six tickets as `ADR-0077` §Consequences required, and `ADR-0078` turned `TASK-041601`'s conditionally-parked collation follow-up into `TASK-041635`, taking the story to **35 tickets** | v0.2 |
 | [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
 | EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
@@ -656,10 +656,81 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-073 | **The architect's** — the two numbers for each of the `recovery-email` and `forgot-password` budgets, and whether an over-budget attempt still counts. `DEC-069`'s shape one endpoint pair later. `ADR-0074`'s argument does not transfer: it turned on shared-address collateral being *visible*, and here over budget is indistinguishable from success, so a throttled player is told nothing and cannot pace. §5 already carries a second, durable limiter, so the answer must say what the address budget is still for | [`STORY-0416`](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) — blocks `TASK-041628` | before `TASK-041628` |
 | DEC-074 | **The architect's** — does a good reset token survive a `422`? `ADR-0031` §5 gives `reset-password` a `422` *"when the token was good and the new password fails policy"*, presupposing the endpoint knows the token is good before judging the password; §4 makes consumption one `DELETE ... RETURNING` with *"no read-then-write window"*, under which knowing **is** spending. A conflict between two sections of a merged ADR, not an acknowledged gap | [`STORY-0416`](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) — blocks `TASK-041629`; `TASK-041620` ships the route with no `422` | before `TASK-041629`, and before `STORY-0417` builds the form |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 | DEC-075 | **The architect's** — does the mailed recovery link survive a static host with no rewrite rule, and if it becomes a fragment route, what is the slug? `ADR-0031` §4 mails `<baseUrl>/reset#token=…`, a **path segment**, and was right about the fragment for the *token*. [`ADR-0076`](../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §4 has since made the opposite call for **every** client address — *"a fragment never 404s… no host, proxy or rewrite rule has an opinion about it"* — which is `room-link.ts`'s already-merged call, and `EPIC-07` still has no file in `tasks/epics/`. A recovery link is the one URL here whose failure is unrecoverable: a `404` on `/reset` and the player never reaches the client, which `ADR-0031` makes a **total, permanent** loss of the account. `<baseUrl>/verify#token=…` has the same exposure. Raised by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which transcribed §4 rather than reinterpreting it and put both links in **one function**, so the answer is a one-function change; the **slug**, if it lands as a fragment route, is `STORY-0417`'s under `ADR-0076` §1. **Blocks nothing today** — no sender is configured, so no link is delivered to anybody | [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) §6 | before `EPIC-07` configures a sender, and before `STORY-0417` builds the screen the link lands on |
+
+`DEC-073` → [`ADR-0079`](../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md)
+on 2026-08-25 — **five to attach, ten to forget, and the attach budget is the only cap on the mail
+it causes.** **The four numbers: `forgot-password` admits `10` per remote address per rolling
+`60000` ms; `recovery-email` admits `5` per `60000` ms.** Four `ServerConfig` values in the pattern
+the existing two pairs use (`AUTH_FORGOT_PASSWORD_MAX_ATTEMPTS`,
+`AUTH_FORGOT_PASSWORD_WINDOW_MILLIS`, `AUTH_RECOVERY_EMAIL_MAX_ATTEMPTS`,
+`AUTH_RECOVERY_EMAIL_WINDOW_MILLIS`), a `forgotPasswordLimits()`
+and a `recoveryEmailLimits()`, and **a separate `AttemptBudget` instance for each endpoint** —
+`ADR-0074` §1's reason applied verbatim, since one shared instance lets either endpoint spend the
+other's budget. **The register's premise was checked before it was used, and it cut the other way.**
+It is true that `ADR-0074`'s argument does not transfer, because over budget here is answered `202`
+and a refused player is told nothing; but invisible collateral is a reason to be *generous*, not
+tight — a limiter nobody can perceive is one nobody can work around. **What decided the numbers is
+that `ADR-0031` §5's fifteen-minute rule covers one of the two mail paths, not both.** Its sentence
+reads naturally as covering both and the split built it on one: `TASK-041613` puts the check inside
+`PasswordResets.issue`, while `TASK-041607` fixes `RecoveryEmails.claimPending` as returning `Unit`
+and `TASK-041608` has it `DELETE`-then-`INSERT` unconditionally — so **a verification mail goes out
+on every successful attach, for ever**. That asymmetry is the whole decision. **On
+`forgot-password` the address budget adds nothing** against the attack it is most often accused of
+enabling: the durable rule caps one account at four recovery mails an hour across *every* source
+address at once, which is exactly what an address key cannot do. Its one unique job is an aggregate
+cap across distinct victims, and that is bought back by a second source address and is hard to aim,
+since causing a single mail needs an address already *verified* here and nothing in this system
+discloses which those are — §5's `202` conflates five cases, §6.3 keeps the address out of every
+response, message and log, and `verifiedOwnerOf` returns an id. So it is set where it cannot bite:
+the player it would refuse has lost their password, is told mail is on its way, and `ADR-0031`'s
+Consequences make no recovery a **total, permanent** loss of the account. Ten per sixty seconds is
+this repository's pair for an aggregating key on a repeated action (`ADR-0022` §2, `ADR-0074` §1).
+**On `recovery-email` the budget is the only cap on outbound verification mail, and the caller
+chooses the recipient** — unbudgeted, one account and one script is a spam relay with a
+`RecoveryMailer` in front of it, and the cost is not the bill (§7 defers that to `EPIC-07`) but a
+sender domain that stops being delivered, which breaks recovery for everyone who opted in. It is
+also a **second door to the current-password guess**: §3 makes the password what stands between a
+minute at an unattended browser and permanent ownership of an account, and `ADR-0074` priced that
+guess at ten a minute at the front door. Five, with no refund, keeps the front door the cheaper one
+by a factor of two, halves the mail rate to 300 an hour, and is beyond what a once-per-account setup
+act uses. `ADR-0074`'s objection to five — *"a per-person number applied to a group"* — is answered
+rather than ignored: it holds at sign-in, which is what a whole café does on arrival, and not for
+recovery setup. **Sixty seconds on both**, because the window is the recovery time and `ADR-0074`'s
+burst-becomes-a-lockout interaction is worse where the lockout is invisible; it also holds
+`AttemptBudget`'s per-key list at a fifteenth of what sign-up's window already accepts. **An
+over-budget attempt still counts** — one rule for every limiter here, no fork of a shared type whose
+KDoc warns against exactly that "simplification" — and here it is also the rule that *works*: `202`
+gives a sprayer no feedback and no reason to pace, so counting caps a hammerer at one window's worth
+in total, where not counting would hand the same sprayer one window's worth every minute for ever.
+**Placement was the half of the question that is not a number, and it differs per endpoint.**
+`recovery-email` admits after the `401`, the decode and `ADR-0078`'s syntax `400`, and **before the
+Argon2 verify** — a check after the hash bounds no pool, and a check before identity would let
+unauthenticated traffic spend a signed-in player's budget. `forgot-password` admits **after the
+`202` is written**, the only budget in this system consulted after its response, because `admit`
+takes a `Mutex` and `TASK-041626` makes the write-first ordering the timing defence rather than an
+optimisation. **Neither endpoint calls `refund`**, and neither can answer `429`. **The key is §5's
+and no part of it is the architect's**: `origin.remoteAddress` alone, and no `X-Forwarded-*` until
+`EPIC-07` installs the plugin. Costs recorded rather than discovered: **an attacker can switch off
+password recovery for everybody behind one address, silently and for as long as they care to pay ten
+requests a minute, while every one of them is told the product is sending mail** — the price of an
+address key on an endpoint whose refusal is invisible, chosen because the only key that would bound
+it is the submitted address, which hands a stranger a switch over one *named* player's recovery;
+five on an aggregating key means a classroom setting recovery up together waits a minute; `202` on
+the attach path now means one more thing, beside `ADR-0078`'s already-recorded *a player can believe
+recovery is on when it is not*; 300 mails an hour from one source is still a relay, just a slower
+one; the per-key list still grows with an attacker's rate times the window; and an operator now
+holds four limiters and eight numbers, with nothing anywhere reporting that a budget refused
+something. **One residual, named and conditioned so it cannot evaporate: the attach path has no
+per-account resend suppression.** On the best reading §5 already requires one and the split
+under-built it, so it is a defect against `TASK-041607`, `TASK-041608` and `TASK-041625` rather than
+a new question — the mechanism, the number and the column all already exist. **A ticket for the
+planner, due before `EPIC-07` configures a sender**, which is the same condition that binds the
+budgets themselves. **Unblocks `TASK-041628`. Raises no `DEC`, and nothing here was the product
+owner's or the human's**: no clause touches what a player is told (§5 fixed that), none needs a paid
+service, and nothing is sent under any answer until a transport exists.
 
 `DEC-071` → [`ADR-0078`](../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md)
 on 2026-08-25 — **the mail is the only real check on an address, so the syntax rule refuses almost
@@ -2112,7 +2183,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041316](tasks/TASK-041316-the-app-test-hands-the-history-read-a-storage.md) The App test hands the history read a Storage | XS | **done** |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
 | [STORY-0415](stories/STORY-0415-the-offer-after-a-first-win.md) The offer — an account after a first win, dismissed for good | | | backlog |
-| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | **in progress** — split into **29** on 2026-08-25, out of numerical order because it depends only on `STORY-0405`. **23 are unblocked** and two wait on `DEC-073` and `DEC-074` (the architect's); `DEC-071` and `DEC-072` were answered on 2026-08-25 by [`ADR-0078`](../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md) and [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), unblocking four. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) — the mail seam, its scope and lifetime, its failure semantics, `baseUrl`, and what a test can await. **Nothing is the human's**: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
+| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | **in progress** — split into **29** on 2026-08-25, out of numerical order because it depends only on `STORY-0405`. **23 are unblocked** and one waits on `DEC-074` (the architect's); `DEC-073` was answered on 2026-08-25 by [`ADR-0079`](../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md) — ten a minute for `forgot-password`, five for `recovery-email`, an over-budget attempt still counting, and the placement in each handler — and `DEC-071` and `DEC-072` were answered the same day by [`ADR-0078`](../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md) and [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), unblocking four. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) — the mail seam, its scope and lifetime, its failure semantics, `baseUrl`, and what a test can await. **Nothing is the human's**: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | | [TASK-041601](tasks/TASK-041601-three-tables-that-cannot-become-a-mailing-list.md) Three tables that cannot become a mailing list | S | done |
 | | [TASK-041602](tasks/TASK-041602-two-strangers-may-both-claim-one-address-and-nothing-cascades.md) Two strangers may both claim one address, and nothing cascades | S | done |
 | | [TASK-041603](tasks/TASK-041603-an-address-that-redacts-itself.md) An address that redacts itself | XS | done |

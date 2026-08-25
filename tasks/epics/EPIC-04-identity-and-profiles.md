@@ -140,7 +140,7 @@ recorded rather than quietly absorbed:
 | [STORY-0413](../stories/STORY-0413-the-history-screen.md) | The history screen — pages, filters, search | 0409, 0411 | backlog |
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
 | [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | backlog |
-| [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md). None is the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
+| [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), and `DEC-073` the same day by [`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), leaving `DEC-074` the only one of the four still open. None is the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | [STORY-0417](../stories/STORY-0417-the-recovery-screens.md) | The recovery screens — attach an address, and reset a password | 0412, 0416 | backlog |
 
 ## What can run in parallel
@@ -250,9 +250,32 @@ answered `DEC-027`, and these four apply that choice rather than revisiting it.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
-| `DEC-073` | **The architect's** — what are the two numbers for each of the `recovery-email` and `forgot-password` budgets, and does an over-budget attempt still count against its own window? `DEC-069`'s shape one endpoint pair later: §5 fixes the mechanism, the key and the answer (`202`, identical to success) and fixes no numbers. `ADR-0074`'s argument does **not** transfer — it turned on shared-address collateral being *visible*, so a throttled player could pace; here over budget is indistinguishable from success and they are told nothing. §5 also already carries a second, durable limiter (no mail within fifteen minutes of a live token), so the answer must say what the address budget is still for | `TASK-041628` |
 | `DEC-074` | **The architect's** — does a good reset token survive a `422`, and by what mechanism? `ADR-0031` §5 gives `reset-password` a `422` *"when the token was good and the new password fails policy"*, which presupposes knowing the token is good before the password is judged and implies a retry; §4 makes consumption one `DELETE ... RETURNING` with *"no read-then-write window"*, under which knowing **is** spending. A conflict between two sections of a merged ADR rather than an acknowledged gap — §*What this does not settle* does not mention it | `TASK-041629`; `TASK-041620` ships the route with no policy and no `422` |
 | `DEC-075` | **The architect's** — does the mailed recovery link survive a static host with no rewrite rule, and if it becomes a fragment route, what is the slug? `ADR-0031` §4 mails `<baseUrl>/reset#token=…`, a **path segment**; [`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §4 has since made the opposite call for every client address on the ground that *"a fragment never 404s"*, which is `room-link.ts`'s already-merged call, and `EPIC-07` still has no file. A `404` on `/reset` means the player never reaches the client, and `ADR-0031` makes no recovery a **total, permanent** loss. `<baseUrl>/verify#token=…` has the same exposure. Raised by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which transcribed §4 rather than reinterpreting it and put both links in **one function**, so the answer is a one-function change; the slug, if it lands as a fragment route, is `STORY-0417`'s under `ADR-0076` §1 | nothing today — no sender is configured, so no link is delivered. Due before `EPIC-07` configures one, and before `STORY-0417` builds the screen |
+
+`DEC-073` — raised on 2026-08-25 when `STORY-0416` was split, blocking `TASK-041628` — was answered
+on the same day by
+[`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md):
+**five to attach, ten to forget, and the attach budget is the only cap on the mail it causes.**
+`forgot-password` admits **10** per remote address per rolling **60 000 ms**; `recovery-email` admits
+**5** per **60 000 ms**; four `ServerConfig` values in the existing pattern, one `AttemptBudget`
+instance each. The register row's premise held and then cut the other way: invisible collateral is a
+reason to be *generous*, since a limiter nobody can perceive is one nobody can pace around. What
+decided the numbers is that **`ADR-0031` §5's fifteen-minute rule covers one of the two mail paths**
+— `TASK-041613` builds it inside `PasswordResets.issue`, while `claimPending` returns `Unit` and
+writes unconditionally, so a verification mail follows every successful attach for ever. So on
+`forgot-password` the address budget **adds nothing** the durable rule does not already do better,
+and is set where it cannot bite a player who has lost their password and is told mail is coming; on
+`recovery-email` it is the **only** cap on mail to a caller-chosen recipient and a second door to the
+current-password guess `ADR-0074` priced at ten a minute, so five keeps the front door cheaper. **An
+over-budget attempt still counts** — one rule for every limiter here, and the rule that actually
+defeats a sprayer who gets no feedback to pace against. Placement differs per endpoint and is fixed
+in §3. The key was never open: §5 fixes `origin.remoteAddress`. The named cost is that an attacker
+can switch off password recovery for everybody behind one address, silently, while each of them is
+told the product is sending mail. **Unblocks `TASK-041628`**, raises no `DEC`, and leaves one
+residual for the planner: the attach path has no per-account resend suppression, which on the best
+reading of §5 is a defect against `TASK-041607`, `TASK-041608` and `TASK-041625` rather than a new
+question, due before `EPIC-07` configures a sender.
 
 `DEC-071` — raised on 2026-08-25 when `STORY-0416` was split, blocking `TASK-041624` and
 `TASK-041625` — was answered the same day by

@@ -125,13 +125,42 @@ than the seam, and the property both tickets assert would then be about a fixtur
 Split on 2026-08-25 into 29 tickets, of which `TASK-041601` was the one startable ticket and six
 were `blocked`. Four decisions were raised and none was answered inside a ticket. `ADR-0077` and
 `ADR-0078` then merged and were folded back in, taking the story to **35 tickets** — six from
-re-cutting `TASK-041627`, one from unparking `TASK-041601`'s conditional follow-up. Two decisions
-remain open and each blocks exactly one ticket.
+re-cutting `TASK-041627`, one from unparking `TASK-041601`'s conditional follow-up. One decision
+remains open and blocks exactly one ticket.
 
 | ID | Kind | Blocks | In one sentence |
 | --- | --- | --- | --- |
-| `DEC-073` | **Architect's** | `TASK-041628` | What are the two numbers for each of the `recovery-email` and `forgot-password` budgets, and does an over-budget attempt still count? |
 | `DEC-074` | **Architect's** | `TASK-041629` | Does a good reset token survive a `422`? `ADR-0031` §5's status table and §4's single-use `DELETE ... RETURNING` cannot both hold as written |
+
+`DEC-073` was **answered on 2026-08-25** by
+[`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md)
+— *five to attach, ten to forget, and the attach budget is the only cap on the mail it causes.*
+**`POST /api/auth/forgot-password` admits 10 attempts per remote address per rolling 60 000 ms;
+`POST /api/auth/recovery-email` admits 5 per 60 000 ms.** Four `ServerConfig` values
+(`auth.forgotPasswordMaxAttempts` / `AUTH_FORGOT_PASSWORD_MAX_ATTEMPTS`,
+`auth.forgotPasswordWindowMillis` / `AUTH_FORGOT_PASSWORD_WINDOW_MILLIS`,
+`auth.recoveryEmailMaxAttempts` / `AUTH_RECOVERY_EMAIL_MAX_ATTEMPTS`,
+`auth.recoveryEmailWindowMillis` / `AUTH_RECOVERY_EMAIL_WINDOW_MILLIS`), a `forgotPasswordLimits()`
+and a `recoveryEmailLimits()`, and a separate `AttemptBudget` instance per endpoint. The numbers
+differ because the endpoints do: **`ADR-0031` §5's fifteen-minute rule covers the reset path only**
+— `TASK-041613` builds it inside `PasswordResets.issue`, while `TASK-041607` fixes `claimPending` as
+returning `Unit` and `TASK-041608` writes unconditionally, so a verification mail follows **every**
+successful attach. On `forgot-password` the address budget therefore adds nothing against bombing one
+victim and is set where it cannot bite a player who has lost their password and is being told mail is
+on its way; on `recovery-email` it is the only cap on mail to a caller-chosen recipient and a second
+door to the current-password guess `ADR-0074` priced at ten a minute, so five keeps sign-in the
+cheaper door. **An over-budget attempt still counts**, on both — one rule for every limiter here, and
+the rule that actually stops a sprayer who is answered `202` and has no reason to pace. **Placement,
+which the ticket asked for explicitly:** `recovery-email` admits after the `401`, the decode and
+`ADR-0078`'s syntax `400` and **before** the Argon2 verify; `forgot-password` admits **after the
+`202` is written**, so `TASK-041626`'s write-first timing defence is untouched by a `Mutex`. Neither
+calls `refund`; neither can answer `429`; the key is §5's `origin.remoteAddress` and no
+`X-Forwarded-*` until `EPIC-07`. **Unblocks `TASK-041628`.** Its seven tests are unchanged by the
+answer — the numbers are config the test sets low, and the window rolls on the injected
+`ServerClock`, so nothing waits in real time. Raises no `DEC`, and leaves one residual for the
+planner: **the attach path has no per-account resend suppression**, which on the best reading of §5
+is a defect against `TASK-041607`, `TASK-041608` and `TASK-041625` rather than a new question, due
+before `EPIC-07` configures a sender.
 
 `DEC-071` was **answered on 2026-08-25** by
 [`ADR-0078`](../../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md) — *the mail is
