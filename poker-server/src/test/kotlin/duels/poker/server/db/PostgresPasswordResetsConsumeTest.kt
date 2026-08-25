@@ -39,6 +39,12 @@ private const val IDENTIFIER = "alice@example.com"
  *
  * `twoConcurrentUsesOfOneTokenYieldExactlyOneSuccess` copies the two-threads-one-latch shape of
  * `PostgresDuelResultStoreConcurrencyTest`.
+ *
+ * `aRefusedCredentialWriteLeavesTheTokenSpendable` gates the first of `consume`'s two transaction
+ * boundaries — the token-spend/credential-write boundary — by using a player with no `password`
+ * credential, so the `UPDATE` fails and the transaction rolls back, leaving the token unspent. The
+ * second boundary, between the credential write and the session delete, stays ungated until
+ * `TASK-041640`.
  */
 class PostgresPasswordResetsConsumeTest {
     private lateinit var dataSource: DataSource
@@ -196,6 +202,36 @@ class PostgresPasswordResetsConsumeTest {
                 otherPlayerId,
                 authSessions.playerOf(otherSession),
                 "a different player's session must survive — a WHERE-less DELETE passes with only one player",
+            )
+        }
+    }
+
+    @Test
+    fun aRefusedCredentialWriteLeavesTheTokenSpendable() {
+        runBlocking {
+            val playerId = insertPlayer()
+            val token = tokens.newResetToken()
+            passwordResets.issue(playerId, token)
+            val session = authSessions.issue(playerId)
+            val newSecret = PresentedSecret("new secret")
+
+            val firstResult = passwordResets.consume(token, newSecret)
+
+            assertFalse(firstResult, "consume must return false when the player has no password credential")
+            assertEquals(
+                playerId,
+                authSessions.playerOf(session),
+                "the player's session must survive a refused consume — the transaction rolled back",
+            )
+
+            credentials.create(playerId, CredentialKind.PASSWORD, IDENTIFIER, newSecret)
+            val secondResult = passwordResets.consume(token, newSecret)
+
+            assertTrue(secondResult, "the same token must work after the credential is created — it was never spent")
+            assertEquals(
+                playerId,
+                credentials.verify(CredentialKind.PASSWORD, IDENTIFIER, newSecret),
+                "the secret must verify after the second consume",
             )
         }
     }

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041639
 title: A reset that cannot write the password spends no token
 type: task
-status: backlog
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: XS
@@ -144,3 +144,24 @@ The order inside the test is load-bearing and is part of what a reviewer checks:
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Correction to this ticket's `## Proof`, step 4.** It predicts *"Nothing reddens — the test passes
+as a duplicate of `aGoodTokenRewritesThePasswordAndReturnsTrue`."* It does not. Giving the fixture
+player a credential before the first `consume` makes that call succeed, and the test's first
+assertion expects `false`, so it reddens there — for a reason that has nothing to do with step 1's
+mutation. Coder and reviewer independently traced it to the same place.
+
+The **conclusion** the step draws survives, by a different mechanism than the one written down: the
+missing-credential fixture is still the only thing in this file that reaches the boundary, because
+the first assertion *is* the fixture condition rather than a consequence of it. Fifty-second `##
+Proof` examined this run, and the thirteenth found wrong or imprecise. Recorded rather than quietly
+amended, because a Proof step whose prediction never held is evidence about how these are written.
+
+**The reordering the test does not catch is `TASK-041640`'s, and it is named.** An implementation
+that delayed the token delete until after the session delete would still pass here, because by then
+the credential exists and the `UPDATE` succeeds. `## Out of scope` defers exactly that — the second
+boundary needs a wrapped `DataSource` that throws *between* the two writes — so this is a stated
+limit, not a gap. The coder volunteered it as the diff's weakest assertion before being asked about
+that section, which is the reason it is written here rather than discovered later.
