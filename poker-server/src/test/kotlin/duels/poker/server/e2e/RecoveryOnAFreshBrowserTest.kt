@@ -2,6 +2,8 @@ package duels.poker.server.e2e
 
 import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.db.assertCoinInvariantHolds
+import duels.poker.server.db.deviceBindingTableSnapshot
+import duels.poker.server.db.playerTableSnapshot
 import duels.poker.server.http.DEVICE_ID_HEADER
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.http.ProfileResponse
@@ -173,6 +175,61 @@ internal class RecoveryOnAFreshBrowserTest {
     }
 
     /**
+     * `ADR-0027` path 1 short-circuits before path 3's minting, so recovery litters no orphan
+     * profile — the whole `player` table, not only the recovered row, is byte-identical across
+     * the bracket that runs the sign-in, the fresh handshake, and both reads.
+     */
+    @Test
+    fun theRecoveryCreatesNoPlayerRow() {
+        val record = runRecovery()
+        assertEquals(
+            record.playerBeforeRecovery,
+            record.playerAfterRecovery,
+            "the player table changed across recovery (sign-in, fresh handshake, profile and " +
+                "duel reads): before=${record.playerBeforeRecovery}, after=${record.playerAfterRecovery}",
+        )
+    }
+
+    /**
+     * The half a `player`-only check cannot see: `ADR-0027` resolves the fresh device's `Hello`
+     * to the already-live session, so no rebinding — an `INSERT` naming the recovered player — is
+     * added to `device_binding` either.
+     */
+    @Test
+    fun theRecoveryCreatesNoDeviceBinding() {
+        val record = runRecovery()
+        assertEquals(
+            record.deviceBindingBeforeRecovery,
+            record.deviceBindingAfterRecovery,
+            "the device_binding table changed across recovery (sign-in, fresh handshake, profile " +
+                "and duel reads): before=${record.deviceBindingBeforeRecovery}, " +
+                "after=${record.deviceBindingAfterRecovery}",
+        )
+    }
+
+    /**
+     * Two inputs, two different expected values: a `liveBindingCountFor` that answered `0` for
+     * everything would satisfy the fresh device's assertion for free, so the winner's own device
+     * — which the recovery bracket also reconnects, as the positive control — has to answer `1`.
+     */
+    @Test
+    fun theFreshDeviceHasNoLiveBindingAndTheOriginalHasOne() {
+        val record = runRecovery()
+        assertEquals(
+            0,
+            record.freshDeviceLiveBindings,
+            "deviceId=$FRESH_DEVICE: expected no live device_binding row after recovery, got " +
+                "${record.freshDeviceLiveBindings}",
+        )
+        assertEquals(
+            1,
+            record.originalDeviceLiveBindings,
+            "winner deviceId=${record.winnerDeviceId}: expected exactly one live device_binding " +
+                "row, got ${record.originalDeviceLiveBindings}",
+        )
+    }
+
+    /**
      * Boots the shipped composition against [dataSource] — `installDuelServer(dataSource)`, then
      * `createClient { install(WebSockets) }`, exactly as [IdentityMovesNoCoinTest] does — opens
      * one duel, plays it to completion, and reads both devices' profiles afterwards, asserting
@@ -227,6 +284,14 @@ internal class RecoveryOnAFreshBrowserTest {
             val loserProfile = client.profileOf(loser.deviceId)
             val originalDuels = client.duelsOf(winner.deviceId)
 
+            // The bracket opens here: everything from here to recoveredDuels below is what a
+            // browser that has never been seen does, plus the original device's control
+            // handshake, which belongs inside it and is correct to include — that handshake
+            // presents a device with a live binding, so IdentityResolver answers Identity.Device
+            // and the directory is never asked to create anything.
+            val playerBeforeRecovery = dataSource.playerTableSnapshot()
+            val deviceBindingBeforeRecovery = dataSource.deviceBindingTableSnapshot()
+
             // The positive control, taken first: the winner's own device, no token. ADR-0018
             // gives a player one live socket and the newest wins, and both this handshake and the
             // fresh browser's below resolve to the same player, so taking this one second would
@@ -247,7 +312,14 @@ internal class RecoveryOnAFreshBrowserTest {
             // The fresh browser reads back the profile and duel history through the recovered session.
             val recoveredProfile = client.profileOf(FRESH_DEVICE, sessionToken)
             val recoveredDuels = client.duelsOf(FRESH_DEVICE, sessionToken)
+
+            // The bracket closes here.
+            val playerAfterRecovery = dataSource.playerTableSnapshot()
+            val deviceBindingAfterRecovery = dataSource.deviceBindingTableSnapshot()
             dataSource.assertCoinInvariantHolds("after the fresh browser reads the profile and duels")
+
+            val freshDeviceLiveBindings = dataSource.liveBindingCountFor(FRESH_DEVICE)
+            val originalDeviceLiveBindings = dataSource.liveBindingCountFor(winner.deviceId)
 
             record = RecoveryRecord(
                 winnerDeviceId = winner.deviceId,
@@ -262,6 +334,12 @@ internal class RecoveryOnAFreshBrowserTest {
                 originalDuels = originalDuels,
                 recoveredProfile = recoveredProfile,
                 recoveredDuels = recoveredDuels,
+                playerBeforeRecovery = playerBeforeRecovery,
+                playerAfterRecovery = playerAfterRecovery,
+                deviceBindingBeforeRecovery = deviceBindingBeforeRecovery,
+                deviceBindingAfterRecovery = deviceBindingAfterRecovery,
+                freshDeviceLiveBindings = freshDeviceLiveBindings,
+                originalDeviceLiveBindings = originalDeviceLiveBindings,
             )
         }
         checkNotNull(record) { "runRecovery: testApplication completed without producing a RecoveryRecord" }
@@ -381,6 +459,19 @@ internal class RecoveryOnAFreshBrowserTest {
  *   session token after the handshake.
  * @property recoveredDuels The fresh browser's whole `GET /api/me/duels` response, read through
  *   the session token after the handshake.
+ * @property playerBeforeRecovery Every column of every `player` row, taken after the winner's
+ *   sign-up and before the original device's control handshake — the open end of the bracket
+ *   recovery must not perturb.
+ * @property playerAfterRecovery Every column of every `player` row, taken immediately after
+ *   [recoveredDuels] is read — the closed end of the same bracket.
+ * @property deviceBindingBeforeRecovery Every column of every `device_binding` row, taken
+ *   alongside [playerBeforeRecovery].
+ * @property deviceBindingAfterRecovery Every column of every `device_binding` row, taken
+ *   alongside [playerAfterRecovery].
+ * @property freshDeviceLiveBindings The count of live `device_binding` rows for `FRESH_DEVICE`
+ *   once the bracket has closed — recovery binds no device, so this is `0`.
+ * @property originalDeviceLiveBindings The count of live `device_binding` rows for
+ *   [winnerDeviceId] once the bracket has closed — the winner's own device keeps its one binding.
  */
 private data class RecoveryRecord(
     val winnerDeviceId: String,
@@ -395,6 +486,12 @@ private data class RecoveryRecord(
     val originalDuels: RecentDuelsResponse,
     val recoveredProfile: ProfileResponse,
     val recoveredDuels: RecentDuelsResponse,
+    val playerBeforeRecovery: List<List<Any?>>,
+    val playerAfterRecovery: List<List<Any?>>,
+    val deviceBindingBeforeRecovery: List<List<Any?>>,
+    val deviceBindingAfterRecovery: List<List<Any?>>,
+    val freshDeviceLiveBindings: Int,
+    val originalDeviceLiveBindings: Int,
 )
 
 private const val RECOVERED_NAME: String = "Champion"
@@ -403,3 +500,25 @@ private const val RECOVERY_PASSWORD: String = "password1"
 
 /** The device id a browser that has never connected before presents, alongside a session token. */
 private const val FRESH_DEVICE: String = "e2e-fresh-browser"
+
+/**
+ * Counts live `device_binding` rows for [deviceId] — `revoked_at IS NULL`. A count, not a
+ * boolean: "there is no binding" and "there is exactly one" are different claims, and
+ * [RecoveryOnAFreshBrowserTest.theFreshDeviceHasNoLiveBindingAndTheOriginalHasOne] asserts both.
+ *
+ * One use site in this file today; a second would move this to `CoinInvariant.kt` beside
+ * `deviceBindingTableSnapshot`.
+ */
+private fun DataSource.liveBindingCountFor(deviceId: String): Int {
+    connection.use { connection ->
+        connection.prepareStatement(
+            "SELECT count(*) FROM device_binding WHERE device_id = ? AND revoked_at IS NULL",
+        ).use { statement ->
+            statement.setString(1, deviceId)
+            statement.executeQuery().use { resultSet ->
+                resultSet.next()
+                return resultSet.getInt(1)
+            }
+        }
+    }
+}
