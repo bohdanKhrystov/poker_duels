@@ -5,6 +5,7 @@ import duels.poker.server.auth.AuthSessions
 import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.DeviceBindings
 import duels.poker.server.auth.IdentityResolver
+import duels.poker.server.auth.RecoveryEmails
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.db.PostgresAuthSessions
 import duels.poker.server.db.PostgresCredentials
@@ -14,6 +15,7 @@ import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
 import duels.poker.server.db.PostgresProfileReads
 import duels.poker.server.db.PostgresProfileWrites
+import duels.poker.server.db.PostgresRecoveryEmails
 import duels.poker.server.db.PostgresStandingsReads
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.SecureHandSeedSource
@@ -48,6 +50,7 @@ public data class ServerComponents(
     val signUpBudget: AttemptBudget,
     val signInBudget: AttemptBudget,
     val bindings: DeviceBindings,
+    val recoveryEmails: RecoveryEmails,
 )
 
 /**
@@ -112,6 +115,9 @@ public fun serverComponents(
     val signUpBudget = AttemptBudget(config.signUpLimits(), clock)
     val signInBudget = AttemptBudget(config.signInLimits(), clock)
     val bindings = PostgresDeviceBindings(dataSource)
+    // The wall clock, not the ServerClock: the same instrument PostgresAuthSessions takes above,
+    // per ADR-0062 §2.
+    val recoveryEmails = PostgresRecoveryEmails(dataSource, wallClock)
 
     return ServerComponents(
         socket = socket,
@@ -125,5 +131,6 @@ public fun serverComponents(
         signUpBudget = signUpBudget,
         signInBudget = signInBudget,
         bindings = bindings,
+        recoveryEmails = recoveryEmails,
     )
 }
