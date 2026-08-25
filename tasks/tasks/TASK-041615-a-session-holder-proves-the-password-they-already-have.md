@@ -10,6 +10,10 @@ estimate: S
 tier: sonnet
 review: deep
 files_touched: 6
+atomic:
+  - the Kotlin compiler — Credentials gains the abstract member verifyCurrent, so PostgresCredentials must implement it in the same commit
+  - the Kotlin compiler again — TestDoubleCredentials, RecordingCredentials and SignInCredentials implement Credentials and fail with "is not abstract and does not implement abstract member 'verifyCurrent'" without it
+  - CredentialsPortTest.noFunctionOnThePortReturnsAString — a golden set of Credentials' member names, asserted at run time, reddens once verifyCurrent exists
 labels: [server, db, auth, security]
 depends_on: [TASK-041614]
 verify:
@@ -44,9 +48,15 @@ needs and which makes `credential.identifier` readable.
 | `poker-server/src/main/kotlin/duels/poker/server/auth/Credentials.kt` | modify |
 | `poker-server/src/main/kotlin/duels/poker/server/db/PostgresCredentials.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/db/PostgresCredentialsCurrentPasswordTest.kt` | create |
-| `poker-server/src/test/kotlin/duels/poker/server/auth/CredentialsPortTest.kt` | modify — `ADR-0070` §4 propagation: `:poker-server:test` failed to compile with `TestDoubleCredentials is not abstract and does not implement abstract member 'verifyCurrent'`; adding the override then reddened `noFunctionOnThePortReturnsAString` with `expected: <[verify, create, holdsCredential]> but was: <[create, holdsCredential, verify, verifyCurrent]>`, so the golden set gained the new name |
-| `poker-server/src/test/kotlin/duels/poker/server/http/AuthRouteDoubles.kt` | modify — `ADR-0070` §4 propagation: same compile failure, naming `RecordingCredentials is not abstract and does not implement abstract member 'verifyCurrent'`; the override throws `UnsupportedOperationException("Sign-up never verifies credentials")`, matching this class's existing `verify` override exactly |
-| `poker-server/src/test/kotlin/duels/poker/server/http/AuthRouteTest.kt` | modify — `ADR-0070` §4 propagation: same compile failure, naming `SignInCredentials is not abstract and does not implement abstract member 'verifyCurrent'`; the override throws `UnsupportedOperationException("sign-in never checks verifyCurrent")`, matching this class's existing `create`/`holdsCredential` overrides' `"sign-in never ..."` idiom |
+| `poker-server/src/test/kotlin/duels/poker/server/auth/CredentialsPortTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/http/AuthRouteDoubles.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/http/AuthRouteTest.kt` | modify |
+
+The last three rows are `ADR-0070` §4 propagation, forced by the gates `atomic:` names above: each
+implements the new member (`RecordingCredentials` and `SignInCredentials` throw, matching their
+own existing out-of-scope idiom; `TestDoubleCredentials` returns `true`, matching its existing
+unconditional-success `verify`), and `CredentialsPortTest`'s golden set of member names gains
+`verifyCurrent`.
 
 Read, and do not edit:
 `poker-server/src/main/kotlin/duels/poker/server/auth/PasswordPolicy.kt` — `passwordIsWithinTheWork
