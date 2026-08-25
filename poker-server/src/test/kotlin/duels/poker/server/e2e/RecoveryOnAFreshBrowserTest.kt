@@ -229,6 +229,51 @@ internal class RecoveryOnAFreshBrowserTest {
         )
     }
 
+    @Test
+    fun aWrongPasswordFromTheFreshBrowserIsRefused() {
+        val record = runRecovery()
+        assertEquals(
+            HttpStatusCode.Unauthorized,
+            record.wrongPasswordStatus,
+            "POST /api/auth/sign-in with RECOVERY_HANDLE and wrong password: " +
+                "expected status 401 Unauthorized, got ${record.wrongPasswordStatus}",
+        )
+    }
+
+    @Test
+    fun theRefusedSignInAddedNoSessionRow() {
+        val record = runRecovery()
+        assertEquals(
+            1,
+            record.sessionsBeforeWrongPassword,
+            "auth_session row count before the wrong password attempt: expected 1, got " +
+                "${record.sessionsBeforeWrongPassword}",
+        )
+        assertEquals(
+            1,
+            record.sessionsAfterWrongPassword,
+            "auth_session row count after the wrong password attempt: expected 1 (unchanged), " +
+                "got ${record.sessionsAfterWrongPassword}",
+        )
+    }
+
+    @Test
+    fun theCountSeesASessionRowAppear() {
+        val record = runRecovery()
+        assertEquals(
+            0,
+            record.sessionsBeforeAnySignIn,
+            "auth_session row count before any sign-in: expected 0, got " +
+                "${record.sessionsBeforeAnySignIn}",
+        )
+        assertEquals(
+            1,
+            record.sessionsBeforeWrongPassword,
+            "auth_session row count before the wrong password attempt: expected 1, got " +
+                "${record.sessionsBeforeWrongPassword}",
+        )
+    }
+
     /**
      * Boots the shipped composition against [dataSource] — `installDuelServer(dataSource)`, then
      * `createClient { install(WebSockets) }`, exactly as [IdentityMovesNoCoinTest] does — opens
@@ -300,6 +345,7 @@ internal class RecoveryOnAFreshBrowserTest {
 
             // A browser that has never connected recovers the account: no X-Device-Id, no
             // Authorization — sign-in resolves neither (ADR-0030 §2, AuthRoutes.kt's own KDoc).
+            val sessionsBeforeAnySignIn = dataSource.authSessionRowCount()
             val sessionToken = client.signIn(RECOVERY_HANDLE, RECOVERY_PASSWORD)
             dataSource.assertCoinInvariantHolds("after the fresh browser signs in")
 
@@ -317,6 +363,12 @@ internal class RecoveryOnAFreshBrowserTest {
             val playerAfterRecovery = dataSource.playerTableSnapshot()
             val deviceBindingAfterRecovery = dataSource.deviceBindingTableSnapshot()
             dataSource.assertCoinInvariantHolds("after the fresh browser reads the profile and duels")
+
+            // Attempt to sign in with the correct handle and a wrong password.
+            val sessionsBeforeWrongPassword = dataSource.authSessionRowCount()
+            val wrongPasswordStatus = client.signInStatus(RECOVERY_HANDLE, "not-$RECOVERY_PASSWORD")
+            val sessionsAfterWrongPassword = dataSource.authSessionRowCount()
+            dataSource.assertCoinInvariantHolds("after the wrong password attempt")
 
             val freshDeviceLiveBindings = dataSource.liveBindingCountFor(FRESH_DEVICE)
             val originalDeviceLiveBindings = dataSource.liveBindingCountFor(winner.deviceId)
@@ -340,6 +392,10 @@ internal class RecoveryOnAFreshBrowserTest {
                 deviceBindingAfterRecovery = deviceBindingAfterRecovery,
                 freshDeviceLiveBindings = freshDeviceLiveBindings,
                 originalDeviceLiveBindings = originalDeviceLiveBindings,
+                sessionsBeforeAnySignIn = sessionsBeforeAnySignIn,
+                wrongPasswordStatus = wrongPasswordStatus,
+                sessionsBeforeWrongPassword = sessionsBeforeWrongPassword,
+                sessionsAfterWrongPassword = sessionsAfterWrongPassword,
             )
         }
         checkNotNull(record) { "runRecovery: testApplication completed without producing a RecoveryRecord" }
@@ -430,6 +486,35 @@ internal class RecoveryOnAFreshBrowserTest {
         )
         return protocolJson.decodeFromString<SignInResponse>(response.bodyAsText()).sessionToken
     }
+
+    /**
+     * Posts the same body [signIn] does over `POST /api/auth/sign-in`, but returns the response
+     * status without asserting it — [signIn] asserts `200` and cannot express a refusal, so this
+     * is a second helper rather than a change to the first.
+     *
+     * Carries no device id header and no `Authorization` header, exactly as [signIn] does.
+     */
+    private suspend fun HttpClient.signInStatus(handle: String, password: String): HttpStatusCode {
+        val response = post("/api/auth/sign-in") {
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"handle":"$handle","password":"$password"}""")
+        }
+        return response.status
+    }
+}
+
+/**
+ * Runs `SELECT count(*) FROM auth_session`.
+ */
+private fun DataSource.authSessionRowCount(): Int {
+    connection.use { connection ->
+        connection.prepareStatement("SELECT count(*) FROM auth_session").use { statement ->
+            statement.executeQuery().use { resultSet ->
+                resultSet.next()
+                return resultSet.getInt(1)
+            }
+        }
+    }
 }
 
 /**
@@ -472,6 +557,14 @@ internal class RecoveryOnAFreshBrowserTest {
  *   once the bracket has closed — recovery binds no device, so this is `0`.
  * @property originalDeviceLiveBindings The count of live `device_binding` rows for
  *   [winnerDeviceId] once the bracket has closed — the winner's own device keeps its one binding.
+ * @property sessionsBeforeAnySignIn The count of `auth_session` rows before the successful
+ *   sign-in, expected to be `0`.
+ * @property wrongPasswordStatus The HTTP response status code from attempting to sign in with the
+ *   correct handle and a wrong password, expected to be `401 Unauthorized`.
+ * @property sessionsBeforeWrongPassword The count of `auth_session` rows before the wrong password
+ *   attempt, expected to be `1`.
+ * @property sessionsAfterWrongPassword The count of `auth_session` rows after the wrong password
+ *   attempt, expected to be `1` (unchanged).
  */
 private data class RecoveryRecord(
     val winnerDeviceId: String,
@@ -492,6 +585,10 @@ private data class RecoveryRecord(
     val deviceBindingAfterRecovery: List<List<Any?>>,
     val freshDeviceLiveBindings: Int,
     val originalDeviceLiveBindings: Int,
+    val sessionsBeforeAnySignIn: Int,
+    val wrongPasswordStatus: HttpStatusCode,
+    val sessionsBeforeWrongPassword: Int,
+    val sessionsAfterWrongPassword: Int,
 )
 
 private const val RECOVERED_NAME: String = "Champion"

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040707
 title: A wrong password from the fresh browser issues no session
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: S
@@ -136,3 +136,17 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 **Why the count is the assertion that carries this.** A status-only test cannot tell a `401` that
 refused from a `401` that refused *after* issuing a token it forgot to return — a shape that sounds
 absurd until an early return is deleted during a refactor. The row count sees it; the status does not.
+
+**The mutation this ticket exists for.** Making sign-in accept any password for an existing handle
+reddens `aWrongPasswordFromTheFreshBrowserIsRefused` (status `200`, not `401`) **and**
+`theRefusedSignInAddedNoSessionRow` (count `2`, not `1`). Both coder and reviewer ran it. The real
+handle is what makes this possible: a nonexistent handle answers `401` because there is nothing to
+match, so it would pass with the password comparison deleted entirely. `signInStatus(RECOVERY_HANDLE,
+"not-$RECOVERY_PASSWORD")` is the only input that separates *rejected* from *not found*.
+
+**`theCountSeesASessionRowAppear` is dominated, not vacuous — checked rather than assumed.** Neither
+of the two obvious mutations reddens it. The reviewer found one that does: suppressing session
+insertion on a successful sign-in reddens it — along with all fourteen other tests, since the whole
+arc depends on that session. So it never fails alone, but it is not a test no mutation can fail. The
+same distinction arose on `TASK-040706` and was resolved the same way; it is worth re-running each
+time rather than assuming it repeats, because *vacuous* is a defect and *dominated* is a note.
