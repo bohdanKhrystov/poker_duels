@@ -88,8 +88,9 @@ class VerifyEmailRefusalsTest {
             // Already consumed: the first use frees the row entirely (TASK-041609's port deletes
             // rather than flags), so a second presentation of the same token finds no row at all --
             // indistinguishable, by construction, from a token nobody ever claimed.
+            val spentPlayer = insertPlayer()
             recoveryEmails.claimPending(
-                insertPlayer(),
+                spentPlayer,
                 EmailAddress("spent@refusals.test"),
                 VerificationToken("spent-refusal-token"),
             )
@@ -98,6 +99,12 @@ class VerifyEmailRefusalsTest {
             // construction bug that collapses every case into "unknown" all by itself, which is
             // exactly the vacuity the separate controls exist to expose instead.
             client.attemptVerification("spent-refusal-token")
+            // That successful first use planted a recovery_email row -- an incidental side effect
+            // of consuming the token, not what this leg is about. Detach it so what remains is
+            // exactly "spent": a token whose email_verification row is gone, with no recovery_email
+            // row alongside it that could make the second call answer AddressTaken instead of
+            // Refused.
+            recoveryEmails.detach(spentPlayer)
             val spent = client.attemptVerification("spent-refusal-token")
 
             assertEquals(HttpStatusCode.BadRequest, unknown.status)
