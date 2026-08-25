@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041627
 title: A sender that sends nothing
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -111,3 +111,26 @@ implements, `sendVerification(address, token)` and `sendPasswordReset(address, t
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**If `NoRecoveryMailer` quietly sent a real mail, nothing here would catch it.** The reviewer's answer,
+and the honest limit of a ticket that tests a no-op: both tests verify the two members are invoked and
+complete, and assert nothing about side effects. A sending implementation passes identically. The gate
+for *did a mail go out* lives in the decorator and route tests that bind a recording double, per
+`ADR-0077` §7 — not here.
+
+**What is genuinely observable, and it is more than "it did not throw".** Replacing either member's body
+with `error(...)` reddens `bothMembersCompleteAndThrowNothing` — on the second call and the first
+respectively, which proves **both** members are actually invoked rather than one being skipped. And
+`object` changed to `class` reddens `itIsAnObjectAndNotAClass`, since `objectInstance` is non-null only
+for an object declaration. The reviewer noted the closing `assertNotNull(asMailer)` is redundant — the
+type system already guarantees assignability — though harmless.
+
+**A caller cannot tell the no-sender state from a configured one**, which is the point `ADR-0077` chose
+an object over a null to secure: no throw, no return value, no logging, no timing difference beyond
+returning immediately, so the route holds one `RecoveryMailer` and branches on nothing.
+
+**Adding an implementation does not weaken the shape gate.** `RecoveryMailerShapeTest` asserts over the
+`RecoveryMailer` interface via `declaredMemberFunctions`, never over implementations, so a new class in
+`duels.poker.server.mail` is invisible to it — confirmed by reading rather than assumed.

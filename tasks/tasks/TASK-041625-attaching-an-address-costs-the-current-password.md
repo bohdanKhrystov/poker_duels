@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041625
 title: Attaching an address costs the current password
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

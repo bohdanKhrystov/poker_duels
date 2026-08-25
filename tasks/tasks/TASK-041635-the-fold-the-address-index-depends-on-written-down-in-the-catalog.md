@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041635
 title: The fold the address index depends on, written down in the catalog
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
