@@ -48,9 +48,12 @@ an **optional, verified-only** address in its own table.
 - **A successful reset deletes every `auth_session` row for that player**, in the same transaction —
   the usual reason to reset is that somebody else has the password. The reset issues no session and
   returns no token.
-- **The token travels in a URL fragment**, `<baseUrl>/reset#token=…`, and the endpoint accepts it
-  **only in a request body**, never as a query parameter. `baseUrl` is one configured value and is
-  never derived from a request header.
+- **The token travels in a URL fragment**, `<baseUrl>/#/reset/<token>` and
+  `<baseUrl>/#/verify/<token>` since `ADR-0081` amended `ADR-0031` §4's one sentence, and the
+  endpoint accepts it **only in a request body**, never as a query parameter. The token is a path
+  segment *of the fragment*, so it still reaches no server, no log and no `Referer`; **a recovery
+  link contains no `?` at all**. `baseUrl` is one configured value and is never derived from a
+  request header.
 - **`RecoveryMailer` has exactly two functions**, named for the only two permitted mails, and a test
   asserts that structurally. There is no `send(to, subject, body)` anywhere. No log line records an
   address; `EmailAddress` redacts itself in `toString()`.
@@ -258,10 +261,13 @@ this story sends nothing under every answer to `DEC-072`. Nothing in this story 
 because it applies that choice rather than changing it — the same test `DEC-043` (*what may a
 password be*) passed.
 
-**Twenty-three tickets are unblocked**, and they are the whole schema, both token types, the digest,
-the mailer port and its structural test, both storage ports, the sweep, `hasRecoveryEmail`,
-`docs/protocol.md`, and three of the five endpoints. The two blocked endpoints are the two that
-send mail, plus the one refusal that needs a rule.
+**Every ticket in this story is unblocked**, as of 2026-08-25: the whole schema, both token types,
+the digest, the mailer port and its structural test, both storage ports, the sweep,
+`hasRecoveryEmail`, `docs/protocol.md`, and all five endpoints. The last three to unblock were the
+two that send mail and the one refusal that needed a rule — `DEC-071`, `DEC-072` and `DEC-074`.
+`TASK-041624` is the one ticket whose body still reads as blocked, and it is a **shell**: its two
+fixture tables were left empty to be filled from `ADR-0078` §6, so it is owed a planner pass rather
+than a prose correction.
 
 **One deliberate divergence from `ADR-0031`, recorded rather than resolved silently.** §6.2's port
 snippet writes `handle: LoginHandle`; no such type exists, because `loginHandleOrNull` returns

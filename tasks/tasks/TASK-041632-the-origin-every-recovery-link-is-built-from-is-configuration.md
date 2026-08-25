@@ -69,9 +69,11 @@ Read, and do not edit:
 - **Reading `Host` or `X-Forwarded-Host` anywhere.** `ADR-0031` §4 forbids it and `TASK-041633`
   gates it over the source tree; this ticket's contribution is that the value has somewhere else to
   come from. **Say in the PR that no header read was added**, since nothing here fails if one is.
-- The two budget pairs, which also land in this file — `TASK-041628`, blocked on `DEC-073`.
-- `DEC-075`, which may change what the *path* after this origin looks like. It changes no part of
-  this field.
+- The two budget pairs, which also land in this file — `TASK-041628`.
+- The *path* after this origin, which `ADR-0081` has since fixed as `#/reset/<token>` and
+  `#/verify/<token>`. It changes no part of this field: `baseUrl` is still an absolute origin with
+  **no trailing slash**, and the `/` before the `#` is written by `RecoveryLinks` (`ADR-0081` §1,
+  §8, which names this ticket as untouched).
 
 ## Tests
 
@@ -107,8 +109,10 @@ Read, and do not edit:
    **`rejectsABaseUrlThatIsNotAnOrigin` reddens alone**, on all four values. Revert.
 2. Keep the `require` but drop the trailing-slash clause.
    **`rejectsABaseUrlThatIsNotAnOrigin` reddens on `"http://x.test/"` only**, and the other three
-   still pass. Run it: a scheme check alone looks like a complete validation and this is the clause
-   that turns `<baseUrl>/reset#…` into `<baseUrl>//reset#…`. Revert.
+   still pass. Run it: a scheme check alone looks like a complete validation, and this is the clause
+   that turns `<baseUrl>/#/reset/…` into `<baseUrl>//#/reset/…` — a double slash before the fragment,
+   which no host and no test in this repository ever sees, because a fragment reaches neither.
+   Revert.
 3. Read the environment before the config but return the config's value anyway.
    **`theEnvironmentVariableOverridesTheBaseUrl` reddens alone** — and only because that test sets
    two *different* origins. Set them to the same string first and watch it pass under the mutation;

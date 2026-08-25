@@ -32,10 +32,22 @@ templates for the one that concatenated a header."* Nothing constructs `Recovery
 until `EPIC-07` has a transport, and `ADR-0077` §Consequences names that outright — *"a builder for
 links nobody delivers"*. It is tested directly, which is why it needs no caller to be gated.
 
-`DEC-075` is open and may move the **path** — `/reset` as a segment versus a fragment route — under
-`ADR-0076` §4. It blocks nothing today because no sender is configured and no link is delivered to
-anybody, and `ADR-0077` §6 put both links here precisely so that answering it is a one-function
-change. This ticket transcribes `ADR-0031` §4 as written and does not anticipate the answer.
+**`DEC-075` is answered and merged, and it moved the path.**
+[`ADR-0081`](../../docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md)
+makes both links **fragment routes on the client's single address**, because the client is one
+document served at `/` and `GET /reset` against a static host with no rewrite rule is a `404` —
+silent, deterministic, invisible to every test here (Vite serves `index.html` for unknown paths),
+and permanent, since `ADR-0031`'s Consequences make a failed recovery a total loss of the account.
+`ADR-0077` §6 put both links in one function precisely so that this would be a one-function change,
+and it is: **two string literals.** `ADR-0031` §4 is amended in that one sentence and in no other —
+the token's entropy, its hash at rest, its hour, its single use, its fragment and its refusal of a
+query string all stand byte-unchanged.
+
+**The token has not left the fragment.** In `#/reset/abc123` it is a path segment **of the
+fragment**, not a URL path segment, so it is still never transmitted, never logged, never in a
+proxy record and never in a `Referer` — `ADR-0031` §4's whole argument, intact. `ADR-0081` §2 is
+why almost nothing below moves: the rule this ticket gates was always *the token is behind the `#`*,
+and that is still true.
 
 ## Files
 
@@ -49,7 +61,10 @@ Read, and do not edit:
 walk and the *name every file before opening any of them* idiom the source sweep copies;
 `poker-server/src/main/kotlin/duels/poker/server/config/ServerConfig.kt` — `BASE_URL_KEY` and
 `DEFAULT_BASE_URL`, for the KDoc only;
-`docs/adr/ADR-0031-an-optional-verified-recovery-email.md` §4;
+`docs/adr/ADR-0031-an-optional-verified-recovery-email.md` §4, whose link sentence `ADR-0081`
+amends and whose every other clause it leaves standing;
+`docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md`
+§1, §2 and §8 — the two literals, why the token is still safe, and what does *not* change;
 `docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md` §6.
 
 ## Scope
@@ -58,13 +73,18 @@ walk and the *name every file before opening any of them* idiom the source sweep
   `verification(token)` and `reset(token)`. It takes the **origin string**, not a `ServerConfig`:
   the class has no reason to know where the value came from, and taking the config would put a
   config type in the one place `EPIC-07`'s transport has to reach.
-- `reset` returns `"$baseUrl/reset#token=$token"` — `ADR-0031` §4's form, character for character.
-  `verification` returns `"$baseUrl/verify#token=$token"`, §4's shape applied to the mail §4 did not
-  spell out: a **fragment**, never a query string, for §4's reasons unchanged — a fragment is not
-  sent to the server, so it stays out of access logs, referrers and proxy records.
+- `reset` returns `"$baseUrl/#/reset/$token"` and `verification` returns
+  `"$baseUrl/#/verify/$token"` — `ADR-0081` §1, character for character. The `/` before the `#` is
+  written **here**, not by `baseUrl`: `ADR-0077` §6 requires an origin with no trailing slash, and
+  this matches the already-merged `roomLink`'s `${origin}/?room=${code}`.
+- **A recovery link contains no `?` at all, and that rule is absolute rather than conditional.**
+  `ADR-0081` §Alternatives lost `#/reset?token=…` on exactly this: today the rule is one character
+  wide and a reviewer audits it by looking for one character, while *a `?` is fine, but only after
+  the first `#`* is broken by deleting two characters from a string that still looks entirely
+  ordinary, inside a function no test outside its own file exercises.
 - **The expected strings in the test are written as literals**, not assembled from the same template
-  the production code uses. A test that concatenates `"$base/reset#token=$t"` restates the encoder
-  and passes whatever the encoder does.
+  the production code uses. A test that concatenates `"$base/#/reset/$t"` restates the encoder and
+  passes whatever the encoder does — including the day somebody edits the template.
 - A source sweep asserting that **no file under `poker-server/src/main/kotlin` contains the string
   `X-Forwarded-Host`, or reads a `Host` header** (`ADR-0077` §6's last bullet: *asserted over the
   source tree rather than inferred*). Walk the tree rather than naming files — the point is that a
@@ -73,8 +93,17 @@ walk and the *name every file before opening any of them* idiom the source sweep
 
 ## Out of scope
 
-- **Answering `DEC-075`.** If the reviewer believes `/reset` should already be a fragment route,
-  that is the decision landing, not this ticket widening. Leave the ticket and say so.
+- **The client end of the agreement.** `screenFromHash`, `tokenFromHash`, matching on the *first*
+  fragment segment, and reading the token once at mount before the address is replaced are all
+  `ADR-0081` §5's and `STORY-0417`'s. This ticket writes the server half only. **That refusal is
+  ungated by construction and cannot be gated here**: a fragment crosses no wire, `protocol.gen.ts`
+  is emitted from `ClientMessage` and `ServerMessage` only, and nothing in `poker-server` can see
+  the client's parser. `ADR-0081` §Consequences records it as the first cost — if the two slugs ever
+  diverge, every mailed link lands on the lobby, silently. Say in the PR that the two literals below
+  are one half of a two-module agreement held together by prose.
+- **Changing either slug.** `reset` and `verify` are fixed by `ADR-0081` §3 because the server mints
+  them into a mail; neither word is coined there — `ADR-0031` §4 and `ADR-0077` §6 already wrote
+  both.
 - Any mail body, subject or wording. `ADR-0031` defers the copy to `STORY-0412`, and this class
   returns a URL and nothing else.
 - Constructing `RecoveryLinks` anywhere in `main`. There is no caller until `EPIC-07`; if detekt
@@ -90,8 +119,8 @@ walk and the *name every file before opening any of them* idiom the source sweep
 
 | Test | Proves |
 | --- | --- |
-| `aResetLinkIsTheConfiguredOriginAndAFragment` | `RecoveryLinks("https://duels.test").reset(token)` equals the literal `"https://duels.test/reset#token=abc123"`. The whole string, asserted as one literal |
-| `aVerificationLinkIsTheConfiguredOriginAndAFragment` | The same for `verification`, equal to `"https://duels.test/verify#token=abc123"`. **Both members** — one template copied wrong is invisible to a test that checks the other |
+| `aResetLinkIsTheConfiguredOriginAndAFragment` | `RecoveryLinks("https://duels.test").reset("abc123")` equals the literal `"https://duels.test/#/reset/abc123"` — `ADR-0081` §1's first table row. The whole string, asserted as one literal |
+| `aVerificationLinkIsTheConfiguredOriginAndAFragment` | The same for `verification`, equal to `"https://duels.test/#/verify/abc123"` — §1's second row. **Both members** — one template copied wrong is invisible to a test that checks the other |
 | `twoOriginsProduceTwoLinks` | The same token through `RecoveryLinks("https://a.test")` and `RecoveryLinks("https://b.test")` yields two different strings, each containing its own origin. One origin cannot tell a configured value from a hard-coded constant |
 | `neitherLinkCarriesTheTokenInAQueryString` | Neither result contains `?`, and in each the first `#` precedes the token. A `?token=` form sends the token to the server and into its logs, which is the exact failure §4 chose the fragment to avoid |
 | `theTokenIsPassedThroughUnchanged` | A token containing `-` and `_` — the URL-safe alphabet's two non-alphanumerics — appears in both links byte for byte, unencoded |
@@ -100,6 +129,8 @@ walk and the *name every file before opening any of them* idiom the source sweep
 ## Acceptance criteria
 
 - [ ] All six `RecoveryLinksTest` tests pass
+- [ ] The two expected strings are character-for-character `ADR-0081` §1's two table rows, with the
+      token as the **second** fragment segment and the slug as the first
 - [ ] The two link assertions compare against **string literals**; the file contains no expression
       that rebuilds a link from `baseUrl` and a token
 - [ ] `twoOriginsProduceTwoLinks` uses **two** origins
@@ -111,23 +142,31 @@ walk and the *name every file before opening any of them* idiom the source sweep
 
 ## Proof
 
-1. Change `reset` to `"$baseUrl/reset?token=$token"`.
+1. Change `reset` to `"$baseUrl/#/reset?token=$token"` — the shape `ADR-0081` §Alternatives called
+   the close call, and the erosion its absolute rule exists to make audible.
    **`aResetLinkIsTheConfiguredOriginAndAFragment` and `neitherLinkCarriesTheTokenInAQueryString`
    both redden**, and `aVerificationLinkIsTheConfiguredOriginAndAFragment` stays green — which is
    what makes the second member's own test worth having. Revert.
-2. Hard-code the origin: `"https://duels.test/reset#token=$token"`, ignoring `baseUrl`.
+2. Hard-code the origin: `"https://duels.test/#/reset/$token"`, ignoring `baseUrl`.
    **`twoOriginsProduceTwoLinks` reddens alone**, while both literal assertions **pass**, because
    their fixture origin is the hard-coded one. Run this: it is the mutation that proves the two
    literal tests gate the *shape* and not the *source* of the origin, and it is exactly the shape
    that a single-fixture test can never catch. Revert.
-3. Rewrite the two literal assertions as `assertEquals("$origin/reset#token=$token", links.reset(token))`.
+3. Rewrite the two literal assertions as `assertEquals("$origin/#/reset/$token", links.reset(token))`.
    **Nothing reddens under mutation 1.** Do not commit this; run it once and record it. It is the
    tidier-looking test and it asserts that the encoder equals itself.
 4. Add `URLEncoder.encode(token, UTF_8)` inside both members.
    **`theTokenIsPassedThroughUnchanged` reddens alone**, on the `-`/`_` token — and stays green for a
    purely alphanumeric one. Check the fixture actually contains both characters before trusting this
    result. Revert.
-5. Add `call.request.headers["X-Forwarded-Host"]` to any file under `poker-server/src/main/kotlin`.
+5. Swap the two fragment segments: `"$baseUrl/#/$token/reset"`.
+   **Both literal assertions redden**, while `neitherLinkCarriesTheTokenInAQueryString` and
+   `theTokenIsPassedThroughUnchanged` both **pass** — there is still no `?`, the `#` still precedes
+   the token, and the token is still byte-identical. Run this one: it is the defect `ADR-0081` §5
+   makes worst, because the client matches its **first** fragment segment against the screen table,
+   so every mailed link would route to the first screen and discard the token; and the two literal
+   assertions are the only things in this repository that see it. Revert.
+6. Add `call.request.headers["X-Forwarded-Host"]` to any file under `poker-server/src/main/kotlin`.
    **`noMainSourceFileReadsAHostHeader` reddens**, naming that file. Then point the walk at a
    directory that does not exist: **the count assertion fires** rather than the sweep passing over
    zero files. Run both; the second is the way this test rots into a tautology, and it is

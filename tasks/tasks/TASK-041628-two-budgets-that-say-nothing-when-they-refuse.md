@@ -19,20 +19,30 @@ verify:
   - ./gradlew :poker-server:detekt
 ---
 
-## Blocked
+## Unblocked
 
-**`DEC-073` — the architect's.** *What are the two numbers for each of `POST /api/auth/recovery-
-email` and `POST /api/auth/forgot-password`, and does an over-budget attempt still count against its
-own window?*
+**`DEC-073` — the architect's — is answered and merged**, so this section is history rather than a
+gate. The `blocked` label in the front matter is a historical marker and this ticket's `status:` is
+not `blocked`.
 
-`ADR-0031` §5 fixes the mechanism, the key (remote address) and the answer (`202`, identical to
-success) and fixes **no numbers**. Neither shipped pair transfers: `ADR-0055`'s five per fifteen
-minutes and `ADR-0074`'s ten per sixty seconds were each chosen on an argument that does not apply
-here. `ADR-0074`'s turned on shared-address collateral being *visible* — a throttled player is told
-their password is wrong and can pace — while here over budget is indistinguishable from success, so
-a throttled player is told nothing at all and cannot pace. `ADR-0031` §5 also already carries a
-**second, durable** limiter (no mail if a live token was issued in the last fifteen minutes), so the
-answer must say what the address budget is still for once that exists.
+[`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md)
+fixes all four numbers, both placements and the counting rule:
+
+- **`forgot-password`: `10` attempts / `60000` ms. `recovery-email`: `5` / `60000` ms.** The
+  register's premise cut the other way in the end — invisible collateral is a reason to be
+  *generous*, because a limiter nobody can perceive is one nobody can work around. `forgot-password`
+  is generous because §5's fifteen-minute per-account rule already caps bombing one victim at four
+  mails an hour across *every* source address; `recovery-email` is five because it is the only cap
+  on mail to a caller-chosen recipient **and** a second door to the current-password guess
+  `ADR-0074` priced at ten.
+- **An over-budget attempt still counts** — one rule for every limiter in this system, and `202`
+  gives a sprayer no reason to pace, so counting caps a hammerer at one window's worth in total.
+- **Placement is per endpoint**: `recovery-email` admits **after** the `401`, the decode and
+  `ADR-0078`'s syntax `400`, and **before** the Argon2 verify; `forgot-password` admits **after the
+  `202` is written**, the only budget in this system consulted after the response, because `admit`
+  takes a `Mutex` and `TASK-041626` makes that ordering the timing defence.
+- **The key is `ADR-0031` §5's and none of it is the architect's**: `origin.remoteAddress` alone,
+  no `X-Forwarded-*` until `EPIC-07` installs the plugin.
 
 ## Goal
 
@@ -54,17 +64,22 @@ not a widening here.
 
 Read, and do not edit:
 `poker-server/src/main/kotlin/duels/poker/server/auth/AttemptBudget.kt` — including its warning that
-an over-budget attempt is recorded whether or not it is admitted, which `DEC-073` may or may not
-keep;
+an over-budget attempt is recorded whether or not it is admitted, which `ADR-0079` **keeps**: this
+ticket uses the shared type unchanged and forks nothing;
 `poker-server/src/main/kotlin/duels/poker/server/http/AuthRoutes.kt` — where sign-up's and
 sign-in's budgets sit in the order and why;
 `docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md`;
-the ADR answering `DEC-073`.
+`docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md` — the
+four numbers, the four key names and the two placements.
 
 ## Scope
 
 - `ServerConfig` gains two pairs of numbers with keys, env names and defaults, in the shape the four
-  existing auth values use. The env names follow `AUTH_*`.
+  existing auth values use — `auth.forgotPasswordMaxAttempts` / `AUTH_FORGOT_PASSWORD_MAX_ATTEMPTS`
+  defaulting to `10`, `auth.forgotPasswordWindowMillis` / `AUTH_FORGOT_PASSWORD_WINDOW_MILLIS` to
+  `60000`, `auth.recoveryEmailMaxAttempts` / `AUTH_RECOVERY_EMAIL_MAX_ATTEMPTS` to `5`, and
+  `auth.recoveryEmailWindowMillis` / `AUTH_RECOVERY_EMAIL_WINDOW_MILLIS` to `60000`, with
+  `forgotPasswordLimits()` and `recoveryEmailLimits()` beside the two existing pairs (`ADR-0079`).
 - **Two separate `AttemptBudget` instances**, one per endpoint, over their own limits. `ADR-0074`
   §1's reason applies verbatim: one instance shared between two endpoints lets one spend the
   other's budget.
@@ -74,9 +89,15 @@ the ADR answering `DEC-073`.
 - Over budget answers **`202`** for both endpoints — identical status, identical body, identical
   headers — so the limiter is not itself an oracle. Never `429`: `ADR-0055`'s `429` was chosen for
   sign-up because that endpoint already leaks a `409`, and neither of these does.
-- Where in each handler the check sits is `DEC-073`'s, and the answer must say: `ADR-0055` meters
-  spending after every other refusal, `ADR-0074` reserves before the hash. These endpoints hash
-  nothing on the `forgot-password` path and hash once on `recovery-email`'s.
+- **Where in each handler the check sits is `ADR-0079`'s and differs between the two**, so it is
+  not one rule copied twice: `recovery-email` admits after the `401`, the decode and the syntax
+  `400`, and before the Argon2 verify — budgeting before identity would let unauthenticated traffic
+  spend a signed-in player's budget (`ADR-0074` §2's reason). `forgot-password` admits **after** its
+  `202` has been written, which is the only budget in this system consulted after the response and
+  is required because `admit` takes a `Mutex` and `TASK-041626`'s ordering is the timing defence.
+- **`AttemptBudget` is used as it stands.** No variant, no flag, no second recording rule and no
+  fork of the shared type: `ADR-0079` keeps *an over-budget attempt still counts* for every limiter
+  here.
 
 ## Out of scope
 
@@ -104,8 +125,10 @@ the ADR answering `DEC-073`.
 
 ## Acceptance criteria
 
-- [ ] `DEC-073` is answered by a merged ADR before this leaves `blocked`
 - [ ] All seven `RecoveryBudgetsTest` tests pass
+- [ ] The four defaults are `10` / `60000` and `5` / `60000` under `ADR-0079`'s four key names
+- [ ] `RecoveryRoutes.kt` declares **two** `AttemptBudget` instances and no subclass, wrapper or
+      copy of that type, and `AttemptBudget.kt` is byte-unchanged
 - [ ] Every over-budget assertion compares a triple to a **success** triple, not merely to `202`
 - [ ] `anOverBudgetForgotPasswordMintsNothing` and `anOverBudgetAttachAnswersLikeASuccess` assert on
       **database state**, because the wire cannot distinguish the cases

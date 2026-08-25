@@ -67,9 +67,13 @@ two-threads-one-latch shape the concurrency test copies;
 ## Out of scope
 
 - The password policy. `passwordIsLongEnough` and `passwordIsWithinTheWorkBound` run at the
-  **endpoint** (`TASK-041620`), which answers `422` for a good token and a bad password — a
-  distinction this port cannot express and must not try to.
-- The endpoint's `204`/`400`/`422` — `TASK-041620` through `TASK-041622`.
+  **endpoint** (`TASK-041629`, not `TASK-041620`), and under `ADR-0080` §1 they run **in front of
+  this port**: the order is decode ⇒ policy ⇒ `consume`, so a `422` never reaches `consume` at all
+  and the endpoint answers it whether or not the token is good. A distinction this port cannot
+  express and must not try to — which is why `ADR-0080` §7 keeps `consume(token, secret): Boolean`
+  unchanged and gives it no third outcome.
+- The endpoint's `204`/`400` — `TASK-041620` through `TASK-041622` — and its `422`, which is
+  `TASK-041629`'s alone.
 - A second Argon2 path or second parameter set. `ADR-0031` §4: *"This ADR adds no second password
   rule and no second hashing path."*
 - Deleting the caller's own session selectively. This is not `ADR-0050`'s revoke: **every** session
