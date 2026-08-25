@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041640
 title: A failure between the password and the sessions undoes both
 type: task
-status: backlog
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -172,3 +172,38 @@ deletes the session, so the session assertion must come before it.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The session-survives assertion is vacuous, and it is kept anyway.** `assertEquals(playerId,
+authSessions.playerOf(session), "the session must still resolve — its delete never committed
+either")` cannot be reddened by any mutation of `consume`. The wrapper's `executeUpdate()` sets
+`failedSql` and throws *before* delegating, so the `auth_session` row is never reached at all — a
+`consume` that caught the `SQLException` and returned `false` without ever calling `rollback()`
+would pass it identically. The coder volunteered this as its diff's weakest assertion before being
+asked, and the reviewer confirmed it independently rather than accepting `PostgresDeviceBindingsTest`
+as precedent.
+
+It stays because it is an acceptance criterion and because removing it would prove nothing: nothing
+imaginable would notice its absence, by the same argument that shows it cannot redden. What is worth
+recording is that **its message is wrong in a way that matters** — *"its delete never committed"*
+implies a write that was attempted and rolled back, when the statement never ran. The sibling in
+`PostgresDeviceBindingsTest` says *"the DELETE never really ran"*, which is the honest form. The
+boundary this ticket is named for is genuinely gated, by the two credential assertions above it;
+Proof step 1 reddens at the old-secret line, not here.
+
+**A correction to the coder's own report, from the reviewer.** The report claimed a token spend split
+into a separately-committed transaction would leave every assertion passing, indistinguishable from a
+correct implementation. It would not: an independently-committed token delete leaves the row gone by
+the time the second `consume` runs, so *the same token must still work* reddens. The real limitation
+is narrower and already refused in `## Out of scope` — this test cannot verify `consume` uses **one
+connection**, and a correctly-coordinated multi-connection implementation would be behaviourally
+indistinguishable. That stays a review property.
+
+**Two escape routes from the wrapper, neither reachable by the shipped code.** It matches
+`sql.contains("auth_session")`, so schema qualification (`public.auth_session`) is still caught, but
+**different casing** is not — Kotlin's `contains` is case-sensitive while Postgres folds unquoted
+identifiers — and neither is a **different statement API**: only the single-`String`
+`prepareStatement` overload is overridden, and `createStatement()` or any other overload passes
+through the delegate unguarded. Both are properties of the harness rather than defects here, and both
+are the kind of thing that goes unnoticed until someone edits `consume`.
