@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040706
 title: The recovery leaves no row in either table a profile occupies
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: S
@@ -160,3 +160,23 @@ argument applies here, and more sharply: `device_binding`'s interesting mutation
 
 **This is the direct half of the story's claim. `TASK-040709` is the durable half** — the arc
 assertions here cover the operations this scenario performs, and nothing more.
+
+**The blindness was demonstrated, not asserted.** A `player` row planted mid-bracket by raw SQL —
+`INSERT INTO player (id) VALUES ('11111111-…')`, no handle, no duel rows — reddens
+`theRecoveryCreatesNoPlayerRow` **alone**, on whole-table multiset equality, while all seven
+`assertCoinInvariantHolds` calls stay green. Coder and reviewer ran it independently. Five earlier
+tickets in this story were each told the invariant could not see this and that `TASK-040706` would
+catch it; that is now a fact a gate holds rather than a claim in a Notes section.
+
+**`theFreshDeviceHasNoLiveBindingAndTheOriginalHasOne` is dominated, and the ticket mandates it
+anyway.** The reviewer could construct no mutation that reddens the count assertion without the
+whole-table snapshot equality also catching it — the count reads the same final state the "after"
+snapshot captures, so anything visible to one is visible to the other. It is not *vacuous*: flipping
+`liveBindingCountFor`'s `=` to `<>` reddens it alone with `expected: <0> but was: <2>`, and its two
+call sites assert two different expected values, so neither is true for free. Recorded because
+"dominated" and "vacuous" are different findings and only the second is a defect — a dominated test
+that names a specific fact still documents it.
+
+**Both `## Proof` mutations were correct as written**, the first ticket in this story for which that
+held. `TASK-040702`'s named a branch the fixed seeds never reach; `TASK-040704`'s covered two of
+three new tests and argued about the third.
