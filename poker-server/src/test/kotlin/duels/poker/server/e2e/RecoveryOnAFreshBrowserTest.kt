@@ -3,10 +3,13 @@ package duels.poker.server.e2e
 import duels.poker.server.db.PostgresTestSupport
 import duels.poker.server.db.assertCoinInvariantHolds
 import duels.poker.server.http.DEVICE_ID_HEADER
+import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.SignInResponse
 import duels.poker.server.protocol.protocolJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -90,6 +93,46 @@ internal class RecoveryOnAFreshBrowserTest {
         )
     }
 
+    @Test
+    fun theFreshBrowsersWelcomeNamesTheRecoveredAccount() {
+        val record = runRecovery()
+        assertEquals(
+            record.winnerProfileAfterDuel.playerId,
+            record.freshWelcome.playerId,
+            "fresh browser deviceId=$FRESH_DEVICE: Welcome named ${record.freshWelcome.playerId}, " +
+                "expected the winner's own playerId ${record.winnerProfileAfterDuel.playerId}, read " +
+                "over HTTP right after the duel, before either client knew who would win",
+        )
+    }
+
+    @Test
+    fun theFreshBrowsersWelcomeCarriesNoDeviceId() {
+        val record = runRecovery()
+        assertEquals(
+            null,
+            record.freshWelcome.deviceId,
+            "fresh browser deviceId=$FRESH_DEVICE: expected Welcome.deviceId null (the session " +
+                "outranks the device id, ADR-0030 §2), got ${record.freshWelcome.deviceId}",
+        )
+    }
+
+    /**
+     * The positive control [theFreshBrowsersWelcomeCarriesNoDeviceId] needs beside it: a `Welcome`
+     * whose `deviceId` were *always* null would satisfy that test for free. This is the input that
+     * says otherwise — the same winner's device, reconnecting with no token, still gets its own
+     * device id back.
+     */
+    @Test
+    fun theOriginalDevicesWelcomeStillCarriesItsDeviceId() {
+        val record = runRecovery()
+        assertEquals(
+            record.winnerDeviceId,
+            record.originalWelcome.deviceId,
+            "original device: expected Welcome.deviceId equal to winnerDeviceId=" +
+                "${record.winnerDeviceId}, got ${record.originalWelcome.deviceId}",
+        )
+    }
+
     /**
      * Boots the shipped composition against [dataSource] — `installDuelServer(dataSource)`, then
      * `createClient { install(WebSockets) }`, exactly as [IdentityMovesNoCoinTest] does — opens
@@ -144,6 +187,23 @@ internal class RecoveryOnAFreshBrowserTest {
             val originalProfile = client.profileOf(winner.deviceId)
             val loserProfile = client.profileOf(loser.deviceId)
 
+            // The positive control, taken first: the winner's own device, no token. ADR-0018
+            // gives a player one live socket and the newest wins, and both this handshake and the
+            // fresh browser's below resolve to the same player, so taking this one second would
+            // have it evicted before its Welcome could be read.
+            val originalWelcome = client.webSocketSession("/ws").completeHandshake(winner.deviceId)
+
+            // A browser that has never connected recovers the account: no X-Device-Id, no
+            // Authorization — sign-in resolves neither (ADR-0030 §2, AuthRoutes.kt's own KDoc).
+            val sessionToken = client.signIn(RECOVERY_HANDLE, RECOVERY_PASSWORD)
+            dataSource.assertCoinInvariantHolds("after the fresh browser signs in")
+
+            // The fresh browser's own handshake: a device id it has never presented before, and
+            // the token, together in one Hello — a real client keeps sending its device id whether
+            // or not it holds a token (ADR-0030 §8), and this evicts the original device's socket.
+            val freshWelcome = client.webSocketSession("/ws").completeHandshake(FRESH_DEVICE, sessionToken)
+            dataSource.assertCoinInvariantHolds("after the fresh browser's handshake")
+
             record = RecoveryRecord(
                 winnerDeviceId = winner.deviceId,
                 loserDeviceId = loser.deviceId,
@@ -151,6 +211,9 @@ internal class RecoveryOnAFreshBrowserTest {
                 loserProfileAfterDuel = loserProfileAfterDuel,
                 originalProfile = originalProfile,
                 loserProfile = loserProfile,
+                sessionToken = sessionToken,
+                originalWelcome = originalWelcome,
+                freshWelcome = freshWelcome,
             )
         }
         checkNotNull(record) { "runRecovery: testApplication completed without producing a RecoveryRecord" }
@@ -197,6 +260,30 @@ internal class RecoveryOnAFreshBrowserTest {
         }
         return response.status
     }
+
+    /**
+     * Signs in with [handle] and [password] over `POST /api/auth/sign-in`, asserting the response
+     * is `200`, and returns the issued session token — copied from `IdentityMovesNoCoinTest`, not
+     * shared, because a file-private top-level declaration in Kotlin is scoped to the file that
+     * declares it.
+     *
+     * Carries no device id header and no `Authorization` header: sign-in resolves no identity of
+     * its own — no `X-Device-Id` and no `Authorization` header are read (`ADR-0030` §2,
+     * `AuthRoutes.kt`'s own KDoc) — which is precisely what lets a browser that has never
+     * connected recover an account.
+     */
+    private suspend fun HttpClient.signIn(handle: String, password: String): String {
+        val response = post("/api/auth/sign-in") {
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"handle":"$handle","password":"$password"}""")
+        }
+        assertEquals(
+            HttpStatusCode.OK,
+            response.status,
+            "POST /api/auth/sign-in for handle=$handle returned ${response.status}",
+        )
+        return protocolJson.decodeFromString<SignInResponse>(response.bodyAsText()).sessionToken
+    }
 }
 
 /**
@@ -213,6 +300,13 @@ internal class RecoveryOnAFreshBrowserTest {
  *   the value the whole story compares against.
  * @property loserProfile The loser's whole `GET /api/me` response, read at the same moment as
  *   [originalProfile], after the winner has signed up but the loser has not.
+ * @property sessionToken The session token `POST /api/auth/sign-in` issued for
+ *   `RECOVERY_HANDLE`/`RECOVERY_PASSWORD`.
+ * @property originalWelcome The whole `Welcome` frame the winner's own device received on
+ *   reconnecting with no token — the positive control, taken before the fresh browser's
+ *   handshake evicts it.
+ * @property freshWelcome The whole `Welcome` frame the fresh browser received, presenting
+ *   `FRESH_DEVICE` and [sessionToken] together in one `Hello`.
  */
 private data class RecoveryRecord(
     val winnerDeviceId: String,
@@ -221,8 +315,14 @@ private data class RecoveryRecord(
     val loserProfileAfterDuel: ProfileResponse,
     val originalProfile: ProfileResponse,
     val loserProfile: ProfileResponse,
+    val sessionToken: String,
+    val originalWelcome: ServerMessage.Welcome,
+    val freshWelcome: ServerMessage.Welcome,
 )
 
 private const val RECOVERED_NAME: String = "Champion"
 private const val RECOVERY_HANDLE: String = "Recovered_1"
 private const val RECOVERY_PASSWORD: String = "password1"
+
+/** The device id a browser that has never connected before presents, alongside a session token. */
+private const val FRESH_DEVICE: String = "e2e-fresh-browser"
