@@ -57,7 +57,7 @@ under it;
 
 - Wording either mail. `ADR-0031`'s *What this does not settle* hands that to `STORY-0412` under
   `EPIC-06`'s design language.
-- Documenting `baseUrl`'s configuration key. It is `DEC-072`'s and `TASK-041627`'s.
+- Documenting `baseUrl`'s configuration key. `ADR-0077` §6 settled it and `TASK-041632` ships it.
 - The two budgets' numbers — `DEC-073`. This ticket writes *over budget answers `202`*, which
   `ADR-0031` §5 fixes, and names no number.
 - Any code change. If a status in `ADR-0031` §5 turns out not to match what a route does, that is a

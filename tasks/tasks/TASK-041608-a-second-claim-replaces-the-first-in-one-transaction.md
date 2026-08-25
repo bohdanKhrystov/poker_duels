@@ -63,7 +63,7 @@ class copies;
 - Requiring the current password. That is the endpoint's job (`TASK-041625`), because the port has
   no `Credentials` and should not grow one.
 - Sending anything. `claimPending` mints and stores; the mail is `DEC-072`'s.
-- Wiring the class into `ServerComponents` — `TASK-041627`.
+- Wiring the class into `ServerComponents` — `TASK-041634`.
 
 ## Tests
 
