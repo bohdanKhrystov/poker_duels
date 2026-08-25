@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040702
 title: A duel the recovered account will remember
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: S
@@ -147,3 +147,27 @@ unaffected by this file's existence and must stay unaffected.
 hard-coded seat `0` that passed eight of nine tests. Here the winner is whichever seat the engine
 adjudicated, and the loser is the other one; the story's later tickets all hang off `winner`, so a
 seat assumed once would be assumed everywhere.
+
+**The Proof's second mutation is wrong, and the substitute was right.** This ticket says to mutate
+the `outcome.winner == 0` branch of `CoinDeltas`. For this fixture's seeds that branch never fires:
+`SocketLadderTest`'s KDoc already records, as an established fact about `HAND_SEED`/`POLICY_SEED`,
+that seat 1 — the `GUEST_DEVICE` client — wins in nine hands. Applied literally the mutation leaves
+both tests green and proves nothing. The coder applied the same intent to the arm that does fire
+(`else -> CoinDeltas(seat0 = 0, seat1 = 1)`) and both methods redden inside `runRecovery()`'s "after
+the duel" checkpoint with `[after the duel] P2 violated (ADR-0030 §5, global): SUM(player.coin_balance)
+= 1, SUM(duel_result.coin_delta) = 1`. The reviewer reproduced all three runs independently rather
+than accepting the report. Eleventh wrong `## Proof` in this run.
+
+**A fixed seed turns the other arm into dead code.** The Proof was written as though either seat
+might win. It cannot: the seeds are fixed and a merged test already documented which seat they
+favour. A mutation aimed at the arm that never fires is untestable by construction and reads exactly
+like one that works — which is why the instruction to *run* the Proof rather than trust it is the
+part that caught this.
+
+**`loserDeviceId` is populated and asserted by nothing.** `RecoveryRecord`'s two device-id fields
+appear in this ticket only inside failure-message interpolation. `TASK-040704` pins `winnerDeviceId`
+via `theOriginalDevicesWelcomeStillCarriesItsDeviceId`; no ticket in the story reads `loserDeviceId`.
+An edit inside `runRecovery()` that swapped which device id belongs to which player, while leaving
+the `ProfileResponse` objects correctly assigned, would pass every test in this file. Recorded rather
+than filed because `TASK-040705` and `TASK-040707` may yet read it; if the story closes with it still
+unread, it becomes a ticket then.
