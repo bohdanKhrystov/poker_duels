@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040707
 title: A wrong password from the fresh browser issues no session
 type: task
-status: backlog
+status: ready
 parent: STORY-0407
 module: poker-server
 estimate: S
