@@ -15,7 +15,15 @@ internal fun profileResponse(
     displayName: String? = null,
     displayNameRemoved: Boolean = false,
     deviceRouteLive: Boolean = true,
-): ProfileResponse = ProfileResponse(playerId, coinBalance, displayName, displayNameRemoved, deviceRouteLive)
+    hasRecoveryEmail: Boolean = false,
+): ProfileResponse = ProfileResponse(
+    playerId,
+    coinBalance,
+    displayName,
+    displayNameRemoved,
+    deviceRouteLive,
+    hasRecoveryEmail,
+)
 
 internal fun duelSummaryResponse(
     duelId: String,

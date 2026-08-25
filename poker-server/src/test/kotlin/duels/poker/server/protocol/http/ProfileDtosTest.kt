@@ -2,9 +2,11 @@ package duels.poker.server.protocol.http
 
 import duels.poker.server.protocol.protocolJson
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ProfileDtosTest {
@@ -13,7 +15,7 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 3)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals(
-            """{"playerId":"p-1","coinBalance":3,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true}""",
+            """{"playerId":"p-1","coinBalance":3,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":false}""",
             encoded,
         )
     }
@@ -141,7 +143,7 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 0, displayName = null, displayNameRemoved = true)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals(
-            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":true,"deviceRouteLive":true}""",
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":true,"deviceRouteLive":true,"hasRecoveryEmail":false}""",
             encoded,
         )
 
@@ -154,12 +156,48 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 0, deviceRouteLive = false)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals(
-            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":false}""",
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":false,"hasRecoveryEmail":false}""",
             encoded,
         )
 
         val decoded = protocolJson.decodeFromString(ProfileResponse.serializer(), encoded)
         assertEquals(profile, decoded)
+    }
+
+    @Test
+    fun aProfileWithRecoveryOnSaysSo() {
+        val profile = profileResponse("p-1", 0, hasRecoveryEmail = true)
+        val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
+        assertEquals(
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":true}""",
+            encoded,
+        )
+    }
+
+    @Test
+    fun aProfileWithNoRecoveryEmailSaysSo() {
+        val profile = profileResponse("p-1", 0, hasRecoveryEmail = false)
+        val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
+        assertEquals(
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":false}""",
+            encoded,
+        )
+    }
+
+    // Two independent checks, because they guard two different mistakes: a new field named for
+    // an address (caught by the key scan below, whatever it is called) and the existing boolean
+    // repurposed to carry the address itself under its own name (caught only by the "@" scan,
+    // since that key is deliberately excluded from the name check).
+    @Test
+    fun theProfileNeverCarriesAnAddress() {
+        val profile = profileResponse("p-1", 0, hasRecoveryEmail = true)
+        val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
+        assertFalse(encoded.contains("@"))
+
+        val keys = Json.parseToJsonElement(encoded).jsonObject.keys
+        val suspectKeys = keys.filter { it != "hasRecoveryEmail" }
+            .filter { it.contains("address", ignoreCase = true) || it.contains("email", ignoreCase = true) }
+        assertEquals(emptyList<String>(), suspectKeys)
     }
 
     @Test

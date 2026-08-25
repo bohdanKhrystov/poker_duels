@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041616
 title: The profile says recovery is on, and never what the address is
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -173,3 +173,28 @@ the proof that no gate couples those tests to this change, and a fourth item inv
 here would assert a coupling the probe had already disproved. The gap that discovery opened is real
 and is written down in `## Proof` §4 rather than papered over: it stands open from this ticket's
 merge until `TASK-041641`'s.
+
+**This ticket's acceptance criteria named tests its own `Files` table forbade, and the coder refused
+to resolve that by widening.** Two methods on `PostgresProfileReadsTest.kt` were named nine times in
+the Tests section and the criteria; the file was absent from the six-row table, and the ticket is
+`atomic:`, so its table is the whole change. `ADR-0070` §4's propagation exception explicitly excludes
+*adds a test*, so the coder had no route that stayed inside the ticket. It reported and stopped.
+
+**The ticket was narrowed rather than widened, on its own evidence.** Widening would have required a
+fourth `atomic:` item asserting that `PostgresProfileReadsTest.kt` cannot be split out — but this
+ticket's Notes already record that its `ADR-0070` probe ran the whole gate set **green without that
+file**, because the class constructs no `ProfileResponse`. A green probe run is proof no such gate
+exists, and an `atomic:` list is worth something only while every item in it is true. The two tests
+became `TASK-041641`, a plain `depends_on`.
+
+**The root cause is a `verify:` block filtered by class.** `--tests 'SomeTest'` exits 0 whether or not
+a named method inside it exists, which is exactly how two missing methods cleared every gate this
+ticket had. `TASK-041641`'s verify names the two **methods**, so a filter matching nothing fails the
+Gradle task — the idiom already in use in `STORY-0506`.
+
+**What is gated here, and what is not.** Adding a `recoveryEmail: String?` to the response reddens
+`theProfileNeverCarriesAnAddress` at its `@` assertion and all five golden strings; a fixture that
+ignores its argument reddens `aProfileWithRecoveryOnSaysSo` alone. But wiring
+`PostgresProfileReads`'s field to a constant — **either direction** — reddens nothing, and the ticket's
+Proof §4 now records that as an open gap naming its successor rather than predicting a red that does
+not occur. Coder and reviewer each ran all four.

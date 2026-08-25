@@ -109,6 +109,12 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
     // would be a lie. Both statements below carry the same correlated EXISTS PostgresProfileReads
     // uses — correlated to player.id, the row each statement already returns — so this stays one
     // round trip with no conditional read.
+    //
+    // hasRecoveryEmail also takes a literal, on ADR-0031 §6.3's ticket-scoped reasoning: a name
+    // write neither reads nor changes recovery_email, so this response does not attempt the fact
+    // rather than adding a third correlated EXISTS to both statements below. Unlike
+    // displayNameRemoved's false above, this one is not false-by-construction — a player with a
+    // verified address who renames still reads false on this particular response.
     private fun ResultSet.toProfile(): ProfileResponse =
         ProfileResponse(
             getString("id"),
@@ -116,6 +122,7 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
             getString("display_name"),
             false,
             getBoolean("device_route_live"),
+            false,
         )
 
     private companion object {
