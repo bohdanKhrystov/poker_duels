@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041602
 title: Two strangers may both claim one address, and nothing cascades
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -119,3 +119,30 @@ Each mutation is applied to `V8__recovery_email.sql`, run, then reverted.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The cascade test's count assertion is what stops it being a tautology.** `assertEquals(3,
+foreignKeys.size, …)` runs before any `delete_rule` is examined, so a filter that matches nothing
+fails on the count rather than satisfying *every row is `NO ACTION`* over an empty set. Coder and
+reviewer each forced the empty case and confirmed it fires. The test then asserts the three
+constraint names as well as the count — `recovery_email_player_id_fkey`,
+`email_verification_player_id_fkey`, `password_reset_player_id_fkey`, read from
+`information_schema` rather than guessed — so it names what it found instead of only reporting that
+nothing in it misbehaved.
+
+**Correction to this ticket's `## Proof`.** It predicts *"expected 3, got 0"* from typo-ing a table
+name. Typo-ing **one** of the three gives *"Expected 3, actual 2"*; the literal `0` appears only when
+the whole filter collapses to a single non-matching name. Both reddening, so the property held either
+way — but the coder ran both readings and reported the imprecision rather than picking the one that
+matched. Fourteenth `## Proof` examined this run: imprecise, not wrong.
+
+**The refusals are gated against how they would actually be undone.** These tests run against the
+database after `Migrations.migrate` applies every migration, not against `V8`'s text. A later
+migration adding `UNIQUE (address)` to `email_verification` — the realistic way an attacker-squat
+defence gets tidied away by someone who reads the table and sees an obviously missing index —
+reddens `twoPlayersMayBothHoldAPendingClaimOnOneAddress` exactly as editing `V8` does.
+
+**Two players are necessary, not tidy.** `email_verification_one_per_player` rejects a second insert
+under the same `player_id` before the address question is reached, so a one-player version of this
+test could not distinguish the squat defence from that constraint.
