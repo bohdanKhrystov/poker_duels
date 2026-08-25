@@ -2340,7 +2340,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041638](tasks/TASK-041638-the-shape-gate-holds-for-four-more-shapes-and-names-the-one-it-cannot.md) The shape gate holds for four more shapes, and names the one it cannot | S | backlog |
 | | [TASK-041639](tasks/TASK-041639-a-reset-that-cannot-write-the-password-spends-no-token.md) A reset that cannot write the password spends no token | XS | backlog |
 | | [TASK-041640](tasks/TASK-041640-a-failure-between-the-password-and-the-sessions-undoes-both.md) A failure between the password and the sessions undoes both | S | backlog |
-| | [TASK-041641](tasks/TASK-041641-the-profiles-recovery-flag-is-that-players-and-a-pending-address-is-not-one.md) The profile's recovery flag is that player's, and a pending address is not one | XS | **ready** |
+| | [TASK-041641](tasks/TASK-041641-the-profiles-recovery-flag-is-that-players-and-a-pending-address-is-not-one.md) The profile's recovery flag is that player's, and a pending address is not one | XS | done |
 | [STORY-0417](stories/STORY-0417-the-recovery-screens.md) The recovery screens — attach an address, and reset a password | | | backlog |
 
 `STORY-0416`'s rows are in **id order**, and `depends_on` is the **sequence**; since `ADR-0077` and
