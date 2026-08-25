@@ -2,7 +2,7 @@
 id: STORY-0416
 title: The recovery email, verified, and the password reset
 type: story
-status: backlog
+status: ready
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, http, security, mail]
@@ -65,7 +65,72 @@ an **optional, verified-only** address in its own table.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0416` once `STORY-0405` has merged.* | — |
+| [TASK-041601](../tasks/TASK-041601-three-tables-that-cannot-become-a-mailing-list.md) | Three tables that cannot become a mailing list | **ready** |
+| [TASK-041602](../tasks/TASK-041602-two-strangers-may-both-claim-one-address-and-nothing-cascades.md) | Two strangers may both claim one address, and nothing cascades | backlog |
+| [TASK-041603](../tasks/TASK-041603-an-address-that-redacts-itself.md) | An address that redacts itself | backlog |
+| [TASK-041604](../tasks/TASK-041604-two-tokens-minted-the-way-a-session-token-is.md) | Two tokens, minted the way a session token is | backlog |
+| [TASK-041605](../tasks/TASK-041605-one-digest-for-both-recovery-tokens.md) | One digest for both recovery tokens | backlog |
+| [TASK-041606](../tasks/TASK-041606-a-port-that-can-send-exactly-two-mails.md) | A port that can send exactly two mails | backlog |
+| [TASK-041607](../tasks/TASK-041607-the-port-where-a-pending-address-and-a-proven-one-both-live.md) | The port where a pending address and a proven one both live | backlog |
+| [TASK-041608](../tasks/TASK-041608-a-second-claim-replaces-the-first-in-one-transaction.md) | A second claim replaces the first, in one transaction | backlog |
+| [TASK-041609](../tasks/TASK-041609-the-first-to-verify-takes-the-address.md) | The first to verify takes the address | backlog |
+| [TASK-041610](../tasks/TASK-041610-a-pending-address-answers-exactly-as-an-unknown-one.md) | A pending address answers exactly as an unknown one | backlog |
+| [TASK-041611](../tasks/TASK-041611-erasing-an-address-is-one-statement-and-so-is-forgetting-a-stale-one.md) | Erasing an address is one statement, and so is forgetting a stale one | backlog |
+| [TASK-041612](../tasks/TASK-041612-the-existing-ticker-forgets-unproven-addresses-too.md) | The existing ticker forgets unproven addresses too | backlog |
+| [TASK-041613](../tasks/TASK-041613-one-live-reset-token-and-a-quarter-hour-of-silence.md) | One live reset token, and a quarter hour of silence | backlog |
+| [TASK-041614](../tasks/TASK-041614-one-statement-spends-the-token-and-the-same-transaction-ends-every-session.md) | One statement spends the token, and the same transaction ends every session | backlog |
+| [TASK-041615](../tasks/TASK-041615-a-session-holder-proves-the-password-they-already-have.md) | A session holder proves the password they already have | backlog |
+| [TASK-041616](../tasks/TASK-041616-the-profile-says-recovery-is-on-and-never-what-the-address-is.md) | The profile says recovery is on, and never what the address is — **`atomic:`, 6 files** | backlog |
+| [TASK-041617](../tasks/TASK-041617-five-endpoints-and-a-field-written-down.md) | Five endpoints and a field, written down | backlog |
+| [TASK-041618](../tasks/TASK-041618-a-token-from-the-mailbox-proves-the-address.md) | A token from the mailbox proves the address | backlog |
+| [TASK-041619](../tasks/TASK-041619-three-ways-to-fail-verification-and-one-answer-for-all-of-them.md) | Three ways to fail verification, and one answer for all of them | backlog |
+| [TASK-041620](../tasks/TASK-041620-a-reset-takes-a-token-in-a-body-and-never-in-a-url.md) | A reset takes a token in a body, and never in a URL | backlog |
+| [TASK-041621](../tasks/TASK-041621-two-submissions-of-one-link-and-only-one-of-them-works.md) | Two submissions of one link, and only one of them works | backlog |
+| [TASK-041622](../tasks/TASK-041622-a-reset-signs-you-out-everywhere-including-here.md) | A reset signs you out everywhere, including here | backlog |
+| [TASK-041623](../tasks/TASK-041623-taking-the-address-back-costs-the-password.md) | Taking the address back costs the password | backlog |
+| [TASK-041624](../tasks/TASK-041624-which-strings-are-an-address.md) | Which strings are an address | **blocked — `DEC-071`** |
+| [TASK-041625](../tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) | Attaching an address costs the current password | **blocked — `DEC-071`, `DEC-072`** |
+| [TASK-041626](../tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) | Four different things happen, and the caller reads the same answer | **blocked — `DEC-072`** |
+| [TASK-041627](../tasks/TASK-041627-a-build-with-no-sender-is-a-valid-build.md) | A build with no sender is a valid build | **blocked — `DEC-072`** |
+| [TASK-041628](../tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) | Two budgets that say nothing when they refuse | **blocked — `DEC-073`** |
+| [TASK-041629](../tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) | A good token, and a password the policy refuses | **blocked — `DEC-074`** |
+
+## Open decisions
+
+Split on 2026-08-25 into **29 tickets**, of which `TASK-041601` is the one startable ticket and six
+are `blocked`. Four decisions were raised and none was answered inside a ticket.
+
+| ID | Kind | Blocks | In one sentence |
+| --- | --- | --- | --- |
+| `DEC-071` | **Product owner's** | `TASK-041624`, `TASK-041625` | Which strings does `POST /api/auth/recovery-email` accept as an address, and what is the player told when one is refused? |
+| `DEC-072` | **Architect's** | `TASK-041625`, `TASK-041626`, `TASK-041627` | What is the shape of the mail seam, and what are its failure, lifetime and observability semantics — including `baseUrl` and the no-sender state? |
+| `DEC-073` | **Architect's** | `TASK-041628` | What are the two numbers for each of the `recovery-email` and `forgot-password` budgets, and does an over-budget attempt still count? |
+| `DEC-074` | **Architect's** | `TASK-041629` | Does a good reset token survive a `422`? `ADR-0031` §5's status table and §4's single-use `DELETE ... RETURNING` cannot both hold as written |
+
+**Nothing here is the human's, and nothing here is about money.** `ADR-0031` §7 already defers the
+transport — SMTP relay or provider API, and therefore any bill — to `EPIC-07`, and every ticket in
+this story sends nothing under every answer to `DEC-072`. Nothing in this story touches the vision's
+*What it is* or *What it is not*: the human already chose *optional email, recovery only*, and
+`ADR-0031` records that choice verbatim. `DEC-071` is the product owner's rather than the human's
+because it applies that choice rather than changing it — the same test `DEC-043` (*what may a
+password be*) passed.
+
+**Twenty-three tickets are unblocked**, and they are the whole schema, both token types, the digest,
+the mailer port and its structural test, both storage ports, the sweep, `hasRecoveryEmail`,
+`docs/protocol.md`, and three of the five endpoints. The two blocked endpoints are the two that
+send mail, plus the one refusal that needs a rule.
+
+**One deliberate divergence from `ADR-0031`, recorded rather than resolved silently.** §6.2's port
+snippet writes `handle: LoginHandle`; no such type exists, because `loginHandleOrNull` returns
+`String?` and `Credentials` takes `identifier: String`. `TASK-041606` uses `String` and says so.
+The mechanism §6.2 specifies — two members, named for the only two permitted mails — is transcribed
+exactly, so nothing the ADR relies on moves.
+
+**One thing this story needs that `ADR-0031` does not mention.** Attaching and detaching both cost
+the current password, and `Credentials` has no way to check one for a caller identified by session:
+`verify` is keyed by identifier. `TASK-041615` adds `verifyCurrent(playerId, kind, presented)`
+rather than putting a player→identifier reverse lookup in the codebase, which would make
+`credential.identifier` readable.
 
 ## Acceptance criteria
 

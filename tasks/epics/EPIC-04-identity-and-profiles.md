@@ -140,7 +140,7 @@ recorded rather than quietly absorbed:
 | [STORY-0413](../stories/STORY-0413-the-history-screen.md) | The history screen — pages, filters, search | 0409, 0411 | backlog |
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
 | [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | backlog |
-| [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | backlog |
+| [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). None is the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | [STORY-0417](../stories/STORY-0417-the-recovery-screens.md) | The recovery screens — attach an address, and reset a password | 0412, 0416 | backlog |
 
 ## What can run in parallel
@@ -205,10 +205,12 @@ without adding a story.
 
 ## Open decisions
 
-**None.** `DEC-054`, raised on 2026-08-19 by the ADR that answered `DEC-053` and the last decision
-this epic was waiting on, was answered on 2026-08-25 and is recorded below. `DEC-069`, raised on
-2026-08-23 when `STORY-0405` was split, was answered on 2026-08-24 and is recorded below too.
-Everything this epic has raised is answered, and **`STORY-0412` is gated by no decision at all**.
+**Four, raised on 2026-08-25 when `STORY-0416` was split: one the product owner's and three the
+architect's.** `DEC-054`, raised on 2026-08-19 by the ADR that answered `DEC-053` and the last
+decision `STORY-0412` was waiting on, was answered the same day and is recorded below. `DEC-069`,
+raised on 2026-08-23 when `STORY-0405` was split, was answered on 2026-08-24 and is recorded below
+too. **`STORY-0412` is still gated by no decision at all**, and the four new ones block six tickets
+inside `STORY-0416` and nothing else in this epic.
 
 `DEC-054` — *does the web client grow URL-addressable routes and a working browser Back, and what
 carries them?* — was answered on 2026-08-25 by
@@ -234,6 +236,24 @@ unknown fragment renders the first screen with no error. **A separate word, wort
 this epic uses both:** `STORY-0412`'s *"which routes are live"* means the **sign-in** routes of
 `ADR-0037` — the device binding and the credential — and nothing about that acceptance criterion
 changes because a screen gained an address.
+
+**None of the four is the human's, and this was checked rather than assumed.** `STORY-0416`'s
+subject is email delivery, which is the shape of question that usually reaches the human — a
+provider is a bill, and sending to real addresses is deliverability risk with consequences outside
+the software. Neither arises, because
+[`ADR-0031`](../../docs/adr/ADR-0031-an-optional-verified-recovery-email.md) §7 already settled it:
+*"The mail transport is not decided here... belongs to `EPIC-07`; the port is the boundary that lets
+this ship without it"*, and *"a build with no sender configured is a valid state."* Every ticket in
+`STORY-0416` sends nothing under every answer to `DEC-072`. Nor does anything there touch the
+vision's *What it is* / *What it is not*: the human chose *optional email, recovery only* when they
+answered `DEC-027`, and these four apply that choice rather than revisiting it.
+
+| ID | Question | Blocks |
+| --- | --- | --- |
+| `DEC-071` | **The product owner's** — which strings does `POST /api/auth/recovery-email` accept as an address, and what is the player told when one is refused? `ADR-0031` §5 answers `400` for *"an address that is not syntactically an address"* and states no rule; §2 already settles storage and the fold, so only the acceptance predicate is open. That `400` is the **only** thing the endpoint ever tells a player about their address — every other outcome is a silent `202` — and the cost runs one way: a rule that refuses a real mailbox denies that player recovery, which `ADR-0031`'s Consequences make a total, permanent loss of the account, its coins and its ladder place. Routed on `DEC-043`'s precedent (*what may a password be*) | `TASK-041624` and `TASK-041625`; nothing else in the story |
+| `DEC-072` | **The architect's** — what is the shape of the mail seam, and what are its failure, lifetime and observability semantics? `ADR-0031` §7 fixes the port and the package and declares a build with no sender a valid state, without saying what the wiring holds in it — a nullable port every call site branches on, or a no-op implementation that makes *no sender* invisible. §5 requires the `202` written **before any mail work** with delivery *"on a detached coroutine"*, and settles nothing about what that coroutine is a child of, what a failed send does after the token row is committed, whether anything is retried, or **what a test can await** — the last of which decides whether *a mail was sent* is assertable at all, and four criteria need it. Also where `baseUrl` lives and what an unconfigured one does, since §4 forbids deriving it from any header. **Choosing a relay or a provider API is explicitly not in it**: that is `EPIC-07`'s, and a bill, and the human's | `TASK-041625`, `TASK-041626`, `TASK-041627` |
+| `DEC-073` | **The architect's** — what are the two numbers for each of the `recovery-email` and `forgot-password` budgets, and does an over-budget attempt still count against its own window? `DEC-069`'s shape one endpoint pair later: §5 fixes the mechanism, the key and the answer (`202`, identical to success) and fixes no numbers. `ADR-0074`'s argument does **not** transfer — it turned on shared-address collateral being *visible*, so a throttled player could pace; here over budget is indistinguishable from success and they are told nothing. §5 also already carries a second, durable limiter (no mail within fifteen minutes of a live token), so the answer must say what the address budget is still for | `TASK-041628` |
+| `DEC-074` | **The architect's** — does a good reset token survive a `422`, and by what mechanism? `ADR-0031` §5 gives `reset-password` a `422` *"when the token was good and the new password fails policy"*, which presupposes knowing the token is good before the password is judged and implies a retry; §4 makes consumption one `DELETE ... RETURNING` with *"no read-then-write window"*, under which knowing **is** spending. A conflict between two sections of a merged ADR rather than an acknowledged gap — §*What this does not settle* does not mention it | `TASK-041629`; `TASK-041620` ships the route with no policy and no `422` |
 
 `DEC-069` — raised on 2026-08-23 when `STORY-0405` was split, blocking `TASK-040523` and nothing
 else — was answered on 2026-08-24 by
