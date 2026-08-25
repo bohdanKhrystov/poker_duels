@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040703
 title: The name and the password that make the account recoverable
 type: task
-status: backlog
+status: ready
 parent: STORY-0407
 module: poker-server
 estimate: XS
