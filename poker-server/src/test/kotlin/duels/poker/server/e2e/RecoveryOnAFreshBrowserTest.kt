@@ -274,6 +274,63 @@ internal class RecoveryOnAFreshBrowserTest {
         )
     }
 
+    @Test
+    fun afterSigningOutTheFreshBrowserIsAStranger() {
+        val record = runRecovery()
+        assertEquals(
+            HttpStatusCode.Unauthorized,
+            record.freshBrowserStatusAfterSignOut,
+            "GET /api/me with X-Device-Id=$FRESH_DEVICE and no Authorization header, after " +
+                "sign-out: expected status 401 Unauthorized, got " +
+                "${record.freshBrowserStatusAfterSignOut}",
+        )
+    }
+
+    @Test
+    fun theTokenStopsWorkingAfterSigningOut() {
+        val record = runRecovery()
+        assertEquals(
+            HttpStatusCode.Unauthorized,
+            record.tokenStatusAfterSignOut,
+            "GET /api/me with the now-deleted session token and no device id: expected status " +
+                "401 Unauthorized, got ${record.tokenStatusAfterSignOut}",
+        )
+    }
+
+    /**
+     * Two inputs, two different expected values: without [RecoveryRecord.sessionsAfterWrongPassword]
+     * read as `1` first, a `0` after sign-out is equally consistent with a session that was never
+     * issued.
+     */
+    @Test
+    fun signingOutDeletesTheOneSessionRow() {
+        val record = runRecovery()
+        assertEquals(
+            1,
+            record.sessionsAfterWrongPassword,
+            "auth_session row count after the wrong password attempt, before sign-out: expected " +
+                "1, got ${record.sessionsAfterWrongPassword}",
+        )
+        assertEquals(
+            0,
+            record.sessionsAfterSigningOut,
+            "auth_session row count after sign-out: expected 0, got " +
+                "${record.sessionsAfterSigningOut}",
+        )
+    }
+
+    @Test
+    fun theOriginalDeviceIsUnaffectedBySigningOut() {
+        val record = runRecovery()
+        assertEquals(
+            record.originalProfile,
+            record.originalProfileAfterSignOut,
+            "winner deviceId=${record.winnerDeviceId}: profile after the fresh browser signs out " +
+                "(${record.originalProfileAfterSignOut}) differs from the profile before any of " +
+                "this began (${record.originalProfile})",
+        )
+    }
+
     /**
      * Boots the shipped composition against [dataSource] — `installDuelServer(dataSource)`, then
      * `createClient { install(WebSockets) }`, exactly as [IdentityMovesNoCoinTest] does — opens
@@ -373,6 +430,28 @@ internal class RecoveryOnAFreshBrowserTest {
             val freshDeviceLiveBindings = dataSource.liveBindingCountFor(FRESH_DEVICE)
             val originalDeviceLiveBindings = dataSource.liveBindingCountFor(winner.deviceId)
 
+            // Sign out on the fresh browser: the session token is the only credential this call
+            // needs (ADR-0030 §3 — a DELETE against auth_session, 204 in place).
+            assertEquals(
+                HttpStatusCode.NoContent,
+                client.signOut(sessionToken),
+                "POST /api/auth/sign-out with the session token",
+            )
+            val sessionsAfterSigningOut = dataSource.authSessionRowCount()
+
+            // The fresh browser, now signed out: X-Device-Id but no Authorization header at all.
+            // FRESH_DEVICE has no live binding, so this reaches Identity.UnknownDevice only when
+            // both halves are true — a device the directory does not know, and no token beside it.
+            val freshBrowserStatusAfterSignOut = client.profileStatus(deviceId = FRESH_DEVICE)
+
+            // The same, now-deleted token, presented with no device id at all.
+            val tokenStatusAfterSignOut = client.profileStatus(token = sessionToken)
+
+            // The original device, read by its own device id: still its own player, unaffected by
+            // a sign-out that happened on a different browser.
+            val originalProfileAfterSignOut = client.profileOf(winner.deviceId)
+            dataSource.assertCoinInvariantHolds("after signing out")
+
             record = RecoveryRecord(
                 winnerDeviceId = winner.deviceId,
                 loserDeviceId = loser.deviceId,
@@ -396,6 +475,10 @@ internal class RecoveryOnAFreshBrowserTest {
                 wrongPasswordStatus = wrongPasswordStatus,
                 sessionsBeforeWrongPassword = sessionsBeforeWrongPassword,
                 sessionsAfterWrongPassword = sessionsAfterWrongPassword,
+                sessionsAfterSigningOut = sessionsAfterSigningOut,
+                freshBrowserStatusAfterSignOut = freshBrowserStatusAfterSignOut,
+                tokenStatusAfterSignOut = tokenStatusAfterSignOut,
+                originalProfileAfterSignOut = originalProfileAfterSignOut,
             )
         }
         checkNotNull(record) { "runRecovery: testApplication completed without producing a RecoveryRecord" }
@@ -421,6 +504,22 @@ internal class RecoveryOnAFreshBrowserTest {
             "GET /api/me for deviceId=$deviceId returned ${response.status}",
         )
         return protocolJson.decodeFromString(response.bodyAsText())
+    }
+
+    /**
+     * Reads `GET /api/me`'s response status without asserting it — [profileOf] asserts `200` and
+     * decodes the body, so it cannot express a refusal.
+     *
+     * Sets `X-Device-Id` only when [deviceId] is non-null and `Authorization: Bearer $token` only
+     * when [token] is non-null, so a call site sends exactly the headers it names — including a
+     * request that carries neither.
+     */
+    private suspend fun HttpClient.profileStatus(deviceId: String? = null, token: String? = null): HttpStatusCode {
+        val response = get("/api/me") {
+            if (deviceId != null) header(DEVICE_ID_HEADER, deviceId)
+            if (token != null) header(HttpHeaders.Authorization, "Bearer $token")
+        }
+        return response.status
     }
 
     /**
@@ -485,6 +584,16 @@ internal class RecoveryOnAFreshBrowserTest {
             "POST /api/auth/sign-in for handle=$handle returned ${response.status}",
         )
         return protocolJson.decodeFromString<SignInResponse>(response.bodyAsText()).sessionToken
+    }
+
+    /**
+     * Signs [token] out over `POST /api/auth/sign-out`, returning the response status — copied
+     * from `IdentityMovesNoCoinTest`, not shared, because a file-private top-level declaration in
+     * Kotlin is scoped to the file that declares it.
+     */
+    private suspend fun HttpClient.signOut(token: String): HttpStatusCode {
+        val response = post("/api/auth/sign-out") { header(HttpHeaders.Authorization, "Bearer $token") }
+        return response.status
     }
 
     /**
@@ -565,6 +674,15 @@ private fun DataSource.authSessionRowCount(): Int {
  *   attempt, expected to be `1`.
  * @property sessionsAfterWrongPassword The count of `auth_session` rows after the wrong password
  *   attempt, expected to be `1` (unchanged).
+ * @property sessionsAfterSigningOut The count of `auth_session` rows after the fresh browser
+ *   signs out, expected to be `0`.
+ * @property freshBrowserStatusAfterSignOut The HTTP status `GET /api/me` answered for
+ *   `X-Device-Id: FRESH_DEVICE` and no `Authorization` header, read after sign-out — expected to
+ *   be `401 Unauthorized`.
+ * @property tokenStatusAfterSignOut The HTTP status `GET /api/me` answered for the now-deleted
+ *   session token and no device id, read after sign-out — expected to be `401 Unauthorized`.
+ * @property originalProfileAfterSignOut The winner's whole `GET /api/me` response, read by its own
+ *   device id after the fresh browser signs out — expected to equal [originalProfile] unchanged.
  */
 private data class RecoveryRecord(
     val winnerDeviceId: String,
@@ -589,6 +707,10 @@ private data class RecoveryRecord(
     val wrongPasswordStatus: HttpStatusCode,
     val sessionsBeforeWrongPassword: Int,
     val sessionsAfterWrongPassword: Int,
+    val sessionsAfterSigningOut: Int,
+    val freshBrowserStatusAfterSignOut: HttpStatusCode,
+    val tokenStatusAfterSignOut: HttpStatusCode,
+    val originalProfileAfterSignOut: ProfileResponse,
 )
 
 private const val RECOVERED_NAME: String = "Champion"
