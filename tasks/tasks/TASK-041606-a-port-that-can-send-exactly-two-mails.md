@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041606
 title: A port that can send exactly two mails
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

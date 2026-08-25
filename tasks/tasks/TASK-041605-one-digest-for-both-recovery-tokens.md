@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041605
 title: One digest for both recovery tokens
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: XS
@@ -103,3 +103,24 @@ mirrors, including the fresh-`MessageDigest`-per-call comment and the `UTF_8` ch
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The charset is genuinely gated, and the mutation that proves it is not the obvious one.** The coder
+mutated `UTF_8` to the *platform default* and reported it stayed green — but this JVM's default **is**
+UTF-8, so that mutation could not redden by construction and settles nothing. The reviewer ran
+`Charsets.ISO_8859_1` instead, which reddens `aNonAsciiTokenIsHashedAsUtf8` alone: `é` is `C3 A9`
+under UTF-8 and the single byte `E9` under Latin-1. The non-ASCII fixture is what makes the clause
+observable — every token this actually mints is base64 ASCII, for which both charsets agree.
+
+**The goldens are literals, verified against a published value rather than against the code.**
+`"abc"` → `ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad` is the standard SHA-256
+test vector; the reviewer recomputed both independently. A golden produced by running the
+implementation asserts it against itself and survives a change to both sides at once — which is why
+the expected digests are written out rather than derived from a named constant.
+
+**The guard against a plaintext token reaching `token_hash` is the type signature, not these tests.**
+The overloads accept `VerificationToken` and `ResetToken` and never a bare `String`, so a caller
+cannot pass plaintext — and correspondingly, if the API were ever widened to take a `String`, nothing
+in this file would notice. Recorded because the ticket's Goal is phrased as a security property and
+the mechanism delivering it lives in the signature.
