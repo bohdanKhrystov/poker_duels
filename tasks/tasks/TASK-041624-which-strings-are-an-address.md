@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041624
 title: Which strings are an address
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -245,3 +245,32 @@ point, because *why is there an emoji in this test* is the first question a read
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The held-out table is what separates a rule from a lookup, and it works.** `ADR-0078` errs permissive,
+so a predicate that merely looked up the ADR's own §6 fixtures would satisfy every entry in both tables
+and pass a test that only iterates them. Replacing the implementation with a lookup of the seven
+accepted literals reddens `theRuleIsAppliedToStringsInNoFixtureTable` at `postmaster@duels.test` — a
+string in neither table and nowhere in the ADR. The `!in REFUSED` direction falls the same way, since
+five of the eight held-out strings are refusals the ADR never names.
+
+**No suite can defeat a lookup that memorises the suite** — the honest answer to *what wrong predicate
+still passes* is a table of all twenty-two fixtures. What the held-out set buys is that this is now the
+**only** wrong implementation left; every simpler one is caught.
+
+**Three properties the held-out strings exist for, each confirmed by mutation.** `String.length`
+standing in for `codePointCount` reddens at the astral fixture — `"😀".repeat(124) + "@duels.test"`,
+135 code points against 259 UTF-16 units, since every string §6 names is BMP. The 254 ceiling is
+asserted from **both** sides with literal fixtures at 254 and 255 code points: `>254` weakened to `>=254`
+reddens the accepted one, tightened to `>255` reddens the refused one. And the control-character clause
+is caught by two real escapes — a NUL and a tab — because a clause with no fixture containing an actual
+control character is a clause nothing tests.
+
+**Every fixture is a literal.** A test computing a length from `MAX_ADDRESS_CODE_POINTS` would move with
+the bug and prove nothing; the reviewer confirmed no fixture references the constant.
+
+**The permissive direction is real, not nominal.** `a@b` and `bob@localhost` are accepted — the naive
+`.+@.+\..+` refuses both and would be wrong — while a bare handle and an empty string are refused, so
+the predicate is not vacuous. `emailAddressOrNull` returns its input unchanged: no trim, no lowercasing,
+no normalisation, since `ADR-0078` §2 keeps storage and folding elsewhere.
