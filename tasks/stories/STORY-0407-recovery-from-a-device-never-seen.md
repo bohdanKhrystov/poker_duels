@@ -2,7 +2,7 @@
 id: STORY-0407
 title: Recovery — signing in from a device that has never been seen
 type: story
-status: backlog
+status: ready
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, e2e]
@@ -40,9 +40,30 @@ is shown to have paid it off. It is also the shape of the epic's definition of d
 
 ## Tasks
 
+Nine, in a single dependency chain: each is startable when the one above it merges, and no two
+startable tickets touch the same file. Seven of them build one scenario class, `RecoveryOnAFreshBrowserTest`,
+step by step — the story's own note that its weight is *one* test that drives the whole arc. None is
+`atomic:`; every ticket touches one file, except the first, whose two are forced by an overload
+ambiguity Kotlin raises between an `internal` declaration and a `private` one of the same name.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0407` once `STORY-0406` has merged.* | — |
+| `TASK-040701` | The `device_binding` snapshot comes from one place | ready |
+| `TASK-040702` | A duel the recovered account will remember | backlog |
+| `TASK-040703` | The name and the password that make the account recoverable | backlog |
+| `TASK-040704` | A browser never seen signs in, and the socket names no device | backlog |
+| `TASK-040705` | The fresh browser reads back the same profile and the same duels | backlog |
+| `TASK-040706` | The recovery leaves no row in either table a profile occupies | backlog |
+| `TASK-040707` | A wrong password from the fresh browser issues no session | backlog |
+| `TASK-040708` | Signing out returns the fresh browser to nothing, and the original device to itself | backlog |
+| `TASK-040709` | One statement in the whole server creates a profile | backlog |
+
+**The negative is gated twice, deliberately.** `TASK-040706` asserts it across the operations this
+scenario performs — both tables a profile occupies after `ADR-0049`, byte-identical, plus a live-binding
+count with two inputs. `TASK-040709` asserts it for write paths nobody has written yet, by reading
+source text, because the coin invariant is structurally blind to an orphan profile (balance `0`, no
+deltas: P1 holds, both P2 sums unmoved) and the endpoint enumeration sees a new route rather than a
+new statement.
 
 ## Acceptance criteria
 
