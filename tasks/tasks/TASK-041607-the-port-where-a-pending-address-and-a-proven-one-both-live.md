@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041607
 title: The port where a pending address and a proven one both live
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -190,3 +190,27 @@ unrelated.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The Proof predicted three null results and was right about all three.** Adding a fourth
+`VerifyEmailResult` case, changing `verifiedOwnerOf`'s return type, and reverting `claimPending` to
+`Unit` with `ClaimPendingResult` deleted each leave `compileKotlin` at `BUILD SUCCESSFUL`. Coder and
+reviewer both ran them. That is honest rather than weak: a declaration-only ticket's gate is the
+compiler, and the compiler has nothing to disagree with until something writes a `when`. Twentieth
+`## Proof` examined this run and the second to correctly predict a mutation that would **not** redden.
+
+**The sealed types have a destination, which was checked rather than assumed.** `claimPending` returns
+a sealed result instead of a `Boolean` so that an exhaustive `when` stops a third outcome being
+absorbed by an `if` — but that only holds if something actually writes the `when`. The reviewer opened
+the downstream tickets: `TASK-041637` writes the exhaustive `when` over `ClaimPendingResult`, and
+`TASK-041618` over `VerifyEmailResult`, both with no `else`. All six declared members trace to a named
+consumer ticket. Detekt does not flag an unused interface member and nothing else would either, so a
+dead member here would have been implemented by a later ticket before anyone noticed.
+
+**The refusal to expose a pending address's `issued_at` is what forces the suppression check into the
+transaction.** No member returns a timestamp, a row DTO, or anything deriving one — the returns are
+`ClaimPendingResult`, `VerifyEmailResult`, `PlayerId?`, `Boolean`, `Int` and `Unit`. That refusal is
+why the fifteen-minute check cannot sit in the route, and why `ADR-0079`'s read-then-write window
+stays closed: a route-level pre-check on a separate connection lets two concurrent attaches both find
+no live row, both write, and both mail.
