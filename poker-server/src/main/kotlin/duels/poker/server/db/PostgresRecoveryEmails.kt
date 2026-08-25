@@ -22,11 +22,9 @@ import javax.sql.DataSource
  * Implements [RecoveryEmails] against the `email_verification` and `recovery_email` tables
  * (`ADR-0031` §2, §3).
  *
- * [claimPending] (`TASK-041608`), [verifyPending] (`TASK-041609`), and [hasRecoveryEmail] and
- * [verifiedOwnerOf] (`TASK-041610`) are implemented. The other two members throw
- * [NotImplementedError] via `TODO()`, each naming the ticket that fills it in — the Kotlin
- * compiler will not accept a class that implements [RecoveryEmails] only partly, the same shape
- * [PostgresAuthSessions] used before its own `delete` landed.
+ * [claimPending] (`TASK-041608`), [verifyPending] (`TASK-041609`), [hasRecoveryEmail],
+ * [verifiedOwnerOf] (`TASK-041610`), [detach] and [deleteExpiredVerifications] (`TASK-041611`)
+ * are all implemented.
  *
  * [clock] is a [Clock], never `ServerClock`: `ServerClock` reports elapsed nanoseconds from an
  * arbitrary epoch, so a `TIMESTAMPTZ` stamped from it would land every row near 1970
@@ -151,11 +149,39 @@ internal class PostgresRecoveryEmails(
             dataSource.connection.use { connection -> selectVerifiedOwner(connection, address) }
         }
 
+    /**
+     * Remove a player's proven recovery email, if one exists, in one statement.
+     *
+     * `ADR-0031` §5's `DELETE` answers `204` whether or not a row existed, so this operation
+     * returns normally in both cases.
+     */
     override suspend fun detach(playerId: PlayerId): Unit =
-        TODO("TASK-041611 implements detach")
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(DELETE_RECOVERY_EMAIL_SQL).use { statement ->
+                    statement.setObject(1, UUID.fromString(playerId.value))
+                    statement.executeUpdate()
+                }
+            }
+        }
 
+    /**
+     * Delete every expired `email_verification` row.
+     *
+     * The sweep statement `ADR-0031` §3 requires: a pending row holds an unproven address, which
+     * is personal data this system has not yet been able to use for its one purpose, so the
+     * delete is not optional.
+     *
+     * @return The number of rows deleted, for a log line and for a test to assert on.
+     */
     override suspend fun deleteExpiredVerifications(): Int =
-        TODO("TASK-041611 implements deleteExpiredVerifications")
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(DELETE_EXPIRED_VERIFICATIONS_SQL).use { statement ->
+                    statement.executeUpdate()
+                }
+            }
+        }
 
     private fun deletePendingClaim(connection: Connection, playerId: PlayerId) {
         connection.prepareStatement(DELETE_PENDING_SQL).use { statement ->
@@ -277,6 +303,12 @@ internal class PostgresRecoveryEmails(
         private const val SELECT_VERIFIED_OWNER_SQL =
             "SELECT player_id FROM recovery_email " +
                 "WHERE lower(address COLLATE \"und-x-icu\") = lower(? COLLATE \"und-x-icu\")"
+
+        private const val DELETE_RECOVERY_EMAIL_SQL =
+            "DELETE FROM recovery_email WHERE player_id = ?"
+
+        private const val DELETE_EXPIRED_VERIFICATIONS_SQL =
+            "DELETE FROM email_verification WHERE expires_at <= now()"
 
         // 23505 = unique_violation. recovery_email_address_unique (someone else verified this
         // address first) and recovery_email_pkey (this player already holds one) land here
