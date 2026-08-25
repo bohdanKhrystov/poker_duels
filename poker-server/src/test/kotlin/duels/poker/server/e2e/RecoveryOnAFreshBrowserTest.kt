@@ -5,6 +5,7 @@ import duels.poker.server.db.assertCoinInvariantHolds
 import duels.poker.server.http.DEVICE_ID_HEADER
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.http.ProfileResponse
+import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.http.SignInResponse
 import duels.poker.server.protocol.protocolJson
 import io.ktor.client.HttpClient
@@ -133,6 +134,44 @@ internal class RecoveryOnAFreshBrowserTest {
         )
     }
 
+    @Test
+    fun theFreshBrowserReadsTheSameProfile() {
+        val record = runRecovery()
+        assertEquals(
+            record.originalProfile,
+            record.recoveredProfile,
+            "fresh browser deviceId=$FRESH_DEVICE: profileOf read a different " +
+                "ProfileResponse than the original device",
+        )
+    }
+
+    @Test
+    fun theFreshBrowserReadsTheSameDuels() {
+        val record = runRecovery()
+        assertEquals(
+            1,
+            record.originalDuels.duels.size,
+            "original device: expected exactly one duel, got ${record.originalDuels.duels.size}",
+        )
+        assertEquals(
+            record.originalDuels,
+            record.recoveredDuels,
+            "fresh browser deviceId=$FRESH_DEVICE: duelsOf read a different " +
+                "RecentDuelsResponse than the original device",
+        )
+    }
+
+    @Test
+    fun aDifferentPlayersProfileDoesNotCompareEqual() {
+        val record = runRecovery()
+        assertEquals(
+            false,
+            record.originalProfile == record.loserProfile,
+            "two distinct ProfileResponse values should not compare equal: winner " +
+                "deviceId=${record.winnerDeviceId} vs loser deviceId=${record.loserDeviceId}",
+        )
+    }
+
     /**
      * Boots the shipped composition against [dataSource] — `installDuelServer(dataSource)`, then
      * `createClient { install(WebSockets) }`, exactly as [IdentityMovesNoCoinTest] does — opens
@@ -186,6 +225,7 @@ internal class RecoveryOnAFreshBrowserTest {
             // Read the winner's profile after sign-up, and the loser's profile at the same moment.
             val originalProfile = client.profileOf(winner.deviceId)
             val loserProfile = client.profileOf(loser.deviceId)
+            val originalDuels = client.duelsOf(winner.deviceId)
 
             // The positive control, taken first: the winner's own device, no token. ADR-0018
             // gives a player one live socket and the newest wins, and both this handshake and the
@@ -204,6 +244,11 @@ internal class RecoveryOnAFreshBrowserTest {
             val freshWelcome = client.webSocketSession("/ws").completeHandshake(FRESH_DEVICE, sessionToken)
             dataSource.assertCoinInvariantHolds("after the fresh browser's handshake")
 
+            // The fresh browser reads back the profile and duel history through the recovered session.
+            val recoveredProfile = client.profileOf(FRESH_DEVICE, sessionToken)
+            val recoveredDuels = client.duelsOf(FRESH_DEVICE, sessionToken)
+            dataSource.assertCoinInvariantHolds("after the fresh browser reads the profile and duels")
+
             record = RecoveryRecord(
                 winnerDeviceId = winner.deviceId,
                 loserDeviceId = loser.deviceId,
@@ -214,6 +259,9 @@ internal class RecoveryOnAFreshBrowserTest {
                 sessionToken = sessionToken,
                 originalWelcome = originalWelcome,
                 freshWelcome = freshWelcome,
+                originalDuels = originalDuels,
+                recoveredProfile = recoveredProfile,
+                recoveredDuels = recoveredDuels,
             )
         }
         checkNotNull(record) { "runRecovery: testApplication completed without producing a RecoveryRecord" }
@@ -237,6 +285,26 @@ internal class RecoveryOnAFreshBrowserTest {
             HttpStatusCode.OK,
             response.status,
             "GET /api/me for deviceId=$deviceId returned ${response.status}",
+        )
+        return protocolJson.decodeFromString(response.bodyAsText())
+    }
+
+    /**
+     * Reads [deviceId]'s recent duels over `GET /api/me/duels`, asserting the response is `200`,
+     * then decodes the body with [protocolJson] — shaped exactly like [profileOf].
+     *
+     * Sets `X-Device-Id` always. Sets `Authorization: Bearer $token` only when [token] is
+     * non-null. No query string — the endpoint's defaults are what a client sends.
+     */
+    private suspend fun HttpClient.duelsOf(deviceId: String, token: String? = null): RecentDuelsResponse {
+        val response = get("/api/me/duels") {
+            header(DEVICE_ID_HEADER, deviceId)
+            if (token != null) header(HttpHeaders.Authorization, "Bearer $token")
+        }
+        assertEquals(
+            HttpStatusCode.OK,
+            response.status,
+            "GET /api/me/duels for deviceId=$deviceId returned ${response.status}",
         )
         return protocolJson.decodeFromString(response.bodyAsText())
     }
@@ -307,6 +375,12 @@ internal class RecoveryOnAFreshBrowserTest {
  *   handshake evicts it.
  * @property freshWelcome The whole `Welcome` frame the fresh browser received, presenting
  *   `FRESH_DEVICE` and [sessionToken] together in one `Hello`.
+ * @property originalDuels The winner's whole `GET /api/me/duels` response, read after the
+ *   sign-up — the value the whole story compares against.
+ * @property recoveredProfile The fresh browser's whole `GET /api/me` response, read through the
+ *   session token after the handshake.
+ * @property recoveredDuels The fresh browser's whole `GET /api/me/duels` response, read through
+ *   the session token after the handshake.
  */
 private data class RecoveryRecord(
     val winnerDeviceId: String,
@@ -318,6 +392,9 @@ private data class RecoveryRecord(
     val sessionToken: String,
     val originalWelcome: ServerMessage.Welcome,
     val freshWelcome: ServerMessage.Welcome,
+    val originalDuels: RecentDuelsResponse,
+    val recoveredProfile: ProfileResponse,
+    val recoveredDuels: RecentDuelsResponse,
 )
 
 private const val RECOVERED_NAME: String = "Champion"

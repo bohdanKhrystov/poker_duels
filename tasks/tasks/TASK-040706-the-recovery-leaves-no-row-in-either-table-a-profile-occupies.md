@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040706
 title: The recovery leaves no row in either table a profile occupies
 type: task
-status: backlog
+status: ready
 parent: STORY-0407
 module: poker-server
 estimate: S
