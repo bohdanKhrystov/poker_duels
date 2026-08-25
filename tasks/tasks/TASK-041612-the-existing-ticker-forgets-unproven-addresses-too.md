@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041612
 title: The existing ticker forgets unproven addresses too
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

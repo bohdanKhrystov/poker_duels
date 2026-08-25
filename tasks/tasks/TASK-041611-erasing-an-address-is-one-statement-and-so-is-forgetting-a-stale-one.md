@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041611
 title: Erasing an address is one statement, and so is forgetting a stale one
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -112,3 +112,28 @@ deletion is not optional"* and its closing `DEC-029` note.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**`PostgresRecoveryEmails` is complete: zero `TODO()` remain.** All six members `TASK-041607` declared
+now have implementations, across five tickets — `claimPending` (`041608`, suppression `041636`),
+`verifyPending` (`041609`), `hasRecoveryEmail` and `verifiedOwnerOf` (`041610`), `detach` and
+`deleteExpiredVerifications` (here).
+
+**The row count is asserted, not decoration.** `deleteExpiredVerifications` returns an `Int` because
+`TASK-041607`'s port declared one for a log line and for a test to pin. Returning a constant `1`
+reddens both sweep tests; returning `0` reddens `theSweepTakesOnlyRowsPastTheirDay`. A sweep that
+deleted the right rows and reported the wrong number would have shipped otherwise, and the log line
+the count exists for would have lied.
+
+**Two fixtures, two fates — which is what makes the predicate observable.** The sweep test builds a
+stale row (clock backed twenty-five hours before the claim, then restored) *and* a fresh one, asserts
+the count is exactly `1`, and asserts the fresh row survives. With only a stale row, `DELETE FROM
+email_verification` with no predicate at all would pass. The backdating is the only construction
+available: `TASK-041609` established that the statement reads SQL `now()`, so advancing the injected
+clock after a claim cannot retroactively expire an already-written `expires_at`.
+
+**The cross-table property is held in the direction where it can be violated.** Making `detach` also
+delete from `email_verification` reddens `detachingLeavesALivePendingClaimAlone` alone. The reverse is
+structurally impossible rather than untested — `recovery_email` has no `expires_at` column, so the
+sweep's predicate cannot name it.
