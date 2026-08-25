@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041615
 title: A session holder proves the password they already have
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
