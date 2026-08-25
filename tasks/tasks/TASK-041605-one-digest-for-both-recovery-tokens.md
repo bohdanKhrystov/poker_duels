@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041605
 title: One digest for both recovery tokens
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: XS

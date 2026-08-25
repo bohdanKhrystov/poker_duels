@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041604
 title: Two tokens, minted the way a session token is
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -106,3 +106,27 @@ Read, and do not edit:
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The stub bytes are what make the URL-safe assertion mean anything.** Thirty-two bytes of `0xFC`
+encode to `_Pz8_…` under the URL-safe alphabet and `/Pz8/…` under the standard one, so swapping
+`getUrlEncoder()` for `getEncoder()` reddens both exact-value tests. Had the stub returned zeroes —
+the reflex choice — both alphabets would produce `AAAA…`, the assertion *no `+` and no `/`* would hold
+for a standard encoder, and the mutation would redden nothing. A fixture value the bug leaves
+unchanged cannot detect it, and zero is the usual trap.
+
+**This ticket's `## Proof` under-predicted, and by more than the coder noticed.** Replacing
+`random.nextBytes(bytes)` with `bytes.fill(7)` was predicted to redden only the vacuity guard. The
+coder found two tests reddening and said so; the reviewer ran it and found **three** — both
+exact-value tests fail as well, because a mutation that ignores the injected `random` produces bytes
+the stub never supplied. All three reds are sound. Sixteenth `## Proof` examined in this run:
+incomplete, not wrong.
+
+**The redaction is gated by equality rather than by absence, unlike `EmailAddress`.**
+`TASK-041603` asserts both that `toString()` equals its constant and that the address is absent as a
+substring. Here `toString()` is asserted equal to `REDACTION`, plus a check that `REDACTION` itself
+contains no part of the secret. The reviewer tested the difference directly — mutating `toString()`
+to return the token value is caught immediately by the equality assertion — so the weaker form is
+sufficient for a *fixed* redaction. It would not be for a derived one, which is why `EmailAddress`
+needs both.
