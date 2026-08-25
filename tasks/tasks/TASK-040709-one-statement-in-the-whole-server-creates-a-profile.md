@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040709
 title: One statement in the whole server creates a profile
 type: task
-status: backlog
+status: ready
 parent: STORY-0407
 module: poker-server
 estimate: S

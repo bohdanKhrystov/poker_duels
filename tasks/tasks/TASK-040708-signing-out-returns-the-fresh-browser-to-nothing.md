@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040708
 title: Signing out returns the fresh browser to nothing, and the original device to itself
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: S
@@ -136,3 +136,19 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 looks as though signing out ought to leave the browser holding *something*. It does not, and
 `ADR-0030` §3 says the mechanism is subtraction — remove the higher-precedence edge, and whatever
 lower edge existed becomes visible again. Here there was none.
+
+**The second half of the title has its own gate, and it was checked rather than assumed.** Mutating
+sign-out to also revoke the signed-out player's `device_binding` row reddens all nineteen tests — but
+via `profileOf`'s *internal* `200` assertion, which throws inside `runRecovery()` before any test's
+own assertion runs. A claim gated only by a helper's internal check inside shared setup is one
+refactor away from being ungated, and that helper is not this ticket's file to protect. So the
+reviewer asked the counterfactual: were `profileOf` to return whatever the server sent instead of
+asserting, `theOriginalDeviceIsUnaffectedBySigningOut` would still fail, because it compares whole
+`ProfileResponse` values and a locked-out device does not produce `originalProfile`. It is the only
+one of the four that would — the other three read `profileStatus`, which returns a status and never
+needed the read to succeed.
+
+**A test-fixture mutation is not evidence about production.** Substituting `record.loserProfile` for
+`record.originalProfile` fails, which shows the comparison discriminates between the two profiles —
+useful, and not the same kind of fact as a production mutation. Both were run here; only the
+production ones gate anything.
