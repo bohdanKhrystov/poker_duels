@@ -1863,7 +1863,16 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040621](tasks/TASK-040621-the-scenario-ends-with-a-revocation-and-nothing-escapes-it.md) The scenario ends with a revocation, and no identity endpoint escapes it | S | done |
 | | [TASK-040622](tasks/TASK-040622-the-backfill-moves-a-row-that-was-already-there.md) The backfill moves a row that was already there | XS | done |
 | | [TASK-040623](tasks/TASK-040623-an-unknown-device-alone-is-refused-too.md) An unknown device, alone, is refused too | XS | done |
-| [STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md) Recovery — signing in from a device that has never been seen | | | backlog |
+| **[STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md)** Recovery — signing in from a device that has never been seen | | | **in progress** — split into nine on 2026-08-25; entirely test work, since every behaviour it asserts already ships |
+| | [TASK-040701](tasks/TASK-040701-the-device-binding-snapshot-comes-from-one-place.md) The device_binding snapshot comes from one place | XS | **ready** |
+| | [TASK-040702](tasks/TASK-040702-a-duel-the-recovered-account-will-remember.md) A duel the recovered account will remember | S | backlog |
+| | [TASK-040703](tasks/TASK-040703-the-name-and-the-password-that-make-the-account-recoverable.md) The name and the password that make the account recoverable | XS | backlog |
+| | [TASK-040704](tasks/TASK-040704-a-browser-never-seen-signs-in-and-the-socket-names-no-device.md) A browser never seen signs in, and the socket names no device | S | backlog |
+| | [TASK-040705](tasks/TASK-040705-the-fresh-browser-reads-back-the-same-profile-and-the-same-duels.md) The fresh browser reads back the same profile and the same duels | S | backlog |
+| | [TASK-040706](tasks/TASK-040706-the-recovery-leaves-no-row-in-either-table-a-profile-occupies.md) The recovery leaves no row in either table a profile occupies | S | backlog |
+| | [TASK-040707](tasks/TASK-040707-a-wrong-password-from-the-fresh-browser-issues-no-session.md) A wrong password from the fresh browser issues no session | S | backlog |
+| | [TASK-040708](tasks/TASK-040708-signing-out-returns-the-fresh-browser-to-nothing.md) Signing out returns the fresh browser to nothing, and the original device to itself | S | backlog |
+| | [TASK-040709](tasks/TASK-040709-one-statement-in-the-whole-server-creates-a-profile.md) One statement in the whole server creates a profile | S | backlog |
 | **[STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md)** Duel history, paged over the whole record | | | **done** |
 | | [TASK-040801](tasks/TASK-040801-a-cursor-is-a-duels-place-in-the-list.md) A cursor is one duel's place in the list, and it survives the round trip | S | **done** |
 | | [TASK-040802](tasks/TASK-040802-the-read-takes-a-cursor-and-compares-the-whole-tuple.md) The read takes a cursor, and PostgreSQL compares the whole tuple | S | **done** |
