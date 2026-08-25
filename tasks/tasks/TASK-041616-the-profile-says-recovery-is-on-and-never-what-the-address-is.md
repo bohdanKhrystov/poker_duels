@@ -69,6 +69,14 @@ Read, and do not edit:
 
 ## Out of scope
 
+- **Any test asserting what the `EXISTS` answers against a real database — `TASK-041641`.** It is
+  not in the *Files* table for the same reason `docs/protocol.md` is not: **no gate names it.**
+  `PostgresProfileReadsTest` constructs no `ProfileResponse` and reads no boolean it does not
+  already read, so it compiles and passes untouched through every one of this ticket's edits — the
+  probe recorded in `## Notes` ran the full gate set to green without it. A `## Files` row needs a gate
+  (`ADR-0069` §1), and a fourth `atomic:` item would have to name a merged gate that fails on the
+  smaller commit; there is none, and the green probe run is the evidence. So the assertion is a
+  separate ticket rather than a fabricated coupling.
 - `docs/protocol.md` — `TASK-041617`. It is not in the *Files* table because **no gate names it**:
   `HttpEndpointDocumentationTest` checks documented ⇒ exists, not the reverse, so an undocumented
   field fails nothing. Adding it here would be a row with no gate, which `ADR-0069` forbids.
@@ -90,24 +98,20 @@ Read, and do not edit:
 | `aProfileWithNoRecoveryEmailSaysSo` | The same with `false`. Two values, so a hard-coded constant fails one |
 | `theProfileNeverCarriesAnAddress` | `Json.encodeToString(profileResponse(...))` for a profile with recovery on contains no `"@"` and no key whose name contains `address` or `email` other than `hasRecoveryEmail` |
 
-`PostgresProfileReadsTest` (existing file, new methods)
-
-| Test | Proves |
-| --- | --- |
-| `theProfileReadsTrueForAPlayerWithAVerifiedAddress` | Two players in **one database**, one verified and one not: the first reads `true`, the second `false`. The uncorrelated `EXISTS (SELECT 1 FROM recovery_email)` makes every caller read `true` once anybody is verified, and passes two tests that each hold one fixture |
-| `aPendingAddressIsNotARecoveryEmail` | A player with a pending claim and no verified row reads `false` — the same answer as a player who never claimed, asserted against both in one test |
+**No test in `PostgresProfileReadsTest` is this ticket's.** That class runs in `verify:` as a
+regression gate on the `PROFILE_OF_SQL` edit — the existing reads must survive a new column — and
+gains no method here. What the `EXISTS` actually answers, for whom, is `TASK-041641`.
 
 ## Acceptance criteria
 
 - [ ] `ProfileDtosTest.aProfileWithRecoveryOnSaysSo` passes
 - [ ] `ProfileDtosTest.aProfileWithNoRecoveryEmailSaysSo` passes
 - [ ] `ProfileDtosTest.theProfileNeverCarriesAnAddress` passes
-- [ ] `PostgresProfileReadsTest.theProfileReadsTrueForAPlayerWithAVerifiedAddress` passes
-- [ ] `PostgresProfileReadsTest.aPendingAddressIsNotARecoveryEmail` passes
 - [ ] The three pre-existing `ProfileDtosTest` golden strings gain `,"hasRecoveryEmail":false` and
       **nothing else changes in that file's existing assertions** — no assertion is weakened, no
       expected value other than those three literals moves
-- [ ] `theProfileReadsTrueForAPlayerWithAVerifiedAddress` holds **two players in one database**
+- [ ] `PostgresProfileReadsTest` is **not edited**: every one of its tests passes untouched, and
+      `git status` shows no change to that file. Its two new methods are `TASK-041641`
 - [ ] `PROFILE_OF_SQL` contains `EXISTS` and does not contain `LEFT JOIN recovery_email`
 - [ ] `RECENT_DUELS_SQL` is byte-unchanged
 - [ ] `ProfileResponse.hasRecoveryEmail` has no default value and is declared last
@@ -116,29 +120,33 @@ Read, and do not edit:
 
 ## Proof
 
-1. Change the `EXISTS` to the uncorrelated `EXISTS (SELECT 1 FROM recovery_email)`.
-   **`theProfileReadsTrueForAPlayerWithAVerifiedAddress` reddens alone**, *expected false, got true*
-   for the unverified player. `aPendingAddressIsNotARecoveryEmail` **also reddens** if its fixture
-   shares a database with a verified player — it must not, so write it against a database holding
-   no verified row and confirm it stays green here. That contrast is the whole reason the first test
-   holds two players.
-2. Change the `EXISTS` to read `email_verification` instead.
-   **`aPendingAddressIsNotARecoveryEmail` reddens alone**, *expected false, got true*.
-   `theProfileReadsTrueForAPlayerWithAVerifiedAddress` verifies its player, which deletes the
-   pending row, so its `true` becomes `false` — **it reddens too**. Two, and if only one does, the
-   verified fixture is not going through `verifyPending`. Revert.
+1. In `ProfileDtoFixtures.profileResponse`, ignore the `hasRecoveryEmail` parameter and pass the
+   literal `false` down to `ProfileResponse`.
+   **`aProfileWithRecoveryOnSaysSo` reddens alone**, on a golden literal ending
+   `,"hasRecoveryEmail":true}` against an encoder now writing `false`.
+   `aProfileWithNoRecoveryEmailSaysSo` and the three pre-existing goldens **stay green**, because
+   `false` is what they already expect. Predict both halves: if the second test reddens too, the
+   pair is not passing two different values through one builder and one of them is decorative.
+   Revert.
+2. Add `val recoveryEmail: String?` to `ProfileResponse` and populate it from a second column.
+   **`theProfileNeverCarriesAnAddress` reddens alone** on the `"@"` assertion, and the three
+   pre-existing golden strings redden on their literals. This is the mutation §6.3 exists to
+   prevent, and the golden strings are half of what catches it. Revert.
 3. Give the field a default of `false` in `ProfileResponse`.
    **Nothing reddens.** Record it: `protocolJson` sets `encodeDefaults = true`, so the golden
    strings are unaffected, and the wire divergence `ADR-0053` names is invisible to every test in
    this repository. The no-default rule is held by the criterion above and by review, not by a gate,
    and saying so is better than implying otherwise. Revert.
-4. Hard-code `true` in `PostgresProfileReads`' construction, ignoring the column.
-   **Both `PostgresProfileReadsTest` methods redden**, and `ProfileDtosTest` is unaffected because
-   it never touches the database. Revert.
-5. Add `val recoveryEmail: String?` to `ProfileResponse` and populate it from a second column.
-   **`theProfileNeverCarriesAnAddress` reddens alone** on the `"@"` assertion, and the three
-   pre-existing golden strings redden on their literals. This is the mutation §6.3 exists to
-   prevent, and the golden strings are half of what catches it. Revert.
+4. **The database layer, four ways, and none of them reddens anything this ticket ships.** Wire
+   `PostgresProfileReads`' construction to a constant `false`; then to a constant `true`; then
+   change the `EXISTS` to the uncorrelated `EXISTS (SELECT 1 FROM recovery_email)`; then point it at
+   `email_verification` instead of `recovery_email`. **All four build and run fully green**,
+   including `PostgresProfileReadsTest`, because nothing in this repository reads
+   `ProfileResponse.hasRecoveryEmail` back out of a real database. Run them anyway and record the
+   four green runs in the PR body: this is not a gap to close here — closing it needs a new test
+   method, which `ADR-0070` §4 condition 3 puts outside any coder's licence — it is
+   **`TASK-041641`**, which depends on this ticket and whose whole content is those two methods.
+   Revert each before applying the next.
 
 ## Definition of done
 
@@ -154,3 +162,14 @@ warns about: `compileKotlin` named two files, `compileTestKotlin` then named two
 run could not see, and `:poker-server:test` then named a sixth — 1565 tests completed, 3 failed, all
 three in `ProfileDtosTest`. Six is the count at green, and it is a fact about this change and no
 other.
+
+**Corrected on 2026-08-25, after this ticket had run once.** As written it named two
+`PostgresProfileReadsTest` methods in *Tests* and in two acceptance criteria while its `atomic:`
+*Files* table — which is the whole change — did not list that file, so the criteria required a file
+the ticket forbade touching. The coder refused to widen and was right to: `ADR-0070` §4 condition 3
+excludes *"adds a test"* from the propagation exception by name. Both methods moved to
+`TASK-041641`. **The count stays six and `atomic:` stays three items** — the probe's green run *is*
+the proof that no gate couples those tests to this change, and a fourth item invented to keep them
+here would assert a coupling the probe had already disproved. The gap that discovery opened is real
+and is written down in `## Proof` §4 rather than papered over: it stands open from this ticket's
+merge until `TASK-041641`'s.

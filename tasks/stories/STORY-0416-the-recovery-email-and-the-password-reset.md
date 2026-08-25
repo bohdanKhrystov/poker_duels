@@ -108,6 +108,7 @@ an **optional, verified-only** address in its own table.
 | [TASK-041638](../tasks/TASK-041638-the-shape-gate-holds-for-four-more-shapes-and-names-the-one-it-cannot.md) | The shape gate holds for four more shapes, and names the one it cannot | backlog |
 | [TASK-041639](../tasks/TASK-041639-a-reset-that-cannot-write-the-password-spends-no-token.md) | A reset that cannot write the password spends no token | backlog |
 | [TASK-041640](../tasks/TASK-041640-a-failure-between-the-password-and-the-sessions-undoes-both.md) | A failure between the password and the sessions undoes both | backlog |
+| [TASK-041641](../tasks/TASK-041641-the-profiles-recovery-flag-is-that-players-and-a-pending-address-is-not-one.md) | The profile's recovery flag is that player's, and a pending address is not one | backlog |
 
 **The table is in id order; `depends_on` is the sequence.** They stopped coinciding when `ADR-0077`
 and `ADR-0078` merged and their answers were folded back in:
@@ -125,6 +126,20 @@ a player with **no** `password` credential, which `V8`'s foreign key to `player`
 reachable — and `TASK-041640` closes the second with a wrapped `DataSource`, because the session
 delete is unconditional and no data fixture can make it fail. They are strictly ordered because they
 edit one file; `041640` is `041639`'s only dependant and vice versa.
+
+`TASK-041641` hangs off `TASK-041616` on the same pattern, and was added on 2026-08-25 for the same
+kind of reason. `TASK-041616` named two `PostgresProfileReadsTest` methods in its *Tests* section
+but is `atomic:`, so its six-row *Files* table is the whole change — and that file is not in it,
+because **no gate names it**: the class constructs no `ProfileResponse`, so it compiles and passes
+untouched through every edit that ticket makes, and its probe reached green without it. That leaves
+the field ungated at the layer that computes it: the coder's mutations showed a constant `false`, a
+constant `true`, an uncorrelated `EXISTS` and an `EXISTS` over `email_verification` **all building
+fully green**. The two methods therefore moved out whole rather than being kept in by a fourth
+`atomic:` item — one would have had to name a merged gate that fails on the smaller commit, and the
+green probe run is the proof there is none. `TASK-041641` is one file, no atomicity, and its
+`verify:` names the two **methods** rather than the class, because a whole-class filter exits 0
+whether or not they exist, which is how the omission cleared `TASK-041616`'s gates in the first
+place.
 
 `TASK-041627` was **re-cut into six**, which `ADR-0077` §Consequences called for by name: *"Three
 implementation files, `ServerConfig`, `ServerComponents`, `Application.kt` and its tests exceed what
