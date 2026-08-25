@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040704
 title: A browser never seen signs in, and the socket names no device
 type: task
-status: backlog
+status: ready
 parent: STORY-0407
 module: poker-server
 estimate: S
