@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041610
 title: A pending address answers exactly as an unknown one
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -116,3 +116,34 @@ for the account in the meantime: nothing"* and §5.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The `COLLATE` on the bind parameter is load-bearing, and dropping it misattributes an account.** The
+lookup folds both sides — `lower(address COLLATE "und-x-icu") = lower(? COLLATE "und-x-icu")` — and
+applying a collation to a parameter looks like the kind of clause a later reader tidies away. The
+reviewer stripped it from the parameter alone and a lookup for player one's own `İ@x.test` returned
+**player two's** `PlayerId`: `lower('İ' COLLATE "und-x-icu")` is `i̇` (three bytes) while the default
+fold gives `i` (one byte), so the two addresses stop being distinguishable in the direction that hands
+one player another's row. Not a missed row — a cross-account misattribution. `É`, `ẞ` and `Ж` fold
+identically under both collations and would have proved nothing; `İ` is the input that separates them.
+
+**The expired case is absent because these two statements cannot observe expiry.** Both name
+`recovery_email` only, never `email_verification` or `expires_at`, so a pending row past its day and a
+fresh one are equally absent and answer identically whatever the clock says. The coder wrote that into
+the test class KDoc rather than building a fixture that would look like coverage, and the Tests table
+asks for five tests with none named for expiry. The backdated-clock construction earns its keep at
+`verifyPending`'s boundary (`TASK-041609`), not here.
+
+**Cross-equality was tested for value rather than argued for.** The coder stripped the cross-equality
+assertions from `aPendingAddressIsFoundByNobody` and re-ran the mutations: the literal `false`/`null`
+pins caught both alone, because each is a single uniquely-identified value under `==`, so *"Y equals
+X"* collapses into *"Y equals the literal"*. Where the wider state space does earn force is
+`onePlayersAddressIsNotAnothers`, whose expected `PlayerId` is a run-generated UUID with no literal to
+hardcode — there the dynamic comparison is the only way to write the assertion, and it is what catches
+a read that returns the first row. Both halves reproduced by the reviewer.
+
+**The Proof undercounts by one.** Mutation 5 is predicted to redden three tests and reddens four:
+`onePlayersAddressIsNotAnothers` checks `hasRecoveryEmail` on two *verified* players, and
+`verifyPending` deletes their `email_verification` rows on success, so both read `false` under the
+mutation. Sound in each case. Twenty-fourth `## Proof` examined this run.
