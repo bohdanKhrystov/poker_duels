@@ -140,7 +140,7 @@ recorded rather than quietly absorbed:
 | [STORY-0413](../stories/STORY-0413-the-history-screen.md) | The history screen — pages, filters, search | 0409, 0411 | backlog |
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
 | [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | backlog |
-| [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). None is the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
+| [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md). None is the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | [STORY-0417](../stories/STORY-0417-the-recovery-screens.md) | The recovery screens — attach an address, and reset a password | 0412, 0416 | backlog |
 
 ## What can run in parallel
@@ -251,9 +251,43 @@ answered `DEC-027`, and these four apply that choice rather than revisiting it.
 | ID | Question | Blocks |
 | --- | --- | --- |
 | `DEC-071` | **The product owner's** — which strings does `POST /api/auth/recovery-email` accept as an address, and what is the player told when one is refused? `ADR-0031` §5 answers `400` for *"an address that is not syntactically an address"* and states no rule; §2 already settles storage and the fold, so only the acceptance predicate is open. That `400` is the **only** thing the endpoint ever tells a player about their address — every other outcome is a silent `202` — and the cost runs one way: a rule that refuses a real mailbox denies that player recovery, which `ADR-0031`'s Consequences make a total, permanent loss of the account, its coins and its ladder place. Routed on `DEC-043`'s precedent (*what may a password be*) | `TASK-041624` and `TASK-041625`; nothing else in the story |
-| `DEC-072` | **The architect's** — what is the shape of the mail seam, and what are its failure, lifetime and observability semantics? `ADR-0031` §7 fixes the port and the package and declares a build with no sender a valid state, without saying what the wiring holds in it — a nullable port every call site branches on, or a no-op implementation that makes *no sender* invisible. §5 requires the `202` written **before any mail work** with delivery *"on a detached coroutine"*, and settles nothing about what that coroutine is a child of, what a failed send does after the token row is committed, whether anything is retried, or **what a test can await** — the last of which decides whether *a mail was sent* is assertable at all, and four criteria need it. Also where `baseUrl` lives and what an unconfigured one does, since §4 forbids deriving it from any header. **Choosing a relay or a provider API is explicitly not in it**: that is `EPIC-07`'s, and a bill, and the human's | `TASK-041625`, `TASK-041626`, `TASK-041627` |
 | `DEC-073` | **The architect's** — what are the two numbers for each of the `recovery-email` and `forgot-password` budgets, and does an over-budget attempt still count against its own window? `DEC-069`'s shape one endpoint pair later: §5 fixes the mechanism, the key and the answer (`202`, identical to success) and fixes no numbers. `ADR-0074`'s argument does **not** transfer — it turned on shared-address collateral being *visible*, so a throttled player could pace; here over budget is indistinguishable from success and they are told nothing. §5 also already carries a second, durable limiter (no mail within fifteen minutes of a live token), so the answer must say what the address budget is still for | `TASK-041628` |
 | `DEC-074` | **The architect's** — does a good reset token survive a `422`, and by what mechanism? `ADR-0031` §5 gives `reset-password` a `422` *"when the token was good and the new password fails policy"*, which presupposes knowing the token is good before the password is judged and implies a retry; §4 makes consumption one `DELETE ... RETURNING` with *"no read-then-write window"*, under which knowing **is** spending. A conflict between two sections of a merged ADR rather than an acknowledged gap — §*What this does not settle* does not mention it | `TASK-041629`; `TASK-041620` ships the route with no policy and no `422` |
+| `DEC-075` | **The architect's** — does the mailed recovery link survive a static host with no rewrite rule, and if it becomes a fragment route, what is the slug? `ADR-0031` §4 mails `<baseUrl>/reset#token=…`, a **path segment**; [`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §4 has since made the opposite call for every client address on the ground that *"a fragment never 404s"*, which is `room-link.ts`'s already-merged call, and `EPIC-07` still has no file. A `404` on `/reset` means the player never reaches the client, and `ADR-0031` makes no recovery a **total, permanent** loss. `<baseUrl>/verify#token=…` has the same exposure. Raised by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which transcribed §4 rather than reinterpreting it and put both links in **one function**, so the answer is a one-function change; the slug, if it lands as a fragment route, is `STORY-0417`'s under `ADR-0076` §1 | nothing today — no sender is configured, so no link is delivered. Due before `EPIC-07` configures one, and before `STORY-0417` builds the screen |
+
+`DEC-072` — raised on 2026-08-25 when `STORY-0416` was split, blocking `TASK-041625`, `TASK-041626`
+and `TASK-041627` — was answered the same day by
+[`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md):
+**no sender is an implementation, detachment is a decorator, and a test binds neither.** The wiring
+holds `NoRecoveryMailer`, a `public object` with two empty bodies, rather than a null — so no route
+branches on whether a sender exists, which is the property `TASK-041627` was written to prove and
+which now belongs to the type instead of to three handlers each remembering the same `if`.
+Detachment is `DetachedRecoveryMailer(delegate, scope, log)`, a decorator over the *same* port, so no
+route file holds a `CoroutineScope`, a `launch` or a `Job`, and the wiring — not the handler —
+decides whether to apply it. The delivery scope is a **supervisor child of the application's job**,
+built in `duelServer` beside `scheduleSweeps`: `ADR-0025`'s rule applied unchanged, so shutdown
+cancels every in-flight send, one failure cancels no sibling, and it is deliberately not the
+application scope itself, which also carries a ticker that never completes. **The server may exit
+with mail pending**, and pending mail is cancelled rather than drained. A failed send is logged
+once — the member name and `failure::class.simpleName`, with no message, no stack trace, no
+`player_id` and no success line, because a transport's own exception is the likeliest place an
+address ever reaches a log and `ADR-0031` §6.3 admits no exception. **Nothing above the port is
+retried and no row is compensated**: retry is transport-shaped and stays `EPIC-07`'s *behind* the
+port, and a compensating delete would destroy live tokens for mail that arrived. `baseUrl` becomes a
+`ServerConfig` field where absent is the default and malformed refuses to start, and `RecoveryLinks`
+is the only place either URL is built. **What a test can await**, the clause that decided the shape:
+the test binds an **undecorated** recording double, so the send is an ordinary suspend call in the
+handler and both *one mail was sent, with this link* and *no mail was sent* are list comparisons with
+no join, no channel and no timeout — **absence forced it**, since no await proves a negative and four
+of this story's criteria assert one. §5's `202`-before-the-send ordering stays a **review criterion**
+and is gated by nothing, exactly as `TASK-041626`'s Proof predicted. The sharp cost, recorded rather
+than discovered: **a lost reset mail buys the player fifteen minutes of silence** they cannot
+distinguish from anything else, because the row is committed before the send can fail and §5
+suppresses the retry. `TASK-041625`, `TASK-041626` and `TASK-041627` are unblocked as far as this
+decision goes — `TASK-041625` still waits on `DEC-071` — and `TASK-041627` is now **bigger than its
+Files table**, which is the planner's to re-cut. No transport was chosen and no bill implied; the one
+clause that could not be answered provider-independently, the retry policy, was named and left to
+`EPIC-07`. Raises `DEC-075`, above.
 
 `DEC-069` — raised on 2026-08-23 when `STORY-0405` was split, blocking `TASK-040523` and nothing
 else — was answered on 2026-08-24 by

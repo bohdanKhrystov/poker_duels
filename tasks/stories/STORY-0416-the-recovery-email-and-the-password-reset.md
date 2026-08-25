@@ -103,9 +103,28 @@ are `blocked`. Four decisions were raised and none was answered inside a ticket.
 | ID | Kind | Blocks | In one sentence |
 | --- | --- | --- | --- |
 | `DEC-071` | **Product owner's** | `TASK-041624`, `TASK-041625` | Which strings does `POST /api/auth/recovery-email` accept as an address, and what is the player told when one is refused? |
-| `DEC-072` | **Architect's** | `TASK-041625`, `TASK-041626`, `TASK-041627` | What is the shape of the mail seam, and what are its failure, lifetime and observability semantics — including `baseUrl` and the no-sender state? |
 | `DEC-073` | **Architect's** | `TASK-041628` | What are the two numbers for each of the `recovery-email` and `forgot-password` budgets, and does an over-budget attempt still count? |
 | `DEC-074` | **Architect's** | `TASK-041629` | Does a good reset token survive a `422`? `ADR-0031` §5's status table and §4's single-use `DELETE ... RETURNING` cannot both hold as written |
+
+`DEC-072` was **answered on 2026-08-25** by
+[`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
+— *no sender is an implementation, detachment is a decorator, and a test binds neither.* The wiring
+holds `NoRecoveryMailer`, a `public object` with two empty bodies, so no route branches on
+configuration; detachment is `DetachedRecoveryMailer(delegate, scope, log)` over the same port, on a
+**supervisor child of the application's job** built in `duelServer`, so shutdown cancels every
+in-flight send and the server may exit with mail pending. A failed send is logged once by member name
+and exception **class name** — no message, no stack trace, no `player_id`, no success line — and
+**nothing above the port is retried and no row is compensated**, which costs a player whose reset
+mail is lost the fifteen minutes §5 already suppresses. `baseUrl` is a `ServerConfig` field where
+absent is the default and malformed refuses to start, and `RecoveryLinks` is the only place either
+URL is built. **What a test can await: the test binds an undecorated recording double**, so the send
+is an ordinary suspend call in the handler and both *a mail was sent, with this link* and *no mail was
+sent* are list comparisons with no join, no channel and no timeout — absence is what forced the
+shape, since no await proves a negative. §5's `202`-before-the-send ordering stays a **review
+criterion** and is gated by nothing, as `TASK-041626`'s Proof step 3 predicted. `TASK-041627` is now
+**bigger than its Files table** and is the planner's to re-cut. The ADR raises `DEC-075` — whether the
+mailed link survives a static host with no rewrite rule, given `ADR-0076` §4 — which blocks nothing
+here, because no sender is configured and no link is delivered to anybody.
 
 **Nothing here is the human's, and nothing here is about money.** `ADR-0031` §7 already defers the
 transport — SMTP relay or provider API, and therefore any bill — to `EPIC-07`, and every ticket in
