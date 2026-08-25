@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041612
 title: The existing ticker forgets unproven addresses too
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -131,3 +131,22 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 every construction site in the repository goes through the `serverComponents(...)` factory, so the
 data class and the factory are one file between them. That is why this ticket is three files and
 carries no `atomic:`.
+
+**The pre-flagged Proof step was right, and it took running the code to know.** Its author wrote that
+step as *"a null result about ordering I could not run, since the code does not exist"* — a prediction
+that reordering the new step to run **first**, with its `try`/`catch` retained, would redden nothing.
+Coder and reviewer each ran it: five of five green across both suites. A prediction that nothing
+reddens is only worth having if somebody checks, because its failure mode is silent — and a later
+reader now knows the ordering is genuinely unconstrained rather than merely untested.
+
+**The isolation is asserted by an effect, not by the absence of a throw.** With the new step throwing
+on every call, `aFailingVerificationSweepDoesNotStopRoomReaping` asserts
+`assertNull(components.socket.rooms.get(room.code))` — the idle room was actually reaped. A `sweepPass`
+that swallowed the failure *and* skipped the remaining steps would satisfy "no exception escaped" and
+fail this. Removing the step's `try`/`catch` reddens that test alone, by timeout. The reviewer also
+confirmed all three steps rethrow `CancellationException` rather than swallowing it, which is what
+keeps the coroutine cancellable.
+
+**Correction to the brief this ticket was dispatched with.** I told the coder detekt was absent from
+the verify block; it is there, and the coder followed the ticket and ran it. My reading had stopped at
+line eighteen of a nineteen-line frontmatter.
