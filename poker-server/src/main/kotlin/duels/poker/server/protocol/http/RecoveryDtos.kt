@@ -58,3 +58,31 @@ public data class ResetPasswordRequest(val token: String, val newPassword: Strin
         public const val REDACTION: String = "ResetPasswordRequest(redacted)"
     }
 }
+
+/**
+ * The body of `DELETE /api/auth/recovery-email`, carrying the caller's current password so the
+ * erase can be gated on it.
+ *
+ * No default value: a missing field must be refused with `400` rather than silently becoming
+ * `""`, which would ask [duels.poker.server.auth.Credentials.verifyCurrent] to check the empty
+ * string against a live credential instead of the request never reaching the port at all.
+ *
+ * The `toString()` method returns a fixed redaction, because a plaintext password in a log line
+ * or exception message is exactly the leak no amount of endpoint care can repair afterward — the
+ * same reason [ResetPasswordRequest] and [VerifyEmailRequest] redact.
+ *
+ * @property currentPassword The password to verify against the caller's current credential before
+ *   the erase runs.
+ */
+@Serializable
+public data class DetachRecoveryEmailRequest(val currentPassword: String) {
+    override fun toString(): String = REDACTION
+
+    public companion object {
+        /**
+         * The fixed string returned by `toString()` to prevent accidental leaks into logs or
+         * exception messages.
+         */
+        public const val REDACTION: String = "DetachRecoveryEmailRequest(redacted)"
+    }
+}

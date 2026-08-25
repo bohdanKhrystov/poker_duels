@@ -9,7 +9,9 @@ module: poker-server
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 3
+files_touched: 4
+atomic:
+  - IdentityMovesNoCoinTest.everyApiPathInTheRouteSourcesIsExercisedByTheScenario — scans the *Routes.kt sources for /api/… literals via :poker-server:test, so a new route and its SCENARIO_ENDPOINTS entry must land in the same commit
 labels: [server, http, auth, privacy, security]
 depends_on: [TASK-041622]
 verify:
@@ -37,6 +39,12 @@ the account to the opted-out risk in full.
 | `poker-server/src/main/kotlin/duels/poker/server/protocol/http/RecoveryDtos.kt` | modify |
 | `poker-server/src/main/kotlin/duels/poker/server/http/RecoveryRoutes.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/http/DetachRecoveryEmailRouteTest.kt` | create |
+| `poker-server/src/test/kotlin/duels/poker/server/e2e/IdentityMovesNoCoinTest.kt` | modify |
+
+The fourth row is `ADR-0070` §4 propagation, forced by the gate `atomic:` names above:
+`SCENARIO_ENDPOINTS` gains `/api/auth/recovery-email`, and its shared KDoc is extended to say why
+the route moves no coin — `RecoveryEmails.detach` deletes from `recovery_email` and touches neither
+`player.coin_balance` nor `duel_result`. Nothing else in the file changes.
 
 Read, and do not edit:
 `poker-server/src/main/kotlin/duels/poker/server/http/DeviceRoutes.kt` — the session-then-password
