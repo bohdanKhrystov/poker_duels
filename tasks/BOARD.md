@@ -2317,8 +2317,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041615](tasks/TASK-041615-a-session-holder-proves-the-password-they-already-have.md) A session holder proves the password they already have | S | done |
 | | [TASK-041616](tasks/TASK-041616-the-profile-says-recovery-is-on-and-never-what-the-address-is.md) The profile says recovery is on, and never what the address is | S | done |
 | | [TASK-041617](tasks/TASK-041617-five-endpoints-and-a-field-written-down.md) Five endpoints and a field, written down | S | done |
-| | [TASK-041618](tasks/TASK-041618-a-token-from-the-mailbox-proves-the-address.md) A token from the mailbox proves the address | S | **ready** |
-| | [TASK-041619](tasks/TASK-041619-three-ways-to-fail-verification-and-one-answer-for-all-of-them.md) Three ways to fail verification, and one answer for all of them | S | backlog |
+| | [TASK-041618](tasks/TASK-041618-a-token-from-the-mailbox-proves-the-address.md) A token from the mailbox proves the address | S | done |
+| | [TASK-041619](tasks/TASK-041619-three-ways-to-fail-verification-and-one-answer-for-all-of-them.md) Three ways to fail verification, and one answer for all of them | S | **ready** |
 | | [TASK-041620](tasks/TASK-041620-a-reset-takes-a-token-in-a-body-and-never-in-a-url.md) A reset takes a token in a body, and never in a URL | S | backlog |
 | | [TASK-041621](tasks/TASK-041621-two-submissions-of-one-link-and-only-one-of-them-works.md) Two submissions of one link, and only one of them works | S | backlog |
 | | [TASK-041622](tasks/TASK-041622-a-reset-signs-you-out-everywhere-including-here.md) A reset signs you out everywhere, including here | S | backlog |
