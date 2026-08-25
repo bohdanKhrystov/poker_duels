@@ -280,9 +280,12 @@ client with no addresses cannot express one.~~ **That case is gone.**
 [`ADR-0067`](../../docs/adr/ADR-0067-a-leaderboard-row-is-text-and-no-id-turns-into-a-profile.md)
 makes a row text, so this epic needs no address it does not already have — and the ADR records the
 loss as one of its own costs, because an address-less client just got more comfortable for another
-milestone. `DEC-054` is unchanged in substance, still the architect's, still due before `STORY-0412`
-is split, and now carried by its other reasons alone: nothing links to a screen, a reload lands on
-the first screen, and *Back* leaves the client.
+milestone. `DEC-054` went to the architect carried by its other reasons alone — nothing links to a
+screen, a reload lands on the first screen, and *Back* leaves the client — and **was answered on
+2026-08-25** by
+[`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md), on those reasons
+and not on this epic's: **the ladder gets an address, `/#/leaderboard`**, and `LadderScreen` does not
+change to receive it.
 
 ## Open decisions
 
@@ -341,11 +344,18 @@ coming due at once, which is what a v0.3 milestone is.
 | --- | --- | --- |
 | `DEC-060` | **The product owner's, raised by [`ADR-0061`](../../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7** — does a **finished** season ever become reachable from a screen, and how is one chosen? The ADR settles that a finished season is never *gone*: its standings recompute exactly from `duel` and `duel_result` rows nothing rewrites, and nothing is archived because an archive would preserve nothing the ledger does not. What it deliberately does not settle is whether a player is ever given a way to ask for one. As shipped, on the first day of a month the previous season's ladder is computable and unreachable, and **nothing anywhere records who won it** — the first season this product runs ends with its winner celebrated by nothing. Settle whether the product ever shows a past season and, if so, how one is named and chosen: a selector, a *last season* line, a single remembered winner, or nothing. Note the cost on the other side — a selector is one more control on a screen `ADR-0060` already said would crowd. *Never* is a complete answer and needs saying out loud rather than falling out | nothing today; the deadline is the first season boundary after the ladder ships |
 
-**Inherited, not raised here:** `DEC-054` — the architect's — whether the client grows
-URL-addressable routes and a working browser *Back*. Due before `STORY-0412` is split, which is
-before anything in this epic starts. It was expected to get sharper here and did the opposite:
-`ADR-0067` makes a row text, so this epic asks the client for no address it does not already have,
-and `DEC-054` now rests on its own reasons alone.
+**Inherited, not raised here, and now answered:** `DEC-054` — the architect's — whether the client
+grows URL-addressable routes and a working browser *Back*. It was expected to get sharper here and
+did the opposite: `ADR-0067` makes a row text, so this epic asked the client for no address it did
+not already have, and `DEC-054` was decided on its own reasons alone.
+[`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md), 2026-08-25: **a
+screen the player chose has an address; a screen the server gave has none.** For this epic that is
+one line — the ladder is reachable at **`/#/leaderboard`**, browser *Back* returns from it to the
+first screen in the same document, and `LadderScreen` changes not at all, because `ADR-0060` §4 kept
+it ignorant of navigation. The slug is the lowercase form of `LADDER_HEADING`'s already-shipped word,
+written as a literal, so `EPIC-06` restyling that heading cannot break a link. Nothing else here
+moves: an address is not a capability and discloses nothing, so `ADR-0067`'s boundary — a row is
+text, and no id turns into a profile — is untouched.
 
 ## Definition of done
 

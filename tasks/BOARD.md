@@ -656,8 +656,59 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-054 | **The architect's** — does the web client grow URL-addressable routes and a working browser *Back*, and what carries them? Raised by [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md): the duel record is a screen with no address, so nothing links to it, a reload lands on the first screen, and *Back* leaves the client. Blocks nothing today | [`ADR-0060`](../docs/adr/ADR-0060-the-record-is-its-own-screen-and-the-lobby-is-the-door.md) | before `STORY-0412` is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
+
+`DEC-054` → [`ADR-0076`](../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md)
+on 2026-08-25 — **a screen the player chose has an address; a screen the server gave has none.**
+**Yes, the client gets addresses**, and an address is a URL **fragment**: `/` for the first screen,
+`/#/duels`, `/#/leaderboard`, and one slug per screen for `STORY-0412` — however many screens that
+story turns out to have, which is the story's call. A slug is the lowercase ASCII form of a word the
+product **already says to a player**, written as a literal rather than derived from `HISTORY_HEADING`
+at runtime, so a restyled heading in `EPIC-06` cannot break a link and this ADR coins no player-facing
+vocabulary. **The waiting screen, the duel table and the result screen get no address, ever**: all
+three are chosen by frames — `RoomJoined`, the first `Snapshot`, `DuelFinished` — so an address
+claiming a seat would be a client asserting a game fact, and false the moment `RoomRegistry` reaps
+the room; a reload while seated lands on `/` and `ADR-0072`'s memory plus the frames put the player
+back. **The store outranks the address**: `Lobby.tsx` keeps its branch order, a player on `#/duels`
+whom a frame seats is shown the duel (`ADR-0060` §5), and the fragment is replaced with `/` so the
+address never lies. **The fragment beats a path segment on a sentence already merged in
+`room-link.ts`** — *"a path segment would 404 on reload against a static host with no rewrite rule,
+and `EPIC-07` has not chosen one"* — and `EPIC-07` still has **no file in `tasks/epics/`**; it beats
+a query parameter because a query is sent to every host's access log and would ride along in the
+invite link a host copies out of the waiting screen. `#/duels` rather than `#duels`, because a bare
+fragment is an element identifier the browser hunts for and scrolls to. **What carries it is two
+owned files and no new dependency**: a pure, framework-free `screen.ts` and a `use-screen.ts` over
+`useSyncExternalStore` — the primitive `ADR-0032` §3 already chose — with one trap named because it
+is silent: `pushState` and `replaceState` fire **neither** `popstate` nor `hashchange`, so a push is
+an assignment to `location.hash` and a replace notifies the module's own subscribers. ***Back* is
+defined at every boundary**: opening a chosen screen pushes, so browser *Back* returns to the first
+screen **in the same document** — no reload, no second socket, the store untouched; `ADR-0060` §4's
+in-page control **replaces**, so a lobby↔record ping-pong cannot grow the stack; *Back* on the first
+screen or on an address the player typed leaves the client, which is what *Back* means everywhere;
+the duel screens pushed nothing, so nothing there changes, and **no `beforeunload` and no
+confirmation** is added — `ADR-0073` §4 refused one on a comparable path and whether one is ever
+offered stays the product owner's. **`DuelResult`'s `<a href="/">` and the waiting screen's *Back to
+the lobby* stay real page loads**, because they are store boundaries rather than screen boundaries:
+routing them client-side would ship `ADR-0075`'s four-field presence leak in the same change that
+fixed *Back*, so that hole stays unreachable and its ticket stays exactly where `ADR-0075` left it.
+**There is no address a player is not entitled to see**: an address selects a screen and grants
+nothing, it is not a capability — `#/duels` opened in another browser shows *that* browser's record,
+because the read is authenticated by what that browser holds — nothing in the space is gated
+(`ADR-0036`, `ADR-0060` §3), and an unknown or renamed fragment renders the first screen with no
+error, because a fragment is not a request and there is nothing to refuse. Costs recorded rather than
+discovered: the destination now has **two spellings**, undoing the tidiness `ADR-0060` §2 bought with
+a single constant; **the screen survives a reload and the state inside it does not** — `#/duels`
+lands on page one under no filter, since `ADR-0057` forecloses a cursor in a link, so the address
+quietly promises more than it delivers; **two navigation authorities** held apart by prose and a
+branch order, with nothing mechanical to catch the next plausible-looking address for a server-owned
+state; a **second hand-rolled `useSyncExternalStore` source**, taking `ADR-0032`'s owned-lines trade
+twice; the in-page and the browser *Back* **coexist and are not the same operation**, so `ADR-0073`
+§5's collision is defined rather than removed; and **every screen story from here owes an address**,
+`STORY-0412` first. Forecloses an address for anything the server decides — permanently, and **by
+rule rather than by omission** — along with server-side rendering, which `ADR-0026` never had. Chosen
+partly because it is the cheapest thing here to unwind: two files and two `useState` flags, with no
+host, no build, no rewrite rule and no dependency to undo. No Kotlin, no frame, no protocol step, no
+deployment requirement. **Unblocks `STORY-0412`'s split.** Raises no `DEC`.
 
 `DEC-070` → [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md)
 on 2026-08-24 — **the server's mark lives as long as the absence that produced it.** Derived from
