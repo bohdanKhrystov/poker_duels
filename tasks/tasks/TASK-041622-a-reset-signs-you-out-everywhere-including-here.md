@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041622
 title: A reset signs you out everywhere, including here
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -128,3 +128,33 @@ must **not** copy;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+**The coder blocked, and found two defects in this ticket rather than one.** `recoveryRoutes` needs a
+`passwordResets` argument that `ServerComponents` did not have — `TASK-041613` and `TASK-041614` added
+`PasswordResets` and its Postgres implementation without ever wiring them into the composition — so the
+sole declared `Application.kt` edit could not compile inside `files_touched: 2`. This ticket's own Scope
+had anticipated it (*"`ServerComponents` gains `passwordResets` in the same edit if `TASK-041613` did
+not already add it"*), so the prose authorised what the Files table forbade. Three files is inside
+`MAX_FILES_TOUCHED`, so the fix was a row and a number, not an `atomic:` block. It also caught the Goal
+claiming *all three* endpoints when `recoveryRoutes` installs **two** — the Tests table and Out of scope
+both already said two.
+
+**`assertAll` over sequential assertions is a real difference, and the reviewer measured it.** With
+`recoveryRoutes(...)` removed from the composition, the shipped test reports `Multiple Failures (2
+failures)` naming both endpoints. The reviewer rewrote the same block as two sequential `assertEquals`
+under the identical mutation and got **one** failure — verify-email only — silently hiding that
+reset-password was equally unwired. Knowing one endpoint is missing and knowing both are is the
+difference between a five-minute fix and a wrong one.
+
+**Two sessions, and the mutations catch both directions.** Excluding the newest session reddens
+`aResetEndsEverySessionThePlayerHeld` on the *second* token; deleting only the newest reddens the same
+test on the *first*. One session could not tell *deleted the one you used* from *deleted all of them*.
+A second player's token is asserted still live, and dropping `WHERE player_id` reddens that test alone.
+
+**Liveness is proven by a refused request, never a table read** — `GET /api/me` with a Bearer token,
+`401` against `200`. That is what the ticket asked for, and it is the difference between the row being
+gone and the session being dead.
+
+**The asymmetry worth knowing:** removing the whole `recoveryRoutes(...)` line from `Application.kt`
+reddens exactly one test, while removing just the reset-password handler from inside it reddens all
+five — every test in the file performs a real reset as a precondition.
