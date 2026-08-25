@@ -71,13 +71,13 @@ internal class PostgresRecoveryEmails(
         TODO("TASK-041609 implements verifyPending")
 
     override suspend fun hasRecoveryEmail(playerId: PlayerId): Boolean =
-        TODO("TASK-041609 implements hasRecoveryEmail")
+        TODO("TASK-041610 implements hasRecoveryEmail")
 
     override suspend fun verifiedOwnerOf(address: EmailAddress): PlayerId? =
         TODO("TASK-041610 implements verifiedOwnerOf")
 
     override suspend fun detach(playerId: PlayerId): Unit =
-        TODO("TASK-041610 implements detach")
+        TODO("TASK-041611 implements detach")
 
     override suspend fun deleteExpiredVerifications(): Int =
         TODO("TASK-041611 implements deleteExpiredVerifications")
