@@ -1,6 +1,12 @@
 # ADR-0031 — An optional recovery email, proven before it can do anything, and a handle that is not a name
 
-- **Status:** Accepted — both token-lifetime clauses amended by
+- **Status:** Accepted — §5's `reset-password` `422` amended by
+  [ADR-0080](ADR-0080-the-password-is-judged-before-the-token-is-touched.md), which answers
+  `DEC-074`: the status stays, and its precondition *"when the token was good"* goes. §4 is what
+  stands — the policy is judged **before** the token is touched, so the `422` is answered whether or
+  not the token is good and without it being looked at, and a refused password costs no link. §4's
+  `DELETE … RETURNING` and its *"no read-then-write window"* are byte-unchanged, and no other clause
+  of this ADR moves. Both token-lifetime clauses amended by
   [ADR-0062](ADR-0062-two-clocks-and-a-date-comes-from-java-time-clock.md), on the same argument it
   applies to [ADR-0027](ADR-0027-the-session-outranks-the-device-id.md) §1. *"24 hours, computed from
   the injected `ServerClock` at issue"* and *"one hour absolute, from `ServerClock` at issue"* name a

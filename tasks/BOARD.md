@@ -656,9 +656,37 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-074 | **The architect's** — does a good reset token survive a `422`? `ADR-0031` §5 gives `reset-password` a `422` *"when the token was good and the new password fails policy"*, presupposing the endpoint knows the token is good before judging the password; §4 makes consumption one `DELETE ... RETURNING` with *"no read-then-write window"*, under which knowing **is** spending. A conflict between two sections of a merged ADR, not an acknowledged gap | [`STORY-0416`](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) — blocks `TASK-041629`; `TASK-041620` ships the route with no `422` | before `TASK-041629`, and before `STORY-0417` builds the form |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 | DEC-075 | **The architect's** — does the mailed recovery link survive a static host with no rewrite rule, and if it becomes a fragment route, what is the slug? `ADR-0031` §4 mails `<baseUrl>/reset#token=…`, a **path segment**, and was right about the fragment for the *token*. [`ADR-0076`](../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §4 has since made the opposite call for **every** client address — *"a fragment never 404s… no host, proxy or rewrite rule has an opinion about it"* — which is `room-link.ts`'s already-merged call, and `EPIC-07` still has no file in `tasks/epics/`. A recovery link is the one URL here whose failure is unrecoverable: a `404` on `/reset` and the player never reaches the client, which `ADR-0031` makes a **total, permanent** loss of the account. `<baseUrl>/verify#token=…` has the same exposure. Raised by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which transcribed §4 rather than reinterpreting it and put both links in **one function**, so the answer is a one-function change; the **slug**, if it lands as a fragment route, is `STORY-0417`'s under `ADR-0076` §1. **Blocks nothing today** — no sender is configured, so no link is delivered to anybody | [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) §6 | before `EPIC-07` configures a sender, and before `STORY-0417` builds the screen the link lands on |
+
+`DEC-074` → [`ADR-0080`](../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md)
+on 2026-08-25 — **the password is judged before the token is touched, so a refusal costs no link.**
+**`ADR-0031` §5's precondition gives way; §4 stands byte-unchanged.** The handler runs three steps
+and no others: decode ⇒ `400`; `passwordIsLongEnough` **and** `passwordIsWithinTheWorkBound` ⇒
+`422`, with **no connection taken and no statement executed**; then `consume` ⇒ `204` / `400`. So a
+`422` never touches the row — same `token_hash`, same `issued_at`, same `expires_at` — the same link
+works on the next submission while it lives, and §5's fifteen-minute suppression still sees it, so a
+`forgot-password` pressed in frustration stays the complete no-op §5 designed. The order is not new:
+`ADR-0048` §2 already puts the maximum *"before Argon2 runs and before the identifier is looked
+up"*, and here the token **is** the identifier. The register's disclosure worry runs the other way —
+the branch is chosen entirely by the caller's own password, so the `422` is byte-identical for a
+live token, an expired one and a string the caller invented, and `400`-versus-`422` reports
+**nothing** about `password_reset`; every other order makes it a liveness report. The endpoint stays
+unbudgeted and its cheapest refusal gets cheaper; a token probe still costs one `DELETE … RETURNING`
+and is still spent by the finding. **Costs**: a `422` no longer proves the link is alive and nothing
+else does either, so a player can be refused twice for one attempt and `STORY-0417`'s form must move
+from *password refused* to *link expired* without contradicting itself; a stranger holding no token
+can make the endpoint answer `422`, which is licensed only while the policy stays a published pure
+function — **the day a breach corpus or any row-reading rule joins it, this endpoint must be
+budgeted or the rule moved behind the lookup**; and `ADR-0031` §5 now reads wrong on its own.
+**`TASK-041620` is unchanged and needs no re-cut** — the step lands in front of `consume` — with one
+fixture constraint: every request in `ResetPasswordRouteTest`, including the two expecting `400`,
+must carry a `newPassword` of 8–128 code points. **`TASK-041629` gains the check and loses one named
+test**, `aBadTokenStillAnswersFourHundredNotFourHundredAndTwentyTwo`, whose order is reversed; what
+it defended is asserted the other way — a fabricated token and a live one produce indistinguishable
+`422`s — and `aRefusedPasswordLeavesTheTokenAsTheDecisionSays` resolves to a second request
+answering `204`. `TASK-041617` transcribes the corrected sentence rather than §5's. **Unblocks
+`TASK-041629`.** Raises no `DEC`, and nothing is the product owner's or the human's.
 
 `DEC-073` → [`ADR-0079`](../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md)
 on 2026-08-25 — **five to attach, ten to forget, and the attach budget is the only cap on the mail
