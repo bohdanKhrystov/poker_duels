@@ -2313,8 +2313,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041611](tasks/TASK-041611-erasing-an-address-is-one-statement-and-so-is-forgetting-a-stale-one.md) Erasing an address is one statement, and so is forgetting a stale one | S | done |
 | | [TASK-041612](tasks/TASK-041612-the-existing-ticker-forgets-unproven-addresses-too.md) The existing ticker forgets unproven addresses too | S | done |
 | | [TASK-041613](tasks/TASK-041613-one-live-reset-token-and-a-quarter-hour-of-silence.md) One live reset token, and a quarter hour of silence | S | done |
-| | [TASK-041614](tasks/TASK-041614-one-statement-spends-the-token-and-the-same-transaction-ends-every-session.md) One statement spends the token, and the same transaction ends every session | S | **ready** |
-| | [TASK-041615](tasks/TASK-041615-a-session-holder-proves-the-password-they-already-have.md) A session holder proves the password they already have | S | backlog |
+| | [TASK-041614](tasks/TASK-041614-one-statement-spends-the-token-and-the-same-transaction-ends-every-session.md) One statement spends the token, and the same transaction ends every session | S | done |
+| | [TASK-041615](tasks/TASK-041615-a-session-holder-proves-the-password-they-already-have.md) A session holder proves the password they already have | S | **ready** |
 | | [TASK-041616](tasks/TASK-041616-the-profile-says-recovery-is-on-and-never-what-the-address-is.md) The profile says recovery is on, and never what the address is | S | backlog |
 | | [TASK-041617](tasks/TASK-041617-five-endpoints-and-a-field-written-down.md) Five endpoints and a field, written down | S | backlog |
 | | [TASK-041618](tasks/TASK-041618-a-token-from-the-mailbox-proves-the-address.md) A token from the mailbox proves the address | S | backlog |

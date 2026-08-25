@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041614
 title: One statement spends the token, and the same transaction ends every session
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -137,3 +137,34 @@ two-threads-one-latch shape the concurrency test copies;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The title's atomicity claim is held by review, not by a gate — and a follow-up is filed rather than
+noted.** Committing the token spend before the credential write, or the credential write before the
+session delete, leaves all five tests green. The coder found this, declined to add a sixth test
+because the Tests table names exactly five, and said so; the reviewer reproduced both splits.
+
+**The reviewer then built the fixture that would close half of it, and proved it discriminates.** A
+live token for a player with **no** `password` credential row: under the shipped atomic code the
+credential write affects zero rows, `consume` answers `false`, and the token-delete rolls back — so
+after the credential is added, the *same* token still works. Under a split, the token was burned on
+the failed attempt and the second call answers `false`. That fixture needs no threading and no fault
+injection, only setup.
+
+**It reaches step one to step two, and nothing reaches step two to step three.** The session delete is
+unconditional in this ticket's Scope, so no data fixture can make it fail; only a wrapped
+`DataSource`/`Connection` that throws between the commits would expose it. That is the half the title
+and Goal actually foreground — *a reset that succeeds cannot leave the attacker's session running* —
+and it is the half a hypothetical future edit would break with every test in this file still green.
+
+**This is heavier than `TASK-041608`'s identical-shaped gap**, and the reviewer's reasoning for why is
+worth keeping: there, a split left an *identical* end state, since a `DELETE` plus an `INSERT` has
+nothing to roll back. Here a split leaves a *strictly worse* state than no reset at all — the owner
+believes they have recovered, the attacker stays signed in, and the `204` says nothing. And unlike
+`TASK-041608`, no later ticket in this chain would incidentally re-exercise it.
+
+**Correction to the brief this ticket was dispatched with.** I said `@Suppress("unused")` on
+`tokens: RecoveryTokens` would come off when `consume` read it. It does not: `RecoveryTokens` only
+mints, has no digest method, and neither the Scope nor `ADR-0031` §4 give `consume` any use for it.
+The coder checked and left it rather than inventing a call.

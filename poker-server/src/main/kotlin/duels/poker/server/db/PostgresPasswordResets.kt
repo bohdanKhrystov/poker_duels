@@ -20,19 +20,32 @@ import javax.sql.DataSource
 /**
  * Implements [PasswordResets] against the `password_reset` table (`ADR-0031` §4).
  *
- * [issue] is implemented; [consume] is `TODO()`, named for `TASK-041614`. [tokens] is unused by
- * [issue] — a fresh token always arrives as a parameter, already minted by the caller — and is
- * carried here now so `TASK-041614` need not widen this constructor later.
+ * [issue] and [consume] each run as one transaction on one connection with `autoCommit = false`,
+ * so a reset that succeeds can never leave the attacker's session running.
+ *
+ * [tokens] remains unused by both — [issue] receives its token already minted by the caller, and
+ * [consume] only ever hashes a token it was handed, never mints one — and stays a constructor
+ * parameter regardless, so a future ticket that does need to mint from here need not widen this
+ * constructor.
  *
  * [clock] is a [Clock], never `ServerClock`, for the reason `PostgresRecoveryEmails` documents:
  * `ServerClock` reports elapsed nanoseconds from an arbitrary epoch, so a `TIMESTAMPTZ` stamped
- * from it would land every row near 1970 (`ADR-0062` §5).
+ * from it would land every row near 1970 (`ADR-0062` §5). [consume]'s own expiry check never
+ * reads [clock] at all — `expires_at > now()` is Postgres' own clock, the same way
+ * `PostgresAuthSessions.playerOf` checks `auth_session`. The row being checked was already
+ * stamped from [clock] at `issue` time; comparing it against anything but the database's own
+ * notion of "now" would let the two diverge.
  */
 internal class PostgresPasswordResets(
     private val dataSource: DataSource,
     private val clock: Clock,
     @Suppress("unused") private val tokens: RecoveryTokens,
 ) : PasswordResets {
+    // Same hasher, same parameters as PostgresCredentials.create (ADR-0031 §4, ADR-0054): this is
+    // the identical no-arg construction PostgresCredentials' public constructor defaults to, not
+    // a second Argon2id path or a different parameter set, which ADR-0031 §4 rules out.
+    private val hasher: SecretHasher = Argon2Hasher()
+
     /**
      * Replaces whatever live reset token [playerId] already holds with [token], in one
      * transaction: a `SELECT` of the outstanding row's `issued_at`, then — unless suppressed —
@@ -78,7 +91,78 @@ internal class PostgresPasswordResets(
             }
         }
 
-    override suspend fun consume(token: ResetToken, secret: PresentedSecret): Boolean = TODO("TASK-041614")
+    /**
+     * Spends [token] and rewrites the player's password credential to [secret] — one transaction
+     * on one connection, so a reset that succeeds cannot leave a stolen session alive.
+     *
+     * Step 1 is `DELETE … RETURNING`, the single statement `ADR-0031` §4 requires: the only read
+     * of `password_reset` this method performs is the one the delete itself does, so no
+     * read-then-write window exists in which two concurrent calls could both find the same token
+     * live. No row back — the token is unknown, already spent, or past its hour — commits the
+     * (empty) transaction and answers `false`.
+     *
+     * Step 2 hashes [secret] through [hasher], the same hasher and parameters
+     * `PostgresCredentials.create` uses. Anything but exactly one row rewritten rolls the whole
+     * transaction back — undoing the token delete too — and answers `false`: a player who has
+     * somehow lost their `password` credential must not have their token spent and their sessions
+     * destroyed for a write that never happened.
+     *
+     * Step 3 deletes every `auth_session` row for that player, unconditionally but for
+     * `player_id`, served by the existing `auth_session_player_id_idx` — including the session
+     * used to request the reset, because the endpoint that calls this requires none.
+     */
+    override suspend fun consume(token: ResetToken, secret: PresentedSecret): Boolean =
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.autoCommit = false
+                try {
+                    val playerId = deleteLiveToken(connection, token)
+                    if (playerId == null) {
+                        connection.commit()
+                        false
+                    } else {
+                        val secretHash = hasher.hash(secret)
+                        if (rewriteCredential(connection, playerId, secretHash) != 1) {
+                            connection.rollback()
+                            false
+                        } else {
+                            deleteSessions(connection, playerId)
+                            connection.commit()
+                            true
+                        }
+                    }
+                } catch (exception: SQLException) {
+                    connection.rollback()
+                    throw exception
+                }
+            }
+        }
+
+    // The single DELETE ... RETURNING that both consumes the token and enforces expiry
+    // (ADR-0031 §4), so no caller can observe the row and decide separately. No row back means
+    // the token named nothing live -- unknown, expired, or already consumed by an earlier call --
+    // and this function cannot and does not distinguish which.
+    private fun deleteLiveToken(connection: Connection, token: ResetToken): PlayerId? =
+        connection.prepareStatement(DELETE_LIVE_TOKEN_SQL).use { statement ->
+            statement.setBytes(1, recoveryTokenDigest(token))
+            statement.executeQuery().use { rows ->
+                if (rows.next()) PlayerId(rows.getObject("player_id", UUID::class.java).toString()) else null
+            }
+        }
+
+    private fun rewriteCredential(connection: Connection, playerId: PlayerId, secretHash: String): Int =
+        connection.prepareStatement(REWRITE_CREDENTIAL_SQL).use { statement ->
+            statement.setString(1, secretHash)
+            statement.setObject(2, UUID.fromString(playerId.value))
+            statement.executeUpdate()
+        }
+
+    private fun deleteSessions(connection: Connection, playerId: PlayerId) {
+        connection.prepareStatement(DELETE_SESSIONS_SQL).use { statement ->
+            statement.setObject(1, UUID.fromString(playerId.value))
+            statement.executeUpdate()
+        }
+    }
 
     // issued_at, never expires_at: the two differ by exactly RESET_LIFETIME, and reading the
     // wrong column would turn a fifteen-minute window into a forty-five-minute one (ADR-0031 §5).
@@ -130,5 +214,15 @@ internal class PostgresPasswordResets(
         private const val INSERT_TOKEN_SQL =
             "INSERT INTO password_reset (token_hash, player_id, issued_at, expires_at) " +
                 "VALUES (?, ?, ?, ?)"
+
+        private const val DELETE_LIVE_TOKEN_SQL =
+            "DELETE FROM password_reset WHERE token_hash = ? AND expires_at > now() " +
+                "RETURNING player_id"
+
+        private const val REWRITE_CREDENTIAL_SQL =
+            "UPDATE credential SET secret_hash = ? WHERE player_id = ? AND kind = 'password'"
+
+        private const val DELETE_SESSIONS_SQL =
+            "DELETE FROM auth_session WHERE player_id = ?"
     }
 }
