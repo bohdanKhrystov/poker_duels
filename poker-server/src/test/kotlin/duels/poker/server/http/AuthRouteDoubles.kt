@@ -37,6 +37,14 @@ internal class RecordingCredentials(
         throw UnsupportedOperationException("Sign-up never verifies credentials")
     }
 
+    override suspend fun verifyCurrent(
+        playerId: PlayerId,
+        kind: CredentialKind,
+        presented: PresentedSecret,
+    ): Boolean {
+        throw UnsupportedOperationException("Sign-up never verifies credentials")
+    }
+
     override suspend fun create(
         playerId: PlayerId,
         kind: CredentialKind,

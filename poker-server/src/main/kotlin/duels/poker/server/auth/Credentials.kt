@@ -56,6 +56,26 @@ public interface Credentials {
     ): PlayerId?
 
     /**
+     * Ask whether [presented] is [playerId]'s current [kind] credential.
+     *
+     * Unlike [verify], the caller supplies no identifier. The caller here is a session holder —
+     * already proven to be [playerId] — so there is no handle to fold and look up, and looking
+     * one up just to feed [verify] would put a reverse lookup from player to identifier into the
+     * codebase for no other reason than this one check.
+     *
+     * @param playerId The player whose credential is checked, already known from a session.
+     * @param kind The kind of credential to check.
+     * @param presented The presented secret to check.
+     * @return `true` if [presented] is [playerId]'s current [kind] credential, `false` if it is
+     *   wrong or [playerId] holds no credential of this [kind].
+     */
+    public suspend fun verifyCurrent(
+        playerId: PlayerId,
+        kind: CredentialKind,
+        presented: PresentedSecret,
+    ): Boolean
+
+    /**
      * Store a new credential for a player.
      *
      * @param playerId The player to create a credential for.

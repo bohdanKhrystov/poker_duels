@@ -4,6 +4,7 @@ import duels.poker.server.auth.CreateCredentialResult
 import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.PresentedSecret
+import duels.poker.server.auth.passwordIsWithinTheWorkBound
 import duels.poker.server.session.PlayerId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -28,6 +29,10 @@ import javax.sql.DataSource
  * costs one real Argon2 verification too — without that, Argon2 itself becomes the timing oracle
  * that tells a stranger whether an identifier exists. `secret_hash` is read here, compared, and
  * dropped: nothing on this class returns it, logs it, or puts it in an exception message.
+ *
+ * [verifyCurrent] answers a different question for a different caller: not *who is this*, but
+ * *is this a player the caller already knows the correct password*, keyed by `(player_id, kind)`
+ * rather than `(kind, identifier)`. It runs no dummy hash — see its own KDoc for why.
  *
  * [hasher] defaults to [Argon2Hasher] via the public constructor. The primary constructor takes
  * it explicitly and is `internal` because [SecretHasher] is — a public constructor cannot expose
@@ -67,6 +72,42 @@ public class PostgresCredentials internal constructor(
         }
         return if (hasher.matches(presented, secretHash)) PlayerId(row.playerId) else null
     }
+
+    /**
+     * Reads `secret_hash` by `(player_id, kind)` and compares it to [presented] with [hasher].
+     *
+     * **No dummy hash, deliberately.** [verify]'s dummy verification against [DUMMY_PHC] exists
+     * because its caller is a stranger who must not learn whether an identifier exists at all.
+     * This caller has already presented a valid session naming [playerId], so there is nothing
+     * left to enumerate: a player who holds no [kind] credential already knows that about
+     * themselves. Answering `false` the instant no row is found is therefore correct, not a
+     * shortcut — adding the dummy back "for consistency" would spend one Argon2 verification on
+     * every wrong-password `403` for no defensive purpose.
+     *
+     * [passwordIsWithinTheWorkBound] is applied to [presented] before [hasher] ever sees it,
+     * exactly as sign-in applies it: an unbounded secret reaching Argon2 here is the same denial
+     * of service through a different door.
+     */
+    override suspend fun verifyCurrent(
+        playerId: PlayerId,
+        kind: CredentialKind,
+        presented: PresentedSecret,
+    ): Boolean =
+        withContext(Dispatchers.IO) {
+            if (!passwordIsWithinTheWorkBound(presented)) {
+                return@withContext false
+            }
+            val secretHash =
+                dataSource.connection.use { connection -> selectCurrentSecretHash(connection, playerId, kind) }
+            secretHash != null && hasher.matches(presented, secretHash)
+        }
+
+    private fun selectCurrentSecretHash(connection: Connection, playerId: PlayerId, kind: CredentialKind): String? =
+        connection.prepareStatement(VERIFY_CURRENT_SQL).use { statement ->
+            statement.setObject(1, UUID.fromString(playerId.value))
+            statement.setString(2, kind.value)
+            statement.executeQuery().use { rows -> if (rows.next()) rows.getString("secret_hash") else null }
+        }
 
     override suspend fun create(
         playerId: PlayerId,
@@ -142,6 +183,9 @@ public class PostgresCredentials internal constructor(
 
         private const val VERIFY_SQL =
             "SELECT player_id, secret_hash FROM credential WHERE kind = ? AND identifier = ?"
+
+        private const val VERIFY_CURRENT_SQL =
+            "SELECT secret_hash FROM credential WHERE player_id = ? AND kind = ?"
 
         private const val CREATE_SQL =
             "INSERT INTO credential (id, player_id, kind, identifier, secret_hash) VALUES (?, ?, ?, ?, ?)"
