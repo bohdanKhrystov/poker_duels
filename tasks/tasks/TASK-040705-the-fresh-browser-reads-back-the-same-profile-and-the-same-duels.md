@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040705
 title: The fresh browser reads back the same profile and the same duels
 type: task
-status: backlog
+status: ready
 parent: STORY-0407
 module: poker-server
 estimate: S
