@@ -103,12 +103,25 @@ an **optional, verified-only** address in its own table.
 | [TASK-041633](../tasks/TASK-041633-one-function-builds-both-recovery-links-and-no-header-reaches-it.md) | One function builds both recovery links, and no header reaches it | backlog |
 | [TASK-041634](../tasks/TASK-041634-a-build-with-no-sender-is-a-valid-build.md) | A build with no sender is a valid build | backlog |
 | [TASK-041635](../tasks/TASK-041635-the-fold-the-address-index-depends-on-written-down-in-the-catalog.md) | The fold the address index depends on, written down in the catalog | backlog |
+| [TASK-041639](../tasks/TASK-041639-a-reset-that-cannot-write-the-password-spends-no-token.md) | A reset that cannot write the password spends no token | backlog |
+| [TASK-041640](../tasks/TASK-041640-a-failure-between-the-password-and-the-sessions-undoes-both.md) | A failure between the password and the sessions undoes both | backlog |
 
 **The table is in id order; `depends_on` is the sequence.** They stopped coinciding when `ADR-0077`
 and `ADR-0078` merged and their answers were folded back in:
 
 `…041623 → 041624 → 041627 → 041625 → 041626 → 041630 → 041631 → 041632 → 041633 → 041634 →
 041628 → 041629`, with `041635` hanging off the merged `041602`.
+
+`TASK-041639 → TASK-041640` hang off the merged `TASK-041614` and are independent of that chain:
+both add tests to `PostgresPasswordResetsConsumeTest.kt`, which no other ticket in this story
+touches, and neither changes a line of production code. They exist because `TASK-041614`'s title
+claims an atomicity **none of its five tests hold**: the coder found that splitting the transaction
+at either boundary leaves all five green, and the reviewer reproduced both splits. `TASK-041639`
+closes the first boundary with the fixture the reviewer built and verified — a live reset token for
+a player with **no** `password` credential, which `V8`'s foreign key to `player` alone makes
+reachable — and `TASK-041640` closes the second with a wrapped `DataSource`, because the session
+delete is unconditional and no data fixture can make it fail. They are strictly ordered because they
+edit one file; `041640` is `041639`'s only dependant and vice versa.
 
 `TASK-041627` was **re-cut into six**, which `ADR-0077` §Consequences called for by name: *"Three
 implementation files, `ServerConfig`, `ServerComponents`, `Application.kt` and its tests exceed what
@@ -265,9 +278,21 @@ password be*) passed.
 the digest, the mailer port and its structural test, both storage ports, the sweep,
 `hasRecoveryEmail`, `docs/protocol.md`, and all five endpoints. The last three to unblock were the
 two that send mail and the one refusal that needed a rule — `DEC-071`, `DEC-072` and `DEC-074`.
-`TASK-041624` is the one ticket whose body still reads as blocked, and it is a **shell**: its two
-fixture tables were left empty to be filled from `ADR-0078` §6, so it is owed a planner pass rather
-than a prose correction.
+`TASK-041624` was the last ticket whose body still read as blocked, because it was a **shell** whose
+two fixture tables were left empty to be filled from `ADR-0078` §6. **That planner pass is done**:
+its `## Blocked` section is now an `## Unblocked` one in the idiom the other three use, both tables
+carry §6's seven accepted and seven refused strings verbatim, and it grew from `XS` to `S` and from
+three tests to four.
+
+The fourth test is the one worth naming here, because the shape the shell prescribed would have gone
+ungated without it. A rule that refuses almost nothing is easy to gate vacuously: a table-driven test
+over the ADR's own fixtures passes for an implementation that is *a lookup of those fixtures*, in
+either direction — `raw in ACCEPTED` and `raw !in REFUSED` both satisfy every entry of both tables.
+`theRuleIsAppliedToStringsInNoFixtureTable` asserts eight strings that appear in **neither** table and
+in the ADR nowhere — three accepted and five refused, one per clause plus both sides of the ceiling
+at 254 code points — and it is the only test in the file that either lookup fails. One of the eight
+is astral, 135 code points and 259 UTF-16 units, and is the only fixture anywhere that tells
+`codePointCount` from `String.length`, since every string in `ADR-0078` §6 is BMP.
 
 **One deliberate divergence from `ADR-0031`, recorded rather than resolved silently.** §6.2's port
 snippet writes `handle: LoginHandle`; no such type exists, because `loginHandleOrNull` returns
