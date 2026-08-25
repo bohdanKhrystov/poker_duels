@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041607
 title: The port where a pending address and a proven one both live
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

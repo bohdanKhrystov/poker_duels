@@ -2189,8 +2189,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041603](tasks/TASK-041603-an-address-that-redacts-itself.md) An address that redacts itself | XS | done |
 | | [TASK-041604](tasks/TASK-041604-two-tokens-minted-the-way-a-session-token-is.md) Two tokens, minted the way a session token is | S | done |
 | | [TASK-041605](tasks/TASK-041605-one-digest-for-both-recovery-tokens.md) One digest for both recovery tokens | XS | done |
-| | [TASK-041606](tasks/TASK-041606-a-port-that-can-send-exactly-two-mails.md) A port that can send exactly two mails | S | **ready** |
-| | [TASK-041607](tasks/TASK-041607-the-port-where-a-pending-address-and-a-proven-one-both-live.md) The port where a pending address and a proven one both live | S | backlog |
+| | [TASK-041606](tasks/TASK-041606-a-port-that-can-send-exactly-two-mails.md) A port that can send exactly two mails | S | done |
+| | [TASK-041607](tasks/TASK-041607-the-port-where-a-pending-address-and-a-proven-one-both-live.md) The port where a pending address and a proven one both live | S | **ready** |
 | | [TASK-041608](tasks/TASK-041608-a-second-claim-replaces-the-first-in-one-transaction.md) A second claim replaces the first, in one transaction | S | backlog |
 | | [TASK-041609](tasks/TASK-041609-the-first-to-verify-takes-the-address.md) The first to verify takes the address | S | backlog |
 | | [TASK-041610](tasks/TASK-041610-a-pending-address-answers-exactly-as-an-unknown-one.md) A pending address answers exactly as an unknown one | S | backlog |

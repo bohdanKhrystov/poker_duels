@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041606
 title: A port that can send exactly two mails
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -120,3 +120,28 @@ Read, and do not edit:
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The gate holds for a function and for nothing else, and that is the ticket's own scope.** The Scope
+names `declaredMemberFunctions` by name, so the diff is exactly what was asked for. But the reviewer
+probed four shapes and **all four pass with every test green**: a property
+(`val sendMarketing: suspend (EmailAddress) -> Unit`), a nested interface, a companion member, and —
+the largest — the port **extending a second interface** that declares a third function, since
+*declared* excludes inherited members by definition. The coder disclosed the property case
+unprompted and documented it in both files' KDoc rather than widening the assertion.
+
+**This matters more than a usual scoping note**, because `ADR-0031` §6.2 makes this test the
+mechanism carrying the vision's *"Never used for contact or marketing"*. That promise has two halves —
+*in a diff a reviewer reads*, which still holds for all four shapes, and *a test asserts it*, which
+does not. A follow-up ticket is owed; it is filed rather than folded in here, because widening the
+assertion is a design choice about what "the public API" means and this ticket already answered that
+question narrowly on the ADR's own wording.
+
+**The Proof under-predicted, and the by-name lookup is why.** Renaming `sendPasswordReset` to `send`
+was predicted to redden `theMailerDeclaresExactlyTwoMembers` alone; it also reddens
+`neitherMailFunctionReturnsAnything`, which resolves each function with `.single { it.name == … }` and
+throws `NoSuchElementException`. Coder and reviewer both confirmed. The design is deliberate — a
+generic sweep over whatever exists would keep passing after a member is renamed out from under it —
+but the reviewer's note stands: the KDoc states the mechanism and not the reason, so the next reader
+sees a lookup that looks incidental. Eighteenth `## Proof` examined this run.
