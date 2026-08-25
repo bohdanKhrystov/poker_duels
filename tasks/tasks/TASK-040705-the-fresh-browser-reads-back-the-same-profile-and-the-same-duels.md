@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040705
 title: The fresh browser reads back the same profile and the same duels
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: S
@@ -135,3 +135,20 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 precisely so that a session whose player has a different device — or, here, a caller whose device has
 no player at all — reads the account and not the caller. Before that change a device-keyed
 `GET /api/me` would have answered `401` here, and the balance on screen would have been nobody's.
+
+**The vacuity this ticket could have had, and the experiment that ruled it out.** Both reads present
+`FRESH_DEVICE`'s device id *and* the session token, which is what a real client does (`ADR-0030` §8)
+but also the shape in which a "reads back the same profile" test proves nothing: if the fresh
+browser's earlier sign-in and handshake had left a `device_binding` row linking `FRESH_DEVICE` to the
+recovered player, a device-routed `GET /api/me` would return the same profile and the assertion could
+not tell which credential selected it. The reviewer settled it by experiment rather than by reading —
+dropping the `Authorization` header while keeping the device id makes
+`theFreshBrowserReadsTheSameProfile` fail. No binding exists at recovery time, so the token is doing
+the work. Reading the code alone would not have established this; the two ADRs say the session
+outranks the device, not that the device resolves to nothing.
+
+**The coder's report answered two of the five questions it was asked**, omitting whether the loser's
+profile could have satisfied the comparison, whether anything claimed to prove no second profile was
+created, and whether Postgres genuinely started. All three were sound when the reviewer checked them,
+but they were checked by the reviewer, not established by the coder. Recorded because an incomplete
+report that happens to be correct is indistinguishable at a glance from one that is not.

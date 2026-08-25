@@ -1868,8 +1868,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040702](tasks/TASK-040702-a-duel-the-recovered-account-will-remember.md) A duel the recovered account will remember | S | done |
 | | [TASK-040703](tasks/TASK-040703-the-name-and-the-password-that-make-the-account-recoverable.md) The name and the password that make the account recoverable | XS | done |
 | | [TASK-040704](tasks/TASK-040704-a-browser-never-seen-signs-in-and-the-socket-names-no-device.md) A browser never seen signs in, and the socket names no device | S | done |
-| | [TASK-040705](tasks/TASK-040705-the-fresh-browser-reads-back-the-same-profile-and-the-same-duels.md) The fresh browser reads back the same profile and the same duels | S | **ready** |
-| | [TASK-040706](tasks/TASK-040706-the-recovery-leaves-no-row-in-either-table-a-profile-occupies.md) The recovery leaves no row in either table a profile occupies | S | backlog |
+| | [TASK-040705](tasks/TASK-040705-the-fresh-browser-reads-back-the-same-profile-and-the-same-duels.md) The fresh browser reads back the same profile and the same duels | S | done |
+| | [TASK-040706](tasks/TASK-040706-the-recovery-leaves-no-row-in-either-table-a-profile-occupies.md) The recovery leaves no row in either table a profile occupies | S | **ready** |
 | | [TASK-040707](tasks/TASK-040707-a-wrong-password-from-the-fresh-browser-issues-no-session.md) A wrong password from the fresh browser issues no session | S | backlog |
 | | [TASK-040708](tasks/TASK-040708-signing-out-returns-the-fresh-browser-to-nothing.md) Signing out returns the fresh browser to nothing, and the original device to itself | S | backlog |
 | | [TASK-040709](tasks/TASK-040709-one-statement-in-the-whole-server-creates-a-profile.md) One statement in the whole server creates a profile | S | backlog |
