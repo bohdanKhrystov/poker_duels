@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040704
 title: A browser never seen signs in, and the socket names no device
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: S
@@ -149,3 +149,26 @@ device was ever consulted. The device id and the token must arrive together.
 
 **A real client keeps sending its device id whether or not it holds a token** (`ADR-0030` §8), so
 step 3 is what a browser actually does, not a contrivance for the test.
+
+**The password stops being decoration here, and the mutation that proves it is asymmetric.**
+`TASK-040703` passed `RECOVERY_HANDLE` and `RECOVERY_PASSWORD` to `signUp` and asserted only the
+`201`, deferring the real proof to this ticket. The obvious mutation — edit the constant's literal —
+is **inert**, because sign-up and sign-in read the same constant and both ends move together; the
+coder ran it and reported `BUILD SUCCESSFUL` rather than substituting silently. What reddens is an
+asymmetric mismatch: sign-in presenting a literal that sign-up did not use answers `401` inside the
+`signIn` helper's status assertion, failing all six tests because `runRecovery()` is shared setup.
+The reviewer reproduced both directions. The deferral arrived somewhere real.
+
+**The Proof named no mutation for its own positive control.** It gives one for each of the two new
+`Welcome` assertions and then only *argues* that neither touches
+`theOriginalDevicesWelcomeStillCarriesItsDeviceId`. An argument is not a gate: without a mutation,
+nothing establishes that the positive control can fail, and a control that cannot fail leaves the
+null assertion beside it unguarded. The coder devised one — blanking `deviceId` in `DuelSocket`'s
+`Identity.Device` arm — and it reddens that test alone; the reviewer reproduced it. Twelfth `## Proof`
+in this run found wrong or incomplete when actually executed.
+
+**"The sign-in request sets neither header" is structural, not asserted.** `AuthRoutes` reads neither
+`X-Device-Id` nor `Authorization` on this route (its own KDoc, `ADR-0030` §2), so a header added by
+mistake would redden nothing. The criterion is held by the helper not writing them, which a reader
+verifies by reading it. Recorded rather than tested, on the precedent set at `DELETE /api/me/device`
+(`TASK-040609`), where a malformed credential is likewise indistinguishable from an absent one.
