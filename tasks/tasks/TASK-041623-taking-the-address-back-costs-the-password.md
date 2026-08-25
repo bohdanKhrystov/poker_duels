@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041623
 title: Taking the address back costs the password
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

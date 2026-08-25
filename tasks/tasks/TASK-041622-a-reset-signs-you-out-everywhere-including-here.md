@@ -3,13 +3,13 @@ schema: 2
 id: TASK-041622
 title: A reset signs you out everywhere, including here
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 2
+files_touched: 3
 labels: [server, http, auth, security]
 depends_on: [TASK-041621]
 verify:
@@ -22,7 +22,7 @@ verify:
 ## Goal
 
 A successful reset leaves the player with no live session anywhere, asserted at the wire — and
-`recoveryRoutes` is installed on the real server, so all three of its endpoints answer for a
+`recoveryRoutes` is installed on the real server, so both of its endpoints answer for a
 running application rather than only inside `testApplication`.
 
 ## Files
@@ -30,10 +30,10 @@ running application rather than only inside `testApplication`.
 | File | Action |
 | --- | --- |
 | `poker-server/src/main/kotlin/duels/poker/server/Application.kt` | modify |
+| `poker-server/src/main/kotlin/duels/poker/server/ServerComponents.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/http/ResetPasswordEndsSessionsTest.kt` | create |
 
 Read, and do not edit:
-`poker-server/src/main/kotlin/duels/poker/server/ServerComponents.kt`;
 `poker-server/src/test/kotlin/duels/poker/server/DuelServerRoutesTest.kt` — the assertion that every
 registered route answers, which this ticket's install must not break;
 `docs/adr/ADR-0050-revoking-the-device-signs-out-everywhere-but-here.md` — the contrast this ticket
@@ -117,6 +117,44 @@ must **not** copy;
    sessions really are gone. The positive control that stops "delete everything" reading as
    success. Revert.
 
+## Notes
+
+- The Goal originally said `recoveryRoutes` answers for "all three" endpoints; it installs two —
+  `/api/auth/verify-email` and `/api/auth/reset-password` — matching the Tests table and the
+  Out-of-scope note that the other two recovery endpoints are not yet written. Corrected before
+  landing so a reader comparing Goal to Tests table does not conclude the Tests table is the one
+  that is wrong.
+
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+**The coder blocked, and found two defects in this ticket rather than one.** `recoveryRoutes` needs a
+`passwordResets` argument that `ServerComponents` did not have — `TASK-041613` and `TASK-041614` added
+`PasswordResets` and its Postgres implementation without ever wiring them into the composition — so the
+sole declared `Application.kt` edit could not compile inside `files_touched: 2`. This ticket's own Scope
+had anticipated it (*"`ServerComponents` gains `passwordResets` in the same edit if `TASK-041613` did
+not already add it"*), so the prose authorised what the Files table forbade. Three files is inside
+`MAX_FILES_TOUCHED`, so the fix was a row and a number, not an `atomic:` block. It also caught the Goal
+claiming *all three* endpoints when `recoveryRoutes` installs **two** — the Tests table and Out of scope
+both already said two.
+
+**`assertAll` over sequential assertions is a real difference, and the reviewer measured it.** With
+`recoveryRoutes(...)` removed from the composition, the shipped test reports `Multiple Failures (2
+failures)` naming both endpoints. The reviewer rewrote the same block as two sequential `assertEquals`
+under the identical mutation and got **one** failure — verify-email only — silently hiding that
+reset-password was equally unwired. Knowing one endpoint is missing and knowing both are is the
+difference between a five-minute fix and a wrong one.
+
+**Two sessions, and the mutations catch both directions.** Excluding the newest session reddens
+`aResetEndsEverySessionThePlayerHeld` on the *second* token; deleting only the newest reddens the same
+test on the *first*. One session could not tell *deleted the one you used* from *deleted all of them*.
+A second player's token is asserted still live, and dropping `WHERE player_id` reddens that test alone.
+
+**Liveness is proven by a refused request, never a table read** — `GET /api/me` with a Bearer token,
+`401` against `200`. That is what the ticket asked for, and it is the difference between the row being
+gone and the session being dead.
+
+**The asymmetry worth knowing:** removing the whole `recoveryRoutes(...)` line from `Application.kt`
+reddens exactly one test, while removing just the reset-password handler from inside it reddens all
+five — every test in the file performs a real reset as a precondition.
