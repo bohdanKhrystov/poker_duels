@@ -18,14 +18,20 @@ verify:
   - ./gradlew :poker-server:detekt
 ---
 
-## Blocked
+## Unblocked
 
-**`DEC-072` — the architect's.** This endpoint is the one `ADR-0031` §5 constrains hardest: *"the
-response is written **before** any mail work, and delivery runs on a detached coroutine, so response
-latency does not vary with whether an address matched."* Nothing yet settles what that coroutine is
-a child of, what happens when `send` throws after the reset row is committed, whether anything is
-retried, or **what a test can await** — and three of this ticket's tests assert that a mail was or
-was not sent.
+**`DEC-072` — the architect's — is answered and merged**, so this section is history rather than a
+gate. The `blocked` label in the front matter is a historical marker and this ticket's `status:` is
+not `blocked`.
+
+[`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
+settles the seam, the scope, the failure semantics — and the clause three of this ticket's tests
+needed, **what a test can await**: the test binds an *undecorated recording double*, so the send is
+an ordinary suspend call inside the handler and both `assertEquals(1, mailer.sent.size)` and
+`assertEquals(emptyList(), mailer.sent)` are decidable with no join, no channel and no timeout.
+**Absence is what forced that shape** — no await proves a negative. No sender configured is
+`NoRecoveryMailer`, a `public object` with two empty bodies and never a null, which is what the
+fourth case below binds.
 
 **Not the human's and not about money.** `ADR-0031` §7 defers the transport to `EPIC-07`; this
 endpoint answers `202` identically under an answer that ships no sender at all.
@@ -48,7 +54,10 @@ Read, and do not edit:
 the `Boolean` that says whether to send;
 `poker-server/src/main/kotlin/duels/poker/server/auth/RecoveryEmails.kt` — `verifiedOwnerOf`;
 `docs/adr/ADR-0031-an-optional-verified-recovery-email.md` §4 and §5;
-the ADR answering `DEC-072`.
+`docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md` — the seam, and
+what a test may await;
+`docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md`, for
+the one sentence that binds this file: `forgot-password`'s budget is admitted **after** the `202`.
 
 ## Scope
 
@@ -61,7 +70,8 @@ the ADR answering `DEC-072`.
   work and then responds passes every status assertion in this file and leaks the answer through
   latency, exactly as `ADR-0027` §6's dummy hash exists to prevent at sign-in.
 - After responding: resolve the owner; if there is one, `issue`; if `issue` returned `true`, send.
-  All on `DEC-072`'s detached seam.
+  All over `ADR-0077`'s port — and in this file the port is bound to an **undecorated** recording
+  double, never the detached decorator, which is what makes *nothing was sent* assertable.
 - A malformed body is **also `202`**, not `400`. §5 says `202` always and lists no exception; a
   `400` here would distinguish a well-formed unknown address from a malformed one, which is a
   weaker oracle than the one being refused but is still one, and there is no reason to spend it.
@@ -70,11 +80,12 @@ the ADR answering `DEC-072`.
 
 ## Out of scope
 
-- The budget — `TASK-041628`, blocked on `DEC-073`. Over budget must answer `202` like everything
-  else, so adding it later moves no assertion in this file.
+- The budget — `TASK-041628`. Over budget answers `202` like everything else, so adding it later
+  moves no assertion in this file; `ADR-0079` puts its `admit` **after** the `202` this ticket
+  writes, which is why that ordering is stated in *Scope* as a property and not as an optimisation.
 - `reset-password`, which spends the token — `TASK-041620`.
-- The mail's wording and the `<baseUrl>/reset#token=…` link — `DEC-072` and `ADR-0031`'s deferral
-  to `STORY-0412`.
+- The mail's wording and the `<baseUrl>/#/reset/<token>` link (`ADR-0081` §1) — `TASK-041633` builds
+  the link, and `ADR-0031` defers the copy to `STORY-0412`.
 - Telling anybody anything. There is no failure response here and no success response either.
 
 ## Tests
@@ -92,11 +103,10 @@ the ADR answering `DEC-072`.
 
 ## Acceptance criteria
 
-- [ ] `DEC-072` is answered by a merged ADR before this leaves `blocked`
 - [ ] All six `ForgotPasswordRouteTest` tests pass
 - [ ] `allFourCasesAnswerOneIdenticalTwoOhTwo` asserts the four triples **equal to each other**, and
       the file contains no assertion of the form *each is 202 with an empty body* standing in for it
-- [ ] The four cases include a **no-sender-configured** run, built through `DEC-072`'s seam
+- [ ] The four cases include a **no-sender-configured** run, built by binding `NoRecoveryMailer`
 - [ ] `onlyTheVerifiedCaseMintsAToken` asserts a row count of exactly `1` **and** whose it is
 - [ ] The two window tests sit at 14 and 16 minutes
 - [ ] The `202` is written **before** `verifiedOwnerOf` is called, checked by reading the handler

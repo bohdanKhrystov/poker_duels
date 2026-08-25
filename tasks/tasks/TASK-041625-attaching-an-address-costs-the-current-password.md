@@ -55,7 +55,7 @@ Read, and do not edit:
 identity-then-password guard order and the fixture this class mirrors;
 `poker-server/src/main/kotlin/duels/poker/server/auth/EmailAddressSyntax.kt`;
 `docs/adr/ADR-0031-an-optional-verified-recovery-email.md` §3 and §5;
-the ADRs answering `DEC-071` and `DEC-072`.
+`docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md` §6's two fixture tables.
 
 ## Scope
 
@@ -114,10 +114,10 @@ the ADRs answering `DEC-071` and `DEC-072`.
 | Test | Proves |
 | --- | --- |
 | `theRightPasswordRecordsAPendingClaim` | `202`, an empty body, and `email_verification` holds one row for that player with the address **as typed**. `hasRecoveryEmail` is still `false` — nothing is attached until it is proven |
-| `anAddressAlreadyProvenElsewhereStillAnswersTwoOhTwo` | A second player attaches an address the first has already verified: `202`, byte-identical `(status, body, header names)` to the test above, and **no mail is sent** — asserted through `DEC-072`'s seam |
+| `anAddressAlreadyProvenElsewhereStillAnswersTwoOhTwo` | A second player attaches an address the first has already verified: `202`, byte-identical `(status, body, header names)` to the test above, and **no mail is sent** — asserted through `ADR-0077`'s undecorated recording double |
 | `aWrongPasswordAnswersFourHundredAndThreeAndRecordsNothing` | `403`, and `email_verification` holds no row for that player |
 | `noSessionAnswersFourHundredAndOne` | No `Authorization` header: `401`, and no row is recorded |
-| `aStringThatIsNotAnAddressAnswersFourHundred` | Using a refused form from `DEC-071`'s table: `400`, and no row is recorded |
+| `aStringThatIsNotAnAddressAnswersFourHundred` | Using a refused form from `ADR-0078` §6's refused table: `400`, and no row is recorded |
 | `theResponseNeverCarriesTheAddress` | Across the `202`, `400`, `401` and `403` responses, no body and no header value contains the address or any substring of it longer than three characters |
 
 ## Acceptance criteria

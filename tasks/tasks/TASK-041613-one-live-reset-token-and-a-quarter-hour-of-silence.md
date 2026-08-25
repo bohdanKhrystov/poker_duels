@@ -62,11 +62,12 @@ clock and digest shape this class copies;
 ## Out of scope
 
 - `consume` — `TASK-041614`.
-- The endpoint, and answering `202` whatever `issue` returns — `TASK-041626`, blocked on `DEC-072`.
-- Sending anything, and the `<baseUrl>/reset#token=…` link — `DEC-072`.
-- The remote-address budget. That is a *second*, independent limiter over the same endpoint and its
-  numbers are `DEC-073`; this one is the durable per-account defence and needs no decision because
-  §5 fixes fifteen minutes explicitly.
+- The endpoint, and answering `202` whatever `issue` returns — `TASK-041626`.
+- Sending anything, and the `<baseUrl>/#/reset/<token>` link (`ADR-0081` §1) — `TASK-041633` builds
+  it and `ADR-0077` settles the seam that delivers it.
+- The remote-address budget. That is a *second*, independent limiter over the same endpoint, and
+  `ADR-0079` set it at ten a minute for this reason: this one, the durable per-account defence §5
+  fixes at fifteen minutes, is what actually caps mail to one victim.
 - Suppressing on `expires_at` rather than `issued_at`. §5 names `issued_at`; the two differ by
   exactly the lifetime and reading the wrong one turns a 15-minute window into a 45-minute one.
 

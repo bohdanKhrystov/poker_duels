@@ -57,10 +57,10 @@ must **not** copy;
 
 - Changing `ADR-0050`'s `DELETE /api/me/device` behaviour or its tests. The two paths differ on
   purpose and this ticket touches neither.
-- The `422` — `TASK-041629`, blocked on `DEC-074`.
+- The `422` — `TASK-041629`. `ADR-0080` §1 puts the policy check in **front** of `consume`, so
+  nothing on this ticket's path moves when it lands and no test here has to know it is coming.
 - `POST /api/auth/recovery-email` and `POST /api/auth/forgot-password`, which are not yet installed
-  because they are not yet written — `TASK-041625` and `TASK-041626` add them to the same call and
-  are blocked on `DEC-071` and `DEC-072`.
+  because they are not yet written — `TASK-041625` and `TASK-041626` add them to the same call.
 - Closing live WebSockets. `AuthRoutes`' sign-out already declines to, on the grounds that tearing
   a socket down abandons a seat mid-duel and `ADR-0013`'s grace period then folds it — an
   authentication operation that costs a coin. A reset inherits that reasoning unchanged.

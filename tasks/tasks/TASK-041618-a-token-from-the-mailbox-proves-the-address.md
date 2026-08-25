@@ -77,8 +77,8 @@ the `CancellationException` rethrow, and the `call.respond(HttpStatusCode.X)` ho
   route tickets contend for it. Until then `VerifyEmailRouteTest` installs `recoveryRoutes` itself
   inside `testApplication`, which is how `AuthRoutes` was first tested.
 - `POST /api/auth/recovery-email`, which creates the pending row this endpoint consumes —
-  `TASK-041625`, blocked on `DEC-071` and `DEC-072`. This ticket's fixture creates the pending row
-  by calling `RecoveryEmails.claimPending` directly.
+  `TASK-041625`. This ticket's fixture creates the pending row by calling
+  `RecoveryEmails.claimPending` directly.
 - The `409`, the expired token and the second use of a token — `TASK-041619`, a second test file
   over the same route. They are separated because this ticket is already a DTO, a route file and a
   test, and three refusals with their own fixtures do not fit in `S` beside them.

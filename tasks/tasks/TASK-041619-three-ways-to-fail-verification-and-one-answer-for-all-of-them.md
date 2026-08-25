@@ -64,7 +64,7 @@ reuses;
   inventing a requirement, and a flaky one.
 - Any change to `RecoveryRoutes.kt`. If a triple turns out to differ, that is a ticket against the
   route, not an assertion softened here.
-- `forgot-password`'s four-case `202` — `TASK-041626`, blocked on `DEC-072`.
+- `forgot-password`'s four-case `202` — `TASK-041626`.
 
 ## Tests
 

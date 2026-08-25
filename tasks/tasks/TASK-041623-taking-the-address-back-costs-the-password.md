@@ -64,8 +64,8 @@ guard order and the uniform `204`, which this endpoint copies;
 
 ## Out of scope
 
-- `POST /api/auth/recovery-email` — `TASK-041625`, blocked on `DEC-071` and `DEC-072`. This ticket's
-  fixture attaches an address by calling `claimPending` + `verifyPending` directly.
+- `POST /api/auth/recovery-email` — `TASK-041625`. This ticket's fixture attaches an address by
+  calling `claimPending` + `verifyPending` directly.
 - Sending a *your address was removed* mail. `ADR-0031` §6.2's port has two members and this is not
   one of them; adding a third is an ADR, not a ticket.
 - Deleting the player's pending claim on a different address — `TASK-041611` fixed that and gave

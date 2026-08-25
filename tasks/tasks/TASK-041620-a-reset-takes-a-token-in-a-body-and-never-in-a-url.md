@@ -34,7 +34,9 @@ accepted **only** in a request body, and no session issued.
 Read, and do not edit:
 `poker-server/src/main/kotlin/duels/poker/server/http/AuthRoutes.kt` — the decode-then-refuse shape;
 `poker-server/src/main/kotlin/duels/poker/server/auth/PasswordResets.kt`;
-`docs/adr/ADR-0031-an-optional-verified-recovery-email.md` §4 and §5.
+`docs/adr/ADR-0031-an-optional-verified-recovery-email.md` §4 and §5;
+`docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md` §7 — why this ticket
+stands unchanged, and the one fixture constraint it must satisfy.
 
 ## Scope
 
@@ -53,18 +55,28 @@ Read, and do not edit:
 - It issues **no session** and returns **no token**. §4: this keeps the endpoint incapable of
   handing out a credential, so a leaked reset link cannot be exchanged for a live session by
   anything but a full sign-in.
+- **Every request in `ResetPasswordRouteTest` carries a `newPassword` of 8 to 128 code points —
+  including the two that expect `400`.** This route applies no policy, so the constraint changes
+  nothing it asserts today; it is here because `ADR-0080` §1 puts the policy check in **front** of
+  the lookup when `TASK-041629` lands, and a shorter password will answer `422` from that day.
+  `TASK-041629` requires this file to pass **unchanged**, and a 7-code-point password anywhere in it
+  makes that requirement unsatisfiable — the coder there would face a ticket that cannot both
+  implement its scope and leave this file standing. One sentence here costs nothing; discovering it
+  there costs a stalled dispatch.
 
 ## Out of scope
 
-- **The `422`, and the password policy** — `TASK-041629`, blocked on `DEC-074`. `ADR-0031` §5's
-  status table and §4's single-use mechanism cannot both hold as written, and the ticket that
-  answers it is separate so that this route can ship. Until then this route applies **no policy**
-  and answers `400` where §5 would answer `422`; that is a knowingly incomplete endpoint and
-  `TASK-041629` completes it. Do not add a policy check here to "finish" it.
+- **The `422`, and the password policy** — `TASK-041629`. `ADR-0080` §1 settled the order and §7
+  says this ticket *"stands unchanged and needs no re-cut"*, because the step it adds goes in
+  **front** of `consume`, where nothing written here has to move. Until it lands this route applies
+  **no policy** and answers `400` where §5 would answer `422`; that is a knowingly incomplete
+  endpoint and `TASK-041629` completes it. Do not add a policy check here to "finish" it — a `422`
+  from this ticket would break `TASK-041629`'s only oracle, which is that this file passes
+  unchanged when the check arrives.
 - Single use and concurrency at the wire — `TASK-041621`.
 - The session sweep, and installing `recoveryRoutes` in `Application.kt` — `TASK-041622`.
-- `forgot-password`, which mints the token this endpoint spends — `TASK-041626`, blocked on
-  `DEC-072`. This ticket's fixture mints it by calling `PasswordResets.issue` directly.
+- `forgot-password`, which mints the token this endpoint spends — `TASK-041626`. This ticket's
+  fixture mints it by calling `PasswordResets.issue` directly.
 - Any rate limit. `ADR-0031` §5 budgets `recovery-email` and `forgot-password` only, and this
   endpoint's caller already holds a 256-bit token.
 
@@ -90,6 +102,9 @@ Read, and do not edit:
 - [ ] `RecoveryRoutes.kt` contains no call to `passwordIsLongEnough` and no `422` — those arrive
       with `TASK-041629`
 - [ ] `ResetPasswordRequest` has no default on either field
+- [ ] **Every** request in `ResetPasswordRouteTest` sends a `newPassword` of 8 to 128 code points —
+      `aBadTokenAnswersFourHundred` and `theTokenIsNotAcceptedAsAQueryParameter` included, and the
+      file contains no password shorter than 8 code points anywhere, in a fixture constant or inline
 - [ ] `AuthRoutes.kt` is byte-unchanged
 - [ ] Every command in `verify:` exits 0
 
@@ -118,6 +133,13 @@ Read, and do not edit:
    `TASK-041621`'s. Instead make `consume` return `true` without writing.
    **`aGoodTokenAnswersTwoHundredAndFour` reddens alone**, on the assertion that the new password
    signs in. Revert.
+6. Shorten `aBadTokenAnswersFourHundred`'s `newPassword` to 7 code points.
+   **Nothing reddens.** Record it rather than skipping it: the fixture constraint above is gated by
+   **nothing in this ticket**, because this route judges no password. It becomes a failure two
+   tickets later, in `TASK-041629`'s `ResetPasswordRouteTest` run, as *expected 400, got 422* — at
+   which point the ticket that discovers it is not the ticket that can fix it. That is the whole
+   reason the constraint is written here, with a criterion a reviewer checks by reading, and the
+   reason to leave the password long even though today it could be anything.
 
 ## Definition of done
 
