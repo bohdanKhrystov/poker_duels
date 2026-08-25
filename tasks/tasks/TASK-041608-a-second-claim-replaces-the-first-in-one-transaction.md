@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041608
 title: A second claim replaces the first, in one transaction
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -153,3 +153,28 @@ fixture, not a weakening: *a second claim replaces the first* is what is being a
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**"In one transaction" is true of the code and asserted by no test.** Splitting the `DELETE` and the
+`INSERT` across two transactions reddens nothing here — the four tests never exercise concurrency or a
+mid-transaction failure, so two sequential succeeding transactions leave identical final state. The
+coder found this and reported it rather than widening scope; the reviewer confirmed the implementation
+is genuinely atomic (one connection, `autoCommit` off, `DELETE` + `INSERT` + one `commit`, rollback on
+`SQLException`) and that this ticket's own *Out of scope* says the write and the rule that gates it are
+separately provable. So it is a property held by review, not a gap: `TASK-041636` adds the
+fifteen-minute suppression **inside** this transaction, and its tests would fail if the atomicity were
+not real.
+
+**The absolute-instant assertion is what makes the injected clock observable.** Replacing it with the
+database's `now()` reddens `aClaimExpiresTwentyFourHoursAfterTheInjectedClock` alone — and only on the
+`issued_at` equality. The duration assertions stay green, because `now()` and `now() + interval '24
+hours'` are still twenty-four hours apart. A test asserting only the interval would not have seen it.
+
+**Two of five `TODO` attributions were wrong, at exactly the point the coder said it had not checked.**
+It disclosed the inference as unverified; the reviewer opened the three ticket files and found
+`hasRecoveryEmail` pointing at `TASK-041609` instead of `TASK-041610`, and `detach` at `TASK-041610`
+instead of `TASK-041611`. Corrected on a second dispatch, cross-checked from both directions —
+`TASK-041609`'s own *Out of scope* names `hasRecoveryEmail`, and `TASK-041610`'s names `detach`. A
+wrong pointer in a `TODO` costs the next coder a wrong ticket, and nothing mechanical would have caught
+it.

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041636
 title: The attach path gets the quarter hour of silence the reset path has
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
