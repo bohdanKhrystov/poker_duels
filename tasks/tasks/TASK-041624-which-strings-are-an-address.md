@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041624
 title: Which strings are an address
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

@@ -733,6 +733,9 @@ private const val THIRD_DEVICE: String = "e2e-third"
  * time. `/api/auth/reset-password` (`TASK-041620`) is the third, on the same escape:
  * `PasswordResets.consume` writes `credential`, deletes from `password_reset` and `auth_session`,
  * and touches neither `player.coin_balance` nor `duel_result`, so it moves no coin either.
+ * `/api/auth/recovery-email` (`TASK-041623`) is the fourth, on the same escape: `RecoveryEmails.
+ * detach` deletes from `recovery_email` and touches neither `player.coin_balance` nor
+ * `duel_result`, so it moves no coin either.
  */
 private val SCENARIO_ENDPOINTS: Set<String> = setOf(
     "/api/auth/sign-up",
@@ -740,6 +743,7 @@ private val SCENARIO_ENDPOINTS: Set<String> = setOf(
     "/api/auth/sign-out",
     "/api/auth/verify-email",
     "/api/auth/reset-password",
+    "/api/auth/recovery-email",
     "/api/me",
     "/api/me/duels",
     "/api/me/name",

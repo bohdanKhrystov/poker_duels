@@ -1,6 +1,8 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.Credentials
+import duels.poker.server.auth.Identity
 import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.auth.PasswordResets
 import duels.poker.server.auth.PresentedSecret
@@ -8,6 +10,7 @@ import duels.poker.server.auth.RecoveryEmails
 import duels.poker.server.auth.ResetToken
 import duels.poker.server.auth.VerificationToken
 import duels.poker.server.auth.VerifyEmailResult
+import duels.poker.server.protocol.http.DetachRecoveryEmailRequest
 import duels.poker.server.protocol.http.ResetPasswordRequest
 import duels.poker.server.protocol.http.VerifyEmailRequest
 import io.ktor.http.HttpStatusCode
@@ -15,6 +18,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.CancellationException
@@ -66,25 +70,50 @@ import kotlinx.coroutines.CancellationException
  * **front** of [PasswordResets.consume], and it arrives with `TASK-041629`. Until then, every
  * refused token answers `400` regardless of the new password's own shape.
  *
- * All four parameters are declared now, even though this ticket's handlers use only
- * [recoveryEmails] and [passwordResets], so that the remaining route tickets in this chain fill in
- * their own handlers without ever editing this signature or its single call site in
- * `Application.kt` — five route tickets contending for one line is how a sequential chain
- * deadlocks.
+ * Also installs `DELETE /api/auth/recovery-email`, which erases the caller's proven recovery
+ * address, per `ADR-0031` §5 and its closing `DEC-029`. It follows the identical guard order
+ * `DELETE /api/me/device` uses (`ADR-0049` §5) — identity, then the credential, then the write —
+ * in this fixed order:
  *
- * @param recoveryEmails The port `verify-email`'s handler calls: [RecoveryEmails.verifyPending]
- *   alone.
+ * 1. [identities] resolves the caller, **before the body is even read** — the same order `POST
+ *    /api/auth/sign-up` resolves its own caller (`ADR-0027` §4), so a stranger never reaches the
+ *    `403`. But only [Identity.Session] counts as resolved here: the narrower guard `DELETE
+ *    /api/me/device` uses (`ADR-0049` §5), not sign-up's more permissive one. A device identity,
+ *    however well it resolves, is not a credential-bearing session, and this route is gated on a
+ *    credential — [Identity.Device], [Identity.UnknownDevice], [Identity.Refused] and
+ *    [Identity.Anonymous] all answer `401 Unauthorized` with an empty body and never reach
+ *    [credentials].
+ * 2. The body decodes as [DetachRecoveryEmailRequest]; every decode failure is `400`, the specific
+ *    cause never changing the answer, exactly as `verify-email`'s and `reset-password`'s own
+ *    decode steps above.
+ * 3. [Credentials.verifyCurrent] decides: a wrong current password answers `403 Forbidden`, and
+ *    [recoveryEmails] is never touched. The `403` is reachable only by somebody already holding a
+ *    valid session, so it discloses nothing they could not already learn from `GET /api/me`.
+ *
+ * On a right password, [RecoveryEmails.detach] runs and the route answers `204 No Content`
+ * **whether or not a row existed** — a `404` for "you had none" would tell a caller holding a
+ * stolen session whether the account has recovery configured, one of the two facts
+ * [RecoveryEmails.hasRecoveryEmail] deliberately gates behind the profile read.
+ *
+ * All four parameters have been declared since `TASK-041618`; this is the first handler in this
+ * file to use [identities] and [credentials], so the remaining route ticket in this chain
+ * (`TASK-041625` or `TASK-041626`) fills in its own handler without ever editing this signature or
+ * its single call site in `Application.kt` — five route tickets contending for one line is how a
+ * sequential chain deadlocks.
+ *
+ * @param recoveryEmails The port `verify-email`'s and `recovery-email`'s handlers call:
+ *   [RecoveryEmails.verifyPending] and [RecoveryEmails.detach] respectively.
  * @param passwordResets The port `reset-password`'s handler calls: [PasswordResets.consume] alone.
- * @param identities Declared now though unused here: filled in by a later route ticket in this
- *   chain (`TASK-041623`, `TASK-041625` or `TASK-041626`) that needs to resolve a caller.
- * @param credentials Declared now though unused here: filled in by a later route ticket in this
- *   chain (`TASK-041623`, `TASK-041625` or `TASK-041626`) that needs to check a credential.
+ * @param identities The port `recovery-email`'s handler calls to resolve the caller's session
+ *   before the body is read; a device identity does not count as resolved here.
+ * @param credentials The port `recovery-email`'s handler calls, once identity is confirmed, to
+ *   verify the presented current password: [Credentials.verifyCurrent] alone.
  */
 public fun Application.recoveryRoutes(
     recoveryEmails: RecoveryEmails,
     passwordResets: PasswordResets,
-    @Suppress("UNUSED_PARAMETER") identities: IdentityResolver,
-    @Suppress("UNUSED_PARAMETER") credentials: Credentials,
+    identities: IdentityResolver,
+    credentials: Credentials,
 ) {
     routing {
         post("/api/auth/verify-email") {
@@ -130,6 +159,50 @@ public fun Application.recoveryRoutes(
             } else {
                 call.respond(HttpStatusCode.BadRequest)
             }
+        }
+        delete("/api/auth/recovery-email") {
+            // Identity first, before the body is read: the same order sign-up uses (ADR-0027
+            // §4), so a stranger never reaches the 403 that would tell them a password they do
+            // not hold was right or wrong. Only a session counts as resolved here, though —
+            // the narrower guard DELETE /api/me/device uses (ADR-0049 §5), not sign-up's own
+            // resolvedPlayerOrNull: a device identity is not a credential-bearing session, and
+            // this route is gated on one.
+            val playerId = when (
+                val identity = identities.resolve(call.sessionTokenOrNull(), call.deviceIdOrNull())
+            ) {
+                is Identity.Session -> identity.playerId
+                is Identity.Device -> null
+                is Identity.UnknownDevice -> null
+                is Identity.Refused -> null
+                is Identity.Anonymous -> null
+            }
+            if (playerId == null) {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@delete
+            }
+            // Every way a body can fail to become a DetachRecoveryEmailRequest — empty, the
+            // wrong content type, malformed JSON, or a missing field — is a client error, 400,
+            // not a server one; the specific cause never changes the answer, exactly as
+            // verify-email's and reset-password's own decode steps above.
+            val request = try {
+                call.receive<DetachRecoveryEmailRequest>()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (ignored: Exception) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@delete
+            }
+            val presented = PresentedSecret(request.currentPassword)
+            if (!credentials.verifyCurrent(playerId, CredentialKind.PASSWORD, presented)) {
+                call.respond(HttpStatusCode.Forbidden)
+                return@delete
+            }
+            // 204 whether or not a row existed: a distinct answer for "you had none" would tell
+            // a caller holding a stolen session whether the account has recovery configured
+            // (ADR-0031 §5), one of the two facts hasRecoveryEmail deliberately gates behind the
+            // profile read.
+            recoveryEmails.detach(playerId)
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }

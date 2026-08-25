@@ -2322,8 +2322,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041620](tasks/TASK-041620-a-reset-takes-a-token-in-a-body-and-never-in-a-url.md) A reset takes a token in a body, and never in a URL | S | done |
 | | [TASK-041621](tasks/TASK-041621-two-submissions-of-one-link-and-only-one-of-them-works.md) Two submissions of one link, and only one of them works | S | done |
 | | [TASK-041622](tasks/TASK-041622-a-reset-signs-you-out-everywhere-including-here.md) A reset signs you out everywhere, including here | S | done |
-| | [TASK-041623](tasks/TASK-041623-taking-the-address-back-costs-the-password.md) Taking the address back costs the password | S | **ready** |
-| | [TASK-041624](tasks/TASK-041624-which-strings-are-an-address.md) Which strings are an address | XS | backlog |
+| | [TASK-041623](tasks/TASK-041623-taking-the-address-back-costs-the-password.md) Taking the address back costs the password | S | done |
+| | [TASK-041624](tasks/TASK-041624-which-strings-are-an-address.md) Which strings are an address | S | **ready** |
 | | [TASK-041625](tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) Attaching an address costs the current password | S | backlog |
 | | [TASK-041626](tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) Four different things happen, and the caller reads the same answer | S | backlog |
 | | [TASK-041627](tasks/TASK-041627-a-sender-that-sends-nothing.md) A sender that sends nothing | S | backlog |
