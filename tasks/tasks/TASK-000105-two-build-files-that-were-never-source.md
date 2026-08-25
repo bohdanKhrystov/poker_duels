@@ -3,7 +3,7 @@ schema: 2
 id: TASK-000105
 title: Two build files that were never source
 type: task
-status: ready
+status: done
 parent: STORY-0001
 module: poker-server
 estimate: XS
@@ -127,3 +127,25 @@ one real risk — that something in the build did read one of them after all.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Four separate agents reported these two files independently before the ticket existed.** They were
+tracked since a stale commit, and each coder that read `poker-server/build.gradle.kts` for another
+reason noticed its two dead siblings. That is the shape of debt this process is meant to convert into
+a ticket rather than a recurring observation.
+
+**Both were strictly poorer copies, checked before deleting.** Each lacks `libs.bouncycastle.provider`
+and two duel-script task registrations that the live `build.gradle.kts` carries; nothing in either
+exists nowhere else. No build script, workflow or document referenced either path — greps across the
+repository including `.github/` found nothing.
+
+**The verify block is the gate, and its two halves are independent.** Two executable refusals
+(`! git ls-files --error-unmatch …`) pass only when the files are untracked; two `git check-ignore -q`
+pass only when `.gitignore` would catch them. Deleting without the ignore line satisfies the first
+pair alone; adding the line without deleting satisfies the second. Both halves are present, so the
+files are gone **and** cannot silently return.
+
+**`.claude/settings.json.bak` is tracked and was deliberately left.** The ticket scopes it out and the
+coder named it in the PR body rather than touching it — it governs this session's own permissions, and
+a ticket that does not name a file is not authorisation to delete it. It remains a recorded follow-up.
