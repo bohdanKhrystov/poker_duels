@@ -3,13 +3,15 @@ schema: 2
 id: TASK-041618
 title: A token from the mailbox proves the address
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 3
+files_touched: 4
+atomic:
+  - IdentityMovesNoCoinTest.everyApiPathInTheRouteSourcesIsExercisedByTheScenario — scans the four *Routes.kt sources for /api/… literals via :poker-server:test, so a new route and its SCENARIO_ENDPOINTS entry must land in the same commit
 labels: [server, http, auth, security]
 depends_on: [TASK-041617]
 verify:
@@ -30,6 +32,13 @@ unknown — unauthenticated, because the token is the proof.
 | `poker-server/src/main/kotlin/duels/poker/server/protocol/http/RecoveryDtos.kt` | create |
 | `poker-server/src/main/kotlin/duels/poker/server/http/RecoveryRoutes.kt` | create |
 | `poker-server/src/test/kotlin/duels/poker/server/http/VerifyEmailRouteTest.kt` | create |
+| `poker-server/src/test/kotlin/duels/poker/server/e2e/IdentityMovesNoCoinTest.kt` | modify |
+
+The fourth row is `ADR-0070` §4 propagation, forced by the gate `atomic:` names above:
+`SCENARIO_ENDPOINTS` gains `/api/auth/verify-email`, and its shared KDoc is extended to say why the
+route moves no coin — `verifyPending` writes `recovery_email` and deletes from
+`email_verification`, touching neither `player.coin_balance` nor `duel_result`. Nothing else in the
+file changes.
 
 Read, and do not edit:
 `poker-server/src/main/kotlin/duels/poker/server/http/AuthRoutes.kt` — the decode-then-refuse shape,
@@ -137,3 +146,31 @@ the `CancellationException` rethrow, and the `call.respond(HttpStatusCode.X)` ho
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Content negotiation coerces rather than rejects, and that reaches beyond this ticket.** The Proof
+predicts `Refused→404` leaves `aMalformedBodyAnswersFourHundred` green; it does not, because
+`{"token":123}` is coerced into the string `"123"` rather than failing to decode, so that sub-request
+reaches the port and is refused *there*. Coder and reviewer each reproduced it. The consequence is
+general: a *malformed body* test written with a wrong-**typed** field is exercising the port, not the
+parser, and would pass for a route with no decode guard at all. The empty and `{}` sub-cases do fail
+at decode; only the wrong-typed one does not. The coder corrected a comment in its own test that had
+assumed otherwise.
+
+**The three causes of refusal stay indistinguishable, structurally.** `TASK-041609` collapsed unknown,
+expired and already-used into one `Refused` in the port, and the route receives that single value with
+nothing to branch on — the `when` has no sub-branching inside the `Refused` arm. So the property is
+preserved not by a route test but by there being no information at the route to leak. The reviewer
+read it rather than taking the argument.
+
+**`AddressTaken`'s status is untested here, and a named ticket owns it.** Mutating it reddens nothing;
+the Out of scope defers it to `TASK-041619`. An untested mapping no successor claims is a gap; this one
+is a deferral, and both halves were checked.
+
+**Two smaller notes.** `Verified→200` reddens two tests rather than the predicted one, because
+`theRouteReadsNoIdentityHeader` also pins `204` on a good token — a legitimate independent assertion,
+since its point is that the success happens *without* auth headers. And the exhaustiveness mutation was
+substituted: a real fourth `VerifyEmailResult` case needs a file outside this ticket's table, so the
+coder removed a branch instead and got *"'when' expression must be exhaustive"* from the compiler.
+Same mechanism, no forbidden file touched.

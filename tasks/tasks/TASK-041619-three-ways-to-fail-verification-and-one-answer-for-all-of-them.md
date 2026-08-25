@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041619
 title: Three ways to fail verification, and one answer for all of them
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

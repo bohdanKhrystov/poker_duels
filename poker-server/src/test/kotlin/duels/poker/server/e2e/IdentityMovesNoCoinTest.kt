@@ -720,18 +720,22 @@ private const val THIRD_DEVICE: String = "e2e-third"
  * The `/api/…` paths this scenario answers for, over its own HTTP calls, so [SCENARIO_ENDPOINTS]
  * stays a fact about what runs above rather than a copy of what the route sources declare.
  *
- * Every entry but one is a literal this class calls directly: `sign-up`, `sign-in` (used three
+ * Every entry but two is a literal this class calls directly: `sign-up`, `sign-in` (used three
  * times: steps 5, 7 and the closing revocation sign-in), `sign-out`, `GET /api/me`, `PUT
- * /api/me/name`, `GET /api/standings` and `DELETE /api/me/device`. `/api/me/duels` is the one
+ * /api/me/name`, `GET /api/standings` and `DELETE /api/me/device`. `/api/me/duels` is one
  * exception, written down rather than called: `ProfileRoutes.kt` hands its handler a `ProfileReads`
  * port only, never a `ProfileWrites`, so it is a read that moves no coin, and adding a fresh HTTP
- * call to it is outside this ticket's scope — the same "does not move coins" escape
- * [everyApiPathInTheRouteSourcesIsExercisedByTheScenario]'s own KDoc names for a future endpoint.
+ * call to it is outside this ticket's scope. `/api/auth/verify-email` (`TASK-041618`) is the other:
+ * `RecoveryEmails.verifyPending` writes `recovery_email` and deletes from `email_verification`, and
+ * touches neither `player.coin_balance` nor `duel_result`, so it moves no coin either — the same
+ * "does not move coins" escape [everyApiPathInTheRouteSourcesIsExercisedByTheScenario]'s own KDoc
+ * names, used here for the first time.
  */
 private val SCENARIO_ENDPOINTS: Set<String> = setOf(
     "/api/auth/sign-up",
     "/api/auth/sign-in",
     "/api/auth/sign-out",
+    "/api/auth/verify-email",
     "/api/me",
     "/api/me/duels",
     "/api/me/name",
