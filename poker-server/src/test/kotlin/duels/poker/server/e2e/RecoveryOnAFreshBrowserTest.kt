@@ -9,6 +9,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -70,6 +73,23 @@ internal class RecoveryOnAFreshBrowserTest {
         )
     }
 
+    @Test
+    fun theWinnerIsNamedAndTheLoserIsNot() {
+        val record = runRecovery()
+        assertEquals(
+            RECOVERED_NAME,
+            record.originalProfile.displayName,
+            "winner deviceId=${record.winnerDeviceId}: expected displayName '$RECOVERED_NAME' after setting name, got " +
+                "${record.originalProfile.displayName}",
+        )
+        assertEquals(
+            null,
+            record.loserProfile.displayName,
+            "loser deviceId=${record.loserDeviceId}: expected displayName null (never set a name), got " +
+                "${record.loserProfile.displayName}",
+        )
+    }
+
     /**
      * Boots the shipped composition against [dataSource] — `installDuelServer(dataSource)`, then
      * `createClient { install(WebSockets) }`, exactly as [IdentityMovesNoCoinTest] does — opens
@@ -104,11 +124,33 @@ internal class RecoveryOnAFreshBrowserTest {
             val winnerProfileAfterDuel = client.profileOf(winner.deviceId)
             val loserProfileAfterDuel = client.profileOf(loser.deviceId)
 
+            // Set the winner's display name.
+            assertEquals(
+                HttpStatusCode.OK,
+                client.setName(winner.deviceId, RECOVERED_NAME),
+                "PUT /api/me/name for the winner's deviceId=${winner.deviceId}",
+            )
+            dataSource.assertCoinInvariantHolds("after setting the winner's name")
+
+            // Sign up the winner.
+            assertEquals(
+                HttpStatusCode.Created,
+                client.signUp(winner.deviceId, RECOVERY_HANDLE, RECOVERY_PASSWORD),
+                "POST /api/auth/sign-up for the winner's deviceId=${winner.deviceId}",
+            )
+            dataSource.assertCoinInvariantHolds("after the winner signs up")
+
+            // Read the winner's profile after sign-up, and the loser's profile at the same moment.
+            val originalProfile = client.profileOf(winner.deviceId)
+            val loserProfile = client.profileOf(loser.deviceId)
+
             record = RecoveryRecord(
                 winnerDeviceId = winner.deviceId,
                 loserDeviceId = loser.deviceId,
                 winnerProfileAfterDuel = winnerProfileAfterDuel,
                 loserProfileAfterDuel = loserProfileAfterDuel,
+                originalProfile = originalProfile,
+                loserProfile = loserProfile,
             )
         }
         checkNotNull(record) { "runRecovery: testApplication completed without producing a RecoveryRecord" }
@@ -135,6 +177,26 @@ internal class RecoveryOnAFreshBrowserTest {
         )
         return protocolJson.decodeFromString(response.bodyAsText())
     }
+
+    /** Sets [deviceId]'s display name to [name] over `PUT /api/me/name`, returning the response status. */
+    private suspend fun HttpClient.setName(deviceId: String, name: String): HttpStatusCode {
+        val response = put("/api/me/name") {
+            header(DEVICE_ID_HEADER, deviceId)
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"$name"}""")
+        }
+        return response.status
+    }
+
+    /** Signs [deviceId] up with [handle] and [password] over `POST /api/auth/sign-up`, returning the status. */
+    private suspend fun HttpClient.signUp(deviceId: String, handle: String, password: String): HttpStatusCode {
+        val response = post("/api/auth/sign-up") {
+            header(DEVICE_ID_HEADER, deviceId)
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"handle":"$handle","password":"$password"}""")
+        }
+        return response.status
+    }
 }
 
 /**
@@ -147,10 +209,20 @@ internal class RecoveryOnAFreshBrowserTest {
  *   the duel.
  * @property loserProfileAfterDuel The loser's whole `GET /api/me` response, read right after the
  *   duel.
+ * @property originalProfile The winner's whole `GET /api/me` response, read after the sign-up —
+ *   the value the whole story compares against.
+ * @property loserProfile The loser's whole `GET /api/me` response, read at the same moment as
+ *   [originalProfile], after the winner has signed up but the loser has not.
  */
 private data class RecoveryRecord(
     val winnerDeviceId: String,
     val loserDeviceId: String,
     val winnerProfileAfterDuel: ProfileResponse,
     val loserProfileAfterDuel: ProfileResponse,
+    val originalProfile: ProfileResponse,
+    val loserProfile: ProfileResponse,
 )
+
+private const val RECOVERED_NAME: String = "Champion"
+private const val RECOVERY_HANDLE: String = "Recovered_1"
+private const val RECOVERY_PASSWORD: String = "password1"
