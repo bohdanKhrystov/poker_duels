@@ -161,6 +161,94 @@ class PostgresRecoveryEmailsClaimTest {
         }
     }
 
+    @Test
+    fun aSecondClaimInsideAQuarterHourLeavesTheFirstTokenLive() {
+        runBlocking {
+            val playerId = insertPlayer()
+            val firstToken = VerificationToken("token-a")
+
+            val firstResult = recoveryEmails.claimPending(playerId, EmailAddress("a@x.test"), firstToken)
+            clock.advance(Duration.ofMinutes(14))
+            val secondResult =
+                recoveryEmails.claimPending(playerId, EmailAddress("b@x.test"), VerificationToken("token-b"))
+
+            assertEquals(ClaimPendingResult.Claimed, firstResult, "the first claim must answer Claimed")
+            assertEquals(
+                ClaimPendingResult.Suppressed,
+                secondResult,
+                "a claim fourteen minutes after a live one must answer Suppressed",
+            )
+            // Never a row count: a count of 1 is satisfied by a replacement too. What proves
+            // nothing was written is that the surviving row is still the FIRST claim's.
+            val row = rowFor(playerId)
+            assertContentEquals(
+                recoveryTokenDigest(firstToken),
+                row.tokenHash,
+                "a suppressed claim must leave the first token's hash live, not the second's",
+            )
+            assertEquals(
+                "a@x.test",
+                row.address,
+                "a suppressed claim must leave the first address live, not the second's",
+            )
+        }
+    }
+
+    @Test
+    fun aSecondClaimAfterAQuarterHourReplacesTheFirst() {
+        runBlocking {
+            val playerId = insertPlayer()
+            val secondToken = VerificationToken("token-b")
+
+            val firstResult =
+                recoveryEmails.claimPending(playerId, EmailAddress("a@x.test"), VerificationToken("token-a"))
+            clock.advance(Duration.ofMinutes(16))
+            val secondResult = recoveryEmails.claimPending(playerId, EmailAddress("b@x.test"), secondToken)
+
+            assertEquals(ClaimPendingResult.Claimed, firstResult, "the first claim must answer Claimed")
+            assertEquals(
+                ClaimPendingResult.Claimed,
+                secondResult,
+                "a claim sixteen minutes after a live one must answer Claimed, the boundary's other side",
+            )
+            assertEquals(1, countPendingRowsFor(playerId), "a claimed replacement must leave exactly one pending row")
+            val row = rowFor(playerId)
+            assertContentEquals(
+                recoveryTokenDigest(secondToken),
+                row.tokenHash,
+                "the surviving row must hold the second token's hash",
+            )
+        }
+    }
+
+    @Test
+    fun oneAccountsSilenceIsNotAnothers() {
+        runBlocking {
+            val alice = insertPlayer()
+            val bob = insertPlayer()
+            val aliceToken = VerificationToken("alice-token")
+
+            val aliceResult = recoveryEmails.claimPending(alice, EmailAddress("alice@x.test"), aliceToken)
+            val bobResult =
+                recoveryEmails.claimPending(bob, EmailAddress("bob@x.test"), VerificationToken("bob-token"))
+
+            assertEquals(ClaimPendingResult.Claimed, aliceResult, "alice's claim must answer Claimed")
+            assertEquals(
+                ClaimPendingResult.Claimed,
+                bobResult,
+                "bob's claim, inside alice's window, must still answer Claimed for his own account",
+            )
+            val bobRow = rowFor(bob)
+            assertEquals("bob@x.test", bobRow.address, "bob's claim must write his own address, not be suppressed")
+            val aliceRow = rowFor(alice)
+            assertContentEquals(
+                recoveryTokenDigest(aliceToken),
+                aliceRow.tokenHash,
+                "bob's claim must not touch alice's token_hash",
+            )
+        }
+    }
+
     private fun insertPlayer(): PlayerId {
         val id = UUID.randomUUID()
         dataSource.connection.use { connection ->
