@@ -25,6 +25,13 @@ import kotlinx.serialization.Serializable
  *   `DELETE /api/me/device` does not distinguish them either. It carries no device id: a device
  *   id is a bearer credential and never travels to a caller who did not present it. No default
  *   value, for the same `encodeDefaults` reason as `displayNameRemoved` above.
+ * @property hasRecoveryEmail Whether the caller has a *verified* recovery email attached — `true`
+ *   exactly when a row for them exists in `recovery_email`. A pending, unverified claim reads
+ *   `false`, identically to no claim at all (`ADR-0031` §3: until verification "the account is
+ *   exactly an account with no email"). Per `ADR-0031` §6.3 this is the whole of what crosses the
+ *   wire: no address, no masked form, no `verifiedAt` — the client can say *recovery is on* and
+ *   can never display the address. No default value, for the same `encodeDefaults` reason as
+ *   `displayNameRemoved` above. Declared last.
  */
 @Serializable
 public data class ProfileResponse(
@@ -33,6 +40,7 @@ public data class ProfileResponse(
     val displayName: String?,
     val displayNameRemoved: Boolean,
     val deviceRouteLive: Boolean,
+    val hasRecoveryEmail: Boolean,
 )
 
 /**

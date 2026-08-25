@@ -38,6 +38,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                             rows.getString(3),
                             rows.getBoolean(4),
                             rows.getBoolean(5),
+                            rows.getBoolean(6),
                         )
                     } else {
                         null
@@ -157,6 +158,13 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         // player has at most one live device_binding row but may hold several revoked ones, so a
         // JOIN would again multiply the profile row. Correlated to p.id, never to a second `?`,
         // so this boolean cannot drift to describe a different player than the row it rides on.
+        // has_recovery_email is a third, independent correlated EXISTS on the same reasoning
+        // (ADR-0053 §3, §4): recovery_email is player_id-keyed (ADR-0031 §2) so a join returns at
+        // most one row today, but the correlated-EXISTS rule holds regardless of today's
+        // cardinality. It reads only recovery_email, never email_verification, so a pending,
+        // unverified claim answers false here exactly as no claim at all does (ADR-0031 §3) — the
+        // same statement PostgresRecoveryEmails.HAS_RECOVERY_EMAIL_SQL already reads for the
+        // identical question, correlated here instead of bound a second time.
         private const val PROFILE_OF_SQL =
             """
             SELECT p.id,
@@ -166,7 +174,9 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                     AND EXISTS (SELECT 1 FROM name_registry r
                                  WHERE r.retired_from = p.id AND r.reason = 'RETIRED')) AS display_name_removed,
                    EXISTS (SELECT 1 FROM device_binding b
-                            WHERE b.player_id = p.id AND b.revoked_at IS NULL) AS device_route_live
+                            WHERE b.player_id = p.id AND b.revoked_at IS NULL) AS device_route_live,
+                   EXISTS (SELECT 1 FROM recovery_email r
+                            WHERE r.player_id = p.id) AS has_recovery_email
             FROM player p
             WHERE p.id = ?
             """
