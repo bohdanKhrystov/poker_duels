@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041623
 title: Taking the address back costs the password
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -149,3 +149,33 @@ upstream and that is a defect ticket against `TASK-041618`, not a widening of th
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Two sentences in this ticket govern different things, and conflating them cost a review round.**
+*"the same order `sign-up` uses"* explains the **ordering** — identity resolved before the body is read,
+*"so a stranger never reaches the `403`"*. It does not license sign-up's identity *resolution*. The Goal
+says `401` **with no session**, and the Scope names `DeviceRoutes.kt` as the session-then-password
+model. The first implementation used `resolvedPlayerOrNull`, which accepts `Identity.Device`, so a
+device-recognised caller reached `verifyCurrent` and got `403` where the Goal requires `401`. The coder
+flagged the inference itself as wanting a reviewer's eye, which is how it was caught.
+
+**The refusal is now asserted, not structural.** `aDeviceIdentityAloneAnswersFourHundredAndOne` mints a
+**real** device-bound player — with a password credential and a verified address — then sends
+`X-Device-Id` alone and asserts `401`, an empty body, and that the address survives. The fixture matters:
+a player who simply could not resolve would pass for the wrong reason. Reverting the handler to
+`resolvedPlayerOrNull` reddens exactly that one test, `expected 401, got 403`, so a future widening is
+caught rather than silently reintroduced.
+
+**Sign-up's permissiveness is right for sign-up and wrong here.** It creates and verifies no credential;
+this endpoint is a credential-guarded deletion. That is why the ticket cites sign-up for the order and
+`DeviceRoutes.kt` for the guard.
+
+**Two `## Proof` inaccuracies, both disclosed by the coder.** Mutation 1 reddens with `403`, not the
+predicted `400` — qualitatively right, specifically wrong. Mutation 5 reddens two of three predicted
+tests, because `oneErasureIsNotAnothers` is scoped entirely to the second player's survival and never
+touches the first player's own outcome, so it is narrower than its name suggests. Mutations 4 and 6 name
+edits in `PostgresRecoveryEmails.kt`, which this ticket forbids editing; the coder declined to run them
+and the reviewer did, finding both behave as predicted. **The conflict is in the instructions, not the
+ticket** — *run the Proof* and *do not edit files outside the table* collide whenever a Proof names a
+mutation in a read-only file.
