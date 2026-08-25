@@ -1870,8 +1870,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040704](tasks/TASK-040704-a-browser-never-seen-signs-in-and-the-socket-names-no-device.md) A browser never seen signs in, and the socket names no device | S | done |
 | | [TASK-040705](tasks/TASK-040705-the-fresh-browser-reads-back-the-same-profile-and-the-same-duels.md) The fresh browser reads back the same profile and the same duels | S | done |
 | | [TASK-040706](tasks/TASK-040706-the-recovery-leaves-no-row-in-either-table-a-profile-occupies.md) The recovery leaves no row in either table a profile occupies | S | done |
-| | [TASK-040707](tasks/TASK-040707-a-wrong-password-from-the-fresh-browser-issues-no-session.md) A wrong password from the fresh browser issues no session | S | **ready** |
-| | [TASK-040708](tasks/TASK-040708-signing-out-returns-the-fresh-browser-to-nothing.md) Signing out returns the fresh browser to nothing, and the original device to itself | S | backlog |
+| | [TASK-040707](tasks/TASK-040707-a-wrong-password-from-the-fresh-browser-issues-no-session.md) A wrong password from the fresh browser issues no session | S | done |
+| | [TASK-040708](tasks/TASK-040708-signing-out-returns-the-fresh-browser-to-nothing.md) Signing out returns the fresh browser to nothing, and the original device to itself | S | **ready** |
 | | [TASK-040709](tasks/TASK-040709-one-statement-in-the-whole-server-creates-a-profile.md) One statement in the whole server creates a profile | S | backlog |
 | **[STORY-0408](stories/STORY-0408-duel-history-paged-over-the-whole-record.md)** Duel history, paged over the whole record | | | **done** |
 | | [TASK-040801](tasks/TASK-040801-a-cursor-is-a-duels-place-in-the-list.md) A cursor is one duel's place in the list, and it survives the round trip | S | **done** |

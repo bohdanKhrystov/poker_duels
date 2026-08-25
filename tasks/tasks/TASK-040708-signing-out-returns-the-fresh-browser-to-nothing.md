@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040708
 title: Signing out returns the fresh browser to nothing, and the original device to itself
 type: task
-status: backlog
+status: ready
 parent: STORY-0407
 module: poker-server
 estimate: S
