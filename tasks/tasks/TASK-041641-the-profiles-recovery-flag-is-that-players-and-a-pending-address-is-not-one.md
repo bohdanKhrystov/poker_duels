@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041641
 title: The profile's recovery flag is that player's, and a pending address is not one
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: XS
