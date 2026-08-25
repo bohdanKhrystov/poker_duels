@@ -92,8 +92,8 @@ an **optional, verified-only** address in its own table.
 | [TASK-041625](../tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) | Attaching an address costs the current password | **blocked — `DEC-071`, `DEC-072`** |
 | [TASK-041626](../tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) | Four different things happen, and the caller reads the same answer | **blocked — `DEC-072`** |
 | [TASK-041627](../tasks/TASK-041627-a-sender-that-sends-nothing.md) | A sender that sends nothing | backlog |
-| [TASK-041628](../tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) | Two budgets that say nothing when they refuse | **blocked — `DEC-073`** |
-| [TASK-041629](../tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) | A good token, and a password the policy refuses | **blocked — `DEC-074`** |
+| [TASK-041628](../tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) | Two budgets that say nothing when they refuse | backlog |
+| [TASK-041629](../tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) | A good token, and a password the policy refuses | backlog |
 | [TASK-041630](../tasks/TASK-041630-a-decorator-that-detaches-over-the-same-port.md) | A decorator that detaches, over the same port | backlog |
 | [TASK-041631](../tasks/TASK-041631-a-failed-send-stays-inside-the-scope-and-names-a-class.md) | A failed send stays inside the scope, and its log line names a class | backlog |
 | [TASK-041632](../tasks/TASK-041632-the-origin-every-recovery-link-is-built-from-is-configuration.md) | The origin every recovery link is built from is configuration | backlog |
@@ -125,12 +125,46 @@ than the seam, and the property both tickets assert would then be about a fixtur
 Split on 2026-08-25 into 29 tickets, of which `TASK-041601` was the one startable ticket and six
 were `blocked`. Four decisions were raised and none was answered inside a ticket. `ADR-0077` and
 `ADR-0078` then merged and were folded back in, taking the story to **35 tickets** — six from
-re-cutting `TASK-041627`, one from unparking `TASK-041601`'s conditional follow-up. One decision
-remains open and blocks exactly one ticket.
+re-cutting `TASK-041627`, one from unparking `TASK-041601`'s conditional follow-up. **All four are
+now answered and this story carries no open decision.**
 
-| ID | Kind | Blocks | In one sentence |
-| --- | --- | --- | --- |
-| `DEC-074` | **Architect's** | `TASK-041629` | Does a good reset token survive a `422`? `ADR-0031` §5's status table and §4's single-use `DELETE ... RETURNING` cannot both hold as written |
+`DEC-074` was **answered on 2026-08-25** by
+[`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md) — *the
+password is judged before the token is touched, so a refusal costs no link.* **`ADR-0031` §5's
+precondition gives way; §4 stands byte-unchanged**, which is the whole point: the clause with the
+concurrency reason behind it is the one that survives. `POST /api/auth/reset-password` runs three
+steps and no others — decode ⇒ `400`; `passwordIsLongEnough` **and**
+`passwordIsWithinTheWorkBound` ⇒ `422`, **with no connection taken and no statement executed**; then
+`consume` ⇒ `204` / `400`. So a `422` never touches `password_reset`: same `token_hash`, same
+`issued_at`, same `expires_at`, and the same link works on the next submission while it lives.
+Because `issued_at` is untouched, §5's fifteen-minute suppression still sees a live token, so a
+player who presses *email me a link* again after a refusal still gets §5's complete no-op and the
+link they are about to use survives. The order is `ADR-0048` §2's own rule — the maximum runs
+*"before Argon2 runs and before the identifier is looked up"*, and here the token **is** the
+identifier — and the minimum joins it because §2 makes reset one of the two endpoints it applies at.
+The disclosure the register worried about runs the other way: the branch is chosen entirely by the
+caller's own password, so the `422` is byte-identical for a live token, an expired one and a string
+the caller invented, and `400`-versus-`422` says nothing about the row. **Costs**: a `422` no longer
+proves the link is alive, so `STORY-0417`'s form must be able to move from *password refused* to
+*link expired* without having contradicted itself; a stranger with no token can make the endpoint
+answer `422`, which holds only while the policy stays a published pure function — the day a breach
+corpus or a row-reading rule joins it, this endpoint must be budgeted or the rule moved behind the
+lookup. **`TASK-041620` is unchanged and needs no re-cut**, since the step lands in front of
+`consume`; the one constraint on it is a fixture one — every request in `ResetPasswordRouteTest`,
+including the two expecting `400`, must carry a `newPassword` of 8–128 code points, or
+`TASK-041629`'s *"passes unchanged"* criterion is unsatisfiable. **`TASK-041629` gains the check
+between decode and `consume` and loses one named test**:
+`aBadTokenStillAnswersFourHundredNotFourHundredAndTwentyTwo` asserts the order this reverses — a
+fabricated token with a 7-code-point password now answers `422` — and what it defended is sharper
+asserted the other way, that the `422` for a fabricated token and for a live one are
+indistinguishable; `aRefusedPasswordLeavesTheTokenAsTheDecisionSays` resolves to a second request
+with the same token and an acceptable password answering `204`. Its losing branch is a pure function
+of the request body, so it needs no clock, no latch and no second connection — the one hazard is a
+fixture pinning `java.time.Clock` (`ADR-0062` §5) far from the database's `now()`, which mints
+tokens already expired. `TASK-041617` transcribes the corrected sentence rather than §5's
+parenthetical. `PasswordResets.consume(token, secret): Boolean` is unchanged and needs no third
+value, exactly as `TASK-041614` already assumes. **Unblocks `TASK-041629`.** Raises no `DEC`, and
+nothing is the product owner's or the human's.
 
 `DEC-073` was **answered on 2026-08-25** by
 [`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md)

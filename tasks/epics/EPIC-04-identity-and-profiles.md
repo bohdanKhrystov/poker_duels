@@ -140,7 +140,7 @@ recorded rather than quietly absorbed:
 | [STORY-0413](../stories/STORY-0413-the-history-screen.md) | The history screen — pages, filters, search | 0409, 0411 | backlog |
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
 | [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | backlog |
-| [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), and `DEC-073` the same day by [`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), leaving `DEC-074` the only one of the four still open. None is the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
+| [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), `DEC-073` the same day by [`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), and `DEC-074` the same day by [`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md), so **none of the four is open**. None was the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | [STORY-0417](../stories/STORY-0417-the-recovery-screens.md) | The recovery screens — attach an address, and reset a password | 0412, 0416 | backlog |
 
 ## What can run in parallel
@@ -250,8 +250,42 @@ answered `DEC-027`, and these four apply that choice rather than revisiting it.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
-| `DEC-074` | **The architect's** — does a good reset token survive a `422`, and by what mechanism? `ADR-0031` §5 gives `reset-password` a `422` *"when the token was good and the new password fails policy"*, which presupposes knowing the token is good before the password is judged and implies a retry; §4 makes consumption one `DELETE ... RETURNING` with *"no read-then-write window"*, under which knowing **is** spending. A conflict between two sections of a merged ADR rather than an acknowledged gap — §*What this does not settle* does not mention it | `TASK-041629`; `TASK-041620` ships the route with no policy and no `422` |
 | `DEC-075` | **The architect's** — does the mailed recovery link survive a static host with no rewrite rule, and if it becomes a fragment route, what is the slug? `ADR-0031` §4 mails `<baseUrl>/reset#token=…`, a **path segment**; [`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §4 has since made the opposite call for every client address on the ground that *"a fragment never 404s"*, which is `room-link.ts`'s already-merged call, and `EPIC-07` still has no file. A `404` on `/reset` means the player never reaches the client, and `ADR-0031` makes no recovery a **total, permanent** loss. `<baseUrl>/verify#token=…` has the same exposure. Raised by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which transcribed §4 rather than reinterpreting it and put both links in **one function**, so the answer is a one-function change; the slug, if it lands as a fragment route, is `STORY-0417`'s under `ADR-0076` §1 | nothing today — no sender is configured, so no link is delivered. Due before `EPIC-07` configures one, and before `STORY-0417` builds the screen |
+
+`DEC-074` — raised on 2026-08-25 when `STORY-0416` was split, blocking `TASK-041629` — was answered
+on the same day by
+[`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md):
+**the password is judged before the token is touched, so a refusal costs no link.** `ADR-0031` §5's
+precondition is what gives way; §4's `DELETE … RETURNING` and its *"no read-then-write window"* are
+byte-unchanged, and keeping them is the point. `POST /api/auth/reset-password` runs three steps and
+no others: decode ⇒ `400`; `passwordIsLongEnough` **and** `passwordIsWithinTheWorkBound` ⇒ `422`,
+with **no connection taken and no statement executed**; then `consume` ⇒ `204` / `400`. A `422`
+therefore leaves the row exactly as it was, the same link works on the next submission while it
+lives, and §5's fifteen-minute suppression still sees a live token — so the double-click §5
+protected against is still a complete no-op. The order is `ADR-0048` §2's own placement rule at a
+third endpoint: the maximum runs *"before Argon2 runs and before the identifier is looked up"*, and
+here the token **is** the identifier; the minimum joins it because §2 makes reset one of the two
+endpoints it applies at. **The register's disclosure worry was checked and cut the other way**:
+because the branch is chosen entirely by the caller's own password, the `422` is byte-identical for
+a live token, an expired one and a string the caller invented, so `400`-versus-`422` reports nothing
+about `password_reset` — every other order makes it a liveness report, and the pre-check shape makes
+liveness observable without consumption, which is the property `ADR-0031` chose 256 bits to avoid
+having to defend. Costs recorded rather than discovered: **a `422` no longer proves the link is
+alive** and nothing else does either, so a player can be refused twice for one attempt and
+`STORY-0417`'s form must move from *password refused* to *link expired* without contradicting
+itself; **a stranger holding no token can make the endpoint answer `422`**, licensed only while the
+policy stays a published pure function — the day a breach corpus or any row-reading rule joins it
+(`ADR-0048` leaves that open) the endpoint must be budgeted or the rule moved behind the lookup; and
+§5 now reads wrong on its own, corrected in a status line. **`TASK-041620` is unchanged and needs no
+re-cut** — the step lands in front of `consume` — with one fixture constraint: every request in
+`ResetPasswordRouteTest`, including the two expecting `400`, must carry a `newPassword` of 8–128
+code points. **`TASK-041629` gains the check and loses one named test**,
+`aBadTokenStillAnswersFourHundredNotFourHundredAndTwentyTwo`, whose order this reverses; what it
+defended is asserted the other way round — a fabricated token and a live one produce
+indistinguishable `422`s. `TASK-041617` transcribes the corrected sentence rather than §5's.
+**Unblocks `TASK-041629`**, and leaves `DEC-075` as the only decision this epic still carries open.
+Nothing is the product owner's or the human's: the words a form uses are already `STORY-0412`'s
+under `ADR-0031`'s *What this does not settle* and `ADR-0048` §7.
 
 `DEC-073` — raised on 2026-08-25 when `STORY-0416` was split, blocking `TASK-041628` — was answered
 on the same day by
