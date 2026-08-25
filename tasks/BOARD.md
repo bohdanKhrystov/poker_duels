@@ -85,10 +85,10 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | [EPIC-01](epics/EPIC-01-poker-engine.md) | Poker engine | **done** | v0.1 |
 | [EPIC-02](epics/EPIC-02-duel-server.md) | Duel server — rooms, WebSocket protocol, persistence | **in progress** — closed 2026-08-14, reopened for `STORY-0213` | v0.1 |
 | [EPIC-03](epics/EPIC-03-web-client.md) | Web client — table, lobby, duel flow | **done** — 14 of 14 stories done (`STORY-0309` closed on 2026-08-24); `STORY-0313` unblocked on 2026-08-24 when `STORY-0214` merged and is **split into fifteen**, all fifteen done, closing the epic on 2026-08-24 — it raised `DEC-070` (how long the server's own action stays on screen, the **product owner's**), answered on 2026-08-24 by [`ADR-0075`](../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md), so **nothing in the story is blocked**; `STORY-0314` **closed on 2026-08-24**, five of five, leaving `STORY-0313` the only story left in the epic | v0.1 |
-| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **in progress** — 9 of 17 stories done; `STORY-0405` unparked on 2026-08-23 when `STORY-0213` and `STORY-0214` merged, and is **split into 24 tickets** with `TASK-040501` startable. It raised `DEC-069` (the sign-in budget's two numbers, the architect's), answered on 2026-08-24 by [`ADR-0074`](../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md) — nothing in the story is blocked. `STORY-0416` was split out of numerical order on 2026-08-25 into **29 tickets**, since it depends only on the finished `STORY-0405` while `0412`, `0414`, `0415` and `0417` all trace through `DEC-054`; it raised `DEC-071` (the product owner's) and `DEC-072`, `DEC-073`, `DEC-074` (the architect's), blocking six of its own tickets and nothing else. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which also raised `DEC-075` — blocking nothing — and `DEC-073` the same day by [`ADR-0079`](../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), leaving all four answered — `DEC-074` on 2026-08-25 by [`ADR-0080`](../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md), which resolves a contradiction between `ADR-0031` §4 and §5 rather than filling a gap. Both answers were then folded back into the split: `TASK-041627` was re-cut into six tickets as `ADR-0077` §Consequences required, and `ADR-0078` turned `TASK-041601`'s conditionally-parked collation follow-up into `TASK-041635`, taking the story to **35 tickets** | v0.2 |
+| [EPIC-04](epics/EPIC-04-identity-and-profiles.md) | Identity and profiles | **in progress** — 9 of 17 stories done; `STORY-0405` unparked on 2026-08-23 when `STORY-0213` and `STORY-0214` merged, and is **split into 24 tickets** with `TASK-040501` startable. It raised `DEC-069` (the sign-in budget's two numbers, the architect's), answered on 2026-08-24 by [`ADR-0074`](../docs/adr/ADR-0074-sign-in-is-ten-wrong-passwords-a-minute-reserved-before-the-hash.md) — nothing in the story is blocked. `STORY-0416` was split out of numerical order on 2026-08-25 into **29 tickets**, since it depends only on the finished `STORY-0405` while `0412`, `0414`, `0415` and `0417` all trace through `DEC-054`; it raised `DEC-071` (the product owner's) and `DEC-072`, `DEC-073`, `DEC-074` (the architect's), blocking six of its own tickets and nothing else. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), which also raised `DEC-075` — blocking nothing — and `DEC-073` the same day by [`ADR-0079`](../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), leaving all four answered — `DEC-074` on 2026-08-25 by [`ADR-0080`](../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md), which resolves a contradiction between `ADR-0031` §4 and §5 rather than filling a gap. Both answers were then folded back into the split: `TASK-041627` was re-cut into six tickets as `ADR-0077` §Consequences required, and `ADR-0078` turned `TASK-041601`'s conditionally-parked collation follow-up into `TASK-041635`, taking the story to **35 tickets**. Three further corrections on 2026-08-25 took it to **38**, none of them a new decision: `ADR-0079` §Consequences named a defect against `TASK-041607`/`TASK-041608`/`TASK-041625` — `ADR-0031` §5's fifteen-minute resend suppression was built on one of the two mail paths — so `claimPending` now answers `ClaimPendingResult` rather than `Unit`, `TASK-041636` enforces the rule inside the writing transaction and `TASK-041637` makes the handler mail only when it wrote; and `TASK-041638` widens `TASK-041606`'s shape gate, which held for functions and for nothing else. **`TASK-041607` stays `ready` and is still the story's single startable ticket** — its `verify:` is `compileKotlin` either way, and the amendment changes the type it declares rather than what it must do | v0.2 |
 | [EPIC-05](epics/EPIC-05-ranking-duel-coins-and-leaderboard.md) | Ranking, duel coins and leaderboard | **done** — 4 stories built, 49 tickets; `STORY-0504` and `STORY-0505` dropped by `ADR-0067` and `ADR-0061` §5; 7 decisions answered by `ADR-0061`–`ADR-0067` | v0.3 |
 | [EPIC-06](epics/EPIC-06-design-system-and-art.md) | Design system and art | **done** | v0.2 |
-| EPIC-07 | Infrastructure and delivery | *not written* | v0.2 |
+| EPIC-07 | Infrastructure and delivery | *not written* — **carries one unfiled ticket, described below**: `player_display_name_unique`'s `COLLATE "und-x-icu"` is gated by nothing | v0.2 |
 | EPIC-08 | Analysis and decision quality | *not written* | later |
 | EPIC-09 | Bots and simulation | *not written* | later |
 | EPIC-10 | The AI software factory — the case study | *not written* | continuous |
@@ -98,6 +98,42 @@ Numbers 03–05 and 07–10 are **reserved**, not planned in detail. Epics are w
 before them is close to done, because writing them earlier means rewriting them. `EPIC-06` is
 the recorded exception: opened ahead of its slot because design shares no file with the server
 work (`ADR-0024`).
+
+### `EPIC-07` owes one ticket that could not be filed
+
+**`V3`'s `player_display_name_unique` carries `COLLATE "und-x-icu"` and nothing gates it.** Found on
+2026-08-25 while writing `TASK-041635`, which does exactly this job for `V8`'s
+`recovery_email_address_unique`, and recorded in that ticket's *Out of scope* because widening its
+catalog filter to reach a second table would make an unrelated migration fail a `STORY-0416` test.
+It is **not** `STORY-0416`'s and has not been smuggled in.
+
+It is filed nowhere because it can be: `tasks/README.md` requires every task to have a `parent` one
+level up, and the only stories that own `V3` — `STORY-0401` and `STORY-0410` — are **done**. So it
+is written here instead, in the epic slot a planner must read before writing `EPIC-07`, rather than
+into an ADR nobody re-opens.
+
+**Which story should own it: `EPIC-07`'s deployment story, the one that fixes the production
+Postgres.** `ADR-0029` §1's whole reason for pinning the clause is host-dependent collation
+differences *"between the test container and production deployment"*, and `EPIC-07` is the first
+moment a deployment exists to disagree with the container. Until then the assertion is real but the
+risk it names is hypothetical.
+
+The ticket is small and its shape is already known. It modifies
+`poker-server/src/test/kotlin/duels/poker/server/db/MigrationsTest.kt`, which **already** queries
+`pg_indexes` for `player_display_name_unique` and asserts only that it exists. The surface is
+`pg_index.indcollation`, `unnest`ed `WITH ORDINALITY` and **`LEFT JOIN`**ed to `pg_collation`,
+filtered by the table and never by index name, asserting `collname = "und-x-icu"` **and**
+`collprovider = "i"` — `TASK-041635`'s idiom verbatim, including the reasons: an `INNER JOIN`
+silently drops non-collatable keys and takes the vacuity guard with it, and
+`information_schema.columns.collation_name` is the wrong surface, reporting `NULL` with and without
+the clause because the collation is on the index expression rather than the column.
+
+**One thing must be re-probed rather than copied.** `TASK-041635`'s behavioural fixture uses the
+`İ` / `i` + U+0307 pair, the one fold that differs between `und-x-icu` and `postgres:16-alpine`'s
+musl default. `display_name` carries `player_display_name_nfc` (`CHECK (display_name IS NFC
+NORMALIZED)`) and a 1–32 length check, which `recovery_email.address` does not, so that exact pair
+may not be insertable there. Probe it before writing the behavioural half; the catalog half needs no
+fixture and reddens on any platform.
 
 ---
 
@@ -110,13 +146,21 @@ work (`ADR-0024`).
 | | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | **done** |
 | | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
 | | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | **done** |
+| | [TASK-000105](tasks/TASK-000105-two-build-files-that-were-never-source.md) Two build files that were never source | XS | **ready** |
 
 `TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
 Actions minutes free at once, and `develop` is now protected: a pull request and two green checks
 to land, no force pushes, no deletions. Required approvals are deliberately **0** — one would
 deadlock the agent run, since an agent cannot approve its own PR.
 
-`TASK-000104` is **startable**, and lives here rather than under any epic because the rule it
+`TASK-000105` is **startable**. `poker-server/build.gradle.kts.bak` and `.tmp` are tracked on
+`develop` from a stale commit, nothing in the repository references either name, and three separate
+coders have now reported them independently — every agent whose ticket names the real build file
+pays to work out which of the three it is. It deletes both, adds `*.bak` and `*.tmp` to
+`.gitignore`, and names `.claude/settings.json.bak` — a third tracked match, under agent
+configuration rather than build output — as deliberately left rather than swept.
+
+`TASK-000104` is **done**, and lives here rather than under any epic because the rule it
 enforces spans three of them. `DEC-040` is answered by
 [`ADR-0047`](../docs/adr/ADR-0047-a-protocol-version-is-claimed-in-a-ledger.md): the lock is a
 **claim ledger**, `docs/protocol-versions.md`, one row per version naming a fingerprint of the wire
@@ -2211,7 +2255,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041316](tasks/TASK-041316-the-app-test-hands-the-history-read-a-storage.md) The App test hands the history read a Storage | XS | **done** |
 | [STORY-0414](stories/STORY-0414-claimed-here-recovered-there.md) Claimed here, recovered there, end to end | | | backlog |
 | [STORY-0415](stories/STORY-0415-the-offer-after-a-first-win.md) The offer — an account after a first win, dismissed for good | | | backlog |
-| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | **in progress** — split into **29** on 2026-08-25, out of numerical order because it depends only on `STORY-0405`. **23 are unblocked** and none waits on a decision — `DEC-074` was answered on 2026-08-25 by [`ADR-0080`](../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md), so the password is judged before the token is touched; `DEC-073` was answered on 2026-08-25 by [`ADR-0079`](../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md) — ten a minute for `forgot-password`, five for `recovery-email`, an over-budget attempt still counting, and the placement in each handler — and `DEC-071` and `DEC-072` were answered the same day by [`ADR-0078`](../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md) and [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), unblocking four. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) — the mail seam, its scope and lifetime, its failure semantics, `baseUrl`, and what a test can await. **Nothing is the human's**: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
+| [STORY-0416](stories/STORY-0416-the-recovery-email-and-the-password-reset.md) The recovery email, verified, and the password reset | | | **in progress** — split into **29** on 2026-08-25, out of numerical order because it depends only on `STORY-0405`, and now **38**: `TASK-041627` was re-cut into six, `ADR-0078` added `TASK-041635`, `ADR-0079`'s named defect added `TASK-041636` and `TASK-041637`, and `TASK-041606`'s landing Notes added `TASK-041638`. **Nothing waits on a decision** — `DEC-074` was answered on 2026-08-25 by [`ADR-0080`](../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md), so the password is judged before the token is touched — and `TASK-041607` is the single startable ticket; `DEC-073` was answered on 2026-08-25 by [`ADR-0079`](../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md) — ten a minute for `forgot-password`, five for `recovery-email`, an over-budget attempt still counting, and the placement in each handler — and `DEC-071` and `DEC-072` were answered the same day by [`ADR-0078`](../docs/adr/ADR-0078-the-mail-is-the-only-real-check-on-an-address.md) and [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), unblocking four. `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md) — the mail seam, its scope and lifetime, its failure semantics, `baseUrl`, and what a test can await. **Nothing is the human's**: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | | [TASK-041601](tasks/TASK-041601-three-tables-that-cannot-become-a-mailing-list.md) Three tables that cannot become a mailing list | S | done |
 | | [TASK-041602](tasks/TASK-041602-two-strangers-may-both-claim-one-address-and-nothing-cascades.md) Two strangers may both claim one address, and nothing cascades | S | done |
 | | [TASK-041603](tasks/TASK-041603-an-address-that-redacts-itself.md) An address that redacts itself | XS | done |
@@ -2247,17 +2291,57 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041633](tasks/TASK-041633-one-function-builds-both-recovery-links-and-no-header-reaches-it.md) One function builds both recovery links, and no header reaches it | S | backlog |
 | | [TASK-041634](tasks/TASK-041634-a-build-with-no-sender-is-a-valid-build.md) A build with no sender is a valid build | S | backlog |
 | | [TASK-041635](tasks/TASK-041635-the-fold-the-address-index-depends-on-written-down-in-the-catalog.md) The fold the address index depends on, written down in the catalog | S | backlog |
+| | [TASK-041636](tasks/TASK-041636-the-attach-path-gets-the-quarter-hour-of-silence-the-reset-path-has.md) The attach path gets the quarter hour of silence the reset path has | S | backlog |
+| | [TASK-041637](tasks/TASK-041637-the-second-attach-in-a-quarter-hour-is-answered-the-same-and-mails-nothing.md) The second attach in a quarter hour is answered the same, and mails nothing | S | backlog |
+| | [TASK-041638](tasks/TASK-041638-the-shape-gate-holds-for-four-more-shapes-and-names-the-one-it-cannot.md) The shape gate holds for four more shapes, and names the one it cannot | S | backlog |
 | [STORY-0417](stories/STORY-0417-the-recovery-screens.md) The recovery screens — attach an address, and reset a password | | | backlog |
 
 `STORY-0416`'s rows are in **id order**, and `depends_on` is the **sequence**; since `ADR-0077` and
 `ADR-0078` landed the two no longer coincide. `TASK-041627` was re-cut into six — `ADR-0077`
 §Consequences said it would be — and one edge moved: `TASK-041627` now ships `NoRecoveryMailer` and
 runs **before** `TASK-041625`, because `TASK-041626`'s no-sender case binds that object and a seam
-has to exist before its consumers. The chain is `…041624 → 041627 → 041625 → 041626 → 041630 →
-041631 → 041632 → 041633 → 041634 → 041628 → 041629`. `TASK-041635` hangs off the merged
-`TASK-041602` and is independent of all of it: it gates `V8`'s `COLLATE "und-x-icu"`, the clause
-`TASK-041601` proved no behaviour of its own could reach, and nothing else in the story touches
-`RecoveryEmailSchemaTest.kt`.
+has to exist before its consumers. The chain is `…041608 → 041636 → 041609 → …041624 → 041627 →
+041625 → 041637 → 041626 → 041630 → 041631 → 041632 → 041633 → 041634 → 041628 → 041629`.
+`TASK-041635` and `TASK-041638` hang off merged tickets and are independent of all of it:
+`TASK-041635` gates `V8`'s `COLLATE "und-x-icu"`, the clause `TASK-041601` proved no behaviour of
+its own could reach, and nothing else in the story touches `RecoveryEmailSchemaTest.kt`;
+`TASK-041638` is the only other ticket that touches `RecoveryMailerShapeTest.kt`. **`V3`'s
+`player_display_name_unique` carries the identical collation clause and is gated by nothing**; it is
+not this story's and is deliberately not filed here — see the unfiled ticket under `EPIC-07` above.
+
+**`ADR-0079` §Consequences named a defect against three of these tickets rather than raising a
+`DEC`, and it is folded in as of 2026-08-25.** `ADR-0031` §5's fifteen-minute resend suppression —
+*"a mail is sent only if the player has no live token issued within the last 15 minutes, read from
+`issued_at`"* — names both endpoints and the split built it on one, so a verification mail would
+have followed **every** successful attach for ever, leaving the attach budget as the only cap on
+the mail it causes. Three tickets were amended and two added. `TASK-041607` now declares
+`claimPending: ClaimPendingResult` (`Claimed` / `Suppressed`) instead of `Unit` — it is a port
+declaration whose `verify:` is `compileKotlin`, so the type it fixes is what every later ticket
+branches on, and the window in which it is free to be wrong closes at the next ticket.
+`TASK-041608` answers `Claimed` unconditionally and now advances its fixture clock sixteen minutes
+between its two claims, so the ticket that adds the rule moves none of its assertions. **The check
+sits inside the writing transaction, not in the route** (`TASK-041636`): a handler judging the
+window would need the `issued_at` of a *pending* address, which is exactly the port member
+`TASK-041607` refuses under §3, and it would be a read-then-write window in which two concurrent
+attaches both write and both mail. `TASK-041637` then makes the handler mail only on `Claimed`.
+`ADR-0079`'s deadline binds the pair: **before `EPIC-07` configures a sender.**
+
+`TASK-041638` closes the other half of a promise `TASK-041606` landed with. Its
+`RecoveryMailerShapeTest` asserts over `declaredMemberFunctions`, exactly as its Scope named, and
+the reviewer then probed four shapes that all pass with every test green — a property, a nested
+type, a companion member, and the port **extending a second interface**, since *declared* excludes
+inherited members. `ADR-0031` §6.2 makes that test the mechanism carrying the vision's *"Never used
+for contact or marketing"*, and that promise has two halves: *in a diff a reviewer reads*, which
+holds for all four, and *a test asserts it*, which did not. Probing for this ticket found a **fifth**
+shape none of the four covered — a **member extension function**, which `declaredMemberFunctions`
+excludes by definition. The ticket asserts four surfaces (`declaredMemberProperties`,
+`declaredMemberExtensionFunctions`, `nestedClasses`, `supertypes`), uses one control type carrying
+all four forbidden shapes at once because four assertions that something is empty all pass when the
+reflection is wrong, and **names in the file's own KDoc the surface it deliberately does not
+assert**: a *top-level* extension function on `RecoveryMailer`, which reads at a call site exactly
+like a member and is invisible to every read over the `KClass`. Closing that needs a classpath scan
+and a new dependency; the residual is bounded, since an extension can only re-aim one of the two
+permitted templates and cannot introduce a third.
 
 `STORY-0413` was split on 2026-08-19 into **fourteen**, on top of what `STORY-0409` and `STORY-0411`
 actually landed, and eleven of them are unblocked. The read grows a second function rather than a

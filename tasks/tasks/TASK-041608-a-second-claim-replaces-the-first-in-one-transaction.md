@@ -21,7 +21,8 @@ verify:
 ## Goal
 
 `PostgresRecoveryEmails.claimPending` writes a pending row that expires 24 hours from the injected
-clock, replacing whatever the player already had, so an abandoned attempt cannot accumulate.
+clock, replacing whatever the player already had, so an abandoned attempt cannot accumulate — and
+reports `Claimed`, the value `TASK-041636` will start withholding.
 
 ## Files
 
@@ -49,6 +50,11 @@ class copies;
   `INSERT INTO email_verification (token_hash, player_id, address, issued_at, expires_at) VALUES
   (?, ?, ?, ?, ?)`, and commits — one transaction, so `UNIQUE (player_id)` can never refuse the
   insert (`ADR-0031` §3). Roll back and rethrow on any `SQLException`.
+- `claimPending` returns `ClaimPendingResult.Claimed`, **unconditionally**. This ticket implements
+  the write; the fifteen-minute suppression that makes `Suppressed` reachable is `TASK-041636`,
+  the very next ticket, and until it merges there is no path to that value. Say so at the return
+  site in a comment naming `TASK-041636`, the same way the five `TODO()` bodies name theirs — a
+  bare `return Claimed` with no note reads as a decision that no suppression exists.
 - `issued_at` is `clock.instant()`; `expires_at` is that plus a private
   `VERIFICATION_LIFETIME: Duration = Duration.ofHours(24)`. The **instant comes from the injected
   `java.time.Clock`**, not `ServerClock` — `ADR-0062` §5 amends `ADR-0031` §3's clause for exactly
@@ -57,6 +63,13 @@ class copies;
 
 ## Out of scope
 
+- **`ADR-0031` §5's fifteen-minute resend suppression — `TASK-041636`.** `claimPending` here writes
+  on every call and answers `Claimed` on every call. That is a knowingly incomplete implementation,
+  named at the return site, in a ticket that already ships five `TODO()` bodies for the same reason:
+  the write and the rule that gates it are separately provable, and folding them together needs
+  three more tests than this ticket has room for. `ADR-0079` §Consequences fixes the deadline —
+  before `EPIC-07` configures a sender — and `TASK-041636` is the next ticket in the chain, so the
+  incomplete state does not outlive one PR. **Say so in the PR.**
 - `verifyPending`, `hasRecoveryEmail`, `verifiedOwnerOf`, `detach`, `deleteExpiredVerifications` —
   `TASK-041609` through `TASK-041611`. Their `TODO()` bodies are deliberate and the ticket that
   removes each is named at the call site.
@@ -68,13 +81,23 @@ class copies;
 ## Tests
 
 `PostgresRecoveryEmailsClaimTest`, on `PostgresTestSupport.freshDatabase()` + `Migrations.migrate`,
-constructing the class with a `Clock.fixed(...)` so every instant is pinned.
+constructing the class with a **mutable holder over `Clock.fixed(...)`** — every instant is pinned,
+and a test can move the clock between calls. Two of the four tests below already need that.
+
+**Why the second claim happens sixteen minutes later and not immediately.** `TASK-041636` adds
+`ADR-0031` §5's fifteen-minute suppression inside this same transaction. Under it, a second claim
+with the clock unmoved writes nothing and the surviving address is `a@x.test`, so a fixture with no
+gap would make `aSecondClaimLeavesExactlyOnePendingRow` assert the opposite of what it will then
+observe, and `TASK-041636` would have to reach into this file and move an assertion. Sixteen
+minutes is outside the window under both tickets, so this test proves the same thing before and
+after and **`TASK-041636` adds methods to this file and edits none.** The gap is a property of the
+fixture, not a weakening: *a second claim replaces the first* is what is being asserted either way.
 
 | Test | Proves |
 | --- | --- |
 | `aClaimStoresTheAddressExactlyAsTyped` | After `claimPending(player, EmailAddress("Bob@Example.com"), token)`, `SELECT address` returns `Bob@Example.com`, and `SELECT token_hash` equals `recoveryTokenDigest(token)` — the plaintext token is nowhere in the row |
 | `aClaimExpiresTwentyFourHoursAfterTheInjectedClock` | With `Clock.fixed` at a known instant, `expires_at` minus `issued_at` is exactly 24 hours and `issued_at` equals the fixed instant. Advancing the injected clock by an hour and claiming again moves both stamps by an hour — **two clock values**, so a hard-coded `Instant.now()` cannot pass |
-| `aSecondClaimLeavesExactlyOnePendingRow` | The same player claims `a@x.test`, then `b@x.test` with a different token. `SELECT count(*)` for that player is `1`, and the surviving row's `address` is `b@x.test`. No `SQLException` is thrown |
+| `aSecondClaimLeavesExactlyOnePendingRow` | The same player claims `a@x.test`; the injected clock is then **advanced sixteen minutes**; the player claims `b@x.test` with a different token. `SELECT count(*)` for that player is `1`, and the surviving row's `address` is `b@x.test`. No `SQLException` is thrown |
 | `oneClaimNeverDisturbsAnotherPlayers` | Two players each claim; the second's claim leaves the first's row present with its original address and token hash. The count assertion above is under `player_id`, which the defect would still satisfy, so this is what actually rules out a `DELETE` with no `WHERE` |
 
 ## Acceptance criteria
@@ -84,6 +107,11 @@ constructing the class with a `Clock.fixed(...)` so every instant is pinned.
 - [ ] `PostgresRecoveryEmailsClaimTest.aSecondClaimLeavesExactlyOnePendingRow` passes
 - [ ] `PostgresRecoveryEmailsClaimTest.oneClaimNeverDisturbsAnotherPlayers` passes
 - [ ] The expiry test uses **two different fixed clock instants** and asserts both stamps moved
+- [ ] `aSecondClaimLeavesExactlyOnePendingRow` advances the injected clock by more than fifteen
+      minutes between the two claims
+- [ ] `claimPending`'s return type is `ClaimPendingResult` and every test asserts the returned value
+      is `Claimed`, not merely that no exception was thrown
+- [ ] `PostgresRecoveryEmails.kt` names `TASK-041636` in a comment at the `Claimed` return site
 - [ ] `PostgresRecoveryEmails.kt` contains no `Instant.now()`, no `System.currentTimeMillis()` and
       no `ServerClock`
 - [ ] `PostgresRecoveryEmails.kt` contains no `lowercase`, `uppercase` or `trim` applied to an
@@ -116,6 +144,11 @@ constructing the class with a `Clock.fixed(...)` so every instant is pinned.
 6. Store `token.value` in `token_hash` instead of the digest — this needs the column read as text,
    so instead store `recoveryTokenDigest(VerificationToken(token.value + "x"))`.
    **`aClaimStoresTheAddressExactlyAsTyped` reddens alone** on the hash comparison. Revert.
+7. Remove the sixteen-minute clock advance from `aSecondClaimLeavesExactlyOnePendingRow`.
+   **Nothing reddens**, because nothing suppresses yet. **Record it in the PR.** The gap exists for
+   `TASK-041636`, not for this ticket: it is the one line in this file whose absence would cost the
+   next ticket an assertion move inside a file it should only be adding methods to. A reviewer who
+   deletes it as noise will not find out here.
 
 ## Definition of done
 
