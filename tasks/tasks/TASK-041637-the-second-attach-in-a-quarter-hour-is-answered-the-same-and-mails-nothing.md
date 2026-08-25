@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041637
 title: The second attach in a quarter hour is answered the same, and mails nothing
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -128,7 +128,7 @@ fixture's injected `java.time.Clock` must be movable between requests; `TASK-041
 - [ ] `AttachRecoveryEmailRouteTest.aSecondAttachInsideAQuarterHourAnswersTheSameAndSendsNothing`
       passes
 - [ ] `AttachRecoveryEmailRouteTest.anAttachAfterAQuarterHourSendsAgain` passes
-- [ ] All six pre-existing `AttachRecoveryEmailRouteTest` tests pass **unchanged** — this ticket
+- [ ] All seven pre-existing `AttachRecoveryEmailRouteTest` tests pass **unchanged** — this ticket
       adds methods and edits none, moves no assertion and weakens none
 - [ ] `aSecondAttachInsideAQuarterHourAnswersTheSameAndSendsNothing` asserts on the **contents** of
       `mailer.sent`, naming the first attach's address, and not on `mailer.sent.size`
@@ -178,3 +178,35 @@ fixture's injected `java.time.Clock` must be movable between requests; `TASK-041
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The vacuity trap this ticket had to avoid, and did.** `recoveryRoutes` defaults `mailer` to
+`NoRecoveryMailer`, so the route mails nothing under any circumstance by default — and a test asserting
+*the recorder is empty after the suppressed attach* would pass trivially against that. Both new tests
+bind `RecordingRecoveryMailer()` **explicitly** via `mailer = mailer`, and both assert `sent`
+**contents** rather than sizes: `listOf(EmailAddress("a@x.test"))` after the first attach, and two named
+addresses in the past-window test. So the first attach is observed to send, and *mails nothing* cannot
+be true for the wrong reason.
+
+**A suppressed attach cannot mail by construction, not merely by coverage.** The `Suppressed` arm is
+`Unit` — no call to `sendVerification` is reachable from it at all — and the inverted-branch mutation
+reddens both new tests, so a rewiring that routed a send onto that arm would be caught. This is what
+`TASK-041625` left structural: it bound `claimPending`'s result to a `val` and never read it, so
+`Claimed` and `Suppressed` were identical because nothing distinguished them. Now they are identical
+because something checked.
+
+**Two Proof steps redden nothing, and that was confirmed by running rather than assuming.** Replacing
+the `Suppressed` arm with `else -> Unit`, and moving `respond` after the `when`, both leave all nine
+tests green. One ticket earlier, `TASK-041625`'s step 3 also reddened nothing — and there the cause was
+a **blind fixture**, not an untestable claim. The coder asked that question explicitly here before
+concluding, and the reviewer re-ran both.
+
+**Three KDoc paragraphs in `RecoveryRoutes.kt` were rewritten because they named this ticket as
+unfinished** — *"not yet branched on: TASK-041637"*. Left alone they would have shipped factually wrong
+in the PR that completes them. That file was already `modify` in the Files table, and the reviewer
+confirmed the rewrites claim no branch that does not exist.
+
+**Correction to this ticket's own criteria, and it was my error.** They said *six* pre-existing tests;
+there are seven, because I amended `TASK-041625`'s Tests table to seven at its landing after review
+ruled its device-identity test should stay, and did not update this successor. Fixed above.
