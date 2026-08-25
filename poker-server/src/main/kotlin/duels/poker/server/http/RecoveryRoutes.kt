@@ -96,22 +96,26 @@ import kotlinx.coroutines.CancellationException
  *    password even inside a valid session, because a session token is a bearer credential in web
  *    storage, and without this a minute at an unattended browser converts into permanent
  *    ownership of the account.
- * 5. [RecoveryEmails.claimPending] runs and its [ClaimPendingResult] is bound to a named value —
- *    never discarded — but **not yet branched on**: `TASK-041637` is what conditions the send on
- *    it. Until then every outcome reaches step 6 identically, so a caller can never tell
- *    [ClaimPendingResult.Claimed] from [ClaimPendingResult.Suppressed] by anything this route
- *    answers.
- * 6. [mailer].[sendVerification][RecoveryMailer.sendVerification] sends the token just minted —
- *    **unless [RecoveryEmails.verifiedOwnerOf] already names another player for this address**, in
- *    which case nothing is sent. `ADR-0031` §5: the route answers `202` even when the address
- *    already belongs to someone else, and sending mail in that case would be this server acting as
- *    a relay pointed at a stranger's inbox — the alternative, telling the caller the address is
- *    taken, is the oracle §5 forbids instead.
+ * 5. [RecoveryEmails.claimPending] runs and its [ClaimPendingResult] decides whether step 6 may
+ *    send anything at all: [ClaimPendingResult.Claimed] may reach the mailer,
+ *    [ClaimPendingResult.Suppressed] never does — `ADR-0031` §5's fifteen-minute rule, applied
+ *    here (`TASK-041637`). The `202` below is written before this is branched on and never varies
+ *    with the outcome, so a caller can never tell [ClaimPendingResult.Claimed] from
+ *    [ClaimPendingResult.Suppressed] by anything this route answers.
+ * 6. On [ClaimPendingResult.Claimed], [mailer].[sendVerification][RecoveryMailer.sendVerification]
+ *    sends the token just minted — **unless [RecoveryEmails.verifiedOwnerOf] already names another
+ *    player for this address**, in which case nothing is sent either. `ADR-0031` §5: the route
+ *    answers `202` even when the address already belongs to someone else, and sending mail in that
+ *    case would be this server acting as a relay pointed at a stranger's inbox — the alternative,
+ *    telling the caller the address is taken, is the oracle §5 forbids instead. On
+ *    [ClaimPendingResult.Suppressed], nothing is sent: the token minted for this request was never
+ *    stored, and the outstanding one from the earlier claim is untouched.
  *
- * The route then answers `202 Accepted` with an empty body, **in every case that reaches step 5**
- * — `ADR-0031` §5 makes every outcome but a malformed address indistinguishable from the outside,
- * including the two `ClaimPendingResult` values and the already-taken address above: a `202`
- * answers nothing about what happened, on purpose.
+ * The route answers `202 Accepted` with an empty body **immediately once step 5 returns, before
+ * step 6 runs** — `ADR-0031` §5 makes every outcome but a malformed address indistinguishable from
+ * the outside, including the two `ClaimPendingResult` values and the already-taken address in step
+ * 6: a `202` answers nothing about what happened, on purpose, and it answers before the thing it
+ * says nothing about has even been decided.
  *
  * **The address never appears in a response, a header or a log line from this handler.** No
  * `call.respond` here carries a body, and no string template in this function interpolates
@@ -120,13 +124,13 @@ import kotlinx.coroutines.CancellationException
  * port" applies to this handler exactly as it applies to storage: the only place the address goes
  * is into [mailer], never into anything this route writes back to the caller.
  *
- * Two things this route deliberately does not do, both named because a future ticket does them:
- * the budget `ADR-0079` §2 and §3 specify — five attaches per rolling sixty seconds, keyed by
- * remote address, admitted after step 3 and before step 4 — is `TASK-041628`'s one line, not
- * built here; and the fifteen-minute resend suppression `ADR-0031` §5 describes is real at the
- * storage layer (`TASK-041636`) but not yet wired to skip the send in step 6, which is
- * `TASK-041637`. Until both land, this endpoint is unbudgeted and sends a verification mail on
- * every successful attach — the defect `ADR-0079` §Consequences names against this ticket.
+ * One thing this route deliberately does not do, named because a future ticket does it: the budget
+ * `ADR-0079` §2 and §3 specify — five attaches per rolling sixty seconds, keyed by remote address,
+ * admitted after step 3 and before step 4 — is `TASK-041628`'s one line, not built here. The
+ * fifteen-minute resend suppression `ADR-0031` §5 describes is real at the storage layer
+ * (`TASK-041636`) and now wired to skip the send in step 6 (`TASK-041637`, this ticket): the
+ * per-account cap `ADR-0079` §Consequences named as the missing half of the endpoint's budget is
+ * the one now in force, holding across every remote address at once, unlike the budget above.
  *
  * Also installs `DELETE /api/auth/recovery-email`, which erases the caller's proven recovery
  * address, per `ADR-0031` §5 and its closing `DEC-029`. It follows the identical guard order
@@ -275,18 +279,24 @@ public fun Application.recoveryRoutes(
                 call.respond(HttpStatusCode.Forbidden)
                 return@post
             }
-            // Bound to a named value, never discarded into _, and not yet branched on: TASK-041637
-            // is what conditions the send below on this result. Until then every outcome reaches
-            // the same 202, so a caller can never tell Claimed from Suppressed.
             val token = tokens.newVerificationToken()
-            val claimResult: ClaimPendingResult = recoveryEmails.claimPending(playerId, address, token)
-            // ADR-0031 §5: 202 even when the address already belongs to another player, and
-            // nothing is sent in that case — the alternative either tells a stranger an address is
-            // registered, or mails a stranger's mailbox that did nothing to deserve it.
-            if (recoveryEmails.verifiedOwnerOf(address) == null) {
-                mailer.sendVerification(address, token)
-            }
+            val claim = recoveryEmails.claimPending(playerId, address, token)
+            // The 202 is written before the when and never varies with the outcome: ADR-0031 §5
+            // requires the answer before any mail work, and TASK-041626 calls this ordering the
+            // timing defence rather than an optimisation — the same reading applies here.
             call.respond(HttpStatusCode.Accepted)
+            // Exhaustive over ClaimPendingResult, no else: this is the one branch in the codebase
+            // that decides whether outbound mail leaves the building, and an else would silently
+            // absorb a third outcome the day ClaimPendingResult grows one.
+            when (claim) {
+                ClaimPendingResult.Claimed -> if (recoveryEmails.verifiedOwnerOf(address) == null) {
+                    // ADR-0031 §5: nothing is sent when the address already belongs to another
+                    // player — the alternative either tells a stranger an address is registered,
+                    // or mails a stranger's mailbox that did nothing to deserve it.
+                    mailer.sendVerification(address, token)
+                }
+                ClaimPendingResult.Suppressed -> Unit
+            }
         }
         delete("/api/auth/recovery-email") {
             // Identity first, before the body is read: the same order sign-up uses (ADR-0027

@@ -33,6 +33,10 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -350,6 +354,88 @@ class AttachRecoveryEmailRouteTest {
         }
     }
 
+    @Test
+    fun aSecondAttachInsideAQuarterHourAnswersTheSameAndSendsNothing() {
+        val mailer = RecordingRecoveryMailer()
+        val recoveryEmailsWithAMovableClock = PostgresRecoveryEmails(dataSource, MutableClock(FIXED_INSTANT))
+        testApplication {
+            application {
+                module()
+                recoveryRoutes(
+                    recoveryEmailsWithAMovableClock,
+                    PasswordResetsNeverCalledByAttach,
+                    identitiesFor(dataSource),
+                    credentials,
+                    mailer = mailer,
+                )
+            }
+            val playerId = insertPlayer()
+            val password = "the quarter-hour player's own password"
+            credentials.create(playerId, CredentialKind.PASSWORD, handleFor(playerId), PresentedSecret(password))
+            val token = sessions.issue(playerId)
+
+            val first = client.attachOutcome(token, "a@x.test", password)
+            // Clock unmoved: the second attach falls inside the same fifteen-minute window as the
+            // first, so ADR-0031 §5 suppresses it (ClaimPendingResult.Suppressed).
+            val second = client.attachOutcome(token, "b@x.test", password)
+
+            assertEquals(HttpStatusCode.Accepted, first.status, "setup: expected the first attach to succeed")
+            assertEquals(
+                first,
+                second,
+                "expected byte-identical (status, body, header names) for a claimed first attach " +
+                    "and a suppressed second one inside the same fifteen-minute window",
+            )
+        }
+        assertEquals(
+            listOf(EmailAddress("a@x.test")),
+            mailer.sent,
+            "expected exactly one send, for the first attach's address — a suppressed second " +
+                "attach must send nothing",
+        )
+    }
+
+    @Test
+    fun anAttachAfterAQuarterHourSendsAgain() {
+        val mailer = RecordingRecoveryMailer()
+        val clock = MutableClock(FIXED_INSTANT)
+        val recoveryEmailsWithAMovableClock = PostgresRecoveryEmails(dataSource, clock)
+        testApplication {
+            application {
+                module()
+                recoveryRoutes(
+                    recoveryEmailsWithAMovableClock,
+                    PasswordResetsNeverCalledByAttach,
+                    identitiesFor(dataSource),
+                    credentials,
+                    mailer = mailer,
+                )
+            }
+            val playerId = insertPlayer()
+            val password = "the window-elapsed player's own password"
+            credentials.create(playerId, CredentialKind.PASSWORD, handleFor(playerId), PresentedSecret(password))
+            val token = sessions.issue(playerId)
+
+            val first = client.attachOutcome(token, "a@x.test", password)
+            // Past the fifteen-minute window: TASK-041636 uses the same sixteen-minute fixture for
+            // "past the window", chosen once rather than invented again here.
+            clock.advance(Duration.ofMinutes(PAST_THE_WINDOW_MINUTES))
+            val second = client.attachOutcome(token, "b@x.test", password)
+
+            assertEquals(HttpStatusCode.Accepted, first.status, "setup: expected the first attach to succeed")
+            assertEquals(
+                HttpStatusCode.Accepted,
+                second.status,
+                "expected the attach past the fifteen-minute window to succeed too",
+            )
+        }
+        assertEquals(
+            listOf(EmailAddress("a@x.test"), EmailAddress("b@x.test")),
+            mailer.sent,
+            "expected two sends, one per attach, once the fifteen-minute window has elapsed",
+        )
+    }
+
     /** Claims and verifies [address] for [playerId] directly, bypassing the HTTP layer entirely. */
     private suspend fun attachVerifiedAddress(playerId: PlayerId, address: String) {
         val token = VerificationToken("attach-route-test-token-${playerId.value}")
@@ -399,6 +485,16 @@ class AttachRecoveryEmailRouteTest {
  * more than one credential in the same database never collides on `UNIQUE (kind, identifier)`.
  */
 private fun handleFor(playerId: PlayerId): String = "attach-route-test-handle-${playerId.value}"
+
+/** The instant [MutableClock] starts at in every test that builds one; the value itself is arbitrary. */
+private val FIXED_INSTANT: Instant = Instant.parse("2026-01-01T00:00:00Z")
+
+/**
+ * How far `anAttachAfterAQuarterHourSendsAgain` advances the clock past `ADR-0031` §5's
+ * fifteen-minute suppression window — the same sixteen-minute-past-the-window fixture
+ * `TASK-041636` uses, chosen once rather than invented again here.
+ */
+private const val PAST_THE_WINDOW_MINUTES = 16L
 
 /**
  * The number of consecutive characters that, shared between the address and a response channel,
@@ -493,5 +589,27 @@ private class RecordingRecoveryMailer : RecoveryMailer {
 
     override suspend fun sendPasswordReset(address: EmailAddress, token: ResetToken, handle: String) {
         throw UnsupportedOperationException("recovery-email never sends a password reset")
+    }
+}
+
+/**
+ * A [Clock] whose instant advances only when [advance] is called, so a test can move past
+ * `ADR-0031` §5's fifteen-minute suppression window without a real fifteen minutes elapsing.
+ * [PostgresRecoveryEmails] reads this clock's [instant], never SQL `now()`, to decide the window —
+ * `TASK-041608` already builds `PostgresRecoveryEmails` over the same kind of mutable holder for
+ * the same reason.
+ */
+private class MutableClock(instant: Instant) : Clock() {
+    private var delegate: Clock = Clock.fixed(instant, ZoneOffset.UTC)
+
+    override fun instant(): Instant = delegate.instant()
+
+    override fun getZone(): ZoneId = delegate.zone
+
+    override fun withZone(zone: ZoneId): Clock = delegate.withZone(zone)
+
+    /** Moves this clock's instant forward by [duration], visible to the next call to [instant]. */
+    fun advance(duration: Duration) {
+        delegate = Clock.fixed(delegate.instant().plus(duration), delegate.zone)
     }
 }
