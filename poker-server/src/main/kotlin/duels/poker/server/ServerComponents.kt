@@ -5,13 +5,16 @@ import duels.poker.server.auth.AuthSessions
 import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.DeviceBindings
 import duels.poker.server.auth.IdentityResolver
+import duels.poker.server.auth.PasswordResets
 import duels.poker.server.auth.RecoveryEmails
+import duels.poker.server.auth.RecoveryTokens
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.db.PostgresAuthSessions
 import duels.poker.server.db.PostgresCredentials
 import duels.poker.server.db.PostgresDeviceBindings
 import duels.poker.server.db.PostgresDuelResultSink
 import duels.poker.server.db.PostgresDuelResultStore
+import duels.poker.server.db.PostgresPasswordResets
 import duels.poker.server.db.PostgresPlayerDirectory
 import duels.poker.server.db.PostgresProfileReads
 import duels.poker.server.db.PostgresProfileWrites
@@ -51,6 +54,7 @@ public data class ServerComponents(
     val signInBudget: AttemptBudget,
     val bindings: DeviceBindings,
     val recoveryEmails: RecoveryEmails,
+    val passwordResets: PasswordResets,
 )
 
 /**
@@ -118,6 +122,10 @@ public fun serverComponents(
     // The wall clock, not the ServerClock: the same instrument PostgresAuthSessions takes above,
     // per ADR-0062 §2.
     val recoveryEmails = PostgresRecoveryEmails(dataSource, wallClock)
+    // Mirrors recoveryEmails immediately above: the same wall clock, per ADR-0062 §2.
+    // RecoveryTokens() needs no decision of its own — it defaults its own SecureRandom, the same
+    // way SecureHandSeedSource() above defaults duel seeds.
+    val passwordResets = PostgresPasswordResets(dataSource, wallClock, RecoveryTokens())
 
     return ServerComponents(
         socket = socket,
@@ -132,5 +140,6 @@ public fun serverComponents(
         signInBudget = signInBudget,
         bindings = bindings,
         recoveryEmails = recoveryEmails,
+        passwordResets = passwordResets,
     )
 }

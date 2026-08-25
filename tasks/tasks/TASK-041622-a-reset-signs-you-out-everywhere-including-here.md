@@ -9,7 +9,7 @@ module: poker-server
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 2
+files_touched: 3
 labels: [server, http, auth, security]
 depends_on: [TASK-041621]
 verify:
@@ -22,7 +22,7 @@ verify:
 ## Goal
 
 A successful reset leaves the player with no live session anywhere, asserted at the wire — and
-`recoveryRoutes` is installed on the real server, so all three of its endpoints answer for a
+`recoveryRoutes` is installed on the real server, so both of its endpoints answer for a
 running application rather than only inside `testApplication`.
 
 ## Files
@@ -30,10 +30,10 @@ running application rather than only inside `testApplication`.
 | File | Action |
 | --- | --- |
 | `poker-server/src/main/kotlin/duels/poker/server/Application.kt` | modify |
+| `poker-server/src/main/kotlin/duels/poker/server/ServerComponents.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/http/ResetPasswordEndsSessionsTest.kt` | create |
 
 Read, and do not edit:
-`poker-server/src/main/kotlin/duels/poker/server/ServerComponents.kt`;
 `poker-server/src/test/kotlin/duels/poker/server/DuelServerRoutesTest.kt` — the assertion that every
 registered route answers, which this ticket's install must not break;
 `docs/adr/ADR-0050-revoking-the-device-signs-out-everywhere-but-here.md` — the contrast this ticket
@@ -116,6 +116,14 @@ must **not** copy;
    **`theNewPasswordSignsInAfterwards` reddens alone**; the three session tests pass, because the
    sessions really are gone. The positive control that stops "delete everything" reading as
    success. Revert.
+
+## Notes
+
+- The Goal originally said `recoveryRoutes` answers for "all three" endpoints; it installs two —
+  `/api/auth/verify-email` and `/api/auth/reset-password` — matching the Tests table and the
+  Out-of-scope note that the other two recovery endpoints are not yet written. Corrected before
+  landing so a reader comparing Goal to Tests table does not conclude the Tests table is the one
+  that is wrong.
 
 ## Definition of done
 
