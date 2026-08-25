@@ -136,7 +136,7 @@ recorded rather than quietly absorbed:
 | [STORY-0409](../stories/STORY-0409-history-filters-and-search.md) | History filters and search | 0408 | backlog |
 | [STORY-0410](../stories/STORY-0410-the-display-name-product-rules.md) | The display-name product rules — screened when set, and takeable away | 0401 | backlog — `DEC-042` answered by `ADR-0051`, not yet split |
 | [STORY-0411](../stories/STORY-0411-the-name-in-the-client.md) | The name in the client — shown, and settable | 0402 | backlog |
-| [STORY-0412](../stories/STORY-0412-the-account-screens.md) | The account screens — sign up, sign in, sign out, and which routes are live | 0406, 0411 | backlog |
+| [STORY-0412](../stories/STORY-0412-the-account-screens.md) | The account screens — sign up, sign in, sign out, and which routes are live | 0406, 0411 | **ready**, split into 27 tickets on 2026-08-26 — `TASK-041201` is startable; two are `blocked` on `DEC-077` (the product owner's) and they are the last two in the chain. **Two** account screens, which `ADR-0076` §1 left to this story: `#/account` and a sign-in screen whose word is the decision |
 | [STORY-0413](../stories/STORY-0413-the-history-screen.md) | The history screen — pages, filters, search | 0409, 0411 | backlog |
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
 | [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | backlog |
@@ -212,9 +212,26 @@ raised on 2026-08-23 when `STORY-0405` was split, was answered on 2026-08-24 and
 too. **`STORY-0412` is still gated by no decision at all**, and the four new ones blocked six tickets
 inside `STORY-0416` and nothing else in this epic.
 
-**The table below is empty: this epic carries no open decision.** `DEC-075` — a fifth, raised on
-2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
+**The table below carries one, raised on 2026-08-26 when `STORY-0412` was split: `DEC-077`, the
+product owner's.** `DEC-075` — a fifth from the `STORY-0416` split, raised on 2026-08-25 by
+[`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
 rather than by the split, and blocking nothing — was answered the same day and is recorded below.
+
+`DEC-077` asks **what the product calls the screen a player opens to reach an account from a browser
+that does not hold it, and therefore what that screen's permanent slug is.** It is the product
+owner's because `ADR-0076` §1 makes a slug the lowercase form of a word the product already says and
+states outright that the ADR **coins no player-facing vocabulary**: a screen needing a word the
+product does not yet say is a product question. `STORY-0412` settled the count `ADR-0076` §1 left to
+it — **two** account screens — and one of the two names was found already merged rather than coined,
+since `ADR-0050` §3, `ADR-0036` and `ADR-0056` §2 each say *account* to a player, so `#/account`
+ships in `TASK-041222` with nothing invented. The second screen has only a **verb** in the merged
+record (`ADR-0050` §3's *"You stay signed in here"*) and a slug wants a noun, as `duels`,
+`leaderboard`, `reset` and `verify` each are. It is **not** the human's: it adds nothing to and takes
+nothing from the vision's *What it is* / *What it is not*, it costs no money and moves no roadmap
+row, and the vision's *Positioning* sentence — *"Lichess and Chess.com… Dark, quiet, fast,
+minimal"*, the same sentence `ADR-0056` and `ADR-0078` derived from — is the input the product owner
+already has. It blocks `TASK-041226` and `TASK-041227`, the last two tickets in the story, and
+nothing else in this epic.
 
 `DEC-054` — *does the web client grow URL-addressable routes and a working browser Back, and what
 carries them?* — was answered on 2026-08-25 by
@@ -254,6 +271,7 @@ answered `DEC-027`, and these four apply that choice rather than revisiting it.
 
 | ID | Question | Blocks |
 | --- | --- | --- |
+| `DEC-077` | **The product owner's** — what does the product call the screen a player opens to reach an account from a browser that does not hold it, and therefore what is that screen's permanent slug? | `TASK-041226`, `TASK-041227` |
 
 `DEC-075` — raised on 2026-08-25 by `ADR-0077`, blocking nothing — was answered on the same day by
 [`ADR-0081`](../../docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md):

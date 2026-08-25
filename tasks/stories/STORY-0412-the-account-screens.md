@@ -2,7 +2,7 @@
 id: STORY-0412
 title: The account screens — sign up, sign in, sign out, and which routes are live
 type: story
-status: backlog
+status: ready
 parent: EPIC-04
 module: web-client
 labels: [client, ui, auth]
@@ -47,9 +47,74 @@ player can see it and end it.
 
 ## Tasks
 
+Split on 2026-08-26 into **27**, in a single linear chain: every ticket after the first depends on
+the one before it, because the story's files overlap heavily — `Lobby.tsx` is edited by four tickets,
+`screen.ts` by three, `main.tsx` by two and `App.test.tsx` by five.
+
+**How many account screens, and what they are called.** `ADR-0076` §1 left the count to this story
+and the count is **two**: the account screen at `#/account`, which claims the profile in hand and
+carries `ADR-0037`'s statement, `ADR-0050`'s revoke and sign-out; and a sign-in screen, which is how
+a browser that does not hold the profile reaches it. Two rather than one because `ADR-0012` mints an
+anonymous profile on the first `Welcome`, so every player arrives holding one — the two intents
+(*give this profile a password* and *reach the account I already have*) are always both live, and
+putting two handle-and-password forms on one screen is what `ADR-0041` was keeping clean. Two rather
+than three because sign-up is a **claim** (`ADR-0030` §1: one endpoint, attaching to the profile this
+device already owns), so it belongs on the account screen rather than beside it — which is also where
+`STORY-0415`'s offer after a first win will send a player. `account` is not a coined word:
+`ADR-0050` §3, `ADR-0036` and `ADR-0056` §2 each say it to a player. The sign-in screen's word is
+`DEC-077`.
+
+**What turned out to be already settled, and needed no decision.** *Does the screen need a
+`hasCredential` field?* — no: `ADR-0050` §4 says `deviceRouteLive` is the whole of what the screen
+reads, and `docs/protocol.md` makes `POST /api/auth/sign-in` the only endpoint that ever issues a
+session token, so a browser holding a live session is one whose player has a password, by
+construction. *How does an identity change reach the socket?* — by reloading the document:
+`ADR-0075` records that `rivalPresence`, `graceRemainingMillis` and `rivalReturned` are cleared at no
+store boundary and are unreachable only because a real navigation rebuilds `initialState()`, and
+`ADR-0076` §6 keeps two controls as page loads for that exact reason.
+
+**One acceptance criterion is met in a different shape than it was written, deliberately.** *Signing
+out during a live duel warns before it acts*: `ADR-0076` §3 makes `Lobby.tsx` branch on `outcome`,
+`view` and `roomCode` **before** the address, so the account screen cannot be on display while a
+frame has seated this tab and a duel-conditional warning is a branch no fixture can reach.
+`TASK-041221` therefore warns on **every** sign-out — true in every state, including the one the
+criterion names — and `TASK-041222` gates the structural half.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0412` once `STORY-0406` and `STORY-0411` have merged.* | — |
+| [TASK-041201](../tasks/TASK-041201-the-address-of-a-screen-is-a-pure-function-of-its-fragment.md) | The address of a screen, as a pure function of its fragment | ready |
+| [TASK-041202](../tasks/TASK-041202-the-hook-that-carries-the-address-and-the-trap-that-is-silent.md) | The hook that carries the address, and the trap that makes a stale render look like React | backlog |
+| [TASK-041203](../tasks/TASK-041203-the-lobby-reads-the-address-instead-of-two-flags.md) | The lobby reads the address instead of two flags, and Back stops leaving the client | backlog |
+| [TASK-041204](../tasks/TASK-041204-the-store-outranks-the-address-and-the-address-stops-lying.md) | The store outranks the address, and a seated player's address stops lying | backlog |
+| [TASK-041205](../tasks/TASK-041205-the-token-this-browser-holds-lives-under-one-key.md) | The session token this browser holds lives under one key | backlog |
+| [TASK-041206](../tasks/TASK-041206-hello-carries-the-session-and-the-device-id-still-never-moves.md) | Hello carries the session this browser holds, and the device id still never moves | backlog |
+| [TASK-041207](../tasks/TASK-041207-the-profile-carries-whether-the-device-route-is-live.md) | The profile carries whether the device route is still live | backlog |
+| [TASK-041208](../tasks/TASK-041208-a-profile-body-with-no-device-route-is-not-a-profile.md) | A profile body with no device route is not a profile | backlog |
+| [TASK-041209](../tasks/TASK-041209-a-fetch-that-carries-the-session-this-browser-holds.md) | A fetch that carries the session this browser holds | backlog |
+| [TASK-041210](../tasks/TASK-041210-every-me-read-goes-out-under-the-session.md) | Every read under `/api/me` goes out under the session | backlog |
+| [TASK-041211](../tasks/TASK-041211-the-words-the-account-screen-says.md) | The words the account screen says, including the refusal that is about nobody | backlog |
+| [TASK-041212](../tasks/TASK-041212-sign-up-and-the-refusal-that-is-about-nobody.md) | Sign-up, seven outcomes, and the one refusal that is about nobody | backlog |
+| [TASK-041213](../tasks/TASK-041213-sign-in-stores-the-token-and-one-answer-covers-both-refusals.md) | Sign-in stores the token, carries no credential of its own, and reloads | backlog |
+| [TASK-041214](../tasks/TASK-041214-sign-out-clears-the-token-and-only-the-token.md) | Sign-out clears the token and only the token, leaves the room, and reloads | backlog |
+| [TASK-041215](../tasks/TASK-041215-stopping-this-device-signing-in-and-the-two-refusals.md) | Stopping this device signing in, and the two refusals that are not failures | backlog |
+| [TASK-041216](../tasks/TASK-041216-the-four-account-calls-reach-a-screen-through-one-provider.md) | The four account calls reach a screen through one provider | backlog |
+| [TASK-041217](../tasks/TASK-041217-the-account-screen-states-which-routes-sign-in.md) | The account screen states which routes sign in to this profile, in both states | backlog |
+| [TASK-041218](../tasks/TASK-041218-the-sign-up-form-on-the-account-screen.md) | The sign-up form — one credential, and the strip is the same profile afterwards | backlog |
+| [TASK-041219](../tasks/TASK-041219-a-throttled-sign-up-says-so-keeps-what-was-typed-and-retries-nothing.md) | A throttled sign-up says so, keeps what was typed, and retries nothing | backlog |
+| [TASK-041220](../tasks/TASK-041220-stopping-this-device-with-one-confirmation-and-three-facts.md) | Stopping this device signing in, offered only where it is safe, with three facts first | backlog |
+| [TASK-041221](../tasks/TASK-041221-signing-out-asks-first-and-says-what-it-costs.md) | Signing out asks first, and says what it costs before it acts | backlog |
+| [TASK-041222](../tasks/TASK-041222-the-account-screen-has-an-address-and-the-lobby-has-the-door.md) | The account screen has an address, and the lobby has the door | backlog |
+| [TASK-041223](../tasks/TASK-041223-the-account-calls-reach-the-real-transport.md) | The account calls reach the real transport, and sign-in reaches it carrying nothing | backlog |
+| [TASK-041224](../tasks/TASK-041224-no-secret-reaches-a-url-and-no-body-carries-a-player-id.md) | No secret reaches a URL, and no request body carries a player id | backlog |
+| [TASK-041225](../tasks/TASK-041225-the-sign-in-form.md) | The sign-in form, and one sentence for both ways it can be refused | backlog |
+| [TASK-041226](../tasks/TASK-041226-the-sign-in-screens-word-and-its-slug.md) | The sign-in screen's word, and the address that word becomes | **blocked** — `DEC-077` |
+| [TASK-041227](../tasks/TASK-041227-the-sign-in-screen-at-its-address-and-the-door-to-it.md) | The sign-in screen at its address, and the door to it from the account screen | **blocked** — `DEC-077` |
+
+## Open decisions
+
+| ID | Question | Blocks |
+| --- | --- | --- |
+| `DEC-077` | **The product owner's** — what does the product call the screen a player opens to reach an account from a browser that does not hold it, and therefore what is that screen's permanent slug? Registered in [`docs/adr/README.md`](../../docs/adr/README.md#open-decisions) | `TASK-041226`, `TASK-041227` |
 
 ## Acceptance criteria
 
