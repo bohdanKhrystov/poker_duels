@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041621
 title: Two submissions of one link, and only one of them works
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -116,3 +116,31 @@ latch-and-two-threads shape;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The mutation is the concurrency proof.** Replacing `consume`'s atomic `DELETE … RETURNING` with a
+`SELECT` and a later `DELETE` makes both concurrent tests report `[204, 204]` while the **sequential**
+test stays green. A serialised run of that mutated code cannot produce two successes — the second
+call's `SELECT` would see the row the first already deleted, which is precisely what the sequential
+test demonstrates. So two `204`s are reachable only if the two requests' vulnerable windows genuinely
+overlapped in wall-clock time. The reviewer reproduced this three times identically, and the sequential
+test carried no failure element in any run.
+
+**It is a race test, not a deterministic forcing of the interleave — and the distinction matters.**
+The coder called the outcome deterministic; the more precise statement is the reviewer's: the
+*property* is guaranteed by Postgres row-level locking on a single statement, but the test's ability to
+*detect a violation* depends on overlap actually occurring. **If the two requests genuinely serialised,
+the read-then-write code would behave identically to the correct code and this test would miss it.**
+That is an inherent limit of black-box concurrency testing at the wire, recorded here so nobody later
+mistakes the test for a proof. Eleven consecutive runs were green with no variation.
+
+**Which request wins is a real race, so the test never names a winner** — it correlates the stored
+password to whichever response was `204`. Both responses are collected and the pair asserted:
+`count { NoContent } == 1` **and** `count { BadRequest } == 1` over a two-element list, not "at least
+one" and not the first alone.
+
+**Two Proof steps redden nothing, by design.** A `repeat(2)` retry in the route is visible only through
+a session-sweep count, which `TASK-041622` owns; and no test here forces `consume` to throw, so
+swallowing its exception as a `400` is ungated. The ticket says both outright rather than predicting
+reds that do not occur.
