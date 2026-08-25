@@ -1,7 +1,3 @@
-// File named for its intended contents; a later route ticket in this recovery-route chain adds
-// the second DTO and can delete this suppression, the same pattern AuthDtos.kt started from.
-@file:Suppress("ktlint:standard:filename")
-
 package duels.poker.server.protocol.http
 
 import kotlinx.serialization.Serializable
@@ -30,5 +26,35 @@ public data class VerifyEmailRequest(val token: String) {
          * exception messages.
          */
         public const val REDACTION: String = "VerifyEmailRequest(redacted)"
+    }
+}
+
+/**
+ * The body of `POST /api/auth/reset-password`, carrying the one-time token mailed to the player
+ * and the new password to rewrite the credential to.
+ *
+ * Neither field is defaulted: a missing field must be refused with `400` rather than silently
+ * becoming `""`, which would ask [duels.poker.server.auth.PasswordResets.consume] to spend the
+ * empty string as a token, or set the empty string as a password, instead of the request never
+ * reaching the port at all.
+ *
+ * The `toString()` method returns a fixed redaction, because a reset token and a plaintext
+ * password in a log line or exception message are exactly the leaks no amount of endpoint care
+ * can repair afterward — the same reason [VerifyEmailRequest] and
+ * [duels.poker.server.auth.VerificationToken] redact.
+ *
+ * @property token The reset token from the mailed link.
+ * @property newPassword The password to rewrite the credential to, once [token] is spent.
+ */
+@Serializable
+public data class ResetPasswordRequest(val token: String, val newPassword: String) {
+    override fun toString(): String = REDACTION
+
+    public companion object {
+        /**
+         * The fixed string returned by `toString()` to prevent accidental leaks into logs or
+         * exception messages.
+         */
+        public const val REDACTION: String = "ResetPasswordRequest(redacted)"
     }
 }
