@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041635
 title: The fold the address index depends on, written down in the catalog
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -188,3 +188,36 @@ moves off this image, `twoSpellingsOnlyIcuFoldsTogetherAreOneAddress` keeps *pas
 may stop *detecting* step 1's mutation, because the pinned collation would then agree with the new
 default. `theAddressIndexIsPinnedToTheIcuRootCollation` reads the pinned clause itself and reddens
 on any platform. That asymmetry is why both tests exist and why neither replaces the other.
+
+## Notes
+
+**The surface a reasonable reader would pick can never fail, and this was checked by running it.**
+`information_schema.columns.collation_name` reports `NULL` whether or not `V8` carries
+`COLLATE "und-x-icu"`, because the collation sits on the *index expression* and `address` is declared
+plain `TEXT`. A test written against it passes in both states forever. The coder wrote that variant,
+ran it under both migrations, and confirmed it — which is the ticket's own Proof step 3 and the reason
+`pg_index.indcollation` → `pg_collation` is the surface that works.
+
+**The vacuity guard needed a `LEFT JOIN`, and the reason is not obvious.** A non-collatable index key
+carries collation OID `0`, so `recovery_email_pkey` — a UUID — has no `pg_collation` row. Under an
+`INNER JOIN` it is silently dropped, taking the count from two to one and corrupting the very assertion
+that stops a zero-row query passing for free. The coder swapped the join and measured it rather than
+reasoning about it. The count and the index-name set are both asserted **before** any `collname` is
+read, and the filter is by *table*, never by index name — so the names are read from the catalog rather
+than handed to it.
+
+**The behavioural fixture is the exact pair or it gates nothing.** `İ` (U+0130) against `i` + U+0307
+fold together under `und-x-icu` and apart under the default — on this alpine image musl folds U+0130 to
+a bare `i`. `É`, `ẞ` and `Ж` fold identically under both and would prove nothing. Substituting a bare
+`i@example.com` breaks the collision under the **correct** migration, so the pair is load-bearing, not
+decorative. Both are written as Kotlin escapes rather than literal glyphs — a raw control character put
+a real NUL into this ticket's own markdown earlier in the run and made `grep` silently return nothing.
+
+**Dropping the clause now fails loudly and says why.** `theAddressIndexIsPinnedToTheIcuRootCollation`
+reports *"Expected und-x-icu, actual default"*, and `twoSpellingsOnlyIcuFoldsTogetherAreOneAddress`
+reports *"Expected an exception… but was completed successfully"*. Before this ticket the same edit
+reddened nothing anywhere in the repository.
+
+**`player_display_name_unique` carries the identical clause under `ADR-0029` §1 and remains ungated.**
+It is `V3`'s, out of this ticket's scope, and named as a follow-up rather than quietly widened into —
+widening the filter would make an unrelated migration fail a `STORY-0416` test.
