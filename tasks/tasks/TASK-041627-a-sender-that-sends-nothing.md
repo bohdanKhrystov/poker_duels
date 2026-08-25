@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041627
 title: A sender that sends nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
