@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041619
 title: Three ways to fail verification, and one answer for all of them
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -126,3 +126,34 @@ Each mutation is applied to `RecoveryRoutes.kt` or `PostgresRecoveryEmails.kt`, 
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**"I could not find a construction" is not "none exists", and the difference was three lines.** The
+coder reported mutation 5's extra red as *structurally unavoidable*: building *already-consumed*
+honestly needs a real prior successful verify, which plants a `recovery_email` row before that leg's
+own refusal check, and the mutation's trigger is not address-scoped. The reviewer tried three
+alternatives — a distinct address for the leg, reordering the legs, separate databases — and **all
+three failed**, confirming that much of the reasoning. Then it found a fourth: call
+`recoveryEmails.detach(spentPlayer)` between the leg's two verifications. `detach` was already
+implemented by `TASK-041611` and already on the port the test holds. With it, mutation 5 reddens
+`aStrangerWithNoTokenCannotReachTheNineOhFour` alone and the main test stays green, exactly as the
+Proof predicts — so the Proof was right and the test now proves its own leg instead of leaning on a
+sibling to cover a documented exception.
+
+**The dropped assertion was ticket-mandated, not a weakening.** A `firstUse.status == 204` guard
+inside the spent leg let the main test catch mutation 3 by itself, which defeats the two positive
+controls the Proof exists to exercise. The coder removed the assertion, kept the call, and documented
+why; the reviewer reinstated the guard, reran mutation 3, reproduced the *all five redden* history, and
+confirmed the Proof requires the main test **not** to catch that alone.
+
+**What a caller can still distinguish: nothing, and that was measured.** The test compares status, full
+body text, and the set of lowercased header names excluding `date`. The reviewer dumped raw headers on
+all three refusals: the only header present on any of them is `Content-Length: 0`, identical
+throughout, since every refusal is the same `call.respond(HttpStatusCode.BadRequest)` with an empty
+body. So the omitted dimension — header *values* — carries no difference in this codebase today.
+Timing is out of scope by `ADR-0031` §5.
+
+**And the `409` `TASK-041618` left ungated is gated now.** Mapping `AddressTaken` to `400` reddens
+`theSecondPlayerToProveOneAddressIsToldItIsTaken` alone, through a real Postgres `23505` off
+`recovery_email_address_unique` with two players racing one address — not a synthetic assertion.
