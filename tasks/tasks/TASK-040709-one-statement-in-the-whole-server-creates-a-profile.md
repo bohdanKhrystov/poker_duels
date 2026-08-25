@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040709
 title: One statement in the whole server creates a profile
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: S
@@ -155,3 +155,18 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 kind of deferral that cannot be forgotten; a sentence in an ADR saying *"no other path may create a
 profile"* has no exit code, and this story's whole subject is a negative over the schema — the shape
 that goes ungated by default.
+
+**The two `grep -qF` refusals are what make the blind spots part of the artefact.** This test cannot
+see a statement assembled from constants, nor one with a line break between `INSERT INTO` and the
+table name — the reviewer confirmed the second by planting a multi-line insert in a new file and
+watching both tests stay green. Those are boundaries this ticket's Scope names, not gaps it failed to
+close, and the verify block forces them into the class KDoc so the next writer reads them where the
+rule lives rather than in a ticket nobody reopens.
+
+**The vacuity guard is the second argument, not an emptiness check.** Making
+`mainSourceFilesContaining` ignore its parameter and always return `{PostgresPlayerDirectory.kt}`
+reddens the `duel_result` test while the `player` test passes — so two different non-empty expected
+answers catch a helper that returns a constant, which a bare `isNotEmpty()` would not. The coder
+considered adding a third emptiness test mirroring `IdentityMovesNoCoinTest`'s and declined, because
+this ticket's Tests table already frames the two-argument shape as the guard. That was the right
+call: one fixture default cannot tell a copy from a constant.
