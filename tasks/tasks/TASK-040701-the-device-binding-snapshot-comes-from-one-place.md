@@ -3,7 +3,7 @@ schema: 2
 id: TASK-040701
 title: The device_binding snapshot comes from one place
 type: task
-status: ready
+status: done
 parent: STORY-0407
 module: poker-server
 estimate: XS
@@ -133,6 +133,24 @@ no gate for: mutating the copy in `CoinInvariant.kt` is what reddens a test in `
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
 
 ## Notes
+
+**The `SELECT *` is load-bearing, and a mutation proved it.** Narrowing it to
+`SELECT device_id, player_id` makes `revokingChangesExactlyOneBindingColumn` fail with
+"expected 1, got 0" — revocation changes only `revoked_at`, so a narrower column list makes the
+snapshot blind to the one thing it exists to see. The body is otherwise byte-identical to the
+original; only visibility changed.
+
+**The promotion was atomic, which is why no compile error appeared.** An `internal` top-level
+declaration and a same-named `private` one in the same module collide as an unresolvable overload at
+**every** call site — `TASK-040616` had an untouched file fail to compile for exactly this. Moving
+and deleting in one commit skips the transient state entirely.
+
+**One thing was lost in the KDoc rewrite this ticket asked for.** The old text cited `ADR-0050` §1 to
+explain why ordering by `player_id` is deterministic: a single terminal revocation means no two rows
+share a `player_id` across snapshots. The new text says "deterministic" without that reason. In its
+old home that was safe; shared, a caller with two bindings for one player now gets unstable ordering
+and nothing warns them. Not a defect in this diff — the rewrite was specified — but worth a line if a
+later ticket touches this helper.
 
 **The two file greps in `verify:` fail before the work and pass after**, which the Gradle command
 alone would not: `IdentityMovesNoCoinTest` is green on `develop` today, so a verify block of tests

@@ -1864,8 +1864,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-040622](tasks/TASK-040622-the-backfill-moves-a-row-that-was-already-there.md) The backfill moves a row that was already there | XS | done |
 | | [TASK-040623](tasks/TASK-040623-an-unknown-device-alone-is-refused-too.md) An unknown device, alone, is refused too | XS | done |
 | **[STORY-0407](stories/STORY-0407-recovery-from-a-device-never-seen.md)** Recovery — signing in from a device that has never been seen | | | **in progress** — split into nine on 2026-08-25; entirely test work, since every behaviour it asserts already ships |
-| | [TASK-040701](tasks/TASK-040701-the-device-binding-snapshot-comes-from-one-place.md) The device_binding snapshot comes from one place | XS | **ready** |
-| | [TASK-040702](tasks/TASK-040702-a-duel-the-recovered-account-will-remember.md) A duel the recovered account will remember | S | backlog |
+| | [TASK-040701](tasks/TASK-040701-the-device-binding-snapshot-comes-from-one-place.md) The device_binding snapshot comes from one place | XS | done |
+| | [TASK-040702](tasks/TASK-040702-a-duel-the-recovered-account-will-remember.md) A duel the recovered account will remember | S | **ready** |
 | | [TASK-040703](tasks/TASK-040703-the-name-and-the-password-that-make-the-account-recoverable.md) The name and the password that make the account recoverable | XS | backlog |
 | | [TASK-040704](tasks/TASK-040704-a-browser-never-seen-signs-in-and-the-socket-names-no-device.md) A browser never seen signs in, and the socket names no device | S | backlog |
 | | [TASK-040705](tasks/TASK-040705-the-fresh-browser-reads-back-the-same-profile-and-the-same-duels.md) The fresh browser reads back the same profile and the same duels | S | backlog |
