@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041609
 title: The first to verify takes the address
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -123,3 +123,38 @@ rather than an exception;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket's `## Proof` step 3 is inert for a database reason, not a coverage one.** Swapping
+`rollback()` for `commit()` in the `23505` catch reddens nothing, because Postgres aborts the whole
+transaction the moment the `INSERT` raises, and a `COMMIT` on an aborted transaction is downgraded to
+a rollback **server-side** regardless of what the Kotlin calls. Coder and reviewer each ran it and got
+`BUILD SUCCESSFUL`, six green. The coder built a substitute that genuinely splits the transaction —
+commit the `DELETE` unconditionally before attempting the `INSERT` — and it reddens
+`theSecondPlayerToVerifyOneAddressIsToldItIsTaken` **alone**, which is the only test the acceptance
+criteria names for the surviving-row assertion. The original Proof also predicted
+`aFoldedCollisionIsToldTheSameThing` would redden; it has no pending-row assertion, so it cannot.
+Twenty-third `## Proof` examined this run.
+
+**Two members of this class read two different clocks, and that is the design.** `verifyPending`
+enforces expiry with SQL `now()` — the ticket's Scope specifies that text literally, and
+`RecoveryEmails.kt`'s own KDoc already said expiry is enforced in every read by
+`WHERE expires_at > now()`. `claimPending` compares its fifteen-minute window against
+`clock.instant()`. Both are correct against their tickets, and the asymmetry is worth knowing before
+reading either: **advancing the injected clock after a claim cannot retroactively expire a row**, so
+an expired fixture has to be built by backdating the clock *before* the claim. The consequence is
+permanent: no test in this file can assert the exact twenty-four-hour boundary, only that a row well
+past it is refused.
+
+**The indistinguishability assertion is documentation, not coverage — today.** `Refused` is a
+parameterless `object`, so *"each equals canonical `Refused`"* and *"the three equal each other"* are
+transitively the same claim, and no mutation at this type shape separates them. Both coder and
+reviewer said so unprompted. It is worth keeping because it states the security property the ticket
+exists for, and because the day `Refused` gains a payload the two forms stop being equivalent.
+
+**No sequence puts one address into `recovery_email` for two players.** The reviewer walked it: the
+only write path is `verifyPending`'s `INSERT`, gated by `recovery_email_address_unique` over
+`lower(address COLLATE "und-x-icu")`, which Postgres enforces atomically at row level whatever the
+isolation or timing; every failure path rolls back, so a losing race leaves no half-written row; and
+`detach` is still `TODO()`, so nothing can delete a row once written.
