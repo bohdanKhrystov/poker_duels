@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041620
 title: A reset takes a token in a body, and never in a URL
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
