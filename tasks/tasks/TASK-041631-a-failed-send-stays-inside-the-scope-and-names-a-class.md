@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041631
 title: A failed send stays inside the scope, and its log line names a class
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -168,3 +168,54 @@ not against the rendered object;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Three of six `## Proof` steps predicted wrongly, each corrected with evidence rather than argument.**
+
+**Step 1 is the substantive one, and it turns on how SLF4J treats a trailing `Throwable`.** The step
+predicts the class-name test stays green; both reddened. Coder and reviewer each compiled a probe
+against the resolved `slf4j-api` 2.0.16 jar and found that `log.error("{} failed", member, failure)`
+makes `MessageFormatter.arrayFormat` **strip the trailing `Throwable` before substitution**, so the
+rendered text is only `"sendVerification failed"` — the exception's name never appears in it.
+
+The distinction that makes the shipped tests sound was drawn at review: **the implementation never
+uses the parameterized form.** It logs one fully-interpolated Kotlin string,
+`"$member failed: ${failure::class.simpleName}"`, passed to `error(String)` — so `arguments` and
+`throwable` are both null and both substrings genuinely appear in the message. The class-name test
+asserts the rendered text; the leak test asserts the rendered text **and** `assertNull(event
+.throwable)` as two separate assertions. They pass for the real reason, not because an SLF4J side
+effect happens to align with them.
+
+**Step 3 is inert, and the mechanism is worth keeping.** Swapping the test scope's `Job` for a
+`SupervisorJob` reddens nothing, because `detach()`'s own `catch (failure: Throwable)` absorbs the
+exception **inside** the launched coroutine, which then completes normally — there is no child
+failure event for either kind of job to arbitrate. Reproduced empirically at review.
+
+**Step 6 reddens four tests, not one, and one of them for the opposite reason the ticket hedged.**
+The ticket allows that the class-name test *"reddens too if each attempt logs"*; it reddens on
+**zero** log lines (`Expected <1>, actual <0>`), because the `runCatching` inside the `repeat`
+swallows every attempt — `CancellationException` included, a known `runCatching` trap — before the
+real logging `catch` is reached.
+
+**The cancellation test observes a delegate that genuinely suspended, not one that never ran.** The
+delegate completes a `CompletableDeferred` immediately before `awaitCancellation()`, and the test
+awaits that signal before `cancelAndJoin()`. Under `runBlocking`'s confined dispatcher the
+`complete()` does not yield, so the coroutine reaches its suspension point before the test's
+continuation resumes. A test passing because work never started is the same defect class as an
+assertion that cannot redden.
+
+**A `modify` row with an empty diff is permitted here, and it was checked rather than assumed.** The
+ticket says so in terms — *"If nothing needs changing, the row stands and the diff for that file is
+empty"* — and `DetachedRecoveryMailer.kt` already satisfies every refusal as `TASK-041630` merged it.
+`files_touched: 2` reconciles under `ADR-0069` §1: with no `atomic:` field the range is 1..3 and the
+table is not counted, and it equals the two edit rows besides.
+
+**What these six tests do not gate, with a real owner.** None would fail if an exception escaped and
+cancelled the **caller's** scope — the test scope is itself `SupervisorJob(coroutineContext.job)`, so
+an escape registers as *"into the scope I was given"*, which is gated, rather than reaching the
+parent. `## Out of scope` assigns the scope's parentage to `TASK-041634`, and that ticket really does
+close it: `theDeliveryScopeIsASupervisorChildOfTheApplication` asserts a failed delivery does not
+complete the application's job, with a Proof step that swaps `SupervisorJob` for `Job` in the real
+wiring. Checked, because this story has already produced one deferral to a ticket that did not close
+the gap.

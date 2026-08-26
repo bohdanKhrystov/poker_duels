@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041632
 title: The origin every recovery link is built from is configuration
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
