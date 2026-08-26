@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041206
 title: Hello carries the session this browser holds, and the device id still never moves
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -117,3 +117,31 @@ Read, and do not edit:
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The title's invariant was checked by counting write sites, not by trusting the tests.** *The device
+id never moves* is a claim over every place `connection.ts` could write it, and a test asserting that
+`Hello` now carries a session token passes whether or not the device id survived beside it. The
+reviewer enumerated the write sites directly rather than inferring coverage: there are **two** — the
+outbound `Hello` frame and the inbound `Welcome` handler — and one test gates each. No third path
+exists in the file, so the pair is sufficient rather than merely plausible.
+
+**The mutation that matters is the tempting one, and it reddens one test alone.** Making the device
+id conditional on there being no session — `deviceId: token === null ? readDeviceId(...) : null`,
+which reads like a tidy-up, since the server ignores the device id once a session is present — is
+caught by `keeps sending the device id under a session, because the server ignores it`. That test
+puts **both** keys in storage and asserts the **complete frame**: a test asserting only
+`sessionToken` would pass the mutation, and one asserting only `deviceId` from a session-less fixture
+would never reach it.
+
+**The negative claim is asserted synchronously.** `keeps the device id it holds when a welcome
+carries none` reads the stored value directly rather than through `waitFor`/`findBy`, which retry
+until a condition holds and therefore cannot express *this did not happen*. That distinction has
+already produced one blind gate in this story.
+
+**Token reading is not re-implemented here.** `connection.ts` calls `readSessionToken(options.storage)`
+lazily and imports it once; the blank-token and byte-for-byte rules stay in `session-token.ts`. A
+second copy would be a defect, and the injected-`Storage`, call-time access pattern is what keeps the
+module loadable under Vitest in Node, where `localStorage` is `undefined` and an import-time read
+fails naming no line of this file.

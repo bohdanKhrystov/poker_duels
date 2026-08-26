@@ -5,6 +5,7 @@ import type {
   ProtocolError,
   ServerMessage,
 } from "./protocol.gen";
+import { readSessionToken } from "./session-token";
 import { PROTOCOL_VERSION } from "./version";
 
 export type ConnectionStatus =
@@ -36,12 +37,15 @@ export function openConnection(options: ConnectionOptions): Connection {
   let status: ConnectionStatus = { kind: "connecting" };
 
   options.socket.onopen = (): void => {
+    // Send the device id whether or not we hold a session token: the server
+    // ignores it under a token (ADR-0027 §1), so omitting it buys nothing and
+    // risks the profile abandonment ADR-0012 named (ADR-0030 §8).
     options.socket.send(
       encodeClientMessage({
         type: "Hello",
         deviceId: readDeviceId(options.storage),
         protocolVersion: PROTOCOL_VERSION,
-        sessionToken: null,
+        sessionToken: readSessionToken(options.storage),
       }),
     );
   };
@@ -59,8 +63,8 @@ export function openConnection(options: ConnectionOptions): Connection {
       if (message.protocolVersion === PROTOCOL_VERSION) {
         // ADR-0030 §8's write-once rule: a null deviceId names no device yet,
         // and writing it over one this browser already holds would make the
-        // client conclude it has none (ADR-0027 §5). Unreachable until
-        // TASK-040518 resolves a session and can answer with no device.
+        // client conclude it has none (ADR-0027 §5). This can now happen when
+        // a session resolves with no device.
         if (message.deviceId !== null) {
           writeDeviceId(options.storage, message.deviceId);
         }

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041207
 title: The profile carries whether the device route is still live
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
