@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041219
 title: A throttled sign-up says so, keeps what was typed, and retries nothing
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -18,6 +18,8 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'tells a deliberate refusal from a broken product, on the screen'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'keeps both fields exactly as they were typed'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'sends nothing more until the player submits again'
+  - test "$(grep -cEi 'setTimeout|setInterval|retry' web-client/src/account/SignUpForm.tsx)" = 0
+  - test "$(grep -c 'throttled' web-client/src/account/sign-in.ts)" = 0
   - cd web-client && npm run check
 ---
 
@@ -121,3 +123,38 @@ the file to **11**.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The two grep criteria are now in `verify:`, added by the driver at landing — and the coder was right
+to refuse to add them itself.** The dispatch brief told it to; `ADR-0070` §4 permits **reading**
+unlisted files and forbids **editing** them, its own ticket is not in its *Files* table, and the
+propagation exception needs an independently-observed failing merged gate naming the path. Neither
+held. The instruction was wrong, not the work. Review confirmed the refusal against the ADR.
+
+Two corrections were needed when the driver made the edit, both of which would have failed CI: the
+second criterion targets **`sign-in.ts` expecting `0`** — throttling belongs to sign-up, and sign-in's
+two refusals are deliberately one answer — not `SignUpForm.tsx`; and neither line may carry a
+`cd web-client &&` prefix, since both criteria name repo-root paths. Both were run from the repo root
+before pushing.
+
+**`grep -c` exits 1 on zero matches**, so a gate written as a bare `grep -c … ` fails on the *correct*
+result. Both lines wrap it as `test "$(…)" = 0`. That belongs with `ADR-0084`'s check when it is
+built.
+
+**The `act(() => {` count stayed at 2 without the property standing in for it, which is the check
+worth naming.** A count is a proxy, and a proxy can outlive what it proxies for: had this ticket's new
+timer wrapper replaced `TASK-041218`'s outer wrap, the criterion would still read 2 while the
+double-submit test went back to being unable to fail. It does not — the new test's own click wrapper
+is `act(async () => {`, which does **not** match the pattern, so the two matches are `TASK-041218`'s
+untouched wrap and the timer advance. Verified directly at review rather than inferred from the total.
+
+**Two Proof steps reddened more tests than predicted, and both are ordinary.** Step 1 reddens four
+because all four new tests share a *throttled renders first* precondition; step 3 reddens two because
+a permanently-disabled button stops the second click reaching the server at all. Each test has its own
+`render()` and mock setup — a shared precondition, not a shared fixture, and nothing to break.
+
+**The preserved-fields test discriminates because its two values differ and each is asserted
+independently.** Clearing only the password reddens the password assertion while the handle assertion
+passes. A clear-and-refill implementation cannot pass either: `SignUpForm`'s sole prop is `signUp`, so
+there is nothing to refill *from* — and the password literal contains characters a re-mask would eat.

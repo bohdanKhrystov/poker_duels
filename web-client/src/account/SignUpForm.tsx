@@ -16,9 +16,10 @@ import {
 /**
  * The sentence stating why a sign-up attempt was refused.
  *
- * `throttled` renders here too (`SIGN_UP_THROTTLED`) even though the preserved-fields
- * behaviour `ADR-0056` §§1-3 describes belongs to a later ticket; this form does nothing
- * beyond showing the sentence for it.
+ * `throttled` renders here too (`SIGN_UP_THROTTLED`), and nothing else does. `ADR-0056` §§1-3's
+ * preserved-fields and no-follow-up rules hold without any code of their own: nothing on this
+ * form ever clears a field, marks one invalid, or schedules a further request for any outcome,
+ * throttled included.
  */
 function refusalSentence(
   kind: Exclude<SignUpOutcome["kind"], "signed-up">,
