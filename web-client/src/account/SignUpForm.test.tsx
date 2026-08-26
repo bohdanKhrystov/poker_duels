@@ -17,6 +17,7 @@ import {
   HANDLE_UNAVAILABLE,
   PASSWORD_REFUSED,
   NO_PROFILE_YET,
+  SIGN_UP_THROTTLED,
   SIGN_UP_FAILED,
 } from "./account-text";
 import { ProfileStrip } from "../profile/ProfileStrip";
@@ -204,5 +205,116 @@ describe("signing up for an account", () => {
 
     resolveSignUp({ kind: "signed-up" });
     await screen.findByText(SIGNED_UP);
+  });
+
+  it("tells a deliberate refusal from a broken product, on the screen", async () => {
+    const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
+    signUp
+      .mockResolvedValueOnce({ kind: "throttled" })
+      .mockResolvedValueOnce({ kind: "failed" })
+      .mockResolvedValueOnce({ kind: "failed" })
+      .mockResolvedValueOnce({ kind: "failed" });
+
+    render(<SignUpForm signUp={signUp} />);
+    const submitButton = screen.getByRole("button", { name: SIGN_UP_LABEL });
+
+    // A 429, reached through the double as `throttled`.
+    fireEvent.click(submitButton);
+    await screen.findByText(SIGN_UP_THROTTLED);
+    expect(screen.queryByText(SIGN_UP_FAILED)).toBeNull();
+
+    // A 500, reached through the double as `failed`.
+    fireEvent.click(submitButton);
+    await screen.findByText(SIGN_UP_FAILED);
+    expect(screen.queryByText(SIGN_UP_THROTTLED)).toBeNull();
+
+    // A 503, reached through the double as `failed`.
+    fireEvent.click(submitButton);
+    await screen.findByText(SIGN_UP_FAILED);
+    expect(screen.queryByText(SIGN_UP_THROTTLED)).toBeNull();
+
+    // A rejected fetch, reached through the double as `failed`.
+    fireEvent.click(submitButton);
+    await screen.findByText(SIGN_UP_FAILED);
+    expect(screen.queryByText(SIGN_UP_THROTTLED)).toBeNull();
+  });
+
+  it("keeps both fields exactly as they were typed", async () => {
+    const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
+    signUp.mockResolvedValue({ kind: "throttled" });
+
+    render(<SignUpForm signUp={signUp} />);
+
+    const handleInput = screen.getByLabelText(HANDLE_LABEL) as HTMLInputElement;
+    const passwordInput = screen.getByLabelText(
+      PASSWORD_LABEL,
+    ) as HTMLInputElement;
+
+    fireEvent.change(handleInput, { target: { value: "grace-hopper" } });
+    // Not the fixture default (the empty string every field starts from), and
+    // holding characters a re-mask would eat.
+    fireEvent.change(passwordInput, {
+      target: { value: "Tr0ub4dor&3-zz!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: SIGN_UP_LABEL }));
+
+    await screen.findByText(SIGN_UP_THROTTLED);
+
+    expect(handleInput.value).toBe("grace-hopper");
+    expect(passwordInput.value).toBe("Tr0ub4dor&3-zz!");
+  });
+
+  it("marks neither field and says nothing beside either one", async () => {
+    const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
+    signUp.mockResolvedValue({ kind: "throttled" });
+
+    render(<SignUpForm signUp={signUp} />);
+
+    fireEvent.click(screen.getByRole("button", { name: SIGN_UP_LABEL }));
+    await screen.findByText(SIGN_UP_THROTTLED);
+
+    const handleInput = screen.getByLabelText(HANDLE_LABEL) as HTMLInputElement;
+    const passwordInput = screen.getByLabelText(
+      PASSWORD_LABEL,
+    ) as HTMLInputElement;
+
+    expect(handleInput.getAttribute("aria-invalid")).toBeNull();
+    expect(passwordInput.getAttribute("aria-invalid")).toBeNull();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+
+  it("sends nothing more until the player submits again", async () => {
+    const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
+    signUp.mockResolvedValue({ kind: "throttled" });
+
+    render(<SignUpForm signUp={signUp} />);
+    const submitButton = screen.getByRole("button", {
+      name: SIGN_UP_LABEL,
+    }) as HTMLButtonElement;
+
+    // Fake timers from before the throttled outcome settles, so a `setTimeout`
+    // scheduled the moment it settles is one this test's own advance would
+    // reach — not a real one racing the assertions below regardless.
+    vi.useFakeTimers();
+    try {
+      await act(async () => {
+        fireEvent.click(submitButton);
+        // The double's promise is already resolved; one microtask turn is
+        // enough for its `.then` to run and settle the outcome.
+        await Promise.resolve();
+      });
+
+      expect(screen.getByText(SIGN_UP_THROTTLED)).toBeDefined();
+
+      act(() => {
+        vi.advanceTimersByTime(120_000);
+      });
+
+      expect(signUp).toHaveBeenCalledTimes(1);
+      expect(submitButton.disabled).toBe(false);
+      expect(screen.queryByRole("button", { name: /retry/i })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
