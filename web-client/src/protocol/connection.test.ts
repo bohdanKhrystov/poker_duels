@@ -102,6 +102,76 @@ describe("the connection", () => {
     expect(JSON.parse(socket.sent[0]).deviceId).toBe("d-1");
   });
 
+  it("says hello with the session token it already holds", () => {
+    storage.setItem("pd.sessionToken", "tok-7");
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.open();
+
+    expect(JSON.parse(socket.sent[0])).toEqual({
+      type: "Hello",
+      deviceId: null,
+      protocolVersion: PROTOCOL_VERSION,
+      sessionToken: "tok-7",
+    });
+  });
+
+  it("keeps sending the device id under a session, because the server ignores it", () => {
+    storage.setItem("pd.deviceId", "d-1");
+    storage.setItem("pd.sessionToken", "tok-7");
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.open();
+
+    expect(JSON.parse(socket.sent[0])).toEqual({
+      type: "Hello",
+      deviceId: "d-1",
+      protocolVersion: PROTOCOL_VERSION,
+      sessionToken: "tok-7",
+    });
+  });
+
+  it("keeps the device id it holds when a welcome carries none", () => {
+    storage.setItem("pd.deviceId", "d-1");
+    const connection = openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.receive(
+      `{"type":"Welcome","deviceId":null,"protocolVersion":${PROTOCOL_VERSION}}`,
+    );
+
+    expect(storage.getItem("pd.deviceId")).toBe("d-1");
+    expect(connection.status).toEqual({ kind: "ready", deviceId: null });
+  });
+
+  it("says hello with no session token when this browser holds none", () => {
+    openConnection({
+      socket: socket.asWebSocket(),
+      storage,
+      onMessage: () => {},
+    });
+
+    socket.open();
+
+    expect(JSON.parse(socket.sent[0])).toEqual({
+      type: "Hello",
+      deviceId: null,
+      protocolVersion: PROTOCOL_VERSION,
+      sessionToken: null,
+    });
+  });
+
   it("writes a client message to the socket", () => {
     const connection = openConnection({
       socket: socket.asWebSocket(),
