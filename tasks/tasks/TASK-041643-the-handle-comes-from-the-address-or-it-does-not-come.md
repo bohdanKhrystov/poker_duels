@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041643
 title: The handle comes from the address, or it does not come
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

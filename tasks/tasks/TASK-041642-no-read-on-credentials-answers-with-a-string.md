@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041642
 title: No read on Credentials answers with a string
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -159,3 +159,31 @@ the whole of this ticket.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The coder's Proof mutated the predicate; the reviewer mutated production.** The reported evidence
+was that changing the test's own predicate to `returnType == typeOf<String>()` reddened one bait test
+— which shows the predicate tells `String` from `String?`, and shows nothing about whether the sweep
+is pointed at `Credentials` at all. A gate aimed at the wrong type, or at an empty member set, passes
+that check identically.
+
+So the real mutation was run at review: `fun handleOf(playerId: PlayerId): String?` added to the
+`Credentials` interface, implemented in `PostgresCredentials` and the test doubles the compiler
+demanded. **`credentialsDeclaresNoMemberReturningAString` reddens** with *Expected `<[]>`, actual
+`<[handleOf]>`* — the exact member `ADR-0082` forbids, named in the failure. `theSweepSeesTheFour
+MembersItIsChecking` reddens with it, at five members where four are expected, which is the vacuity
+guard doing its job rather than a second defect. Every file reverted; `git diff --quiet` clean.
+
+**The two bait tests prove something the production mutation does not.** They declare a local
+`HandleReadingControl` carrying both `handleOf(playerId): String?` and `identifierOf(playerId):
+String`, and assert the same helper finds both. That is the guard against a helper which ignores its
+`KClass` argument or hard-codes `Credentials` — two inputs with two different expected answers, which
+one fixture default could never distinguish. Keep both claims separate when reading this file: the
+baits gate the *helper*, the member-set assertion gates *`Credentials`*.
+
+**The simplest bypass is the one `ADR-0082` predicted**, and the class KDoc names it because the
+verify block `grep -qF`s the phrase: a return type wrapped in a `@JvmInline value class`, which
+reflection reports as the wrapper rather than as `String`. A handle read added to some other type
+escapes too. Neither is a defect here — they are the boundary of what a reflection sweep over one
+interface can see, and they are written where the next person to edit `Credentials` will read them.

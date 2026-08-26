@@ -2432,8 +2432,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041639](tasks/TASK-041639-a-reset-that-cannot-write-the-password-spends-no-token.md) A reset that cannot write the password spends no token | XS | **done** |
 | | [TASK-041640](tasks/TASK-041640-a-failure-between-the-password-and-the-sessions-undoes-both.md) A failure between the password and the sessions undoes both | S | **done** |
 | | [TASK-041641](tasks/TASK-041641-the-profiles-recovery-flag-is-that-players-and-a-pending-address-is-not-one.md) The profile's recovery flag is that player's, and a pending address is not one | XS | done |
-| | [TASK-041642](tasks/TASK-041642-no-read-on-credentials-answers-with-a-string.md) No read on `Credentials` answers with a string | S | **ready** |
-| | [TASK-041643](tasks/TASK-041643-the-handle-comes-from-the-address-or-it-does-not-come.md) The handle comes from the address, or it does not come | S | backlog |
+| | [TASK-041642](tasks/TASK-041642-no-read-on-credentials-answers-with-a-string.md) No read on `Credentials` answers with a string | S | **done** |
+| | [TASK-041643](tasks/TASK-041643-the-handle-comes-from-the-address-or-it-does-not-come.md) The handle comes from the address, or it does not come | S | **ready** |
 | | [TASK-041644](tasks/TASK-041644-three-states-answer-nothing-and-the-fourth-answers-a-handle.md) Three states answer nothing, and the fourth answers a handle | S | backlog |
 | [STORY-0417](stories/STORY-0417-the-recovery-screens.md) The recovery screens — attach an address, and reset a password | | | backlog |
 
