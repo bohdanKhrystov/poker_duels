@@ -109,12 +109,27 @@ an **optional, verified-only** address in its own table.
 | [TASK-041639](../tasks/TASK-041639-a-reset-that-cannot-write-the-password-spends-no-token.md) | A reset that cannot write the password spends no token | backlog |
 | [TASK-041640](../tasks/TASK-041640-a-failure-between-the-password-and-the-sessions-undoes-both.md) | A failure between the password and the sessions undoes both | backlog |
 | [TASK-041641](../tasks/TASK-041641-the-profiles-recovery-flag-is-that-players-and-a-pending-address-is-not-one.md) | The profile's recovery flag is that player's, and a pending address is not one | backlog |
+| [TASK-041642](../tasks/TASK-041642-no-read-on-credentials-answers-with-a-string.md) | No read on `Credentials` answers with a string | **ready** |
+| [TASK-041643](../tasks/TASK-041643-the-handle-comes-from-the-address-or-it-does-not-come.md) | The handle comes from the address, or it does not come | backlog |
+| [TASK-041644](../tasks/TASK-041644-three-states-answer-nothing-and-the-fourth-answers-a-handle.md) | Three states answer nothing, and the fourth answers a handle | backlog |
 
 **The table is in id order; `depends_on` is the sequence.** They stopped coinciding when `ADR-0077`
 and `ADR-0078` merged and their answers were folded back in:
 
-`…041623 → 041624 → 041627 → 041625 → 041626 → 041630 → 041631 → 041632 → 041633 → 041634 →
-041628 → 041629`, with `041635` hanging off the merged `041602`.
+`…041623 → 041624 → 041627 → 041625 → 041637 → 041642 → 041643 → 041644 → 041626 → 041630 →
+041631 → 041632 → 041633 → 041634 → 041628 → 041629`, with `041635` hanging off the merged
+`041602`.
+
+**Three of those links are new, and they are `ADR-0082`'s.** `TASK-041626` came back **blocked** on
+2026-08-26 — the first genuine block of this run, and correct: its handler needs a login handle and
+nothing in the codebase could produce one. The three tickets now in front of it are the answer, and
+the order among them is not arbitrary. `TASK-041642` — the gate that reddens on
+`Credentials.handleOf(playerId)` — runs **first**, before the ticket that has to produce a handle,
+because a gate landed after its temptation has passed was never tested against it. `TASK-041643`
+then lands the port member, its statement and the one test double; `TASK-041644` gates the
+statement's behaviour. `041643` and `041644` are strictly ordered because they are one statement
+seen from two sides: `041643`'s gates are fixed-string `grep`s, since *character for character* is
+not a property any test can assert, and `041644`'s are rows in a database.
 
 `TASK-041639 → TASK-041640` hang off the merged `TASK-041614` and are independent of that chain:
 both add tests to `PostgresPasswordResetsConsumeTest.kt`, which no other ticket in this story
@@ -162,7 +177,10 @@ were `blocked`. Four decisions were raised and none was answered inside a ticket
 re-cutting `TASK-041627`, one from unparking `TASK-041601`'s conditional follow-up. **All four are
 now answered and this story carries no open decision.** A fifth, `DEC-076`, was raised on 2026-08-26
 by a coder implementing `TASK-041626` — not by the split and not by an ADR — and was **registered and
-answered in the same PR**, so it too leaves nothing open.
+answered in the same PR**, so it too leaves nothing open. Folding that answer back in the same day
+added three tickets and took the story to **44**, moved no status but `TASK-041626`'s own, and
+raised nothing new: `ADR-0082` is applied here, never interpreted. `TASK-041642` is now the single
+startable ticket.
 
 `DEC-076` was **raised and answered on 2026-08-26** by
 [`ADR-0082`](../../docs/adr/ADR-0082-a-handle-is-read-from-a-proven-address-never-from-a-player-id.md)
@@ -212,12 +230,27 @@ precede); **its fixture's verified owner must actually hold a `password` credent
 zero; it gains `theMailCarriesTheOwnersOwnHandle` over **two** verified addresses owned by **two**
 players with **different** handles, so a constant handle cannot pass; and
 `theResponseNeverCarriesTheAddress` gains a handle clause, since `ADR-0031` §1 forbids the handle in
-any response body and the handler now holds one. The port member, its Postgres statement, the
-`ThrowingRecoveryEmails` double and the `Credentials` gate are **a ticket in front of it**, not an
-eighth file on a three-file `S`. **`TASK-041630` changes in one criterion**: *"uses an address and a
-token that are different strings"* becomes three distinct strings including the handle — the
-decorator itself is unchanged, and it was never the ticket that should have sourced the handle.
-Raises no `DEC`, and nothing is the product owner's or the human's.
+any response body and the handler now holds one. **`TASK-041630` changes in one criterion**: *"uses
+an address and a token that are different strings"* becomes three distinct strings including the
+handle — the decorator itself is unchanged, and it was never the ticket that should have sourced the
+handle. Raises no `DEC`, and nothing is the product owner's or the human's.
+
+**The answer was folded back into the split on 2026-08-26, taking the story to 44 tickets.** The
+port member, its Postgres statement, the `ThrowingRecoveryEmails` double and the `Credentials` gate
+go **in front of `TASK-041626`**, never as an eighth file on a three-file `S` — and they are
+**three** tickets rather than one, because `ADR-0070`'s probe was run rather than a file list
+remembered. Stubbing the member and the `data class` and running the gate set verbatim from
+`.github/workflows/build.yml`, the first red run named **one** path, `PostgresRecoveryEmails.kt`,
+from `:poker-server:compileKotlin`; the second named `VerificationSweepTest.kt` from
+`:poker-server:compileTestKotlin`, **invisible to the first** because Gradle stops at its first
+failing task. The third exited 0 across both CI jobs. So the smallest commit that lands the member
+is exactly three files, and **the two test files are not in it**: no gate names either, and a probe
+reaching green without a file is the proof there is none — `TASK-041641`'s reasoning, applied again.
+`atomic:` would have had to name a gate that does not exist, which is the one thing `ADR-0068`
+forbids. `TASK-041642` (the `Credentials` gate, one new file, deliberately first — a gate that lands
+after its temptation has passed was never tested against it), `TASK-041643` (the member, the
+statement, the double) and `TASK-041644` (the statement's five behavioural tests, plus a bounded
+repair row so a red is one dispatch rather than a block).
 
 `DEC-074` was **answered on 2026-08-25** by
 [`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md) — *the
