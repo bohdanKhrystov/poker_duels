@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041204
 title: The store outranks the address, and a seated player's address stops lying
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -110,3 +110,38 @@ Read, and do not edit:
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The coder's first version of the headline test reddened nothing, and it caught that itself.**
+`shows the duel to a player a frame seats, whatever address they were reading` initially asserted
+only on the DOM — `Pot 30` present, `Back` absent — and under the branch-order inversion this ticket
+exists to forbid, it stayed green. The reason is worth keeping: the address-correcting effect runs
+unconditionally on `seatedByAFrame`/`screen` whichever branch rendered, so it restores the hash inside
+the same `act()` flush that `render()` performs, and the final DOM converges on `DuelTable` either
+way. **The regression is real and the settled state hides it.**
+
+The fix spies on `useHistory` and asserts it is never called. Under inversion it reddens —
+*expected "spy" to not be called at all, but actually been called 1 times* — because the record
+screen, rendered first, fires its fetch. The reviewer checked whether that is a faithful proxy or a
+test artefact and concluded the former: a correct implementation never renders the record screen
+here, so it never calls `useHistory`, and in a real browser `useEffect` runs after paint, so an
+inverted order would genuinely flash that screen before self-correcting.
+
+**Proof step 3's prediction does not hold, and the ticket is what is wrong.** It predicts that
+dropping the `screen !== "first"` guard reddens `leaves the address alone while no frame has seated
+anybody` alone. Nothing reddens. That test's baseline carries no outcome, view or room code, so
+`seatedByAFrame` is `false`, and it is **ANDed** with the dropped term — `false && X` is `false`
+whatever `X` is. No implementation satisfying the test can be affected by that mutation. The guard
+still earns its place in production, sparing repeated work on frames that arrive at home; it is
+simply not gated here, and the Proof narrative should not claim otherwise.
+
+**Two of the four Proof steps predicted green, and both were right.** Step 4 — moving the replace
+into the render body — reddens nothing, which the ticket already acknowledges as a gap this suite
+does not close. A step that predicts green is evidence; a step quietly dropped is not.
+
+**The tests divide the work deliberately.** *Shows the duel…* catches only the render-order
+regression and passes when the replace is missing entirely. *Replaces the address a frame overruled,
+and stacks no entry doing it* is the one that catches a missing replace, and it asserts both that the
+address changed and that `history.length` did not grow — `replaceState` against `pushState` is the
+whole distinction, and Proof step 2 turns on it.

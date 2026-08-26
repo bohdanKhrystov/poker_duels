@@ -6,7 +6,7 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
@@ -21,6 +21,30 @@ import { PROTOCOL_VERSION } from "../protocol";
 import { FakeSocket } from "../protocol/fake-socket";
 import { openReconnectingConnection } from "../protocol/reconnecting";
 import { aView } from "../table/view-fixture";
+
+// `read` (`useHistory()`) is wired by the real app boot in "../main", which
+// this suite never runs — every other test here leaves it `null` and never
+// notices, because none of them ever move `screen` off `"first"`. The tests
+// below are the first to combine a chosen screen with a store fact, and that
+// combination is exactly ADR-0076 §3's branch order, so `read` has to be a
+// real function here for that branch to be reachable at all — otherwise the
+// gate this file is closing would silently pass no matter which branch runs
+// first. `useLadder` is untouched: no test here opens the leaderboard.
+//
+// It is a spy, not a plain stub, for a reason specific to this file: the
+// effect this ticket adds settles the address back to "first" inside the
+// same `act()` flush `render()` performs, so a branch-order regression that
+// picks the record first and then self-corrects leaves an identical *final*
+// DOM either way — the flash never survives to be queried. Whether the
+// record's own fetch fired is the one signal that still tells the two apart.
+const historyRead = vi.hoisted(() => vi.fn(() => new Promise<never>(() => {})));
+vi.mock("../main", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../main")>();
+  return {
+    ...actual,
+    useHistory: () => historyRead,
+  };
+});
 
 const ROOM_JOINED = { type: "RoomJoined", code: "ABCDEFGH", seat: 0 } as const;
 
@@ -60,6 +84,11 @@ function withClipboard(writeText: () => Promise<void>): void {
     configurable: true,
   });
 }
+
+beforeEach(() => {
+  window.location.hash = "";
+  historyRead.mockClear();
+});
 
 afterEach(() => {
   Reflect.deleteProperty(navigator, "clipboard");
@@ -1366,5 +1395,60 @@ describe("the lobby", () => {
 
     expect(screen.getByText("Your rival is back.")).toBeDefined();
     expect(screen.queryByText("The server folded for your rival.")).toBeNull();
+  });
+
+  it("shows the duel to a player a frame seats, whatever address they were reading", () => {
+    window.location.hash = "#/duels";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+
+    renderLobby(store);
+
+    // ADR-0076 §3: the store outranks the address. The duel table wins even
+    // though the address was still naming the record when the frame seated
+    // this player — asserted from the address side, not from a click.
+    expect(screen.getByText("Pot 30")).toBeDefined();
+    // The record's own "Back" affordance (rendered only inside the
+    // `screen === "duels"` branch) is the sharpest negative available here:
+    // present would mean the address, not the store, won the branch.
+    expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
+    // The branch order is what this test guards, and the settled DOM above
+    // cannot tell a correct first pass from a wrong pass that this same
+    // ticket's own effect immediately corrects: both end on `DuelTable`.
+    // The record's own fetch firing is the one witness a wrong first branch
+    // leaves behind even after the correction lands.
+    expect(historyRead).not.toHaveBeenCalled();
+  });
+
+  it("replaces the address a frame overruled, and stacks no entry doing it", () => {
+    window.location.hash = "#/duels";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+    const lengthBeforeRender = window.history.length;
+
+    renderLobby(store);
+
+    // Two assertions, deliberately: a `push` would satisfy the first and
+    // break Back forever, which is exactly why there are two tests here and
+    // not one (ADR-0076 §3, and this ticket's own Proof).
+    expect(window.location.hash).toBe("");
+    expect(window.history.length).toBe(lengthBeforeRender);
+  });
+
+  it("leaves the address alone while no frame has seated anybody", () => {
+    window.location.hash = "#/duels";
+
+    renderLobby();
+
+    // No outcome, no view, no roomCode: nobody has been seated, so the
+    // effect must not touch the address that is legitimately naming the
+    // record right now.
+    expect(window.location.hash).toBe("#/duels");
+    expect(screen.getByRole("button", { name: "Back" })).toBeDefined();
+    expect(
+      screen.queryByRole("button", { name: "Create a duel room" }),
+    ).toBeNull();
   });
 });

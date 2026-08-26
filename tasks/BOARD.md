@@ -2419,8 +2419,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041202](tasks/TASK-041202-the-hook-that-carries-the-address-and-the-trap-that-is-silent.md) The hook that carries the address, and the trap that makes a stale render look like React | S | **done** |
 | | [TASK-041203](tasks/TASK-041203-the-lobby-reads-the-address-instead-of-two-flags.md) The lobby reads the address instead of two flags, and Back stops leaving the client | S | **done** |
 | | [TASK-041228](tasks/TASK-041228-the-hook-answers-a-hashchange-and-ignores-a-popstate.md) The hook answers a hashchange and ignores a popstate, which no test can currently tell apart | XS | **done** |
-| | [TASK-041204](tasks/TASK-041204-the-store-outranks-the-address-and-the-address-stops-lying.md) The store outranks the address, and a seated player's address stops lying | S | **ready** |
-| | [TASK-041205](tasks/TASK-041205-the-token-this-browser-holds-lives-under-one-key.md) The session token this browser holds lives under one key | XS | backlog |
+| | [TASK-041204](tasks/TASK-041204-the-store-outranks-the-address-and-the-address-stops-lying.md) The store outranks the address, and a seated player's address stops lying | S | **done** |
+| | [TASK-041205](tasks/TASK-041205-the-token-this-browser-holds-lives-under-one-key.md) The session token this browser holds lives under one key | XS | **ready** |
 | | [TASK-041206](tasks/TASK-041206-hello-carries-the-session-and-the-device-id-still-never-moves.md) Hello carries the session this browser holds, and the device id still never moves | S | backlog |
 | | [TASK-041207](tasks/TASK-041207-the-profile-carries-whether-the-device-route-is-live.md) The profile carries whether the device route is still live | S | backlog — `atomic:` at **4**, probed under `ADR-0070` |
 | | [TASK-041208](tasks/TASK-041208-a-profile-body-with-no-device-route-is-not-a-profile.md) A profile body with no device route is not a profile | XS | backlog |
