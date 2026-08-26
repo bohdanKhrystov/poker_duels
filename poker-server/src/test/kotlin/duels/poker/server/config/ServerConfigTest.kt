@@ -300,4 +300,50 @@ class ServerConfigTest {
             }
         }
     }
+
+    @Test
+    fun readsTheBaseUrlFromTheConfig() {
+        val config = MapApplicationConfig(ServerConfig.BASE_URL_KEY to "https://example.com")
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals("https://example.com", serverConfig.baseUrl)
+    }
+
+    @Test
+    fun theEnvironmentVariableOverridesTheBaseUrl() {
+        val config = MapApplicationConfig(ServerConfig.BASE_URL_KEY to "https://config.test")
+        val serverConfig = ServerConfig.from(config) { name ->
+            if (name == ServerConfig.BASE_URL_ENV) "https://env.test" else null
+        }
+        assertEquals("https://env.test", serverConfig.baseUrl)
+    }
+
+    @Test
+    fun fallsBackToTheDefaultBaseUrl() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals("http://localhost:5173", serverConfig.baseUrl)
+    }
+
+    @Test
+    fun rejectsABaseUrlThatIsNotAnOrigin() {
+        assertThrows<IllegalArgumentException> {
+            val config = MapApplicationConfig(ServerConfig.BASE_URL_KEY to "localhost:5173")
+            ServerConfig.from(config) { null }
+        }
+
+        assertThrows<IllegalArgumentException> {
+            val config = MapApplicationConfig(ServerConfig.BASE_URL_KEY to "ftp://x.test")
+            ServerConfig.from(config) { null }
+        }
+
+        assertThrows<IllegalArgumentException> {
+            val config = MapApplicationConfig(ServerConfig.BASE_URL_KEY to "http://x.test/")
+            ServerConfig.from(config) { null }
+        }
+
+        assertThrows<IllegalArgumentException> {
+            val config = MapApplicationConfig(ServerConfig.BASE_URL_KEY to "")
+            ServerConfig.from(config) { null }
+        }
+    }
 }

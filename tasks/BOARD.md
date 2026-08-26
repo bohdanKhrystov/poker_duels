@@ -2495,8 +2495,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041629](tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) A good token, and a password the policy refuses | S | backlog |
 | | [TASK-041630](tasks/TASK-041630-a-decorator-that-detaches-over-the-same-port.md) A decorator that detaches, over the same port | S | **done** |
 | | [TASK-041631](tasks/TASK-041631-a-failed-send-stays-inside-the-scope-and-names-a-class.md) A failed send stays inside the scope, and its log line names a class | S | **done** |
-| | [TASK-041632](tasks/TASK-041632-the-origin-every-recovery-link-is-built-from-is-configuration.md) The origin every recovery link is built from is configuration | S | **ready** |
-| | [TASK-041633](tasks/TASK-041633-one-function-builds-both-recovery-links-and-no-header-reaches-it.md) One function builds both recovery links, and no header reaches it | S | backlog |
+| | [TASK-041632](tasks/TASK-041632-the-origin-every-recovery-link-is-built-from-is-configuration.md) The origin every recovery link is built from is configuration | S | **done** |
+| | [TASK-041633](tasks/TASK-041633-one-function-builds-both-recovery-links-and-no-header-reaches-it.md) One function builds both recovery links, and no header reaches it | S | **ready** |
 | | [TASK-041634](tasks/TASK-041634-a-build-with-no-sender-is-a-valid-build.md) A build with no sender is a valid build | S | backlog |
 | | [TASK-041635](tasks/TASK-041635-the-fold-the-address-index-depends-on-written-down-in-the-catalog.md) The fold the address index depends on, written down in the catalog | S | done |
 | | [TASK-041636](tasks/TASK-041636-the-attach-path-gets-the-quarter-hour-of-silence-the-reset-path-has.md) The attach path gets the quarter hour of silence the reset path has | S | done |

@@ -40,6 +40,9 @@ public data class ServerConfig(
     val signUpWindowMillis: Long = 900_000L,
     val signInMaxAttempts: Int = 10,
     val signInWindowMillis: Long = 60_000L,
+    // This field has a default so that existing construction sites can compile without
+    // specifying the recovery link origin, which is only read when a mail sender is configured.
+    val baseUrl: String = DEFAULT_BASE_URL,
 ) {
     /** Bundles the three room timeouts so callers do not reassemble them. */
     public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(roomWaitingTimeoutMillis, roomFinishedTimeoutMillis, disconnectGraceMillis)
@@ -121,6 +124,10 @@ public data class ServerConfig(
         public const val DEFAULT_SIGN_IN_WINDOW_MILLIS: Long = 60_000L
         public const val SIGN_IN_WINDOW_MILLIS_KEY: String = "auth.signInWindowMillis"
         public const val AUTH_SIGN_IN_WINDOW_MILLIS: String = "AUTH_SIGN_IN_WINDOW_MILLIS"
+
+        public const val DEFAULT_BASE_URL: String = "http://localhost:5173"
+        public const val BASE_URL_KEY: String = "server.baseUrl"
+        public const val BASE_URL_ENV: String = "BASE_URL"
 
         /**
          * Build a [ServerConfig] from a Ktor [ApplicationConfig] with environment variable
@@ -269,6 +276,17 @@ public data class ServerConfig(
                 "sign-in window must be an integer, got: $signInWindowMillisString"
             }
 
+            val baseUrl = resolve(config, env, BASE_URL_ENV, BASE_URL_KEY, DEFAULT_BASE_URL)
+            require(baseUrl.isNotEmpty()) {
+                "$BASE_URL_KEY must not be empty"
+            }
+            require(baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+                "$BASE_URL_KEY must be an absolute http or https origin, got: $baseUrl"
+            }
+            require(!baseUrl.endsWith("/")) {
+                "$BASE_URL_KEY must not have a trailing slash, got: $baseUrl"
+            }
+
             return ServerConfig(
                 port = port,
                 maxFrameLength = maxFrameLength,
@@ -285,6 +303,7 @@ public data class ServerConfig(
                 signUpWindowMillis = signUpWindowMillis,
                 signInMaxAttempts = signInMaxAttempts,
                 signInWindowMillis = signInWindowMillis,
+                baseUrl = baseUrl,
             )
         }
 
