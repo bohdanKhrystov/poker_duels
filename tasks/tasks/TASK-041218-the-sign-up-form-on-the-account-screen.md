@@ -18,6 +18,8 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'leaves the coin balance and the name exactly as they were'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'offers one credential and holds no space for another'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'never fills one field from the other'
+  - test "$(grep -c 'act(() => {' web-client/src/account/SignUpForm.test.tsx)" = 1
+  - test "$(grep -ci 'email\|address' web-client/src/account/SignUpForm.tsx)" = 0
   - cd web-client && npm run check
 ---
 
@@ -62,6 +64,14 @@ shape to follow); `web-client/src/account/account-text.ts`;
   stops offering submit.
 - A second submit while one is in flight sends nothing, guarded by a `useRef` exactly as
   `NameSurface` does and for the same reason: a credential is attached once.
+- **The two submits in that test go inside one `act(() => { … })`, and the reason is a comment in the
+  file.** Two bare `fireEvent.click()` calls **cannot see the ref**:
+  `@testing-library/react` wraps each `fireEvent` in its own `act()`, so React flushes between them
+  and the second click lands on a button that already carries `disabled` — the count of `1` then
+  measures the `isSubmitting` state and nothing else, and the form passes with no ref at all. `act`
+  is re-entrant and flushes only at the outermost exit, so batching both dispatches is what leaves
+  the second submit reaching the handler with the state uncommitted. `TASK-041118` is fixing the same
+  vacuous pair in `NameSurface.test.tsx`, where it was found; do not copy that file's current shape.
 - No validation before sending. `ADR-0048` §7 publishes the rules so the screen can state them;
   the verdict is the server's.
 
@@ -89,7 +99,7 @@ shape to follow); `web-client/src/account/account-text.ts`;
 | `never fills one field from the other` | With a profile carrying `displayName: "Ada"` above it, both inputs start empty; and typing into the handle leaves the password empty and vice versa. Fails against a form that seeds the handle from the name — the exact thing `ADR-0031` §1 forbids |
 | `says one sentence per refusal, and replaces it on the next attempt` | A `handle-refused` then an `unavailable-handle`: the second sentence is on screen and the first is not. One sentence, never a log |
 | `maps each refusal to its own sentence` | `handle-refused`, `unavailable-handle`, `password-refused`, `no-profile` and `failed` each render their own constant, asserted one by one so the failure names which |
-| `sends nothing on a second submit while one is in flight` | Two submits before the promise settles: the double's call count is `1` |
+| `sends nothing on a second submit while one is in flight` | Two submits **inside one `act`**, before the promise settles: the double's call count is `1`. The nesting is what makes this a statement about the `useRef` — dispatched bare, the second click reaches a disabled button and the test passes against a form with no ref |
 
 Seven tests in a new file: `npm run test -- src/account/SignUpForm.test.tsx` reports **7**.
 
@@ -107,7 +117,9 @@ Seven tests in a new file: `npm run test -- src/account/SignUpForm.test.tsx` rep
       attempt` passes
 - [ ] `signing up for an account > maps each refusal to its own sentence` passes over all five
 - [ ] `signing up for an account > sends nothing on a second submit while one is in flight` passes
-      with a call count of `1`
+      with a call count of `1`, with **both** submits dispatched inside a single `act(() => { … })`
+- [ ] `grep -c 'act(() => {' web-client/src/account/SignUpForm.test.tsx` returns `1` — one wrapper,
+      around the one pair of submits
 - [ ] `grep -ci 'email\|address' web-client/src/account/SignUpForm.tsx` returns `0`
 - [ ] `npm run test -- src/account/SignUpForm.test.tsx` reports `Tests  7 passed (7)`
 - [ ] No file outside the two listed differs
@@ -129,9 +141,13 @@ Seven tests in a new file: `npm run test -- src/account/SignUpForm.test.tsx` rep
    *first sentence is gone* half. A test that only asserted the second sentence was present would
    pass — write it that way once and see.
 4. Drop the in-flight `useRef` and keep only the `isSubmitting` state.
-   **`sends nothing on a second submit while one is in flight` reddens**, because state has not
-   re-rendered by the time the second submit runs. This is the same defect `NameSurface` carries a
-   ref for, and it is the reason the ref is named in Scope.
+   **`sends nothing on a second submit while one is in flight` reddens** — *expected 1, received 2* —
+   **and only because both submits are inside one `act`**, which leaves the state uncommitted while
+   the second one runs. Then run the variant that matters more: dispatch the two clicks **bare**,
+   with the ref still deleted, and watch the test **pass**. That green run is the whole reason this
+   ticket names `act` in *Scope*, it is the defect `TASK-041118` is repairing in
+   `NameSurface.test.tsx`, and reporting it is what proves the wrapper is load-bearing rather than
+   ceremonial. Restore both.
 5. Add a disabled *Continue with Google* button.
    **`offers one credential and holds no space for another` reddens** on the pattern check and on the
    control count. Then add it as plain text rather than a button: the count assertion passes and the

@@ -256,6 +256,25 @@ the bytes independently rather than accepting the report: exactly two escape seq
 `U+0130` or combining-dot bytes, zero double backslashes. The planner hit the same bug hours earlier
 writing this ticket, which is why the code points appear in it as prose.
 
+**This ticket was over its own estimate and there was no honest label for it.** `estimate: S` caps at
+**120 changed lines**; the five tests, the `insertCredential` helper and the KDoc sentence measured
+roughly **130–145** before a later amendment added about ten more. Schema 2 admits only `XS` and `S`
+— `M` was deleted on purpose — so the ceiling was not a label that could be corrected, and the only
+truthful fix at planning time would have been **two tickets**: the three refusal tests
+(`aPendingAddressAndAnUnknownOneBothAnswerNothing`, `anOwnerWithNoPasswordCredentialAnswersNothing`)
+in one, the two positive reads and the collation fixture in the other. That split is no longer
+available: this is merged, and re-cutting a merged ticket rewrites the trail rather than repairing
+it, which is the one thing the trail is for.
+
+**So this paragraph is the whole of the action, deliberately.** It is recorded because *which* fact
+is wrong matters to the next planner: the estimate, not the scope. Nothing in the Files table, the
+Tests table or the acceptance criteria is false — the ticket did what it says and the two files it
+names are the two it touched. What failed is that **a ticket's size was judged from its file count**,
+and this one is two files holding five database tests with a measured, four-row collation table
+behind one of them. Line count and file count came apart here, and only the file count was checked.
+`ADR-0070`'s probe sizes an `atomic:` ticket's *file* list; nothing sizes a ticket's *diff*, and
+`files_touched` passing the linter is not evidence that `estimate:` did.
+
 **One assertion here is vacuous and stays by ticket mandate.** The cross-`assertEquals` in
 `aPendingAddressAndAnUnknownOneBothAnswerNothing` cannot fail independently of the two `assertNull`s
 above it — null equals null, and it is unreachable if either `assertNull` has already reddened. The

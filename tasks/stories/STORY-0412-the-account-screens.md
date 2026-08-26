@@ -47,10 +47,45 @@ player can see it and end it.
 
 ## Tasks
 
-Split on 2026-08-26 into **27**, and amended the same day to **29**, in a single linear chain: every
-ticket after the first depends on the one before it, because the story's files overlap heavily —
-`Lobby.tsx` is edited by four tickets, `screen.ts` by three, `main.tsx` by three and `App.test.tsx`
-by six.
+Split on 2026-08-26 into **27**, amended the same day to **29**, and to **31** later that day, in a
+single linear chain: every ticket after the first depends on the one before it, because the story's
+files overlap heavily — `Lobby.tsx` is edited by four tickets, `screen.ts` by three, `main.tsx` by
+**four** and `App.test.tsx` by eight.
+
+**The two most recent additions, and why the first of them is a repair rather than an addition.**
+`TASK-041231` sits between `TASK-041221` and `TASK-041222`, and it exists because `TASK-041222` as
+written **could not compile**. `AccountScreen`'s `signedIn: boolean` prop is required and merged
+(`TASK-041217`); that ticket's `## Scope` said the flag is *"read once where the other module-scope
+bindings live in `main.tsx` and passed down"* while its *Files* table has no `main.tsx` row. That was
+first read as one more register disagreement to tidy up — the seventh of that shape this run — and it
+is not one: **there is no prop path at all.** `App.tsx` renders `<Lobby />` with no props and
+`Lobby()` takes none, so nothing computed in `main.tsx` reaches the lobby except through a context,
+and `TASK-041223` — which holds `main.tsx` — lands *after* `TASK-041222`, so consuming a hook there
+would fail `tsc` at the earlier merge. The carrier needed no decision: `Lobby.tsx` already opens with
+`import { useHistory, useLadder } from "../main";`, both contexts over a module-scope constant, and
+this is a third one. Cutting a ticket rather than making `TASK-041222` a four-file `atomic:` is this
+story's own remedy applied a third time (`TASK-041228`, `TASK-041229`): the client gate is green with
+the provider and no account screen, so **no merged gate refuses the intermediate state**, and
+`ADR-0068` and `ADR-0070` make that a split.
+
+`TASK-041230` sits last and closes a limit `TASK-041205`'s coder stated unprompted rather than
+leaving to be found: that module proves *it* writes one storage key, and nothing proves nothing else
+writes that key — a second writer would shadow the session token and no test would fail. It copies
+`TASK-040709`'s merged source-scan including the vacuity guard that ticket's `## Notes` names, **two
+search strings with two different expected answers**, and both answers were measured on `develop`
+before the ticket was written.
+
+`TASK-041223` was amended in the same pass to **own the one assertion it moves**. `plainFetch` is a
+second `window.fetch(` in `main.tsx`, so `TASK-041210`'s `wires all four reads through the wrapper
+and names the browser fetch once` goes from `1` to `2` — which that ticket's `## Out of scope`
+designed on purpose (*"that redness is the point; it is not brittleness to design around here"*) and
+which its criterion *"every pre-existing test in `App.test.tsx` passes unchanged"* flatly
+contradicted. The number moves in `TASK-041223`'s own diff with a comment naming why there are now
+two raw fetches, and routing `apiFetch` through `plainFetch` to keep the count at `1` is refused by
+name, because it is the tidy-looking change that retires the gate. The same pass corrected that
+ticket's `grep -c 'authorizedFetch' … returns 1`: **measured at `3`** on the merged file — an import,
+a comment and the call — which is the arithmetically impossible line-counting form `TASK-041210`'s
+`## Notes` already recorded once.
 
 **The two added tickets, neither of them a decision.** `TASK-041228` sits fourth, straight after
 `TASK-041203`, and closes a gate that cannot see what it claims to: `TASK-041202`'s `## Proof` step 3
@@ -124,6 +159,7 @@ criterion names — and `TASK-041222` gates the structural half.
 | [TASK-041219](../tasks/TASK-041219-a-throttled-sign-up-says-so-keeps-what-was-typed-and-retries-nothing.md) | A throttled sign-up says so, keeps what was typed, and retries nothing | backlog |
 | [TASK-041220](../tasks/TASK-041220-stopping-this-device-with-one-confirmation-and-three-facts.md) | Stopping this device signing in, offered only where it is safe, with three facts first | backlog |
 | [TASK-041221](../tasks/TASK-041221-signing-out-asks-first-and-says-what-it-costs.md) | Signing out asks first, and says what it costs before it acts | backlog |
+| [TASK-041231](../tasks/TASK-041231-whether-this-browser-holds-a-token-reaches-the-tree.md) | Whether this browser holds a token is read once, above the tree | backlog |
 | [TASK-041222](../tasks/TASK-041222-the-account-screen-has-an-address-and-the-lobby-has-the-door.md) | The account screen has an address, and the lobby has the door | backlog |
 | [TASK-041223](../tasks/TASK-041223-the-account-calls-reach-the-real-transport.md) | The account calls reach the real transport, and sign-in reaches it carrying nothing | backlog |
 | [TASK-041224](../tasks/TASK-041224-no-secret-reaches-a-url-and-no-body-carries-a-player-id.md) | No secret reaches a URL, and no request body carries a player id | backlog |
@@ -131,6 +167,7 @@ criterion names — and `TASK-041222` gates the structural half.
 | [TASK-041226](../tasks/TASK-041226-the-sign-in-screens-word-and-its-slug.md) | The sign-in screen's word, and the address that word becomes | backlog |
 | [TASK-041227](../tasks/TASK-041227-the-sign-in-screen-at-its-address-and-the-door-to-it.md) | The sign-in screen at its address, and the door to it from the account screen | backlog |
 | [TASK-041229](../tasks/TASK-041229-a-successful-sign-in-lands-on-the-account-screen.md) | A successful sign-in starts the next boot on the account screen, with no way back to sign-in | backlog |
+| [TASK-041230](../tasks/TASK-041230-one-module-writes-the-session-tokens-key.md) | One module writes the session token's key, and a scan is what says so | backlog |
 
 ## Open decisions
 

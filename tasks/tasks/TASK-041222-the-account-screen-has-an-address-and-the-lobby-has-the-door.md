@@ -11,13 +11,15 @@ tier: sonnet
 review: standard
 files_touched: 3
 labels: [client, account, routing, ui]
-depends_on: [TASK-041221]
+depends_on: [TASK-041231]
 verify:
   - cd web-client && npm ci
   - cd web-client && NO_COLOR=1 npm run --silent test -- src/routing/screen.test.ts 2>&1 | grep -qE 'Tests +4 passed \(4\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'leaves the first screen for the account, and comes back to it'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'opens the account screen at the address alone, with no click at all'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'offers the account door whether or not the profile read succeeded'
+  - test "$(grep -c '"#/account"' web-client/src/routing/screen.ts)" = 1
+  - test "$(grep -c 'readSessionToken' web-client/src/lobby/Lobby.tsx)" = 0
   - cd web-client && npm run check
 ---
 
@@ -51,9 +53,13 @@ unchanged, because the new member has its own tests below. Read, and do not edit
 - `Lobby.tsx` gains one branch, after the ladder's and in the same shape: the account screen with the
   in-page *Back* rendered beside it by the swap, exactly as `HistoryScreen` and `LadderScreen` get
   theirs (`ADR-0060` §4). `AccountScreen` is handed `useProfileStrip()` and a `signedIn` flag.
-- `signedIn` is `readSessionToken(localStorage) !== null`, read once where the other module-scope
-  bindings live in `main.tsx` and passed down — **not** read inside a component, for the reason
-  `DEC-032` records about the shadowed global under Vitest.
+- `signedIn` comes from **`useSignedIn()`**, called in `Lobby.tsx` beside the existing
+  `useHistory()` and `useLadder()` from the same import. `TASK-041231` lands the hook, the context
+  and the one module-scope `readSessionToken(localStorage) !== null` in `main.tsx` before this ticket
+  starts. **`main.tsx` is not edited here and is not in the budget** — the flag is consumed, never
+  computed. It is read at module scope rather than inside a component for the reason `DEC-032`
+  records about the shadowed global under Vitest, and that reason lives with the read, in
+  `TASK-041231`.
 - One more door on the first screen, labelled `ACCOUNT_HEADING`, calling `open("account")`, beside
   the record's and the ladder's.
 - **The door is offered whatever the profile read answered.** `ADR-0036`: nothing gates on having an
@@ -62,6 +68,9 @@ unchanged, because the new member has its own tests below. Read, and do not edit
 
 ## Out of scope
 
+- **Computing `signedIn`, and every line of `main.tsx`.** `TASK-041231` reads the token once at
+  module scope and exports `useSignedIn()`; this ticket calls it. **Gated below**: the *Files* table
+  has no `main.tsx` row, and a criterion counts `readSessionToken` in `Lobby.tsx` at `0`.
 - **The sign-in screen's slug.** Behind `DEC-077`; `TASK-041225` adds it.
 - **`tokenFromHash` and the `reset`/`verify` slugs.** `ADR-0081` gives them to `STORY-0417`.
 - Changing `AccountScreen`, `SignUpForm`, `RevokeControl` or `SignOutControl`. They are composed here
@@ -94,8 +103,9 @@ unchanged, because the new member has its own tests below. Read, and do not edit
 - [ ] The four tests in `screen.test.ts` pass unchanged
 - [ ] Every pre-existing test in `App.test.tsx` passes unchanged
 - [ ] `grep -c '"#/account"' web-client/src/routing/screen.ts` returns `1`
-- [ ] `grep -c 'readSessionToken' web-client/src/lobby/Lobby.tsx` returns `0` — the flag is passed in
-- [ ] No file outside the three listed differs
+- [ ] `grep -c 'readSessionToken' web-client/src/lobby/Lobby.tsx` returns `0` — the flag arrives
+      through `useSignedIn()`, which `TASK-041231` exports from `main.tsx`
+- [ ] No file outside the three listed differs — `main.tsx` in particular is byte-unchanged
 - [ ] Every command in `verify:` exits 0
 
 ## Proof

@@ -112,6 +112,7 @@ an **optional, verified-only** address in its own table.
 | [TASK-041642](../tasks/TASK-041642-no-read-on-credentials-answers-with-a-string.md) | No read on `Credentials` answers with a string | **ready** |
 | [TASK-041643](../tasks/TASK-041643-the-handle-comes-from-the-address-or-it-does-not-come.md) | The handle comes from the address, or it does not come | backlog |
 | [TASK-041644](../tasks/TASK-041644-three-states-answer-nothing-and-the-fourth-answers-a-handle.md) | Three states answer nothing, and the fourth answers a handle | backlog |
+| [TASK-041645](../tasks/TASK-041645-the-two-recovery-budgets-are-numbers-a-test-reads.md) | The two recovery budgets are numbers a test reads, not numbers a reviewer swaps unnoticed | ready |
 
 **The table is in id order; `depends_on` is the sequence.** They stopped coinciding when `ADR-0077`
 and `ADR-0078` merged and their answers were folded back in:
@@ -235,7 +236,8 @@ an address and a token that are different strings"* becomes three distinct strin
 handle — the decorator itself is unchanged, and it was never the ticket that should have sourced the
 handle. Raises no `DEC`, and nothing is the product owner's or the human's.
 
-**The answer was folded back into the split on 2026-08-26, taking the story to 44 tickets.** The
+**The answer was folded back into the split on 2026-08-26, taking the story to 44 tickets — and to 45
+later that day, with `TASK-041645` below.** The
 port member, its Postgres statement, the `ThrowingRecoveryEmails` double and the `Credentials` gate
 go **in front of `TASK-041626`**, never as an eighth file on a three-file `S` — and they are
 **three** tickets rather than one, because `ADR-0070`'s probe was run rather than a file list
@@ -251,6 +253,23 @@ forbids. `TASK-041642` (the `Credentials` gate, one new file, deliberately first
 after its temptation has passed was never tested against it), `TASK-041643` (the member, the
 statement, the double) and `TASK-041644` (the statement's five behavioural tests, plus a bounded
 repair row so a red is one dispatch rather than a block).
+
+**A forty-fifth was filed on 2026-08-26, and it closes a gap that was proved rather than suspected.**
+`TASK-041628` shipped `ADR-0079`'s four numbers — ten to forget, five to attach — and **no test
+asserts any of them.** Its reviewer swapped the two defaults in `ServerConfig.kt` and ran both of
+that ticket's `verify:` classes: **build succeeded, zero failures.** Every test in
+`RecoveryBudgetsTest` builds its own explicit low `AttemptLimits`, because that ticket's *Tests* intro
+mandates *limits set low* — right for exercising the mechanism and blind to the policy. So *that a
+budget applies* was gated and *which budget applies where* was not, on the two numbers `ADR-0079`
+reached by two different arguments. The ticket carried the criterion *"`ServerConfigTest` covers both
+new pairs' precedence"* while its *Files* table excluded that file, with none of the explicit
+carve-outs it wrote for `ServerComponents.kt` and `Application.kt`; the coder refused to widen and was
+right, since `ADR-0070` §4's propagation exception excludes *adds a test*. It is merged, so the fourth
+row became `TASK-041645`. One correction fell out of writing it: the closing fixture recorded in
+`TASK-041628`'s `## Notes`, `ServerConfig().forgotPasswordLimits()`, **does not compile** —
+`ServerConfig` has nine parameters with no default. The tests go through `ServerConfig.from(…)`
+instead, which is stronger as well as buildable, because the numbers exist twice and only the
+`DEFAULT_*` constants that `from` resolves are the ones `Application` ships.
 
 `DEC-074` was **answered on 2026-08-25** by
 [`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md) — *the
