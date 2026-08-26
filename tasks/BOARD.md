@@ -147,7 +147,7 @@ fixture and reddens on any platform.
 | | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-progress** |
 | | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | **done** |
 | | [TASK-000105](tasks/TASK-000105-two-build-files-that-were-never-source.md) Two build files that were never source | XS | done |
-| | [TASK-000106](tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) The board and the ticket file are one register, and the linter reads both | S | **ready** |
+| | [TASK-000106](tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) The board and the ticket file are one register, and the linter reads both | S | **done** |
 
 `TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
 Actions minutes free at once, and `develop` is now protected: a pull request and two green checks

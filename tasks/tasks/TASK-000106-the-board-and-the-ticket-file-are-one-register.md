@@ -3,7 +3,7 @@ schema: 2
 id: TASK-000106
 title: The board and the ticket file are one register, and the linter reads both
 type: task
-status: ready
+status: done
 parent: STORY-0001
 module: process
 estimate: S
@@ -198,3 +198,42 @@ builds a minimal `tasks/` tree in a `TemporaryDirectory` — one epic, one story
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A ticket about a register that lies shipped a test that lied about what it gated — caught by
+running the mutation, not by reading it.** `test_an_id_named_only_in_prose_is_not_a_board_row`
+originally fixtured the prose line *"Some prose talking about TASK-000101 but not in a table row."*
+That line carries **no markdown link**, so the row regex rejected it whether or not the
+`startswith("|")` guard existed: commenting the guard out changed nothing, and the test would have
+passed against a parser with no guard at all.
+
+The realistic input is the one this board is full of — 190KB of prose that **links** ticket ids inside
+running sentences. The fixture is now
+`"See [TASK-000101](tasks/TASK-000101-test.md) for details on this feature."`, and with the guard
+removed that sentence is parsed as a row with its whole text read as a status, reddening the test
+alone. **The fixture changed, not the guard**: the guard was correct and the input was not, and
+relaxing it would have made the old fixture meaningful while deleting the protection.
+
+**Two of six Proof steps reddened nothing, and only one was a defect.** Step 5 was the vacuous test
+above. Step 6 predicts that skipping `errors.clear()` in `setUp` pollutes a class-level run; it does
+not, because `tearDown` clears and restores regardless — belt-and-braces, not a defect, and recorded
+as the ticket's imprecision rather than the code's.
+
+**Why this check earns its place.** `--startable` reads the **file**, so a board row saying `ready`
+over a file saying `backlog` makes a startable ticket invisible to the tool that finds work. That cost
+real work four times this run, most sharply when `--startable` reported *no startable task* while
+three tickets — **including this one** — had every dependency merged and sat at `backlog`.
+
+**A parser limit found on the real board and documented where it will be re-broken.** A naive
+pipe-split breaks on a cell containing `` `grep -o … | wc -l` ``, which exists at `TASK-041223` and
+produced a false positive until backtick-aware splitting was added. The comment beside
+`split_table_row()` says **why**, and the tracking is implemented rather than merely described.
+
+**What this check still misses**, named rather than discovered later: a board row whose **markdown
+link target** points at a different task passes if its status happens to match that other task's file.
+Catching it needs a second check comparing link targets against cell positions.
+
+**Three dispatches, each for a different reason** — working code with unmeasured Proof steps; the
+measurements, which exposed the vacuous test; the fixture fix. That is the retry budget doing what it
+is for, rather than a ticket grinding.
