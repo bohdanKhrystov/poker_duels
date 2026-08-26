@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041203
 title: The lobby reads the address instead of two flags, and Back stops leaving the client
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
