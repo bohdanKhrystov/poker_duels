@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041222
 title: The account screen has an address, and the lobby has the door
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
