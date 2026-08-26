@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041218
 title: The sign-up form — one credential, and the strip is the same profile afterwards
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -140,3 +140,37 @@ Seven tests in a new file: `npm run test -- src/account/SignUpForm.test.tsx` rep
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A Proof mutation reddened nothing, and the coder made the gate real instead of reporting past it.**
+Step 4 drops the `useRef` in-flight guard, leaving only `isSubmitting` state — and the test stayed
+**7/7 green**. The cause is the framework, not the implementation: `@testing-library/react`'s
+`fireEvent` wraps each call in its own `act()`, which flushes React **synchronously between the two
+clicks**, so state from the first has already committed by the second and no pre-render race is ever
+observable. The test could not fail.
+
+The fix nests both dispatches inside **one outer `act()`**, deferring the inner flushes so both
+handlers run against the same stale ref. Re-measured: the mutant fails with *expected "spy" to be
+called 1 times, but got 2 times*; the shipped implementation passes. Shipped as a second commit and
+verified independently at review, against both commits, to confirm it is a strengthening rather than
+a rearrangement.
+
+**The same pattern is vacuous in already-merged code.** `NameSurface.test.tsx` line 147 uses two bare
+`fireEvent.click()` calls for the identical *"sends nothing on a second submit while one is in
+flight"* property — it would pass against an implementation carrying only a state guard and no ref.
+Confirmed by the reviewer. **Any test in this codebase written that way gates nothing**, and that one
+needs its own ticket; it is outside this ticket's *Files* table.
+
+**Two ticket claims measured and corrected, neither a diff defect.** Step 1 (seed the handle from a
+profile's `displayName`) is **structurally unreachable**: `SignUpForm`'s sole prop is `signUp`, with
+no profile channel, and adding one would violate Scope's one-export signature. Step 2's *"reddens on
+four of five rows"* describes the mapping's blast radius, but `maps each refusal to its own sentence`
+is one sequential `it()` block — required, since the verify block pins the file at exactly seven tests
+— so it aborts at the **first** mismatch and reports one line, not four.
+
+**Argument order is gated by the fixture, and only by the fixture.** Handle and password are both
+plain strings, so `signUp(password, handle)` compiles and no type forecloses it. Swapping them reddens
+exactly one test, `sends the handle and the password the player typed`, because the fixture uses two
+**different** values — `"ada-lovelace"` and `"correct-horse-battery"` — asserted with
+`toHaveBeenCalledWith` in order. A same-value fixture would pass either way.
