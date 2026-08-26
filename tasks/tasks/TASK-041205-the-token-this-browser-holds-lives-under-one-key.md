@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041205
 title: The session token this browser holds lives under one key, and clearing it clears nothing else
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: XS
