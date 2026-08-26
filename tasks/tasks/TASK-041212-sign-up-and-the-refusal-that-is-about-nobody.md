@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041212
 title: Sign-up, seven outcomes, and the one refusal that is about nobody
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
