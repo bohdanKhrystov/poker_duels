@@ -16,6 +16,8 @@ import duels.poker.server.auth.ResetToken
 import duels.poker.server.auth.VerificationToken
 import duels.poker.server.auth.VerifyEmailResult
 import duels.poker.server.auth.emailAddressOrNull
+import duels.poker.server.auth.passwordIsLongEnough
+import duels.poker.server.auth.passwordIsWithinTheWorkBound
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.mail.NoRecoveryMailer
 import duels.poker.server.protocol.http.AttachRecoveryEmailRequest
@@ -104,10 +106,12 @@ import kotlinx.coroutines.CancellationException
  * [duels.poker.server.auth.ResetRecipient.handle].
  *
  * Also installs `POST /api/auth/reset-password`, which spends a mailed reset token and rewrites
- * the credential's password, per `ADR-0031` §4. It follows the identical decode-then-refuse shape:
- * decode as [ResetPasswordRequest] first — every decode failure is `400`, the cause never changing
- * the answer — then [PasswordResets.consume], then `204 No Content` on `true` and `400 Bad Request`
- * on `false`.
+ * the credential's password, per `ADR-0031` §4 and `ADR-0080` §1. It runs three steps, in this
+ * fixed order: decode as [ResetPasswordRequest] first — every decode failure is `400`, the cause
+ * never changing the answer — then [passwordIsLongEnough] and [passwordIsWithinTheWorkBound] judge
+ * the new password, either `false` answering `422 Unprocessable Entity` with an empty body before
+ * [PasswordResets.consume] is ever reached, and only then [PasswordResets.consume], answering
+ * `204 No Content` on `true` and `400 Bad Request` on `false`.
  *
  * This route is **unauthenticated**, exactly as `verify-email` above: it reads no `X-Device-Id`
  * header, no `Authorization` header, and calls nothing on [identities] or [credentials]. The token
@@ -124,9 +128,12 @@ import kotlinx.coroutines.CancellationException
  * handing out a credential, so a leaked reset link cannot be exchanged for a live session by
  * anything but a full sign-in with the new password.
  *
- * This handler runs no password policy and answers no `422`: `ADR-0080` §7 puts that check in
- * **front** of [PasswordResets.consume], and it arrives with `TASK-041629`. Until then, every
- * refused token answers `400` regardless of the new password's own shape.
+ * **A `422` here never touches the token.** `ADR-0080` §1 puts the policy check in front of
+ * [PasswordResets.consume]: on refusal, no connection is taken, no statement runs, and
+ * `password_reset` is neither read nor written, so the row survives byte-for-byte and the same
+ * token answers `204` on a later request carrying an accepted password (`ADR-0080` §4). The two
+ * predicates are one conjunction — either returning `false` answers the identical `422`, and no
+ * test may pin which one fired (`ADR-0048` §6, `ADR-0080` §1).
  *
  * Also installs `POST /api/auth/recovery-email`, which records a pending claim on an address for
  * the caller, per `ADR-0031` §3 and §5. It follows the identical guard order the `DELETE` on this
@@ -361,13 +368,21 @@ public fun Application.recoveryRoutes(
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
             }
+            // ADR-0080 §1: the password is judged before the token is touched. Either predicate
+            // false answers 422 here — no connection taken, no statement executed, password_reset
+            // neither read nor written. The two predicates are one conjunction (ADR-0048 §6,
+            // ADR-0080 §1): their relative order is unobservable and no test may pin which fired.
+            val secret = PresentedSecret(request.newPassword)
+            if (!passwordIsLongEnough(secret) || !passwordIsWithinTheWorkBound(secret)) {
+                call.respond(HttpStatusCode.UnprocessableEntity)
+                return@post
+            }
             // The token travels in the body alone: no call.request.queryParameters and no
             // call.parameters anywhere in this handler (ADR-0031 §4). A query parameter reaches
             // every access log, proxy log and Referer header between here and the browser; a
             // fragment never reaches a server at all, which is the whole reason the client mails
             // the token in one and posts it from the other.
             val token = ResetToken(request.token)
-            val secret = PresentedSecret(request.newPassword)
             if (passwordResets.consume(token, secret)) {
                 call.respond(HttpStatusCode.NoContent)
             } else {
