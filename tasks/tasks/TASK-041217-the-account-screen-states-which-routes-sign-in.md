@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041217
 title: The account screen states which routes sign in to this profile, in both states
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -140,3 +140,35 @@ Six tests in a new file: `npm run test -- src/account/AccountScreen.test.tsx` re
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Proof step 5 predicts one reddening test and two redden — and keeping the second was right.** Changing
+the `<h2>` to an `<h3>` also trips `asserts no route of its own while the profile has not landed`,
+whose `getByRole("heading", { level: 2 })` stops matching. The coder declined to relax that query to
+make the narrower prediction true. Review confirmed the level-2 constraint is required by `## Scope`
+(*"as the one `<h2>`"*) and by the Tests table, so the test is correctly strict and **the ticket's
+prose is what is wrong**. Weakening it would have bought a tidy result and a weaker gate.
+
+**The screen decides from `deviceRouteLive` and nothing else, and the argument rests on a documented
+contract rather than on inspection.** `says the device signs in, and says it stopped, from the server
+fact alone` renders twice from `aProfile({ deviceRouteLive: true })` and then `false`, every other
+field at its fixture default — and `profile-fixture.ts` documents that its fields are **mutually
+independent**. A screen reading any other field would see it constant across both renders and print
+the same sentence twice. Both renders assert **presence of the right sentence and absence of the
+wrong one**; a presence-only pair would pass a screen printing both at once.
+
+**Queries are role-based, which matters for a pair that does not exist yet.** `ADR-0083` requires
+`SIGN_IN_HEADING` and `SIGN_IN_LABEL` to be two literals holding the **identical** text, so a string
+query becomes ambiguous the day `TASK-041226` lands. Writing role queries now means those tests do not
+have to be revisited then.
+
+**Absence is asserted synchronously.** `queryByText(...).toBeNull()`, not `findBy`/`waitFor` — those
+retry until a condition holds and cannot express *this did not happen*, and a retry-based absence
+check also cannot distinguish a self-correcting flicker from correctness. That distinction cost
+`TASK-041203` a review round and produced its most careful finding.
+
+**Two unlisted files were read and neither edited**: `profile/profile-strip.ts` for the type the named
+`ProfileStrip.tsx` imports, and `profile/profile-fixture.ts` for the `aProfile` the Tests section
+requires by name. `ADR-0070` §4 permits exactly that — reading is allowed, editing is not — and the
+diff touches neither.
