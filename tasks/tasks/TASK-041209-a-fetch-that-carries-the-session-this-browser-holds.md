@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041209
 title: A fetch that carries the session this browser holds, and adds nothing when it holds none
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -121,3 +121,31 @@ Five tests in a new file: `npm run test -- src/account/authorized-fetch.test.ts`
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The load-bearing assertion is a key-set equality, and the distinction is not cosmetic.**
+`sends exactly the headers it was given when this browser holds none` compares
+`Object.keys(headers)` to exactly `["X-Device-Id"]`. That catches a wrapper which sets
+`Authorization` **unconditionally with an empty value** — a case `expect(headers.Authorization)
+.toBeUndefined()` passes happily, and `toContain` misses entirely. Enumerate and compare, rather
+than check presence: the same distinction decided `TASK-041207`'s fixture keys and `TASK-041208`'s
+refusals.
+
+**`reads the token on every call, not once` earns its name because of how it is built.** It changes
+the stored token **between two calls through the same wrapper instance**. A test constructing a
+fresh wrapper per call cannot tell a per-call read from a capture at construction time, and would
+pass against both — while the defect it exists to catch is the one that keeps a signed-out browser
+signed in.
+
+**The bearer value is asserted literally, against a token distinct from every other fixture string.**
+`"Bearer tok-7"` by `toBe`, so a wrapper emitting a constant, or omitting the prefix, reddens.
+
+**Nothing about reading the token is re-implemented.** `session-token.ts` owns byte-for-byte reads,
+the blank-and-whitespace rule, and the injected `Storage` touched only at call time; this wrapper
+calls it and contains no `localStorage` reference. The laziness is load-bearing rather than tidy —
+an import-time read fails at module load under Vitest in Node, naming no line of this file.
+
+**The refusal holds: nothing here refreshes, retries or redirects on a dead token.** `ADR-0083`
+declined to reopen that, and `## Out of scope` names it. A refusal produces no assertion by default,
+so it is recorded here rather than inferred from the absence of code.

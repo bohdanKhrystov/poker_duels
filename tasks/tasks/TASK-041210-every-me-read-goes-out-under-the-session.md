@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041210
 title: Every read under /api/me goes out under the session, so the strip stops naming the wrong player
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
