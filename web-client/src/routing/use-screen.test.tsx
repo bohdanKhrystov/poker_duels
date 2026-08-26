@@ -91,4 +91,30 @@ describe("the screen the address names", () => {
     expect(hashChangeCount).toBe(0);
     expect(result.current.screen).toBe("first");
   });
+
+  it("ignores a popstate, and still answers the hashchange it subscribed to", () => {
+    const { result } = renderHook(() => useScreen());
+    expect(result.current.screen).toBe("first");
+
+    act(() => {
+      // pushState fires neither popstate nor hashchange, here or in a real
+      // browser, so it is the only way to move the address without also
+      // notifying useScreen — the dispatch below is this test's only
+      // popstate, not a side effect of moving the address.
+      window.history.pushState(null, "", "#/duels");
+      window.dispatchEvent(new Event("popstate"));
+    });
+    // No render happens here beyond the one act() above. window.location.hash
+    // already reads "#/duels" after the pushState, so a render forced by
+    // anything else — not just one caused by the subscription — would have
+    // getSnapshot read that already-changed value and pass this assertion
+    // for a reason that has nothing to do with which event the hook
+    // subscribed to.
+    expect(result.current.screen).toBe("first");
+
+    act(() => {
+      window.dispatchEvent(new Event("hashchange"));
+    });
+    expect(result.current.screen).toBe("duels");
+  });
 });
