@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041228
 title: The hook answers a hashchange and ignores a popstate, which no test can currently tell apart
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: XS

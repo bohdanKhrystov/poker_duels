@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041203
 title: The lobby reads the address instead of two flags, and Back stops leaving the client
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -130,3 +130,46 @@ ones.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket's `## Proof` step 2 reddens nothing, and the property it covers is this ticket's own
+governing rule.** Inverting the branch order so the address outranks the store — the exact inversion
+`ADR-0076` §3 forbids — fails no test in the suite. Every test that renders `<Lobby />` without
+clicking a door leaves `screen` at `"first"`, so the reordered conditions never evaluate true, and
+nothing combines *a chosen screen is open* with *a duel in progress*. What a player would see: seated
+by a frame and still looking at the record or leaderboard, no `DuelTable`, no `ActionBar`, while their
+opponent waits on an action they have no control to take.
+
+The deferral to `TASK-041204` was checked rather than accepted: it names
+`shows the duel to a player a frame seats, whatever address they were reading`, which drives exactly
+that condition. **The gap has a real owner.** Naming a ticket is not the same as that ticket closing
+the gap, and in this story the same check found the opposite for `TASK-041643` on the same day.
+
+**The ticket's claim that every other test in the file is untouched is false.** Three pre-existing
+tests broke on the same synchronous→async change and were repaired: `mounted history screen carries
+exactly one heading`, `offers the same ladder door whether the profile read failed or answered`, and
+`mounted ladder screen carries exactly one heading`. All three are in `App.test.tsx`, which the
+*Files* table authorises, so this is a ticket inaccuracy rather than a scope breach. The reviewer
+checked each assertion individually and found none weakened; the hash reset added between one test's
+two renders is isolation, not weakening.
+
+**The reordered assertion, and the limit of what any assertion here can do.** The pre-existing
+"create button is gone" check ran synchronously after the click. Under async rendering the button is
+genuinely still present at that instant, so the check had to move — and moving it after the settle
+made it a weaker claim. First review failed the PR on exactly that.
+
+The second pass reads both facts inside **one** `waitFor` callback, so it can only succeed on a
+render where the door's absence and the record's presence hold **together** — closing the split-timing
+false pass, where two independently-timed queries are each satisfied at different, mutually
+inconsistent instants.
+
+Then the coder disproved its own fix's sufficiency, which is the part worth keeping. It built the
+flicker concretely — the button present at the very render the label appears, removed 80ms later —
+and **it does not redden**: `waitFor` retries past the inconsistent render and succeeds on the later
+consistent one. Pushing the settle to 5000ms, beyond the timeout, **does** redden at 1019ms, so the
+check is not vacuous. Reviewer and coder agree on the conclusion: **no assertion built on
+`waitFor`/`findBy` can distinguish a transient that self-corrects inside the retry window from
+correctness, because tolerating exactly that is what those primitives are for.** Catching it needs a
+`MutationObserver` commit log or a zero-timeout post-click snapshot — a different mechanism, not a
+tighter assertion. That is a property of eventual-consistency testing, not a defect in this diff.
