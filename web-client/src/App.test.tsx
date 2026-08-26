@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -75,6 +75,13 @@ function renderApp(): void {
 }
 
 describe("App", () => {
+  // The record and the ladder now share an address with every other test in
+  // this file: without a reset, whichever test last opened one leaves the
+  // hash for the next test to boot into.
+  beforeEach(() => {
+    window.location.hash = "";
+  });
+
   it("renders the application heading", () => {
     renderApp();
     expect(screen.getByRole("heading").textContent).toBe("Poker Duels");
@@ -170,7 +177,49 @@ describe("App", () => {
     expect(historyScreen).toBeNull();
   });
 
-  it("leaves the first screen for the record, and comes back to it", () => {
+  it("puts the record at its own address, and the way back at the first one", async () => {
+    // Both halves in one test, so a leave() that renders the lobby but
+    // leaves a stale address cannot pass: the address must name the record
+    // while it is open, and must name the first screen once Back is pressed.
+    renderApp();
+
+    // Click "Your duels" button
+    const yourDuelsButton = screen.getByRole("button", { name: "Your duels" });
+    fireEvent.click(yourDuelsButton);
+
+    // The record has its own address, and its heading is on screen
+    expect(
+      await screen.findByRole("heading", { name: "Your duels" }),
+    ).toBeDefined();
+    expect(window.location.hash).toBe("#/duels");
+
+    // Click the in-page "Back" control
+    const backButton = screen.getByRole("button", { name: "Back" });
+    fireEvent.click(backButton);
+
+    // The way back names the first screen, and the first screen is back
+    expect(
+      await screen.findByRole("button", { name: "Create a duel room" }),
+    ).toBeDefined();
+    expect(window.location.hash).toBe("");
+  });
+
+  it("opens the screen the address already names, with no click at all", () => {
+    // The reload half of ADR-0076's promise, unreachable by any click-driven
+    // test: an address already in the bar before the tree exists must pick
+    // its screen on the very first render.
+    window.location.hash = "#/leaderboard";
+
+    renderApp();
+
+    // The ladder is on screen
+    expect(screen.getByLabelText("leaderboard")).toBeDefined();
+
+    // The room-code form is not
+    expect(screen.queryByLabelText("Room code")).toBeNull();
+  });
+
+  it("leaves the first screen for the record, and comes back to it", async () => {
     // The affordance: that a player can reach the record and get back.
     // This test renders App, activates *Your duels*, asserts the first
     // screen is gone, activates *Back*, and asserts it is there again.
@@ -185,14 +234,17 @@ describe("App", () => {
     const yourDuelsButton = screen.getByRole("button", { name: "Your duels" });
     fireEvent.click(yourDuelsButton);
 
+    // The history screen is shown, once the queued hashchange re-renders
+    const historyScreen = await screen.findByLabelText("your duels");
+    expect(historyScreen).toBeDefined();
+
+    // The address names the record
+    expect(window.location.hash).toBe("#/duels");
+
     // The create button is gone
     expect(
       screen.queryByRole("button", { name: "Create a duel room" }),
     ).toBeNull();
-
-    // The history screen is shown
-    const historyScreen = screen.getByLabelText("your duels");
-    expect(historyScreen).toBeDefined();
 
     // Click "Back" button
     const backButton = screen.getByRole("button", { name: "Back" });
@@ -200,14 +252,17 @@ describe("App", () => {
 
     // The create button is back
     expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
+      await screen.findByRole("button", { name: "Create a duel room" }),
     ).toBeDefined();
+
+    // The address is back at the first screen
+    expect(window.location.hash).toBe("");
 
     // The history screen is gone
     expect(screen.queryByLabelText("your duels")).toBeNull();
   });
 
-  it("leaves the first screen for the ladder, and comes back to it", () => {
+  it("leaves the first screen for the ladder, and comes back to it", async () => {
     // The same round trip as the record's test above, for the fifth control
     // ADR-0060 predicted the first screen would carry: the lobby is showing,
     // *Leaderboard* is clicked, *Create a duel room* is gone and the ladder
@@ -225,14 +280,17 @@ describe("App", () => {
     });
     fireEvent.click(leaderboardButton);
 
+    // The ladder screen is shown, once the queued hashchange re-renders
+    const ladderScreen = await screen.findByLabelText("leaderboard");
+    expect(ladderScreen).toBeDefined();
+
+    // The address names the leaderboard
+    expect(window.location.hash).toBe("#/leaderboard");
+
     // The create button is gone
     expect(
       screen.queryByRole("button", { name: "Create a duel room" }),
     ).toBeNull();
-
-    // The ladder screen is shown
-    const ladderScreen = screen.getByLabelText("leaderboard");
-    expect(ladderScreen).toBeDefined();
 
     // Click "Back" button
     const backButton = screen.getByRole("button", { name: "Back" });
@@ -240,14 +298,17 @@ describe("App", () => {
 
     // The create button is back
     expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
+      await screen.findByRole("button", { name: "Create a duel room" }),
     ).toBeDefined();
+
+    // The address is back at the first screen
+    expect(window.location.hash).toBe("");
 
     // The ladder screen is gone
     expect(screen.queryByLabelText("leaderboard")).toBeNull();
   });
 
-  it("mounted history screen carries exactly one heading", () => {
+  it("mounted history screen carries exactly one heading", async () => {
     // Assert the HistoryScreen component contains exactly one heading total.
     // This test guards against adding extra headings inside HistoryScreen.
     renderApp();
@@ -256,8 +317,8 @@ describe("App", () => {
     const yourDuelsButton = screen.getByRole("button", { name: "Your duels" });
     fireEvent.click(yourDuelsButton);
 
-    // Get the history screen section
-    const historyScreen = screen.getByLabelText("your duels");
+    // Get the history screen section, once the queued hashchange re-renders
+    const historyScreen = await screen.findByLabelText("your duels");
 
     // Count headings within the history screen
     const headingsInHistory = historyScreen.querySelectorAll(
@@ -372,7 +433,7 @@ describe("App", () => {
     expect(backButton).toBeNull();
   });
 
-  it("offers the same ladder door whether the profile read failed or answered", () => {
+  it("offers the same ladder door whether the profile read failed or answered", async () => {
     // ADR-0060: the door does not depend on the profile read. A ladder
     // unreachable because the profile read was slow is a bug this decision
     // already refused. The test renders the app twice, once with a failed
@@ -406,13 +467,15 @@ describe("App", () => {
     });
     expect(leaderboardButton1).toBeDefined();
 
-    // Click it and assert ladder opens
+    // Click it and assert ladder opens, once the queued hashchange re-renders
     fireEvent.click(leaderboardButton1);
-    const ladderSection1 = screen.getByLabelText("leaderboard");
+    const ladderSection1 = await screen.findByLabelText("leaderboard");
     expect(ladderSection1).toBeDefined();
 
-    // Clean up first render
+    // Clean up first render, and the address it left behind: the second
+    // render below is a fresh mount and must not inherit it.
     unmount1();
+    window.location.hash = "";
 
     // Second render with successful profile read
     const successRead = vi.fn(async (): Promise<ProfileStripState> => ({
@@ -438,9 +501,9 @@ describe("App", () => {
     });
     expect(leaderboardButton2).toBeDefined();
 
-    // Click it and assert ladder opens
+    // Click it and assert ladder opens, once the queued hashchange re-renders
     fireEvent.click(leaderboardButton2);
-    const ladderSection2 = screen.getByLabelText("leaderboard");
+    const ladderSection2 = await screen.findByLabelText("leaderboard");
     expect(ladderSection2).toBeDefined();
   });
 
@@ -500,7 +563,7 @@ describe("App", () => {
     expect(screen.queryByRole("button", { name: "Leaderboard" })).toBeNull();
   });
 
-  it("mounted ladder screen carries exactly one heading", () => {
+  it("mounted ladder screen carries exactly one heading", async () => {
     // Assert the LadderScreen component contains exactly one heading total.
     // This test guards against adding extra headings inside LadderScreen.
     // The guard is only reachable once the screen is mounted in the tree,
@@ -513,8 +576,8 @@ describe("App", () => {
     });
     fireEvent.click(leaderboardButton);
 
-    // Get the ladder screen section
-    const ladderScreen = screen.getByLabelText("leaderboard");
+    // Get the ladder screen section, once the queued hashchange re-renders
+    const ladderScreen = await screen.findByLabelText("leaderboard");
 
     // Count headings within the ladder screen
     const headingsInLadder = ladderScreen.querySelectorAll(

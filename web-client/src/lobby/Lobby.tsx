@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useForgetRoom, useSend } from "../store/duel-provider";
+import { useScreen } from "../routing/use-screen";
 import { useProfileStrip } from "../profile/profile-provider";
 import { useHistory, useLadder } from "../main";
 import { ProfileStrip } from "../profile/ProfileStrip";
@@ -28,8 +29,7 @@ export function Lobby(): ReactElement {
   const read = useHistory();
   const readLadder = useLadder();
   const [typedCode, setTypedCode] = useState("");
-  const [showHistory, setShowHistory] = useState(false);
-  const [showLadder, setShowLadder] = useState(false);
+  const { screen, open, leave } = useScreen();
   const code = normalizeRoomCode(typedCode);
 
   // The duel is over. This comes first because the reducer clears nothing a
@@ -87,11 +87,11 @@ export function Lobby(): ReactElement {
 
   // A player is not in a duel (view is null and roomCode is null).
   // They can reach the history screen from here.
-  if (showHistory && read !== null) {
+  if (screen === "duels" && read !== null) {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
         <HistoryScreen read={read} />
-        <button type="button" onClick={() => setShowHistory(false)}>
+        <button type="button" onClick={leave}>
           Back
         </button>
       </section>
@@ -102,11 +102,11 @@ export function Lobby(): ReactElement {
   // here, by the swap, and not by LadderScreen itself (ADR-0060): LadderScreen
   // knows nothing about navigation, so its own affordance is assertable with
   // no transport at all.
-  if (showLadder && readLadder !== null) {
+  if (screen === "leaderboard" && readLadder !== null) {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
         <LadderScreen read={readLadder} />
-        <button type="button" onClick={() => setShowLadder(false)}>
+        <button type="button" onClick={leave}>
           Back
         </button>
       </section>
@@ -140,10 +140,10 @@ export function Lobby(): ReactElement {
       {profile !== null && profile.kind === "profile" && setName !== null && (
         <NameSurface profile={profile.profile} setName={setName} />
       )}
-      <button type="button" onClick={() => setShowHistory(true)}>
+      <button type="button" onClick={() => open("duels")}>
         {HISTORY_HEADING}
       </button>
-      <button type="button" onClick={() => setShowLadder(true)}>
+      <button type="button" onClick={() => open("leaderboard")}>
         {LADDER_HEADING}
       </button>
     </section>
