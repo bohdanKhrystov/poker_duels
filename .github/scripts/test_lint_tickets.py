@@ -193,8 +193,10 @@ class BoardRegisterTest(unittest.TestCase):
             encoding="utf-8"
         )
 
-        # Create board with only prose mention (no table row)
-        board_content = """Some prose talking about TASK-000101 but not in a table row.
+        # Create board with a prose line containing a markdown link to the task, but not in a table row.
+        # This tests that the table-row guard (checking for "|" start) correctly excludes prose lines
+        # with markdown links, which exist in the real board (e.g., "See [TASK-041223](...) for details").
+        board_content = """See [TASK-000101](tasks/TASK-000101-test.md) for details on this feature.
 
 | Epic | Story | Status |
 | --- | --- | --- |
@@ -208,6 +210,8 @@ class BoardRegisterTest(unittest.TestCase):
         self.assertEqual(result, 1, f"Expected exit 1, got {result}")
         error_text = " ".join(lint_tickets.errors)
         self.assertIn("TASK-000101", error_text)
+        # Verify the error is about a missing row, not a disagreement
+        self.assertIn("no board row", error_text)
 
 
 if __name__ == "__main__":
