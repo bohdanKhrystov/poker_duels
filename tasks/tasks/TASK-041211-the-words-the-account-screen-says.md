@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041211
 title: The words the account screen says, including the refusal that is about nobody
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -177,3 +177,36 @@ Six tests in a new file: `npm run test -- src/account/account-text.test.ts` repo
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A `## Proof` step contradicted the ticket, and the ticket was right.** Step 4 predicts that changing
+`SIGN_IN_REFUSED` to `"We could not sign you in."` **passes** — a refusal naming no field is the point.
+It failed, because the shipped check demanded the sentence co-occur with *handle*, *password* and
+*account*, which a deliberately wording-free refusal cannot satisfy. The coder traced the fault to its
+own test rather than to the spec and rewrote the check to be register-independent.
+
+**Loosening a check is the easiest way to delete a gate, so both directions were measured.** With the
+rewrite: the ticket's string passes with one match, and adding a second field-specific constant
+reddens it at two. Coder and reviewer each ran both halves. A rewrite that only fixed the false
+positive would look identical in the diff.
+
+**Vitest halts a test body at its first thrown assertion.** In `tells a deliberate refusal from a
+broken product`, the inequality fires and the `Set(...).size === 6` assertion on the following line is
+never *reported* in a failing run — though it independently catches a mutation the first does not
+(aliasing two of the six sign-up outcomes collapses the set to five). Worth knowing when reading any
+Proof result here: *"reddened at assertion N"* does not mean the assertions after N are inert.
+
+**The golden values are literals, not constant references.** All 23 string exports are asserted
+character for character against written-out strings, and `Object.keys` enumerates all 24 exports — so
+an added or removed export reddens rather than passing unnoticed. `expect(FOO).toBe(FOO)` would have
+been a tautology; this is a gate.
+
+**One alias risk is out of scope and correctly left alone.** `ADR-0083` requires `SIGN_IN_HEADING` and
+`SIGN_IN_LABEL` to be two literals holding the identical string, and
+`export const SIGN_IN_HEADING = SIGN_IN_LABEL` would pass a naive golden test. **This file exports no
+`SIGN_IN_HEADING`** — that risk arrives with `TASK-041226`. Within this file the six-way `Set` check
+guards the sign-up outcomes, but nothing guards the labels against each other; the coder proposed
+enumerating all 23 exports into a `Set` and asserting size 23, and declined to build it because the
+Tests table does not name it. That is the right call, and the check is recorded here rather than
+invented inside a PR.
