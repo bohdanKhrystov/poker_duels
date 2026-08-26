@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041638
 title: The shape gate holds for four more shapes, and names the one it cannot
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -223,3 +223,44 @@ All five predictions were probed on this repository's toolchain before this tick
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket's own `## Proof` preamble claims its mutations were "probed on this repository's
+toolchain." They were not — not against the live interface.** Applied literally as **abstract**
+members, mutations 1, 2 and 5 fail `:poker-server:compileKotlin` outright, because `NoRecoveryMailer`
+and `DetachedRecoveryMailer` — two merged implementors the *Files* table does not name — do not
+implement them. Whoever wrote the Proof probed a scratch interface, not the real one in its real
+dependency graph.
+
+The coder gave each mutated member a trivial body (`get() = TODO()`, `{}`) for the Proof runs only,
+and review confirmed the substitution is **faithful**: `declaredMemberProperties`,
+`declaredMemberExtensionFunctions` and `supertypes` read identical metadata whether a member is
+abstract or has a body. The measurements stand; the preamble is what is wrong. **"Probed on this
+toolchain" has to mean against the live file with its live implementors**, or it is an untested claim
+wearing a measurement's clothes.
+
+**Each of the four new shapes was mutated individually, and each reddened its own test alone** —
+property, member extension, companion, nested type, supertype. A shape added to an assertion but never
+mutated is a shape that is not gated, which is exactly how the original gate came to hold for
+functions and nothing else.
+
+**The vacuity control has both halves.** `ForbiddenShapesControl` declares all four forbidden shapes
+and is asserted to be **found**, proving the helpers read their `KClass` argument rather than
+hard-coding one; pointing the control at `RecoveryMailer::class` reddens alone, and pointing all four
+new tests at the control reddens nothing.
+
+**The limit the gate cannot cover, named where a reader will hit it.** A **top-level extension
+function** — `suspend fun RecoveryMailer.sendNewsletter(…)` in any file — reads at every call site
+exactly like a member and is invisible to every reflective read over `RecoveryMailer::class`, because
+it belongs to the file that declares it, not to the interface. Ordinary syntax, no warning, compiles
+clean, whole suite green. **Only a reviewer noticing the declaration in a diff catches it.** Named in
+the class KDoc, explaining why rather than what, on the pattern `ADR-0082`'s `Credentials` gate and
+`TASK-040709` both set.
+
+**A process note the coder disclosed rather than hid.** Reverting a Proof mutation with
+`git checkout -- <testfile>` and nothing staged reverted the **whole file** to its pre-ticket state,
+discarding the ticket's work. It found this by checking `git status` and `wc -l` — **not** from the
+injected reminder that fired seconds later, whose claim that "the user or a linter" made the change
+was itself false — rebuilt, re-ran, and switched to targeted edits for the rest. Review verified the
+rebuild against the Tests table line by line, which is where a rebuild quietly loses something.
