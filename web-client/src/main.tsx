@@ -22,13 +22,21 @@ import { setDisplayName } from "./profile/set-name";
 import { readDuelPage, type DuelPageRead } from "./profile/duel-page";
 import type { HistoryQuery } from "./profile/duels-query";
 import { readLadderPage, type LadderRead } from "./ladder/ladder-read";
+import { authorizedFetch } from "./account/authorized-fetch";
+
+// Module scope, so the wrapper outlives a sign-out without keeping a signed-out
+// browser signed in until the next reload: reads the token on every call, not once.
+const apiFetch = authorizedFetch(
+  (path, init) => window.fetch(path, init),
+  localStorage,
+);
 
 // Module scope, so the provider's effect sees one stable reference and one
 // mount means one read. An arrow written inline in the JSX would be a new
 // function on every render.
 const readProfile = (): Promise<ProfileStripState> =>
   readProfileStrip({
-    fetch: (path, init) => window.fetch(path, init),
+    fetch: apiFetch,
     storage: localStorage,
   });
 
@@ -36,7 +44,7 @@ const readProfile = (): Promise<ProfileStripState> =>
 // that changed on every render would be a new function on every render.
 const setName = (name: string) =>
   setDisplayName({
-    fetch: (path, init) => window.fetch(path, init),
+    fetch: apiFetch,
     storage: localStorage,
     name,
   });
@@ -46,7 +54,7 @@ const setName = (name: string) =>
 // function on every render.
 const readHistory = (query: HistoryQuery): Promise<DuelPageRead> =>
   readDuelPage({
-    fetch: (path, init) => window.fetch(path, init),
+    fetch: apiFetch,
     storage: localStorage,
     query,
   });
@@ -56,7 +64,7 @@ const readHistory = (query: HistoryQuery): Promise<DuelPageRead> =>
 // inline in the JSX would be a new function on every render.
 const readLadder = (after: string | null): Promise<LadderRead> =>
   readLadderPage({
-    fetch: (path, init) => window.fetch(path, init),
+    fetch: apiFetch,
     storage: localStorage,
     after,
   });

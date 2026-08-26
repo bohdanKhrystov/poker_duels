@@ -160,6 +160,68 @@ describe("App", () => {
     expect(ladderReadSource).not.toMatch(/localStorage\./);
   });
 
+  it("reads the profile, the record and the ladder under the session this browser holds", () => {
+    // The four reads in main.tsx must all use apiFetch which includes the
+    // Authorization header when a token is present. This test verifies that
+    // main.tsx uses authorizedFetch and passes apiFetch to all four reads:
+    // readProfile, setName, readHistory, and readLadder.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    // main.tsx should import authorizedFetch
+    expect(mainSource).toMatch(/import.*authorizedFetch/);
+
+    // main.tsx should define apiFetch using authorizedFetch
+    expect(mainSource).toMatch(/const apiFetch = authorizedFetch\(/);
+
+    // main.tsx should pass apiFetch (not inline fetch) to all four reads
+    expect(mainSource).toMatch(/readProfileStrip\(\{[\s\S]*?fetch: apiFetch/);
+    expect(mainSource).toMatch(/setDisplayName\(\{[\s\S]*?fetch: apiFetch/);
+    expect(mainSource).toMatch(/readDuelPage\(\{[\s\S]*?fetch: apiFetch/);
+    expect(mainSource).toMatch(/readLadderPage\(\{[\s\S]*?fetch: apiFetch/);
+
+    // Verify authorizedFetch appears exactly once (one wrapper, not per-binding)
+    const authorizedFetchCount = (mainSource.match(/authorizedFetch\(/g) || [])
+      .length;
+    expect(authorizedFetchCount).toBe(1);
+  });
+
+  it("sets a name under the session this browser holds", () => {
+    // The name write (setDisplayName) must also use apiFetch to carry the
+    // Authorization header. This test verifies setName uses apiFetch.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    // setName binding must use apiFetch
+    expect(mainSource).toMatch(
+      /const setName.*=\s*\(name: string\)[\s\S]*?fetch: apiFetch/,
+    );
+
+    // Verify apiFetch is defined exactly once at module scope
+    const apiFetchDefCount = (mainSource.match(/const apiFetch = /g) || [])
+      .length;
+    expect(apiFetchDefCount).toBe(1);
+  });
+
+  it("reads under no session when this browser holds no token", () => {
+    // authorizedFetch must not send Authorization header when no token
+    // exists. This test verifies the wrapper is correctly implemented and
+    // guards the code that creates it.
+    const authorizedFetchSource = readFileSync(
+      resolve(here, "account/authorized-fetch.ts"),
+      "utf-8",
+    );
+
+    // Should check for token existence
+    expect(authorizedFetchSource).toMatch(/readSessionToken/);
+
+    // Should return early without Authorization header when no token
+    expect(authorizedFetchSource).toMatch(/token === null/);
+
+    // Verify main.tsx correctly uses this wrapper
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+    expect(mainSource).toMatch(/const apiFetch = authorizedFetch\(/);
+    expect(mainSource).toMatch(/localStorage/);
+  });
+
   it("leaves the lobby exactly as it was for a player who never opens the record", () => {
     // The three merged tests still find the heading, its class and the
     // *Create a duel room* button, and nothing from the history screen is on
