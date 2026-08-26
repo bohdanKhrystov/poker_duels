@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041630
 title: A decorator that detaches, over the same port
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -149,3 +149,43 @@ reddening. No test sleeps, no test has a timeout, and no test needs one.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket's `## Proof` step 4 contradicts its own acceptance criteria, and the Proof is what is
+wrong.** Step 4 mutates the decorator to an empty `launch { }` and predicts the argument test reddens
+alone, *"both ordering assertions pass"*. All three redden. The reason is structural rather than
+incidental: `"delivered"` is appended **inside the delegate**, reachable only through `send()`, so a
+launch that never calls it runs no delegate code at all and the marker lists come back `[returned]`
+instead of `[returned, delivered]`.
+
+Making step 4's prediction true would require weakening the assertion to check only that `"returned"`
+appears — which two explicit acceptance criteria forbid (*the delegate appends `"delivered"`* and
+*asserts the whole list in order*). The coder reported the contradiction rather than reshaping its
+tests to match the narrative, and the reviewer confirmed the criteria are the spec and the Proof is
+the document that gives way. **That order matters: a Proof is a procedure for testing whether the
+criteria hold, so a Proof that can only be satisfied by weakening an assertion is describing a
+decorative gate.** Fifteenth `## Proof` found wrong or imprecise this run.
+
+**A real deadlock was found in the first draft and root-caused rather than worked around.** The
+fixture built `SupervisorJob(coroutineContext.job)`, joined its children, and never completed or
+cancelled the job — and a bare `SupervisorJob()` does not auto-complete when its children finish, so
+`runBlocking`, which waits for its whole structured subtree, hung forever. Diagnosed from a thread
+dump: the test thread parked in `BlockingCoroutine.joinBlocking` for 636 seconds having used 263
+milliseconds of CPU. The tempting fixes — a timeout, dropping `runBlocking`, or doubting the
+decorator — would all have hidden it.
+
+**The fix is a fix, not a mask, and that was checked.** `scope.cancel()` runs **after** the join, so
+a delivery in flight completes before anything is cancelled; the recording delegate appends its marker
+after a `yield()`, so the test observes a *complete* delivery rather than a partial one; and
+`DetachedRecoveryMailer` constructs no scope of its own, so it detaches identically under a real
+server scope. A test passing because work was cancelled rather than because it finished is the same
+defect class as an assertion that cannot redden.
+
+**Three distinct strings, and only a fixture can catch one of the pairs.** `ADDRESS`, `RESET_TOKEN`
+and `HANDLE` are genuinely different, each asserted against its own constant. `ResetToken` is a
+`@JvmInline value class`, so a token/handle swap does not compile — but **address and handle are both
+plain `String`** at the delegate call site. The coder mutated `sendPasswordReset` to forward
+`address.value` where `handle` belongs; it compiled, and only `theDeliveryCarriesTheArgumentsItWas
+Given` reddened, with `sendPasswordResetDetachesTheSameWay` staying green. That is the criterion
+`ADR-0083` widened, verified rather than asserted.
