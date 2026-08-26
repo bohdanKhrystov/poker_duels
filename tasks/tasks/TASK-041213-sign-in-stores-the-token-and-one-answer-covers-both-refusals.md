@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041213
 title: Sign-in stores the token, carries no credential of its own, and reloads the document
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -150,3 +150,40 @@ Seven tests in a new file: `npm run test -- src/account/sign-in.test.ts` reports
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The pairwise equality assertion is dominated, and a mutation proved it rather than an argument.**
+Test 2 asserts each refusal against the literal `{kind:"refused"}` **and** asserts the two outcomes
+deeply equal. Proof step 3 — mutating `401` to `unknown-handle` for well-formed handles — moved
+**both** fixtures to the same wrong kind, so the pairwise check passed while the two literals
+reddened. Reviewer confirmed no mutation catches the pairwise alone: any divergence fails it *and* at
+least one literal. It is kept because the ticket's Tests row asks for *deeply equal* as the stated
+contract, and recorded here as documentation rather than as a gate.
+
+**A coder caught its own mutation being unrealistic and redid it.** Proof step 1's first attempt
+(`?? ""`, header always present) reddened even with empty storage, which is not the bug the step
+describes. Rebuilt as the realistic version — header included only when a device id exists — it
+reddens with the fixture and is **invisible with storage emptied**. That second measurement is the
+finding: the mutation's visibility depends entirely on the fixture holding a device id.
+
+**A ticket prediction that does not reproduce, and why it does not matter.** Proof step 5 says storing
+before validating *"would store the string `undefined`"*. It throws a `TypeError` instead: the
+in-memory `Storage` fake does not coerce `setItem`'s value the way a browser does. Rerun with the
+type check removed entirely, the outcome assertion reddens cleanly. Review confirmed the divergence
+touches **only** that prediction's prose — the implementation validates `typeof token !== "string"`
+before storing, and no other test depends on coercion.
+
+**Both assertion shapes here are the strong form.** The body is asserted by **key-set equality** on
+sorted keys, so an extra field reddens it; the headers are asserted as an **empty key set**, so a
+header present with any value — including an empty string — enlarges the array and fails. The weaker
+`toBeUndefined()` form shipped in a sibling ticket and is recorded there as the spot to strengthen.
+
+**The non-event half uses call counts, not retries.** *Reloads once a session exists, and not before*
+asserts `toHaveBeenCalledTimes(0)` on both the refusal and the rejected-fetch paths. `waitFor` cannot
+express *this did not happen* — it passes as soon as any retry succeeds.
+
+**What these tests do not cover, and whose job it is.** None would fail if sign-out could not clear
+what sign-in stored: nothing here calls anything sign-out shaped, and storage is only inspected
+immediately after `signIn()`. `session-token.ts` owns the round-trip property that forgetting clears
+what writing wrote; `TASK-041214` owns asserting sign-out calls that path at all.

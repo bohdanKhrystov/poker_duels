@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041214
 title: Sign-out clears the token and only the token, leaves the room, and reloads
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
