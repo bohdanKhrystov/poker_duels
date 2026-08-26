@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041215
 title: Stopping this device signing in, and the two refusals that are not failures
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S

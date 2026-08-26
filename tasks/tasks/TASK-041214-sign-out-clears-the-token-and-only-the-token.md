@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041214
 title: Sign-out clears the token and only the token, leaves the room, and reloads
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -143,3 +143,43 @@ Six tests in a new file: `npm run test -- src/account/sign-out.test.ts` reports 
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The driver's dispatch brief was wrong and the coder overrode it by citing this ticket.** The brief
+claimed *"the device id and the room code must survive"*. This ticket says the opposite about the
+room: sign-out calls **both** `forgetSessionToken` **and** `forgetRoomCode`, *"and nothing else… The
+stored device id is untouched"* — the room goes because `ADR-0072` remembers one *until the player
+leaves it* and `ADR-0030` §6 says signing out abandons the seat. Review confirmed the ticket is
+unambiguous, so this was a brief defect rather than a ticket one.
+
+The generalisation that produced it is worth naming: `ADR-0030` §8's *sign-out restores whatever the
+device had* is true of `forgetSessionToken`, which clears one key — but sign-out is more than that one
+call. **A summary of a ticket drifts from the ticket; the ticket is the specification.** This is the
+second time this run a coder was right against a brief, both times because an ADR was generalised
+without re-reading the criteria.
+
+**Proof step 3 is incomplete, and keeping the test was the right call.** It predicts that leaving the
+room code in place reddens `forgets the room this tab remembered` **alone**; two tests redden, because
+the Tests table itself requires `clears the token even when the server never answers` to assert the
+room is gone in **both** its sub-cases. Weakening that test would have made the Proof's claim true and
+the gate weaker. The Proof gave way instead.
+
+**These six tests assert sign-out's own behaviour, not its dependencies'.** `session-token.ts` already
+proves that forgetting clears what writing wrote; `TASK-041213` recorded that none of its tests could
+see whether sign-out *invokes* that path, and deferred it here. Tests 1 and 4 carry it — 1 by
+observing the token gone and the device id untouched, 4 by observing both forgets happen even when the
+server never answers.
+
+**Every assertion is in the strong form.** Headers by key-set equality
+(`['Authorization','X-Device-Id']` against `['Authorization']` is what a regression looks like, where
+`toBeUndefined()` would pass a header present-but-empty); the device-id survivor asserted with a
+literal distinct from the token, so it cannot pass by coincidence; the reload double checking storage
+state **at call time**, which is what makes *"after the local half"* mean something rather than
+*"eventually"*; and the no-session case asserting a fetch count of zero synchronously.
+
+**One injection report was ambiguous rather than false, and was disclosed anyway.** A reminder fired
+after the coder's own `prettier --write`, claiming a linter had modified the file and framing it as
+not to be reported. The modification was **mechanically true** — prettier had just run — while the
+concealment framing matched the fabricated pattern. Disclosing an ambiguous signal is the right
+default; the alternative trains an agent to suppress the true ones too.
