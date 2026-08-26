@@ -2428,8 +2428,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041210](tasks/TASK-041210-every-me-read-goes-out-under-the-session.md) Every read under `/api/me` goes out under the session | S | **done** |
 | | [TASK-041211](tasks/TASK-041211-the-words-the-account-screen-says.md) The words the account screen says, including the refusal that is about nobody | S | **done** |
 | | [TASK-041212](tasks/TASK-041212-sign-up-and-the-refusal-that-is-about-nobody.md) Sign-up, seven outcomes, and the one refusal that is about nobody | S | **done** |
-| | [TASK-041213](tasks/TASK-041213-sign-in-stores-the-token-and-one-answer-covers-both-refusals.md) Sign-in stores the token, carries no credential of its own, and reloads | S | **ready** |
-| | [TASK-041214](tasks/TASK-041214-sign-out-clears-the-token-and-only-the-token.md) Sign-out clears the token and only the token, leaves the room, and reloads | S | backlog |
+| | [TASK-041213](tasks/TASK-041213-sign-in-stores-the-token-and-one-answer-covers-both-refusals.md) Sign-in stores the token, carries no credential of its own, and reloads | S | **done** |
+| | [TASK-041214](tasks/TASK-041214-sign-out-clears-the-token-and-only-the-token.md) Sign-out clears the token and only the token, leaves the room, and reloads | S | **ready** |
 | | [TASK-041215](tasks/TASK-041215-stopping-this-device-signing-in-and-the-two-refusals.md) Stopping this device signing in, and the two refusals that are not failures | S | backlog |
 | | [TASK-041216](tasks/TASK-041216-the-four-account-calls-reach-a-screen-through-one-provider.md) The four account calls reach a screen through one provider | XS | backlog |
 | | [TASK-041217](tasks/TASK-041217-the-account-screen-states-which-routes-sign-in.md) The account screen states which routes sign in to this profile, in both states | S | backlog |
