@@ -338,7 +338,11 @@ def normalize_status(raw: str) -> str:
 def split_table_row(line: str) -> list[str]:
     """Split a markdown table row into cells, respecting backtick-quoted code spans.
 
-    Pipes inside backticks are not treated as separators.
+    Pipes inside backticks are not treated as separators. Without backtick awareness, a cell
+    containing `grep -o … \| wc -l` would be incorrectly split at the escaped pipe, creating
+    false cell boundaries and wrong status extraction. The board contains such cells (e.g.,
+    TASK-041223), so this parser tracks backtick state to distinguish pipes inside code from
+    table separators.
     """
     # Remove leading and trailing pipes and whitespace
     line = line.strip()
