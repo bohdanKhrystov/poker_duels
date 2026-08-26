@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041632
 title: The origin every recovery link is built from is configuration
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -131,3 +131,33 @@ Read, and do not edit:
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A gap the coder named turned out to be foreclosed rather than unguarded, and the distinction was
+checked.** It reported that no test would fail if the base URL were read once at class-load instead
+of per call, since each test invokes `from()` independently. Reading the implementation settles it:
+`from()` takes `getEnvVariable` as a **parameter** and holds no state, so there is nothing to cache
+and the missing test would gate nothing. Worth contrasting with the reachable version of the same
+shape — `authorized-fetch.test.ts`'s *reads the token on every call, not once* catches it by changing
+state between two calls through **one** instance, and it has to, because that wrapper does hold a
+reference.
+
+**The fixture values are distinct from the default, which is what stops a config test passing
+vacuously.** `readsTheBaseUrlFromTheConfig` uses `"https://example.com"` against a
+`"http://localhost:5173"` default, and the precedence test uses two different origins
+(`"https://config.test"` and `"https://env.test"`). Had any fixture equalled the default, that test
+and `fallsBackToTheDefaultBaseUrl` would both pass whether or not the config was read at all — the
+same trap as a fixture value sitting on a clamp boundary.
+
+**Four refusals, and Proof step 2 shows they are not one assertion written four times.** Removing
+only the trailing-slash `require` reddens **only** the `http://x.test/` case while the other three
+still pass. Two of the four — `"localhost:5173"` and `"ftp://x.test"` — legitimately share the scheme
+clause; the empty string and the trailing slash each have their own. That is the honest accounting,
+recorded so nobody later reads four values as four independent gates.
+
+**The `verify:` block carries no build-wide gate**, matching the ticket as written. Two tickets in
+this story passed their tests, ktlint and detekt and then failed CI on `IdentityMovesNoCoinTest` — a
+gate absent from their own blocks. This diff adds a config field with a valid default and modifies no
+construction site, so the risk was low and CI was green; the omission is recorded rather than
+discovered a third time.

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041633
 title: One function builds both recovery links, and no header reaches it
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
