@@ -3,6 +3,7 @@ package duels.poker.server
 import duels.poker.server.auth.ClaimPendingResult
 import duels.poker.server.auth.EmailAddress
 import duels.poker.server.auth.RecoveryEmails
+import duels.poker.server.auth.ResetRecipient
 import duels.poker.server.auth.VerificationToken
 import duels.poker.server.auth.VerifyEmailResult
 import duels.poker.server.config.ServerConfig
@@ -220,6 +221,9 @@ class VerificationSweepTest {
             error("ThrowingRecoveryEmails: not used by this test")
 
         override suspend fun verifiedOwnerOf(address: EmailAddress): PlayerId? =
+            error("ThrowingRecoveryEmails: not used by this test")
+
+        override suspend fun resetRecipientOf(address: EmailAddress): ResetRecipient? =
             error("ThrowingRecoveryEmails: not used by this test")
 
         override suspend fun detach(playerId: PlayerId): Unit =

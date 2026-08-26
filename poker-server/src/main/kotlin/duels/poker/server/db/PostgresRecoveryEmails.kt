@@ -3,6 +3,7 @@ package duels.poker.server.db
 import duels.poker.server.auth.ClaimPendingResult
 import duels.poker.server.auth.EmailAddress
 import duels.poker.server.auth.RecoveryEmails
+import duels.poker.server.auth.ResetRecipient
 import duels.poker.server.auth.VerificationToken
 import duels.poker.server.auth.VerifyEmailResult
 import duels.poker.server.session.PlayerId
@@ -150,6 +151,23 @@ internal class PostgresRecoveryEmails(
         }
 
     /**
+     * `SELECT r.player_id, c.identifier FROM recovery_email r JOIN credential c ON c.player_id =
+     * r.player_id AND c.kind = 'password' WHERE lower(r.address COLLATE "und-x-icu") = lower(?
+     * COLLATE "und-x-icu")` — [selectVerifiedOwner]'s pinned-collation fold against the same
+     * table, joined onto `credential` for the login handle only a `password` credential carries
+     * (`ADR-0082` §1).
+     *
+     * This is an inner `JOIN` — never the outer, `LEFT`-qualified form — because a verified
+     * address whose owner holds no `password` credential must answer `null` here exactly as an
+     * unknown or pending address does, rather than handing the caller a null handle to make a
+     * decision about.
+     */
+    override suspend fun resetRecipientOf(address: EmailAddress): ResetRecipient? =
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection -> selectResetRecipient(connection, address) }
+        }
+
+    /**
      * Remove a player's proven recovery email, if one exists, in one statement.
      *
      * `ADR-0031` §5's `DELETE` answers `204` whether or not a row existed, so this operation
@@ -263,6 +281,21 @@ internal class PostgresRecoveryEmails(
             }
         }
 
+    private fun selectResetRecipient(connection: Connection, address: EmailAddress): ResetRecipient? =
+        connection.prepareStatement(SELECT_RESET_RECIPIENT_SQL).use { statement ->
+            statement.setString(1, address.value)
+            statement.executeQuery().use { rows ->
+                if (rows.next()) {
+                    ResetRecipient(
+                        playerId = PlayerId(rows.getObject("player_id", UUID::class.java).toString()),
+                        handle = rows.getString("identifier"),
+                    )
+                } else {
+                    null
+                }
+            }
+        }
+
     // Holds only what verifyPending needs between the DELETE and the INSERT. Never returned from
     // this class, never logged: RecoveryEmails' contract is that an address crosses this
     // package's boundary into nothing but RecoveryMailer.
@@ -303,6 +336,17 @@ internal class PostgresRecoveryEmails(
         private const val SELECT_VERIFIED_OWNER_SQL =
             "SELECT player_id FROM recovery_email " +
                 "WHERE lower(address COLLATE \"und-x-icu\") = lower(? COLLATE \"und-x-icu\")"
+
+        // ADR-0082 §1: the same pinned-collation fold as SELECT_VERIFIED_OWNER_SQL, qualified by
+        // r. because this statement joins two tables. c.kind = 'password' matches
+        // REWRITE_CREDENTIAL_SQL (PostgresPasswordResets) verbatim, so the reset path spells the
+        // kind one way in both statements that make it up. The join is inner, never the outer
+        // LEFT-qualified form: a verified address whose owner holds no password credential must
+        // answer null, not a null handle.
+        private const val SELECT_RESET_RECIPIENT_SQL =
+            "SELECT r.player_id, c.identifier FROM recovery_email r " +
+                "JOIN credential c ON c.player_id = r.player_id AND c.kind = 'password' " +
+                "WHERE lower(r.address COLLATE \"und-x-icu\") = lower(? COLLATE \"und-x-icu\")"
 
         private const val DELETE_RECOVERY_EMAIL_SQL =
             "DELETE FROM recovery_email WHERE player_id = ?"
