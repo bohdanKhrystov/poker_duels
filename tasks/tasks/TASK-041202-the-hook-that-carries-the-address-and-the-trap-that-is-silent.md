@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041202
 title: The hook that carries the address, and the trap that makes a stale render look like React
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
