@@ -136,7 +136,7 @@ recorded rather than quietly absorbed:
 | [STORY-0409](../stories/STORY-0409-history-filters-and-search.md) | History filters and search | 0408 | backlog |
 | [STORY-0410](../stories/STORY-0410-the-display-name-product-rules.md) | The display-name product rules — screened when set, and takeable away | 0401 | backlog — `DEC-042` answered by `ADR-0051`, not yet split |
 | [STORY-0411](../stories/STORY-0411-the-name-in-the-client.md) | The name in the client — shown, and settable | 0402 | backlog |
-| [STORY-0412](../stories/STORY-0412-the-account-screens.md) | The account screens — sign up, sign in, sign out, and which routes are live | 0406, 0411 | **ready**, split into 27 tickets on 2026-08-26 — `TASK-041201` is startable; two are `blocked` on `DEC-077` (the product owner's) and they are the last two in the chain. **Two** account screens, which `ADR-0076` §1 left to this story: `#/account` and a sign-in screen whose word is the decision |
+| [STORY-0412](../stories/STORY-0412-the-account-screens.md) | The account screens — sign up, sign in, sign out, and which routes are live | 0406, 0411 | **ready**, split into 27 tickets on 2026-08-26 — `TASK-041201` is startable; the last two in the chain read `blocked` on `DEC-077` (the product owner's), **answered the same day** by [`ADR-0083`](../../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md) and waiting only on the planner folding it in. **Two** account screens, which `ADR-0076` §1 left to this story: `#/account`, and a sign-in screen the product now calls ***Sign in*** at `#/sign-in` |
 | [STORY-0413](../stories/STORY-0413-the-history-screen.md) | The history screen — pages, filters, search | 0409, 0411 | backlog |
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
 | [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | backlog |
@@ -212,30 +212,52 @@ raised on 2026-08-23 when `STORY-0405` was split, was answered on 2026-08-24 and
 too. `STORY-0412` was gated by no decision at all when it was split, and the four new ones blocked
 six tickets inside `STORY-0416` and nothing else in this epic. **That sentence has since stopped
 being true in one respect and is corrected rather than deleted:** splitting `STORY-0412` on
-2026-08-26 raised `DEC-077`, which gates the last two of its twenty-seven tickets.
+2026-08-26 raised `DEC-077`, which gated the last two of its twenty-seven tickets and was answered
+the same day.
 
-**The table below carries one, raised on 2026-08-26 when `STORY-0412` was split: `DEC-077`, the
-product owner's.** `DEC-075` — a fifth from the `STORY-0416` split, raised on 2026-08-25 by
+**This epic has no open decision. `DEC-077`, the product owner's, was raised on 2026-08-26 when
+`STORY-0412` was split and answered on 2026-08-26 — the table that carried it is gone, and what it
+settled is recorded below.** `DEC-075` — a fifth from the `STORY-0416` split, raised on 2026-08-25 by
 [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
 rather than by the split, and blocking nothing — was answered the same day and is recorded below.
 `DEC-076` — a sixth, raised on 2026-08-26 by an implementation attempt on `TASK-041626` rather than
 by a planner or an ADR — was **registered and answered in the same PR** and is recorded below too.
 
-`DEC-077` asks **what the product calls the screen a player opens to reach an account from a browser
-that does not hold it, and therefore what that screen's permanent slug is.** It is the product
+`DEC-077` asked **what the product calls the screen a player opens to reach an account from a browser
+that does not hold it, and therefore what that screen's permanent slug is.** It was the product
 owner's because `ADR-0076` §1 makes a slug the lowercase form of a word the product already says and
 states outright that the ADR **coins no player-facing vocabulary**: a screen needing a word the
 product does not yet say is a product question. `STORY-0412` settled the count `ADR-0076` §1 left to
 it — **two** account screens — and one of the two names was found already merged rather than coined,
 since `ADR-0050` §3, `ADR-0036` and `ADR-0056` §2 each say *account* to a player, so `#/account`
-ships in `TASK-041222` with nothing invented. The second screen has only a **verb** in the merged
-record (`ADR-0050` §3's *"You stay signed in here"*) and a slug wants a noun, as `duels`,
-`leaderboard`, `reset` and `verify` each are. It is **not** the human's: it adds nothing to and takes
-nothing from the vision's *What it is* / *What it is not*, it costs no money and moves no roadmap
-row, and the vision's *Positioning* sentence — *"Lichess and Chess.com… Dark, quiet, fast,
-minimal"*, the same sentence `ADR-0056` and `ADR-0078` derived from — is the input the product owner
-already has. It blocks `TASK-041226` and `TASK-041227`, the last two tickets in the story, and
+ships in `TASK-041222` with nothing invented. The second screen had only a **verb** in the merged
+record (`ADR-0050` §3's *"You stay signed in here"*). It was **not** the human's: it adds nothing to
+and takes nothing from the vision's *What it is* / *What it is not*, it costs no money and moves no
+roadmap row, and the vision's *Positioning* sentence — *"Lichess and Chess.com… Dark, quiet, fast,
+minimal"*, the same sentence `ADR-0056` and `ADR-0078` derived from — was the input the product owner
+already had. It blocked `TASK-041226` and `TASK-041227`, the last two tickets in the story, and
 nothing else in this epic.
+
+It was answered on 2026-08-26 by
+[`ADR-0083`](../../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md):
+**the second account screen is *Sign in*, and its address is never refused.** Nothing is coined —
+`ADR-0050` §3's merged text already says *sign in* to a player twice, and the *Positioning* sentence
+above is what licensed the plain word over a themed one. The heading is `SIGN_IN_HEADING = "Sign in"`
+and **the slug is `sign-in`**, a literal in `screen.ts`, with **the hyphen taken from the product's
+own spelling** in `POST /api/auth/sign-in` rather than from a slugifier — so the client's address and
+the server's path read the same character for character. That widens `ADR-0076` §1's *"a word"* to a
+hyphenated compound for this one word, and writes down the rule that survives it. **The word is said
+twice from one constant**: the screen's heading and the single door on the account screen, offered
+only when `signedIn` is false (`ADR-0060` §2), with no fourth door on the lobby. **The address is
+refused to nobody** — a browser holding a session token that opens `#/sign-in` gets the screen, and
+holding a token is **not** a fourth branch, because `signedIn` means *this browser holds a string*,
+nothing here reacts to a `401`, and `ADR-0050` §3 leaves every other device holding a dead one. Those
+are the browsers that need the screen most, and `ADR-0076` §2 forbids an address that makes a second
+claim about entitlement. `ADR-0076` §3's three store-owned branches still outrank it. **A successful
+sign-in lands on `#/account`**, because the account screen's routes statement is the only
+confirmation this product has. `TASK-041226` and `TASK-041227` are unblocked by it, and the planner
+folds in three corrections: the `^[a-z]+$` criterion widens, `TASK-041227` gains the landing rule and
+a fourth file, and the heading is queried by role.
 
 `DEC-054` — *does the web client grow URL-addressable routes and a working browser Back, and what
 carries them?* — was answered on 2026-08-25 by
@@ -273,9 +295,8 @@ this ship without it"*, and *"a build with no sender configured is a valid state
 vision's *What it is* / *What it is not*: the human chose *optional email, recovery only* when they
 answered `DEC-027`, and these four apply that choice rather than revisiting it.
 
-| ID | Question | Blocks |
-| --- | --- | --- |
-| `DEC-077` | **The product owner's** — what does the product call the screen a player opens to reach an account from a browser that does not hold it, and therefore what is that screen's permanent slug? | `TASK-041226`, `TASK-041227` |
+**No table follows, because there is nothing to put in it: every decision this epic has raised is
+answered.** The row that stood here was `DEC-077`, struck by the PR that answered it.
 
 `DEC-076` — raised on 2026-08-26 by a coder on `TASK-041626` who blocked rather than guessing, and
 blocking that one ticket — was **registered and answered in the same PR** by
