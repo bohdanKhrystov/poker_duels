@@ -11,7 +11,7 @@ tier: sonnet
 review: standard
 files_touched: 2
 labels: [client, routing, lobby]
-depends_on: [TASK-041203]
+depends_on: [TASK-041228]
 verify:
   - cd web-client && npm ci
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'shows the duel to a player a frame seats, whatever address they were reading'

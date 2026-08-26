@@ -36,6 +36,14 @@ creates it — everything after it can and must.
 | --- | --- | --- |
 | [TASK-000101](../tasks/TASK-000101-bootstrap-repository.md) | Bootstrap repository, documents and ticket system | in-review |
 | [TASK-000102](../tasks/TASK-000102-enable-branch-protection.md) | Enable branch protection on main and develop | blocked |
+| [TASK-000106](../tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) | The board and the ticket file are one register, and the linter reads both | backlog |
+
+> **This table is a third register and it is out of step.** It names three of this story's six
+> tickets, and the cells above were written before `TASK-000103`, `TASK-000104` and `TASK-000105`
+> existed. `tasks/BOARD.md` and each ticket file are the two registers `TASK-000106` puts a gate
+> between; a story file's own task table is deliberately **not** one of them, for the reason that
+> ticket's `## Out of scope` gives. Left as found rather than quietly repaired: every cell here is a
+> claim about a status, and this is not the pull request that gets to make one.
 
 ## Acceptance criteria
 

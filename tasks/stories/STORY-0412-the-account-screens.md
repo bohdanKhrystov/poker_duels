@@ -47,9 +47,22 @@ player can see it and end it.
 
 ## Tasks
 
-Split on 2026-08-26 into **27**, in a single linear chain: every ticket after the first depends on
-the one before it, because the story's files overlap heavily — `Lobby.tsx` is edited by four tickets,
-`screen.ts` by three, `main.tsx` by two and `App.test.tsx` by five.
+Split on 2026-08-26 into **27**, and amended the same day to **29**, in a single linear chain: every
+ticket after the first depends on the one before it, because the story's files overlap heavily —
+`Lobby.tsx` is edited by four tickets, `screen.ts` by three, `main.tsx` by three and `App.test.tsx`
+by six.
+
+**The two added tickets, neither of them a decision.** `TASK-041228` sits fourth, straight after
+`TASK-041203`, and closes a gate that cannot see what it claims to: `TASK-041202`'s `## Proof` step 3
+predicted that swapping `useScreen`'s subscription from `hashchange` to `popstate` would redden two
+tests, and it reddens **none** — this jsdom fires both events on a microtask for a hash assignment
+where a browser fires only one, so no test in that file can tell the two subscriptions apart.
+`ADR-0076` §5 names that trap *because it is silent*; the gate on it was silent too. `TASK-041229`
+sits last and carries `ADR-0083` §5's landing rule, which `TASK-041227` was written before `DEC-077`
+was answered and cannot hold: the rule reaches `main.tsx`, a fourth file, and **no merged gate
+refuses the intermediate state** — the client gate is green with the screen and no landing rule, and
+green with the landing rule and no screen. Four files with nothing holding them together is two
+tickets rather than an `atomic:` of four (`ADR-0068`, `ADR-0070`).
 
 **How many account screens, and what they are called.** `ADR-0076` §1 left the count to this story
 and the count is **two**: the account screen at `#/account`, which claims the profile in hand and
@@ -92,6 +105,7 @@ criterion names — and `TASK-041222` gates the structural half.
 | [TASK-041201](../tasks/TASK-041201-the-address-of-a-screen-is-a-pure-function-of-its-fragment.md) | The address of a screen, as a pure function of its fragment | ready |
 | [TASK-041202](../tasks/TASK-041202-the-hook-that-carries-the-address-and-the-trap-that-is-silent.md) | The hook that carries the address, and the trap that makes a stale render look like React | backlog |
 | [TASK-041203](../tasks/TASK-041203-the-lobby-reads-the-address-instead-of-two-flags.md) | The lobby reads the address instead of two flags, and Back stops leaving the client | backlog |
+| [TASK-041228](../tasks/TASK-041228-the-hook-answers-a-hashchange-and-ignores-a-popstate.md) | The hook answers a hashchange and ignores a popstate, which no test can currently tell apart | backlog |
 | [TASK-041204](../tasks/TASK-041204-the-store-outranks-the-address-and-the-address-stops-lying.md) | The store outranks the address, and a seated player's address stops lying | backlog |
 | [TASK-041205](../tasks/TASK-041205-the-token-this-browser-holds-lives-under-one-key.md) | The session token this browser holds lives under one key | backlog |
 | [TASK-041206](../tasks/TASK-041206-hello-carries-the-session-and-the-device-id-still-never-moves.md) | Hello carries the session this browser holds, and the device id still never moves | backlog |
@@ -114,8 +128,9 @@ criterion names — and `TASK-041222` gates the structural half.
 | [TASK-041223](../tasks/TASK-041223-the-account-calls-reach-the-real-transport.md) | The account calls reach the real transport, and sign-in reaches it carrying nothing | backlog |
 | [TASK-041224](../tasks/TASK-041224-no-secret-reaches-a-url-and-no-body-carries-a-player-id.md) | No secret reaches a URL, and no request body carries a player id | backlog |
 | [TASK-041225](../tasks/TASK-041225-the-sign-in-form.md) | The sign-in form, and one sentence for both ways it can be refused | backlog |
-| [TASK-041226](../tasks/TASK-041226-the-sign-in-screens-word-and-its-slug.md) | The sign-in screen's word, and the address that word becomes | **blocked** — `DEC-077` **answered**; unblocked when the planner folds `ADR-0083` in |
-| [TASK-041227](../tasks/TASK-041227-the-sign-in-screen-at-its-address-and-the-door-to-it.md) | The sign-in screen at its address, and the door to it from the account screen | **blocked** — `DEC-077` **answered**; unblocked when the planner folds `ADR-0083` in |
+| [TASK-041226](../tasks/TASK-041226-the-sign-in-screens-word-and-its-slug.md) | The sign-in screen's word, and the address that word becomes | backlog |
+| [TASK-041227](../tasks/TASK-041227-the-sign-in-screen-at-its-address-and-the-door-to-it.md) | The sign-in screen at its address, and the door to it from the account screen | backlog |
+| [TASK-041229](../tasks/TASK-041229-a-successful-sign-in-lands-on-the-account-screen.md) | A successful sign-in starts the next boot on the account screen, with no way back to sign-in | backlog |
 
 ## Open decisions
 
@@ -123,11 +138,14 @@ criterion names — and `TASK-041222` gates the structural half.
 browser that does not hold it, and therefore what is that screen's permanent slug?* — was answered on
 2026-08-26 by
 [`ADR-0083`](../../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md),
-and the row it occupied here is struck by the PR that answered it. What the answer changes in the two
-tickets is the planner's to fold in: `TASK-041226`'s *the slug matches `^[a-z]+$`* criterion widens to
-`^[a-z]+(-[a-z]+)*$` for the hyphen; `TASK-041227` gains `ADR-0083` §5's landing rule, which reaches
-`main.tsx` and so a fourth file; and both tickets query the *Sign in* heading by role, because
-`SIGN_IN_LABEL` puts the same string on the submit button under it.
+and the row it occupied here is struck by the PR that answered it. **The answer was folded into the
+split on 2026-08-26** and both tickets are unblocked: `TASK-041226`'s *the slug matches `^[a-z]+$`*
+criterion widened to `^[a-z]+(-[a-z]+)*$` and its proof step on the hyphen inverted — the hyphen is
+now the correct spelling, from `POST /api/auth/sign-in`, and the underscore is what must fail;
+§5's landing rule became `TASK-041229` rather than a fourth file on `TASK-041227`; and the *Sign in*
+heading is queried **by role**, because `SIGN_IN_LABEL` puts the identical six characters on the
+submit button beneath it, so `getByText("Sign in")` throws *found multiple elements*. Nothing in
+`ADR-0083` needed a further decision.
 
 ## Acceptance criteria
 
