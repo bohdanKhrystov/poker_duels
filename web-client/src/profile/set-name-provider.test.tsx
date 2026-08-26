@@ -29,6 +29,7 @@ describe("the set-name provider", () => {
         displayName: "Ada",
         coinBalance: 100,
         displayNameRemoved: false,
+        deviceRouteLive: false,
       },
     }));
 

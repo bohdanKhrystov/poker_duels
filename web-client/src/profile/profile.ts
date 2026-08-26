@@ -15,6 +15,8 @@ export interface PlayerProfile {
   readonly displayName: string | null;
   /** `true` only when they hold no name and one was removed from them (`ADR-0053`). */
   readonly displayNameRemoved: boolean;
+  /** `true` exactly when this player holds a live device binding; `false` covers revoked and never bound (`ADR-0049` §5). */
+  readonly deviceRouteLive: boolean;
 }
 
 export type ProfileRead =
@@ -25,9 +27,8 @@ export type ProfileRead =
 /**
  * Parses a wire body into a `PlayerProfile`, or returns `null` if the body is invalid.
  *
- * Both `displayName` and `displayNameRemoved` are required on the wire — no defaults.
- * The body must have `playerId` (string), `coinBalance` (number), `displayName` (string or null),
- * and `displayNameRemoved` (boolean). A missing or wrong-typed field answers `null`.
+ * `playerId`, `coinBalance`, `displayName`, `displayNameRemoved`, and `deviceRouteLive`
+ * are required on the wire — no defaults. A missing or wrong-typed field answers `null`.
  */
 export function profileFromBody(body: unknown): PlayerProfile | null {
   if (
@@ -35,7 +36,8 @@ export function profileFromBody(body: unknown): PlayerProfile | null {
     body !== null &&
     typeof (body as Record<string, unknown>).playerId === "string" &&
     typeof (body as Record<string, unknown>).coinBalance === "number" &&
-    typeof (body as Record<string, unknown>).displayNameRemoved === "boolean"
+    typeof (body as Record<string, unknown>).displayNameRemoved === "boolean" &&
+    typeof (body as Record<string, unknown>).deviceRouteLive === "boolean"
   ) {
     const displayName = (body as Record<string, unknown>).displayName;
     if (typeof displayName === "string" || displayName === null) {
@@ -45,6 +47,8 @@ export function profileFromBody(body: unknown): PlayerProfile | null {
         displayName,
         displayNameRemoved: (body as Record<string, unknown>)
           .displayNameRemoved as boolean,
+        deviceRouteLive: (body as Record<string, unknown>)
+          .deviceRouteLive as boolean,
       };
     }
   }
