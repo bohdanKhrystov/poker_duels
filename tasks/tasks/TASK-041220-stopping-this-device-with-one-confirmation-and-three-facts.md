@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041220
 title: Stopping this device signing in, offered only where it is safe, with three facts first
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S

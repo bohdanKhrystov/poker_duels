@@ -147,7 +147,7 @@ fixture and reddens on any platform.
 | | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
 | | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | **done** |
 | | [TASK-000105](tasks/TASK-000105-two-build-files-that-were-never-source.md) Two build files that were never source | XS | done |
-| | [TASK-000106](tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) The board and the ticket file are one register, and the linter reads both | S | backlog |
+| | [TASK-000106](tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) The board and the ticket file are one register, and the linter reads both | S | **ready** |
 
 `TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
 Actions minutes free at once, and `develop` is now protected: a pull request and two green checks
@@ -2461,7 +2461,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041217](tasks/TASK-041217-the-account-screen-states-which-routes-sign-in.md) The account screen states which routes sign in to this profile, in both states | S | **done** |
 | | [TASK-041218](tasks/TASK-041218-the-sign-up-form-on-the-account-screen.md) The sign-up form — one credential, and the strip is the same profile afterwards | S | **done** |
 | | [TASK-041219](tasks/TASK-041219-a-throttled-sign-up-says-so-keeps-what-was-typed-and-retries-nothing.md) A throttled sign-up says so, keeps what was typed, and retries nothing | S | **done** |
-| | [TASK-041220](tasks/TASK-041220-stopping-this-device-with-one-confirmation-and-three-facts.md) Stopping this device signing in, offered only where it is safe, with three facts first | S | backlog |
+| | [TASK-041220](tasks/TASK-041220-stopping-this-device-with-one-confirmation-and-three-facts.md) Stopping this device signing in, offered only where it is safe, with three facts first | S | **ready** |
 | | [TASK-041221](tasks/TASK-041221-signing-out-asks-first-and-says-what-it-costs.md) Signing out asks first, and says what it costs before it acts | S | backlog |
 | | [TASK-041231](tasks/TASK-041231-whether-this-browser-holds-a-token-reaches-the-tree.md) Whether this browser holds a token is read once, above the tree | S | backlog — inserted 2026-08-26 between `TASK-041221` and `TASK-041222`. `AccountScreen`'s `signedIn` prop is required and merged, and **there was no path to it**: `App.tsx` renders `<Lobby />` with no props and `Lobby()` takes none, so nothing `main.tsx` computes reaches the lobby except through a context. `TASK-041222` could not compile inside its three files and `TASK-041223` lands after it. The carrier needs no decision — `Lobby.tsx` already imports `useHistory` and `useLadder` from `../main` |
 | | [TASK-041222](tasks/TASK-041222-the-account-screen-has-an-address-and-the-lobby-has-the-door.md) The account screen has an address, and the lobby has the door | S | backlog — amended 2026-08-26: `## Scope` authorised a `main.tsx` edit its *Files* table forbids, the seventh disagreement of that shape this run. The flag now arrives through `useSignedIn()` and `main.tsx` is refused in `## Out of scope`; `depends_on` moves to `TASK-041231` |
@@ -2529,7 +2529,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041635](tasks/TASK-041635-the-fold-the-address-index-depends-on-written-down-in-the-catalog.md) The fold the address index depends on, written down in the catalog | S | done |
 | | [TASK-041636](tasks/TASK-041636-the-attach-path-gets-the-quarter-hour-of-silence-the-reset-path-has.md) The attach path gets the quarter hour of silence the reset path has | S | done |
 | | [TASK-041637](tasks/TASK-041637-the-second-attach-in-a-quarter-hour-is-answered-the-same-and-mails-nothing.md) The second attach in a quarter hour is answered the same, and mails nothing | S | done |
-| | [TASK-041638](tasks/TASK-041638-the-shape-gate-holds-for-four-more-shapes-and-names-the-one-it-cannot.md) The shape gate holds for four more shapes, and names the one it cannot | S | backlog |
+| | [TASK-041638](tasks/TASK-041638-the-shape-gate-holds-for-four-more-shapes-and-names-the-one-it-cannot.md) The shape gate holds for four more shapes, and names the one it cannot | S | **ready** |
 | | [TASK-041639](tasks/TASK-041639-a-reset-that-cannot-write-the-password-spends-no-token.md) A reset that cannot write the password spends no token | XS | **done** |
 | | [TASK-041640](tasks/TASK-041640-a-failure-between-the-password-and-the-sessions-undoes-both.md) A failure between the password and the sessions undoes both | S | **done** |
 | | [TASK-041641](tasks/TASK-041641-the-profiles-recovery-flag-is-that-players-and-a-pending-address-is-not-one.md) The profile's recovery flag is that player's, and a pending address is not one | XS | done |
