@@ -2,7 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { act, render, screen, fireEvent } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { App } from "./App";
 import { DuelProvider } from "./store/duel-provider";
@@ -234,32 +240,41 @@ describe("App", () => {
     const yourDuelsButton = screen.getByRole("button", { name: "Your duels" });
     fireEvent.click(yourDuelsButton);
 
-    // The history screen is shown, once the queued hashchange re-renders
-    const historyScreen = await screen.findByLabelText("your duels");
+    // The history screen is shown and the create button is gone, read off
+    // the same settled render: checked as two assertions in sequence, a
+    // button that flickers back after the label appears and disappears
+    // again before the second check runs would pass unnoticed. Asserted
+    // together inside one waitFor, only a render where both hold at once
+    // can satisfy it.
+    const historyScreen = await waitFor(() => {
+      const found = screen.getByLabelText("your duels");
+      expect(
+        screen.queryByRole("button", { name: "Create a duel room" }),
+      ).toBeNull();
+      return found;
+    });
     expect(historyScreen).toBeDefined();
 
     // The address names the record
     expect(window.location.hash).toBe("#/duels");
 
-    // The create button is gone
-    expect(
-      screen.queryByRole("button", { name: "Create a duel room" }),
-    ).toBeNull();
-
     // Click "Back" button
     const backButton = screen.getByRole("button", { name: "Back" });
     fireEvent.click(backButton);
 
-    // The create button is back
-    expect(
-      await screen.findByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    // The create button is back and the history screen is gone, read off
+    // the same settled render, for the same reason as above
+    const createButtonAgain = await waitFor(() => {
+      const found = screen.getByRole("button", {
+        name: "Create a duel room",
+      });
+      expect(screen.queryByLabelText("your duels")).toBeNull();
+      return found;
+    });
+    expect(createButtonAgain).toBeDefined();
 
     // The address is back at the first screen
     expect(window.location.hash).toBe("");
-
-    // The history screen is gone
-    expect(screen.queryByLabelText("your duels")).toBeNull();
   });
 
   it("leaves the first screen for the ladder, and comes back to it", async () => {
@@ -280,32 +295,41 @@ describe("App", () => {
     });
     fireEvent.click(leaderboardButton);
 
-    // The ladder screen is shown, once the queued hashchange re-renders
-    const ladderScreen = await screen.findByLabelText("leaderboard");
+    // The ladder screen is shown and the create button is gone, read off
+    // the same settled render: checked as two assertions in sequence, a
+    // button that flickers back after the label appears and disappears
+    // again before the second check runs would pass unnoticed. Asserted
+    // together inside one waitFor, only a render where both hold at once
+    // can satisfy it.
+    const ladderScreen = await waitFor(() => {
+      const found = screen.getByLabelText("leaderboard");
+      expect(
+        screen.queryByRole("button", { name: "Create a duel room" }),
+      ).toBeNull();
+      return found;
+    });
     expect(ladderScreen).toBeDefined();
 
     // The address names the leaderboard
     expect(window.location.hash).toBe("#/leaderboard");
 
-    // The create button is gone
-    expect(
-      screen.queryByRole("button", { name: "Create a duel room" }),
-    ).toBeNull();
-
     // Click "Back" button
     const backButton = screen.getByRole("button", { name: "Back" });
     fireEvent.click(backButton);
 
-    // The create button is back
-    expect(
-      await screen.findByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    // The create button is back and the ladder screen is gone, read off
+    // the same settled render, for the same reason as above
+    const createButtonAgain = await waitFor(() => {
+      const found = screen.getByRole("button", {
+        name: "Create a duel room",
+      });
+      expect(screen.queryByLabelText("leaderboard")).toBeNull();
+      return found;
+    });
+    expect(createButtonAgain).toBeDefined();
 
     // The address is back at the first screen
     expect(window.location.hash).toBe("");
-
-    // The ladder screen is gone
-    expect(screen.queryByLabelText("leaderboard")).toBeNull();
   });
 
   it("mounted history screen carries exactly one heading", async () => {
