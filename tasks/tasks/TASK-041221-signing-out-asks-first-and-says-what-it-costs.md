@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041221
 title: Signing out asks first, and says what it costs before it acts
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S

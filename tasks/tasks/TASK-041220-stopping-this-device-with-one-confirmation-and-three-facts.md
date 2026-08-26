@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041220
 title: Stopping this device signing in, offered only where it is safe, with three facts first
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -140,3 +140,39 @@ Seven tests in a new file: `npm run test -- src/account/RevokeControl.test.tsx` 
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A gap measured with a scratch test, then judged unreachable rather than merely unguarded.** Asked
+which test catches the control revoking without waiting for confirmation, the coder gave two readings
+and proved the second. *Called from the first press* is caught by two tests. A **same-tick double
+dispatch on the confirm button** is caught by none — and it did not assert that: it wrote a scratch
+test nesting two `fireEvent.click` calls in one outer `act()`, measured `revoke` called **2 times**,
+then deleted the scratch with `git clean -f`. `confirm()` has no re-entrancy guard beyond `disabled`.
+
+Review then placed it correctly: **unreachable in practice.** A disabled button cannot be clicked by a
+user, and two real clicks are separate events React flushes between, so `disabled` applies in the gap.
+The race exists only when a test batches both dispatches into one `act()`. That is *foreclosed*, not
+*open* — no ticket. Worth recording because this story has produced all three answers, and each needs
+a different response: `TASK-041643`'s collation clause was genuinely unguarded and got a ticket;
+`TASK-041632`'s class-load concern was foreclosed by a parameter; this one is foreclosed by the event
+model.
+
+**The coder declined to ship an eighth test**, correctly — the Tests table does not call for it and
+`verify:` pins the count at seven. Widening a ticket to close a gap it does not own is how a Files
+table stops meaning anything.
+
+**Two refusals stay distinguishable here, which is the opposite of sign-in's rule.** `no-credential`
+and `failed` must render **different** sentences, gated by `expect(noCredentialMessage).not.toBe
+(failedMessage)`. Sign-in's two refusals are deliberately one answer (`ADR-0031`); this control's are
+different facts about different things, and the two shapes look identical from a distance.
+
+**A design decision the ticket left open and the Files table constrained.** It requires the two
+refusals to differ but names no strings, and `account-text.ts` has no dedicated constants — a file this
+ticket may not open. The coder reused `SIGN_UP_LABEL` for `no-credential` (it names the action that
+fixes the situation) and `SIGN_UP_FAILED` for `failed`/`no-session`, **declaring nothing new**. Review
+judged the reuse defensible under the constraint. Dedicated copy would be a follow-up touching
+`account-text.ts`, not a change here.
+
+**Every "offers nothing" assertion is synchronous** — `queryBy…toBeNull()`, never `findBy`/`waitFor`,
+which retry until a condition holds and so cannot express *this did not happen*.
