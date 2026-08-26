@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041118
 title: Two clicks inside one act, or the in-flight guard is not the thing under test
 type: task
-status: ready
+status: done
 parent: STORY-0411
 module: web-client
 estimate: XS
@@ -163,3 +163,37 @@ leaving `setIsSubmitting(true)`, the `disabled={isSubmitting}` binding and the `
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The old test asserted the right property and passed for the wrong reason — a failure distinct from
+the ones this run has been finding.** It was not a fixture blind to its property, nor an assertion
+that could not redden. It measured a **real** effect produced by a **different** mechanism than the
+one under test.
+
+The full chain, verified by coder and reviewer independently: `fireEvent` wraps each call in its own
+`act()`, so in the merged test the first click dispatches, React flushes, `isSubmitting` commits, the
+**button becomes `disabled`**, and jsdom suppresses the second click entirely. The observed call count
+of `1` came from the disabled attribute — a fact the **state guard alone** produces. The
+`submitInFlight` ref was never exercised, and the test could not distinguish a component holding a ref
+from one holding none.
+
+**Both halves of the proof were measured, and both were necessary.** The mutation — delete the ref
+guard, keep the state — run against the **merged** test gives **9 passed, green**, which is what
+demonstrates the defect was real. The same mutation against the **fixed** test gives *expected "spy"
+to be called 1 times, but got 2 times*. A red result alone would not distinguish a repaired gate from
+one that was never broken.
+
+**The fix is entirely in the test; `NameSurface.tsx` is byte-unchanged** and `submitInFlight` still
+occurs four times. Wrapping both dispatches in **one outer** `act()` defers the inner flushes, so the
+button never disables between them, the second click actually runs, and only the ref stops it.
+
+**A criterion counts `act(() => {` at exactly 2, and that count is load-bearing.** The mutation reddens
+identically whether one click-pair or both are wrapped, so it **cannot distinguish a half-fix** — the
+count is the only thing that does. The coder also measured that `await act(async () => {…})` changes
+nothing and reverted to the synchronous form to keep the count exact.
+
+**An environment quirk worth knowing before it wastes an hour.** This session's command-safety checker
+refuses the inline form `test "$(grep -c 'act(() => {' …)" = 2`, misreading the nested parentheses;
+the identical logic runs fine from a script file. That is a sandbox artefact, not an unsatisfiable
+criterion.
