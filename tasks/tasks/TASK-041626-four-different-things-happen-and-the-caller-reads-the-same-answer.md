@@ -9,7 +9,9 @@ module: poker-server
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 3
+files_touched: 4
+atomic:
+  - everyApiPathInTheRouteSourcesIsExercisedByTheScenario fails on a commit that adds the route without the endpoint entry
 labels: [server, http, auth, security, blocked]
 depends_on: [TASK-041644]
 verify:
@@ -22,6 +24,7 @@ verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.http.ForgotPasswordRouteTest.theResponseNeverCarriesTheAddress' -PrequireDocker=true
   - ./gradlew :poker-server:ktlintCheck
   - ./gradlew :poker-server:detekt
+  - ./gradlew :poker-server:check
 ---
 
 > **One `--tests` per command, deliberately.** A whole-class filter exits 0 whether or not a named
@@ -70,6 +73,7 @@ reset token only for a verified address that has not been mailed in the last fif
 | `poker-server/src/main/kotlin/duels/poker/server/protocol/http/RecoveryDtos.kt` | modify |
 | `poker-server/src/main/kotlin/duels/poker/server/http/RecoveryRoutes.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/http/ForgotPasswordRouteTest.kt` | create |
+| `poker-server/src/test/kotlin/duels/poker/server/e2e/IdentityMovesNoCoinTest.kt` | modify |
 
 Read, and do not edit:
 `poker-server/src/main/kotlin/duels/poker/server/auth/PasswordResets.kt` — `issue` already returns
