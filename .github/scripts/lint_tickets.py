@@ -321,6 +321,130 @@ def check_links(tickets: dict[str, dict]) -> None:
                 fail(where, f"status is 'ready' but these are not done: {', '.join(unmet)}")
 
 
+def normalize_status(raw: str) -> str:
+    """Normalize a board status cell for comparison.
+
+    Takes the text before the first em dash, strips markdown formatting and whitespace,
+    and lowercases. Handles bold (**status**), strikethrough (~~status~~), backticks,
+    and prose after an em dash (— explanation).
+    """
+    # Take text before the first em dash
+    text = raw.split(" — ")[0].strip()
+    # Strip markdown formatting and whitespace
+    text = text.replace("*", "").replace("~", "").replace("`", "").strip()
+    return text.lower()
+
+
+def split_table_row(line: str) -> list[str]:
+    """Split a markdown table row into cells, respecting backtick-quoted code spans.
+
+    Pipes inside backticks are not treated as separators. Without backtick awareness, a cell
+    containing `grep -o … \| wc -l` would be incorrectly split at the escaped pipe, creating
+    false cell boundaries and wrong status extraction. The board contains such cells (e.g.,
+    TASK-041223), so this parser tracks backtick state to distinguish pipes inside code from
+    table separators.
+    """
+    # Remove leading and trailing pipes and whitespace
+    line = line.strip()
+    if line.startswith("|"):
+        line = line[1:]
+    if line.endswith("|"):
+        line = line[:-1]
+
+    # Split on pipes that are not inside backticks
+    cells: list[str] = []
+    current_cell = ""
+    in_backticks = False
+
+    for char in line:
+        if char == "`":
+            in_backticks = not in_backticks
+            current_cell += char
+        elif char == "|" and not in_backticks:
+            cells.append(current_cell.strip())
+            current_cell = ""
+        else:
+            current_cell += char
+
+    if current_cell:
+        cells.append(current_cell.strip())
+
+    return cells
+
+
+def read_board_statuses() -> dict[str, str]:
+    """Read task statuses from tasks/BOARD.md.
+
+    Returns a dict mapping task ID to normalized status. Only recognizes rows with
+    markdown links to task files: ](tasks/TASK-NNNNNN-….md). Prose mentions of task
+    IDs outside of table rows are ignored.
+    """
+    board_path = TASKS / "BOARD.md"
+    if not board_path.exists():
+        return {}
+
+    board_statuses: dict[str, str] = {}
+    text = board_path.read_text(encoding="utf-8")
+
+    for line in text.splitlines():
+        # A board row is a line whose stripped form starts with | and contains a task link
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+
+        # Look for a task link: ](tasks/TASK-NNNNNN-….md)
+        task_link_pattern = re.compile(r"\]\(tasks/(TASK-\d{6}-[^)]*\.md)\)")
+        match = task_link_pattern.search(line)
+        if not match:
+            continue
+
+        # Extract the task ID from the link
+        link_text = match.group(1)
+        task_id_match = re.match(r"(TASK-\d{6})", link_text)
+        if not task_id_match:
+            continue
+        task_id = task_id_match.group(1)
+
+        # Extract the last cell as the status
+        cells = split_table_row(line)
+        if not cells:
+            continue
+        status_cell = cells[-1]
+
+        # Normalize and store
+        board_statuses[task_id] = normalize_status(status_cell)
+
+    return board_statuses
+
+
+def check_board_register(tickets: dict[str, dict]) -> None:
+    """Verify that board status cells match their corresponding ticket files.
+
+    Fails if:
+    - A task file has no corresponding board row
+    - A board row's status differs from its file's status
+    """
+    board_statuses = read_board_statuses()
+
+    # Check each task file has a board row with matching status
+    for task_id, data in tickets.items():
+        if data["type"] != "task":
+            continue
+
+        if task_id not in board_statuses:
+            fail("tasks/BOARD.md", f"task {task_id} has no board row")
+            continue
+
+        board_status = board_statuses[task_id]
+        file_status = str(data.get("status", "")).lower()
+
+        if board_status != file_status:
+            fail(
+                "tasks/BOARD.md",
+                f"task {task_id}: board says '{board_status}', file says '{file_status}'"
+            )
+
+
 def startable(tickets: dict[str, dict]) -> list[dict]:
     """Tasks an agent can begin right now, in dependency then id order.
 
@@ -346,6 +470,7 @@ def main() -> int:
 
     tickets = collect()
     check_links(tickets)
+    check_board_register(tickets)
 
     counts = {t: sum(1 for d in tickets.values() if d["type"] == t) for t in ID_PATTERNS}
     if errors:
