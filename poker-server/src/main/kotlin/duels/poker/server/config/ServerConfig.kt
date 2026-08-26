@@ -43,6 +43,13 @@ public data class ServerConfig(
     // This field has a default so that existing construction sites can compile without
     // specifying the recovery link origin, which is only read when a mail sender is configured.
     val baseUrl: String = DEFAULT_BASE_URL,
+    // These four fields have defaults for the same reason the sign-up and sign-in pairs above do:
+    // existing construction sites compile without specifying the two recovery budgets ADR-0079
+    // fixes, which are only used by TASK-041628.
+    val forgotPasswordMaxAttempts: Int = 10,
+    val forgotPasswordWindowMillis: Long = 60_000L,
+    val recoveryEmailMaxAttempts: Int = 5,
+    val recoveryEmailWindowMillis: Long = 60_000L,
 ) {
     /** Bundles the three room timeouts so callers do not reassemble them. */
     public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(roomWaitingTimeoutMillis, roomFinishedTimeoutMillis, disconnectGraceMillis)
@@ -52,6 +59,12 @@ public data class ServerConfig(
 
     /** Bundles the sign-in budget's two numbers so callers do not reassemble them. */
     public fun signInLimits(): AttemptLimits = AttemptLimits(signInMaxAttempts, signInWindowMillis)
+
+    /** Bundles the `forgot-password` budget's two numbers so callers do not reassemble them. */
+    public fun forgotPasswordLimits(): AttemptLimits = AttemptLimits(forgotPasswordMaxAttempts, forgotPasswordWindowMillis)
+
+    /** Bundles the `recovery-email` budget's two numbers so callers do not reassemble them. */
+    public fun recoveryEmailLimits(): AttemptLimits = AttemptLimits(recoveryEmailMaxAttempts, recoveryEmailWindowMillis)
 
     public companion object {
         public const val DEFAULT_PORT: Int = 8080
@@ -128,6 +141,22 @@ public data class ServerConfig(
         public const val DEFAULT_BASE_URL: String = "http://localhost:5173"
         public const val BASE_URL_KEY: String = "server.baseUrl"
         public const val BASE_URL_ENV: String = "BASE_URL"
+
+        public const val DEFAULT_FORGOT_PASSWORD_MAX_ATTEMPTS: Int = 10
+        public const val FORGOT_PASSWORD_MAX_ATTEMPTS_KEY: String = "auth.forgotPasswordMaxAttempts"
+        public const val AUTH_FORGOT_PASSWORD_MAX_ATTEMPTS: String = "AUTH_FORGOT_PASSWORD_MAX_ATTEMPTS"
+
+        public const val DEFAULT_FORGOT_PASSWORD_WINDOW_MILLIS: Long = 60_000L
+        public const val FORGOT_PASSWORD_WINDOW_MILLIS_KEY: String = "auth.forgotPasswordWindowMillis"
+        public const val AUTH_FORGOT_PASSWORD_WINDOW_MILLIS: String = "AUTH_FORGOT_PASSWORD_WINDOW_MILLIS"
+
+        public const val DEFAULT_RECOVERY_EMAIL_MAX_ATTEMPTS: Int = 5
+        public const val RECOVERY_EMAIL_MAX_ATTEMPTS_KEY: String = "auth.recoveryEmailMaxAttempts"
+        public const val AUTH_RECOVERY_EMAIL_MAX_ATTEMPTS: String = "AUTH_RECOVERY_EMAIL_MAX_ATTEMPTS"
+
+        public const val DEFAULT_RECOVERY_EMAIL_WINDOW_MILLIS: Long = 60_000L
+        public const val RECOVERY_EMAIL_WINDOW_MILLIS_KEY: String = "auth.recoveryEmailWindowMillis"
+        public const val AUTH_RECOVERY_EMAIL_WINDOW_MILLIS: String = "AUTH_RECOVERY_EMAIL_WINDOW_MILLIS"
 
         /**
          * Build a [ServerConfig] from a Ktor [ApplicationConfig] with environment variable
@@ -276,6 +305,50 @@ public data class ServerConfig(
                 "sign-in window must be an integer, got: $signInWindowMillisString"
             }
 
+            val forgotPasswordMaxAttemptsString = resolve(
+                config,
+                env,
+                AUTH_FORGOT_PASSWORD_MAX_ATTEMPTS,
+                FORGOT_PASSWORD_MAX_ATTEMPTS_KEY,
+                DEFAULT_FORGOT_PASSWORD_MAX_ATTEMPTS.toString(),
+            )
+            val forgotPasswordMaxAttempts = requireNotNull(forgotPasswordMaxAttemptsString.toIntOrNull()) {
+                "forgot-password max attempts must be an integer, got: $forgotPasswordMaxAttemptsString"
+            }
+
+            val forgotPasswordWindowMillisString = resolve(
+                config,
+                env,
+                AUTH_FORGOT_PASSWORD_WINDOW_MILLIS,
+                FORGOT_PASSWORD_WINDOW_MILLIS_KEY,
+                DEFAULT_FORGOT_PASSWORD_WINDOW_MILLIS.toString(),
+            )
+            val forgotPasswordWindowMillis = requireNotNull(forgotPasswordWindowMillisString.toLongOrNull()) {
+                "forgot-password window must be an integer, got: $forgotPasswordWindowMillisString"
+            }
+
+            val recoveryEmailMaxAttemptsString = resolve(
+                config,
+                env,
+                AUTH_RECOVERY_EMAIL_MAX_ATTEMPTS,
+                RECOVERY_EMAIL_MAX_ATTEMPTS_KEY,
+                DEFAULT_RECOVERY_EMAIL_MAX_ATTEMPTS.toString(),
+            )
+            val recoveryEmailMaxAttempts = requireNotNull(recoveryEmailMaxAttemptsString.toIntOrNull()) {
+                "recovery-email max attempts must be an integer, got: $recoveryEmailMaxAttemptsString"
+            }
+
+            val recoveryEmailWindowMillisString = resolve(
+                config,
+                env,
+                AUTH_RECOVERY_EMAIL_WINDOW_MILLIS,
+                RECOVERY_EMAIL_WINDOW_MILLIS_KEY,
+                DEFAULT_RECOVERY_EMAIL_WINDOW_MILLIS.toString(),
+            )
+            val recoveryEmailWindowMillis = requireNotNull(recoveryEmailWindowMillisString.toLongOrNull()) {
+                "recovery-email window must be an integer, got: $recoveryEmailWindowMillisString"
+            }
+
             val baseUrl = resolve(config, env, BASE_URL_ENV, BASE_URL_KEY, DEFAULT_BASE_URL)
             require(baseUrl.isNotEmpty()) {
                 "$BASE_URL_KEY must not be empty"
@@ -304,6 +377,10 @@ public data class ServerConfig(
                 signInMaxAttempts = signInMaxAttempts,
                 signInWindowMillis = signInWindowMillis,
                 baseUrl = baseUrl,
+                forgotPasswordMaxAttempts = forgotPasswordMaxAttempts,
+                forgotPasswordWindowMillis = forgotPasswordWindowMillis,
+                recoveryEmailMaxAttempts = recoveryEmailMaxAttempts,
+                recoveryEmailWindowMillis = recoveryEmailWindowMillis,
             )
         }
 
