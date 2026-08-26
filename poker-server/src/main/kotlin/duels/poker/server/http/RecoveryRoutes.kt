@@ -17,6 +17,7 @@ import duels.poker.server.auth.emailAddressOrNull
 import duels.poker.server.mail.NoRecoveryMailer
 import duels.poker.server.protocol.http.AttachRecoveryEmailRequest
 import duels.poker.server.protocol.http.DetachRecoveryEmailRequest
+import duels.poker.server.protocol.http.ForgotPasswordRequest
 import duels.poker.server.protocol.http.ResetPasswordRequest
 import duels.poker.server.protocol.http.VerifyEmailRequest
 import io.ktor.http.HttpStatusCode
@@ -50,6 +51,46 @@ import kotlinx.coroutines.CancellationException
  * `ADR-0031` §5 makes the three indistinguishable on purpose, and the port already collapses them
  * into one value before this route ever sees the result. This route must not undo that: it never
  * asks which of the three happened, and answers the identical `400` for all three.
+ *
+ * Also installs `POST /api/auth/forgot-password`, which answers `202` in every case and mints a
+ * reset token only for a verified address that has not been mailed in the last fifteen minutes, per
+ * `ADR-0031` §4 and §5 and `ADR-0082` §4. This route is **unauthenticated**, exactly as
+ * `verify-email` above: the caller cannot sign in, which is the whole point of the endpoint.
+ *
+ * The body decodes as [ForgotPasswordRequest] first, but unlike every other decode step in this
+ * file, a decode failure answers `202`, not `400` — `ADR-0031` §5 answers `202` always and lists no
+ * exception for a malformed body, and a `400` here would distinguish a well-formed unknown address
+ * from a malformed one, which is a weaker version of the very oracle §5 refuses. [emailAddressOrNull]
+ * then judges `request.address`; a syntactically invalid address answers the identical `202` and
+ * reaches neither [recoveryEmails] nor [passwordResets].
+ *
+ * **The `202` is written next, before [RecoveryEmails.resetRecipientOf] is called, before
+ * [PasswordResets.issue], and before any send** — the timing defence, not an optimisation: every
+ * outcome from here on (an address nobody has mentioned, one that is pending but unverified, one
+ * that is verified, and a build with no sender configured) is indistinguishable from the outside,
+ * and the join `ADR-0082` added to [RecoveryEmails.resetRecipientOf] runs entirely after this
+ * response, so it costs the caller nothing observable.
+ *
+ * `ADR-0082` §4's five lines follow, and no others: [RecoveryEmails.resetRecipientOf] answers a
+ * [duels.poker.server.auth.ResetRecipient] or this handler returns; [RecoveryTokens.newResetToken]
+ * mints a token; [PasswordResets.issue] stores it, superseding any token the player already held,
+ * unless one was issued less than fifteen minutes ago, in which case it answers `false` and nothing
+ * more happens; and only on `true` does [mailer].[sendPasswordReset][RecoveryMailer.sendPasswordReset]
+ * send it, carrying the recipient's own handle. A `null` from [RecoveryEmails.resetRecipientOf] — an
+ * address nobody has mentioned, one that is only pending, or a verified address whose owner holds no
+ * `password` credential, the three indistinguishable per `ADR-0082` §1 — mints no token: a token
+ * that could never be mailed would still spend the player's fifteen-minute window and supersede a
+ * link they may be holding.
+ *
+ * **The address never appears in a response, a header or a log line from this handler**, exactly as
+ * `recovery-email`'s own handler below — and now that `ADR-0082` gives this handler a login handle
+ * too, neither does that: no `call.respond` here carries a body, and no string template in this
+ * function interpolates [ForgotPasswordRequest.address], an
+ * [EmailAddress][duels.poker.server.auth.EmailAddress] value, or
+ * [duels.poker.server.auth.ResetRecipient.handle].
+ *
+ * One thing this route deliberately does not do, named because a future ticket does it: the budget
+ * `ADR-0079` admits **after** the `202` this route writes — `TASK-041628`'s one line, not built here.
  *
  * Also installs `POST /api/auth/reset-password`, which spends a mailed reset token and rewrites
  * the credential's password, per `ADR-0031` §4. It follows the identical decode-then-refuse shape:
@@ -161,28 +202,33 @@ import kotlinx.coroutines.CancellationException
  * declared since `TASK-041618`; the `DELETE` handler below was the first to use [identities] and
  * [credentials], and neither route ticket in this chain has ever edited that part of this
  * signature or its single call site in `Application.kt` — five route tickets contending for one
- * line is how a sequential chain deadlocks. [mailer] and [tokens] are new here, `POST
- * /api/auth/recovery-email`'s own — the first handler in this file to need a sender — and both are
- * trailing parameters with defaults ([NoRecoveryMailer] and a fresh [RecoveryTokens]) that already
- * match `Application.kt`'s unconfigured build, so its call site stays unedited by this ticket too:
- * a defaulted trailing parameter is the same avoidance one step further.
+ * line is how a sequential chain deadlocks. [mailer] and [tokens] were new when `recovery-email`'s
+ * own ticket added them — the first handler in this file to need a sender — and remain trailing
+ * parameters with defaults ([NoRecoveryMailer] and a fresh [RecoveryTokens]) that already match
+ * `Application.kt`'s unconfigured build, so its call site stays unedited by `forgot-password`'s
+ * ticket too: a defaulted trailing parameter is the same avoidance one step further, now serving a
+ * second caller.
  *
- * @param recoveryEmails The port `verify-email`'s, `recovery-email`'s and `DELETE
- *   recovery-email`'s handlers call: [RecoveryEmails.verifyPending], [RecoveryEmails.claimPending]
- *   plus [RecoveryEmails.verifiedOwnerOf], and [RecoveryEmails.detach] respectively.
- * @param passwordResets The port `reset-password`'s handler calls: [PasswordResets.consume] alone.
+ * @param recoveryEmails The port `verify-email`'s, `forgot-password`'s, `recovery-email`'s and
+ *   `DELETE recovery-email`'s handlers call: [RecoveryEmails.verifyPending],
+ *   [RecoveryEmails.resetRecipientOf], [RecoveryEmails.claimPending] plus
+ *   [RecoveryEmails.verifiedOwnerOf], and [RecoveryEmails.detach] respectively.
+ * @param passwordResets The port `forgot-password`'s and `reset-password`'s handlers call:
+ *   [PasswordResets.issue] and [PasswordResets.consume] respectively.
  * @param identities The port `recovery-email`'s and `DELETE recovery-email`'s handlers call to
  *   resolve the caller's session before the body is read; a device identity does not count as
  *   resolved here.
  * @param credentials The port `recovery-email`'s and `DELETE recovery-email`'s handlers call, once
  *   identity is confirmed, to verify the presented current password: [Credentials.verifyCurrent]
  *   alone.
- * @param mailer The port `recovery-email`'s handler calls to send the verification mail a claim
- *   produces, unless the address is already proven for someone else. Defaults to
- *   [NoRecoveryMailer], the implementation `ADR-0077` names for every developer machine and every
- *   CI run.
+ * @param mailer The port `forgot-password`'s and `recovery-email`'s handlers call — the former to
+ *   send the reset mail once [passwordResets] confirms a token was actually issued, the latter to
+ *   send the verification mail a claim produces unless the address is already proven for someone
+ *   else. Defaults to [NoRecoveryMailer], the implementation `ADR-0077` names for every developer
+ *   machine and every CI run.
  * @param tokens Mints the verification token `recovery-email`'s handler hands to [recoveryEmails]
- *   and, on the same value, to [mailer]. Defaults to a fresh [RecoveryTokens].
+ *   and, on the same value, to [mailer], and the reset token `forgot-password`'s handler hands to
+ *   [passwordResets] and, on the same value, to [mailer]. Defaults to a fresh [RecoveryTokens].
  */
 public fun Application.recoveryRoutes(
     recoveryEmails: RecoveryEmails,
@@ -209,6 +255,45 @@ public fun Application.recoveryRoutes(
                 VerifyEmailResult.Verified -> call.respond(HttpStatusCode.NoContent)
                 VerifyEmailResult.Refused -> call.respond(HttpStatusCode.BadRequest)
                 VerifyEmailResult.AddressTaken -> call.respond(HttpStatusCode.Conflict)
+            }
+        }
+        post("/api/auth/forgot-password") {
+            // Every way a body can fail to become a ForgotPasswordRequest — empty, the wrong
+            // content type, malformed JSON, or a missing field — answers 202 here, unlike every
+            // other decode step in this file: ADR-0031 §5 answers 202 always and lists no
+            // exception for a malformed body, and a 400 would distinguish a well-formed unknown
+            // address from a malformed one, a weaker version of the oracle §5 already refuses.
+            val request = try {
+                call.receive<ForgotPasswordRequest>()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (ignored: Exception) {
+                call.respond(HttpStatusCode.Accepted)
+                return@post
+            }
+            // ADR-0078 §1's rule, applied exactly as recovery-email's own decode step below uses
+            // it — except a syntactically invalid address also answers 202, never 400, for the
+            // same reason a decode failure does above.
+            val address = emailAddressOrNull(request.address)
+            if (address == null) {
+                call.respond(HttpStatusCode.Accepted)
+                return@post
+            }
+            // The 202 is written here, before resetRecipientOf, before issue and before any
+            // send — the timing defence, not an optimisation (TASK-041626): every outcome from
+            // here on is indistinguishable from the outside, and the join ADR-0082 added to
+            // resetRecipientOf runs entirely after this response, so it costs the caller nothing
+            // observable.
+            call.respond(HttpStatusCode.Accepted)
+            // ADR-0082 §4's five lines and no others. A null recipient — an address nobody has
+            // mentioned, one that is only pending, or a verified address whose owner holds no
+            // password credential, three states this route cannot and must not tell apart — mints
+            // no token: a token that could never be mailed would still spend the player's
+            // fifteen-minute window and supersede a link they may be holding.
+            val recipient = recoveryEmails.resetRecipientOf(address) ?: return@post
+            val token = tokens.newResetToken()
+            if (passwordResets.issue(recipient.playerId, token)) {
+                mailer.sendPasswordReset(address, token, recipient.handle)
             }
         }
         post("/api/auth/reset-password") {

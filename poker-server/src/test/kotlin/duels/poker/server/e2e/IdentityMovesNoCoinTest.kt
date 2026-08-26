@@ -720,7 +720,7 @@ private const val THIRD_DEVICE: String = "e2e-third"
  * The `/api/…` paths this scenario answers for, over its own HTTP calls, so [SCENARIO_ENDPOINTS]
  * stays a fact about what runs above rather than a copy of what the route sources declare.
  *
- * Every entry but three is a literal this class calls directly: `sign-up`, `sign-in` (used three
+ * Every entry but five is a literal this class calls directly: `sign-up`, `sign-in` (used three
  * times: steps 5, 7 and the closing revocation sign-in), `sign-out`, `GET /api/me`, `PUT
  * /api/me/name`, `GET /api/standings` and `DELETE /api/me/device`. `/api/me/duels` is one
  * exception, written down rather than called: `ProfileRoutes.kt` hands its handler a `ProfileReads`
@@ -735,7 +735,11 @@ private const val THIRD_DEVICE: String = "e2e-third"
  * and touches neither `player.coin_balance` nor `duel_result`, so it moves no coin either.
  * `/api/auth/recovery-email` (`TASK-041623`) is the fourth, on the same escape: `RecoveryEmails.
  * detach` deletes from `recovery_email` and touches neither `player.coin_balance` nor
- * `duel_result`, so it moves no coin either.
+ * `duel_result`, so it moves no coin either. `/api/auth/forgot-password` (`TASK-041626`) is the
+ * fifth, on the same escape: it answers an identical `202` in all four of its cases — an address
+ * nobody has mentioned, one that is pending but unverified, one that is verified, and a caller with
+ * no sender configured — and mints at most one `password_reset` row via `PasswordResets.issue`,
+ * touching neither `player.coin_balance` nor `duel_result`, so it moves no coin either.
  */
 private val SCENARIO_ENDPOINTS: Set<String> = setOf(
     "/api/auth/sign-up",
@@ -744,6 +748,7 @@ private val SCENARIO_ENDPOINTS: Set<String> = setOf(
     "/api/auth/verify-email",
     "/api/auth/reset-password",
     "/api/auth/recovery-email",
+    "/api/auth/forgot-password",
     "/api/me",
     "/api/me/duels",
     "/api/me/name",
