@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041210
 title: Every read under /api/me goes out under the session, so the strip stops naming the wrong player
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -211,3 +211,43 @@ Any normal import makes that `2` — the `import` line and the call line — so 
 written, and two dispatches missed it because it was never in `verify:`. Both halves are fixed: the
 count is over `authorizedFetch(` **with its call parenthesis**, `grep -o … | wc -l` counts
 occurrences rather than lines so two calls on one line cannot hide, and it now runs in `verify:`.
+
+## Notes
+
+**Two attempts failed against criteria that could not be met, and the code was right both times.**
+The old criterion `grep -c 'authorizedFetch' main.tsx` returning `1` is arithmetically impossible —
+`grep -c` counts **lines**, and any normal import gives two. It was also **never in `verify:`**, which
+is why two dispatches sailed past it. Both are fixed: the replacement counts *constructions*
+(`grep -o 'authorizedFetch(' | wc -l` = 1, `grep -o 'fetch: apiFetch' | wc -l` = 4) and both sit in
+the block.
+
+**The second attempt is the instructive failure.** Reviewing the first, I judged its source-scan a
+proxy rather than the property and asked for behavioural assertions. The rewrite called the read
+functions **directly**, passing a wrapper the test constructed itself — so it never touched
+`main.tsx`, and a reviewer applying Proof step 1 found it passed while three of four reads were
+unwrapped. **"Assert the behaviour, not the text" inverts when the property under test is a property
+of the wiring**: `main.tsx` is configuration, and a test that supplies its own configuration cannot
+observe it. An integration test is unwritable here for three structural reasons the ticket now
+records — a module-level `vi.mock("./main")` (Node's `localStorage` shadows jsdom's), two of four
+bindings being module-private, and a socket opened at import.
+
+**The one-character hole, and what actually closes it.** Asked which single character would leave
+every assertion green while defeating the property, the coder found
+`window.fetch(path, init)` → `window.fetch(path+ init)`: `tsc` exit 0, `eslint` exit 0, all 679 tests
+green including both source assertions — and every read then goes to a URL built by concatenating
+`init`'s `"[object Object]"`, carrying no headers. What catches it is **`format:check`**, because
+Prettier requires a space around a binary `+`. The reviewer confirmed it exits non-zero. So the
+property is closed by a formatting rule rather than by an assertion — true, verified, and worth
+knowing, because it is not a gate anyone designed. The obvious alternative mutation (dropping `init`)
+is caught independently by `noUnusedParameters` and `no-unused-vars`.
+
+**The vacuity guard is two needles with two different answers.** Mutating `occurrencesIn` to return a
+constant `4` reddens both tests, which one needle could never establish. Proof step 4's prose is
+imprecise about *which* assertion fires first — `builds that wrapper once…` fails on its first
+(`authorizedFetch(`: expected 4 to be 1), not its second — but the counts matched exactly and the gate
+works.
+
+**A criterion in `## Scope` that nothing ever checked is now gated.** The comment recording the
+device-id consequence (`ADR-0030`: *"never cleared and never overwritten — not on sign-in, not on
+sign-out"*) was demanded by Scope and absent from both earlier attempts, with nothing to say so. It
+is held by `grep -qF 'never cleared'` in `verify:`.
