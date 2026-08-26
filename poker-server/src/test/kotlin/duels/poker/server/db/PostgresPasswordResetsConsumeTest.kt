@@ -12,6 +12,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.SQLException
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -19,8 +22,10 @@ import java.time.ZoneOffset
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -42,9 +47,15 @@ private const val IDENTIFIER = "alice@example.com"
  *
  * `aRefusedCredentialWriteLeavesTheTokenSpendable` gates the first of `consume`'s two transaction
  * boundaries — the token-spend/credential-write boundary — by using a player with no `password`
- * credential, so the `UPDATE` fails and the transaction rolls back, leaving the token unspent. The
- * second boundary, between the credential write and the session delete, stays ungated until
- * `TASK-041640`.
+ * credential, so the `UPDATE` fails and the transaction rolls back, leaving the token unspent.
+ *
+ * `aFailureAtTheSessionDeleteUndoesThePasswordAndTheToken` gates the second boundary, between the
+ * credential write and the session delete: nothing reachable through `consume` can make that
+ * `DELETE` fail on data alone — no `CHECK`, no trigger, no unique index for a fixture to violate —
+ * so it wraps the real `DataSource` ([SessionDeleteFailingDataSource], at the bottom of this file)
+ * to make the statement whose SQL names `auth_session` throw instead of reaching the driver, the
+ * same manufactured-failure shape `PostgresDeviceBindingsTest` uses for its own unreachable
+ * boundary.
  */
 class PostgresPasswordResetsConsumeTest {
     private lateinit var dataSource: DataSource
@@ -236,6 +247,50 @@ class PostgresPasswordResetsConsumeTest {
         }
     }
 
+    @Test
+    fun aFailureAtTheSessionDeleteUndoesThePasswordAndTheToken() {
+        runBlocking {
+            val playerId = insertPlayer()
+            val oldSecret = PresentedSecret("old correct horse")
+            val newSecret = PresentedSecret("new correct horse battery")
+            credentials.create(playerId, CredentialKind.PASSWORD, IDENTIFIER, oldSecret)
+            val token = tokens.newResetToken()
+            passwordResets.issue(playerId, token)
+            val session = authSessions.issue(playerId)
+
+            val failingDataSource = SessionDeleteFailingDataSource(dataSource)
+            val failingPasswordResets = PostgresPasswordResets(failingDataSource, Clock.systemUTC(), tokens)
+
+            assertFailsWith<SQLException> {
+                failingPasswordResets.consume(token, newSecret)
+            }
+
+            assertNotNull(failingDataSource.failedSql, "the guarded statement must have fired")
+            assertTrue(
+                failingDataSource.failedSql!!.contains("auth_session"),
+                "the manufactured failure must land on the auth_session delete, not some other statement",
+            )
+            assertEquals(
+                playerId,
+                credentials.verify(CredentialKind.PASSWORD, IDENTIFIER, oldSecret),
+                "the old secret must still verify — the credential write rolled back with the rest of the transaction",
+            )
+            assertNull(
+                credentials.verify(CredentialKind.PASSWORD, IDENTIFIER, newSecret),
+                "the new secret must not verify — the credential write never committed",
+            )
+            assertEquals(
+                playerId,
+                authSessions.playerOf(session),
+                "the session must still resolve — its delete never committed either",
+            )
+
+            val secondResult = passwordResets.consume(token, newSecret)
+
+            assertTrue(secondResult, "the same token must still work — the failed attempt rolled back its spend too")
+        }
+    }
+
     private fun insertPlayer(): PlayerId {
         val id = UUID.randomUUID()
         dataSource.connection.use { connection ->
@@ -248,5 +303,44 @@ class PostgresPasswordResetsConsumeTest {
             }
         }
         return PlayerId(id.toString())
+    }
+}
+
+// Wraps a real DataSource so the statement consume() prepares for DELETE FROM auth_session throws
+// instead of reaching the driver -- the boundary between the credential write and the session
+// delete that no fixture can reach, because that DELETE has no CHECK, no trigger and no unique
+// index for data alone to violate (see the class KDoc above). Everything before the throw is real:
+// the statement is prepared against the real driver, the credential write before it already ran
+// against the real container, and the rollback() inside consume's catch block is a real statement
+// on a real connection -- only the throw itself is invented. Matching on the SQL rather than a call
+// index means the wrapper keeps aiming at this boundary even if consume ever prepares a fourth
+// statement.
+private class SessionDeleteFailingDataSource(
+    private val delegate: DataSource,
+) : DataSource by delegate {
+    // Null until the guarded statement's executeUpdate() actually throws, so a test can tell a
+    // wrapper that fired from one whose victim was never reached.
+    var failedSql: String? = null
+        private set
+
+    override fun getConnection(): Connection = SessionDeleteFailingConnection(delegate.connection)
+
+    private inner class SessionDeleteFailingConnection(
+        private val connectionDelegate: Connection,
+    ) : Connection by connectionDelegate {
+        override fun prepareStatement(sql: String): PreparedStatement {
+            val real = connectionDelegate.prepareStatement(sql)
+            return if (sql.contains("auth_session")) SessionDeleteFailingPreparedStatement(real, sql) else real
+        }
+    }
+
+    private inner class SessionDeleteFailingPreparedStatement(
+        private val delegate: PreparedStatement,
+        private val sql: String,
+    ) : PreparedStatement by delegate {
+        override fun executeUpdate(): Int {
+            failedSql = sql
+            throw SQLException("manufactured failure standing in for a dropped connection or driver error")
+        }
     }
 }
