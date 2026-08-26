@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { NameSurface } from "./NameSurface";
 import { aProfile } from "./profile-fixture";
 import type { SetNameOutcome } from "./set-name";
@@ -167,8 +173,17 @@ describe("the name surface", () => {
       target: { value: "  Ada  " },
     });
     const firstButton = screen.getByRole("button") as HTMLButtonElement;
-    fireEvent.click(firstButton);
-    fireEvent.click(firstButton);
+    // Both clicks inside one `act`: it is re-entrant and flushes only when
+    // the outermost call exits, so the state from the first click has not
+    // committed while the second is dispatched — the button is still
+    // enabled, `handleSubmit` runs a second time, and
+    // `submitInFlight.current` is the only thing that stops it sending
+    // twice. Two bare `fireEvent.click` calls would each flush in their own
+    // `act` and hide the ref entirely.
+    act(() => {
+      fireEvent.click(firstButton);
+      fireEvent.click(firstButton);
+    });
 
     expect(setNameSpy).toHaveBeenCalledTimes(1);
     expect(setNameSpy).toHaveBeenCalledWith("  Ada  ");
@@ -194,8 +209,10 @@ describe("the name surface", () => {
       target: { value: "Grace" },
     });
     const secondButton = screen.getByRole("button");
-    fireEvent.click(secondButton);
-    fireEvent.click(secondButton);
+    act(() => {
+      fireEvent.click(secondButton);
+      fireEvent.click(secondButton);
+    });
 
     expect(setNameSpy).toHaveBeenCalledTimes(2);
     expect(setNameSpy).toHaveBeenNthCalledWith(2, "Grace");
