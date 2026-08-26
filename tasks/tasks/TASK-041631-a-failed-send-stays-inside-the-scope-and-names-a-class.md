@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041631
 title: A failed send stays inside the scope, and its log line names a class
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
