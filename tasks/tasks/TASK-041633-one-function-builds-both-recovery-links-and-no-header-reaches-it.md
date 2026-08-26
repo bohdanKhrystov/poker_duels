@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041633
 title: One function builds both recovery links, and no header reaches it
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -175,3 +175,35 @@ amends and whose every other clause it leaves standing;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A negative scan needs two guards, and this one shipped with only one.** `noMainSourceFileReadsA
+HostHeader` asserts *no main source contains a header token*. That claim passes identically whether
+it is true **or the scan is broken** — an empty file list, a wrong directory, a mistyped needle all
+produce the same green. The first version carried the file-count guard, which defends the empty case,
+and nothing defending the search itself. Review failed it on exactly that.
+
+The fix adds a **positive control** over the same traversal and the same `content.contains()` call:
+`"package "`, guaranteed present in every Kotlin file, asserted **found**. Both halves now read one
+`fileContents` map built once, so the control exercises the mechanism the refusal depends on rather
+than a parallel one.
+
+**The residual limit, stated because it is easy to overstate what the control buys.** It does **not**
+catch a mistyped forbidden token — it searches a different needle, so a typo in the header constant
+leaves both the control and the negative assertions green. What rules that out is Proof step 6,
+measured: adding `"X-Forwarded-Host"` to a main source reddened the test at the forbidden-token
+assertion, and reverting restored it, with the control passing in both runs. **That is a one-time
+check, not a standing gate** — editing the needle later is caught by nothing here.
+
+**The gap in the title is intended, not overlooked.** *No header reaches it* is enforced by the type
+signature and by `ServerConfig`, not by a test: the function takes a `String`, so a caller could
+in principle pass a header-derived value. Review judged that acceptable — the class has no caller
+until `EPIC-07`, the signature is explicit about what it accepts, and `## Out of scope` forbids
+re-validating the origin here. Recorded so the next reader sees a decision rather than an omission.
+
+**Proof steps 2–5 were not run, and nothing is missed by that.** The reviewer checked each against the
+shipped tests: step 2 (a hard-coded origin) is caught by `twoOriginsProduceTwoLinks`, step 4
+(`URLEncoder`) by `theTokenIsPassedThroughUnchanged`, step 5 (swapped segments) by the two literal
+assertions. Steps 1 and 6 were measured. Saying plainly which steps went unrun is the right report —
+this run has seen the alternative, a Proof table recording the unmutated state as a mutation's result.
