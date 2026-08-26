@@ -94,8 +94,23 @@ internal class RecoveryLinksTest {
 
         assertTrue(kotlinFiles.isNotEmpty(), "expected to find Kotlin files in ${mainKotlin.absolutePath}")
 
-        val forbiddenTokens = listOf("X-Forwarded-Host", "\"Host\"")
         val fileContents = kotlinFiles.associate { it.absolutePath to it.readText() }
+
+        // Positive control: verify the search mechanism works by checking for something guaranteed
+        // to be present in every Kotlin source file. This ensures we are not passing vacuously
+        // when a forbidden token is simply absent from the tree.
+        var packageDeclarationsFound = 0
+        for ((filePath, content) in fileContents) {
+            if (content.contains("package ")) {
+                packageDeclarationsFound++
+            }
+        }
+        assertTrue(
+            packageDeclarationsFound > 0,
+            "expected to find 'package' declarations in Kotlin files at ${mainKotlin.absolutePath}",
+        )
+
+        val forbiddenTokens = listOf("X-Forwarded-Host", "\"Host\"")
 
         for ((filePath, content) in fileContents) {
             for (token in forbiddenTokens) {
