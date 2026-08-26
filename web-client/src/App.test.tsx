@@ -80,6 +80,12 @@ function renderApp(): void {
   );
 }
 
+// Counts occurrences, not lines, so two matches on one line cannot hide
+// behind a line-oriented count the way `grep -c` would hide them.
+function occurrencesIn(source: string, needle: string): number {
+  return source.split(needle).length - 1;
+}
+
 describe("App", () => {
   // The record and the ladder now share an address with every other test in
   // this file: without a reset, whichever test last opened one leaves the
@@ -158,6 +164,33 @@ describe("App", () => {
     // ladder-read should not use window.fetch or localStorage
     expect(ladderReadSource).not.toMatch(/window\.fetch\(/);
     expect(ladderReadSource).not.toMatch(/localStorage\./);
+  });
+
+  it("wires all four reads through the wrapper and names the browser fetch once", () => {
+    // main.tsx binds all four reads — readProfile, setName, readHistory and
+    // readLadder — through the one authorizedFetch wrapper, so a signed-in
+    // player's strip, name, record and ladder row all carry the session.
+    // Two needles, two different expected answers: wrapping a single read
+    // leaves "fetch: apiFetch" at 1 (short of 4) and "window.fetch(" at 4
+    // (short of 1), so a source that wraps some reads but not all reddens
+    // both assertions, and a helper that matched nothing or returned a
+    // constant could satisfy at most one of the two.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(occurrencesIn(mainSource, "fetch: apiFetch")).toBe(4);
+    expect(occurrencesIn(mainSource, "window.fetch(")).toBe(1);
+  });
+
+  it("builds that wrapper once, at module scope", () => {
+    // authorizedFetch( — with its call parenthesis, so the `import {
+    // authorizedFetch }` line cannot be mistaken for a second construction —
+    // is called exactly once, and the resulting constant sits at column 0.
+    // profile-provider.tsx's own stable-reference rule is why: a wrapper
+    // built inside a component body is indented and would fail this anchor.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(occurrencesIn(mainSource, "authorizedFetch(")).toBe(1);
+    expect(mainSource).toMatch(/^const apiFetch = authorizedFetch\(/m);
   });
 
   it("leaves the lobby exactly as it was for a player who never opens the record", () => {
