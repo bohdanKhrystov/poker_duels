@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041231
 title: Whether this browser holds a token is read once, above the tree
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
