@@ -1,5 +1,7 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.AttemptBudget
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.auth.ClaimPendingResult
 import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.Credentials
@@ -14,15 +16,18 @@ import duels.poker.server.auth.ResetToken
 import duels.poker.server.auth.VerificationToken
 import duels.poker.server.auth.VerifyEmailResult
 import duels.poker.server.auth.emailAddressOrNull
+import duels.poker.server.config.ServerConfig
 import duels.poker.server.mail.NoRecoveryMailer
 import duels.poker.server.protocol.http.AttachRecoveryEmailRequest
 import duels.poker.server.protocol.http.DetachRecoveryEmailRequest
 import duels.poker.server.protocol.http.ForgotPasswordRequest
 import duels.poker.server.protocol.http.ResetPasswordRequest
 import duels.poker.server.protocol.http.VerifyEmailRequest
+import duels.poker.server.time.SystemClock
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
+import io.ktor.server.plugins.origin
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.delete
@@ -71,6 +76,15 @@ import kotlinx.coroutines.CancellationException
  * and the join `ADR-0082` added to [RecoveryEmails.resetRecipientOf] runs entirely after this
  * response, so it costs the caller nothing observable.
  *
+ * Immediately after, [forgotPasswordBudget] is consulted —
+ * [admit][duels.poker.server.auth.AttemptBudget.admit], keyed by
+ * [io.ktor.server.plugins.origin]'s remote address alone. This is the only budget in this system
+ * consulted **after** its own response is written, because `admit` takes a `Mutex` and this
+ * ordering is the timing defence above, not an optimisation (`ADR-0079` §3, `TASK-041628`). Not
+ * admitted, the handler returns here: no lookup, no [PasswordResets.issue] and no send, and
+ * nothing about the `202` already on the wire changes, so an exhausted address is indistinguishable
+ * from every other case this endpoint answers.
+ *
  * `ADR-0082` §4's five lines follow, and no others: [RecoveryEmails.resetRecipientOf] answers a
  * [duels.poker.server.auth.ResetRecipient] or this handler returns; [RecoveryTokens.newResetToken]
  * mints a token; [PasswordResets.issue] stores it, superseding any token the player already held,
@@ -88,9 +102,6 @@ import kotlinx.coroutines.CancellationException
  * function interpolates [ForgotPasswordRequest.address], an
  * [EmailAddress][duels.poker.server.auth.EmailAddress] value, or
  * [duels.poker.server.auth.ResetRecipient.handle].
- *
- * One thing this route deliberately does not do, named because a future ticket does it: the budget
- * `ADR-0079` admits **after** the `202` this route writes — `TASK-041628`'s one line, not built here.
  *
  * Also installs `POST /api/auth/reset-password`, which spends a mailed reset token and rewrites
  * the credential's password, per `ADR-0031` §4. It follows the identical decode-then-refuse shape:
@@ -119,7 +130,7 @@ import kotlinx.coroutines.CancellationException
  *
  * Also installs `POST /api/auth/recovery-email`, which records a pending claim on an address for
  * the caller, per `ADR-0031` §3 and §5. It follows the identical guard order the `DELETE` on this
- * same path below uses — identity, then the credential — with one gate between them that
+ * same path below uses — identity, then the credential — with two gates between them that
  * `DELETE` has no need for, in this fixed order:
  *
  * 1. [identities] resolves the caller, **before the body is even read**, exactly as `DELETE
@@ -132,18 +143,26 @@ import kotlinx.coroutines.CancellationException
  * 3. [emailAddressOrNull] judges `request.address`; `null` answers `400`. `ADR-0078` §1 is the
  *    whole rule, and §5 makes this `400` the endpoint's only feedback about the address — every
  *    other outcome below is a silent `202`.
- * 4. [Credentials.verifyCurrent] decides: a wrong current password answers `403 Forbidden`, and
+ * 4. [recoveryEmailBudget] is consulted —
+ *    [admit][duels.poker.server.auth.AttemptBudget.admit], keyed by
+ *    [io.ktor.server.plugins.origin]'s remote address alone. Not admitted answers `202`
+ *    immediately, **before** [Credentials.verifyCurrent], any row and any send (`ADR-0079` §2 and
+ *    §3, `TASK-041628`). The check sits after the `401` — a request with no identity costs no
+ *    budget — and before the Argon2 verify, so it bounds the pool rather than metering an attempt
+ *    already paid for; budgeting any earlier would let unauthenticated traffic spend a signed-in
+ *    player's budget.
+ * 5. [Credentials.verifyCurrent] decides: a wrong current password answers `403 Forbidden`, and
  *    [recoveryEmails] is never touched. `ADR-0031` §3: attaching an address costs the current
  *    password even inside a valid session, because a session token is a bearer credential in web
  *    storage, and without this a minute at an unattended browser converts into permanent
  *    ownership of the account.
- * 5. [RecoveryEmails.claimPending] runs and its [ClaimPendingResult] decides whether step 6 may
+ * 6. [RecoveryEmails.claimPending] runs and its [ClaimPendingResult] decides whether step 7 may
  *    send anything at all: [ClaimPendingResult.Claimed] may reach the mailer,
  *    [ClaimPendingResult.Suppressed] never does — `ADR-0031` §5's fifteen-minute rule, applied
  *    here (`TASK-041637`). The `202` below is written before this is branched on and never varies
  *    with the outcome, so a caller can never tell [ClaimPendingResult.Claimed] from
  *    [ClaimPendingResult.Suppressed] by anything this route answers.
- * 6. On [ClaimPendingResult.Claimed], [mailer].[sendVerification][RecoveryMailer.sendVerification]
+ * 7. On [ClaimPendingResult.Claimed], [mailer].[sendVerification][RecoveryMailer.sendVerification]
  *    sends the token just minted — **unless [RecoveryEmails.verifiedOwnerOf] already names another
  *    player for this address**, in which case nothing is sent either. `ADR-0031` §5: the route
  *    answers `202` even when the address already belongs to someone else, and sending mail in that
@@ -152,11 +171,12 @@ import kotlinx.coroutines.CancellationException
  *    [ClaimPendingResult.Suppressed], nothing is sent: the token minted for this request was never
  *    stored, and the outstanding one from the earlier claim is untouched.
  *
- * The route answers `202 Accepted` with an empty body **immediately once step 5 returns, before
- * step 6 runs** — `ADR-0031` §5 makes every outcome but a malformed address indistinguishable from
- * the outside, including the two `ClaimPendingResult` values and the already-taken address in step
- * 6: a `202` answers nothing about what happened, on purpose, and it answers before the thing it
- * says nothing about has even been decided.
+ * The route answers `202 Accepted` with an empty body **immediately once step 6 returns, before
+ * step 7 runs** — `ADR-0031` §5 makes every outcome but a malformed address and an exhausted
+ * budget indistinguishable from the outside, including the two `ClaimPendingResult` values and the
+ * already-taken address in step 7: a `202` answers nothing about what happened, on purpose, and it
+ * answers before the thing it says nothing about has even been decided. An exhausted budget at
+ * step 4 answers the identical `202` sooner still, before step 5 ever runs.
  *
  * **The address never appears in a response, a header or a log line from this handler.** No
  * `call.respond` here carries a body, and no string template in this function interpolates
@@ -165,13 +185,11 @@ import kotlinx.coroutines.CancellationException
  * port" applies to this handler exactly as it applies to storage: the only place the address goes
  * is into [mailer], never into anything this route writes back to the caller.
  *
- * One thing this route deliberately does not do, named because a future ticket does it: the budget
- * `ADR-0079` §2 and §3 specify — five attaches per rolling sixty seconds, keyed by remote address,
- * admitted after step 3 and before step 4 — is `TASK-041628`'s one line, not built here. The
- * fifteen-minute resend suppression `ADR-0031` §5 describes is real at the storage layer
- * (`TASK-041636`) and now wired to skip the send in step 6 (`TASK-041637`, this ticket): the
- * per-account cap `ADR-0079` §Consequences named as the missing half of the endpoint's budget is
- * the one now in force, holding across every remote address at once, unlike the budget above.
+ * The fifteen-minute resend suppression `ADR-0031` §5 describes is real at the storage layer
+ * (`TASK-041636`) and wired to skip the send in step 7 (`TASK-041637`): the per-account cap
+ * `ADR-0079` §Consequences named as the missing half of the endpoint's budget is the one already
+ * in force, holding across every remote address at once — unlike [recoveryEmailBudget] at step 4
+ * above, which is per-address and this ticket's own (`TASK-041628`).
  *
  * Also installs `DELETE /api/auth/recovery-email`, which erases the caller's proven recovery
  * address, per `ADR-0031` §5 and its closing `DEC-029`. It follows the identical guard order
@@ -207,7 +225,10 @@ import kotlinx.coroutines.CancellationException
  * parameters with defaults ([NoRecoveryMailer] and a fresh [RecoveryTokens]) that already match
  * `Application.kt`'s unconfigured build, so its call site stays unedited by `forgot-password`'s
  * ticket too: a defaulted trailing parameter is the same avoidance one step further, now serving a
- * second caller.
+ * second caller. [forgotPasswordBudget] and [recoveryEmailBudget] repeat the same trick again:
+ * trailing parameters defaulting to `ADR-0079`'s own numbers, read from [ServerConfig]'s companion,
+ * over [duels.poker.server.time.SystemClock] — so this signature's growth, for a third time, costs
+ * `Application.kt` nothing (`TASK-041628`).
  *
  * @param recoveryEmails The port `verify-email`'s, `forgot-password`'s, `recovery-email`'s and
  *   `DELETE recovery-email`'s handlers call: [RecoveryEmails.verifyPending],
@@ -229,6 +250,15 @@ import kotlinx.coroutines.CancellationException
  * @param tokens Mints the verification token `recovery-email`'s handler hands to [recoveryEmails]
  *   and, on the same value, to [mailer], and the reset token `forgot-password`'s handler hands to
  *   [passwordResets] and, on the same value, to [mailer]. Defaults to a fresh [RecoveryTokens].
+ * @param forgotPasswordBudget The `forgot-password` rate limiter, consulted after its `202` is
+ *   already written (`ADR-0079` §3). A **second, independent** [AttemptBudget] instance from
+ *   [recoveryEmailBudget], over its own limits (`ADR-0074` §1's reason, applied here): one instance
+ *   shared between the two endpoints would let either spend the other's budget. Defaults to
+ *   [ServerConfig]'s own default limits over [duels.poker.server.time.SystemClock].
+ * @param recoveryEmailBudget The `recovery-email` rate limiter, consulted before
+ *   [Credentials.verifyCurrent] and after the address is judged (`ADR-0079` §2 and §3) — the only
+ *   cap this system places on outbound verification mail. Defaults to [ServerConfig]'s own default
+ *   limits over [duels.poker.server.time.SystemClock].
  */
 public fun Application.recoveryRoutes(
     recoveryEmails: RecoveryEmails,
@@ -237,6 +267,20 @@ public fun Application.recoveryRoutes(
     credentials: Credentials,
     mailer: RecoveryMailer = NoRecoveryMailer,
     tokens: RecoveryTokens = RecoveryTokens(),
+    forgotPasswordBudget: AttemptBudget = AttemptBudget(
+        AttemptLimits(
+            ServerConfig.DEFAULT_FORGOT_PASSWORD_MAX_ATTEMPTS,
+            ServerConfig.DEFAULT_FORGOT_PASSWORD_WINDOW_MILLIS,
+        ),
+        SystemClock,
+    ),
+    recoveryEmailBudget: AttemptBudget = AttemptBudget(
+        AttemptLimits(
+            ServerConfig.DEFAULT_RECOVERY_EMAIL_MAX_ATTEMPTS,
+            ServerConfig.DEFAULT_RECOVERY_EMAIL_WINDOW_MILLIS,
+        ),
+        SystemClock,
+    ),
 ) {
     routing {
         post("/api/auth/verify-email") {
@@ -285,6 +329,14 @@ public fun Application.recoveryRoutes(
             // resetRecipientOf runs entirely after this response, so it costs the caller nothing
             // observable.
             call.respond(HttpStatusCode.Accepted)
+            // Consulted only now, after the 202 is already on the wire — the only budget in this
+            // system checked after its own response, because admit takes a Mutex and this
+            // ordering is the timing defence above, not an optimisation (ADR-0079 §3). Not
+            // admitted, the handler returns here: no lookup, no issue and no send, and nothing
+            // about the response already written changes.
+            if (!forgotPasswordBudget.admit(call.request.origin.remoteAddress)) {
+                return@post
+            }
             // ADR-0082 §4's five lines and no others. A null recipient — an address nobody has
             // mentioned, one that is only pending, or a verified address whose owner holds no
             // password credential, three states this route cannot and must not tell apart — mints
@@ -357,6 +409,18 @@ public fun Application.recoveryRoutes(
             val address = emailAddressOrNull(request.address)
             if (address == null) {
                 call.respond(HttpStatusCode.BadRequest)
+                return@post
+            }
+            // Consulted after the address and before the Argon2 verify (ADR-0079 §2 and §3): a
+            // request refused above by identity, decoding or the address rule costs no budget,
+            // and a check any later would meter an attempt whose hash has already been paid for.
+            // Not admitted answers the identical 202 a claim answers, before verifyCurrent, any
+            // row and any send — the over-budget state is not the 400 above; ADR-0079 §6 accepts
+            // that a caller holding a session can tell this 202 apart from a 403 by presenting a
+            // password already known to be wrong, which the front-door budget also permits at
+            // twice this rate.
+            if (!recoveryEmailBudget.admit(call.request.origin.remoteAddress)) {
+                call.respond(HttpStatusCode.Accepted)
                 return@post
             }
             val presented = PresentedSecret(request.currentPassword)

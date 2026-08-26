@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041628
 title: Two budgets that say nothing when they refuse
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -167,3 +167,42 @@ four numbers, the four key names and the two placements.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The budget numbers themselves are gated by nothing, and this was proved rather than argued.** The
+reviewer swapped the two defaults in `ServerConfig.kt` — forgot-password to five, recovery-email to
+ten — and ran both `verify:` classes: **build succeeded, zero failures.** Every test here builds its
+own explicit low `AttemptLimits` because the Tests intro mandates *limits set low*, which is right for
+exercising the mechanism and blind to the policy. So *that a budget applies* is gated; *which budget
+applies where* is not.
+
+**That gap is a ticket defect, and it currently has no owner.** The acceptance criterion
+*"`ServerConfigTest` covers both new pairs' env-then-file-then-default precedence"* names a file the
+*Files* table excludes, with no carve-out — contrast this ticket's own lines 60–63, which explicitly
+forward `ServerComponents.kt`/`Application.kt` risk to `TASK-041618`/`TASK-041622`. No such reference
+exists for `ServerConfigTest.kt`. The coder refused to widen, correctly: nothing merged was failing,
+and `ADR-0070` §4's propagation exception explicitly excludes *adds a test*. **The closing fixture is
+known** — `assertEquals(AttemptLimits(10, 60_000L), ServerConfig().forgotPasswordLimits())` and its
+recovery-email twin — and needs a fourth Files row or its own ticket. Seventh Scope/Files disagreement
+this run.
+
+**Proof step 6 gates nothing in production, for a reason worth recording.** There is no window literal
+in `RecoveryRoutes.kt` at all — both windows come from `ServerConfig` constants and every test builds
+its own `AttemptLimits`. The only executable form of that step mutates a literal inside
+`theBudgetWindowRollsOnTheInjectedClock` itself, so *"reddens alone"* is tautological. It is the same
+gap as the missing `ServerConfigTest` coverage seen from the other side.
+
+**Three steps reddened more tests than predicted, and each extra was traced.** Step 1's third failure
+is `aForwardedHeaderDoesNotChooseTheKey`'s own setup assertion re-checking the `202`; step 2's second
+is `anOverBudgetAttachAnswersLikeASuccess`, which leaves `forgotPasswordBudget` at its default of ten
+so a borrowed budget stops being over-budget; step 5's extras both rely on a second verified address
+minting nothing. Review confirmed none indicates a coupling worth breaking — intra-test overlap and
+correct use of defaults, not fragility.
+
+**The refusal is byte-identical by construction, not by coincidence.** Forgot-password's over-budget
+path executes the **same** `call.respond(HttpStatusCode.Accepted)` statement the success path reaches,
+and recovery-email's uses the textually identical zero-arg call. Both are asserted on the
+`(status, body, headerNames)` triple. And `aForwardedHeaderDoesNotChooseTheKey` proves the budget key
+cannot be chosen by a caller: `origin.remoteAddress` is read alone, with zero occurrences of
+`X-Forwarded` anywhere in the production file.
