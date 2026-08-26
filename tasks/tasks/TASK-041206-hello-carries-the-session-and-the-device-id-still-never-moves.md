@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041206
 title: Hello carries the session this browser holds, and the device id still never moves
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
