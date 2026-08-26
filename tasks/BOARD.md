@@ -2421,8 +2421,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041228](tasks/TASK-041228-the-hook-answers-a-hashchange-and-ignores-a-popstate.md) The hook answers a hashchange and ignores a popstate, which no test can currently tell apart | XS | **done** |
 | | [TASK-041204](tasks/TASK-041204-the-store-outranks-the-address-and-the-address-stops-lying.md) The store outranks the address, and a seated player's address stops lying | S | **done** |
 | | [TASK-041205](tasks/TASK-041205-the-token-this-browser-holds-lives-under-one-key.md) The session token this browser holds lives under one key | XS | **done** |
-| | [TASK-041206](tasks/TASK-041206-hello-carries-the-session-and-the-device-id-still-never-moves.md) Hello carries the session this browser holds, and the device id still never moves | S | **ready** |
-| | [TASK-041207](tasks/TASK-041207-the-profile-carries-whether-the-device-route-is-live.md) The profile carries whether the device route is still live | S | backlog — `atomic:` at **4**, probed under `ADR-0070` |
+| | [TASK-041206](tasks/TASK-041206-hello-carries-the-session-and-the-device-id-still-never-moves.md) Hello carries the session this browser holds, and the device id still never moves | S | **done** |
+| | [TASK-041207](tasks/TASK-041207-the-profile-carries-whether-the-device-route-is-live.md) The profile carries whether the device route is still live | S | **ready** — `atomic:` at **4**, probed under `ADR-0070` |
 | | [TASK-041208](tasks/TASK-041208-a-profile-body-with-no-device-route-is-not-a-profile.md) A profile body with no device route is not a profile | XS | backlog |
 | | [TASK-041209](tasks/TASK-041209-a-fetch-that-carries-the-session-this-browser-holds.md) A fetch that carries the session this browser holds | S | backlog |
 | | [TASK-041210](tasks/TASK-041210-every-me-read-goes-out-under-the-session.md) Every read under `/api/me` goes out under the session | S | backlog |
