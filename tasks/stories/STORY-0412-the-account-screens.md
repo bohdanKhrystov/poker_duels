@@ -61,8 +61,15 @@ putting two handle-and-password forms on one screen is what `ADR-0041` was keepi
 than three because sign-up is a **claim** (`ADR-0030` §1: one endpoint, attaching to the profile this
 device already owns), so it belongs on the account screen rather than beside it — which is also where
 `STORY-0415`'s offer after a first win will send a player. `account` is not a coined word:
-`ADR-0050` §3, `ADR-0036` and `ADR-0056` §2 each say it to a player. The sign-in screen's word is
-`DEC-077`.
+`ADR-0050` §3, `ADR-0036` and `ADR-0056` §2 each say it to a player. The sign-in screen's word was
+`DEC-077`, answered on 2026-08-26 by
+[`ADR-0083`](../../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md):
+the screen is ***Sign in*** at **`#/sign-in`** — not coined either, since `ADR-0050` §3 says *sign in*
+to a player and `POST /api/auth/sign-in` is where the hyphen comes from. The word is said as the
+screen's heading and as the one door to it on the account screen, from one constant (`ADR-0060` §2);
+**the address is refused to nobody**, so holding a session token is not a branch and `ADR-0076` §3's
+three store-owned branches still outrank it; and **a successful sign-in lands on `#/account`**,
+because the routes statement there is the only confirmation this product has.
 
 **What turned out to be already settled, and needed no decision.** *Does the screen need a
 `hasCredential` field?* — no: `ADR-0050` §4 says `deviceRouteLive` is the whole of what the screen
@@ -107,14 +114,20 @@ criterion names — and `TASK-041222` gates the structural half.
 | [TASK-041223](../tasks/TASK-041223-the-account-calls-reach-the-real-transport.md) | The account calls reach the real transport, and sign-in reaches it carrying nothing | backlog |
 | [TASK-041224](../tasks/TASK-041224-no-secret-reaches-a-url-and-no-body-carries-a-player-id.md) | No secret reaches a URL, and no request body carries a player id | backlog |
 | [TASK-041225](../tasks/TASK-041225-the-sign-in-form.md) | The sign-in form, and one sentence for both ways it can be refused | backlog |
-| [TASK-041226](../tasks/TASK-041226-the-sign-in-screens-word-and-its-slug.md) | The sign-in screen's word, and the address that word becomes | **blocked** — `DEC-077` |
-| [TASK-041227](../tasks/TASK-041227-the-sign-in-screen-at-its-address-and-the-door-to-it.md) | The sign-in screen at its address, and the door to it from the account screen | **blocked** — `DEC-077` |
+| [TASK-041226](../tasks/TASK-041226-the-sign-in-screens-word-and-its-slug.md) | The sign-in screen's word, and the address that word becomes | **blocked** — `DEC-077` **answered**; unblocked when the planner folds `ADR-0083` in |
+| [TASK-041227](../tasks/TASK-041227-the-sign-in-screen-at-its-address-and-the-door-to-it.md) | The sign-in screen at its address, and the door to it from the account screen | **blocked** — `DEC-077` **answered**; unblocked when the planner folds `ADR-0083` in |
 
 ## Open decisions
 
-| ID | Question | Blocks |
-| --- | --- | --- |
-| `DEC-077` | **The product owner's** — what does the product call the screen a player opens to reach an account from a browser that does not hold it, and therefore what is that screen's permanent slug? Registered in [`docs/adr/README.md`](../../docs/adr/README.md#open-decisions) | `TASK-041226`, `TASK-041227` |
+**None.** `DEC-077` — *what does the product call the screen a player opens to reach an account from a
+browser that does not hold it, and therefore what is that screen's permanent slug?* — was answered on
+2026-08-26 by
+[`ADR-0083`](../../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md),
+and the row it occupied here is struck by the PR that answered it. What the answer changes in the two
+tickets is the planner's to fold in: `TASK-041226`'s *the slug matches `^[a-z]+$`* criterion widens to
+`^[a-z]+(-[a-z]+)*$` for the hyphen; `TASK-041227` gains `ADR-0083` §5's landing rule, which reaches
+`main.tsx` and so a fourth file; and both tickets query the *Sign in* heading by role, because
+`SIGN_IN_LABEL` puts the same string on the submit button under it.
 
 ## Acceptance criteria
 
