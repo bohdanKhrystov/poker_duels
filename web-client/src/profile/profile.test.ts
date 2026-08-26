@@ -310,4 +310,70 @@ describe("the profile read", () => {
 
     expect(result).toEqual({ kind: "unavailable" });
   });
+
+  it("reads the device route the server sent, in both of its states", async () => {
+    // Case 1: deviceRouteLive is true
+    writeDeviceId(storage, "d-1");
+    const mock1 = answering(ok(meBody({ deviceRouteLive: true })));
+    const result1 = await readProfile({
+      fetch: mock1.fetch,
+      storage,
+    });
+
+    expect(result1).toEqual({
+      kind: "profile",
+      profile: aProfile({ deviceRouteLive: true }),
+    });
+
+    // Case 2: deviceRouteLive is false to ensure it's not hardcoded
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock2 = answering(ok(meBody({ deviceRouteLive: false })));
+    const result2 = await readProfile({
+      fetch: mock2.fetch,
+      storage,
+    });
+
+    expect(result2).toEqual({
+      kind: "profile",
+      profile: aProfile({ deviceRouteLive: false }),
+    });
+  });
+
+  it("refuses a body that says nothing about the device route", async () => {
+    // Build a body and delete the deviceRouteLive key
+    writeDeviceId(storage, "d-1");
+    const body = meBody();
+    delete body.deviceRouteLive;
+    const mock = answering(ok(body));
+    const result = await readProfile({
+      fetch: mock.fetch,
+      storage,
+    });
+
+    expect(result).toEqual({ kind: "unavailable" });
+  });
+
+  it("refuses a device route that is not a boolean", async () => {
+    // Case 1: deviceRouteLive is a string "true"
+    writeDeviceId(storage, "d-1");
+    const mock1 = answering(ok(meBody({ deviceRouteLive: "true" })));
+    const result1 = await readProfile({
+      fetch: mock1.fetch,
+      storage,
+    });
+
+    expect(result1).toEqual({ kind: "unavailable" });
+
+    // Case 2: deviceRouteLive is a number 1
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock2 = answering(ok(meBody({ deviceRouteLive: 1 })));
+    const result2 = await readProfile({
+      fetch: mock2.fetch,
+      storage,
+    });
+
+    expect(result2).toEqual({ kind: "unavailable" });
+  });
 });

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041208
 title: A profile body with no device route is not a profile, and the client asserts neither value
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: XS
@@ -94,3 +94,28 @@ Read, and do not edit: `web-client/src/profile/profile.ts`;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**Two refusal tests, and one mutation proves they are not the same assertion twice.** Dropping the
+`typeof … === "boolean"` guard reddens **both**, which establishes nothing about independence — a
+single test would do that. What carries the claim is changing the guard to `!== undefined`: the
+type-check test reddens while `refuses a body that says nothing about the device route` stays green,
+because a guard accepting any defined value still rejects a deleted key. Without that step the two
+would be indistinguishable, and one of them would be adding a name rather than a gate.
+
+**The test asserts what the code does, not what a reader would prefer.** `profileFromBody` answers
+`null` when any guard fails, and `readProfile` turns that into `{ kind: "unavailable" }` — so the
+refusal is asserted along the path that actually runs. A refusal test written against a hoped-for
+`throw` would pass, read correctly, and gate nothing; this story has produced four assertions of
+exactly that shape, so it was checked against the source rather than assumed.
+
+**The missing-field body has the key absent, not present-and-`undefined`.** `meBody()` then
+`delete body.deviceRouteLive` — permitted because the fixture returns `Record<string, unknown>`, with
+no cast that would mask a type error. The distinction matters: both reach a `typeof` guard the same
+way but a `hasOwnProperty` check differently, and only absence is the case this ticket names.
+
+**Neither fixture drift nor the fixture default is re-tested here.** Key enumeration across
+`aProfile()` and `meBody()` belongs to `profile-fixture.test.ts` and a second copy would be a defect.
+Proof step 4 changes the fixture default and all three tests stay green — the intended result, since
+each supplies its own value explicitly, so the default could flip without touching this file.
