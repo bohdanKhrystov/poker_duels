@@ -2424,8 +2424,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041206](tasks/TASK-041206-hello-carries-the-session-and-the-device-id-still-never-moves.md) Hello carries the session this browser holds, and the device id still never moves | S | **done** |
 | | [TASK-041207](tasks/TASK-041207-the-profile-carries-whether-the-device-route-is-live.md) The profile carries whether the device route is still live | S | **done** — `atomic:` at **4**, probed under `ADR-0070` |
 | | [TASK-041208](tasks/TASK-041208-a-profile-body-with-no-device-route-is-not-a-profile.md) A profile body with no device route is not a profile | XS | **done** |
-| | [TASK-041209](tasks/TASK-041209-a-fetch-that-carries-the-session-this-browser-holds.md) A fetch that carries the session this browser holds | S | **ready** |
-| | [TASK-041210](tasks/TASK-041210-every-me-read-goes-out-under-the-session.md) Every read under `/api/me` goes out under the session | S | backlog |
+| | [TASK-041209](tasks/TASK-041209-a-fetch-that-carries-the-session-this-browser-holds.md) A fetch that carries the session this browser holds | S | **done** |
+| | [TASK-041210](tasks/TASK-041210-every-me-read-goes-out-under-the-session.md) Every read under `/api/me` goes out under the session | S | **ready** |
 | | [TASK-041211](tasks/TASK-041211-the-words-the-account-screen-says.md) The words the account screen says, including the refusal that is about nobody | S | backlog |
 | | [TASK-041212](tasks/TASK-041212-sign-up-and-the-refusal-that-is-about-nobody.md) Sign-up, seven outcomes, and the one refusal that is about nobody | S | backlog |
 | | [TASK-041213](tasks/TASK-041213-sign-in-stores-the-token-and-one-answer-covers-both-refusals.md) Sign-in stores the token, carries no credential of its own, and reloads | S | backlog |
