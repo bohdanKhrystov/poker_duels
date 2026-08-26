@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041205
 title: The session token this browser holds lives under one key, and clearing it clears nothing else
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: XS
@@ -126,3 +126,35 @@ Five tests in a new file: `npm run test -- src/protocol/session-token.test.ts` r
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The module proves it writes one key; nothing proves nothing else writes that key.** The coder
+stated this limit unprompted rather than leaving it to be discovered: the literal-key test catches a
+bug *inside* this module, but a second module writing `SESSION_TOKEN_STORAGE_KEY` would shadow this
+one's value and no test would fail. The "one key" invariant rests on convention, not enforcement.
+
+**That gap has a solved precedent in this codebase and should become its own ticket.**
+`TASK-040709`'s `ProfileCreationIsOneStatementTest` scans main source text for `INSERT INTO player`
+and asserts the set of files containing it equals `{PostgresPlayerDirectory.kt}`, so a second write
+path anywhere fails the build until someone extends the set with a reason. The reviewer judged the
+equivalent feasible here — scan `web-client/src/**/*.ts` for files mentioning the key and assert the
+set is exactly `{session-token.ts}`. Note the precedent's own vacuity guard: it searches **two**
+different strings with two different expected answers, because one fixture default cannot tell a
+working scan from a helper returning a constant.
+
+**The golden key is asserted as a literal, not through the constant.** `writes under the one key the
+module names` compares against the string `"pd.sessionToken"` rather than referencing
+`SESSION_TOKEN_STORAGE_KEY` — a test reading the same constant it checks is a tautology. Changing the
+constant reddens this test *and* the forget test, which is what makes the pair meaningful.
+
+**Storage is read at call time, never at import.** Under Vitest in Node here, `localStorage` is
+`undefined` where `sessionStorage` works, and an import-time read fails at module load naming no line
+of this file. The module takes an injected `Storage` and touches it only inside its functions, so the
+trap is structurally unreachable rather than merely avoided.
+
+**Two inputs where one would have passed vacuously.** The byte-for-byte test stores a **padded** token
+and a plain one, so mutating the read to `value.trim()` reddens on the padded case alone; a fixture
+with no padding could not detect it. The blank-token test asserts `""` and `"   "` separately, since
+an empty-string case alone establishes nothing about whitespace — which is exactly what Proof step 4
+turns on.
