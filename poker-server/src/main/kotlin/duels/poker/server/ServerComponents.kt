@@ -7,6 +7,7 @@ import duels.poker.server.auth.DeviceBindings
 import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.auth.PasswordResets
 import duels.poker.server.auth.RecoveryEmails
+import duels.poker.server.auth.RecoveryMailer
 import duels.poker.server.auth.RecoveryTokens
 import duels.poker.server.config.ServerConfig
 import duels.poker.server.db.PostgresAuthSessions
@@ -25,6 +26,7 @@ import duels.poker.server.duel.SecureHandSeedSource
 import duels.poker.server.http.ProfileReads
 import duels.poker.server.http.ProfileWrites
 import duels.poker.server.http.StandingsReads
+import duels.poker.server.mail.NoRecoveryMailer
 import duels.poker.server.room.RandomRoomCodeSource
 import duels.poker.server.room.RoomRegistry
 import duels.poker.server.session.ConnectionDirectory
@@ -55,6 +57,7 @@ public data class ServerComponents(
     val bindings: DeviceBindings,
     val recoveryEmails: RecoveryEmails,
     val passwordResets: PasswordResets,
+    val mailer: RecoveryMailer,
 )
 
 /**
@@ -126,6 +129,10 @@ public fun serverComponents(
     // RecoveryTokens() needs no decision of its own — it defaults its own SecureRandom, the same
     // way SecureHandSeedSource() above defaults duel seeds.
     val passwordResets = PostgresPasswordResets(dataSource, wallClock, RecoveryTokens())
+    // The undecorated mailer, per ADR-0077 §1 and §8: no sender configured is an object, never a
+    // null, and this factory has no delivery scope to build the DetachedRecoveryMailer decorator
+    // around — that scope is Application's alone to construct.
+    val mailer: RecoveryMailer = NoRecoveryMailer
 
     return ServerComponents(
         socket = socket,
@@ -141,5 +148,6 @@ public fun serverComponents(
         bindings = bindings,
         recoveryEmails = recoveryEmails,
         passwordResets = passwordResets,
+        mailer = mailer,
     )
 }

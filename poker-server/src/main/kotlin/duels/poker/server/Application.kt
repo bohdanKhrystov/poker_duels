@@ -10,6 +10,7 @@ import duels.poker.server.http.deviceRoutes
 import duels.poker.server.http.profileRoutes
 import duels.poker.server.http.recoveryRoutes
 import duels.poker.server.http.standingsRoutes
+import duels.poker.server.mail.DetachedRecoveryMailer
 import duels.poker.server.room.GraceExpiry
 import duels.poker.server.room.RoomRegistry
 import duels.poker.server.session.ConnectionDirectory
@@ -25,7 +26,11 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 
@@ -67,7 +72,8 @@ public fun Application.module() {
  * the periodic sweep `ADR-0025` decides on.
  *
  * The module is invoked first to install plugins and the health route, then the socket and
- * profile routes are installed to share the same application and database connection pool.
+ * profile routes are installed to share the same application and database connection pool. The
+ * recovery routes are installed against a decorated mailer built here — `ADR-0077` §3 — and
  * [scheduleSweeps] runs last, once [components] — the only thing the sweep needs — already
  * exists, so every caller of this function, the shipped [main] and any test that boots the server
  * the same way, gets a server that reaps idle rooms and expires disconnect grace windows by
@@ -96,7 +102,20 @@ public fun Application.duelServer(
     profileRoutes(components.reads, components.writes, components.identities)
     deviceRoutes(components.identities, components.credentials, components.bindings)
     standingsRoutes(components.reads, components.standings, components.wallClock, components.identities)
-    recoveryRoutes(components.recoveryEmails, components.passwordResets, components.identities, components.credentials)
+    // A supervisor child of the application's job, per ADR-0077 §3: a child, so shutdown cancels
+    // every in-flight send; a supervisor, so one failed send reaches no sibling and never this
+    // application's own job; its own scope rather than the application's, because that one also
+    // carries the sweep loop scheduleSweeps installs below, which never completes.
+    val delivery = CoroutineScope(
+        coroutineContext + SupervisorJob(coroutineContext.job) + CoroutineName("recovery-mail"),
+    )
+    recoveryRoutes(
+        components.recoveryEmails,
+        components.passwordResets,
+        components.identities,
+        components.credentials,
+        DetachedRecoveryMailer(components.mailer, delivery, log),
+    )
     scheduleSweeps(
         components.socket.rooms,
         components.socket.connections,
