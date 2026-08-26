@@ -2433,8 +2433,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041215](tasks/TASK-041215-stopping-this-device-signing-in-and-the-two-refusals.md) Stopping this device signing in, and the two refusals that are not failures | S | **done** |
 | | [TASK-041216](tasks/TASK-041216-the-four-account-calls-reach-a-screen-through-one-provider.md) The four account calls reach a screen through one provider | XS | **done** |
 | | [TASK-041217](tasks/TASK-041217-the-account-screen-states-which-routes-sign-in.md) The account screen states which routes sign in to this profile, in both states | S | **done** |
-| | [TASK-041218](tasks/TASK-041218-the-sign-up-form-on-the-account-screen.md) The sign-up form — one credential, and the strip is the same profile afterwards | S | **ready** |
-| | [TASK-041219](tasks/TASK-041219-a-throttled-sign-up-says-so-keeps-what-was-typed-and-retries-nothing.md) A throttled sign-up says so, keeps what was typed, and retries nothing | S | backlog |
+| | [TASK-041218](tasks/TASK-041218-the-sign-up-form-on-the-account-screen.md) The sign-up form — one credential, and the strip is the same profile afterwards | S | **done** |
+| | [TASK-041219](tasks/TASK-041219-a-throttled-sign-up-says-so-keeps-what-was-typed-and-retries-nothing.md) A throttled sign-up says so, keeps what was typed, and retries nothing | S | **ready** |
 | | [TASK-041220](tasks/TASK-041220-stopping-this-device-with-one-confirmation-and-three-facts.md) Stopping this device signing in, offered only where it is safe, with three facts first | S | backlog |
 | | [TASK-041221](tasks/TASK-041221-signing-out-asks-first-and-says-what-it-costs.md) Signing out asks first, and says what it costs before it acts | S | backlog |
 | | [TASK-041222](tasks/TASK-041222-the-account-screen-has-an-address-and-the-lobby-has-the-door.md) The account screen has an address, and the lobby has the door | S | backlog |

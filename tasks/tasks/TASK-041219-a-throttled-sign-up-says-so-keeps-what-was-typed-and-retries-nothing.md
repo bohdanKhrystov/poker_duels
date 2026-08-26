@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041219
 title: A throttled sign-up says so, keeps what was typed, and retries nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
