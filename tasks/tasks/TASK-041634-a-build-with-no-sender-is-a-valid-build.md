@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041634
 title: A build with no sender is a valid build
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -153,3 +153,43 @@ break;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This closes a gap four tickets deferred here, and the closure was measured rather than assumed.**
+`TASK-041631` shipped six tests and its coder disclosed that **none** could catch an exception
+escaping to cancel the **caller's** scope — its test scope was itself a `SupervisorJob`, so an escape
+registered as *"into the scope I was given"* rather than reaching the parent. It named this ticket as
+the owner; a reviewer read this ticket and agreed it should gate the property; and now the swap is
+run: replacing `SupervisorJob(coroutineContext.job)` with `Job(…)` reddens
+`theDeliveryScopeIsASupervisorChildOfTheApplication` on
+`assertTrue(appJob.isActive, "a failed delivery cancelled the application's job")`.
+
+**The distinction that makes it a real gate**: the test observes the application's job **surviving an
+actual failed delivery**, not merely that the delivery scope is a supervisor by construction. A
+structural assertion would pass even while a failure propagated. Confirmed independently at review.
+
+**Proof step 3 was refused, and the refusal named its own cost.** Executing it needs an edit to
+`RecoveryRoutes.kt`, outside the *Files* table, so it was not run even transiently. The coder then
+disclosed the precision gap that leaves: the `forbiddenAnywhere` token sweep (`mailer == null`,
+`mailer != null`, `null == mailer`, `null != mailer`, `mailer?.`) would not catch
+`when (mailer) { null -> … }`. **That shape is unreachable** — `mailer` is typed `RecoveryMailer`,
+not `RecoveryMailer?`, so Kotlin rejects the null branch at compile time. No ticket needed, and the
+reasoning is recorded so the question is not reopened.
+
+**A deviation from this ticket's literal text, and the text is what is wrong.** Applied whole-file,
+the *"contains no `NoRecoveryMailer`"* check **fails on correct code**: `RecoveryRoutes.kt`
+legitimately defaults `mailer: RecoveryMailer = NoRecoveryMailer`, which `ADR-0077` §1 describes as
+*an object, never a null* and its own KDoc documents at length. The check is scoped to the handler
+bodies after `routing {` — where a reintroduced branch would live — while the null-check tokens stay
+whole-file. Review confirmed a branch reintroduced in a handler still reddens.
+
+**Proof step 2 underclaims its own coverage.** It says of the `CoroutineScope(Dispatchers.IO)`
+mutation that *"no other test in this repository can see it"*; `nothingShutsTheDeliveryScopeDown
+Explicitly` reddens too, because the source no longer contains `SupervisorJob(`. Measured by coder and
+reviewer both. Not a defect — a ticket claiming less than it delivers, recorded so the next reader
+trusts the measurement over the prose.
+
+**The build-wide gates were run although the block does not name them.** `:poker-server:check` passed
+across 1719 tests including `verifyDuelScript` and `verifyProtocolTypes`. Two tickets in this story
+failed CI on exactly such a gate, and this one touches `Application.kt`, where that bites hardest.

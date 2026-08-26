@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041628
 title: Two budgets that say nothing when they refuse
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S
