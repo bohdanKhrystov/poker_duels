@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useForgetRoom, useSend } from "../store/duel-provider";
 import { useScreen } from "../routing/use-screen";
@@ -31,6 +31,22 @@ export function Lobby(): ReactElement {
   const [typedCode, setTypedCode] = useState("");
   const { screen, open, leave } = useScreen();
   const code = normalizeRoomCode(typedCode);
+
+  // ADR-0076 §3: when the two disagree there is one authority, and it is the
+  // store. A frame that seats a store-owned screen (outcome, view or
+  // roomCode) overrules whatever the address named, so the fragment is
+  // replaced back to "/" — never pushed, since the player did not navigate.
+  // This runs in an effect, not during render: writing to history during
+  // render is a side effect in a render path, and React may run it twice.
+  // Guarded to screens other than "first" so a player already at "/" never
+  // has replaceState called on every frame that arrives.
+  const seatedByAFrame =
+    state.outcome !== null || state.view !== null || state.roomCode !== null;
+  useEffect(() => {
+    if (seatedByAFrame && screen !== "first") {
+      leave();
+    }
+  }, [seatedByAFrame, screen, leave]);
 
   // The duel is over. This comes first because the reducer clears nothing a
   // frame established: `view` and `roomCode` both outlive the duel, so a result
