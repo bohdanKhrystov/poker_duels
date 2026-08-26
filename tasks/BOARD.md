@@ -714,8 +714,32 @@ parallel with `EPIC-02`; no shared file.
 | ID | Question | Where | Due |
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
-| DEC-078 | **The architect's** — what mechanically counts as a **gated** acceptance criterion, and what happens to the ones already written? Two checks were proposed after this run's defects and **both were measured against the live backlog before being proposed; both fail as written.** (a) *A criterion naming a file the `## Files` table excludes* — `TASK-041628`'s shape, and six others this run — flags **194** tickets raw and **29** once narrowed to demand verbs, of which **28 are correct**: *"`SeasonTest` is untouched"* is the dominant and legitimate use, and only the criterion's **verb** separates it from the defect. (b) *A shell command in a criterion must appear in `verify:`* — `TASK-041210`'s criterion 5, `TASK-041215`'s grep, `TASK-041634`'s Scope-demanded comment — flags **25 unsettled tickets across 12 files**, mostly real wishes but with spelling false positives where `verify:` runs a hardened form of the same gate, so it cannot land green without a twelve-file repair `TASK-000106` explicitly refuses. Open: is the register the criterion or the block; does the check read settled tickets; is *in `verify:`* exact or normalised; are the 25 repaired, grandfathered or the rule inverted; and does the answer join `TASK-000106` or stand alone. **Blocks nothing today** | [`TASK-000106`](tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) | before the next story is split |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
+
+`DEC-078` → [`ADR-0084`](../docs/adr/ADR-0084-a-criterion-that-speaks-in-shell-belongs-in-verify.md)
+on 2026-08-26 — **a criterion is gated when a `verify:` command exits non-zero if it is false, and
+nothing else gates anything.** Raised and answered the same day, after a planner measured two
+candidate linter rules against the live backlog and found both unshippable. **Face (b)** — a
+criterion quoting a shell command no `verify:` line runs — becomes a check in `lint_tickets.py`,
+scoped to tasks that are `ready`, `in-progress` or `in-review`, matching by **word-subset of one
+`verify:` line** rather than by substring. That relation is what dissolved the twelve-file blocker:
+re-measured on `ef47e299`, the spelling false positives (`npm run test -- src/X.test.tsx` in the
+criterion against the hardened `NO_COLOR=1 npm run --silent test -- … | grep -qE` in `verify:`) were
+an artefact of exact-substring matching, and the true count is **18 criteria across 11 files** —
+`backlog` × 16, `ready` × 2. The sixteen retire at each ticket's own `backlog` → `ready` flip, which
+is a PR somebody writes anyway; `TASK-041219`'s two are repaired in the check's own PR, one file,
+named in advance. **No grandfather list, no `filed:` date field, no twelve-file repair.**
+**Face (a)** — a criterion demanding content in a file the *Files* table excludes, `TASK-041628`'s
+shape — is **not** mechanised, and the ADR carries the re-measurement that says why: 206 tickets
+flagged raw, and every narrowing leaves the legitimate refusals dominant, because *"`CardSecrecyTest`
+passes with no change to the file"* is a refusal written in a demand's grammar and only *whether the
+demanded thing already exists in the file* separates it from the defect. It becomes a written rule in
+`tasks/README.md` instead — a criterion may demand new content only in a file the *Files* table
+edits; about any other file it may say only *unchanged* or *still passes*; and one that cannot be met
+without a forbidden edit **is the next ticket, filed in the same split**. The cost is named rather
+than hidden: **`TASK-041628` would happen again today**, since its criterion is English and not
+shell. The check ships as **its own ticket depending on `TASK-000106`**, three files, not folded into
+it. Nothing is blocked and no `status:` moves
 
 `DEC-077` → [`ADR-0083`](../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md)
 on 2026-08-26 — **the second account screen is *Sign in*, and its address is never refused.** Raised
