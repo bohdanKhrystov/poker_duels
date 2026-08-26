@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041644
 title: Three states answer nothing, and the fourth answers a handle
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

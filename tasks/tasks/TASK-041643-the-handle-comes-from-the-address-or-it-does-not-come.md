@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041643
 title: The handle comes from the address, or it does not come
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -227,3 +227,42 @@ predictions, written down rather than dressed up.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket ships a security-relevant statement with no behavioural test, by design — and the
+deferral was checked rather than accepted.** Every behavioural property goes to `TASK-041644`. The
+coder verified the consequence empirically: strip the parameter-side `COLLATE` from
+`SELECT_RESET_RECIPIENT_SQL` and the compile plus both merged suites stay green; only the
+fixed-string grep reddens.
+
+That clause is the one whose removal already produced a live cross-account leak in this story — a
+lookup for player one's own `İ@x.test` returning **player two's** `PlayerId`. So the review's job was
+not to confirm the deferral was documented but to confirm the ticket it names **closes** it. It did
+not. `TASK-041644`'s case-fold test fixtured `Bob@Example.com` / `BOB@example.COM`, plain ASCII,
+which folds identically under every collation and passes with the clause deleted. **The PR was held**
+until `TASK-041644` (#1045) carried a fixture that can fail; that merged first, and this landed
+after.
+
+The replacement was measured against real Postgres rather than reasoned. Storing `İ` (U+0130) and
+asking both spellings gives: parameter-side strip → the exact-spelling lookup answers nothing;
+column-side strip → both Unicode lookups answer nothing; **both** sides stripped → the
+combining-sequence lookup answers nothing while the exact one still succeeds. The ASCII pair is blind
+to all three. Two things that measurement settled and reasoning would have got backwards: **the
+direction is load-bearing** — storing the already-folded spelling and asking `İ`, which reads more
+naturally as a case test, is blind to the column-side strip because `lower(i+U+0307)` is a fixed
+point under both collations — and **one lookup cannot cover the set**, since only the exact spelling
+catches the parameter-side strip and only the combining sequence catches the pin dropped from both
+halves.
+
+**The `LEFT JOIN` grep is over- and under-sensitive, and something real stands behind it.** It
+reddened on the coder's own KDoc, which used the words *"never a `LEFT JOIN`"* twice — a literal
+substring count with no notion of code versus prose, whose failure looks nothing like its cause. It
+also misses `left join`, `LEFT  JOIN`, a line break between the words, and `LEFT OUTER JOIN`. What
+makes the deferral legitimate anyway is `TASK-041644`'s `anOwnerWithNoPasswordCredentialAnswersNothing`,
+which runs against real Postgres and catches any outer-join spelling regardless of source text.
+
+**Proof step 5 predicted an inert mutation and was right.** Changing `ThrowingRecoveryEmails`'s new
+body from `error(...)` to `null` reddens nothing, because no test in `VerificationSweepTest` calls it.
+Writing that down is the correct form — a step that predicts green is evidence, where a step quietly
+dropped is not.

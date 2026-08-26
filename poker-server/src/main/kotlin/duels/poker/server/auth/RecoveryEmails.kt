@@ -7,11 +7,14 @@ import duels.poker.server.session.PlayerId
  * holds once verified, and the `email_verification` row a claim writes before it is proven.
  *
  * **The address never leaves this package except into `RecoveryMailer`.** No member returns an
- * [EmailAddress] to a caller, and no member returns a `String` that could be one.
+ * [EmailAddress] to a caller, and no member returns a `String` that could be one —
+ * [ResetRecipient.handle] is a login handle, and `loginHandleOrNull` permits only `[a-z0-9._-]`,
+ * so it structurally cannot be an address.
  *
- * **[verifiedOwnerOf] is the only read that returns an address's owner**, and it returns a
- * [PlayerId], never the address itself. The address needed to actually send mail is read inside
- * the storage layer, at send time.
+ * **[verifiedOwnerOf] is the only read that returns an owner and nothing else** — it keeps its
+ * second caller, the attach path's already-proven-elsewhere check, which must not receive a
+ * handle. It returns a [PlayerId], never the address itself; the address needed to actually send
+ * mail is read inside the storage layer, at send time.
  *
  * **Expiry is enforced in every read**, by `WHERE expires_at > now()`. A missed sweep is a
  * retention defect and never a security hole — [deleteExpiredVerifications] only ever deletes rows
@@ -76,6 +79,25 @@ public interface RecoveryEmails {
     public suspend fun verifiedOwnerOf(address: EmailAddress): PlayerId?
 
     /**
+     * Look up the player and login handle behind a verified recovery address, for
+     * `forgot-password`'s mail — the third argument `RecoveryMailer.sendPasswordReset` requires
+     * and that [verifiedOwnerOf] alone cannot supply.
+     *
+     * Answers `null` for exactly the states [verifiedOwnerOf] does — an address that is unknown
+     * and one that is only pending, indistinguishably (`ADR-0031` §3) — and for a third: a
+     * verified address whose owner holds no `password` credential. All three are one outcome to
+     * the caller (`ADR-0082` §1).
+     *
+     * **There is no [PlayerId] overload of this member, and there must never be one.** Obtaining a
+     * handle requires already holding a *proven* recovery address, which is the exact secret
+     * `forgot-password` exists to refuse to disclose (`ADR-0082` §1).
+     *
+     * @param address The address to look up.
+     * @return The [PlayerId] and login handle behind [address] once verified, or `null`.
+     */
+    public suspend fun resetRecipientOf(address: EmailAddress): ResetRecipient?
+
+    /**
      * Remove a player's proven recovery email, if one exists.
      *
      * `ADR-0031` §5's `DELETE` answers `204` whether or not a row existed, so this operation
@@ -96,6 +118,17 @@ public interface RecoveryEmails {
      */
     public suspend fun deleteExpiredVerifications(): Int
 }
+
+/**
+ * The player id and login handle behind a verified recovery address, answered together because
+ * `RecoveryMailer.sendPasswordReset` needs both from the one proof of possession
+ * [RecoveryEmails.resetRecipientOf] requires (`ADR-0082` §1).
+ *
+ * An ordinary `data class` — deliberately not given [EmailAddress]'s redacting `toString()`.
+ * Nothing on the reset path logs anything today; the trigger for revisiting that is the first log
+ * line anywhere on this path (`ADR-0082` §Consequences).
+ */
+public data class ResetRecipient(val playerId: PlayerId, val handle: String)
 
 /**
  * The answer to a request to verify a pending email address.
