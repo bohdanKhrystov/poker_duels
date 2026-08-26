@@ -53,6 +53,9 @@ vi.mock("./main", () => {
     LadderProvider: (props: { children: ReactNode }): ReactNode =>
       props.children,
     useLadder: () => fakeLadderRead,
+    SignedInProvider: (props: { children: ReactNode }): ReactNode =>
+      props.children,
+    useSignedIn: () => false,
   };
 });
 
@@ -191,6 +194,38 @@ describe("App", () => {
 
     expect(occurrencesIn(mainSource, "authorizedFetch(")).toBe(1);
     expect(mainSource).toMatch(/^const apiFetch = authorizedFetch\(/m);
+  });
+
+  it("reads whether this browser holds a token once, at module scope", () => {
+    // readSessionToken( — with its call parenthesis — is called exactly once,
+    // and the resulting constant sits at column 0. A read inside a component
+    // body is indented and fails the anchor; a second read anywhere fails the
+    // count. This is the DEC-032 guard: Node 24+ shadows jsdom's localStorage
+    // with an inert global, so a component that reaches for it is a component
+    // whose tests do not test the browser.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(occurrencesIn(mainSource, "readSessionToken(")).toBe(1);
+    expect(mainSource).toMatch(/^const signedIn = readSessionToken\(/m);
+  });
+
+  it("hands that flag to the tree and reads it in no component", () => {
+    // main.tsx provides the signedIn flag to the tree (value={signedIn})
+    // and never consumes its own context (= useSignedIn()). Two needles with
+    // two different expected answers: wrapping without providing leaves
+    // "value={signedIn}" at 0 (short of 1) and "= useSignedIn()" still at 0,
+    // so a source that wraps but does not provide reddens the first assertion
+    // alone, and consuming the context you provide reddens the second alone.
+    // A helper that matched nothing or returned a constant could satisfy at
+    // most one of the two.
+    //
+    // The second needle keeps its "= " on purpose: export function
+    // useSignedIn(): boolean contains the substring useSignedIn(), so a bare
+    // needle can never answer 0 and the assertion would be unsatisfiable.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(occurrencesIn(mainSource, "value={signedIn}")).toBe(1);
+    expect(occurrencesIn(mainSource, "= useSignedIn()")).toBe(0);
   });
 
   it("leaves the lobby exactly as it was for a player who never opens the record", () => {
