@@ -3,7 +3,7 @@ schema: 2
 id: TASK-000106
 title: The board and the ticket file are one register, and the linter reads both
 type: task
-status: backlog
+status: ready
 parent: STORY-0001
 module: process
 estimate: S
