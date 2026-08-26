@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041629
 title: A good token, and a password the policy refuses
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

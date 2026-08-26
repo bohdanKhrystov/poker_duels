@@ -2491,8 +2491,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041625](tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) Attaching an address costs the current password | S | done |
 | | [TASK-041626](tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) Four different things happen, and the caller reads the same answer | S | **done** |
 | | [TASK-041627](tasks/TASK-041627-a-sender-that-sends-nothing.md) A sender that sends nothing | S | done |
-| | [TASK-041628](tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) Two budgets that say nothing when they refuse | S | **ready** |
-| | [TASK-041629](tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) A good token, and a password the policy refuses | S | backlog |
+| | [TASK-041628](tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) Two budgets that say nothing when they refuse | S | **done** |
+| | [TASK-041629](tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) A good token, and a password the policy refuses | S | **ready** |
 | | [TASK-041630](tasks/TASK-041630-a-decorator-that-detaches-over-the-same-port.md) A decorator that detaches, over the same port | S | **done** |
 | | [TASK-041631](tasks/TASK-041631-a-failed-send-stays-inside-the-scope-and-names-a-class.md) A failed send stays inside the scope, and its log line names a class | S | **done** |
 | | [TASK-041632](tasks/TASK-041632-the-origin-every-recovery-link-is-built-from-is-configuration.md) The origin every recovery link is built from is configuration | S | **done** |
