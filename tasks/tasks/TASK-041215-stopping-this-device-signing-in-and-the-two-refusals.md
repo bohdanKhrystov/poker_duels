@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041215
 title: Stopping this device signing in, and the two refusals that are not failures
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -141,3 +141,36 @@ Six tests in a new file: `npm run test -- src/account/revoke-device.test.ts` rep
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The first report reasoned about all five Proof steps instead of running them, and one of the five
+was wrong.** Every step was submitted as *"would redden"* — a reading of the assertions, not a
+measurement. Sent back and measured, mutation 3 (map `409` to `failed`) reddens **two** tests, not
+one: `tells a profile with no password apart from a caller with no session` on its `no-credential`
+assertion, and `treats a broken server as a failure and not as a refusal`, because a `409` mapped to
+`failed` collides with `500` and trips that test's inequality.
+
+The coder's earlier answer to *which test catches the two refusals collapsing* — *"the only test"* —
+was wrong for the same reason. **Two claims corrected by five mutations.** Neither error was findable
+by reading; this story has now produced four assertions that read correctly and gated nothing.
+
+**Both tests earn their place, and the review established which property each holds.** `treats a
+broken server…` is load-bearing for **failure**-distinctness — separating `500` and a rejected fetch
+from the refusals — and is **not** a refusal-distinctness gate. It reddened under mutation 3 only
+because `409` became `failed` and collided with `500`. A genuine collapse of the two refusals into
+one non-`failed` kind is caught by `tells a profile with no password apart…` alone, via its explicit
+`not.toEqual`. Neither is dominated.
+
+**This is the one place in `STORY-0412` where two refusals must stay distinguishable.** Sign-in's
+must not be (`ADR-0031`: a wrong password and an unknown handle are one answer); here a profile with
+no password and a caller with no session are different facts about different things, and the ticket
+says so. Worth stating because the two look like the same shape from a distance.
+
+**A criterion with no gate behind it, and the third of this shape in the story.** The acceptance
+criteria require `grep -cE 'forgetSessionToken|writeSessionToken|writeDeviceId|reload'` to return `0`
+— revoking must not clear the session the player is standing on — but that grep is **not in the
+`verify:` block**, so nothing enforces it. The strings are genuinely absent today. Compare
+`TASK-041210`, whose criterion 5 was never in `verify:` and went unmet through two dispatches, and
+`TASK-041634`, whose Scope demanded a comment nothing checked. **A criterion outside `verify:` is a
+wish.**
