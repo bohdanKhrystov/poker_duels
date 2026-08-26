@@ -2489,7 +2489,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041623](tasks/TASK-041623-taking-the-address-back-costs-the-password.md) Taking the address back costs the password | S | done |
 | | [TASK-041624](tasks/TASK-041624-which-strings-are-an-address.md) Which strings are an address | S | done |
 | | [TASK-041625](tasks/TASK-041625-attaching-an-address-costs-the-current-password.md) Attaching an address costs the current password | S | done |
-| | [TASK-041626](tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) Four different things happen, and the caller reads the same answer | S | backlog |
+| | [TASK-041626](tasks/TASK-041626-four-different-things-happen-and-the-caller-reads-the-same-answer.md) Four different things happen, and the caller reads the same answer | S | **ready** |
 | | [TASK-041627](tasks/TASK-041627-a-sender-that-sends-nothing.md) A sender that sends nothing | S | done |
 | | [TASK-041628](tasks/TASK-041628-two-budgets-that-say-nothing-when-they-refuse.md) Two budgets that say nothing when they refuse | S | backlog |
 | | [TASK-041629](tasks/TASK-041629-a-good-token-and-a-password-the-policy-refuses.md) A good token, and a password the policy refuses | S | backlog |
@@ -2507,7 +2507,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041641](tasks/TASK-041641-the-profiles-recovery-flag-is-that-players-and-a-pending-address-is-not-one.md) The profile's recovery flag is that player's, and a pending address is not one | XS | done |
 | | [TASK-041642](tasks/TASK-041642-no-read-on-credentials-answers-with-a-string.md) No read on `Credentials` answers with a string | S | **done** |
 | | [TASK-041643](tasks/TASK-041643-the-handle-comes-from-the-address-or-it-does-not-come.md) The handle comes from the address, or it does not come | S | **done** |
-| | [TASK-041644](tasks/TASK-041644-three-states-answer-nothing-and-the-fourth-answers-a-handle.md) Three states answer nothing, and the fourth answers a handle | S | **ready** |
+| | [TASK-041644](tasks/TASK-041644-three-states-answer-nothing-and-the-fourth-answers-a-handle.md) Three states answer nothing, and the fourth answers a handle | S | **done** |
 | [STORY-0417](stories/STORY-0417-the-recovery-screens.md) The recovery screens — attach an address, and reset a password | | | backlog — carries one **inherited test debt** recorded on 2026-08-26, and the story file states it as a requirement on the split with an acceptance criterion of its own. `TASK-041201`'s `## Notes` found that `ADR-0081` §1's whole first-segment rule rests on **one** test whose two inputs, `#/duels/2026` and `#/leaderboard/anything`, both put an already-known slug in front of a segment nothing reads. The case the rule exists for is `#/verify/<token>` — a slug followed by an **opaque** segment a server wrote into mail — and nothing reaches it, because `verify` is this story's screen. The implementation handles it; no test would notice if a later edit stopped it, and the failure a player sees is a mailed link landing on the lobby in silence. Not ticketed here: this story is not split yet, and `ADR-0083` §1 and §2 already fix where a finished reset sends the player — ***Sign in*** at `#/sign-in`, which `STORY-0412` builds |
 
 `STORY-0416`'s rows are in **id order**, and `depends_on` is the **sequence**; since `ADR-0077` and

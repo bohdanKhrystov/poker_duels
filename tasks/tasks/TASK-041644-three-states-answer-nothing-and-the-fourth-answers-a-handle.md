@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041644
 title: Three states answer nothing, and the fourth answers a handle
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -225,3 +225,40 @@ claim that the ASCII half cannot fail here.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket's fixture was rewritten before a line of it was implemented, because the original
+could not fail.** `theHandleIsFoundWhateverCaseTheAddressIsAskedIn` originally stored
+`Bob@Example.com` and asked `BOB@example.COM` — plain ASCII, which folds identically under every
+collation, so it passed with the `COLLATE` clause deleted. `TASK-041643` was **held** on that: it
+ships `resetRecipientOf` with no behavioural test of its own and defers every property here, and a
+deferral to a test that cannot fail is not a deferral.
+
+**The replacement was measured against real Postgres, and two of its properties are counter-intuitive
+enough that reasoning would have got them wrong.** The address is stored as `U+0130` and asked in
+both spellings:
+
+- **Direction is load-bearing.** Storing the already-folded `i` + U+0307 and asking `U+0130` — which
+  reads more naturally as a case test — is **blind** to a column-side strip, because
+  `lower(i+U+0307)` is a fixed point under both collations.
+- **Neither lookup subsumes the other.** Dropping `COLLATE` from the **parameter** half alone reddens
+  only the exact-spelling ask; dropping it from **both** halves reddens only the combining-sequence
+  ask, because a fold that stays self-consistent still stops being the fold the unique index is built
+  on. Coder and reviewer each confirmed both directions against the shipped statement.
+
+**A tooling defect nearly made the fixture decorative.** Typing the token for a `\u` escape into an
+edit parameter was **silently decoded into the glyph** — the tell was Edit reporting old and new
+strings as identical — and doubling the backslash produced literally two backslashes, which is wrong
+Kotlin. A file carrying the decoded glyph compiles and passes while testing something other than what
+it claims. The coder routed around it by building the backslash at runtime, and the reviewer verified
+the bytes independently rather than accepting the report: exactly two escape sequences, **zero** raw
+`U+0130` or combining-dot bytes, zero double backslashes. The planner hit the same bug hours earlier
+writing this ticket, which is why the code points appear in it as prose.
+
+**One assertion here is vacuous and stays by ticket mandate.** The cross-`assertEquals` in
+`aPendingAddressAndAnUnknownOneBothAnswerNothing` cannot fail independently of the two `assertNull`s
+above it — null equals null, and it is unreachable if either `assertNull` has already reddened. The
+ticket argues for it anyway as a statement of the security property (*the two agree*, not merely that
+each is empty), which is a settled design choice rather than a defect. Recorded so the next reader
+does not mistake it for a working gate.
