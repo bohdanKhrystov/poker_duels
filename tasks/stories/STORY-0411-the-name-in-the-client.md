@@ -58,8 +58,21 @@ behind it because all three extend the same store and screen shell.
 ## Tasks
 
 Split on 2026-08-18 into **seventeen**, following `ADR-0029`, `ADR-0051`, `ADR-0052` and
-`ADR-0053`. The chain is linear: every ticket touches at least one file the one before it touched,
-and the run is sequential.
+`ADR-0053`, and **eighteen** since 2026-08-26. The chain is linear: every ticket touches at least one
+file the one before it touched, and the run is sequential.
+
+**The eighteenth was filed after the story closed, against merged code, and it is a test that could
+not fail.** `TASK-041110`'s `sends what the player typed, once, however many times the button is
+pressed` dispatches two bare `fireEvent.click()` calls to prove the in-flight guard sends one
+request. `@testing-library/react` wraps every `fireEvent` in its own `act()`, so React flushes
+between the two: the second click lands on a button that already carries `disabled`, no second
+submit starts, and the call count of `1` measures the `isSubmitting` **state**. Delete
+`NameSurface.tsx`'s `submitInFlight` ref — the one line whose own comment explains that state has not
+caught up when the second submit runs — and every one of the nine tests still passes. `TASK-041118`
+nests both dispatches in a single outer `act`, which is what leaves the second submit reaching the
+handler with the state uncommitted, and its Proof is that mutation run **twice**: green against the
+merged test, red against the fixed one. Found when the identical mutation reddened nothing while
+`TASK-041218` was being planned, and confirmed independently at review against both commits.
 
 **Three judgements the split had to make, recorded here rather than left in a ticket:**
 
@@ -97,6 +110,7 @@ and the run is sequential.
 | [TASK-041115](../tasks/TASK-041115-the-strip-prints-the-players-own-name.md) | The strip prints the player's own name, or what stands for none | backlog |
 | [TASK-041116](../tasks/TASK-041116-a-duel-line-names-the-opponent.md) | A duel line names the opponent it was played against | backlog |
 | [TASK-041117](../tasks/TASK-041117-no-name-on-the-screen-is-built-from-a-player-id.md) | No name on the screen is built from a player id, and a takedown is invisible | backlog |
+| [TASK-041118](../tasks/TASK-041118-two-clicks-in-one-act-or-the-guard-is-not-under-test.md) | Two clicks inside one act, or the in-flight guard is not the thing under test | ready |
 
 ## Acceptance criteria
 
