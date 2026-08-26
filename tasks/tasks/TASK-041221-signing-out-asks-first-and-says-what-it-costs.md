@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041221
 title: Signing out asks first, and says what it costs before it acts
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -126,3 +126,39 @@ Five tests in a new file: `npm run test -- src/account/SignOutControl.test.tsx` 
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The duel-conditional branch this ticket looks like it should have is unreachable, and the component
+says so in a comment.** `ADR-0076` §3's branch order (`outcome → view → roomCode → screen`) means the
+account screen cannot render while a frame has seated the tab, so *"signing out during a live duel
+warns before it acts"* has **no fixture that reaches it**. A planner measured that when splitting the
+story; this ticket therefore warns on **every** sign-out, which is true in every state including the
+named one, with `TASK-041222` gating the structural half. Recorded as a **refusal, not an omission** —
+the distinction that stops a later reader adding a branch no test can enter.
+
+**One test guards a narrower property than its name suggests, and the coder said so.** `puts no
+browser dialog between the press and the act` spies on `window.confirm` and asserts zero calls — so it
+stays **green** if confirmation is skipped altogether, because it guards against a *native dialog*,
+not against skipping. The skip case is covered by `warns before it acts…`, measured. Naming that
+boundary matters: an assertion that guards a real effect produced by a different mechanism than its
+name implies is exactly the defect `NameSurface.test.tsx` shipped, where a call count of one came from
+the `disabled` attribute rather than the ref guard.
+
+**Two Proof steps reddened one more test than the ticket names, both on `calls once, and only from the
+confirming control`, and it is not over-coupled.** That test runs two scenarios: a confirm flow
+asserting exactly one call, and a cancel flow asserting zero with the control restored. Step 1's
+mutation added a first-press call **without removing** the confirm-button call, so a full sequence
+fires twice; step 3 collapsed the two steps into one, and jsdom's unmocked `window.confirm` returns
+`undefined`, so the gated call never fired. Both extras are the test doing the two jobs its name
+promises. Not weakened to match the narrower prediction — the fifth ticket this run to keep a stricter
+assertion over a tidier Proof.
+
+**Reading an unnamed file is permitted; editing is not.** The coder read `sign-out.ts` for
+`SignOutOutcome`'s real shape rather than inventing a parallel type that `TASK-041223` would later have
+to reconcile, and flagged it. `ADR-0070` §4 draws the line at editing. Flagging anyway was right —
+seven tickets this run had Scope/Files disagreements that only a coder's refusal caught.
+
+**None of `sign-out.ts`'s own guarantees are re-tested here.** It clears the token **and** the room
+code and leaves the device id (`ADR-0030` §8, `ADR-0072` — a room is remembered *until the player
+leaves it*), gated in its own file. This control asserts only that it is invoked, and when.
