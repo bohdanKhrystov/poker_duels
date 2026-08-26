@@ -7,6 +7,7 @@ import React, {
   type ReactNode,
 } from "react";
 import ReactDOM from "react-dom/client";
+import { authorizedFetch } from "./account/authorized-fetch";
 import { App } from "./App";
 import { roomCodeFromSearch } from "./lobby/room-link";
 import { connectToDuelServer } from "./protocol";
@@ -23,12 +24,29 @@ import { readDuelPage, type DuelPageRead } from "./profile/duel-page";
 import type { HistoryQuery } from "./profile/duels-query";
 import { readLadderPage, type LadderRead } from "./ladder/ladder-read";
 
+// Module scope, built once, so every read below shares one wrapper rather
+// than each opening its own. authorizedFetch reads the session token on
+// every call (not once), so this outlives a sign-out without keeping a
+// signed-out browser signed in.
+//
+// The known consequence: readFromApi still answers no-profile without a
+// request when this browser holds no device id, so a browser that holds a
+// session token but no device id would read nothing. That case cannot
+// arise — the device id is written by the first Welcome this browser ever
+// receives and is never cleared and never overwritten, not on sign-in and
+// not on sign-out (ADR-0030 §8) — so every browser able to hold a session
+// token already holds a device id.
+const apiFetch = authorizedFetch(
+  (path, init) => window.fetch(path, init),
+  localStorage,
+);
+
 // Module scope, so the provider's effect sees one stable reference and one
 // mount means one read. An arrow written inline in the JSX would be a new
 // function on every render.
 const readProfile = (): Promise<ProfileStripState> =>
   readProfileStrip({
-    fetch: (path, init) => window.fetch(path, init),
+    fetch: apiFetch,
     storage: localStorage,
   });
 
@@ -36,7 +54,7 @@ const readProfile = (): Promise<ProfileStripState> =>
 // that changed on every render would be a new function on every render.
 const setName = (name: string) =>
   setDisplayName({
-    fetch: (path, init) => window.fetch(path, init),
+    fetch: apiFetch,
     storage: localStorage,
     name,
   });
@@ -46,7 +64,7 @@ const setName = (name: string) =>
 // function on every render.
 const readHistory = (query: HistoryQuery): Promise<DuelPageRead> =>
   readDuelPage({
-    fetch: (path, init) => window.fetch(path, init),
+    fetch: apiFetch,
     storage: localStorage,
     query,
   });
@@ -56,7 +74,7 @@ const readHistory = (query: HistoryQuery): Promise<DuelPageRead> =>
 // inline in the JSX would be a new function on every render.
 const readLadder = (after: string | null): Promise<LadderRead> =>
   readLadderPage({
-    fetch: (path, init) => window.fetch(path, init),
+    fetch: apiFetch,
     storage: localStorage,
     after,
   });

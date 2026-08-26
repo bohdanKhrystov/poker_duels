@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041211
 title: The words the account screen says, including the refusal that is about nobody
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
