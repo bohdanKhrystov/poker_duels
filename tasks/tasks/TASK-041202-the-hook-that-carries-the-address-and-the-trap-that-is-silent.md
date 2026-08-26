@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041202
 title: The hook that carries the address, and the trap that makes a stale render look like React
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -146,3 +146,36 @@ Five tests in a new file: `npm run test -- src/routing/use-screen.test.tsx` repo
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The planner named this ticket's `## Proof` as the likeliest wrong in the story, and it was — but
+not in the step it predicted.** The worry was step 1: that a `pushState` mutation might redden
+nothing if jsdom fired `hashchange` synchronously, leaving `ADR-0076` §5's silent-staleness trap
+ungated beneath twenty-five later tickets. It reddens. `waitFor` polls until timeout rather than
+awaiting a single tick, so it caught the stale value — `expected 'first' to be 'duels'`, on the hook's
+value, while the `location.hash` and `history.length` assertions in the same test stayed green. Those
+are three separate assertions, which is why the failure is legible.
+
+Step 4 was stronger than predicted too: a fresh-object `getSnapshot` does not merely draw React's
+*"result of getSnapshot should be cached"* warning, it throws **`Maximum update depth exceeded`** and
+reddens all five tests. The stack names no line in `use-screen.ts`, which is why the caching comment
+on the snapshot line has to exist.
+
+**Step 3 is the one that failed, and the finding is about the environment, not the code.** Mutating
+the hook to subscribe to `popstate` instead of `hashchange` reddens **nothing**. Coder and reviewer
+each went into this repo's installed jsdom and found why: assigning `window.location.hash` fires
+neither event synchronously and then fires **both** on a microtask — where a real browser fires only
+`hashchange` for a same-document fragment change. So the shipped hook is correct and subscribed to
+`hashchange`, but **no test in this file can tell the two subscriptions apart**, and a later edit
+swapping them would pass.
+
+That is the same shape of defect the story exists to prevent, one layer up: the trap `ADR-0076` §5
+names is silent, and here the *gate* on it is silent too. The only channel that separates the two
+events under this jsdom is to move the address with `history.pushState` — which fires neither — then
+dispatch a bare `popstate` `Event` and assert the hook's value does **not** change. That is new scope
+and belongs in its own ticket, not smuggled in here; it is recorded so it is not rediscovered.
+
+**A failed prediction disclosed is the process working.** The coder ran all five steps, reported the
+one that contradicted the ticket, and investigated the cause instead of adjusting a test until the
+mutation passed. Fifty-seventh `## Proof` examined this run; the fourteenth found wrong or imprecise.
