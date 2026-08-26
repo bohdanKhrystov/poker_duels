@@ -142,9 +142,9 @@ fixture and reddens on any platform.
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
 | **[STORY-0001](stories/STORY-0001-repository-and-ticket-system.md)** Repository, docs, tickets | | | ready |
-| | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **done** |
+| | [TASK-000101](tasks/TASK-000101-bootstrap-repository.md) Bootstrap repository and ticket system | M | **in-review** |
 | | [TASK-000102](tasks/TASK-000102-enable-branch-protection.md) Enable branch protection | S | **done** |
-| | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-review** |
+| | [TASK-000103](tasks/TASK-000103-token-lean-agent-workflow.md) Token-lean agent workflow | S | **in-progress** |
 | | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | **done** |
 | | [TASK-000105](tasks/TASK-000105-two-build-files-that-were-never-source.md) Two build files that were never source | XS | done |
 | | [TASK-000106](tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) The board and the ticket file are one register, and the linter reads both | S | **ready** |

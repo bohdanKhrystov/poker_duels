@@ -24,6 +24,9 @@ jobs:
       - name: Validate ticket structure
         run: python3 .github/scripts/lint_tickets.py
 
+      - name: Test the ticket linter and board register
+        run: python3 -m unittest discover -s .github/scripts -t .github/scripts -p 'test_*.py'
+
       - name: Test the status notifier
         run: python3 -m unittest discover -s scripts/notify -t scripts/notify -p 'test_*.py'
 
