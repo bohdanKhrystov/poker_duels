@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041629
 title: A good token, and a password the policy refuses
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -205,3 +205,45 @@ the closing `204` stops the comparison being between two tokens that are both de
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This merged before its review returned — a driver error, not a coder one.** `review: deep` was set
+on this ticket because it touches the reset-password path, and the merge gates are CI green **and**
+a reviewer's `pass` **and** the ticket's `verify` exiting 0. Two of three were met. The review came
+back `pass` with no findings, so nothing defective shipped, but that is luck rather than process:
+the verdict was unknown at the moment of merging. Recorded because the run's value is a legible
+trail, and a gate skipped quietly is worth more to hide than to admit.
+
+**Two of this ticket's "reddens alone" claims are wrong, and both were reproduced independently.**
+
+- **Step 5** (drop `passwordIsLongEnough`): the ticket says the seven-code-point test reddens alone.
+  **Four of six redden** — that test, `fourAstralCharactersAreFourCodePointsAndAreRefused`, the first
+  leg of `aRefusedPasswordLeavesTheTokenUsableOnTheNextRequest`, and the equality in
+  `aFabricatedTokenAndALiveTokenAnswerTheSameFourHundredAndTwentyTwo`. Every test using a sub-8
+  password.
+- **Step 7** (boundary to `>= 9`): the ticket says `anEightCodePointPasswordIsAccepted` reddens alone.
+  **Three of six redden**, the extras being tests whose fixtures the ticket's own Tests table pins at
+  exactly eight code points.
+
+The pattern is the same in both: the prose was written before the fixtures existed and never
+reconciled with them. **The Tests table is what makes a prediction true or false**, and a ticket that
+overstates precision teaches the next reader to trust prose over measurement.
+
+**Step 7's target was read-only, and the substitution was verified faithful rather than assumed.**
+`PasswordPolicy.kt` is not in the *Files* table, so the coder re-expressed the boundary as an
+equivalent clause in the handler. At review the **real** constant was moved (`MINIMUM_PASSWORD_CODE
+_POINTS` 8 → 9) and reverted: identical count **and** identical test set. The shipped diff duplicates
+no boundary logic — `RecoveryRoutes.kt` only calls `passwordIsLongEnough` and
+`passwordIsWithinTheWorkBound`.
+
+**The property holds where it matters.** The policy check runs strictly before `consume`, and
+`aRefusedPasswordLeavesTheTokenUsableOnTheNextRequest` proves it with **one** token across two
+requests, the second asserting `204`. `aFabricatedTokenAndALiveTokenAnswerTheSameFourHundredAndTwenty
+Two` compares a whole `ResponseShape(status, body, headerNames)` — a status-only comparison would miss
+a differing body or header, and this is the test that stops a caller learning whether a token was real
+from a policy refusal.
+
+**The commit-after-abort trap does not apply here.** Postgres downgrades a `COMMIT` on an aborted
+transaction to a rollback, making that mutation inert — but this diff's addition is pure computation
+with no database interaction, and `consume` carries no `rollback()`-then-`commit()` path.
