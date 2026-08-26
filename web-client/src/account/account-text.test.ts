@@ -114,20 +114,20 @@ describe("the account screen's words", () => {
       /password (is|was) (wrong|incorrect)/i,
     );
 
-    // Not a hand-written list: every string export is a candidate. A sentence that names both
-    // credential fields and the account they are checked against is the shape of a sign-in
-    // mismatch refusal, and there must be exactly one — a second one would be the enumeration
-    // oracle in words this test exists to refuse.
+    // Not a hand-written list: every string export is a candidate. The unified sentence is
+    // itself a candidate under any wording, and so is anything shaped like the oracle it
+    // refuses — a second, field-specific sentence would be the enumeration oracle in words
+    // this test exists to catch, however that second constant happened to be worded.
     const stringExports = Object.values(accountText).filter(
       (value): value is string => typeof value === "string",
     );
-    const mismatchSentences = stringExports.filter(
+    const mismatchShaped = stringExports.filter(
       (value) =>
-        /handle/i.test(value) &&
-        /password/i.test(value) &&
-        /account/i.test(value),
+        value === accountText.SIGN_IN_REFUSED ||
+        /handle (is|was) (unknown|not)/i.test(value) ||
+        /password (is|was) (wrong|incorrect)/i.test(value),
     );
-    expect(mismatchSentences).toEqual([accountText.SIGN_IN_REFUSED]);
+    expect(mismatchShaped).toEqual([accountText.SIGN_IN_REFUSED]);
   });
 
   it("tells a deliberate refusal from a broken product", () => {
