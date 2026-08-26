@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041201
 title: The address of a screen, as a pure function of its fragment
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: XS
@@ -133,3 +133,24 @@ Four tests in a new file: `npm run test -- src/routing/screen.test.ts` reports *
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The whole first-segment rule rests on one test with two inputs.** Coder and reviewer each worked
+out, independently, that a `screen.ts` matching the *whole* fragment would still pass tests 1, 2 and
+4 — only `names the first segment and ignores whatever follows it` reddens. That is the honest shape
+of this file, and it is worth knowing before someone edits it: three of the four tests are dominated
+for the property `ADR-0081` §1 actually cares about.
+
+**And both of that test's inputs put a known slug in front.** `#/duels/2026` and
+`#/leaderboard/anything` prove the split for slugs the switch already knows. The case `ADR-0081`
+exists for is `#/verify/<token>` — a slug followed by an **opaque** segment — and nothing here
+reaches it, because `verify` is `STORY-0417`'s screen and this ticket's `## Out of scope` defers it.
+The implementation handles it; no test would notice if a later edit stopped it doing so. **`STORY-0417`
+should carry that test**, and this note is where the debt is recorded rather than discovered.
+
+**The four refusals are each reached by their own guard**, which is what stops test 2 passing by
+accident: empty and `"/"` by an explicit first branch, a bare `#duels` by the `startsWith("/")`
+check, an unknown `#/nope` by the switch default, and `#/LEADERBOARD` by case-sensitive comparison. A
+`screen.ts` that answered the first screen for everything outside an exact-match table would pass all
+four; the reviewer confirmed this one does not work that way.
