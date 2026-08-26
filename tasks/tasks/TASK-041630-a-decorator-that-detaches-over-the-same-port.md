@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041630
 title: A decorator that detaches, over the same port
 type: task
-status: backlog
+status: ready
 parent: STORY-0416
 module: poker-server
 estimate: S

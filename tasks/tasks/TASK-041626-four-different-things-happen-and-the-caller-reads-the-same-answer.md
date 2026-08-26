@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041626
 title: Four different things happen, and the caller reads the same answer
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -231,3 +231,44 @@ admitted **after** the `202`* — so nothing in it needs opening, and the budget
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket blocked once, and the block was right.** `sendPasswordReset(address, token, handle)`
+needed a login handle that nothing in the codebase could produce from a `PlayerId`. That became
+`DEC-076`, answered by `ADR-0082` — *a handle is read from a proven address, never from a player id*
+— and three tickets shipped before this one could run: the `Credentials` gate, the port member and
+its statement, and the behavioural tests. The gate landed **first** on purpose, so the ticket tempted
+by `Credentials.handleOf` would meet a red build rather than a code review.
+
+**It then failed CI on a gate its own `verify:` block did not name.** Adding
+`POST /api/auth/forgot-password` reddened `IdentityMovesNoCoinTest.everyApiPathInTheRouteSources
+IsExercisedByTheScenario`, which scans the four `*Routes.kt` files and asserts the `/api/…` set equals
+`SCENARIO_ENDPOINTS`. The block ran seven test methods, ktlint and detekt — but not `check` — so the
+failure was invisible to coder and reviewer alike and only CI caught it. **The same miss hit
+`TASK-041618` earlier in this story.** The fix therefore added `./gradlew :poker-server:check` to this
+ticket's own `verify:` block, which is the part that stops a third occurrence; the fourth file forced
+an `atomic:` item, and the gate itself is its justification — it genuinely fails on a commit that adds
+the route without the endpoint entry.
+
+**Three `## Proof` steps were not run, and the reviewer checked the cost rather than the reasoning.**
+Steps 2, 4 and 5 name mutations in files outside the *Files* table. Step 2's refusal costs nothing:
+`TASK-041644` already asserts pending and unknown both answer `null` *and* equal each other, and ran
+the identical `email_verification` mutation. Steps 4 and 5 were **correct in substance but wrongly
+justified** — the ticket's *"stop and report"* clause is scoped to `RecoveryEmails`, never naming
+`PostgresPasswordResets`, so a licensed mutate-and-revert was available. The properties are not
+unguarded: `TASK-041613` ran `RESEND_WINDOW` → 30 minutes and the unconditional-write mutation for
+real, at the same 14/16-minute boundary these window tests reuse.
+
+**Two of this ticket's own Proof predictions are wrong, and the type system is why one of them is.**
+Step 8 assumes `token` and `handle` are both `String`; `ResetToken` is a `@JvmInline value class`, so
+the literal positional swap **does not compile** — the mutation it was written to catch is
+foreclosed, which is a strength rather than a gap, and the value-level swap is what actually tests the
+property. Step 7 predicts the failure surfaces on the second player; both handles are wrong under that
+mutation and JUnit halts at the first assertion. Left uncorrected in the body deliberately: the coder
+was told to report, not act.
+
+**Only one test would notice the wrong player's handle.** `theMailCarriesTheOwnersOwnHandle` is the
+sole fixture with two owners and two different handles asserting each mail against its own owner; the
+other six never inspect the mailer's arguments at all. Confirmed empirically by two mutations that
+reddened it alone.
