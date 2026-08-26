@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041212
 title: Sign-up, seven outcomes, and the one refusal that is about nobody
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -144,3 +144,38 @@ Seven tests in a new file: `npm run test -- src/account/sign-up.test.ts` reports
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The `Set(...).size` check is dominated here, and the reasoning matters more than the verdict.** The
+coder argued the per-status assertions *"would all pass under collision"*, leaving the set size as the
+only real gate. That is backwards, and the review established why: the fixture's expected kinds are
+**literals**, one distinct kind per status. So any collision makes at least one status return
+something other than its written expectation, and that per-status assertion reddens directly.
+
+Given six distinct literal expectations for six statuses, **no collision exists that the literals miss
+and the set catches**. The reviewer offered 400 and 409 both answering `"unavailable-handle"` as the
+case the set would catch alone — but the fixture expects `"handle-refused"` for 400, so that
+assertion reddens too. The set assertion is kept because the ticket names it and it costs nothing;
+it is recorded here as **dominated** so nobody later reads it as the thing holding the property up.
+
+The claim would have been true under one condition — expectations read from the mapping under test —
+and that condition is exactly what would have made the seven tests tautological. Worth keeping
+straight: *the coder's claim being right would have been the defect.*
+
+**The security property is structural, not textual.** No player-facing string appears in this diff at
+all; outcomes are type discriminants and every message lives in `account-text.ts`, which carries its
+own register-independent gate against a second field-specific constant. `409` maps to one
+`unavailable-handle` outcome per `ADR-0031` §2, so a caller cannot tell a taken handle from any other
+refusal.
+
+**Two assertions carry more than they appear to.** `sends the handle and the password and nothing
+else` is a **key-set equality** on sorted keys, so an extra field — a device id, a token — reddens it,
+where a containment check would not. `sends what was typed, byte for byte` varies whitespace **and**
+case across **both** fields; a single-field fixture cannot tell a trim from a pass-through.
+
+**One weaker spot, non-blocking.** `authenticates as the device this browser holds` asserts
+`headers["Authorization"]` is `undefined` rather than asserting the key set. A header present with an
+empty value would pass. The acceptance criterion asks for absence of the key and this satisfies it as
+written; the stronger form is the one `authorized-fetch.test.ts` uses, and it is the form to prefer
+when this file is next touched.
