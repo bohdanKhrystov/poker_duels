@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041208
 title: A profile body with no device route is not a profile, and the client asserts neither value
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: XS

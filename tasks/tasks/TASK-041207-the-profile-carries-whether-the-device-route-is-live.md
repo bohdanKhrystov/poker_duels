@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041207
 title: The profile carries whether the device route is still live
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -121,3 +121,30 @@ which change from failing to passing:
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**The `atomic:` claim was measured at review, not accepted.** A ticket declaring four files asserts
+that a **merged gate refuses the smaller commit**, and this story had already produced a case where
+that assertion would have been false: `TASK-041227` was declared atomic at four until a planner ran
+the probe and found the gate set **green with either half alone**, so it was split into two instead.
+The reasoning here — a required field breaks every construction site, a key-enumerating fixture
+notices a missing key — is exactly the kind that sounds sufficient and sometimes is not.
+
+Both partial states were built and run:
+
+- **`profile.ts` alone** → `npm run typecheck` **reddens**: the object literal in
+  `set-name-provider.test.tsx` lacks the field, and `aProfile`'s return type no longer satisfies
+  `PlayerProfile`.
+- **Everything except `profile-fixture.test.ts`** → `typecheck` is **green** and `npm run test`
+  **reddens**: both fixtures return five keys where the expected arrays hold four.
+
+The two gates refuse **different** intermediate states, which is what makes the pair complete rather
+than redundant. Neither alone would have justified four files.
+
+**The fixture tests enumerate and compare; they do not merely check presence.** Both use
+`Object.keys(...).sort()` against a fixed array. An `expect(keys).toContain("deviceRouteLive")` would
+pass while the *other* fixture silently lacked the field — which is the precise drift this pair exists
+to catch, and the same vacuous shape found three times elsewhere in this story. Adding the field to
+`aProfile` and forgetting `meBody` reddens `builds bodies carrying every field the wire declares,
+opponent id included` on the key comparison, naming the count rather than leaving a reader to guess.
