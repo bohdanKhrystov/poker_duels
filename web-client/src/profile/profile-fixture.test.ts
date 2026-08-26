@@ -5,6 +5,7 @@ describe("the profile fixtures", () => {
   it("builds a profile carrying every field PlayerProfile declares", () => {
     expect(Object.keys(aProfile()).sort()).toEqual([
       "coinBalance",
+      "deviceRouteLive",
       "displayName",
       "displayNameRemoved",
       "playerId",
@@ -26,6 +27,7 @@ describe("the profile fixtures", () => {
     const me = meBody();
     expect(Object.keys(me).sort()).toEqual([
       "coinBalance",
+      "deviceRouteLive",
       "displayName",
       "displayNameRemoved",
       "playerId",

@@ -16,6 +16,7 @@ export function aProfile(
     coinBalance: 41,
     displayName: null,
     displayNameRemoved: false,
+    deviceRouteLive: true,
     ...overrides,
   };
 }
@@ -46,7 +47,7 @@ export function aDuelLine(overrides: Partial<RecentDuel> = {}): RecentDuel {
  * like `meBody({ coinBalance: "x" })` and still get a body.
  *
  * Carries exactly the fields `GET /api/me` documents: `playerId`, `coinBalance`,
- * `displayName`, and `displayNameRemoved`.
+ * `displayName`, `displayNameRemoved`, and `deviceRouteLive`.
  */
 export function meBody(
   overrides: Record<string, unknown> = {},
@@ -56,6 +57,7 @@ export function meBody(
     coinBalance: 41,
     displayName: null,
     displayNameRemoved: false,
+    deviceRouteLive: true,
     ...overrides,
   };
 }
