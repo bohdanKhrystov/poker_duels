@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041216
 title: The four account calls reach a screen through one provider
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: XS
@@ -114,3 +114,35 @@ Four tests in a new file: `npm run test -- src/account/account-provider.test.tsx
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**A scope question that looked like a defect, settled by the ticket's own words.** Asked which test
+fails if one of the four calls were wired to a *second* provider, the coder answered: none, and argued
+that is not this ticket's claim. That reading is correct — `## Out of scope` says *"Building the
+calls. `TASK-041223` binds them in `main.tsx` to the real transport."* This ticket is the
+provider-construction half; the wiring is a later ticket's.
+
+The reason it needed checking rather than accepting: **`TASK-041210` reasoned identically and was
+wrong.** Its second attempt tested a wrapper it constructed inside the test, concluded that was the
+property, and passed while three of four `/api/me` reads went unwrapped — *when the property under
+test is a property of the wiring, a test that supplies its own wiring cannot observe it.* Same shape,
+opposite verdict, and only `## Scope` decides which half a ticket occupies.
+
+**`TASK-041223` now carries two obligations flagged from different directions** — binding these four
+calls, and (per a planner's earlier probe) needing `web-client/src/App.test.tsx` in its *Files* table,
+because adding sign-in and sign-up bindings will redden `TASK-041210`'s exact counts of
+`fetch: apiFetch` and `window.fetch(`. That is deliberate: those counts convert *"a criterion greps
+`main.tsx` once those bindings exist"* from a promise into a failing build.
+
+**Identity is asserted on the container and on each member.** Spreading the calls object reddens the
+two `.toBe()` container checks while the four member checks still pass — which is what makes this more
+than a reference-equality trick, and what a re-render assertion needs to mean anything.
+
+**The aliasing check has both halves.** Wiring `revokeThisDevice` to the `signOut` double reddens both
+the reference assertions (including `not.toBe` between the two) **and** the call counts. A reference
+check alone would pass against two distinct doubles merely swapped rather than aliased.
+
+**None of the four calls' own semantics are re-tested here.** The doubles return bare outcome kinds;
+the seven sign-up outcomes, sign-in's single answer for both refusals, sign-out clearing token *and*
+room code, and revoke's two deliberately distinguishable refusals each stay gated in their own files.

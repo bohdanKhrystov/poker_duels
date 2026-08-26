@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041217
 title: The account screen states which routes sign in to this profile, in both states
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S

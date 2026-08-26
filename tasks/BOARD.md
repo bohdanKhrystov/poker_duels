@@ -2431,8 +2431,8 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041213](tasks/TASK-041213-sign-in-stores-the-token-and-one-answer-covers-both-refusals.md) Sign-in stores the token, carries no credential of its own, and reloads | S | **done** |
 | | [TASK-041214](tasks/TASK-041214-sign-out-clears-the-token-and-only-the-token.md) Sign-out clears the token and only the token, leaves the room, and reloads | S | **done** |
 | | [TASK-041215](tasks/TASK-041215-stopping-this-device-signing-in-and-the-two-refusals.md) Stopping this device signing in, and the two refusals that are not failures | S | **done** |
-| | [TASK-041216](tasks/TASK-041216-the-four-account-calls-reach-a-screen-through-one-provider.md) The four account calls reach a screen through one provider | XS | **ready** |
-| | [TASK-041217](tasks/TASK-041217-the-account-screen-states-which-routes-sign-in.md) The account screen states which routes sign in to this profile, in both states | S | backlog |
+| | [TASK-041216](tasks/TASK-041216-the-four-account-calls-reach-a-screen-through-one-provider.md) The four account calls reach a screen through one provider | XS | **done** |
+| | [TASK-041217](tasks/TASK-041217-the-account-screen-states-which-routes-sign-in.md) The account screen states which routes sign in to this profile, in both states | S | **ready** |
 | | [TASK-041218](tasks/TASK-041218-the-sign-up-form-on-the-account-screen.md) The sign-up form — one credential, and the strip is the same profile afterwards | S | backlog |
 | | [TASK-041219](tasks/TASK-041219-a-throttled-sign-up-says-so-keeps-what-was-typed-and-retries-nothing.md) A throttled sign-up says so, keeps what was typed, and retries nothing | S | backlog |
 | | [TASK-041220](tasks/TASK-041220-stopping-this-device-with-one-confirmation-and-three-facts.md) Stopping this device signing in, offered only where it is safe, with three facts first | S | backlog |
