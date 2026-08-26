@@ -30,6 +30,36 @@ public data class VerifyEmailRequest(val token: String) {
 }
 
 /**
+ * The body of `POST /api/auth/forgot-password`, carrying the address to mail a reset link to.
+ *
+ * No default value: a missing field must fail to decode, landing on the identical `202`-then-return
+ * path every other decode failure takes here — `ADR-0031` §5 answers `202` always and lists no
+ * exception for a malformed body — rather than silently becoming `""` and reaching the same answer
+ * by a second path, through [duels.poker.server.auth.emailAddressOrNull] refusing an empty string.
+ *
+ * The `toString()` method returns a fixed redaction, because a recovery address in a log line or
+ * exception message is exactly the leak `ADR-0031` §6.3 keeps the address out of every response
+ * body, `ServerMessage` and log line for — the same reason [AttachRecoveryEmailRequest] withholds
+ * its own `address` field.
+ *
+ * @property address The address to send a reset link to, exactly as the caller typed it — nothing
+ *   here canonicalises it; [duels.poker.server.auth.RecoveryEmails.resetRecipientOf] judges and
+ *   reads it unchanged.
+ */
+@Serializable
+public data class ForgotPasswordRequest(val address: String) {
+    override fun toString(): String = REDACTION
+
+    public companion object {
+        /**
+         * The fixed string returned by `toString()` to prevent accidental leaks into logs or
+         * exception messages.
+         */
+        public const val REDACTION: String = "ForgotPasswordRequest(redacted)"
+    }
+}
+
+/**
  * The body of `POST /api/auth/reset-password`, carrying the one-time token mailed to the player
  * and the new password to rewrite the credential to.
  *
