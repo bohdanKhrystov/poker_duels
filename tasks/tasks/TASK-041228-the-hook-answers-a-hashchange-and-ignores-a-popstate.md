@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041228
 title: The hook answers a hashchange and ignores a popstate, which no test can currently tell apart
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: XS
@@ -146,3 +146,35 @@ which is the only reason it says something useful.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket exists because a gate was proved blind, not because a bug shipped.** `TASK-041202`'s
+Proof predicted that subscribing to `popstate` instead of `hashchange` would redden a test; it
+reddened nothing. Coder and reviewer each read this repo's installed jsdom and found why — assigning
+`window.location.hash` fires neither event synchronously and then fires **both** on a microtask,
+where a real browser fires only `hashchange`. The hook was correct throughout. Nothing would have
+noticed if a later edit made it wrong, and `ADR-0076` §5 names that trap precisely because it is
+silent.
+
+**The isolating channel is `history.pushState`, because it fires neither event** — in jsdom and in a
+real browser alike. Move the address that way, dispatch a bare `popstate`, and the hook's value must
+not move.
+
+**Asserting a non-event needs a different primitive, and that is the whole craft of this test.**
+`waitFor` and `findBy` retry until a condition holds, so they pass the moment any retry succeeds —
+useless for *"this did not happen"*. Here the assertion is a single synchronous `expect` immediately
+after a synchronous `act()`. `dispatchEvent` is synchronous per the DOM spec, unlike the hash
+assignment the file's other tests need `waitFor` for, and `act()` flushes any resulting React update
+before returning. A hook that responded would run `notify()` during the dispatch and already read
+`"duels"` when the assertion executes — there is no transient for a retry to wait past.
+
+**It catches the break that would actually happen.** Two mutations were run: `hashchange` → `popstate`
+reddens **this test alone** while the five older ones stay green, which is what shows it uniquely
+gates the distinction; a constant `getSnapshot` reddens all six, which only shows it is alive. The
+reviewer then reasoned through the case neither covers — a hook subscribing to **both** events, the
+plausible way someone breaks this while fixing a perceived bug — and confirmed the first assertion
+fails there too.
+
+**Both halves are asserted.** The ignored `popstate` *and* a subsequent honoured `hashchange`. A test
+that only proved the hook ignores things would pass against a hook that ignores everything.

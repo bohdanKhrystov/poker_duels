@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041204
 title: The store outranks the address, and a seated player's address stops lying
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
