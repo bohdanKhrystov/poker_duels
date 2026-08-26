@@ -346,4 +346,56 @@ class ServerConfigTest {
             ServerConfig.from(config) { null }
         }
     }
+
+    @Test
+    fun forgotPasswordIsTenAMinuteWithNothingConfigured() {
+        // ADR-0079: generous at 10 / 60000 because fifteen-minute per-account rule already caps bombing
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(AttemptLimits(10, 60_000L), serverConfig.forgotPasswordLimits())
+    }
+
+    @Test
+    fun recoveryEmailIsFiveAMinuteWithNothingConfigured() {
+        // ADR-0079: 5 / 60000 because it is the only cap on mail to caller-chosen recipient
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(AttemptLimits(5, 60_000L), serverConfig.recoveryEmailLimits())
+    }
+
+    @Test
+    fun eachRecoveryBudgetReadsItsOwnKeys() {
+        // ADR-0079: both recovery budgets must read their own keys, not cross-wired
+        val config = MapApplicationConfig(
+            ServerConfig.FORGOT_PASSWORD_MAX_ATTEMPTS_KEY to "3",
+            ServerConfig.FORGOT_PASSWORD_WINDOW_MILLIS_KEY to "111000",
+            ServerConfig.RECOVERY_EMAIL_MAX_ATTEMPTS_KEY to "7",
+            ServerConfig.RECOVERY_EMAIL_WINDOW_MILLIS_KEY to "222000",
+        )
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(AttemptLimits(3, 111_000L), serverConfig.forgotPasswordLimits())
+        assertEquals(AttemptLimits(7, 222_000L), serverConfig.recoveryEmailLimits())
+    }
+
+    @Test
+    fun theEnvironmentOverridesBothRecoveryBudgets() {
+        // ADR-0079: environment must override both recovery budgets from file
+        val config = MapApplicationConfig(
+            ServerConfig.FORGOT_PASSWORD_MAX_ATTEMPTS_KEY to "3",
+            ServerConfig.FORGOT_PASSWORD_WINDOW_MILLIS_KEY to "111000",
+            ServerConfig.RECOVERY_EMAIL_MAX_ATTEMPTS_KEY to "7",
+            ServerConfig.RECOVERY_EMAIL_WINDOW_MILLIS_KEY to "222000",
+        )
+        val serverConfig = ServerConfig.from(config) { name ->
+            when (name) {
+                ServerConfig.AUTH_FORGOT_PASSWORD_MAX_ATTEMPTS -> "2"
+                ServerConfig.AUTH_FORGOT_PASSWORD_WINDOW_MILLIS -> "333000"
+                ServerConfig.AUTH_RECOVERY_EMAIL_MAX_ATTEMPTS -> "4"
+                ServerConfig.AUTH_RECOVERY_EMAIL_WINDOW_MILLIS -> "444000"
+                else -> null
+            }
+        }
+        assertEquals(AttemptLimits(2, 333_000L), serverConfig.forgotPasswordLimits())
+        assertEquals(AttemptLimits(4, 444_000L), serverConfig.recoveryEmailLimits())
+    }
 }

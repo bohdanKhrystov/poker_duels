@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041645
 title: The two recovery budgets are numbers a test reads, not numbers a reviewer swaps unnoticed
 type: task
-status: ready
+status: done
 parent: STORY-0416
 module: poker-server
 estimate: S
@@ -163,3 +163,35 @@ calls that read them;
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This closes a gap that was demonstrated, not suspected — and the demonstration is repeatable.**
+`TASK-041628` shipped budgets of ten a minute to forget and five to attach, and no test asserted
+either number: every test there builds its own low `AttemptLimits`, because that ticket's Tests intro
+mandates *limits set low*. Right for the mechanism, blind to the policy. A reviewer swapped the two
+defaults and **every gate stayed green**. Swapping them now reddens both default tests, confirmed
+independently at review.
+
+**The fixture recorded in `TASK-041628`'s notes did not compile, and a planner caught it before a
+coder met it.** `ServerConfig` has **nine parameters with no defaults**, so `ServerConfig()` does not
+exist. The tests go through `ServerConfig.from(MapApplicationConfig()) { … }` — which is also the
+**stronger** path, because the numbers live in two places and only the `DEFAULT_*` constants that
+`from` resolves are the ones `Application` ships. Asserting against a directly-constructed object
+would have gated a value nothing uses.
+
+**The defaults are asserted as literals, not against the constants.** `AttemptLimits(10, 60_000L)` and
+`AttemptLimits(5, 60_000L)` are written out; referencing `DEFAULT_*` would make the assertion a
+tautology that passes whatever the constant holds — leaving the swap invisible and closing nothing.
+That distinction has now decided four tests this run, and it is the check most likely to be wrong
+while looking right.
+
+**One test carries the field-assignment property alone, and the others structurally cannot.**
+`eachRecoveryBudgetReadsItsOwnKeys` configures all four keys with distinct non-default values (3,
+111000, 7, 222000), so a resolver reading the right key and assigning to the wrong field reddens it.
+The two default tests configure nothing, so both fields receive defaults regardless of assignment
+order — they cannot see it, and that is not a deficiency in them.
+
+**No global, no class-load ordering.** `ServerConfig.from` takes its environment reader as a
+**parameter**, which is what made a class-load caching concern **foreclosed** rather than ungated when
+it was raised on `TASK-041632`.
