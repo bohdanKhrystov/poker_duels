@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  act,
+} from "@testing-library/react";
 import { SignUpForm } from "./SignUpForm";
 import type { SignUpOutcome } from "./sign-up";
 import {
@@ -185,8 +191,14 @@ describe("signing up for an account", () => {
     render(<SignUpForm signUp={signUp} />);
 
     const submitButton = screen.getByRole("button", { name: SIGN_UP_LABEL });
-    fireEvent.click(submitButton);
-    fireEvent.click(submitButton);
+    // Both dispatches inside one outer `act()`: fireEvent's own act() wrapping
+    // nests inside it and defers its flush to the outer call, so the second
+    // click's handler runs against the same pre-render closure as the first —
+    // the actual race a synchronous ref (and not state) is guarding against.
+    act(() => {
+      fireEvent.click(submitButton);
+      fireEvent.click(submitButton);
+    });
 
     expect(signUp).toHaveBeenCalledTimes(1);
 
