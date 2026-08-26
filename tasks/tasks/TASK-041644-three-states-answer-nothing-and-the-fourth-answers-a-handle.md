@@ -40,6 +40,13 @@ The mutations `TASK-041643`'s Proof runs and cannot catch are this ticket's subj
 handing the route a null handle, and a dropped `c.kind = 'password'` that goes ambiguous the day
 `DEC-027` admits a second credential kind. Both are gated here by one test.
 
+The third is the fold. A fixed-string `grep` for `COLLATE "und-x-icu"` reddens on a KDoc comment and
+stays green on a fold that has quietly stopped being symmetric, and the asymmetric case is not
+hypothetical: stripping the parameter-side `COLLATE` from `verifiedOwnerOf` earlier in this story
+made a lookup for one player's own address answer a **different player's** `PlayerId`, on a read one
+step from authentication. That mutation is invisible to every ASCII fixture, so this ticket's
+case-folding test carries a non-ASCII one and the *Tests* section below says which and why.
+
 ## Files
 
 | File | Action |
@@ -106,7 +113,39 @@ three-`null`-states paragraph is the whole of the refusal half of this ticket.
 | `oneOwnersHandleIsNotAnothers` | **Two** players, **two** verified addresses, **two different** handles. Each address answers its own owner's id and its own owner's handle. A statement that ignores its parameter, joins on the wrong column, or returns the first row in the table passes every other test in this file and fails this one — and a constant handle cannot pass it at all |
 | `aPendingAddressAndAnUnknownOneBothAnswerNothing` | A claimed-but-unverified address and an address nobody has ever mentioned both answer `null`, asserted **individually and equal to each other** — the security property is that the two agree, not that each happens to be the empty value. The file's merged `aPendingAddressIsFoundByNobody` makes the same argument for `verifiedOwnerOf` and this follows it |
 | `anOwnerWithNoPasswordCredentialAnswersNothing` | Two verified addresses whose owners hold, respectively, **no credential at all** and **only a non-`password` credential** (`CredentialKind("oauth:google")`). Both answer `null`. This is the `JOIN`-not-`LEFT JOIN` test *and* the `c.kind = 'password'` test: a `LEFT JOIN` answers a recipient with no handle for the first owner, and a join with the kind predicate dropped answers the OAuth identifier as though it were a login handle for the second |
-| `theHandleIsFoundWhateverCaseTheAddressIsAskedIn` | An address stored as `Bob@Example.com` answers the same `ResetRecipient` when asked as `BOB@example.COM` and as the exact stored spelling. The pinned `und-x-icu` fold, observed rather than greped |
+| `theHandleIsFoundWhateverCaseTheAddressIsAskedIn` | **Two owners, two addresses, four lookups.** An address stored as `Bob@Example.com` answers its owner's `ResetRecipient` asked as `BOB@example.COM` and as the exact stored spelling; a second owner's address is **stored as `DOTTED + "@x.test"`** and answers *its* owner's `ResetRecipient` asked as `DOTTED + "@x.test"` and as `FOLDED + "@x.test"`. The pinned `und-x-icu` fold on **both halves** of the comparison, observed rather than greped |
+
+Throughout this ticket, `DOTTED` is the single character **U+0130** (LATIN CAPITAL LETTER I WITH DOT
+ABOVE) and `FOLDED` is the two-character sequence **`i` followed by U+0307** (COMBINING DOT ABOVE).
+Write both in the test as Kotlin unicode escapes, never as literal glyphs, so the fixture survives
+any editor. The two code points above are the whole specification — nothing outside this ticket
+needs opening for them. The merged
+`RecoveryEmailSchemaTest.twoSpellingsOnlyIcuFoldsTogetherAreOneAddress` pins the same pair, but it
+pins it against `recovery_email_address_unique` and against no `SELECT` at all, which is exactly why
+it leaves this statement uncovered.
+
+**The second fixture is the one that discriminates, and its direction is load-bearing.** U+0130 is
+the character the two collations disagree about: `lower()` maps it to `FOLDED` under `und-x-icu` and
+to a bare `i` under the container's musl default. `É`, `ẞ` and `Ж` fold identically under both, and
+so does every ASCII letter — which is why the `Bob@Example.com` half proves only that *some* fold
+happens, never that it is the pinned one.
+
+Measured against `postgres:16-alpine` — the container `PostgresTestSupport` starts — with the
+address stored as `DOTTED + "@x.test"` and the four spellings of the statement asked both ways:
+
+| `SELECT_RESET_RECIPIENT_SQL` | asked `DOTTED` | asked `FOLDED` |
+| --- | --- | --- |
+| As `TASK-041643` merged it | found | found |
+| `COLLATE` dropped from the **parameter** | **not found** | found |
+| `COLLATE` dropped from the **column** | **not found** | **not found** |
+| `COLLATE` dropped from **both** | found | **not found** |
+
+Neither lookup alone covers that set, which is why the test asks twice: the exact-spelling lookup is
+the only one that catches a dropped parameter-side fold, and the combining-sequence lookup is the
+only one that catches the pin being removed from both halves at once — a fold that stays
+self-consistent while no longer being the fold `recovery_email_address_unique` is built on. Under
+every one of the four variants the `Bob@Example.com` lookups are found, so a reader can check the
+claim that the ASCII half cannot fail here.
 
 ## Acceptance criteria
 
@@ -121,6 +160,17 @@ three-`null`-states paragraph is the whole of the refusal half of this ticket.
 - [ ] `anOwnerWithNoPasswordCredentialAnswersNothing` covers **both** owners — one with no
       credential row and one with a `CredentialKind("oauth:google")` row — in one test and one
       database
+- [ ] `theHandleIsFoundWhateverCaseTheAddressIsAskedIn` makes **four** lookups over **two** owners:
+      `Bob@Example.com` asked as `BOB@example.COM` and as the exact stored spelling, and a second
+      owner's `DOTTED + "@x.test"` asked as `DOTTED + "@x.test"` and as `FOLDED + "@x.test"`. Each
+      of the four is asserted against **its own** owner's `ResetRecipient`, id and handle both, and
+      the two owners' handles are different strings
+- [ ] The two non-ASCII spellings in that test are written as Kotlin unicode escapes — U+0130 for
+      `DOTTED`, `i` plus U+0307 for `FOLDED` — with no literal glyph anywhere in the file, and the
+      stored address is the `DOTTED` one. **Stored and asked are not interchangeable here**: storing
+      `FOLDED` and asking `DOTTED` would still catch a dropped parameter-side `COLLATE` but would go
+      blind to a dropped column-side one, and storing `DOTTED` and asking only `FOLDED` goes blind
+      to the parameter side, which is the mutation this test exists for
 - [ ] The five merged tests in the file are **byte-unchanged**; `git diff` shows additions only,
       plus the KDoc sentence and the new helper
 - [ ] The file contains no call to `PostgresCredentials.create` and no `Argon2`
@@ -146,12 +196,22 @@ three-`null`-states paragraph is the whole of the refusal half of this ticket.
    reddens **only if its fixture handle is not the literal `"handle"`**. Choose the fixture handles
    so it does: this is the *one value across a whole story* trap, and a single-fixture test cannot
    tell a copy from a constant. Revert.
-4. Replace the SQL fold with `address.value.lowercase()` bound as a plain parameter.
-   **`theHandleIsFoundWhateverCaseTheAddressIsAskedIn` reddens on the shouted-case lookup**, and —
-   predicted honestly — **also on the exact-stored-spelling lookup**, because `Bob@Example.com`
-   lowercased no longer matches the stored mixed-case row under a comparison that is no longer
-   folding the column. Two assertions in one test, not one. That second red is the tell that the
-   fold moved out of SQL rather than merely weakening. Revert.
+4. Delete `COLLATE "und-x-icu"` from the **parameter half only** of `SELECT_RESET_RECIPIENT_SQL`,
+   leaving `lower(r.address COLLATE "und-x-icu") = lower(?)`.
+   **`theHandleIsFoundWhateverCaseTheAddressIsAskedIn` reddens alone, and inside it only the
+   `DOTTED` lookup**: the parameter now folds under the database default, which maps U+0130 to a
+   bare `i`, while the column still folds to `FOLDED` — so a verified address answers `null` when
+   asked in **the exact spelling it was stored in**. Its other three lookups stay green, and so do
+   the other four tests, whose fixtures are ASCII and fold identically either way. PostgreSQL raises
+   no collation conflict and logs nothing, so an assertion is the only thing in the system that can
+   see this. It is the mutation that, applied to `verifiedOwnerOf` earlier in this story, made a
+   lookup for one player's own address answer a **different player's** `PlayerId`. Revert.
+
+   Then delete the `COLLATE` from **both** halves. **The same test reddens, and now on the `FOLDED`
+   lookup instead** — the fold is self-consistent again but is no longer the one
+   `recovery_email_address_unique` is built on, so two spellings the index treats as one address
+   become two for the read. Each lookup catches what the other cannot; that is why this test asks
+   twice and why the *Tests* table above is a measurement rather than a recollection. Revert.
 5. Delete `aPendingAddressAndAnUnknownOneBothAnswerNothing`'s `assertEquals` of the two results
    against each other, keeping both `assertNull`s.
    **Nothing reddens.** Written down as inert on purpose: the cross-assertion is not defending
