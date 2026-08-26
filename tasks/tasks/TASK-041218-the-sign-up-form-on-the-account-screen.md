@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041218
 title: The sign-up form — one credential, and the strip is the same profile afterwards
 type: task
-status: backlog
+status: ready
 parent: STORY-0412
 module: web-client
 estimate: S
