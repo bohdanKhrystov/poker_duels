@@ -2529,7 +2529,7 @@ time*. Landing the display name first makes it `V3` and leaves the rest nothing 
 | | [TASK-041635](tasks/TASK-041635-the-fold-the-address-index-depends-on-written-down-in-the-catalog.md) The fold the address index depends on, written down in the catalog | S | done |
 | | [TASK-041636](tasks/TASK-041636-the-attach-path-gets-the-quarter-hour-of-silence-the-reset-path-has.md) The attach path gets the quarter hour of silence the reset path has | S | done |
 | | [TASK-041637](tasks/TASK-041637-the-second-attach-in-a-quarter-hour-is-answered-the-same-and-mails-nothing.md) The second attach in a quarter hour is answered the same, and mails nothing | S | done |
-| | [TASK-041638](tasks/TASK-041638-the-shape-gate-holds-for-four-more-shapes-and-names-the-one-it-cannot.md) The shape gate holds for four more shapes, and names the one it cannot | S | **ready** |
+| | [TASK-041638](tasks/TASK-041638-the-shape-gate-holds-for-four-more-shapes-and-names-the-one-it-cannot.md) The shape gate holds for four more shapes, and names the one it cannot | S | **done** |
 | | [TASK-041639](tasks/TASK-041639-a-reset-that-cannot-write-the-password-spends-no-token.md) A reset that cannot write the password spends no token | XS | **done** |
 | | [TASK-041640](tasks/TASK-041640-a-failure-between-the-password-and-the-sessions-undoes-both.md) A failure between the password and the sessions undoes both | S | **done** |
 | | [TASK-041641](tasks/TASK-041641-the-profiles-recovery-flag-is-that-players-and-a-pending-address-is-not-one.md) The profile's recovery flag is that player's, and a pending address is not one | XS | done |
