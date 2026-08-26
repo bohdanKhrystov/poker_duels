@@ -13,10 +13,17 @@ files_touched: 2
 labels: [server, mail, concurrency]
 depends_on: [TASK-041626]
 verify:
-  - ./gradlew :poker-server:test --tests 'duels.poker.server.mail.DetachedRecoveryMailerTest'
+  - ./gradlew :poker-server:test --tests 'duels.poker.server.mail.DetachedRecoveryMailerTest.sendVerificationReturnsBeforeItsDeliveryRuns'
+  - ./gradlew :poker-server:test --tests 'duels.poker.server.mail.DetachedRecoveryMailerTest.sendPasswordResetDetachesTheSameWay'
+  - ./gradlew :poker-server:test --tests 'duels.poker.server.mail.DetachedRecoveryMailerTest.theDeliveryCarriesTheArgumentsItWasGiven'
   - ./gradlew :poker-server:ktlintCheck
   - ./gradlew :poker-server:detekt
 ---
+
+> **One `--tests` per command, deliberately.** A whole-class filter exits 0 whether or not a named
+> method exists — the defect that let `TASK-041616` ship two criteria naming tests nobody had
+> written. Putting several patterns in one invocation does not fix it: Gradle fails only when the
+> *combined* filter matches nothing, so a real method and an imaginary one together still exit 0.
 
 ## Goal
 
@@ -90,7 +97,7 @@ reddening. No test sleeps, no test has a timeout, and no test needs one.
 | --- | --- |
 | `sendVerificationReturnsBeforeItsDeliveryRuns` | The delegate `yield()`s and then appends `"delivered"`; the caller appends `"returned"` immediately after `sendVerification` comes back; the scope's children are then joined. The list is exactly `["returned", "delivered"]`. A member that forwarded directly produces `["delivered", "returned"]` |
 | `sendPasswordResetDetachesTheSameWay` | The identical ordering for the second member, `handle` included. Two members, two tests: a body that forgot to `launch` in one of them is invisible to a test exercising the other |
-| `theDeliveryCarriesTheArgumentsItWasGiven` | After joining, the delegate recorded exactly one call whose address, token and member name are the ones passed in. The positive control: the ordering tests above are satisfied by a `launch` that delivers nothing at all |
+| `theDeliveryCarriesTheArgumentsItWasGiven` | After joining, the delegate recorded exactly one call whose address, token, **handle** and member name are the ones passed in — four values, three of them distinct strings. The positive control: the ordering tests above are satisfied by a `launch` that delivers nothing at all |
 
 ## Acceptance criteria
 
@@ -102,8 +109,12 @@ reddening. No test sleeps, no test has a timeout, and no test needs one.
       it contains two elements
 - [ ] `sendPasswordResetDetachesTheSameWay` exists and exercises the second member, `handle`
       included
-- [ ] `theDeliveryCarriesTheArgumentsItWasGiven` uses an address and a token that are **different
-      strings**, so an argument swap is detectable
+- [ ] `theDeliveryCarriesTheArgumentsItWasGiven` uses an address, a token **and a handle** that are
+      **three distinct strings**, so any argument swap is detectable. `ADR-0082` gave
+      `sendPasswordReset`'s third parameter its first real source, and `token` and `handle` are
+      both `String` on `RecoveryMailer` — which `ADR-0082` §5 keeps byte-unchanged — so the
+      compiler cannot tell a swap of those two from the correct call. Only three distinct values
+      can
 - [ ] `DetachedRecoveryMailer.kt` contains no `CoroutineScope(`, no `GlobalScope`, no `runBlocking`
       and no `Job(` — it receives a scope and constructs none
 - [ ] `DetachedRecoveryMailer.kt` contains no `delay`, no retry loop, no counter and no `DELETE`
