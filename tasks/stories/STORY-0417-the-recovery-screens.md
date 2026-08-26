@@ -38,8 +38,41 @@ follows `STORY-0412` because it extends the account screen that story opens.
   unattended browser from becoming permanent ownership.
 - **A successful reset signs you out everywhere, including here.** The screen says so before it acts,
   and afterwards sends the player to sign in — the server issues no session from a reset, so a client
-  that expected one is a client that hangs.
+  that expected one is a client that hangs. That destination is ***Sign in*** at **`#/sign-in`**,
+  fixed by [`ADR-0083`](../../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md)
+  §1 and §2 and built by `STORY-0412`; this story does not name it a second time.
 - No secret in a URL, no token in storage, no address in any log or analytics call.
+
+## A test this story must carry, inherited as a debt
+
+**`screenFromHash` must be proved against a slug followed by an opaque segment, and this is the only
+story that can do it.** `TASK-041201`'s `## Notes` record the shape of the file it shipped: the whole
+first-segment rule of `ADR-0081` §1 rests on **one** test, `names the first segment and ignores
+whatever follows it`, and a `screen.ts` that matched the *whole* fragment would still pass the other
+three. That one test's two inputs are `#/duels/2026` and `#/leaderboard/anything` — **both put a slug
+the switch already knows in front of a segment nothing ever reads.**
+
+The case `ADR-0081` §1 exists for is `#/verify/<token>`: the first segment names the screen and the
+second is a secret a server wrote into mail. `TASK-041201` could not reach it, because `verify` is
+this story's screen and that ticket deferred the slug. The implementation handles it today; **no test
+would notice if a later edit stopped it**, and the failure mode is a player clicking a link in their
+mail and landing on the lobby with no message.
+
+Whoever splits this story must therefore produce a ticket that pins, in `web-client/src/routing/`:
+
+- `screenFromHash("#/verify/<an opaque token>")` returns `"verify"`, with a token value that is not a
+  word, not a year and not a slug — a long random-looking string, so the assertion cannot pass by the
+  second segment resembling something the switch knows.
+- The same for `#/reset/<token>`, `ADR-0081` §1's other mailed address — **two** slugs, because one
+  cannot tell a general rule from a special case for `verify`.
+- `tokenFromHash` returns exactly that segment for both, and `null` for an address with no second
+  segment. `ADR-0081` §4 puts the token in the fragment precisely so it crosses no wire, and reading
+  it is what makes the choice worth anything.
+- A token containing a character that would end a path segment or start a query — the guard against a
+  reader that splits on the wrong thing.
+
+This is a **requirement on the split, not a ticket**: it is recorded here so the planner run that
+cuts this story cannot miss it, and so a reviewer can check that it was honoured.
 
 ## Tasks
 
@@ -59,6 +92,9 @@ follows `STORY-0412` because it extends the account screen that story opens.
 - [ ] The reset screen warns that every session ends, then sends the player to sign in, and never
       expects a token back.
 - [ ] A reset failure (`400`) and a policy failure (`422`) render different, actionable sentences.
+- [ ] `screenFromHash` and `tokenFromHash` are asserted against `#/verify/<token>` **and**
+      `#/reset/<token>` with opaque token values — the debt `TASK-041201` recorded and the section
+      above spells out. A split that produces no such ticket has not met this story.
 - [ ] The suite's own count is asserted, and no test sleeps on a real clock.
 
 ## Out of scope
