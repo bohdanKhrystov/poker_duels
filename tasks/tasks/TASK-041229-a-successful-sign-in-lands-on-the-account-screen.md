@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041229
 title: A successful sign-in starts the next boot on the account screen, with no way back to sign-in
 type: task
-status: backlog
+status: blocked
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -153,3 +153,67 @@ tests and driven the same way: the rendered tree over a stubbed `window.fetch`.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Blocked — three defects in this ticket, all measured, after three coder dispatches
+
+**Blocked 2026-08-27.** Not a hard problem in the code: the ticket describes a fixture that cannot
+be built and gates a test that does not exist. `main.tsx`'s side of the work was written and one of
+its three tests is genuinely good; the other two cannot be what the ticket asks for.
+
+**1. The specified fixture is unbuildable, and this is `TASK-041223`'s defect inherited.** The
+`## Tests` preamble says the tests sit *"beside `TASK-041223`'s binding tests and driven the same
+way: the rendered tree over a stubbed `window.fetch`"*. `TASK-041223` was **amended precisely
+because that fixture does not exist**: `web-client/src/App.test.tsx` line 35 is
+`vi.mock("./main", …)`, which replaces the module wholesale for **every** test in the file and
+exports neither `plainFetch` nor `apiFetch`. No rendered-tree test in that file reaches `main.tsx`'s
+bindings. The mock is load-bearing — Node's `localStorage` shadows jsdom's (`DEC-032`) and `main.tsx`
+opens a socket at import. This ticket was written against `TASK-041223`'s **pre-amendment** shape and
+never updated when that ticket was rewritten around source assertions.
+
+**2. The third row names a test that no longer exists.** `## Tests` lists
+`sends sign-in with no credential of its own, even holding a session` as *"(existing,
+`TASK-041223`)"* which *"must not move"*, and `verify:` greps for it. **It exists nowhere in the
+repository.** It was `TASK-041223`'s pre-amendment test name; the amendment replaced it with
+`refuses to wrap sign-in, the one request that must carry nothing` (`App.test.tsx:238`), and the
+request-level guarantee lives in `sends no device id and no authorization of its own`
+(`sign-in.test.ts:135`). Both are merged and both hold. Because a `verify:` line greps a name that
+does not exist, **the ticket forced the coder to write a test to satisfy the grep** — a fabricated
+"existing" test. That is the ticket's defect, not the coder's, and it is the sharpest lesson here: a
+`verify:` line naming a test that must *already* exist is a gate that can be satisfied by creating
+it.
+
+**3. `leaves a refused sign-in exactly where it was` cannot be honest in this file, and the property
+it names is unguarded everywhere.** Measured, on the third dispatch: mutate `sign-in.ts` to call the
+injected `reload` on **every** outcome rather than only on success, run the **whole** suite — **no
+test reddens.** Not this file's, and not `sign-in.test.ts`'s. The property is *genuinely unguarded*,
+not foreclosed and not covered elsewhere. As written in PR #1096 the test asserts
+`signIn\([^}]*reload: reloadAtAccount` and then asserts the same binding a second time through a
+`match(...)`; it says nothing about refusal, because a source assertion on `main.tsx` **cannot** see
+which branch calls `reload`. The name promises a guard the mechanism cannot provide.
+
+### What is good and should survive
+
+`lands the next boot on the account screen after a sign-in that worked` **is** gated and was measured
+twice: deleting the `replaceState` call reddens it by name, and so does swapping `replaceState` for a
+`window.location.hash` assignment. The `reloadAtAccount` implementation in `main.tsx` is sound —
+`replaceState` fires neither `hashchange` nor `popstate` in this jsdom, creates no history entry, and
+the reload follows immediately, so no listener could observe it anyway. All five gated counts in
+`main.tsx` held: `authorizedFetch(` = 1, `window.fetch(` = 2, `apiFetch` = 5, `const plainFetch` = 1,
+`fetch: plainFetch` = 4.
+
+### Routes, for a planner to choose between rather than a coder to guess
+
+1. **Drop row three entirely** and delete its `verify:` line. The guarantee it names is already
+   merged twice over, so the row buys nothing and its grep is the thing that manufactured a fake
+   test. This one is not really a choice — it should happen whichever route the rest takes.
+2. **Rename row two to what a source assertion can prove**, and file the refusal-branch guard as its
+   own ticket against `sign-in.test.ts`, where the behaviour actually lives and where a fixture
+   already injects `reload`. Cheapest, and honest, provided the new name stops promising a behaviour.
+3. **Move both behavioural rows to `sign-in.test.ts`**, leaving this ticket only the `main.tsx`
+   wiring and its one good source assertion. `signIn` already takes `reload` injected, so a test
+   there can drive a 200 and a 401 against one fixture and assert `reload` was called exactly once
+   and then not at all — which is the *"two different server answers against one fixture"* the
+   `## Tests` table asks for, in the one file where it is buildable.
+
+**The acceptance test for any amendment:** mutating `sign-in.ts` to call `reload` on every outcome
+must redden a test **by name**. Today nothing does.
