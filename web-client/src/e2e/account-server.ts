@@ -5,7 +5,8 @@ export interface ServerPlayer {
   readonly playerId: string;
   readonly deviceId: string;
   readonly coinBalance: number;
-  readonly displayName: string | null;
+  displayName: string | null;
+  readonly duels: readonly Record<string, unknown>[];
 }
 
 export interface RecordedRequest {
@@ -22,6 +23,8 @@ export interface AccountServer {
 
 export function accountServer(players: readonly ServerPlayer[]): AccountServer {
   const requests: RecordedRequest[] = [];
+  // Cast to mutable array to allow displayName updates
+  const mutablePlayers = players as ServerPlayer[];
 
   const fetch: ApiFetch = async (
     path: string,
@@ -44,7 +47,7 @@ export function accountServer(players: readonly ServerPlayer[]): AccountServer {
 
     // Resolve the device id from the X-Device-Id header
     const deviceId = init.headers["X-Device-Id"];
-    const player = players.find((p) => p.deviceId === deviceId);
+    const player = mutablePlayers.find((p) => p.deviceId === deviceId);
 
     // Handle GET /api/me
     if (path === "/api/me" && method === "GET") {
@@ -57,6 +60,62 @@ export function accountServer(players: readonly ServerPlayer[]): AccountServer {
       }
 
       // Return the player's profile
+      const profileBody = meBody({
+        playerId: player.playerId,
+        coinBalance: player.coinBalance,
+        displayName: player.displayName,
+        displayNameRemoved: false,
+        deviceRouteLive: true,
+      });
+
+      return {
+        status: 200,
+        json: async () => profileBody,
+      };
+    }
+
+    // Handle GET /api/me/duels
+    if (path.startsWith("/api/me/duels") && method === "GET") {
+      if (player === undefined) {
+        return {
+          status: 401,
+          json: async () => ({}),
+        };
+      }
+
+      return {
+        status: 200,
+        json: async () => ({
+          duels: player.duels,
+          nextCursor: null,
+        }),
+      };
+    }
+
+    // Handle PUT /api/me/name
+    if (path === "/api/me/name" && method === "PUT") {
+      if (player === undefined) {
+        return {
+          status: 401,
+          json: async () => ({}),
+        };
+      }
+
+      // Parse the name from the body
+      let name: string | null = null;
+      try {
+        const bodyObj = JSON.parse(body ?? "{}");
+        name = typeof bodyObj.name === "string" ? bodyObj.name : null;
+      } catch {
+        // If parsing fails, name stays null
+      }
+
+      // Update the player's display name
+      if (name !== null) {
+        player.displayName = name;
+      }
+
+      // Return the full profile body with the updated name
       const profileBody = meBody({
         playerId: player.playerId,
         coinBalance: player.coinBalance,
