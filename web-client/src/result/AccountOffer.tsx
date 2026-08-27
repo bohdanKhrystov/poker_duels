@@ -8,6 +8,13 @@ import {
 import { hashForScreen } from "../routing/screen";
 
 export function AccountOffer(props: {
+  /**
+   * Called on the accept control's click, before the browser loads the account
+   * screen (`ADR-0086` §6). The link stays an `<a href="/#/account">`, so the
+   * handler runs and navigation stays the browser's. Storage operations are
+   * synchronous, so a handler that forgets has finished before the page leaves.
+   */
+  readonly onAccept: () => void;
   readonly onDismiss: () => void;
 }): ReactElement {
   return (
@@ -22,6 +29,7 @@ export function AccountOffer(props: {
       <a
         className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
         href={`/${hashForScreen("account")}`}
+        onClick={props.onAccept}
       >
         {OFFER_ACCEPT}
       </a>
