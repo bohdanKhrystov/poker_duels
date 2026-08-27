@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041407
 title: Claimed here — the duel, the coin the server sent, the name, and the credential
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
