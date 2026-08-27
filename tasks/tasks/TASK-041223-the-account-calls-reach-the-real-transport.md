@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041223
 title: The account calls reach the real transport, and sign-in reaches it carrying nothing
 type: task
-status: ready
+status: blocked
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -169,3 +169,52 @@ tests.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Blocked — the Tests table names a mechanism the Files table cannot support
+
+**The security property in this ticket's title is ungated, and the specified fixture cannot be built
+in the file specified.** Two coder dispatches and a deep review established both halves.
+
+**The gap, reproduced twice.** Rebind **only** `signIn` to `apiFetch` in `main.tsx` — a live sign-in
+would then carry `Authorization: Bearer <token>` to the sign-in endpoint — and the whole suite stays
+green except `wires all four reads through the wrapper and names the browser fetch once`, which moves
+on a **count** (4 → 5). The test named for this property,
+`sends sign-in with no credential of its own, even holding a session`, **passes**: it reads
+`account/sign-in.ts`'s own source text and never touches `main.tsx`, so it cannot see which fetch is
+bound. What it asserts is already covered properly by `sign-in.test.ts`'s
+`sends no device id and no authorization of its own`, which inspects `calls[0].init.headers` from a
+real invocation.
+
+The same shape holds for `binds the four account calls…`: running this ticket's **own** Proof step 2 —
+rebind `revokeThisDevice`'s arrow to call `signOut`, keep the key name — leaves the suite 754/754
+green, because the object-key substring is unchanged and the endpoint checks run against
+`revoke-device.ts`'s source. **This ticket's Proof step 1 is also wrong**: it predicts those tests
+redden on the Authorization assertion; two of three do not.
+
+**Why the specified fixture is unbuildable here.** The Tests table calls for the assertions to be
+*driven through the rendered tree with a stubbed `window.fetch`*. But `App.test.tsx` line 35 carries
+`vi.mock("./main", …)`, which replaces the module wholesale — its factory returns fakes for
+`HistoryProvider`, `useHistory`, `LadderProvider`, `useLadder`, `SignedInProvider` and `useSignedIn`,
+and exports **neither** `plainFetch` **nor** `apiFetch`. Any rendered-tree test in this file exercises
+the mock, never `main.tsx`'s real bindings. The mock exists because Node's `localStorage` shadows
+jsdom's and `main.tsx` opens a socket at import — it is not incidental.
+
+So the coder's source-text approach was the only mechanism available **in the file its Files table
+names**, and the driver's instruction to build the rendered-tree fixture asked for something the
+module mock forecloses.
+
+**Three routes, for the planner to choose between rather than the coder to guess:**
+1. **A targeted source assertion on `main.tsx` itself** — assert the `signIn` binding line references
+   `plainFetch` and not `apiFetch`. Buildable inside the current Files table; catches the rebind by
+   name rather than by count. Weaker than a request-level assertion, and honest about being a wiring
+   check, which is what the property actually is.
+2. **A rendered-tree test in a new file that does not mock `./main`** — needs a Files-table entry and
+   must solve the `localStorage`/socket problem the mock exists to avoid.
+3. **Gate it where the request is actually made** — `authorized-fetch.test.ts` already asserts by
+   key-set equality that no `Authorization` key appears when no token is held; the missing fact is
+   which wrapper `main.tsx` chooses, which is route 1.
+
+**This is `ADR-0084` face one in its sharpest form** — a ticket whose prose names a file its table
+excludes, deliberately left to review rather than the linter because 28 of 29 mechanical flags would be
+legitimate refusals. It took a `deep` review and two dispatches to find. The production wiring is
+**correct today**; what is missing is the net that keeps it correct.
