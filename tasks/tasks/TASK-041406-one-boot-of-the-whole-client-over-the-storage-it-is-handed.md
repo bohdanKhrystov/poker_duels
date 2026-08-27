@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041406
 title: One boot of the whole client, over the storage and the server it is handed
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
