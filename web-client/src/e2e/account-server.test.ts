@@ -473,4 +473,176 @@ describe("accountServer", () => {
     expect(unknownHandleBody).toEqual({});
     expect(wrongPasswordBody).toEqual(unknownHandleBody);
   });
+
+  it("a bearer token outranks the device id on the profile read", async () => {
+    const server = accountServer(players);
+
+    await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({
+        handle: "outranks-profile-handle",
+        password: "outranks-profile-password",
+      }),
+    });
+    const signInResponse = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "outranks-profile-handle",
+        password: "outranks-profile-password",
+      }),
+    });
+    const signInBody = (await signInResponse.json()) as Record<string, unknown>;
+    const tokenForA = signInBody.sessionToken as string;
+
+    // Carries B's device id and A's token — the two disagree on purpose.
+    const response = await server.fetch("/api/me", {
+      headers: {
+        "X-Device-Id": "device-seat-1",
+        Authorization: `Bearer ${tokenForA}`,
+      },
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(body).toEqual({
+      playerId: "player-seat-0",
+      coinBalance: 100,
+      displayName: "Alice",
+      displayNameRemoved: false,
+      deviceRouteLive: true,
+    });
+
+    // The two fixture players differ in every field below, so the wrong
+    // answer under a broken precedence is a different value, not a missing
+    // one.
+    expect(body.playerId).not.toBe("player-seat-1");
+    expect(body.coinBalance).not.toBe(37);
+    expect(body.displayName).not.toBe("Bob");
+  });
+
+  it("a bearer token outranks the device id on the duels read", async () => {
+    const server = accountServer(players);
+
+    await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({
+        handle: "outranks-duels-handle",
+        password: "outranks-duels-password",
+      }),
+    });
+    const signInResponse = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "outranks-duels-handle",
+        password: "outranks-duels-password",
+      }),
+    });
+    const signInBody = (await signInResponse.json()) as Record<string, unknown>;
+    const tokenForA = signInBody.sessionToken as string;
+
+    // Carries B's device id and A's token, against a different route — the
+    // precedence is a property of the resolver, not of one route.
+    const response = await server.fetch("/api/me/duels", {
+      headers: {
+        "X-Device-Id": "device-seat-1",
+        Authorization: `Bearer ${tokenForA}`,
+      },
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as Record<string, unknown>;
+    const duelIds = (body.duels as Record<string, unknown>[]).map(
+      (d) => d.duelId,
+    );
+    expect(duelIds).toContain("duel-seat-0-1");
+    expect(duelIds).toContain("duel-seat-0-2");
+    expect(duelIds).not.toContain("duel-seat-1-1");
+  });
+
+  it("the device id still answers when no token is carried", async () => {
+    const server = accountServer(players);
+
+    // Same device id as the two tests above, but no Authorization header at
+    // all. Without this test, a double that always answers A's player would
+    // still pass the precedence tests above.
+    const response = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-1" },
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(body).toEqual({
+      playerId: "player-seat-1",
+      coinBalance: 37,
+      displayName: "Bob",
+      displayNameRemoved: false,
+      deviceRouteLive: true,
+    });
+  });
+
+  it("a token naming no live session is refused rather than falling back", async () => {
+    const server = accountServer(players);
+
+    // A valid device id rides alongside a token nobody ever issued.
+    const response = await server.fetch("/api/me", {
+      headers: {
+        "X-Device-Id": "device-seat-1",
+        Authorization: "Bearer made-up-token-nobody-issued",
+      },
+    });
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body).toEqual({});
+  });
+
+  it("signing out returns the browser to the device it holds", async () => {
+    const server = accountServer(players);
+
+    await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-1" },
+      body: JSON.stringify({
+        handle: "sign-out-handle",
+        password: "sign-out-password",
+      }),
+    });
+    const signInResponse = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "sign-out-handle",
+        password: "sign-out-password",
+      }),
+    });
+    const signInBody = (await signInResponse.json()) as Record<string, unknown>;
+    const token = signInBody.sessionToken as string;
+
+    const signOutResponse = await server.fetch("/api/auth/sign-out", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(signOutResponse.status).toBe(204);
+
+    // The same token no longer names a session.
+    const afterSignOut = await server.fetch("/api/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(afterSignOut.status).toBe(401);
+
+    // The device it holds answers its own player again, unaided by any
+    // token.
+    const deviceOnly = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-1" },
+    });
+    expect(deviceOnly.status).toBe(200);
+    const deviceOnlyBody = (await deviceOnly.json()) as Record<string, unknown>;
+    expect(deviceOnlyBody).toEqual({
+      playerId: "player-seat-1",
+      coinBalance: 37,
+      displayName: "Bob",
+      displayNameRemoved: false,
+      deviceRouteLive: true,
+    });
+  });
 });
