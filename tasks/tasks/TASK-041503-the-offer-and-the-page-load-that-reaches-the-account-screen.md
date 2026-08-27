@@ -89,8 +89,10 @@ Read, and do not edit:
 - **Deciding whether to render.** The component has no `verdict`, no `signedIn` and no `settled`
   prop; `TASK-041502`'s `offerAccount` decides and a later ticket wires it. A component that
   returned `null` for itself would be a second place able to get the trigger wrong.
-- **Doing anything on dismissal beyond calling `onDismiss`.** Where that handler writes is
-  `DEC-079`'s and `DEC-080`'s, both open.
+- **Doing anything on dismissal beyond calling `onDismiss`.** Where that handler writes was
+  `DEC-079`'s and `DEC-080`'s; both are now answered — `ADR-0085` and `ADR-0086`, which put it in
+  `result/account-offer-settled.ts` — and **this refusal still stands**, because the write belongs
+  to the wiring ticket and not to this component.
 - **Placing it on the result screen.** `TASK-041504` adds the slot; the ticket after the decisions
   fills it.
 - A heading element (`<h2>`/`<h3>`). `OFFER_HEADING` is a `<p>`: `DuelResult` already owns the one

@@ -82,8 +82,10 @@ Read, and do not edit:
   KDoc already states.
 - **Importing `AccountOffer`.** Gated at zero in both files. `DuelResult` knowing the component
   would be the panel making its own offer, which is what test 1 forbids.
-- **Wiring `Lobby.tsx` to fill the slot.** That needs a `settled` source, which is `DEC-079`'s and
-  `DEC-080`'s; both are open, and the wiring ticket is not written yet.
+- **Wiring `Lobby.tsx` to fill the slot.** That needs a `settled` source, which was `DEC-079`'s and
+  `DEC-080`'s; both are now answered — `ADR-0085` and `ADR-0086`, which name
+  `readOfferSettled(storage)` in `result/account-offer-settled.ts` — and **this refusal still
+  stands**: the wiring is its own ticket, still unwritten.
 - **Any change to the eleven merged assertions above the new ones.** This diff **appends** three
   tests and edits none. A `verify:` line requires the file to hold exactly 16.
 

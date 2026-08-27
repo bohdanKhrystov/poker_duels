@@ -139,7 +139,7 @@ recorded rather than quietly absorbed:
 | [STORY-0412](../stories/STORY-0412-the-account-screens.md) | The account screens — sign up, sign in, sign out, and which routes are live | 0406, 0411 | **ready**, split into 27 tickets on 2026-08-26 — `TASK-041201` is startable; the last two in the chain read `blocked` on `DEC-077` (the product owner's), **answered the same day** by [`ADR-0083`](../../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md) and waiting only on the planner folding it in. **Two** account screens, which `ADR-0076` §1 left to this story: `#/account`, and a sign-in screen the product now calls ***Sign in*** at `#/sign-in` |
 | [STORY-0413](../stories/STORY-0413-the-history-screen.md) | The history screen — pages, filters, search | 0409, 0411 | backlog |
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
-| [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | in progress — partially split into four on 2026-08-27; raised `DEC-079` and `DEC-080`. **`DEC-079` answered the same day** by [`ADR-0085`](../../docs/adr/ADR-0085-not-again-is-this-browser-and-an-answer-spends-the-offer.md): *"not again"* is **this browser**, and **an answer** spends the offer. No server half, no first-win fact, no wire change; `DEC-080` narrows to the key and the module |
+| [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | in progress — partially split into four on 2026-08-27; raised `DEC-079` and `DEC-080`. **`DEC-079` answered the same day** by [`ADR-0085`](../../docs/adr/ADR-0085-not-again-is-this-browser-and-an-answer-spends-the-offer.md): *"not again"* is **this browser**, and **an answer** spends the offer. No server half, no first-win fact, no wire change; `DEC-080` narrowed to the key and the module and was **answered on 2026-08-28** by [`ADR-0086`](../../docs/adr/ADR-0086-the-offers-answer-is-one-key-owned-beside-the-predicate-it-feeds.md): `pd.accountOfferSettled`, owned by `result/account-offer-settled.ts`. **Both open decisions are closed and the three unwritten tickets are writable** |
 | [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), `DEC-073` the same day by [`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), and `DEC-074` the same day by [`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md), so **none of the four is open**. None was the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | [STORY-0417](../stories/STORY-0417-the-recovery-screens.md) | The recovery screens — attach an address, and reset a password | 0412, 0416 | backlog |
 
@@ -216,12 +216,39 @@ being true in one respect and is corrected rather than deleted:** splitting `STO
 the same day.
 
 **Two, raised on 2026-08-27 when `STORY-0415` was split — a pair: one the product owner's and one
-the architect's downstream of it. The product owner's was answered the same day, so one is left,
-and it is narrower than it was registered.**
+the architect's downstream of it. The product owner's was answered the same day and the architect's
+on 2026-08-28, so this epic has no open decision left; the table that carried them is gone and what
+each settled is recorded below.**
 
-| ID | Question | Whose | Blocks |
-| --- | --- | --- | --- |
-| `DEC-080` | **Which key, and which module owns it** — and therefore the third entry `one-module-owns-each-storage-key.test.ts` gains. **Narrowed on 2026-08-27** by [`ADR-0085`](../../docs/adr/ADR-0085-not-again-is-this-browser-and-an-answer-spends-the-offer.md), which answered `DEC-079` as *this browser*: nothing crosses the wire, `GET /api/me` gains no field, no column records the dismissal, no endpoint accepts it, `STORY-0415` grows no server half (§1), and nothing needs to say *this win is the first*, because the offer is made on a win this browser has not answered for (§5) | **The architect's** | Exactly what `DEC-079` blocked — the persistence, the `Lobby` wiring and the whole-client arc. **None of the four already written** |
+`DEC-080` asked **which storage key holds the offer's answer and which module owns it** — and
+therefore the third entry `one-module-owns-each-storage-key.test.ts` gains. It was the architect's,
+raised as the technical half of `DEC-079` and **narrowed on 2026-08-27** by `ADR-0085` §1 and §5,
+which closed its wire, column, endpoint, server-half and *first-win fact* branches. It was answered
+on 2026-08-28 by
+[`ADR-0086`](../../docs/adr/ADR-0086-the-offers-answer-is-one-key-owned-beside-the-predicate-it-feeds.md)
+— **the offer's answer is `pd.accountOfferSettled`, owned beside the predicate it feeds.**
+
+**The key is `pd.accountOfferSettled`**, and `web-client/src/result/account-offer-settled.ts` is the
+only production file that names the literal, exporting `ACCOUNT_OFFER_SETTLED_STORAGE_KEY`,
+`readOfferSettled(storage)` and `markOfferSettled(storage)` over the injected `Storage`. The stored
+value is the sentinel `"1"`, and **anything unrecognised reads as *not settled***, a direction taken
+from `ADR-0085` §Consequences rather than invented — *"the side that risks asking twice over the side
+that risks never telling them"*. **The module exports no way to clear the bit**, and `signOut` is
+unchanged, so `ADR-0085`'s signed-out-account-holder case stays named and unsolved.
+
+**Three measurements decided it, against the real gate, reverted after.** Its scan uses
+`String.includes`, so `"pd.accountOffer"` matches a file holding `"pd.accountOfferSettled"` too —
+the short name is refused, and the `pd.` namespace now carries an unenforced rule that no key may
+contain another. A second writer in `src/result/` reddens a row whose owner is in `src/protocol/`, so
+the scan is whole-`src` and the owner sits in `result/` beside the offer's three other files rather
+than in `protocol/`, whose keys are each a wire fact this one is not. A literal only the test file
+holds returns `[]`, so the `.test.ts` exclusion handles self-exclusion. **The costs are named**: a
+row that outlives its meaning with nothing able to remove it, a fourth key in a namespace that is a
+convention and not a mechanism, a storage clear that re-offers with exactly one copy to lose, a
+sentinel no other module here uses, a literal that must stay one line forever, an unguarded
+`setItem`, and a modified click that settles the offer without leaving the page. It **records**
+that `pd.roomCode` has no row in that gate. **Unblocks `STORY-0415`'s three unwritten tickets**, and
+**nothing in it was the product owner's**.
 
 `DEC-079` asked **whether `ADR-0036`'s *"not again"* is a fact about the player or about this
 browser, and what spends the offer.** It was raised on 2026-08-27 when `STORY-0415` was split and
