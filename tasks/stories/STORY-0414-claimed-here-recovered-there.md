@@ -2,7 +2,7 @@
 id: STORY-0414
 title: Claimed here, recovered there, end to end
 type: story
-status: backlog
+status: done
 parent: EPIC-04
 module: web-client
 labels: [client, e2e, auth, identity]

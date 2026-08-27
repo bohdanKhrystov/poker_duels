@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041410
 title: Signing out on the second client leaves it with no profile, and the first untouched
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
