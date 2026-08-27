@@ -2,7 +2,7 @@
 id: STORY-0412
 title: The account screens — sign up, sign in, sign out, and which routes are live
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: web-client
 labels: [client, ui, auth]
