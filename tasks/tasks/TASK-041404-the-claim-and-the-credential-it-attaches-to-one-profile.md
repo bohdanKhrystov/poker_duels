@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041404
 title: The claim, and the credential it attaches to exactly one profile
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S

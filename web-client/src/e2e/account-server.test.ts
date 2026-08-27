@@ -269,4 +269,208 @@ describe("accountServer", () => {
     const getBody = (await getResponse.json()) as Record<string, unknown>;
     expect(getBody.displayName).toBe("Diana");
   });
+
+  it("a claim attaches the credential to the device own player", async () => {
+    const server = accountServer(players);
+
+    const signUpResponse = await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({
+        handle: "alice-handle",
+        password: "alice-password",
+      }),
+    });
+    expect(signUpResponse.status).toBe(201);
+
+    const signInResponse = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "alice-handle",
+        password: "alice-password",
+      }),
+    });
+    expect(signInResponse.status).toBe(200);
+    const signInBody = (await signInResponse.json()) as Record<string, unknown>;
+    const token = signInBody.sessionToken as string;
+    expect(typeof token).toBe("string");
+
+    // The token names the device that claimed the handle, and not the other
+    // player — both are claimable, so the right answer is not the only one.
+    expect(server.tokens.get(token)).toBe("player-seat-0");
+    expect(server.tokens.get(token)).not.toBe("player-seat-1");
+  });
+
+  it("a claim moves no coin and renames nobody", async () => {
+    const server = accountServer(players);
+
+    const beforeResponse = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-0" },
+    });
+    const beforeBody = await beforeResponse.json();
+
+    const signUpResponse = await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({
+        handle: "claim-handle",
+        password: "claim-password",
+      }),
+    });
+    expect(signUpResponse.status).toBe(201);
+
+    const afterResponse = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-0" },
+    });
+    const afterBody = await afterResponse.json();
+
+    // ADR-0030 §1 as an assertion over the whole body, not one field: a claim
+    // names no column of `player`, so coinBalance and displayName are
+    // byte-unchanged and there is no third field the claim could have moved.
+    expect(afterBody).toEqual(beforeBody);
+  });
+
+  it("a claim of a handle somebody already holds is refused", async () => {
+    const server = accountServer(players);
+
+    const firstSignUp = await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({
+        handle: "shared-handle",
+        password: "first-password",
+      }),
+    });
+    expect(firstSignUp.status).toBe(201);
+
+    const secondSignUp = await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-1" },
+      body: JSON.stringify({
+        handle: "shared-handle",
+        password: "second-password",
+      }),
+    });
+    expect(secondSignUp.status).toBe(409);
+
+    // The credential still names the first player: the first password still
+    // signs in and names player-seat-0, the second player's password does not.
+    const signInAsFirst = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "shared-handle",
+        password: "first-password",
+      }),
+    });
+    expect(signInAsFirst.status).toBe(200);
+    const signInAsFirstBody = (await signInAsFirst.json()) as Record<
+      string,
+      unknown
+    >;
+    expect(server.tokens.get(signInAsFirstBody.sessionToken as string)).toBe(
+      "player-seat-0",
+    );
+
+    const signInAsSecond = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "shared-handle",
+        password: "second-password",
+      }),
+    });
+    expect(signInAsSecond.status).toBe(401);
+  });
+
+  it("sign in issues a token for the player who claimed the handle", async () => {
+    const server = accountServer(players);
+
+    await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({
+        handle: "repeat-handle",
+        password: "repeat-password",
+      }),
+    });
+
+    const firstSignIn = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "repeat-handle",
+        password: "repeat-password",
+      }),
+    });
+    expect(firstSignIn.status).toBe(200);
+    const firstBody = (await firstSignIn.json()) as Record<string, unknown>;
+    expect(typeof firstBody.sessionToken).toBe("string");
+
+    const secondSignIn = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "repeat-handle",
+        password: "repeat-password",
+      }),
+    });
+    expect(secondSignIn.status).toBe(200);
+    const secondBody = (await secondSignIn.json()) as Record<string, unknown>;
+    expect(typeof secondBody.sessionToken).toBe("string");
+
+    // A constant token would satisfy a laxer assertion; two successive
+    // sign-ins must return two distinct strings.
+    expect(firstBody.sessionToken).not.toBe(secondBody.sessionToken);
+
+    // Both name the player who claimed the handle.
+    expect(server.tokens.get(firstBody.sessionToken as string)).toBe(
+      "player-seat-0",
+    );
+    expect(server.tokens.get(secondBody.sessionToken as string)).toBe(
+      "player-seat-0",
+    );
+  });
+
+  it("a wrong password and an unknown handle answer the same 401", async () => {
+    const server = accountServer(players);
+
+    await server.fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({
+        handle: "known-handle",
+        password: "correct-password",
+      }),
+    });
+
+    const wrongPasswordResponse = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "known-handle",
+        password: "wrong-password",
+      }),
+    });
+    const unknownHandleResponse = await server.fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {},
+      body: JSON.stringify({
+        handle: "nobody-has-this-handle",
+        password: "correct-password",
+      }),
+    });
+
+    // Both statuses are the literal 401 the merged sign-in.ts maps, not
+    // merely equal to each other.
+    expect(wrongPasswordResponse.status).toBe(401);
+    expect(unknownHandleResponse.status).toBe(401);
+
+    const wrongPasswordBody = await wrongPasswordResponse.json();
+    const unknownHandleBody = await unknownHandleResponse.json();
+    expect(wrongPasswordBody).toEqual({});
+    expect(unknownHandleBody).toEqual({});
+    expect(wrongPasswordBody).toEqual(unknownHandleBody);
+  });
 });
