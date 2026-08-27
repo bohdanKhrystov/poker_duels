@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041222
 title: The account screen has an address, and the lobby has the door
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -138,3 +138,37 @@ unchanged, because the new member has its own tests below. Read, and do not edit
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket's `## Proof` step 1 says the inversion "reddens on the heading." It does not — and the
+correction is the whole reason this PR gates anything.** Inverting the branch order so the address
+outranks the store reddens on `expect(vi.mocked(AccountScreen)).not.toHaveBeenCalled()`. **Remove that
+spy line and the heading-only check passes under the same inversion**, measured by coder and reviewer
+independently.
+
+The mechanism: the address-correcting effect self-corrects inside `render()`'s own `act()` flush, so
+**both branch orders settle on the duel table with the hash cleared**. Only the transient differs. What
+a seated player would actually suffer is a flash of the account screen on the first paint — real, and
+invisible to any settled-DOM assertion.
+
+**Third instance of the same failure mode in this run, in three unrelated files.** `NameSurface`'s call
+count of one came from the `disabled` attribute rather than the ref guard; `TASK-041204`'s first
+attempt asserted on DOM that converged either way; and here the heading converges too. In each case an
+assertion observed a **genuine effect produced by a different mechanism than the one under test** — the
+hardest kind to see, because nothing about reading it looks wrong.
+
+**Two steps reddened more than predicted, and both extras are real catches.** Step 2's misspelled slug
+also reddens `shows the duel…seats them`, because that test hardcodes `"#/account"` as its setup hash —
+under the mutation `screenFromHash` reads it as `"first"`, the correcting effect's `screen !== "first"`
+guard never fires, and the hash is never replaced. Step 3's door gate also reddens two tests using
+`renderApp()`'s default non-`"profile"` fixture. Neither was weakened to match the narrower prediction.
+
+**Step 4 was not reproduced, and was not reported as though it had been.** It requires editing
+`AccountScreen.tsx`, which this ticket marks *Read, and do not edit*. The coder refused and explicitly
+declined to assert the ticket's claim as measured — worth more than a plausible reconstruction, which
+is what five coders this run had to be sent back to replace.
+
+**The counts other tickets gate are intact.** `main.tsx` is byte-unchanged, so `TASK-041210`'s
+`authorizedFetch(`=1 and `fetch: apiFetch`=4 hold, as does `TASK-041231`'s `= useSignedIn()`=**0**
+there — this ticket makes that call in `Lobby.tsx`, which is exactly where the seam was cut for it.
