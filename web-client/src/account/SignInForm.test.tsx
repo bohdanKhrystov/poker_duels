@@ -199,4 +199,43 @@ describe("signing in", () => {
       resolveSignIn({ kind: "signed-in" });
     });
   });
+
+  it("puts nothing in the DOM that tells the two refusals apart", async () => {
+    // Two mocked refusals with different `reason` strings — a real server
+    // sends neither field, but the fixture carries them so a test can prove
+    // the form never reaches for them. React reflects a controlled input's
+    // `value` into the DOM attribute, so the two attempts must type the
+    // exact same credentials; otherwise the markup differs over the player's
+    // keystrokes alone, never over any leak.
+    const signIn = vi
+      .fn(async (): Promise<SignInOutcome> => ({ kind: "signed-in" }))
+      .mockResolvedValueOnce(refusedBecause("one reason string"))
+      .mockResolvedValueOnce(refusedBecause("a different reason string"));
+    const { container } = render(<SignInForm signIn={signIn} />);
+
+    const handleInput = screen.getByLabelText(HANDLE_LABEL);
+    const passwordInput = screen.getByLabelText(PASSWORD_LABEL);
+    const same = "fixed-handle";
+    const samePassword = "fixed-password";
+
+    fireEvent.change(handleInput, { target: { value: same } });
+    fireEvent.change(passwordInput, { target: { value: samePassword } });
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+    const firstMarkup = container.innerHTML;
+
+    fireEvent.change(handleInput, { target: { value: same } });
+    fireEvent.change(passwordInput, { target: { value: samePassword } });
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+    const secondMarkup = container.innerHTML;
+
+    // Guarded against vacuity: if the refusal is never rendered, both would
+    // be trivially equal.
+    expect(firstMarkup).toContain(SIGN_IN_REFUSED);
+    expect(secondMarkup).toContain(SIGN_IN_REFUSED);
+    expect(firstMarkup).toBe(secondMarkup);
+  });
 });

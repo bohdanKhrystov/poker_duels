@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041232
 title: Two refusals reach the DOM as the same markup, attributes included
 type: task
-status: backlog
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
