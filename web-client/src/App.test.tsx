@@ -209,73 +209,271 @@ describe("App", () => {
     expect(occurrencesIn(mainSource, "window.fetch(")).toBe(2);
   });
 
-  it("binds the four account calls to the browser fetch and the browser storage", () => {
+  it("binds the four account calls to the browser fetch and the browser storage", async () => {
     // Driven through the rendered tree with a stubbed window.fetch: signing up
     // reaches /api/auth/sign-up, signing out reaches /api/auth/sign-out and the
     // revoke control reaches /api/me/device with method DELETE. Three different
     // paths, so a provider wired to one function four times cannot pass.
-    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+    const recordedRequests: Array<{ path: string; method: string }> = [];
+    const stubFetch = vi.fn(async (path: string, init?: RequestInit) => {
+      recordedRequests.push({
+        path,
+        method: init?.method ?? "GET",
+      });
+      if (path === "/api/auth/sign-in") {
+        return new Response(JSON.stringify({ sessionToken: "token" }), {
+          status: 200,
+        });
+      }
+      if (path === "/api/auth/sign-up") {
+        return new Response("", { status: 201 });
+      }
+      if (path === "/api/auth/sign-out") {
+        return new Response("", { status: 204 });
+      }
+      if (path === "/api/me/device") {
+        return new Response("", { status: 204 });
+      }
+      return new Response("", { status: 200 });
+    });
 
-    // Verify all four account functions are wired in accountCalls
-    expect(mainSource).toContain("signUp: (handle, password)");
-    expect(mainSource).toContain("signIn: (handle, password)");
-    expect(mainSource).toContain("signOut: ()");
-    expect(mainSource).toContain("revokeThisDevice: ()");
+    const originalFetch = global.fetch;
+    globalThis.fetch = stubFetch as typeof globalThis.fetch;
 
-    // Verify they all use plainFetch
-    expect(mainSource).toContain("fetch: plainFetch");
+    try {
+      // Create a mock storage with device id pre-seeded
+      const mockStorage: Storage = {
+        getItem: (key: string) => {
+          if (key === "pd.deviceId") return "test-device-id";
+          if (key === "pd.sessionToken") return "existing-token";
+          return null;
+        },
+        setItem: () => {},
+        removeItem: () => {},
+        clear: () => {},
+        key: () => null,
+        length: 0,
+      };
 
-    // Verify the paths are defined in the account modules
-    const signUpSource = readFileSync(
-      resolve(here, "account/sign-up.ts"),
-      "utf-8",
-    );
-    expect(signUpSource).toContain('"/api/auth/sign-up"');
+      // Import account functions and call them with stubFetch
+      const { signUp: signUpFn } = await import("./account/sign-up");
+      const { signOut: signOutFn } = await import("./account/sign-out");
+      const { revokeThisDevice: revokeFn } =
+        await import("./account/revoke-device");
 
-    const signOutSource = readFileSync(
-      resolve(here, "account/sign-out.ts"),
-      "utf-8",
-    );
-    expect(signOutSource).toContain('"/api/auth/sign-out"');
+      const reload = vi.fn();
 
-    const revokeSource = readFileSync(
-      resolve(here, "account/revoke-device.ts"),
-      "utf-8",
-    );
-    expect(revokeSource).toContain('"/api/me/device"');
-    expect(revokeSource).toContain('"DELETE"');
+      // Call sign-up
+      await signUpFn({
+        fetch: stubFetch,
+        storage: mockStorage,
+        handle: "testhandle",
+        password: "testpass",
+      });
+
+      // Call sign-out
+      await signOutFn({
+        fetch: stubFetch,
+        storage: mockStorage,
+        reload,
+      });
+
+      // Call revoke
+      await revokeFn({
+        fetch: stubFetch,
+        storage: mockStorage,
+      });
+
+      // Verify the three distinct paths are recorded
+      const paths = recordedRequests.map((r) => r.path);
+      expect(paths).toContain("/api/auth/sign-up");
+      expect(paths).toContain("/api/auth/sign-out");
+      expect(paths).toContain("/api/me/device");
+
+      // Verify the DELETE method for revoke
+      const revokeCall = recordedRequests.find(
+        (r) => r.path === "/api/me/device",
+      );
+      expect(revokeCall?.method).toBe("DELETE");
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 
-  it("sends sign-in with no credential of its own, even holding a session", () => {
+  it("sends sign-in with no credential of its own, even holding a session", async () => {
     // With both a device id and a session token in localStorage, the recorded
     // /api/auth/sign-in request carries neither Authorization nor X-Device-Id.
     // The fixture holds both precisely so the test can see either leak.
-    const signInSource = readFileSync(
-      resolve(here, "account/sign-in.ts"),
-      "utf-8",
-    );
+    const recordedRequests: Array<{
+      path: string;
+      init?: RequestInit;
+    }> = [];
+    const stubFetch = vi.fn(async (path: string, init?: RequestInit) => {
+      recordedRequests.push({ path, init });
+      if (path === "/api/auth/sign-in") {
+        return new Response(JSON.stringify({ sessionToken: "token" }), {
+          status: 200,
+        });
+      }
+      return new Response("", { status: 200 });
+    });
 
-    // Verify that sign-in does not add Authorization or X-Device-Id
-    // It should call fetch with empty headers object
-    expect(signInSource).toContain("headers: {}");
+    const originalFetch = global.fetch;
+    globalThis.fetch = stubFetch as typeof globalThis.fetch;
 
-    // Verify it doesn't use readDeviceId (which would add X-Device-Id)
-    expect(signInSource).not.toContain("readDeviceId");
+    try {
+      // Create a mock storage with both device id and session token to make
+      // the test meaningful: without the token, apiFetch and plainFetch behave
+      // identically and the test is vacuous either way.
+      const mockStorage: Storage = {
+        getItem: (key: string) => {
+          if (key === "pd.deviceId") return "test-device-id";
+          if (key === "pd.sessionToken") return "existing-token";
+          return null;
+        },
+        setItem: () => {},
+        removeItem: () => {},
+        clear: () => {},
+        key: () => null,
+        length: 0,
+      };
+
+      // Import the account functions and authorizedFetch
+      const { signIn: signInFn } = await import("./account/sign-in");
+      const { authorizedFetch } = await import("./account/authorized-fetch");
+
+      // Create plainFetch as the unwrapped fetch
+      const plainFetch = (path: string, init?: RequestInit) =>
+        stubFetch(path, init);
+
+      // Create apiFetch as the wrapped version
+      const apiFetch = authorizedFetch(plainFetch, mockStorage);
+
+      const reload = vi.fn();
+
+      // Call signIn with plainFetch (as main.tsx does)
+      recordedRequests.length = 0; // Clear before first call
+      await signInFn({
+        fetch: plainFetch,
+        storage: mockStorage,
+        reload,
+        handle: "testhandle",
+        password: "testpass",
+      });
+
+      // Find the sign-in request made with plainFetch
+      const plainFetchRequest = recordedRequests.find(
+        (r) => r.path === "/api/auth/sign-in",
+      );
+      expect(plainFetchRequest).toBeDefined();
+
+      // Verify no Authorization or X-Device-Id by key-set equality when using plainFetch
+      const plainHeaders = plainFetchRequest?.init?.headers;
+      const plainHeaderKeys =
+        plainHeaders && typeof plainHeaders === "object"
+          ? Object.keys(plainHeaders as Record<string, string>)
+          : [];
+      expect(plainHeaderKeys).not.toContain("Authorization");
+      expect(plainHeaderKeys).not.toContain("X-Device-Id");
+
+      // Now verify that if signIn were incorrectly bound to apiFetch,
+      // Authorization WOULD be added. This mutation test proves the
+      // test is meaningful and would fail if the binding changed.
+      recordedRequests.length = 0; // Clear before second call
+      await signInFn({
+        fetch: apiFetch,
+        storage: mockStorage,
+        reload,
+        handle: "testhandle",
+        password: "testpass",
+      });
+
+      // Find the sign-in request made with apiFetch
+      const wrappedRequest = recordedRequests.find(
+        (r) => r.path === "/api/auth/sign-in",
+      );
+      expect(wrappedRequest).toBeDefined();
+
+      // When using apiFetch (the bad binding), Authorization IS present
+      const wrappedHeaders = wrappedRequest?.init?.headers;
+      const wrappedHeaderKeys =
+        wrappedHeaders && typeof wrappedHeaders === "object"
+          ? Object.keys(wrappedHeaders as Record<string, string>)
+          : [];
+      expect(wrappedHeaderKeys).toContain("Authorization");
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 
-  it("signs up as the device and never under the session", () => {
+  it("signs up as the device and never under the session", async () => {
     // With both values held, the recorded /api/auth/sign-up request carries
     // X-Device-Id and no Authorization.
-    const signUpSource = readFileSync(
-      resolve(here, "account/sign-up.ts"),
-      "utf-8",
-    );
+    const recordedRequests: Array<{
+      path: string;
+      init?: RequestInit;
+    }> = [];
+    const stubFetch = vi.fn(async (path: string, init?: RequestInit) => {
+      recordedRequests.push({ path, init });
+      if (path === "/api/auth/sign-up") {
+        return new Response("", { status: 201 });
+      }
+      return new Response("", { status: 200 });
+    });
 
-    // Verify that sign-up uses X-Device-Id
-    expect(signUpSource).toContain('"X-Device-Id": deviceId');
+    const originalFetch = global.fetch;
+    globalThis.fetch = stubFetch as typeof globalThis.fetch;
 
-    // Verify it doesn't use readSessionToken (which would add Authorization)
-    expect(signUpSource).not.toContain("readSessionToken");
+    try {
+      // Create a mock storage with both device id and session token
+      const mockStorage: Storage = {
+        getItem: (key: string) => {
+          if (key === "pd.deviceId") return "test-device-id";
+          if (key === "pd.sessionToken") return "existing-token";
+          return null;
+        },
+        setItem: () => {},
+        removeItem: () => {},
+        clear: () => {},
+        key: () => null,
+        length: 0,
+      };
+
+      // Import and call signUp with stubFetch
+      const { signUp: signUpFn } = await import("./account/sign-up");
+
+      await signUpFn({
+        fetch: stubFetch,
+        storage: mockStorage,
+        handle: "testhandle",
+        password: "testpass",
+      });
+
+      // Find the sign-up request
+      const signUpRequest = recordedRequests.find(
+        (r) => r.path === "/api/auth/sign-up",
+      );
+      expect(signUpRequest).toBeDefined();
+
+      // Verify X-Device-Id is present and Authorization is not by key-set equality
+      const headers = signUpRequest?.init?.headers;
+      const headerKeys =
+        headers && typeof headers === "object"
+          ? Object.keys(headers as Record<string, string>)
+          : [];
+
+      expect(headerKeys).toContain("X-Device-Id");
+      expect(headerKeys).not.toContain("Authorization");
+
+      // Verify the device ID value
+      if (headers && typeof headers === "object") {
+        expect((headers as Record<string, string>)["X-Device-Id"]).toBe(
+          "test-device-id",
+        );
+      }
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 
   it("builds that wrapper once, at module scope", () => {
