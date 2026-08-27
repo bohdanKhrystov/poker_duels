@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041402
 title: Two players, keyed by the device id each one holds, and every request written down
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
