@@ -8,6 +8,11 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom/client";
 import { authorizedFetch } from "./account/authorized-fetch";
+import { AccountProvider, type AccountCalls } from "./account/account-provider";
+import { signUp } from "./account/sign-up";
+import { signIn } from "./account/sign-in";
+import { signOut } from "./account/sign-out";
+import { revokeThisDevice } from "./account/revoke-device";
 import { App } from "./App";
 import { roomCodeFromSearch } from "./lobby/room-link";
 import { connectToDuelServer } from "./protocol";
@@ -41,6 +46,34 @@ const apiFetch = authorizedFetch(
   (path, init) => window.fetch(path, init),
   localStorage,
 );
+
+// Unwrapped fetch for the four account calls: plainFetch is one raw fetch,
+// and the wrapped fetch above is a second. None of the account calls go through
+// authorizedFetch — sign-in carries no authentication at all, sign-up
+// authenticates as the device with a header it sets itself, and sign-out and
+// revocation set Authorization themselves from the token they read. A wrapper
+// over any of them would put a second Authorization on a request that already
+// has one, or a first one on the request docs/protocol.md says must have none.
+const plainFetch = (path: string, init: RequestInit) =>
+  window.fetch(path, init);
+
+const reload = () => window.location.reload();
+
+const accountCalls: AccountCalls = {
+  signUp: (handle, password) =>
+    signUp({ fetch: plainFetch, storage: localStorage, handle, password }),
+  signIn: (handle, password) =>
+    signIn({
+      fetch: plainFetch,
+      storage: localStorage,
+      reload,
+      handle,
+      password,
+    }),
+  signOut: () => signOut({ fetch: plainFetch, storage: localStorage, reload }),
+  revokeThisDevice: () =>
+    revokeThisDevice({ fetch: plainFetch, storage: localStorage }),
+};
 
 // Module scope, so the provider's effect sees one stable reference and one
 // mount means one read. An arrow written inline in the JSX would be a new
@@ -189,13 +222,15 @@ if (container) {
           <SetNameProvider setName={setName}>
             <HistoryProvider>
               <LadderProvider>
-                <DuelProvider
-                  store={client.store}
-                  send={client.send}
-                  forgetRoom={client.forgetRoom}
-                >
-                  <App />
-                </DuelProvider>
+                <AccountProvider calls={accountCalls}>
+                  <DuelProvider
+                    store={client.store}
+                    send={client.send}
+                    forgetRoom={client.forgetRoom}
+                  >
+                    <App />
+                  </DuelProvider>
+                </AccountProvider>
               </LadderProvider>
             </HistoryProvider>
           </SetNameProvider>

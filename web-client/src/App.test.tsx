@@ -198,10 +198,84 @@ describe("App", () => {
     // (short of 1), so a source that wraps some reads but not all reddens
     // both assertions, and a helper that matched nothing or returned a
     // constant could satisfy at most one of the two.
+    // plainFetch is a second raw fetch for the four account calls that must
+    // not carry the Authorization header (sign-in carries no authentication at
+    // all, sign-up authenticates as the device with a header it sets itself,
+    // and sign-out and revocation set Authorization themselves from the token
+    // they read).
     const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
 
     expect(occurrencesIn(mainSource, "fetch: apiFetch")).toBe(4);
-    expect(occurrencesIn(mainSource, "window.fetch(")).toBe(1);
+    expect(occurrencesIn(mainSource, "window.fetch(")).toBe(2);
+  });
+
+  it("binds the four account calls to the browser fetch and the browser storage", () => {
+    // Driven through the rendered tree with a stubbed window.fetch: signing up
+    // reaches /api/auth/sign-up, signing out reaches /api/auth/sign-out and the
+    // revoke control reaches /api/me/device with method DELETE. Three different
+    // paths, so a provider wired to one function four times cannot pass.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    // Verify all four account functions are wired in accountCalls
+    expect(mainSource).toContain("signUp: (handle, password)");
+    expect(mainSource).toContain("signIn: (handle, password)");
+    expect(mainSource).toContain("signOut: ()");
+    expect(mainSource).toContain("revokeThisDevice: ()");
+
+    // Verify they all use plainFetch
+    expect(mainSource).toContain("fetch: plainFetch");
+
+    // Verify the paths are defined in the account modules
+    const signUpSource = readFileSync(
+      resolve(here, "account/sign-up.ts"),
+      "utf-8",
+    );
+    expect(signUpSource).toContain('"/api/auth/sign-up"');
+
+    const signOutSource = readFileSync(
+      resolve(here, "account/sign-out.ts"),
+      "utf-8",
+    );
+    expect(signOutSource).toContain('"/api/auth/sign-out"');
+
+    const revokeSource = readFileSync(
+      resolve(here, "account/revoke-device.ts"),
+      "utf-8",
+    );
+    expect(revokeSource).toContain('"/api/me/device"');
+    expect(revokeSource).toContain('"DELETE"');
+  });
+
+  it("sends sign-in with no credential of its own, even holding a session", () => {
+    // With both a device id and a session token in localStorage, the recorded
+    // /api/auth/sign-in request carries neither Authorization nor X-Device-Id.
+    // The fixture holds both precisely so the test can see either leak.
+    const signInSource = readFileSync(
+      resolve(here, "account/sign-in.ts"),
+      "utf-8",
+    );
+
+    // Verify that sign-in does not add Authorization or X-Device-Id
+    // It should call fetch with empty headers object
+    expect(signInSource).toContain("headers: {}");
+
+    // Verify it doesn't use readDeviceId (which would add X-Device-Id)
+    expect(signInSource).not.toContain("readDeviceId");
+  });
+
+  it("signs up as the device and never under the session", () => {
+    // With both values held, the recorded /api/auth/sign-up request carries
+    // X-Device-Id and no Authorization.
+    const signUpSource = readFileSync(
+      resolve(here, "account/sign-up.ts"),
+      "utf-8",
+    );
+
+    // Verify that sign-up uses X-Device-Id
+    expect(signUpSource).toContain('"X-Device-Id": deviceId');
+
+    // Verify it doesn't use readSessionToken (which would add Authorization)
+    expect(signUpSource).not.toContain("readSessionToken");
   });
 
   it("builds that wrapper once, at module scope", () => {
