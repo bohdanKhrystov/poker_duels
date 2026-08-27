@@ -58,6 +58,8 @@ export const SIGN_UP_THROTTLED =
   "Nothing typed was refused, and no account was created. The profile is unchanged, with the " +
   "same duel coins and the same duels, and it can keep playing now and sign up again later.";
 
+export const SIGN_IN_HEADING = "Sign in";
+
 export const SIGN_IN_LABEL = "Sign in";
 
 export const SIGN_IN_REFUSED =
