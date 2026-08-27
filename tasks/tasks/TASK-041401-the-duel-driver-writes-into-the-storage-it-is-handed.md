@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041401
 title: The duel driver writes into the storage it is handed, and one module owns the double
 type: task
-status: ready
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
