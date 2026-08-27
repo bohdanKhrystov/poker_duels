@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041227
 title: The sign-in screen at its address, and the door to it from the account screen
 type: task
-status: backlog
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
