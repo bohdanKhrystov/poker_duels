@@ -38,10 +38,10 @@ raised is after a first win, because that is the first moment the player has som
 
 ## Tasks
 
-Split on 2026-08-27, and **partially**: four tickets, plus a fifth, sixth and seventh that are not
-written because `DEC-079` and `DEC-080` decide their shape. `DEC-079` was answered the same day —
-see `## Open decisions` below — so their shape is now fixed except for the key's name and its owning
-module, which is `DEC-080`.
+Split on 2026-08-27, and **partially**: four tickets, plus a fifth, sixth and seventh that were not
+written because `DEC-079` and `DEC-080` decided their shape. **Both are now answered** — `DEC-079`
+the same day, `DEC-080` on 2026-08-28 — see `## Answered decisions` below, so the three remaining
+tickets are writable in full.
 
 | ID | Title | Status |
 | --- | --- | --- |
@@ -49,12 +49,14 @@ module, which is `DEC-080`.
 | [TASK-041502](../tasks/TASK-041502-whether-the-offer-is-made-at-all.md) | Whether the offer is made — a win, no credential, and not already settled | backlog |
 | [TASK-041503](../tasks/TASK-041503-the-offer-and-the-page-load-that-reaches-the-account-screen.md) | The offer itself, and the page load that reaches the account screen | backlog |
 | [TASK-041504](../tasks/TASK-041504-the-result-screen-carries-an-offer-it-does-not-make.md) | The result screen carries an offer it does not make, and gives nothing up for it | backlog |
-| — | *The persistence, the `Lobby` wiring, and the whole-client arc — not yet written. `DEC-079` is answered (`ADR-0085`); only `DEC-080`'s key and module are still open.* | — |
+| — | *The persistence, the `Lobby` wiring, and the whole-client arc — not yet written, and no longer blocked: `DEC-079` is answered (`ADR-0085`) and `DEC-080` is answered (`ADR-0086`).* | — |
 
 `TASK-041501` is the head; the other three depend on it for **sequencing only** and their `Files`
 tables are pairwise disjoint, so all three are startable together once it merges.
 
-## Open decisions
+## Answered decisions
+
+**Neither is open. This story is blocked on nothing.**
 
 - **`DEC-079` — the product owner's. Answered on 2026-08-27** by
   [`ADR-0085`](../../docs/adr/ADR-0085-not-again-is-this-browser-and-an-answer-spends-the-offer.md):
@@ -66,8 +68,22 @@ tables are pairwise disjoint, so all three are startable together once it merges
   trigger therefore needs no *first-win* fact from the server: `offerAccount`'s three terms are the
   whole rule. `ADR-0085` §3 is a case-by-case table of what a player sees, written to be read
   straight into a `## Tests` table.
-- **`DEC-080` — the architect's, and narrowed by that answer** to **which key and which module owns
+- **`DEC-080` — the architect's, narrowed by that answer** to **which key and which module owns
   it**, and therefore the third entry `one-module-owns-each-storage-key.test.ts` gains.
+  **Answered on 2026-08-28** by
+  [`ADR-0086`](../../docs/adr/ADR-0086-the-offers-answer-is-one-key-owned-beside-the-predicate-it-feeds.md):
+  the key is **`pd.accountOfferSettled`** and **`web-client/src/result/account-offer-settled.ts`**
+  is the only production file that names the literal, exporting
+  `ACCOUNT_OFFER_SETTLED_STORAGE_KEY`, `readOfferSettled(storage)` and `markOfferSettled(storage)`
+  over the injected `Storage`. The stored value is the sentinel `"1"` and **anything unrecognised
+  reads as *not settled***, which is `ADR-0085` §Consequences' own tie-break rather than a new one.
+  **No clearing function is exported** and `signOut` is unchanged. The module sits in `result/`
+  beside `account-offer.ts` and not in `protocol/`, because every caller is on the result screen and
+  `protocol/`'s three keys are each a wire fact this one is not. The short name `pd.accountOffer` is
+  **refused on a measurement**: the gate scans with `String.includes`, so a key that is a prefix of
+  another returns two files for one row. `ADR-0086` §5 writes the third row out verbatim, §6 fixes
+  that `markOfferSettled` runs from the accept anchor's click handler (`DuelResult`'s `onLeave`
+  precedent) and never on the account screen's load, and §7 is the persistence ticket's file list.
 
 Neither blocked `TASK-041501`–`TASK-041504`, which hold under either answer.
 
@@ -91,7 +107,10 @@ what they typed*, rather than as the result-screen prompt returning.
   synchronous `act()` observes nothing; it must await a flush.
 - `web-client/src/protocol/one-module-owns-each-storage-key.test.ts` is the merged gate a new
   storage key has to be added to — and `DEC-079` did land on client storage, so it gains a third
-  entry once `DEC-080` names the key and its module.
+  entry, written out verbatim in `ADR-0086` §5. That gate scans production text with
+  `String.includes`, which is why `ADR-0086` refuses a key that is a prefix of another, and it
+  **must be edited in the same ticket that creates the module**: `pd.roomCode` has been in the
+  client without a row since it was added, which is what *add the row next time* looks like.
 - `web-client/src/virtual-time.test.ts` fails any test file that reaches for a timer without
   installing fake ones first.
 - Suite at the split: **811 tests / 103 files**. The four tickets take it to **822 / 106**.

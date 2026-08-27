@@ -76,7 +76,9 @@ Read, and do not edit:
   `!signedIn` is *"It does not appear for a player who already holds a credential"*; `!settled` is
   what a later ticket feeds.
 - **`settled` is an input and this function never obtains it.** Where it is read from and written to
-  is `DEC-079`'s and `DEC-080`'s, both open. Five `verify:` lines gate that this file names no
+  was `DEC-079`'s and `DEC-080`'s; both are now answered — `ADR-0085` and `ADR-0086` put it in
+  `result/account-offer-settled.ts`, deliberately **not** here, since a key in this file would break
+  its own gates. Five `verify:` lines gate that this file names no
   storage, no fetch, no coin balance, no stack list and no `length` — so it cannot quietly acquire
   a source, and cannot derive the trigger from a count. That last prohibition is
   `STORY-0415`'s acceptance criterion *"no test asserts it from a derived count"*, made mechanical.
@@ -89,13 +91,16 @@ Read, and do not edit:
 
 ## Out of scope
 
-- **Reading `settled` from anywhere.** Blocked on `DEC-079`. A version of this ticket that reached
-  for `localStorage` would be answering it.
+- **Reading `settled` from anywhere.** Was blocked on `DEC-079`; now answered by `ADR-0085` and
+  `ADR-0086`, and **the refusal still stands** — reading it is the persistence and wiring tickets'
+  work. A version of this ticket that reached for `localStorage` would have been answering it, and
+  would now break its own `verify:` gates.
 - **Calling `verdictOf`.** The caller does that; this function takes the answer. `DuelResult`
   already calls `verdictOf` and a second call is a second reader.
 - **Any React.** No hook, no component, no `.tsx`. `TASK-041503` and the wiring ticket after it.
 - **Deciding what *spends* the offer** — whether being shown spends it, or only *"Not now"* does.
-  `DEC-079`. This function is given the answer as a boolean and has no opinion.
+  `DEC-079`, since answered by `ADR-0085` §2: **an answer** spends it, and being shown does not.
+  This function is still given the answer as a boolean and has no opinion.
 
 ## Tests
 
@@ -172,8 +177,8 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 
 ## Notes
 
-**Why this ticket is not blocked when the story's two open decisions are.** `DEC-079` and `DEC-080`
-decide where `settled` comes from. They do not decide the predicate: under every candidate answer
+**Why this ticket was not blocked when the story's two decisions were.** `DEC-079` and `DEC-080`
+decided where `settled` comes from — both are now answered, and the prediction below held. They do not decide the predicate: under every candidate answer
 the client-side test is still *this duel was won* **and** *this browser holds no credential*
 **and** *one boolean the wiring supplies*. `verdict` cannot move to the server — it needs `mySeat`,
 which is this client's — and `signedIn` is already a merged client fact. So the shape above holds

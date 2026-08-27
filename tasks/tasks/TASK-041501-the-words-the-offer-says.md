@@ -89,8 +89,10 @@ Read, and do not edit:
   form's **submit** button, which performs a network write, and `ACCOUNT_HEADING` ("Account") sits
   on the lobby's existing door. A third control carrying either string would be indistinguishable
   from it in a `getByRole(…, { name })` query, and `TASK-041503` queries this link by name.
-- **Any word about what dismissal costs, or about how long the offer lasts.** `DEC-079` is open on
-  exactly what *"not again"* means; copy that described it would be this ticket answering it.
+- **Any word about what dismissal costs, or about how long the offer lasts.** `DEC-079` was open on
+  exactly what *"not again"* means when this ticket was written; copy that described it would have
+  been this ticket answering it. Both decisions have since been answered — `ADR-0085` and
+  `ADR-0086` — and **this refusal still stands**: the words are this ticket's, the behaviour is not.
 - Where the flag lives, when the offer appears, and who renders it — `DEC-079`, `DEC-080`, and the
   tickets those unblock.
 
