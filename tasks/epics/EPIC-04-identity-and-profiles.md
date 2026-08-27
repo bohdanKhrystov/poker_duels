@@ -139,7 +139,7 @@ recorded rather than quietly absorbed:
 | [STORY-0412](../stories/STORY-0412-the-account-screens.md) | The account screens — sign up, sign in, sign out, and which routes are live | 0406, 0411 | **ready**, split into 27 tickets on 2026-08-26 — `TASK-041201` is startable; the last two in the chain read `blocked` on `DEC-077` (the product owner's), **answered the same day** by [`ADR-0083`](../../docs/adr/ADR-0083-the-second-account-screen-is-sign-in-and-its-address-is-never-refused.md) and waiting only on the planner folding it in. **Two** account screens, which `ADR-0076` §1 left to this story: `#/account`, and a sign-in screen the product now calls ***Sign in*** at `#/sign-in` |
 | [STORY-0413](../stories/STORY-0413-the-history-screen.md) | The history screen — pages, filters, search | 0409, 0411 | backlog |
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
-| [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | backlog |
+| [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | in progress — partially split into four on 2026-08-27; raised `DEC-079` and `DEC-080` |
 | [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), `DEC-073` the same day by [`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), and `DEC-074` the same day by [`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md), so **none of the four is open**. None was the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
 | [STORY-0417](../stories/STORY-0417-the-recovery-screens.md) | The recovery screens — attach an address, and reset a password | 0412, 0416 | backlog |
 
@@ -215,9 +215,17 @@ being true in one respect and is corrected rather than deleted:** splitting `STO
 2026-08-26 raised `DEC-077`, which gated the last two of its twenty-seven tickets and was answered
 the same day.
 
-**This epic has no open decision. `DEC-077`, the product owner's, was raised on 2026-08-26 when
+**Two, raised on 2026-08-27 when `STORY-0415` was split, and they are a pair: one the product
+owner's and one the architect's downstream of it.**
+
+| ID | Question | Whose | Blocks |
+| --- | --- | --- | --- |
+| `DEC-079` | Is `ADR-0036`'s *"not again"* a fact about the **player** or about **this browser**, and what **spends** the offer? `ADR-0036` §Consequences says the flag *"belongs on the profile"*; `STORY-0415` §Design notes says a key the client module owns, asserted *"through the injected storage"*. And `DEC-049` says a `429` spends nothing *"including `ADR-0036`'s offer, **which only 'Not now' dismisses**"*, while `STORY-0415` says the offer never appears after a second win — so does an accepted-then-abandoned offer come back? | **The product owner's.** Both halves are what a player experiences, on a second browser and after an abandoned sign-up, and both derive from `docs/vision.md`. Neither adds to nor subtracts from *What it is / What it is not*, so **not the human's** | `STORY-0415`'s fifth, sixth and seventh tickets — the persistence, the `Lobby` wiring and the whole-client arc. **None of the four already written**, which hold under either answer |
+| `DEC-080` | What carries the offer's state on the wire, and what tells the client this win is the **first**? `GET /api/me` carries neither field, and `ADR-0036` calls the first-win fact *"a read-path question"* while naming no field, endpoint or column. Under *the player*: the column, the field, the dismissal endpoint, and whether this `module: web-client` story grows a server half. Under *this browser*: whether it is one client-owned key — `one-module-owns-each-storage-key.test.ts` gaining a third entry — and that `ADR-0036` is **amended rather than ignored** | **The architect's**, and strictly downstream: its answer is different under each half of `DEC-079` | Exactly what `DEC-079` blocks, and nothing else |
+
+`DEC-077`, the product owner's, was raised on 2026-08-26 when
 `STORY-0412` was split and answered on 2026-08-26 — the table that carried it is gone, and what it
-settled is recorded below.** `DEC-075` — a fifth from the `STORY-0416` split, raised on 2026-08-25 by
+settled is recorded below. `DEC-075` — a fifth from the `STORY-0416` split, raised on 2026-08-25 by
 [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md)
 rather than by the split, and blocking nothing — was answered the same day and is recorded below.
 `DEC-076` — a sixth, raised on 2026-08-26 by an implementation attempt on `TASK-041626` rather than
