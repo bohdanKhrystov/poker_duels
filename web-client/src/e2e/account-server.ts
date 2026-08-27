@@ -25,8 +25,11 @@ export interface AccountServer {
 
 export function accountServer(players: readonly ServerPlayer[]): AccountServer {
   const requests: RecordedRequest[] = [];
-  // Cast to mutable array to allow displayName updates
-  const mutablePlayers = players as ServerPlayer[];
+  // A shallow copy per player: PUT /api/me/name writes displayName in place,
+  // and the double must not mutate the caller's array or its objects — two
+  // accountServer(players) calls over the same fixture must not see each
+  // other's writes.
+  const mutablePlayers: ServerPlayer[] = players.map((p) => ({ ...p }));
 
   // handle -> { password, playerId }. playerId is read from the resolved
   // player at claim time (ADR-0030 §1) — never a parameter, never the handle.
