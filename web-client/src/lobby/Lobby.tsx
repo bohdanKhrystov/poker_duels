@@ -16,7 +16,9 @@ import { HISTORY_HEADING } from "../history/history-text";
 import { LadderScreen } from "../ladder/LadderScreen";
 import { LADDER_HEADING } from "../ladder/ladder-text";
 import { AccountScreen } from "../account/AccountScreen";
-import { ACCOUNT_HEADING } from "../account/account-text";
+import { ACCOUNT_HEADING, SIGN_IN_HEADING } from "../account/account-text";
+import { useAccount } from "../account/account-provider";
+import { SignInForm } from "../account/SignInForm";
 import { normalizeRoomCode, roomLink } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
@@ -31,6 +33,7 @@ export function Lobby(): ReactElement {
   const read = useHistory();
   const readLadder = useLadder();
   const signedIn = useSignedIn();
+  const account = useAccount();
   const [typedCode, setTypedCode] = useState("");
   const { screen, open, leave } = useScreen();
   const code = normalizeRoomCode(typedCode);
@@ -138,7 +141,33 @@ export function Lobby(): ReactElement {
   if (screen === "account") {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
-        <AccountScreen profile={profile} signedIn={signedIn} />
+        <AccountScreen
+          profile={profile}
+          signedIn={signedIn}
+          signUp={account !== null ? account.signUp : undefined}
+          onSignIn={() => open("sign-in")}
+        />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
+  // The sign-in screen, reached only from the account screen's one door
+  // (ADR-0060 §2's crowding argument keeps it off the first screen). The way
+  // back is rendered here, by the swap, and SignInForm itself knows nothing
+  // about navigation (ADR-0060 §4). ADR-0083 §4: the address is refused to
+  // nobody, so this branch reads only the address — never signedIn, and
+  // never main.tsx's own module-scope token read. `account` is null only
+  // where no AccountProvider sits above this tree; the branch falls through
+  // to the first screen in that case, the same fallback `duels` and
+  // `leaderboard` already take when their own read is unavailable.
+  if (screen === "sign-in" && account !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+        <h2 className="text-small">{SIGN_IN_HEADING}</h2>
+        <SignInForm signIn={account.signIn} />
         <button type="button" onClick={leave}>
           Back
         </button>
