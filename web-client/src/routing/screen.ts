@@ -1,8 +1,8 @@
 /**
  * A named screen in the duel client. The first screen is the one a player sees when
- * the client boots; the duels and leaderboard screens are chosen by the player.
+ * the client boots; the duels, leaderboard and account screens are chosen by the player.
  */
-export type Screen = "first" | "duels" | "leaderboard";
+export type Screen = "first" | "duels" | "leaderboard" | "account";
 
 /**
  * The screen named by a URL fragment, reading only the first segment.
@@ -34,6 +34,8 @@ export function screenFromHash(hash: string): Screen {
       return "duels";
     case "leaderboard":
       return "leaderboard";
+    case "account":
+      return "account";
     default:
       return "first";
   }
@@ -42,12 +44,17 @@ export function screenFromHash(hash: string): Screen {
 /**
  * The URL fragment for a screen. `hashForScreen("first")` returns `"/"`, which
  * indicates the first screen's address carries no fragment (ADR-0076 §3, §7).
- * The other two screens return `"#/duels"` and `"#/leaderboard"`.
+ * The other screens return `"#/duels"`, `"#/leaderboard"` and the account
+ * screen's own fragment.
  */
 export function hashForScreen(screen: Screen): string {
-  // The slugs "duels" and "leaderboard" are literals in this file, not derived
-  // from heading names at runtime, because a URL that changed when a heading was
-  // restyled would break every link that ever worked (ADR-0076 §1).
+  // The slugs "duels", "leaderboard" and "account" are literals in this file,
+  // not derived from heading names at runtime, because a URL that changed
+  // when a heading was restyled would break every link that ever worked
+  // (ADR-0076 §1). "account" is not coined here: it is the lowercase ASCII
+  // form of a word the product already says to a player — ADR-0050 §3's
+  // merged confirmation sentence ("…will never sign in to this account
+  // again"), ADR-0036's decision, and ADR-0056 §2's "no account was created".
   switch (screen) {
     case "first":
       return "/";
@@ -55,5 +62,7 @@ export function hashForScreen(screen: Screen): string {
       return "#/duels";
     case "leaderboard":
       return "#/leaderboard";
+    case "account":
+      return "#/account";
   }
 }

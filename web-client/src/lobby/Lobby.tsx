@@ -3,7 +3,7 @@ import type { ProtocolError } from "../protocol";
 import { useDuelState, useForgetRoom, useSend } from "../store/duel-provider";
 import { useScreen } from "../routing/use-screen";
 import { useProfileStrip } from "../profile/profile-provider";
-import { useHistory, useLadder } from "../main";
+import { useHistory, useLadder, useSignedIn } from "../main";
 import { ProfileStrip } from "../profile/ProfileStrip";
 import { NameSurface } from "../profile/NameSurface";
 import { useSetName } from "../profile/set-name-provider";
@@ -15,6 +15,8 @@ import { HistoryScreen } from "../history/HistoryScreen";
 import { HISTORY_HEADING } from "../history/history-text";
 import { LadderScreen } from "../ladder/LadderScreen";
 import { LADDER_HEADING } from "../ladder/ladder-text";
+import { AccountScreen } from "../account/AccountScreen";
+import { ACCOUNT_HEADING } from "../account/account-text";
 import { normalizeRoomCode, roomLink } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
@@ -28,6 +30,7 @@ export function Lobby(): ReactElement {
   const setName = useSetName();
   const read = useHistory();
   const readLadder = useLadder();
+  const signedIn = useSignedIn();
   const [typedCode, setTypedCode] = useState("");
   const { screen, open, leave } = useScreen();
   const code = normalizeRoomCode(typedCode);
@@ -129,6 +132,20 @@ export function Lobby(): ReactElement {
     );
   }
 
+  // They can reach the account screen from here too, the same shape as the
+  // record's and the ladder's: the way back is rendered here, by the swap,
+  // and AccountScreen itself knows nothing about navigation (ADR-0060 §4).
+  if (screen === "account") {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+        <AccountScreen profile={profile} signedIn={signedIn} />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section>
       {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
@@ -161,6 +178,12 @@ export function Lobby(): ReactElement {
       </button>
       <button type="button" onClick={() => open("leaderboard")}>
         {LADDER_HEADING}
+      </button>
+      {/* ADR-0036: the door is offered whatever the profile read answered —
+          nothing here gates on having an account, the same rule the record's
+          and the ladder's doors already carry. */}
+      <button type="button" onClick={() => open("account")}>
+        {ACCOUNT_HEADING}
       </button>
     </section>
   );

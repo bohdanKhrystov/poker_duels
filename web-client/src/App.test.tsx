@@ -16,6 +16,8 @@ import { createDuelStore } from "./store/duel-store";
 import { HistoryProvider, LadderProvider } from "./main";
 import { HistoryScreen } from "./history/HistoryScreen";
 import { LadderScreen } from "./ladder/LadderScreen";
+import { AccountScreen } from "./account/AccountScreen";
+import { ACCOUNT_HEADING } from "./account/account-text";
 import { ProfileProvider } from "./profile/profile-provider";
 import { aProfile } from "./profile/profile-fixture";
 import type { ProfileStripState } from "./profile/profile-strip";
@@ -59,6 +61,23 @@ vi.mock("./main", () => {
   };
 });
 
+// ADR-0076 §3's address-correcting effect self-corrects inside render()'s own
+// act() flush, so a branch order that checks the account screen before the
+// duel still settles on the same final DOM — only the transient render
+// differs (TASK-041204 found the same shape for the record). AccountScreen
+// has no hook and no fetch of its own for that transient to leave a trace
+// in, so the spy sits on the component itself: real behaviour is preserved
+// by calling straight through to the actual implementation, and only the
+// call count is new.
+vi.mock("./account/AccountScreen", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./account/AccountScreen")>();
+  return {
+    ...actual,
+    AccountScreen: vi.fn(actual.AccountScreen),
+  };
+});
+
 function seatView(index: number): SeatView {
   return {
     index,
@@ -95,6 +114,7 @@ describe("App", () => {
   // hash for the next test to boot into.
   beforeEach(() => {
     window.location.hash = "";
+    vi.mocked(AccountScreen).mockClear();
   });
 
   it("renders the application heading", () => {
@@ -678,5 +698,254 @@ describe("App", () => {
 
     // Should be exactly one heading in the ladder screen
     expect(headingsInLadder).toHaveLength(1);
+  });
+
+  it("leaves the first screen for the account, and comes back to it", async () => {
+    // The same round trip as the record's and the ladder's above, for the
+    // account door TASK-041222 adds: the lobby is showing, the account door
+    // is clicked, the create button is gone and the account screen is on
+    // screen; Back is clicked, and the lobby is back. Both ends, both times.
+    renderApp();
+
+    // The lobby is showing
+    expect(
+      screen.getByRole("button", { name: "Create a duel room" }),
+    ).toBeDefined();
+
+    // Click the account door
+    const accountButton = screen.getByRole("button", {
+      name: ACCOUNT_HEADING,
+    });
+    fireEvent.click(accountButton);
+
+    // The account screen is shown and the create button is gone, read off
+    // the same settled render, for the same reason as the record's and the
+    // ladder's round trips above.
+    const accountHeading = await waitFor(() => {
+      const found = screen.getByRole("heading", { name: ACCOUNT_HEADING });
+      expect(
+        screen.queryByRole("button", { name: "Create a duel room" }),
+      ).toBeNull();
+      return found;
+    });
+    expect(accountHeading).toBeDefined();
+
+    // The address names the account screen
+    expect(window.location.hash).toBe("#/account");
+
+    // Click "Back" button
+    const backButton = screen.getByRole("button", { name: "Back" });
+    fireEvent.click(backButton);
+
+    // The create button is back and the account heading is gone, read off
+    // the same settled render, for the same reason as above
+    const createButtonAgain = await waitFor(() => {
+      const found = screen.getByRole("button", {
+        name: "Create a duel room",
+      });
+      expect(
+        screen.queryByRole("heading", { name: ACCOUNT_HEADING }),
+      ).toBeNull();
+      return found;
+    });
+    expect(createButtonAgain).toBeDefined();
+
+    // The address is back at the first screen
+    expect(window.location.hash).toBe("");
+  });
+
+  it("opens the account screen at the address alone, with no click at all", () => {
+    // The reload half of ADR-0076's promise, unreachable by any click-driven
+    // test: an address already in the bar before the tree exists must pick
+    // its screen on the very first render, exactly as the ladder's own
+    // version of this test does above.
+    window.location.hash = "#/account";
+
+    renderApp();
+
+    // The account screen is on screen
+    expect(
+      screen.getByRole("heading", { name: ACCOUNT_HEADING }),
+    ).toBeDefined();
+
+    // The room-code form is not
+    expect(screen.queryByLabelText("Room code")).toBeNull();
+  });
+
+  it("offers the account door whether or not the profile read succeeded", async () => {
+    // ADR-0036: nothing gates on having an account, and ADR-0060 §3 already
+    // keeps the record's and the ladder's doors open when the profile read
+    // fails — a player whose profile read failed is exactly the player who
+    // may want to sign in. Asserted for both outcomes in one test: a single
+    // fixture cannot tell a rule from a default, since a door rendered
+    // unconditionally passes a single failed-read test, as does a door
+    // rendered only when the read failed.
+    const failedRead = vi.fn(async (): Promise<ProfileStripState> => ({
+      kind: "unavailable",
+    }));
+    const { unmount } = render(
+      <ProfileProvider read={failedRead}>
+        <HistoryProvider>
+          <LadderProvider>
+            <DuelProvider store={createDuelStore()} send={vi.fn()}>
+              <App />
+            </DuelProvider>
+          </LadderProvider>
+        </HistoryProvider>
+      </ProfileProvider>,
+    );
+
+    // The door is offered when the profile read answered "unavailable".
+    // Awaited, not a plain getByRole: the pending read settles inside this
+    // poll's own act() wrapping, so unmount() below never races it.
+    expect(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    ).toBeDefined();
+
+    // Clean up first render, and the address it left behind
+    unmount();
+    window.location.hash = "";
+
+    const successRead = vi.fn(async (): Promise<ProfileStripState> => ({
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    }));
+    render(
+      <ProfileProvider read={successRead}>
+        <HistoryProvider>
+          <LadderProvider>
+            <DuelProvider store={createDuelStore()} send={vi.fn()}>
+              <App />
+            </DuelProvider>
+          </LadderProvider>
+        </HistoryProvider>
+      </ProfileProvider>,
+    );
+
+    // The door is offered when the profile read answered with a profile
+    expect(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    ).toBeDefined();
+  });
+
+  it("does not offer the account door while a duel is in progress", () => {
+    // The door is offered only where a player is not in a duel, the same
+    // rule the record's and the ladder's doors already have: a duel
+    // outranks the account screen too.
+    const store = createDuelStore();
+    const send = vi.fn();
+
+    render(
+      <HistoryProvider>
+        <LadderProvider>
+          <DuelProvider store={store} send={send}>
+            <App />
+          </DuelProvider>
+        </LadderProvider>
+      </HistoryProvider>,
+    );
+
+    // Initially in lobby, the account door should be available
+    expect(
+      screen.queryByRole("button", { name: ACCOUNT_HEADING }),
+    ).not.toBeNull();
+
+    // Simulate joining a room
+    act(() => {
+      store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 0 });
+    });
+
+    // Simulate a duel starting with a Snapshot (view !== null)
+    const snapshot: Snapshot = {
+      type: "Snapshot",
+      view: {
+        viewerSeat: 0,
+        handNumber: 1,
+        buttonSeat: 0,
+        street: "PREFLOP",
+        board: { cards: [] },
+        pot: 30,
+        betToMatch: 20,
+        minRaiseTo: 40,
+        seatToAct: 0,
+        smallBlind: 10,
+        bigBlind: 20,
+        seats: [seatView(0), seatView(1)],
+      },
+    };
+
+    act(() => {
+      store.apply(snapshot);
+    });
+
+    // Now the duel is in progress (view !== null): the account door is gone
+    expect(screen.queryByRole("button", { name: ACCOUNT_HEADING })).toBeNull();
+
+    // ...and the duel table is on screen
+    expect(screen.getByText("You")).toBeDefined();
+  });
+
+  it("shows the duel to a player reading the account screen when a frame seats them", () => {
+    // ADR-0076 §3: the store outranks the address, always. A player reading
+    // the account screen when a frame seats them at a table is shown the
+    // duel, and the fragment is replaced so the address does not lie about
+    // where they are — through App's real composition this time, not
+    // Lobby.test.tsx's fixture.
+    //
+    // The settled DOM cannot tell this branch order from an inverted one:
+    // §3's address-correcting effect fires regardless of which branch was
+    // rendered first and repaints to the duel table either way, so a branch
+    // order that checked the account screen first would still converge to
+    // the same final heading-less, hash-empty DOM (the general shape of this
+    // trap is TASK-041204's). The AccountScreen call count does not
+    // converge: the correct order never reaches the account branch at all
+    // on a first render that is already seated, so the spy is what actually
+    // tells the two orders apart.
+    window.location.hash = "#/account";
+
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 0 });
+    const snapshot: Snapshot = {
+      type: "Snapshot",
+      view: {
+        viewerSeat: 0,
+        handNumber: 1,
+        buttonSeat: 0,
+        street: "PREFLOP",
+        board: { cards: [] },
+        pot: 30,
+        betToMatch: 20,
+        minRaiseTo: 40,
+        seatToAct: 0,
+        smallBlind: 10,
+        bigBlind: 20,
+        seats: [seatView(0), seatView(1)],
+      },
+    };
+    store.apply(snapshot);
+
+    render(
+      <HistoryProvider>
+        <LadderProvider>
+          <DuelProvider store={store} send={vi.fn()}>
+            <App />
+          </DuelProvider>
+        </LadderProvider>
+      </HistoryProvider>,
+    );
+
+    // AccountScreen was never called: the seated first render went straight
+    // to the duel table, never through the account branch at all
+    expect(vi.mocked(AccountScreen)).not.toHaveBeenCalled();
+
+    // The account heading is not on screen
+    expect(screen.queryByRole("heading", { name: ACCOUNT_HEADING })).toBeNull();
+
+    // The duel table is on screen
+    expect(screen.getByText("You")).toBeDefined();
+
+    // The hash settles to "" — the fragment is replaced, not left lying
+    expect(window.location.hash).toBe("");
   });
 });
