@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041504
 title: The result screen carries an offer it does not make, and gives nothing up for it
 type: task
-status: backlog
+status: done
 parent: STORY-0415
 module: web-client
 estimate: S
