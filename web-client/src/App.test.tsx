@@ -13,11 +13,17 @@ import type { ReactNode } from "react";
 import { App } from "./App";
 import { DuelProvider } from "./store/duel-provider";
 import { createDuelStore } from "./store/duel-store";
-import { HistoryProvider, LadderProvider } from "./main";
+import { HistoryProvider, LadderProvider, useSignedIn } from "./main";
 import { HistoryScreen } from "./history/HistoryScreen";
 import { LadderScreen } from "./ladder/LadderScreen";
 import { AccountScreen } from "./account/AccountScreen";
-import { ACCOUNT_HEADING } from "./account/account-text";
+import {
+  ACCOUNT_HEADING,
+  SIGN_IN_HEADING,
+  SIGN_IN_LABEL,
+  SIGN_OUT_LABEL,
+} from "./account/account-text";
+import { AccountProvider, type AccountCalls } from "./account/account-provider";
 import { ProfileProvider } from "./profile/profile-provider";
 import { aProfile } from "./profile/profile-fixture";
 import type { ProfileStripState } from "./profile/profile-strip";
@@ -57,7 +63,10 @@ vi.mock("./main", () => {
     useLadder: () => fakeLadderRead,
     SignedInProvider: (props: { children: ReactNode }): ReactNode =>
       props.children,
-    useSignedIn: () => false,
+    // A vi.fn(), not a bare arrow: TASK-041227's session-holding fixtures
+    // reconfigure this per test with mockReturnValue(true), and beforeEach
+    // resets it to false so every other test keeps the signed-out default.
+    useSignedIn: vi.fn(() => false),
   };
 });
 
@@ -90,15 +99,28 @@ function seatView(index: number): SeatView {
   };
 }
 
+// Stable across tests. signUp and signIn back the two forms TASK-041227
+// mounts (SignUpForm, SignInForm); signOut and revokeThisDevice back
+// controls no test in this file reaches yet, so they are stubbed only to
+// satisfy AccountCalls's shape and are never awaited.
+const fakeAccountCalls: AccountCalls = {
+  signUp: vi.fn() as unknown as AccountCalls["signUp"],
+  signIn: vi.fn() as unknown as AccountCalls["signIn"],
+  signOut: vi.fn() as unknown as AccountCalls["signOut"],
+  revokeThisDevice: vi.fn() as unknown as AccountCalls["revokeThisDevice"],
+};
+
 function renderApp(): void {
   render(
-    <HistoryProvider>
-      <LadderProvider>
-        <DuelProvider store={createDuelStore()} send={vi.fn()}>
-          <App />
-        </DuelProvider>
-      </LadderProvider>
-    </HistoryProvider>,
+    <AccountProvider calls={fakeAccountCalls}>
+      <HistoryProvider>
+        <LadderProvider>
+          <DuelProvider store={createDuelStore()} send={vi.fn()}>
+            <App />
+          </DuelProvider>
+        </LadderProvider>
+      </HistoryProvider>
+    </AccountProvider>,
   );
 }
 
@@ -115,6 +137,9 @@ describe("App", () => {
   beforeEach(() => {
     window.location.hash = "";
     vi.mocked(AccountScreen).mockClear();
+    // Every test starts signed out; the session-holding fixtures below flip
+    // this to true themselves.
+    vi.mocked(useSignedIn).mockReturnValue(false);
   });
 
   it("renders the application heading", () => {
@@ -981,5 +1006,204 @@ describe("App", () => {
 
     // The hash settles to "" — the fragment is replaced, not left lying
     expect(window.location.hash).toBe("");
+  });
+
+  it("reaches the sign-in screen from the account screen, and comes back", async () => {
+    // The whole round trip: from the account screen with no session, the
+    // door is there; clicking it puts the sign-in form on screen with its
+    // own address; the in-page Back returns the first screen with an empty
+    // hash. Both ends and the address at each.
+    renderApp();
+
+    // Reach the account screen
+    const accountButton = screen.getByRole("button", {
+      name: ACCOUNT_HEADING,
+    });
+    fireEvent.click(accountButton);
+
+    // The door is on the account screen, read off the same settled render
+    // as its own heading, for the same reason the other round trips above
+    // read theirs off one settled render.
+    const signInDoor = await waitFor(() => {
+      const found = screen.getByRole("button", { name: SIGN_IN_HEADING });
+      expect(
+        screen.getByRole("heading", { name: ACCOUNT_HEADING }),
+      ).toBeDefined();
+      return found;
+    });
+
+    // Click the door
+    fireEvent.click(signInDoor);
+
+    // The sign-in screen is on screen — the heading reached by role, since
+    // SIGN_IN_HEADING and SIGN_IN_LABEL put the identical string on the
+    // heading and the submit button beneath it, and that same string is
+    // also the door's own label still sitting in the pre-transition DOM —
+    // so the account heading's absence is asserted in the same settled
+    // render, and not only the sign-in heading's presence, or a query that
+    // resolves against the door before the transition finishes would settle
+    // this the same way a correct one would.
+    const signInHeading = await waitFor(() => {
+      const found = screen.getByRole("heading", { name: SIGN_IN_HEADING });
+      expect(
+        screen.queryByRole("heading", { name: ACCOUNT_HEADING }),
+      ).toBeNull();
+      expect(screen.getByRole("button", { name: SIGN_IN_LABEL })).toBeDefined();
+      return found;
+    });
+    expect(signInHeading).toBeDefined();
+    expect(window.location.hash).toBe("#/sign-in");
+
+    // Click "Back"
+    const backButton = screen.getByRole("button", { name: "Back" });
+    fireEvent.click(backButton);
+
+    // The first screen is back and the sign-in heading is gone, read off
+    // the same settled render, and the address is empty
+    const createButtonAgain = await waitFor(() => {
+      const found = screen.getByRole("button", {
+        name: "Create a duel room",
+      });
+      expect(
+        screen.queryByRole("heading", { name: SIGN_IN_HEADING }),
+      ).toBeNull();
+      return found;
+    });
+    expect(createButtonAgain).toBeDefined();
+    expect(window.location.hash).toBe("");
+  });
+
+  it("opens the sign-in screen at the address alone, with no click at all", () => {
+    // The reload half of ADR-0076's promise: an address already in the bar
+    // before the tree exists must pick its screen on the very first render.
+    // useSyncExternalStore's initial snapshot reads window.location.hash
+    // directly during that first render — no hashchange or popstate fires
+    // or is needed for this assertion, so jsdom's quirk with those two
+    // events firing (both, on a microtask) for a post-mount assignment
+    // (ADR-0076 §5) does not apply to this test at all.
+    window.location.hash = "#/sign-in";
+
+    renderApp();
+
+    // The sign-in form is on screen
+    expect(
+      screen.getByRole("heading", { name: SIGN_IN_HEADING }),
+    ).toBeDefined();
+    expect(screen.getByRole("button", { name: SIGN_IN_LABEL })).toBeDefined();
+
+    // The room-code form is not
+    expect(screen.queryByLabelText("Room code")).toBeNull();
+  });
+
+  it("offers the way to sign in to a browser holding an anonymous profile", async () => {
+    // ADR-0012 mints a profile on the first Welcome, so a browser with no
+    // live session and a profile in hand is the state almost every real
+    // player is in — and the one a no-profile fixture would never reach.
+    // That browser gets both the form that gives its profile a password and
+    // the door to an account it already has.
+    const read = vi.fn(async (): Promise<ProfileStripState> => ({
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    }));
+    render(
+      <ProfileProvider read={read}>
+        <AccountProvider calls={fakeAccountCalls}>
+          <HistoryProvider>
+            <LadderProvider>
+              <DuelProvider store={createDuelStore()} send={vi.fn()}>
+                <App />
+              </DuelProvider>
+            </LadderProvider>
+          </HistoryProvider>
+        </AccountProvider>
+      </ProfileProvider>,
+    );
+
+    const accountButton = await screen.findByRole("button", {
+      name: ACCOUNT_HEADING,
+    });
+    fireEvent.click(accountButton);
+
+    // Both the sign-up form and the sign-in door are on the account screen,
+    // read off the same settled render: only a render where both hold at
+    // once can satisfy this.
+    const signUpForm = await waitFor(() => {
+      const found = screen.getByLabelText("sign up for an account");
+      expect(
+        screen.getByRole("button", { name: SIGN_IN_HEADING }),
+      ).toBeDefined();
+      return found;
+    });
+    expect(signUpForm).toBeDefined();
+  });
+
+  it("offers no way to sign in to a browser that already holds a session", async () => {
+    // Every other test that renders the account screen renders a
+    // signed-out browser (the mocked useSignedIn's own default); this is
+    // the one fixture where it flips to true, and it is that flip alone —
+    // not the profile, which this fixture never sets — the door is gated
+    // on.
+    vi.mocked(useSignedIn).mockReturnValue(true);
+    renderApp();
+
+    const accountButton = screen.getByRole("button", {
+      name: ACCOUNT_HEADING,
+    });
+    fireEvent.click(accountButton);
+
+    // Wait for the settled account screen before asserting the door's
+    // absence, so a door still mid-transition cannot be mistaken for one
+    // that was never offered.
+    await screen.findByRole("heading", { name: ACCOUNT_HEADING });
+
+    // The door is gone
+    expect(screen.queryByRole("button", { name: SIGN_IN_HEADING })).toBeNull();
+
+    // The sign-out control is there instead — the two rows are the whole of
+    // what a session held means to this screen: no way in, and a way out
+    expect(screen.getByRole("button", { name: SIGN_OUT_LABEL })).toBeDefined();
+  });
+
+  it("opens the sign-in screen to a browser that already holds a session token", () => {
+    // ADR-0083 §4 directly: a browser that already holds a session token
+    // and opens #/sign-in still gets the sign-in screen — no redirect, no
+    // replaced fragment. Same fixture as the row above — signedIn mocked
+    // true — with the address set before the render instead of a click, the
+    // same "address alone" shape the test above uses, so no event needs to
+    // fire for this assertion either.
+    vi.mocked(useSignedIn).mockReturnValue(true);
+    window.location.hash = "#/sign-in";
+
+    renderApp();
+
+    expect(
+      screen.getByRole("heading", { name: SIGN_IN_HEADING }),
+    ).toBeDefined();
+    expect(screen.getByRole("button", { name: SIGN_IN_LABEL })).toBeDefined();
+
+    // The address is unchanged — refused to nobody, redirected for nobody
+    expect(window.location.hash).toBe("#/sign-in");
+  });
+
+  it("keeps the first screen doors at three", () => {
+    renderApp();
+
+    // The first screen's buttons besides the two that stay on it (Create a
+    // duel room, and the room-code form's own submit) are its doors — the
+    // record, the ladder and the account, and no fourth. Counted by
+    // exclusion rather than by name, so a differently-named fourth door
+    // still moves this count, and not only one literally called "Sign in".
+    const doors = screen
+      .getAllByRole("button")
+      .map((button) => button.textContent)
+      .filter(
+        (text) => text !== "Create a duel room" && text !== "Join the duel",
+      );
+    expect(doors).toHaveLength(3);
+
+    // Named, not only counted: the sign-in door specifically — refused a
+    // place here by ADR-0060 §2's crowding argument — is not among them.
+    expect(screen.queryByRole("button", { name: SIGN_IN_HEADING })).toBeNull();
   });
 });
