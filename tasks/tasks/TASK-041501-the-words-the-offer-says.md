@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041501
 title: The words the offer says, and the one word ADR-0036 already chose
 type: task
-status: backlog
+status: done
 parent: STORY-0415
 module: web-client
 estimate: XS
