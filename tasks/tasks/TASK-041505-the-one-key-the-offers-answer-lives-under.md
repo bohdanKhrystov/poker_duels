@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041505
 title: The one key the offer's answer lives under, and the gate row that owns it
 type: task
-status: backlog
+status: done
 parent: STORY-0415
 module: web-client
 estimate: S

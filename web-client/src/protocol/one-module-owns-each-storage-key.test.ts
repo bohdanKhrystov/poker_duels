@@ -68,4 +68,10 @@ describe("one module owns each storage key", () => {
       "device-id.ts",
     ]);
   });
+
+  it("only the account-offer-settled module writes the offer-settled key", () => {
+    expect(productionSourcesContaining("pd.accountOfferSettled")).toEqual([
+      "account-offer-settled.ts",
+    ]);
+  });
 });
