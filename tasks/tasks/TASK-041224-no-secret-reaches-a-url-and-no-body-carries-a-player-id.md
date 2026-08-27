@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041224
 title: No secret reaches a URL, and no request body carries a player id
 type: task
-status: backlog
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
