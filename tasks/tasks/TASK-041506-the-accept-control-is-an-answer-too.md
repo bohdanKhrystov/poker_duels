@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041506
 title: The accept control is an answer too, and says so before the page loads
 type: task
-status: backlog
+status: done
 parent: STORY-0415
 module: web-client
 estimate: XS
