@@ -16,7 +16,7 @@ import type { ClientStep, ScriptedSeat, ScriptStep } from "./scripted-duel";
  * unless the process is started with `--localstorage-file`, and under Vitest it
  * shadows the one jsdom provides.
  */
-function inMemoryStorage(): Storage {
+export function inMemoryStorage(): Storage {
   const entries = new Map<string, string>();
   return {
     get length(): number {
@@ -67,6 +67,8 @@ export interface DuelRun {
   readonly receivedCount: number;
   /** Every frame the double's `receive` actually saw, in the order it saw them. */
   readonly receivedFrames: readonly string[];
+  /** The storage the run actually used, whether handed in or built. */
+  readonly storage: Storage;
 }
 
 /**
@@ -149,6 +151,7 @@ export function driveScriptedDuel(options: {
     index: number,
     container: HTMLElement,
   ) => void;
+  readonly storage?: Storage;
 }): DuelRun {
   const duel = scriptedDuel();
   const seat = duel.seats.find((s) => s.viewerSeat === options.viewerSeat);
@@ -158,7 +161,7 @@ export function driveScriptedDuel(options: {
     );
   }
 
-  const storage = inMemoryStorage();
+  const storage = options.storage ?? inMemoryStorage();
   const socket = new CountingSocket();
   const client = bootDuelClient({
     connect: (onMessage) =>
@@ -196,5 +199,6 @@ export function driveScriptedDuel(options: {
     sent: socket.sent,
     receivedCount: socket.receivedFrames.length,
     receivedFrames: socket.receivedFrames,
+    storage,
   };
 }
