@@ -19,12 +19,26 @@ export interface RecordedRequest {
 export interface AccountServer {
   readonly fetch: ApiFetch;
   readonly requests: readonly RecordedRequest[];
+  /** `token → playerId`, written by sign-in here and read by `TASK-041405`. */
+  readonly tokens: ReadonlyMap<string, string>;
 }
 
 export function accountServer(players: readonly ServerPlayer[]): AccountServer {
   const requests: RecordedRequest[] = [];
   // Cast to mutable array to allow displayName updates
   const mutablePlayers = players as ServerPlayer[];
+
+  // handle -> { password, playerId }. playerId is read from the resolved
+  // player at claim time (ADR-0030 §1) — never a parameter, never the handle.
+  const credentials = new Map<
+    string,
+    { readonly password: string; readonly playerId: string }
+  >();
+
+  // token -> playerId, minted from a counter so two sign-ins are two
+  // distinct strings. Written here; read by TASK-041405.
+  const tokens = new Map<string, string>();
+  let nextTokenNumber = 1;
 
   const fetch: ApiFetch = async (
     path: string,
@@ -130,6 +144,82 @@ export function accountServer(players: readonly ServerPlayer[]): AccountServer {
       };
     }
 
+    // Handle POST /api/auth/sign-up
+    if (path === "/api/auth/sign-up" && method === "POST") {
+      if (player === undefined) {
+        return {
+          status: 401,
+          json: async () => ({}),
+        };
+      }
+
+      // Parse the handle and password from the body
+      let handle: string | null = null;
+      let password: string | null = null;
+      try {
+        const bodyObj = JSON.parse(body ?? "{}");
+        handle = typeof bodyObj.handle === "string" ? bodyObj.handle : null;
+        password =
+          typeof bodyObj.password === "string" ? bodyObj.password : null;
+      } catch {
+        // If parsing fails, both stay null
+      }
+
+      if (handle !== null && credentials.has(handle)) {
+        return {
+          status: 409,
+          json: async () => ({}),
+        };
+      }
+
+      // The credential names the device's own player, read now — a claim
+      // adds a credential and moves nothing else (ADR-0030 §1). coinBalance,
+      // displayName and duels are never touched by this branch.
+      if (handle !== null && password !== null) {
+        credentials.set(handle, { password, playerId: player.playerId });
+      }
+
+      return {
+        status: 201,
+        json: async () => ({}),
+      };
+    }
+
+    // Handle POST /api/auth/sign-in
+    if (path === "/api/auth/sign-in" && method === "POST") {
+      // Parse the handle and password from the body
+      let handle: string | null = null;
+      let password: string | null = null;
+      try {
+        const bodyObj = JSON.parse(body ?? "{}");
+        handle = typeof bodyObj.handle === "string" ? bodyObj.handle : null;
+        password =
+          typeof bodyObj.password === "string" ? bodyObj.password : null;
+      } catch {
+        // If parsing fails, both stay null
+      }
+
+      const credential = handle !== null ? credentials.get(handle) : undefined;
+
+      // A wrong password and an unknown handle answer the same 401.
+      if (credential === undefined || credential.password !== password) {
+        return {
+          status: 401,
+          json: async () => ({}),
+        };
+      }
+
+      // Minted from a counter: opaque to every caller, carries no player id.
+      const token = `session-token-${nextTokenNumber}`;
+      nextTokenNumber += 1;
+      tokens.set(token, credential.playerId);
+
+      return {
+        status: 200,
+        json: async () => ({ sessionToken: token }),
+      };
+    }
+
     // Unknown path
     return {
       status: 500,
@@ -141,6 +231,9 @@ export function accountServer(players: readonly ServerPlayer[]): AccountServer {
     fetch,
     get requests() {
       return [...requests];
+    },
+    get tokens() {
+      return new Map(tokens);
     },
   };
 }
