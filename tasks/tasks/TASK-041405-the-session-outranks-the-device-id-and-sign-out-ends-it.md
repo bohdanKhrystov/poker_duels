@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041405
 title: The session outranks the device id, and signing out ends it
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
