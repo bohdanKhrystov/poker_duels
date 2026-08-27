@@ -1206,4 +1206,39 @@ describe("App", () => {
     // place here by ADR-0060 §2's crowding argument — is not among them.
     expect(screen.queryByRole("button", { name: SIGN_IN_HEADING })).toBeNull();
   });
+
+  it("lands the next boot on the account screen after a sign-in that worked", () => {
+    // ADR-0083 §5. The span is brace-bounded for the reason TASK-041223
+    // measured: a lazy unbounded span runs past the arrow's own body into the
+    // next declaration, and verify: pins this file's unbounded-span count at
+    // zero. Naming that needle here in prose would break the count itself.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(mainSource).toMatch(
+      /=> \{[^}]*history\.replaceState\(null, "", hashForScreen\("account"\)\)/,
+    );
+    expect(mainSource).toMatch(/signIn\([^}]*reload: reloadAtAccount/);
+    // Sign-out leaves the room; ADR-0083 §5 is about sign-in alone.
+    expect(mainSource).not.toMatch(/signOut\([^}]*reload: reloadAtAccount/);
+
+    // Two needles, two different answers. The 0 is the replace-not-assign rule;
+    // the 2 is one plain reload plus the account landing's own, and it is what
+    // keeps a landing that sets the fragment and never reboots from passing.
+    expect(occurrencesIn(mainSource, "location.hash =")).toBe(0);
+    expect(occurrencesIn(mainSource, "window.location.reload()")).toBe(2);
+  });
+
+  it("hands the account landing to sign-in and never runs it here", () => {
+    // main.tsx passes the function; sign-in.ts decides which outcome runs it,
+    // and sign-in.test.ts's "reloads the document once a session exists, and
+    // not before" is what holds that decision. What this file can see, and the
+    // only refusal-shaped defect it can see, is main.tsx invoking the landing
+    // itself — which would move a refused player to #/account too.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    // Two needles, two different answers: one declaration and one binding,
+    // and no call site anywhere.
+    expect(occurrencesIn(mainSource, "reloadAtAccount")).toBe(2);
+    expect(occurrencesIn(mainSource, "reloadAtAccount()")).toBe(0);
+  });
 });
