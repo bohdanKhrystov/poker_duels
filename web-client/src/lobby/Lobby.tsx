@@ -145,6 +145,7 @@ export function Lobby(): ReactElement {
           profile={profile}
           signedIn={signedIn}
           signUp={account !== null ? account.signUp : undefined}
+          signOut={account !== null ? account.signOut : undefined}
           onSignIn={() => open("sign-in")}
         />
         <button type="button" onClick={leave}>

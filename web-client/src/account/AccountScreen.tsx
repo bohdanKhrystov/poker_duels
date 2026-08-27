@@ -1,7 +1,9 @@
 import type { ReactElement } from "react";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { SignUpOutcome } from "./sign-up";
+import type { SignOutOutcome } from "./sign-out";
 import { SignUpForm } from "./SignUpForm";
+import { SignOutControl } from "./SignOutControl";
 import {
   ACCOUNT_HEADING,
   PASSWORD_ROUTE_LIVE,
@@ -11,8 +13,9 @@ import {
 
 /**
  * The account screen: states, in words, which routes currently sign in to
- * this profile, and carries the two forms a browser without a live session
- * needs — give this profile a password, or reach an account already made.
+ * this profile, and carries the forms a browser needs on either side of a
+ * session — give this profile a password or reach an account already made
+ * with no session, and sign out with one.
  *
  * `ADR-0037` requires the account screens to state which routes are live, and
  * `ADR-0050` §4 makes `deviceRouteLive` the whole of what this screen reads to
@@ -20,11 +23,13 @@ import {
  *
  * Renders as a prop-driven presentation over `ProfileStripState`, with no
  * hooks, fetching or provider read, so it is renderable in a test alone — the
- * same shape `HistoryScreen` and `LadderScreen` use (`ADR-0060` §4). `signUp`
- * and `onSignIn` are optional so a caller that only cares about the route
- * facts (`AccountScreen.test.tsx`) need not supply either. The revoke control
- * and the sign-out control (`RevokeControl`, `SignOutControl` — `TASK-041220`,
- * `TASK-041221`) already exist but are not placed on this screen yet.
+ * same shape `HistoryScreen` and `LadderScreen` use (`ADR-0060` §4). `signUp`,
+ * `signOut` and `onSignIn` are optional so a caller that only cares about the
+ * route facts (`AccountScreen.test.tsx`) need not supply any of them.
+ * `SignOutControl` gates its own visibility on `signedIn` internally
+ * (`TASK-041221`), so this screen only has to withhold the prop where no
+ * carrier for it exists. The revoke control (`RevokeControl`, `TASK-041220`)
+ * still exists but is not placed on this screen yet.
  */
 export function AccountScreen(props: {
   readonly profile: ProfileStripState | null;
@@ -33,9 +38,10 @@ export function AccountScreen(props: {
     handle: string,
     password: string,
   ) => Promise<SignUpOutcome>;
+  readonly signOut?: () => Promise<SignOutOutcome>;
   readonly onSignIn?: () => void;
 }): ReactElement {
-  const { profile, signedIn, signUp, onSignIn } = props;
+  const { profile, signedIn, signUp, signOut, onSignIn } = props;
 
   // With no profile in hand — still loading, no-profile, or unavailable — the
   // screen asserts neither route (`ADR-0037`): a sentence built from a read
@@ -84,6 +90,9 @@ export function AccountScreen(props: {
         <button type="button" onClick={onSignIn}>
           {SIGN_IN_HEADING}
         </button>
+      )}
+      {signOut !== undefined && (
+        <SignOutControl signedIn={signedIn} signOut={signOut} />
       )}
     </section>
   );

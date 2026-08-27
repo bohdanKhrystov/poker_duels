@@ -21,6 +21,7 @@ import {
   ACCOUNT_HEADING,
   SIGN_IN_HEADING,
   SIGN_IN_LABEL,
+  SIGN_OUT_LABEL,
 } from "./account/account-text";
 import { AccountProvider, type AccountCalls } from "./account/account-provider";
 import { ProfileProvider } from "./profile/profile-provider";
@@ -1156,7 +1157,12 @@ describe("App", () => {
     // that was never offered.
     await screen.findByRole("heading", { name: ACCOUNT_HEADING });
 
+    // The door is gone
     expect(screen.queryByRole("button", { name: SIGN_IN_HEADING })).toBeNull();
+
+    // The sign-out control is there instead — the two rows are the whole of
+    // what a session held means to this screen: no way in, and a way out
+    expect(screen.getByRole("button", { name: SIGN_OUT_LABEL })).toBeDefined();
   });
 
   it("opens the sign-in screen to a browser that already holds a session token", () => {
