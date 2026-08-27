@@ -171,4 +171,60 @@ describe("the result screen", () => {
     expect(() => fireEvent.click(back)).not.toThrow();
     expect(back.getAttribute("href")).toBe("/");
   });
+
+  it("adds no offer of its own", () => {
+    const { container } = render(
+      <DuelResult outcome={anOutcome()} mySeat={0} />,
+    );
+
+    expect(container.querySelector('[aria-label="the offer"]')).toBeNull();
+    expect(
+      container
+        .querySelector('[aria-label="the result"]')
+        ?.textContent?.match(/password/i),
+    ).toBeNull();
+  });
+
+  it("puts the offer it is handed between the rematch and the way back", () => {
+    const { container } = render(
+      <DuelResult
+        outcome={anOutcome()}
+        mySeat={0}
+        rematch={<button type="button">Rematch</button>}
+        offer={<section aria-label="the offer">An offer</section>}
+      />,
+    );
+
+    const rematch = screen.getByRole("button", { name: "Rematch" });
+    const offer = container.querySelector(
+      '[aria-label="the offer"]',
+    ) as Element;
+    const back = screen.getByRole("link", { name: "Back to the lobby" });
+
+    expect(offer).toBeDefined();
+    expect(
+      rematch.compareDocumentPosition(offer) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      (offer as Node).compareDocumentPosition(back) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("disables nothing it already carried when it carries an offer", () => {
+    render(
+      <DuelResult
+        outcome={anOutcome()}
+        mySeat={0}
+        offer={<section aria-label="the offer">An offer</section>}
+      />,
+    );
+
+    const rematch = screen.queryByRole("button", { name: /rematch/i });
+    const back = screen.getByRole("link", { name: "Back to the lobby" });
+
+    expect(rematch).toBeNull();
+    expect(screen.getByText("+1 duel coin")).toBeDefined();
+    expect(back.getAttribute("href")).toBe("/");
+  });
 });

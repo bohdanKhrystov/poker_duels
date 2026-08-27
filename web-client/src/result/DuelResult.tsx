@@ -28,6 +28,11 @@ export function DuelResult(props: {
    */
   rematch?: ReactNode;
   /**
+   * An optional account offer (`ADR-0036`). The panel does not decide whether one
+   * is due — it renders what it is handed, exactly as it does for `rematch`.
+   */
+  offer?: ReactNode;
+  /**
    * An optional handler called before the way back link navigates. The link
    * stays an `<a href="/">`, so the handler runs and navigation stays the
    * browser's. Storage operations are synchronous, so a handler that forgets
@@ -57,6 +62,7 @@ export function DuelResult(props: {
         {metaLine(props.outcome, props.mySeat)}
       </p>
       {props.rematch}
+      {props.offer}
       <a
         className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
         href="/"
