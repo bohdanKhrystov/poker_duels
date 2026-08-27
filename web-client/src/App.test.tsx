@@ -189,6 +189,38 @@ describe("App", () => {
     expect(ladderReadSource).not.toMatch(/localStorage\./);
   });
 
+  it("binds each of the four account calls to the un-wrapped fetch", () => {
+    // The one fact no other suite can see. sign-in.test.ts and sign-up.test.ts
+    // already assert the recorded headers of a real invocation, but each calls
+    // the function with a fetch the test supplies, so neither can observe which
+    // fetch main.tsx binds. That choice is configuration, and a test that
+    // supplies its own configuration cannot observe it (TASK-041210).
+    //
+    // [^}]* stops at the argument object's closing brace, so a binding that
+    // named apiFetch cannot pass by reaching the next binding's plainFetch.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(mainSource).toMatch(/signUp\([^}]*fetch: plainFetch/);
+    expect(mainSource).toMatch(/signIn\([^}]*fetch: plainFetch/);
+    expect(mainSource).toMatch(/signOut\([^}]*fetch: plainFetch/);
+    expect(mainSource).toMatch(/revokeThisDevice\([^}]*fetch: plainFetch/);
+
+    // Two needles, two different answers: one declaration, four bindings.
+    expect(occurrencesIn(mainSource, "const plainFetch")).toBe(1);
+    expect(occurrencesIn(mainSource, "fetch: plainFetch")).toBe(4);
+  });
+
+  it("refuses to wrap sign-in, the one request that must carry nothing", () => {
+    // authorized-fetch.ts's own KDoc: "Must never wrap POST /api/auth/sign-in".
+    // Both polarities, inside sign-in's own argument object: the defect is a
+    // one-word edit, and the negative names the two ways of making it.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(mainSource).toMatch(/signIn\([^}]*fetch: plainFetch/);
+    expect(mainSource).not.toMatch(/signIn\([^}]*fetch: apiFetch/);
+    expect(mainSource).not.toMatch(/signIn\([^}]*authorizedFetch/);
+  });
+
   it("wires all four reads through the wrapper and names the browser fetch once", () => {
     // main.tsx binds all four reads — readProfile, setName, readHistory and
     // readLadder — through the one authorizedFetch wrapper, so a signed-in
@@ -201,7 +233,9 @@ describe("App", () => {
     const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
 
     expect(occurrencesIn(mainSource, "fetch: apiFetch")).toBe(4);
-    expect(occurrencesIn(mainSource, "window.fetch(")).toBe(1);
+    // plainFetch reads the browser fetch directly, one raw fetch for the
+    // account calls that must not be wrapped.
+    expect(occurrencesIn(mainSource, "window.fetch(")).toBe(2);
   });
 
   it("builds that wrapper once, at module scope", () => {

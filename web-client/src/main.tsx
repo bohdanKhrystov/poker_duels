@@ -8,6 +8,11 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom/client";
 import { authorizedFetch } from "./account/authorized-fetch";
+import { AccountProvider, type AccountCalls } from "./account/account-provider";
+import { signIn } from "./account/sign-in";
+import { signOut } from "./account/sign-out";
+import { signUp } from "./account/sign-up";
+import { revokeThisDevice } from "./account/revoke-device";
 import { App } from "./App";
 import { roomCodeFromSearch } from "./lobby/room-link";
 import { connectToDuelServer } from "./protocol";
@@ -24,6 +29,7 @@ import { readDuelPage, type DuelPageRead } from "./profile/duel-page";
 import type { HistoryQuery } from "./profile/duels-query";
 import { readLadderPage, type LadderRead } from "./ladder/ladder-read";
 import { readSessionToken } from "./protocol/session-token";
+import type { ApiFetch } from "./profile/api";
 
 // Module scope, built once, so every read below shares one wrapper rather
 // than each opening its own. authorizedFetch reads the session token on
@@ -79,6 +85,26 @@ const readLadder = (after: string | null): Promise<LadderRead> =>
     storage: localStorage,
     after,
   });
+
+const plainFetch: ApiFetch = (path, init) => window.fetch(path, init);
+
+const reload = (): void => window.location.reload();
+
+const accountCalls: AccountCalls = {
+  signUp: (handle, password) =>
+    signUp({ fetch: plainFetch, storage: localStorage, handle, password }),
+  signIn: (handle, password) =>
+    signIn({
+      fetch: plainFetch,
+      storage: localStorage,
+      reload,
+      handle,
+      password,
+    }),
+  signOut: () => signOut({ fetch: plainFetch, storage: localStorage, reload }),
+  revokeThisDevice: () =>
+    revokeThisDevice({ fetch: plainFetch, storage: localStorage }),
+};
 
 // One boot per tab, outside the tree (ADR-0032): StrictMode below may mount and
 // unmount as often as it likes without opening a socket or sending a frame.
@@ -185,21 +211,23 @@ if (container) {
   ReactDOM.createRoot(container).render(
     <React.StrictMode>
       <SignedInProvider>
-        <ProfileProvider read={readProfile}>
-          <SetNameProvider setName={setName}>
-            <HistoryProvider>
-              <LadderProvider>
-                <DuelProvider
-                  store={client.store}
-                  send={client.send}
-                  forgetRoom={client.forgetRoom}
-                >
-                  <App />
-                </DuelProvider>
-              </LadderProvider>
-            </HistoryProvider>
-          </SetNameProvider>
-        </ProfileProvider>
+        <AccountProvider calls={accountCalls}>
+          <ProfileProvider read={readProfile}>
+            <SetNameProvider setName={setName}>
+              <HistoryProvider>
+                <LadderProvider>
+                  <DuelProvider
+                    store={client.store}
+                    send={client.send}
+                    forgetRoom={client.forgetRoom}
+                  >
+                    <App />
+                  </DuelProvider>
+                </LadderProvider>
+              </HistoryProvider>
+            </SetNameProvider>
+          </ProfileProvider>
+        </AccountProvider>
       </SignedInProvider>
     </React.StrictMode>,
   );
