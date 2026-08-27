@@ -30,6 +30,7 @@ import type { HistoryQuery } from "./profile/duels-query";
 import { readLadderPage, type LadderRead } from "./ladder/ladder-read";
 import { readSessionToken } from "./protocol/session-token";
 import type { ApiFetch } from "./profile/api";
+import { hashForScreen } from "./routing/screen";
 
 // Module scope, built once, so every read below shares one wrapper rather
 // than each opening its own. authorizedFetch reads the session token on
@@ -90,6 +91,15 @@ const plainFetch: ApiFetch = (path, init) => window.fetch(path, init);
 
 const reload = (): void => window.location.reload();
 
+// ADR-0083 §5: a successful sign-in starts the next boot at #/account, never
+// back at the screen it has just finished using. A replace rather than an
+// assignment, because a pushed entry would put the Back button on #/sign-in
+// for a browser that is now signed in.
+const reloadAtAccount = (): void => {
+  window.history.replaceState(null, "", hashForScreen("account"));
+  window.location.reload();
+};
+
 const accountCalls: AccountCalls = {
   signUp: (handle, password) =>
     signUp({ fetch: plainFetch, storage: localStorage, handle, password }),
@@ -97,7 +107,7 @@ const accountCalls: AccountCalls = {
     signIn({
       fetch: plainFetch,
       storage: localStorage,
-      reload,
+      reload: reloadAtAccount,
       handle,
       password,
     }),

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041229
 title: A successful sign-in starts the next boot on the account screen, with no way back to sign-in
 type: task
-status: blocked
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
