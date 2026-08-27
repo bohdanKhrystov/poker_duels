@@ -1206,4 +1206,55 @@ describe("App", () => {
     // place here by ADR-0060 §2's crowding argument — is not among them.
     expect(screen.queryByRole("button", { name: SIGN_IN_HEADING })).toBeNull();
   });
+
+  it("lands the next boot on the account screen after a sign-in that worked", () => {
+    // ADR-0083 §5: main.tsx wires reloadAtAccount (not plain reload) to signIn.
+    // reloadAtAccount calls replaceState to #/account before reload, so Back
+    // never returns to #/sign-in. This test verifies the binding by reading
+    // main.tsx's source. App.test.tsx mocks ./main wholesale at line 41, so no
+    // integration test can observe the real binding; only source assertions
+    // can (TASK-041223, TASK-041210).
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    // reloadAtAccount must be defined and call replaceState with account
+    expect(mainSource).toMatch(
+      /const reloadAtAccount = \(\): void => \{[\s\S]*?replaceState\(null, "", hashForScreen\("account"\)\)/,
+    );
+
+    // It must be wired to signIn, not left unused
+    expect(mainSource).toMatch(/signIn\([^}]*reload: reloadAtAccount/);
+
+    // And NOT wired to signOut (which keeps plain reload per Out of scope)
+    expect(mainSource).not.toMatch(/signOut\([^}]*reload: reloadAtAccount/);
+  });
+
+  it("leaves a refused sign-in exactly where it was", () => {
+    // ADR-0083 §5: reloadAtAccount is called only on success. On refusal (401),
+    // signIn returns {kind: "refused"} and never calls reload, so the address
+    // stays #/sign-in. The binding is in main.tsx; source assertion is the only
+    // test this file can run (TASK-041223, TASK-041210).
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    // The binding must exist
+    expect(mainSource).toMatch(/signIn\([^}]*reload: reloadAtAccount/);
+
+    // sign-in.ts calls reload only on success line 77; that's the control.
+    // This test verifies main.tsx doesn't wrap signIn to call reload on other
+    // outcomes. If signIn were wrapped or replaced, it would be different here.
+    const signInBinding = mainSource.match(/signIn: \(handle[^}]*\}/);
+    expect(signInBinding).toBeDefined();
+    // Wired with reloadAtAccount only, not modified
+    expect(signInBinding![0]).toContain("reload: reloadAtAccount");
+  });
+
+  it("sends sign-in with no credential of its own, even holding a session", () => {
+    // TASK-041223: sign-in is bound to plainFetch (unwrapped), never apiFetch,
+    // so no bearer token reaches the sign-in endpoint. This assertion reused
+    // from TASK-041223 verifies that this ticket's rebinding of reload did not
+    // accidentally change the fetch binding. Source assertion only.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(mainSource).toMatch(/signIn\([^}]*fetch: plainFetch/);
+    expect(mainSource).not.toMatch(/signIn\([^}]*fetch: apiFetch/);
+  });
 });

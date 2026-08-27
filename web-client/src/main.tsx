@@ -13,6 +13,7 @@ import { signIn } from "./account/sign-in";
 import { signOut } from "./account/sign-out";
 import { signUp } from "./account/sign-up";
 import { revokeThisDevice } from "./account/revoke-device";
+import { hashForScreen } from "./routing/screen";
 import { App } from "./App";
 import { roomCodeFromSearch } from "./lobby/room-link";
 import { connectToDuelServer } from "./protocol";
@@ -90,6 +91,15 @@ const plainFetch: ApiFetch = (path, init) => window.fetch(path, init);
 
 const reload = (): void => window.location.reload();
 
+// ADR-0083 §5: a successful sign-in starts the next boot at #/account, never
+// back at the screen it has just finished using. A replace rather than an
+// assignment, because a pushed entry would put the Back button on #/sign-in
+// for a browser that is now signed in.
+const reloadAtAccount = (): void => {
+  window.history.replaceState(null, "", hashForScreen("account"));
+  window.location.reload();
+};
+
 const accountCalls: AccountCalls = {
   signUp: (handle, password) =>
     signUp({ fetch: plainFetch, storage: localStorage, handle, password }),
@@ -97,7 +107,7 @@ const accountCalls: AccountCalls = {
     signIn({
       fetch: plainFetch,
       storage: localStorage,
-      reload,
+      reload: reloadAtAccount,
       handle,
       password,
     }),
