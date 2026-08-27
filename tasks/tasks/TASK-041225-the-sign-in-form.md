@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041225
 title: The sign-in form, and one sentence for both ways it can be refused
 type: task
-status: backlog
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
