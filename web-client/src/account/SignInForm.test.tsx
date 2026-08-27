@@ -101,7 +101,7 @@ describe("signing in", () => {
     const signIn = vi.fn(async (): Promise<SignInOutcome> => ({
       kind: "refused",
     }));
-    render(<SignInForm signIn={signIn} />);
+    const { container } = render(<SignInForm signIn={signIn} />);
 
     await act(async () => {
       fireEvent.click(submitButton());
@@ -112,9 +112,21 @@ describe("signing in", () => {
 
     expect(handleInput.hasAttribute("aria-invalid")).toBe(false);
     expect(passwordInput.hasAttribute("aria-invalid")).toBe(false);
-    // The one shared sentence renders once — nothing sits beside either
-    // field, naming it.
-    expect(screen.getAllByText(SIGN_IN_REFUSED)).toHaveLength(1);
+
+    // The whole screen, not one known string: a per-field message beside
+    // either input — in any wording, not only via aria-invalid — would add
+    // text this equality does not expect, which a substring or a count of
+    // one known string would miss. Composed from the same copy-module
+    // constants the component renders, so nothing here is retyped as a
+    // literal. Whitespace is normalized to absorb an incidental text node at
+    // an element boundary, not to hide an added word — today's raw,
+    // unnormalized DOM text already matches with no separator at all.
+    const normalize = (text: string) => text.replace(/\s+/g, " ").trim();
+    const rendered = normalize(container.textContent ?? "");
+    const onlyTheKnownComposition = normalize(
+      [SIGN_IN_REFUSED, HANDLE_LABEL, PASSWORD_LABEL, SIGN_IN_LABEL].join(""),
+    );
+    expect(rendered).toBe(onlyTheKnownComposition);
   });
 
   it("tells a refusal from a broken server", async () => {
