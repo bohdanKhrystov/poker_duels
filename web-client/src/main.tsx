@@ -23,6 +23,7 @@ import { setDisplayName } from "./profile/set-name";
 import { readDuelPage, type DuelPageRead } from "./profile/duel-page";
 import type { HistoryQuery } from "./profile/duels-query";
 import { readLadderPage, type LadderRead } from "./ladder/ladder-read";
+import { readSessionToken } from "./protocol/session-token";
 
 // Module scope, built once, so every read below shares one wrapper rather
 // than each opening its own. authorizedFetch reads the session token on
@@ -87,6 +88,26 @@ const client = bootDuelClient({
   storage: localStorage,
 });
 
+// Fallback Storage for test environments where localStorage is undefined.
+// In the browser, localStorage is always defined; Node tests must provide jsdom
+// or mock main.tsx. This fallback is used when neither condition is met.
+const nullStorage: Storage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+  clear: () => {},
+  key: () => null,
+  length: 0,
+};
+
+// Module scope read of the session token, run once at boot. Node 24+ defines an
+// inert `localStorage` global that shadows jsdom's under Vitest (DEC-032), so a
+// component that reaches for the global is a component whose tests do not test
+// the browser. Sign-in and sign-out reload the document, so a fresh boot is what
+// recomputes it. The hook never re-reads: there is no storage event listener and
+// no subscription.
+const signedIn = readSessionToken(localStorage ?? nullStorage) !== null;
+
 const HistoryContext = createContext<
   ((query: HistoryQuery) => Promise<DuelPageRead>) | null
 >(null);
@@ -137,25 +158,49 @@ export function useLadder():
   return useContext(LadderContext);
 }
 
+const SignedInContext = createContext<boolean>(false);
+
+/**
+ * Whether this browser holds a session token, once at module scope and never again.
+ *
+ * The read is a module-scope constant (not an inline arrow) so a component's
+ * effect sees one stable reference: a reference that changes on every render
+ * would re-run the effect on every render with it.
+ */
+export function SignedInProvider(props: { children: ReactNode }): ReactElement {
+  return (
+    <SignedInContext.Provider value={signedIn}>
+      {props.children}
+    </SignedInContext.Provider>
+  );
+}
+
+/** Whether this browser holds a session token, or `false` where no provider is above. */
+export function useSignedIn(): boolean {
+  return useContext(SignedInContext);
+}
+
 const container = document.getElementById("root");
 if (container) {
   ReactDOM.createRoot(container).render(
     <React.StrictMode>
-      <ProfileProvider read={readProfile}>
-        <SetNameProvider setName={setName}>
-          <HistoryProvider>
-            <LadderProvider>
-              <DuelProvider
-                store={client.store}
-                send={client.send}
-                forgetRoom={client.forgetRoom}
-              >
-                <App />
-              </DuelProvider>
-            </LadderProvider>
-          </HistoryProvider>
-        </SetNameProvider>
-      </ProfileProvider>
+      <SignedInProvider>
+        <ProfileProvider read={readProfile}>
+          <SetNameProvider setName={setName}>
+            <HistoryProvider>
+              <LadderProvider>
+                <DuelProvider
+                  store={client.store}
+                  send={client.send}
+                  forgetRoom={client.forgetRoom}
+                >
+                  <App />
+                </DuelProvider>
+              </LadderProvider>
+            </HistoryProvider>
+          </SetNameProvider>
+        </ProfileProvider>
+      </SignedInProvider>
     </React.StrictMode>,
   );
 }

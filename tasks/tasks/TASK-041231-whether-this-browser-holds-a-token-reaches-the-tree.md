@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041231
 title: Whether this browser holds a token is read once, above the tree
 type: task
-status: ready
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
@@ -159,3 +159,40 @@ observable.
 ## Definition of done
 
 Standard, per [`tasks/README.md`](../README.md) — do not restate it in the ticket.
+
+## Notes
+
+**This ticket exists because a scheduling premise of the driver's was false.** The assumption was that
+`TASK-041223` would supply what `TASK-041222` needs. It cannot: `App.tsx` renders `<Lobby />` with
+**no props** and `Lobby()` takes none, so nothing `main.tsx` computes reaches the lobby except through
+a context — and `TASK-041223` lands **after** `TASK-041222`, so `tsc` would refuse the earlier merge.
+A planner measured that and cut this ticket to sit between them. The carrier needed no decision:
+`Lobby.tsx` already imports `useHistory` and `useLadder` from `../main`.
+
+**What these tests do not gate, and why that is correct here.** None would fail if `useSignedIn()` were
+wired to a **second, independent** boolean rather than the module-scope read — they assert that exactly
+one read exists and that the flag reaches the tree, not that the context value equals the read. `##
+Out of scope` settles it: *"Mounting the account screen, or any use of the hook… This ticket exports it
+and nothing consumes it yet — which is why one of the two tests asserts a count of **zero**."* The
+claim is gated by whichever ticket first consumes the hook, `TASK-041222`.
+
+That is the same shape as `TASK-041216`, where no test caught a call wired to a second provider and
+that was **also** correct, because binding belonged to a later ticket. Both are the construct half of a
+construct-then-wire pair, and only `## Scope` distinguishes that from the defect that cost
+`TASK-041210` two dispatches.
+
+**A fallback that could have hidden a failure, and does not.** The module-scope read nullish-coalesces
+to a stub `Storage` returning `null`, because under Vitest in Node `localStorage` is **undefined**
+while `sessionStorage` works, and an import-time read fails at module load naming no line of this file.
+The distinction that matters: the fallback covers `localStorage` being **absent**, not **throwing** —
+in a real browser with storage blocked, the exception **propagates** rather than silently answering
+*"this browser holds no token."* A defensive default that turns a broken read into a confident wrong
+answer is the shape of several defects found this run; this is not one.
+
+**The needle is written `= useSignedIn()` on purpose.** A bare `useSignedIn()` expectation of zero is
+unreachable, because the declaration `export function useSignedIn(): boolean` contains that substring.
+The planner measured that before shipping the ticket.
+
+**`main.tsx`'s guarded counts are untouched** — `authorizedFetch(` still 1, `fetch: apiFetch` still 4,
+which `TASK-041210` asserts. Those counts convert a promised future grep into a failing build, and a
+change that moved them would be a stop-and-report rather than licence to edit another ticket's tests.
