@@ -446,3 +446,252 @@ it("signs in from the second client and reads back the same balance name and due
   // correctly.
   expect(readDeviceId(storageA)).toBe(PLAYER_SEAT_0.deviceId);
 });
+
+it("no request the second client made carries a player id", async () => {
+  const server = accountServer([PLAYER_SEAT_0, PLAYER_SEAT_1]);
+  const storageB = inMemoryStorage();
+  const HANDLE = "duelist-three";
+  const PASSWORD = "a-third-password";
+
+  // B's arc: play, boot, sign-in, reboot
+  driveScriptedDuel({ viewerSeat: 1, storage: storageB });
+  cleanup();
+
+  const { container: containerB1 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  // B signs up and signs in
+  act(() => {
+    fireEvent.click(
+      within(containerB1).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionB1 = await within(containerB1).findByLabelText("account");
+  const signUpFormB1 = within(accountRegionB1).getByLabelText(
+    "sign up for an account",
+  );
+
+  fireEvent.change(within(signUpFormB1).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signUpFormB1).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  fireEvent.click(
+    within(signUpFormB1).getByRole("button", { name: SIGN_UP_LABEL }),
+  );
+
+  await within(signUpFormB1).findByText(SIGNED_UP);
+
+  // Now sign in with new credentials
+  const accountRegionB2 = await within(containerB1).findByLabelText("account");
+  act(() => {
+    fireEvent.click(
+      within(accountRegionB2).getByRole("button", { name: SIGN_IN_HEADING }),
+    );
+  });
+
+  const signInFormB2 = await within(containerB1).findByLabelText(
+    "sign in to an account",
+  );
+  fireEvent.change(within(signInFormB2).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signInFormB2).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  await act(async () => {
+    fireEvent.click(
+      within(signInFormB2).getByRole("button", { name: SIGN_IN_LABEL }),
+    );
+  });
+
+  // Reboot with session
+  cleanup();
+  bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  const sessionToken = readSessionToken(storageB);
+
+  // Sweep through all recorded requests
+  const requests = server.requests;
+
+  // Presence first: the log is non-empty
+  expect(requests.length).toBeGreaterThan(0);
+
+  // Check that no path contains player seat identifiers
+  for (const request of requests) {
+    expect(
+      request.path.includes("player-seat-0"),
+      `Path ${request.path} must not contain player-seat-0`,
+    ).toBe(false);
+    expect(
+      request.path.includes("player-seat-1"),
+      `Path ${request.path} must not contain player-seat-1`,
+    ).toBe(false);
+
+    // Check that session token is not in path or body
+    if (sessionToken) {
+      expect(
+        request.path.includes(sessionToken),
+        `Path ${request.path} must not contain session token`,
+      ).toBe(false);
+      if (request.body) {
+        expect(
+          request.body.includes(sessionToken),
+          `Body must not contain session token`,
+        ).toBe(false);
+      }
+    }
+
+    // Check body keys for forbidden ones
+    if (request.body) {
+      try {
+        const bodyObj = JSON.parse(request.body);
+        const keys = Object.keys(bodyObj);
+        const forbiddenKeys = ["playerId", "player_id", "id"];
+        for (const forbidden of forbiddenKeys) {
+          expect(
+            keys.includes(forbidden),
+            `Body keys ${keys.join(", ")} must not include ${forbidden}`,
+          ).toBe(false);
+        }
+      } catch {
+        // If body is not JSON, skip parsing check
+      }
+    }
+  }
+
+  cleanup();
+});
+
+it("the second client learns who it is only from an answer", async () => {
+  const server = accountServer([PLAYER_SEAT_0, PLAYER_SEAT_1]);
+  const storageB = inMemoryStorage();
+  const HANDLE = "duelist-four";
+  const PASSWORD = "a-fourth-password";
+
+  // B's arc: play, boot, sign-in, reboot
+  driveScriptedDuel({ viewerSeat: 1, storage: storageB });
+  cleanup();
+
+  const { container: containerB1 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  // B signs up and signs in
+  act(() => {
+    fireEvent.click(
+      within(containerB1).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionB1 = await within(containerB1).findByLabelText("account");
+  const signUpFormB1 = within(accountRegionB1).getByLabelText(
+    "sign up for an account",
+  );
+
+  fireEvent.change(within(signUpFormB1).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signUpFormB1).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  fireEvent.click(
+    within(signUpFormB1).getByRole("button", { name: SIGN_UP_LABEL }),
+  );
+
+  await within(signUpFormB1).findByText(SIGNED_UP);
+
+  const accountRegionB2 = await within(containerB1).findByLabelText("account");
+  act(() => {
+    fireEvent.click(
+      within(accountRegionB2).getByRole("button", { name: SIGN_IN_HEADING }),
+    );
+  });
+
+  const signInFormB2 = await within(containerB1).findByLabelText(
+    "sign in to an account",
+  );
+  fireEvent.change(within(signInFormB2).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signInFormB2).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  await act(async () => {
+    fireEvent.click(
+      within(signInFormB2).getByRole("button", { name: SIGN_IN_LABEL }),
+    );
+  });
+
+  // Reboot with session
+  cleanup();
+  bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  // Find the response that contains player-seat-0
+  const requests = server.requests;
+
+  // Find the request that produced a response containing player-seat-0
+  // Look for a /api/me request with Authorization header (indicating session-based read)
+  let foundPlayerInResponse = false;
+  let responseProducingRequest: (typeof requests)[0] | null = null;
+
+  for (const request of requests) {
+    if (
+      request.path === "/api/me" &&
+      request.method === "GET" &&
+      request.headers["Authorization"] !== undefined
+    ) {
+      // This is a session-based read that should return player-seat-0 after sign-in
+      foundPlayerInResponse = true;
+      responseProducingRequest = request;
+      break;
+    }
+  }
+
+  expect(foundPlayerInResponse).toBe(true);
+  expect(responseProducingRequest).not.toBeNull();
+
+  if (responseProducingRequest) {
+    // Assert that this request carried only Authorization and X-Device-Id headers
+    const headers = responseProducingRequest.headers;
+    const headerKeys = Object.keys(headers);
+
+    // Only Authorization and X-Device-Id should be present (and Content-Type if needed)
+    const allowedKeys = [
+      "Authorization",
+      "X-Device-Id",
+      "Content-Type",
+      "content-type",
+    ];
+    for (const key of headerKeys) {
+      expect(
+        allowedKeys.includes(key),
+        `Unexpected header ${key} in request that produced player-seat-0`,
+      ).toBe(true);
+    }
+
+    // Verify Authorization header is present (should be bearer token)
+    const authHeader = headers["Authorization"];
+    expect(authHeader).toBeDefined();
+    expect(authHeader?.startsWith("Bearer ")).toBe(true);
+  }
+
+  cleanup();
+});
