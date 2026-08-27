@@ -7,6 +7,8 @@ import {
   SIGNED_UP,
   SIGN_IN_HEADING,
   SIGN_IN_LABEL,
+  SIGN_OUT_LABEL,
+  SIGN_OUT_WARNING,
   SIGN_UP_LABEL,
 } from "../account/account-text";
 import { authorizedFetch } from "../account/authorized-fetch";
@@ -728,6 +730,371 @@ it("the second client learns who it is only from an answer", async () => {
     ).toBe(true);
   }
   expect(meRead.headers["Authorization"]?.startsWith("Bearer ")).toBe(true);
+
+  cleanup();
+});
+
+it("signing out on the second client returns it to the profile it had", async () => {
+  const server = accountServer([PLAYER_SEAT_0, PLAYER_SEAT_1]);
+  const storageA = inMemoryStorage();
+  const storageB = inMemoryStorage();
+  const HANDLE = "duelist-sign-out-test";
+  const PASSWORD = "sign-out-password-test";
+  const NEW_NAME = "Signed In Test";
+
+  // A's arc: play, boot, name, sign up
+  driveScriptedDuel({ viewerSeat: 0, storage: storageA });
+  cleanup();
+
+  const { container: containerA } = bootClient({
+    storage: storageA,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_0.deviceId),
+  });
+
+  const nameRegionA =
+    await within(containerA).findByLabelText("your display name");
+  fireEvent.change(within(nameRegionA).getByRole("textbox"), {
+    target: { value: NEW_NAME },
+  });
+  fireEvent.click(
+    within(nameRegionA).getByRole("button", { name: "Set my name" }),
+  );
+  await within(nameRegionA).findByText(NEW_NAME);
+
+  const profileRegionA = within(containerA).getByLabelText("your profile");
+  const balanceFromA =
+    within(profileRegionA).getByText(/Duel coins$/).textContent;
+  const nameFromA = within(nameRegionA).getByText(NEW_NAME).textContent;
+
+  act(() => {
+    fireEvent.click(
+      within(containerA).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionA = await within(containerA).findByLabelText("account");
+  const signUpForm = within(accountRegionA).getByLabelText(
+    "sign up for an account",
+  );
+
+  fireEvent.change(within(signUpForm).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signUpForm).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  fireEvent.click(
+    within(signUpForm).getByRole("button", { name: SIGN_UP_LABEL }),
+  );
+
+  await within(signUpForm).findByText(SIGNED_UP);
+
+  cleanup();
+
+  // B's arc: play, boot
+  driveScriptedDuel({ viewerSeat: 1, storage: storageB });
+  cleanup();
+
+  const { container: containerB1 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  // Capture B's anonymous profile before signing in
+  const profileRegionB1 =
+    await within(containerB1).findByLabelText("your profile");
+  const nameRegionB1 =
+    await within(containerB1).findByLabelText("your display name");
+  const balanceFromB =
+    within(profileRegionB1).getByText(/Duel coins$/).textContent;
+  const nameFromB = within(nameRegionB1).getByText(
+    nameOrNone(PLAYER_SEAT_1.displayName),
+  ).textContent;
+
+  // Sign in B with A's credentials
+  act(() => {
+    fireEvent.click(
+      within(containerB1).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionB1 = await within(containerB1).findByLabelText("account");
+  act(() => {
+    fireEvent.click(
+      within(accountRegionB1).getByRole("button", { name: SIGN_IN_HEADING }),
+    );
+  });
+
+  const signInForm = await within(containerB1).findByLabelText(
+    "sign in to an account",
+  );
+  fireEvent.change(within(signInForm).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signInForm).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  await act(async () => {
+    fireEvent.click(
+      within(signInForm).getByRole("button", { name: SIGN_IN_LABEL }),
+    );
+  });
+
+  expect(readSessionToken(storageB)).not.toBeNull();
+  expect(readDeviceId(storageB)).toBe(PLAYER_SEAT_1.deviceId);
+
+  cleanup();
+
+  // Boot B again (simulating the reload from sign-in)
+  const { container: containerB2 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  act(() => {
+    fireEvent.click(within(containerB2).getByRole("button", { name: "Back" }));
+  });
+
+  const profileRegionB2 =
+    await within(containerB2).findByLabelText("your profile");
+  const nameRegionB2 =
+    await within(containerB2).findByLabelText("your display name");
+
+  // Verify B is signed in with A's profile at this point
+  within(profileRegionB2).getByText(
+    `${coinBalanceText(PLAYER_SEAT_0.coinBalance)} Duel coins`,
+  );
+  within(nameRegionB2).getByText(NEW_NAME);
+
+  // Navigate to account screen and sign out
+  act(() => {
+    fireEvent.click(
+      within(containerB2).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionB2 = await within(containerB2).findByLabelText("account");
+
+  // Click sign-out label (first click shows confirmation)
+  fireEvent.click(
+    within(accountRegionB2).getByRole("button", { name: SIGN_OUT_LABEL }),
+  );
+
+  // Verify warning appears
+  within(accountRegionB2).getByText(SIGN_OUT_WARNING);
+
+  // Click confirmation button (also labeled with SIGN_OUT_LABEL)
+  await act(async () => {
+    fireEvent.click(
+      within(accountRegionB2).getByRole("button", { name: SIGN_OUT_LABEL }),
+    );
+  });
+
+  // After sign-out, storage should be cleared
+  expect(readSessionToken(storageB)).toBeNull();
+  expect(readDeviceId(storageB)).toBe(PLAYER_SEAT_1.deviceId);
+
+  cleanup();
+
+  // Boot B again with wiring.signedIn = false (because token is gone)
+  window.location.hash = "";
+  const { container: containerB3 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  const profileRegionB3 =
+    await within(containerB3).findByLabelText("your profile");
+  const nameRegionB3 =
+    await within(containerB3).findByLabelText("your display name");
+
+  const balanceAfterSignOut =
+    within(profileRegionB3).getByText(/Duel coins$/).textContent;
+  const nameAfterSignOut = within(nameRegionB3).getByText(
+    nameOrNone(PLAYER_SEAT_1.displayName),
+  ).textContent;
+
+  // Verify B is back to its anonymous profile
+  expect(balanceAfterSignOut).toBe(balanceFromB);
+  expect(nameAfterSignOut).toBe(nameFromB);
+
+  // Verify B's profile is NOT A's
+  expect(within(profileRegionB3).queryByText(balanceFromA)).toBeNull();
+  expect(within(nameRegionB3).queryByText(nameFromA)).toBeNull();
+
+  cleanup();
+});
+
+it("the first client is unaffected by the second signing out", async () => {
+  const server = accountServer([PLAYER_SEAT_0, PLAYER_SEAT_1]);
+  const storageA = inMemoryStorage();
+  const storageB = inMemoryStorage();
+  const HANDLE = "duelist-first-unaffected";
+  const PASSWORD = "first-unaffected-password";
+  const NEW_NAME = "First Unaffected Name";
+
+  // A's arc: play, boot, name, sign up
+  driveScriptedDuel({ viewerSeat: 0, storage: storageA });
+  cleanup();
+
+  const { container: containerA } = bootClient({
+    storage: storageA,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_0.deviceId),
+  });
+
+  const nameRegionA =
+    await within(containerA).findByLabelText("your display name");
+  fireEvent.change(within(nameRegionA).getByRole("textbox"), {
+    target: { value: NEW_NAME },
+  });
+  fireEvent.click(
+    within(nameRegionA).getByRole("button", { name: "Set my name" }),
+  );
+  await within(nameRegionA).findByText(NEW_NAME);
+
+  const profileRegionA = within(containerA).getByLabelText("your profile");
+  const balanceFromA =
+    within(profileRegionA).getByText(/Duel coins$/).textContent;
+  const nameFromA = within(nameRegionA).getByText(NEW_NAME).textContent;
+
+  act(() => {
+    fireEvent.click(
+      within(containerA).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionA = await within(containerA).findByLabelText("account");
+  const signUpForm = within(accountRegionA).getByLabelText(
+    "sign up for an account",
+  );
+
+  fireEvent.change(within(signUpForm).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signUpForm).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  fireEvent.click(
+    within(signUpForm).getByRole("button", { name: SIGN_UP_LABEL }),
+  );
+
+  await within(signUpForm).findByText(SIGNED_UP);
+
+  // Verify A's storage before B's sign-out
+  expect(readDeviceId(storageA)).toBe(PLAYER_SEAT_0.deviceId);
+  expect(readSessionToken(storageA)).toBeNull();
+
+  cleanup();
+
+  // B's arc: play, boot, sign in, sign out
+  driveScriptedDuel({ viewerSeat: 1, storage: storageB });
+  cleanup();
+
+  const { container: containerB1 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  // Sign in B with A's credentials
+  act(() => {
+    fireEvent.click(
+      within(containerB1).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionB1 = await within(containerB1).findByLabelText("account");
+  act(() => {
+    fireEvent.click(
+      within(accountRegionB1).getByRole("button", { name: SIGN_IN_HEADING }),
+    );
+  });
+
+  const signInForm = await within(containerB1).findByLabelText(
+    "sign in to an account",
+  );
+  fireEvent.change(within(signInForm).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signInForm).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  await act(async () => {
+    fireEvent.click(
+      within(signInForm).getByRole("button", { name: SIGN_IN_LABEL }),
+    );
+  });
+
+  expect(readSessionToken(storageB)).not.toBeNull();
+
+  cleanup();
+
+  // Boot B again
+  const { container: containerB2 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  act(() => {
+    fireEvent.click(within(containerB2).getByRole("button", { name: "Back" }));
+  });
+
+  await within(containerB2).findByLabelText("your profile");
+
+  // Navigate to account and sign out
+  act(() => {
+    fireEvent.click(
+      within(containerB2).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionB2 = await within(containerB2).findByLabelText("account");
+
+  fireEvent.click(
+    within(accountRegionB2).getByRole("button", { name: SIGN_OUT_LABEL }),
+  );
+
+  within(accountRegionB2).getByText(SIGN_OUT_WARNING);
+
+  await act(async () => {
+    fireEvent.click(
+      within(accountRegionB2).getByRole("button", { name: SIGN_OUT_LABEL }),
+    );
+  });
+
+  cleanup();
+
+  // Verify A's storage is unchanged
+  expect(readDeviceId(storageA)).toBe(PLAYER_SEAT_0.deviceId);
+  expect(readSessionToken(storageA)).toBeNull();
+
+  // Boot A fresh to verify it renders unchanged
+  window.location.hash = "";
+  const { container: containerA2 } = bootClient({
+    storage: storageA,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_0.deviceId),
+  });
+
+  const profileRegionA2 =
+    await within(containerA2).findByLabelText("your profile");
+  const nameRegionA2 =
+    await within(containerA2).findByLabelText("your display name");
+
+  const balanceAfterB =
+    within(profileRegionA2).getByText(/Duel coins$/).textContent;
+  const nameAfterB = within(nameRegionA2).getByText(NEW_NAME).textContent;
+
+  expect(balanceAfterB).toBe(balanceFromA);
+  expect(nameAfterB).toBe(nameFromA);
 
   cleanup();
 });
