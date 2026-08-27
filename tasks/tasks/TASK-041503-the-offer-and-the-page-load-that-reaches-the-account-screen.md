@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041503
 title: The offer itself, and the page load that reaches the account screen
 type: task
-status: backlog
+status: done
 parent: STORY-0415
 module: web-client
 estimate: S
