@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041230
 title: One module writes the session token's key, and a scan is what says so
 type: task
-status: backlog
+status: done
 parent: STORY-0412
 module: web-client
 estimate: S
