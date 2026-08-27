@@ -39,20 +39,33 @@ raised is after a first win, because that is the first moment the player has som
 ## Tasks
 
 Split on 2026-08-27, and **partially**: four tickets, plus a fifth, sixth and seventh that were not
-written because `DEC-079` and `DEC-080` decided their shape. **Both are now answered** — `DEC-079`
-the same day, `DEC-080` on 2026-08-28 — see `## Answered decisions` below, so the three remaining
-tickets are writable in full.
+written because `DEC-079` and `DEC-080` decided their shape. Both were answered — `DEC-079` the same
+day, `DEC-080` on 2026-08-28 — and the split was **completed on 2026-08-28**, at **nine** rather than
+seven. Two of the five new tickets exist for reasons measured rather than chosen, and both are
+recorded in `## What the split measured`: `ADR-0086` §6 needs a prop on a merged component, and the
+`pd.roomCode` gap `ADR-0086` names had to become a ticket rather than a discovery made twice.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-041501](../tasks/TASK-041501-the-words-the-offer-says.md) | The words the offer says, and the one word `ADR-0036` already chose | backlog |
-| [TASK-041502](../tasks/TASK-041502-whether-the-offer-is-made-at-all.md) | Whether the offer is made — a win, no credential, and not already settled | backlog |
-| [TASK-041503](../tasks/TASK-041503-the-offer-and-the-page-load-that-reaches-the-account-screen.md) | The offer itself, and the page load that reaches the account screen | backlog |
-| [TASK-041504](../tasks/TASK-041504-the-result-screen-carries-an-offer-it-does-not-make.md) | The result screen carries an offer it does not make, and gives nothing up for it | backlog |
-| — | *The persistence, the `Lobby` wiring, and the whole-client arc — not yet written, and no longer blocked: `DEC-079` is answered (`ADR-0085`) and `DEC-080` is answered (`ADR-0086`).* | — |
+| [TASK-041501](../tasks/TASK-041501-the-words-the-offer-says.md) | The words the offer says, and the one word `ADR-0036` already chose | done |
+| [TASK-041502](../tasks/TASK-041502-whether-the-offer-is-made-at-all.md) | Whether the offer is made — a win, no credential, and not already settled | done |
+| [TASK-041503](../tasks/TASK-041503-the-offer-and-the-page-load-that-reaches-the-account-screen.md) | The offer itself, and the page load that reaches the account screen | done |
+| [TASK-041504](../tasks/TASK-041504-the-result-screen-carries-an-offer-it-does-not-make.md) | The result screen carries an offer it does not make, and gives nothing up for it | done |
+| [TASK-041505](../tasks/TASK-041505-the-one-key-the-offers-answer-lives-under.md) | The one key the offer's answer lives under, and the gate row that owns it | backlog |
+| [TASK-041506](../tasks/TASK-041506-the-accept-control-is-an-answer-too.md) | The accept control is an answer too, and says so before the page loads | backlog |
+| [TASK-041507](../tasks/TASK-041507-the-lobby-fills-the-offer-slot-and-answers-for-it.md) | The lobby fills the offer slot, and either control answers it | backlog |
+| [TASK-041508](../tasks/TASK-041508-the-offer-across-two-boots-of-a-whole-client.md) | The offer across two boots of a whole client, answered and unanswered | backlog |
+| [TASK-041509](../tasks/TASK-041509-the-room-code-key-gets-the-row-it-never-had.md) | The room code key gets the row it never had | backlog |
 
-`TASK-041501` is the head; the other three depend on it for **sequencing only** and their `Files`
-tables are pairwise disjoint, so all three are startable together once it merges.
+`TASK-041501` was the head. `TASK-041505` and `TASK-041506` depend only on the four merged tickets
+and their `Files` tables are disjoint, so they are **one batch**; `TASK-041507` needs both,
+`TASK-041508` needs `TASK-041507`, and `TASK-041509` needs only `TASK-041505` — it shares that
+ticket's one file and nothing else, so it can run beside `TASK-041507` or `TASK-041508` but never
+beside `TASK-041505`.
+
+`TASK-041507` is the story's only `atomic:` ticket, at **four** files: `App.test.tsx`'s
+`vi.mock("./main", …)` replaces that module wholesale for all 37 of its tests, and 25 of them throw
+the moment `Lobby.tsx` imports a binding the factory does not return — measured, not predicted.
 
 ## Answered decisions
 
@@ -87,12 +100,11 @@ tables are pairwise disjoint, so all three are startable together once it merges
 
 Neither blocked `TASK-041501`–`TASK-041504`, which hold under either answer.
 
-**Two edits this story owes its next planner, both named in `ADR-0085` §7 and neither made here:**
-the third acceptance criterion below becomes *"It does not appear a second time after a second win
-**to a player who answered it**"*, with the unanswered case — shown, neither control pressed, so
-offered again after the next win — added as its own criterion; and `ADR-0056` §6's `STORY-0415` line
-is restated as *a `429` is not a dismissal, and the sign-up the player accepted is still there with
-what they typed*, rather than as the result-screen prompt returning.
+**Both edits `ADR-0085` §7 named were made on 2026-08-28**, by the pass that completed the split: the
+third acceptance criterion below gained its *"to a player who answered it"* clause and the unanswered
+case became a criterion of its own, and `ADR-0056` §6's `STORY-0415` line now reads *a `429` is not a
+dismissal, and the sign-up the player accepted is still there with what they typed*, marked as
+amended by `ADR-0085` §7 rather than silently rewritten.
 
 ## What the split measured, so the next pass need not re-derive it
 
@@ -115,11 +127,39 @@ what they typed*, rather than as the result-screen prompt returning.
   installing fake ones first.
 - Suite at the split: **811 tests / 103 files**. The four tickets take it to **822 / 106**.
 
+### Measured on 2026-08-28, completing the split
+
+- **`App.test.tsx` forecloses a three-file wiring ticket.** Its `vi.mock("./main", …)` (line 41)
+  takes no `importOriginal` and returns a fixed object, so any binding `Lobby.tsx` imports from
+  `../main` must appear in that factory. Adding `offerSettledHere` and `settleOfferHere` to
+  `main.tsx` and importing them in `Lobby.tsx` without touching that file measured
+  `Tests 25 failed | 808 passed (833)`, every failure reading `No "offerSettledHere" export is
+  defined on the "./main" mock`. This is the third time this file has cost a ticket — `TASK-041223`
+  and `TASK-041229` were both blocked by it — so `TASK-041507` names it in `atomic:` and in its
+  `Files` table.
+- **`ArcWiring` has exactly two builders**, `drive-arc.test.tsx` and
+  `claimed-here-recovered-there.test.tsx`, so two required fields on it is a three-file ticket. The
+  second builder was named by `tsc --noEmit` — `error TS2739: Type '{ history: null; signedIn:
+  false; }' is missing the following properties from type 'ArcWiring'` — which is a typecheck
+  failure that hides every test result behind it.
+- **The one-module gate's substring scan cuts both ways, harmlessly one way.** Making
+  `markOfferSettled` write a second key `pd.accountOfferSettledAt` **from the same module** leaves
+  the row green, because the scan collects file *names*. The refused short name `pd.accountOffer` is
+  dangerous only because a second **file** would then match.
+- **`pd.roomCode` resolves to exactly one production file**, `room-memory.ts`, and a probe writing
+  that literal into `store/boot.ts` reddens a row for it — so the gap `ADR-0086` named is closable in
+  six lines, and it is `TASK-041509`.
+- Suite: **822 / 106** merged → **828 / 107** with `TASK-041505` → **829** → **832** → **835** →
+  **836** with `TASK-041509`. Every number measured, in that order.
+
 ## Acceptance criteria
 
 - [ ] The offer appears after a won duel and not after a lost or drawn one — all three asserted.
 - [ ] It does not appear for a player who already holds a credential.
-- [ ] It does not appear a second time after a second win.
+- [ ] It does not appear a second time after a second win **to a player who answered it** — either
+      control, `ADR-0085` §2.
+- [ ] It **is** offered again after a later win to a player who was shown it and pressed neither
+      control, since nothing was answered — `ADR-0085` §3's fourth row.
 - [ ] Dismissing it once suppresses it across a reload, asserted through the injected storage.
 - [ ] Dismissing leaves every capability intact: the player can still play, still earns the coin, and
       nothing is disabled.

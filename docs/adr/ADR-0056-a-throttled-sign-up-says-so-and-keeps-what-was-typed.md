@@ -187,7 +187,12 @@ throttled sign-up leaves the offer exactly where it was.
   - [ ] The rendered throttled message contains **no digit**, which is the objective proxy for §2's
         *no time, no counts*.
 - **`STORY-0415`: one prohibition and one criterion** — a `429` on the offer's form is not a
-  dismissal (§5), and the offer is still available afterwards.
+  dismissal (§5), and the sign-up the player accepted is still there with what they typed.
+  *Amended by [`ADR-0085`](ADR-0085-not-again-is-this-browser-and-an-answer-spends-the-offer.md) §7,
+  which supplies this wording.* §5's holding is untouched — a `429` consumes no handle, no session,
+  no profile and dismisses nothing — but what the player returns to is the **form**, not the
+  result-screen prompt: under `ADR-0085` §2 taking the offer is itself an answer, so the prompt has
+  already been spent by the time a `429` can happen.
 
 ## Consequences
 
