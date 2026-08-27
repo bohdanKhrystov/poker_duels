@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { duelRowBody } from "../profile/profile-fixture";
 import { accountServer, type ServerPlayer } from "./account-server";
 
 const players: readonly ServerPlayer[] = [
@@ -8,12 +9,17 @@ const players: readonly ServerPlayer[] = [
     deviceId: "device-seat-0",
     coinBalance: 100,
     displayName: "Alice",
+    duels: [
+      duelRowBody({ duelId: "duel-seat-0-1", outcome: "WON" }),
+      duelRowBody({ duelId: "duel-seat-0-2", outcome: "LOST" }),
+    ],
   },
   {
     playerId: "player-seat-1",
     deviceId: "device-seat-1",
     coinBalance: 37,
     displayName: "Bob",
+    duels: [duelRowBody({ duelId: "duel-seat-1-1", outcome: "DREW" })],
   },
 ];
 
@@ -116,5 +122,151 @@ describe("accountServer", () => {
       headers: { "X-Device-Id": "device-seat-0" },
     });
     expect(response.status).toBe(500);
+  });
+
+  it("answers each device id with its own duels", async () => {
+    const server = accountServer(players);
+
+    // Request for player 0's duels
+    const response0 = await server.fetch("/api/me/duels", {
+      headers: { "X-Device-Id": "device-seat-0" },
+    });
+    expect(response0.status).toBe(200);
+    const body0 = (await response0.json()) as Record<string, unknown>;
+    expect(body0).toHaveProperty("duels");
+    expect(body0).toHaveProperty("nextCursor");
+    const duels0 = body0.duels as Record<string, unknown>[];
+    expect(duels0).toHaveLength(2);
+    const duelIds0 = duels0.map((d) => d.duelId);
+    expect(duelIds0).toContain("duel-seat-0-1");
+    expect(duelIds0).toContain("duel-seat-0-2");
+
+    // Request for player 1's duels
+    const response1 = await server.fetch("/api/me/duels", {
+      headers: { "X-Device-Id": "device-seat-1" },
+    });
+    expect(response1.status).toBe(200);
+    const body1 = (await response1.json()) as Record<string, unknown>;
+    expect(body1).toHaveProperty("duels");
+    expect(body1).toHaveProperty("nextCursor");
+    const duels1 = body1.duels as Record<string, unknown>[];
+    expect(duels1).toHaveLength(1);
+    const duelIds1 = duels1.map((d) => d.duelId);
+    expect(duelIds1).toContain("duel-seat-1-1");
+
+    // Verify they are different
+    expect(duelIds0).not.toEqual(duelIds1);
+  });
+
+  it("answers the duels read with a cursor field the parser needs", async () => {
+    const server = accountServer(players);
+
+    const response = await server.fetch("/api/me/duels", {
+      headers: { "X-Device-Id": "device-seat-0" },
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(body).toHaveProperty("nextCursor");
+    expect(body.nextCursor).toBeNull();
+    expect(body).toHaveProperty("duels");
+    expect(Array.isArray(body.duels)).toBe(true);
+  });
+
+  it("a name set on one player is not set on the other", async () => {
+    // Create a fresh server instance with mutable players
+    const testPlayers: ServerPlayer[] = [
+      {
+        playerId: "player-seat-0",
+        deviceId: "device-seat-0",
+        coinBalance: 100,
+        displayName: "Alice",
+        duels: [],
+      },
+      {
+        playerId: "player-seat-1",
+        deviceId: "device-seat-1",
+        coinBalance: 37,
+        displayName: "Bob",
+        duels: [],
+      },
+    ];
+
+    const server = accountServer(testPlayers);
+
+    // Get initial names
+    const initialResponse0 = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-0" },
+    });
+    const initialBody0 = (await initialResponse0.json()) as Record<
+      string,
+      unknown
+    >;
+    expect(initialBody0.displayName).toBe("Alice");
+
+    const initialResponse1 = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-1" },
+    });
+    const initialBody1 = (await initialResponse1.json()) as Record<
+      string,
+      unknown
+    >;
+    expect(initialBody1.displayName).toBe("Bob");
+
+    // Set name for player 0
+    const putResponse = await server.fetch("/api/me/name", {
+      method: "PUT",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({ name: "Charlie" }),
+    });
+    expect(putResponse.status).toBe(200);
+    const putBody = (await putResponse.json()) as Record<string, unknown>;
+    expect(putBody.displayName).toBe("Charlie");
+
+    // Verify player 0 has the new name
+    const afterResponse0 = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-0" },
+    });
+    const afterBody0 = (await afterResponse0.json()) as Record<string, unknown>;
+    expect(afterBody0.displayName).toBe("Charlie");
+
+    // Verify player 1 still has the old name
+    const afterResponse1 = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-1" },
+    });
+    const afterBody1 = (await afterResponse1.json()) as Record<string, unknown>;
+    expect(afterBody1.displayName).toBe("Bob");
+  });
+
+  it("the name survives into the next profile read", async () => {
+    // Create a fresh server instance with mutable players
+    const testPlayers: ServerPlayer[] = [
+      {
+        playerId: "player-seat-0",
+        deviceId: "device-seat-0",
+        coinBalance: 100,
+        displayName: "Alice",
+        duels: [],
+      },
+    ];
+
+    const server = accountServer(testPlayers);
+
+    // Set name via PUT
+    const putResponse = await server.fetch("/api/me/name", {
+      method: "PUT",
+      headers: { "X-Device-Id": "device-seat-0" },
+      body: JSON.stringify({ name: "Diana" }),
+    });
+    expect(putResponse.status).toBe(200);
+    const putBody = (await putResponse.json()) as Record<string, unknown>;
+    expect(putBody.displayName).toBe("Diana");
+
+    // Read the profile again via GET /api/me
+    const getResponse = await server.fetch("/api/me", {
+      headers: { "X-Device-Id": "device-seat-0" },
+    });
+    expect(getResponse.status).toBe(200);
+    const getBody = (await getResponse.json()) as Record<string, unknown>;
+    expect(getBody.displayName).toBe("Diana");
   });
 });

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041403
 title: The record each player keeps, and the name each one sets
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
