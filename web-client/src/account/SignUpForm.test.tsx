@@ -23,6 +23,19 @@ import {
 import { ProfileStrip } from "../profile/ProfileStrip";
 import { aProfile } from "../profile/profile-fixture";
 
+/**
+ * An `unavailable-handle` outcome carrying an extra `reason` the real `SignUpOutcome` type never has:
+ * `ADR-0031` §2's indistinguishability note makes `{ kind: "unavailable-handle" }` the whole of what
+ * a real server sends — one sentence maps to two world-states, so the outcome carries no disambiguating
+ * field. `reason` is assigned through a variable rather than returned as a literal, so TypeScript's
+ * excess-property check does not strip it — the field has to survive at runtime, invisible through the
+ * type, so a fixture can prove the form never reaches for it.
+ */
+function unavailableHandleBecause(reason: string): SignUpOutcome {
+  const outcome = { kind: "unavailable-handle" as const, reason };
+  return outcome;
+}
+
 describe("signing up for an account", () => {
   it("sends the handle and the password the player typed", async () => {
     const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
@@ -316,5 +329,47 @@ describe("signing up for an account", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("puts nothing in the DOM that tells two unavailable-handle refusals apart", async () => {
+    // Two mocked unavailable-handle outcomes with different `reason` strings — a real server
+    // sends neither field, but the fixture carries them so a test can prove the form never
+    // reaches for them. React reflects a controlled input's `value` into the DOM attribute,
+    // so the two attempts must type the exact same credentials; otherwise the markup differs
+    // over the player's keystrokes alone, never over any leak.
+    const signUp = vi
+      .fn<[string, string], Promise<SignUpOutcome>>()
+      .mockResolvedValueOnce(unavailableHandleBecause("handle taken branch"))
+      .mockResolvedValueOnce(
+        unavailableHandleBecause("profile has password branch"),
+      );
+    const { container } = render(<SignUpForm signUp={signUp} />);
+
+    const handleInput = screen.getByLabelText(HANDLE_LABEL) as HTMLInputElement;
+    const passwordInput = screen.getByLabelText(
+      PASSWORD_LABEL,
+    ) as HTMLInputElement;
+    const same = "fixed-handle";
+    const samePassword = "fixed-password";
+
+    fireEvent.change(handleInput, { target: { value: same } });
+    fireEvent.change(passwordInput, { target: { value: samePassword } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: SIGN_UP_LABEL }));
+    });
+    const firstMarkup = container.innerHTML;
+
+    fireEvent.change(handleInput, { target: { value: same } });
+    fireEvent.change(passwordInput, { target: { value: samePassword } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: SIGN_UP_LABEL }));
+    });
+    const secondMarkup = container.innerHTML;
+
+    // Guarded against vacuity: if the refusal is never rendered, both would
+    // be trivially equal.
+    expect(firstMarkup).toContain(HANDLE_UNAVAILABLE);
+    expect(secondMarkup).toContain(HANDLE_UNAVAILABLE);
+    expect(firstMarkup).toBe(secondMarkup);
   });
 });
