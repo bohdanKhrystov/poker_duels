@@ -39,7 +39,9 @@ raised is after a first win, because that is the first moment the player has som
 ## Tasks
 
 Split on 2026-08-27, and **partially**: four tickets, plus a fifth, sixth and seventh that are not
-written because `DEC-079` and `DEC-080` decide their shape. See `## Open decisions` below.
+written because `DEC-079` and `DEC-080` decide their shape. `DEC-079` was answered the same day —
+see `## Open decisions` below — so their shape is now fixed except for the key's name and its owning
+module, which is `DEC-080`.
 
 | ID | Title | Status |
 | --- | --- | --- |
@@ -47,23 +49,34 @@ written because `DEC-079` and `DEC-080` decide their shape. See `## Open decisio
 | [TASK-041502](../tasks/TASK-041502-whether-the-offer-is-made-at-all.md) | Whether the offer is made — a win, no credential, and not already settled | backlog |
 | [TASK-041503](../tasks/TASK-041503-the-offer-and-the-page-load-that-reaches-the-account-screen.md) | The offer itself, and the page load that reaches the account screen | backlog |
 | [TASK-041504](../tasks/TASK-041504-the-result-screen-carries-an-offer-it-does-not-make.md) | The result screen carries an offer it does not make, and gives nothing up for it | backlog |
-| — | *The persistence, the `Lobby` wiring, and the whole-client arc — not yet written. They are `DEC-079`'s and `DEC-080`'s to shape.* | — |
+| — | *The persistence, the `Lobby` wiring, and the whole-client arc — not yet written. `DEC-079` is answered (`ADR-0085`); only `DEC-080`'s key and module are still open.* | — |
 
 `TASK-041501` is the head; the other three depend on it for **sequencing only** and their `Files`
 tables are pairwise disjoint, so all three are startable together once it merges.
 
 ## Open decisions
 
-- **`DEC-079` — the product owner's.** Is *"not again"* a fact about the player or about this
-  browser, and what spends the offer? `ADR-0036` §Consequences says the flag *"belongs on the
-  profile"*; this story's own design notes say a key this client module owns. `DEC-049` says *"only
-  'Not now' dismisses"*; this story's third criterion says a second win never shows it. Both halves
-  are what a player experiences and both are derivable from `docs/vision.md`.
-- **`DEC-080` — the architect's, downstream of `DEC-079`.** What carries it: the field `GET /api/me`
-  gains if any, the endpoint that records a dismissal, what says *this win is the first*, and
-  whether this story grows a server half.
+- **`DEC-079` — the product owner's. Answered on 2026-08-27** by
+  [`ADR-0085`](../../docs/adr/ADR-0085-not-again-is-this-browser-and-an-answer-spends-the-offer.md):
+  ***"not again"* is this browser, and an answer is what spends the offer.** The bit is written and
+  read through the injected `Storage` and **never sent** — no column, no `GET /api/me` field, no
+  endpoint, no wire change — so this story keeps `module: web-client` and grows no server half.
+  Both controls are answers and both are permanent; a `429`, an abandoned sign-up, a rematch and a
+  reload spend nothing; **an offer shown but never answered is made again after the next win**. The
+  trigger therefore needs no *first-win* fact from the server: `offerAccount`'s three terms are the
+  whole rule. `ADR-0085` §3 is a case-by-case table of what a player sees, written to be read
+  straight into a `## Tests` table.
+- **`DEC-080` — the architect's, and narrowed by that answer** to **which key and which module owns
+  it**, and therefore the third entry `one-module-owns-each-storage-key.test.ts` gains.
 
-Neither blocks `TASK-041501`–`TASK-041504`, which hold under either answer.
+Neither blocked `TASK-041501`–`TASK-041504`, which hold under either answer.
+
+**Two edits this story owes its next planner, both named in `ADR-0085` §7 and neither made here:**
+the third acceptance criterion below becomes *"It does not appear a second time after a second win
+**to a player who answered it**"*, with the unanswered case — shown, neither control pressed, so
+offered again after the next win — added as its own criterion; and `ADR-0056` §6's `STORY-0415` line
+is restated as *a `429` is not a dismissal, and the sign-up the player accepted is still there with
+what they typed*, rather than as the result-screen prompt returning.
 
 ## What the split measured, so the next pass need not re-derive it
 
@@ -77,7 +90,8 @@ Neither blocks `TASK-041501`–`TASK-041504`, which hold under either answer.
 - **A `hashchange` is a task, not a microtask.** A probe that sets `location.hash` inside a
   synchronous `act()` observes nothing; it must await a flush.
 - `web-client/src/protocol/one-module-owns-each-storage-key.test.ts` is the merged gate a new
-  storage key has to be added to, if `DEC-079` lands on client storage.
+  storage key has to be added to — and `DEC-079` did land on client storage, so it gains a third
+  entry once `DEC-080` names the key and its module.
 - `web-client/src/virtual-time.test.ts` fails any test file that reaches for a timer without
   installing fake ones first.
 - Suite at the split: **811 tests / 103 files**. The four tickets take it to **822 / 106**.
