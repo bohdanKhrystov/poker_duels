@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041408
 title: Recovered there — a different device id reads back the same balance, name and duel
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
