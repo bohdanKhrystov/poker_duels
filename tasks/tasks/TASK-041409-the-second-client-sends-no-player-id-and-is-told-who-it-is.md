@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041409
 title: The second client sends no player id, and is told who it is
 type: task
-status: backlog
+status: done
 parent: STORY-0414
 module: web-client
 estimate: S
