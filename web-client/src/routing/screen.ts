@@ -1,8 +1,8 @@
 /**
  * A named screen in the duel client. The first screen is the one a player sees when
- * the client boots; the duels, leaderboard and account screens are chosen by the player.
+ * the client boots; the duels, leaderboard, account and sign-in screens are chosen by the player.
  */
-export type Screen = "first" | "duels" | "leaderboard" | "account";
+export type Screen = "first" | "duels" | "leaderboard" | "account" | "sign-in";
 
 /**
  * The screen named by a URL fragment, reading only the first segment.
@@ -36,6 +36,8 @@ export function screenFromHash(hash: string): Screen {
       return "leaderboard";
     case "account":
       return "account";
+    case "sign-in":
+      return "sign-in";
     default:
       return "first";
   }
@@ -48,13 +50,16 @@ export function screenFromHash(hash: string): Screen {
  * screen's own fragment.
  */
 export function hashForScreen(screen: Screen): string {
-  // The slugs "duels", "leaderboard" and "account" are literals in this file,
+  // The slugs "duels", "leaderboard", "account" and "sign-in" are literals in this file,
   // not derived from heading names at runtime, because a URL that changed
   // when a heading was restyled would break every link that ever worked
   // (ADR-0076 §1). "account" is not coined here: it is the lowercase ASCII
   // form of a word the product already says to a player — ADR-0050 §3's
   // merged confirmation sentence ("…will never sign in to this account
   // again"), ADR-0036's decision, and ADR-0056 §2's "no account was created".
+  // "sign-in" is the hyphenated form of the second-person action; the hyphen
+  // is the one `docs/protocol.md` already writes in `POST /api/auth/sign-in`
+  // (ADR-0083 §2).
   switch (screen) {
     case "first":
       return "/";
@@ -64,5 +69,7 @@ export function hashForScreen(screen: Screen): string {
       return "#/leaderboard";
     case "account":
       return "#/account";
+    case "sign-in":
+      return "#/sign-in";
   }
 }

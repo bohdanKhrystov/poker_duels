@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041226
 title: The sign-in screen's word, and the address that word becomes
 type: task
-status: backlog
+status: done
 parent: STORY-0412
 module: web-client
 estimate: XS

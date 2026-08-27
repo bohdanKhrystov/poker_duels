@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as accountText from "./account-text";
+import { hashForScreen, screenFromHash, type Screen } from "../routing/screen";
 
 describe("the account screen's words", () => {
   it("states every sentence exactly, character for character", () => {
@@ -23,6 +24,7 @@ describe("the account screen's words", () => {
         "REVOKE_OTHER_SESSIONS",
         "REVOKE_PERMANENT",
         "SIGNED_UP",
+        "SIGN_IN_HEADING",
         "SIGN_IN_LABEL",
         "SIGN_IN_REFUSED",
         "SIGN_OUT_LABEL",
@@ -85,6 +87,7 @@ describe("the account screen's words", () => {
         "Nothing typed was refused, and no account was created. The profile is unchanged, with the " +
         "same duel coins and the same duels, and it can keep playing now and sign up again later.",
     );
+    expect(accountText.SIGN_IN_HEADING).toBe("Sign in");
     expect(accountText.SIGN_IN_LABEL).toBe("Sign in");
     expect(accountText.SIGN_IN_REFUSED).toBe(
       "That handle and password do not match an account.",
@@ -178,5 +181,27 @@ describe("the account screen's words", () => {
         typeof value === "string" && value.toLowerCase().includes("revoke"),
     );
     expect(sayingRevoke).toEqual([]);
+  });
+
+  it("names a screen for every address, and an address for every screen", () => {
+    const screens: Screen[] = [
+      "first",
+      "duels",
+      "leaderboard",
+      "account",
+      "sign-in",
+    ];
+
+    for (const screen of screens) {
+      const hash = hashForScreen(screen);
+      const recovered = screenFromHash(hash);
+      expect(recovered).toBe(screen);
+    }
+
+    expect(hashForScreen("first")).toBe("/");
+    expect(hashForScreen("duels")).toBe("#/duels");
+    expect(hashForScreen("leaderboard")).toBe("#/leaderboard");
+    expect(hashForScreen("account")).toBe("#/account");
+    expect(hashForScreen("sign-in")).toBe("#/sign-in");
   });
 });
