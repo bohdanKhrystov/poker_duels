@@ -446,3 +446,288 @@ it("signs in from the second client and reads back the same balance name and due
   // correctly.
   expect(readDeviceId(storageA)).toBe(PLAYER_SEAT_0.deviceId);
 });
+
+it("no request the second client made carries a player id", async () => {
+  const server = accountServer([PLAYER_SEAT_0, PLAYER_SEAT_1]);
+  const storageB = inMemoryStorage();
+  const HANDLE = "duelist-three";
+  const PASSWORD = "a-third-password";
+
+  // B's arc: play, boot, sign-in, reboot
+  driveScriptedDuel({ viewerSeat: 1, storage: storageB });
+  cleanup();
+
+  const { container: containerB1 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  // B signs up and signs in
+  act(() => {
+    fireEvent.click(
+      within(containerB1).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionB1 = await within(containerB1).findByLabelText("account");
+  const signUpFormB1 = within(accountRegionB1).getByLabelText(
+    "sign up for an account",
+  );
+
+  fireEvent.change(within(signUpFormB1).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signUpFormB1).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  fireEvent.click(
+    within(signUpFormB1).getByRole("button", { name: SIGN_UP_LABEL }),
+  );
+
+  await within(signUpFormB1).findByText(SIGNED_UP);
+
+  // Now sign in with new credentials
+  const accountRegionB2 = await within(containerB1).findByLabelText("account");
+  act(() => {
+    fireEvent.click(
+      within(accountRegionB2).getByRole("button", { name: SIGN_IN_HEADING }),
+    );
+  });
+
+  const signInFormB2 = await within(containerB1).findByLabelText(
+    "sign in to an account",
+  );
+  fireEvent.change(within(signInFormB2).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signInFormB2).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  await act(async () => {
+    fireEvent.click(
+      within(signInFormB2).getByRole("button", { name: SIGN_IN_LABEL }),
+    );
+  });
+
+  // Reboot with session
+  cleanup();
+  bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  const sessionToken = readSessionToken(storageB);
+
+  // Sweep through all recorded requests
+  const requests = server.requests;
+
+  // Presence first: the log is non-empty
+  expect(requests.length).toBeGreaterThan(0);
+
+  // Check that no path contains player seat identifiers
+  for (const request of requests) {
+    expect(
+      request.path.includes("player-seat-0"),
+      `Path ${request.path} must not contain player-seat-0`,
+    ).toBe(false);
+    expect(
+      request.path.includes("player-seat-1"),
+      `Path ${request.path} must not contain player-seat-1`,
+    ).toBe(false);
+
+    // Check that session token is not in path or body
+    if (sessionToken) {
+      expect(
+        request.path.includes(sessionToken),
+        `Path ${request.path} must not contain session token`,
+      ).toBe(false);
+      if (request.body) {
+        expect(
+          request.body.includes(sessionToken),
+          `Body must not contain session token`,
+        ).toBe(false);
+      }
+    }
+
+    // Check body keys for forbidden ones. Parsing is the only thing this
+    // try guards — the key-check expect()s below run outside it, or a
+    // failing assertion (itself a throw) would be caught by a catch meant
+    // only for a body that isn't JSON, and silently discarded.
+    if (request.body) {
+      let parsedBody: unknown;
+      try {
+        parsedBody = JSON.parse(request.body);
+      } catch {
+        // If body is not JSON, skip the key check — nothing to inspect.
+        parsedBody = undefined;
+      }
+      if (parsedBody !== undefined) {
+        const keys = Object.keys(parsedBody as Record<string, unknown>);
+        const forbiddenKeys = ["playerId", "player_id", "id"];
+        for (const forbidden of forbiddenKeys) {
+          expect(
+            keys.includes(forbidden),
+            `Body keys ${keys.join(", ")} must not include ${forbidden}`,
+          ).toBe(false);
+        }
+      }
+    }
+  }
+
+  cleanup();
+});
+
+it("the second client learns who it is only from an answer", async () => {
+  const server = accountServer([PLAYER_SEAT_0, PLAYER_SEAT_1]);
+  const storageA = inMemoryStorage();
+  const storageB = inMemoryStorage();
+  const HANDLE = "duelist-four";
+  const PASSWORD = "a-fourth-password";
+
+  // A's arc: play and sign up. The credential this mints names player-seat-0
+  // (ADR-0030 §1: sign-up resolves by the requesting device) — the same
+  // shape test 4 already proved. B must sign in with A's credentials below,
+  // never its own: a self-sign-up would mint a credential naming
+  // player-seat-1, and this test could then never observe player-seat-0 in
+  // any answer at all.
+  driveScriptedDuel({ viewerSeat: 0, storage: storageA });
+  cleanup();
+
+  const { container: containerA } = bootClient({
+    storage: storageA,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_0.deviceId),
+  });
+
+  act(() => {
+    fireEvent.click(
+      within(containerA).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionA = await within(containerA).findByLabelText("account");
+  const signUpForm = within(accountRegionA).getByLabelText(
+    "sign up for an account",
+  );
+
+  fireEvent.change(within(signUpForm).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signUpForm).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  fireEvent.click(
+    within(signUpForm).getByRole("button", { name: SIGN_UP_LABEL }),
+  );
+  await within(signUpForm).findByText(SIGNED_UP);
+
+  cleanup();
+
+  // B's arc: its own boot and its own device id, then sign in with A's
+  // credentials above.
+  driveScriptedDuel({ viewerSeat: 1, storage: storageB });
+  cleanup();
+
+  const { container: containerB1 } = bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  act(() => {
+    fireEvent.click(
+      within(containerB1).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const accountRegionB = await within(containerB1).findByLabelText("account");
+  act(() => {
+    fireEvent.click(
+      within(accountRegionB).getByRole("button", { name: SIGN_IN_HEADING }),
+    );
+  });
+
+  const signInForm = await within(containerB1).findByLabelText(
+    "sign in to an account",
+  );
+  fireEvent.change(within(signInForm).getByLabelText(HANDLE_LABEL), {
+    target: { value: HANDLE },
+  });
+  fireEvent.change(within(signInForm).getByLabelText(PASSWORD_LABEL), {
+    target: { value: PASSWORD },
+  });
+  await act(async () => {
+    fireEvent.click(
+      within(signInForm).getByRole("button", { name: SIGN_IN_LABEL }),
+    );
+  });
+
+  expect(readSessionToken(storageB)).not.toBeNull();
+
+  cleanup();
+
+  // Reboot under the session — the same shape a document reload is
+  // elsewhere in this file. The mount's own profile read is the answer
+  // under test.
+  bootClient({
+    storage: storageB,
+    server,
+    wiring,
+    welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
+  });
+
+  // The request that told B who it is: the reboot's GET /api/me, the only
+  // request in this arc carrying a live session's Authorization header.
+  const meRead = server.requests.find(
+    (request) =>
+      request.path === "/api/me" &&
+      request.method === "GET" &&
+      request.headers["Authorization"] !== undefined,
+  );
+
+  expect(meRead).toBeDefined();
+  if (meRead === undefined) {
+    throw new Error("expected a session-authorized GET /api/me in the log");
+  }
+
+  // The positive half: player-seat-0 appears in what the server answered.
+  // A fresh call replaying meRead's own recorded headers, not a second
+  // request invented here — GET /api/me is a pure read with no side
+  // effects (the raw fetch a few tests up relies on the same fact), so this
+  // reproduces exactly what B received without account-server.ts needing
+  // to log responses too.
+  const response = await server.fetch(meRead.path, {
+    method: meRead.method,
+    headers: meRead.headers,
+  });
+  const responseBody = (await response.json()) as {
+    readonly playerId: string;
+  };
+  expect(responseBody.playerId).toBe(PLAYER_SEAT_0.playerId);
+
+  // ...and the request that earned it carried no player id anywhere: only
+  // Authorization and B's own X-Device-Id.
+  expect(meRead.path.includes(PLAYER_SEAT_0.playerId)).toBe(false);
+  expect(meRead.body).toBeNull();
+  expect(meRead.headers["X-Device-Id"]).toBe(PLAYER_SEAT_1.deviceId);
+
+  const headerKeys = Object.keys(meRead.headers);
+  const allowedKeys = [
+    "Authorization",
+    "X-Device-Id",
+    "Content-Type",
+    "content-type",
+  ];
+  for (const key of headerKeys) {
+    expect(
+      allowedKeys.includes(key),
+      `Unexpected header ${key} in the request that told B who it is`,
+    ).toBe(true);
+  }
+  expect(meRead.headers["Authorization"]?.startsWith("Bearer ")).toBe(true);
+
+  cleanup();
+});
