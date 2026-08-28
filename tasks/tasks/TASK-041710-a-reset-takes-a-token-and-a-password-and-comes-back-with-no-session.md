@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041710
 title: A reset takes a token and a password, and comes back with no session
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
