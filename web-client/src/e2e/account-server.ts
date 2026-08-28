@@ -127,6 +127,7 @@ export function accountServer(players: readonly ServerPlayer[]): AccountServer {
         displayName: sessionPlayer.displayName,
         displayNameRemoved: false,
         deviceRouteLive: true,
+        hasRecoveryEmail: false,
       });
 
       return {
@@ -184,6 +185,7 @@ export function accountServer(players: readonly ServerPlayer[]): AccountServer {
         displayName: player.displayName,
         displayNameRemoved: false,
         deviceRouteLive: true,
+        hasRecoveryEmail: false,
       });
 
       return {
