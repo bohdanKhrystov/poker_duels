@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041706
 title: The words the two mailed screens say, including what a reset costs
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
