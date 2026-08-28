@@ -10,6 +10,7 @@ import {
   SIGN_IN_HEADING,
   deviceRouteLine,
 } from "./account-text";
+import { recoveryLine } from "./recovery-text";
 
 /**
  * The account screen: states, in words, which routes currently sign in to
@@ -51,6 +52,16 @@ export function AccountScreen(props: {
       ? deviceRouteLine(profile.profile.deviceRouteLive)
       : null;
 
+  // With no profile in hand — still loading, no-profile, or unavailable — the
+  // screen asserts neither fact about recovery (`ADR-0037`): a sentence built
+  // from a read the client never got back is not a fact the client was told.
+  // `ADR-0031` §6.3: no endpoint in this product returns an address, so this
+  // screen never shows one.
+  const recoveryText =
+    profile !== null && profile.kind === "profile"
+      ? recoveryLine(profile.profile.hasRecoveryEmail)
+      : null;
+
   // `POST /api/auth/sign-in` is the only endpoint in `docs/protocol.md` that
   // ever returns a `sessionToken` — sign-up issues none and reset-password
   // issues none — so a browser holding a live session is a browser whose
@@ -82,6 +93,9 @@ export function AccountScreen(props: {
     >
       <h2 className="text-small">{ACCOUNT_HEADING}</h2>
       {deviceLine !== null ? <p className="text-small">{deviceLine}</p> : null}
+      {recoveryText !== null ? (
+        <p className="text-small">{recoveryText}</p>
+      ) : null}
       {showPasswordRoute ? (
         <p className="text-small">{PASSWORD_ROUTE_LIVE}</p>
       ) : null}
