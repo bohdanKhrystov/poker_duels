@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041507
 title: The lobby fills the offer slot, and either control answers it
 type: task
-status: backlog
+status: done
 parent: STORY-0415
 module: web-client
 estimate: S
