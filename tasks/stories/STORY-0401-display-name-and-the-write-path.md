@@ -2,7 +2,7 @@
 id: STORY-0401
 title: player.display_name, its canonical form, and the write path
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: poker-server
 labels: [server, http, profiles, schema, identity]

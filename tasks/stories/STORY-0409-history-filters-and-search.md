@@ -2,7 +2,7 @@
 id: STORY-0409
 title: History filters and search
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: poker-server
 labels: [server, http, read-path, history]

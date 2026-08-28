@@ -2,7 +2,7 @@
 id: STORY-0416
 title: The recovery email, verified, and the password reset
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, http, security, mail]

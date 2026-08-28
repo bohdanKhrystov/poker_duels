@@ -2,7 +2,7 @@
 id: STORY-0407
 title: Recovery — signing in from a device that has never been seen
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, e2e]

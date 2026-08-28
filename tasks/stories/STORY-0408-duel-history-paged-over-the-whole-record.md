@@ -2,7 +2,7 @@
 id: STORY-0408
 title: Duel history, paged over the whole record
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: poker-server
 labels: [server, http, read-path, history]
