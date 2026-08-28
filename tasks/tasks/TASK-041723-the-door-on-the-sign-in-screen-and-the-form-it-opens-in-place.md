@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041723
 title: The door on the sign-in screen, and the form it opens in place of the sign-in form
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
