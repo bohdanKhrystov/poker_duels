@@ -2,7 +2,7 @@
 id: EPIC-02
 title: Duel server
 type: epic
-status: in-progress
+status: done
 module: poker-server
 labels: [server, ktor, websocket, persistence]
 ---
