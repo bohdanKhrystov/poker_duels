@@ -121,31 +121,56 @@ tickets that edit `Lobby.tsx` are ordered by that file alone.
 because an absolute figure is wrong the moment two tickets are dispatched in one batch. The head
 pins both, since nothing else is in flight when it runs.
 
-## Held, on `DEC-081`
+## The three unwritten tickets, and the answer they were waiting for
 
-**Three tickets are not written**, and they are exactly the ones the answer determines: the *forgot
-password* flow's **words**, its **form or screen**, and its **door, slug and wiring**. Their `Files`
-and `Tests` tables all depend on whether the flow is a screen with an address of its own or a form on
+**Three tickets are not written**, and they are exactly the ones `DEC-081` determined: the *forgot
+password* flow's **words**, its **form or screen**, and its **door and wiring**. Their `Files` and
+`Tests` tables all depended on whether the flow is a screen with an address of its own or a form on
 `#/sign-in`, and on what the product calls it.
 
-What is **not** held, and is written now: `TASK-041708`, the transport. `POST /api/auth/forgot-password`
-has one field, one status and one merged sentence's worth of behaviour, and no answer to `DEC-081`
-moves a line of it. `TASK-041711` puts it on the account seam beside the other three, where
-`revokeThisDevice` has already sat without a screen since `TASK-041220`.
+**`DEC-081` is answered.**
+[`ADR-0087`](../../docs/adr/ADR-0087-forgot-your-password-is-a-door-on-the-sign-in-screen.md), on
+2026-08-28: ***Forgot your password?* is a door on the sign-in screen, not a screen of its own.**
+What the three tickets are now written from:
 
-This is `STORY-0415`'s pattern: write what the answer cannot touch, hold what it determines, and
-register the question rather than guessing it. A guessed heading here would coin player-facing
-vocabulary that `ADR-0076` §1 reserves, in a slug the product then owns forever.
+- **Four constants in `web-client/src/account/recovery-text.ts`** — `FORGOT_PASSWORD_LABEL =
+  "Forgot your password?"`, `FORGOT_PASSWORD_SUBMIT = "Send a link"`,
+  `FORGOT_PASSWORD_ACKNOWLEDGED = "If that address is verified on an account here, a link is on its
+  way. Follow it to set a new password."` and `FORGOT_PASSWORD_FAILED = "That did not go through.
+  Try again."` **`ADDRESS_LABEL` and `CANCEL` are imported, not re-authored** (§1).
+- **No slug and no address.** `Screen`, `screenFromHash` and `hashForScreen` are **not edited**, and
+  `ADR-0076` §1's table gains no row (§3). Nothing may write `forgot-password` into `screen.ts`.
+- **The door is on the sign-in screen, below the sign-in form, conditional on nothing** — not the
+  first screen, not the account screen (§4) — and it opens a one-field form **in place of** the
+  sign-in form, so there are never two forms in view and no password field in the flow (§5). The
+  door's words are that form's heading, **from the one literal** (§2).
+- **Accepted renders `FORGOT_PASSWORD_ACKNOWLEDGED` with the form still there and what was typed
+  still in it**; failed renders `FORGOT_PASSWORD_FAILED` the same way (§5).
+- **An address the product does not hold gets exactly what everybody else gets** — same sentence,
+  same controls, same layout, no second state, no hint, no count (§6).
+
+Layout, colour and letter-fitting stay `EPIC-06`'s; which component holds the form is the planner's
+and the architect's (§7).
+
+What was **never** held, and was written while the question was open: `TASK-041708`, the transport.
+`POST /api/auth/forgot-password` has one field, one status and one merged sentence's worth of
+behaviour, and no answer to `DEC-081` moved a line of it. `TASK-041711` puts it on the account seam
+beside the other three, where `revokeThisDevice` has already sat without a screen since
+`TASK-041220`.
+
+This was `STORY-0415`'s pattern: write what the answer cannot touch, hold what it determines, and
+register the question rather than guessing it. A guessed heading here would have coined player-facing
+vocabulary that `ADR-0076` §1 reserves — and `ADR-0087` records that it coined one deliberately,
+which is exactly the decision a ticket may not take.
 
 ## Open decisions
 
-`DEC-081` — **the product owner's** — what the product calls the *forgot password* flow, whether it
-is a screen with its own address or a form on `#/sign-in`, and where its door is. Registered on
-2026-08-28 in [`docs/adr/README.md`](../../docs/adr/README.md#open-decisions). It is `DEC-077`'s
-question one screen later: `ADR-0076` §1 permits only a word the product already says to a player,
-`ADR-0083` §6 deferred the door here by name, and `ADR-0081` §3 granted this story an address without
-saying what it is. **It blocks three unwritten tickets and nothing else** — the other twenty hold
-under either answer, and `TASK-041701` is startable today.
+**None.** `DEC-081` — **the product owner's** — asked what the product calls the *forgot password*
+flow, whether it is a screen with its own address or a form on `#/sign-in`, and where its door is.
+Registered on 2026-08-28 and answered the same day by
+[`ADR-0087`](../../docs/adr/ADR-0087-forgot-your-password-is-a-door-on-the-sign-in-screen.md), whose
+holding is transcribed in the section above. It blocked three unwritten tickets and nothing else; the
+other twenty held under either answer, and `TASK-041701` was startable throughout.
 
 ## Acceptance criteria
 
@@ -167,10 +192,11 @@ under either answer, and `TASK-041701` is startable today.
 > **The seventh criterion is `TASK-041701`, and it is the story's head.** The eighth is met by every
 > ticket's `verify:` block, in the per-file form the split explains above.
 >
-> **Two criteria are partly held.** *"`forgot-password` renders one sentence for every outcome"*
-> is met at the transport by `TASK-041708` — two outcomes, asserted identical for every failing
-> status — and its rendering waits on `DEC-081`. The first criterion's *never renders an address* is
-> met by `TASK-041712`; the attach form's half is `TASK-041713`'s.
+> **Two criteria are split across tickets.** *"`forgot-password` renders one sentence for every
+> outcome"* is met at the transport by `TASK-041708` — two outcomes, asserted identical for every
+> failing status — and in the rendering by the tickets `ADR-0087` unblocked, where §6 makes the
+> unknown address indistinguishable from every other. The first criterion's *never renders an
+> address* is met by `TASK-041712`; the attach form's half is `TASK-041713`'s.
 
 ## Out of scope
 

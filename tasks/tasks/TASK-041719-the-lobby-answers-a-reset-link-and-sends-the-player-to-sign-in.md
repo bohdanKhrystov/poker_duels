@@ -83,7 +83,8 @@ Read, and do not edit:
   to reach `#/sign-in` while still holding a dead string. A `verify:` line pins `sessionToken` at zero
   occurrences in this file.
 - **Any sentence.** All copy is `recovery-text.ts`'s and `account-text.ts`'s.
-- **The *forgot password* flow's door and address.** Held on `DEC-081`.
+- **The *forgot password* flow's door.** `ADR-0087` §3 and §4: it has no address at all, and its
+  door is on the sign-in screen, in the ticket that ADR unblocked.
 
 ## Tests
 

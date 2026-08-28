@@ -82,11 +82,11 @@ Read, and do not edit:
 
 ## Out of scope
 
-- **The screen that calls this, its heading, its slug and its door.** Held on **`DEC-081`**, the
-  product owner's — the product does not yet say *forgot password* to a player, and `ADR-0076` §1
-  forbids a ticket coining the word. This module is written now because it is settled: one endpoint,
-  one field, one status, all in merged documentation.
-- **Any sentence.** The acknowledgement is copy and belongs with the held screen.
+- **The form that calls this, its words and its door.** `DEC-081` was the product owner's and
+  `ADR-0087` answered it: a door on the sign-in screen, **no screen and no slug**. All of it belongs
+  to the ticket that ADR unblocked. This module was written before the answer because it is settled
+  either way: one endpoint, one field, one status, all in merged documentation.
+- **Any sentence.** The acknowledgement is copy and belongs with that form.
 - **Retrying, or reporting a `429`.** The endpoint has no `429`; `ADR-0079` puts the budget behind an
   answer that never changes.
 - **Wiring it anywhere.** `TASK-041711` puts it on the seam; nothing calls it until the held ticket.
@@ -162,11 +162,12 @@ Standard, per [`tasks/README.md`](../README.md) — do not restate it in the tic
 
 ## Notes
 
-**This module is written while its screen is held, and that is deliberate.** `DEC-081` asks what the
-product calls the *ask for a reset* flow, where its door is, and therefore its slug. None of those
-change one line of this file: the endpoint, its single field and its single status are merged in
-`docs/protocol.md` and `ADR-0031` §5. Writing the safe half now is `STORY-0415`'s pattern — write
-what the answer cannot touch, hold what it determines.
+**This module was written while its screen was held, and that is deliberate.** `DEC-081` asked what
+the product calls the *ask for a reset* flow, where its door is, and therefore its slug; `ADR-0087`
+answered it with a door on the sign-in screen and **no slug at all**. None of that changes one line
+of this file: the endpoint, its single field and its single status are merged in `docs/protocol.md`
+and `ADR-0031` §5. Writing the safe half first was `STORY-0415`'s pattern — write what the answer
+cannot touch, hold what it determines — and the prediction held.
 
 **Step 4's predicted hole is recorded rather than closed.** `TASK-041707` counts calls because
 `ADR-0079` budgets that endpoint at five a minute; this one is budgeted at ten and every attempt

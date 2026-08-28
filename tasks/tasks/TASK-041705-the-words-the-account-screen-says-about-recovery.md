@@ -87,8 +87,9 @@ Read, and do not edit:
 ## Out of scope
 
 - **Any word the verification or reset screen says.** `TASK-041706`, in this same file.
-- **Any word the *forgot password* flow says.** Held on `DEC-081`, which is the product owner's: the
-  product does not yet say that phrase to a player, and `ADR-0076` §1 forbids a ticket coining one.
+- **Any word the *forgot password* flow says.** `DEC-081` was the product owner's and `ADR-0087` §1
+  answered it with four constants for this same module — they belong to the ticket `ADR-0087`
+  unblocked, not to this one, and this ticket's eleven exports stay eleven.
 - **`PASSWORD_REFUSED`, `PASSWORD_LABEL`, `CANCEL` or anything already in `account-text.ts`.** They
   are imported by the components that need them; a second constant holding the same characters is a
   second spelling. `account-text.ts` is not edited and a `verify:` line pins its suite at seven.

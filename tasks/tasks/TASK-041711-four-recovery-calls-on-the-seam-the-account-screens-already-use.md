@@ -113,9 +113,9 @@ Read, and do not edit:
   finding: report it before editing, because that mock has already forced three tickets in this epic.
 - **Any new provider or context.** Four members on a merged interface, not a fifth provider in a tree
   that already nests seven.
-- **A `forgotPassword` caller.** There is none until `DEC-081` is answered and the held screen is
-  written. `revokeThisDevice` has sat on this seam with no screen since `TASK-041220`, so this is the
-  established state and not a new one.
+- **A `forgotPassword` caller.** There is none until the ticket `ADR-0087` unblocked is written —
+  `DEC-081` is answered, but its form belongs to that ticket. `revokeThisDevice` has sat on this seam
+  with no caller since `TASK-041220`, so this is the established state and not a new one.
 - **Making any member optional.** An optional call is a call a component silently skips.
 
 ## Tests

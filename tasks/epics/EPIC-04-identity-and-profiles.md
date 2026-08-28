@@ -141,7 +141,7 @@ recorded rather than quietly absorbed:
 | [STORY-0414](../stories/STORY-0414-claimed-here-recovered-there.md) | Claimed here, recovered there, end to end | 0407, 0412, 0413 | backlog |
 | [STORY-0415](../stories/STORY-0415-the-offer-after-a-first-win.md) | The offer — an account after a first win, dismissed for good | 0412 | in progress — partially split into four on 2026-08-27; raised `DEC-079` and `DEC-080`. **`DEC-079` answered the same day** by [`ADR-0085`](../../docs/adr/ADR-0085-not-again-is-this-browser-and-an-answer-spends-the-offer.md): *"not again"* is **this browser**, and **an answer** spends the offer. No server half, no first-win fact, no wire change; `DEC-080` narrowed to the key and the module and was **answered on 2026-08-28** by [`ADR-0086`](../../docs/adr/ADR-0086-the-offers-answer-is-one-key-owned-beside-the-predicate-it-feeds.md): `pd.accountOfferSettled`, owned by `result/account-offer-settled.ts`. **Both open decisions are closed and the three unwritten tickets are writable** |
 | [STORY-0416](../stories/STORY-0416-the-recovery-email-and-the-password-reset.md) | The recovery email, verified, and the password reset | 0405 | **ready**, split into 29 tickets on 2026-08-25 — `TASK-041601` is startable; six are `blocked` on `DEC-071` (the product owner's), `DEC-072`, `DEC-073` and `DEC-074` (the architect's). `DEC-072` was answered on 2026-08-25 by [`ADR-0077`](../../docs/adr/ADR-0077-no-sender-is-an-implementation-and-detachment-is-a-decorator.md), `DEC-073` the same day by [`ADR-0079`](../../docs/adr/ADR-0079-five-to-attach-ten-to-forget-and-the-attach-budget-is-the-only-mail-cap.md), and `DEC-074` the same day by [`ADR-0080`](../../docs/adr/ADR-0080-the-password-is-judged-before-the-token-is-touched.md), so **none of the four is open**. None was the human's: `ADR-0031` §7 already defers the transport, and therefore any bill, to `EPIC-07` |
-| [STORY-0417](../stories/STORY-0417-the-recovery-screens.md) | The recovery screens — attach an address, and reset a password | 0412, 0416 | **in progress** — the epic's last story, **partially split** on 2026-08-28 into **20** tickets with **three held**. `TASK-041701` is the single startable one and is the inherited `screenFromHash` debt. The held three are the *forgot password* flow's words, its form-or-screen and its door, all determined by **`DEC-081`, the product owner's**; its transport, `TASK-041708`, is written because no answer moves a line of it |
+| [STORY-0417](../stories/STORY-0417-the-recovery-screens.md) | The recovery screens — attach an address, and reset a password | 0412, 0416 | **in progress** — the epic's last story, **partially split** on 2026-08-28 into **20** tickets with **three held**. `TASK-041701` is the single startable one and is the inherited `screenFromHash` debt. The three unwritten ones are the *forgot password* flow's words, its form-or-screen and its door, all determined by **`DEC-081`, the product owner's**, which [`ADR-0087`](../../docs/adr/ADR-0087-forgot-your-password-is-a-door-on-the-sign-in-screen.md) answered on 2026-08-28 — a door on the sign-in screen, no slug, no new address — so the planner writes them next; its transport, `TASK-041708`, was written regardless because no answer moves a line of it |
 
 ## What can run in parallel
 
@@ -219,13 +219,13 @@ the same day.
 the architect's downstream of it. The product owner's was answered the same day and the architect's
 on 2026-08-28, and what each settled is recorded below.**
 
-**One is open, and it is the last thing standing between this epic and its close.**
+**Nothing in this epic is open.** `DEC-081`, raised on 2026-08-28 when `STORY-0417` was split and
+the last thing standing between this epic and its close, was answered the same day and is recorded
+below.
 
-| ID | Question | Where | Due |
-| --- | --- | --- | --- |
-| DEC-081 | **The product owner's** — what does the product call the flow a player uses when they have **forgotten their password**, is it a screen with its own address or a form on `#/sign-in`, and where is its door? | [`STORY-0417`](../stories/STORY-0417-the-recovery-screens.md) | before `STORY-0417` closes |
-
-Raised on 2026-08-28 when `STORY-0417` was split, and it is `DEC-077`'s question one screen later.
+`DEC-081` asked **what the product calls the flow a player uses when they have forgotten their
+password, whether it is a screen with its own address or a form on `#/sign-in`, and where its door
+is.** It was the product owner's, and it is `DEC-077`'s question one screen later.
 [`ADR-0076`](../../docs/adr/ADR-0076-a-screen-the-player-chose-has-an-address.md) §1 permits only
 *"a word the product already says to a player"* and coins none itself, and **this product says
 nothing to a player about forgetting a password**: the phrase lives in
@@ -237,14 +237,40 @@ exactly what `DEC-077` was raised to avoid doing carelessly, and it went to the 
 [`ADR-0081`](../../docs/adr/ADR-0081-a-mailed-link-is-a-fragment-route-and-the-token-is-the-segment-behind-the-slug.md)
 §3 granted the story that screen's address without saying what it is.
 
-**It blocks three unwritten tickets and nothing else.** Everything mechanical is settled and is being
-built: the endpoint, its single field, its unconditional `202` (`ADR-0031` §5), the fact that it is
-budgeted at ten a minute and answers nothing else (`ADR-0079`), and the one honest sentence
-(`ADR-0078` §Consequences). `TASK-041708` ships the transport now, because no answer to this question
-moves a line of it. **Nothing in it is the human's**: it applies the vision's *quiet, minimal*
-positioning to one word rather than changing what the product is, costs nothing, moves no roadmap
-row, and touches neither *What it is* nor *What it is not* — the same test `DEC-077` and `DEC-043`
-both passed.
+**It blocked three unwritten tickets and nothing else.** Everything mechanical was already settled
+and is being built: the endpoint, its single field, its unconditional `202` (`ADR-0031` §5), the fact
+that it is budgeted at ten a minute and answers nothing else (`ADR-0079`), and the one honest
+sentence (`ADR-0078` §Consequences). `TASK-041708` ships the transport regardless, because no answer
+to this question moves a line of it.
+
+It was answered on 2026-08-28 by
+[`ADR-0087`](../../docs/adr/ADR-0087-forgot-your-password-is-a-door-on-the-sign-in-screen.md) —
+***Forgot your password?* is a door on the sign-in screen, not a screen of its own** — deriving from
+the vision's *Positioning* sentence, the same one `ADR-0083` used. **Unlike `ADR-0083` it coins, and
+says so**: *sign in* was merged player-facing text before that ADR named a screen with it, and here
+the same search returns nothing, so the word was chosen rather than found.
+
+**The word is `FORGOT_PASSWORD_LABEL = "Forgot your password?"`**, one of four constants in
+`web-client/src/account/recovery-text.ts` beside `FORGOT_PASSWORD_SUBMIT = "Send a link"`,
+`FORGOT_PASSWORD_ACKNOWLEDGED` and `FORGOT_PASSWORD_FAILED`, with `ADDRESS_LABEL` and `CANCEL`
+imported rather than re-authored. **It is not a screen and mints no slug**: `Screen` gains no member,
+`ADR-0076` §1's table no row, and the count that ADR left to the story is settled at zero for this
+flow, so `ADR-0081` §3's grant is left unspent while `reset` and `verify` stand byte-unchanged. **The
+door sits on the sign-in screen below the sign-in form, conditional on nothing**, and opens a
+one-field form **in place of** it — never two forms in view, no password field in the flow, the
+door's words serving as the form's heading from one literal. **An address the product does not hold
+gets exactly what everybody else gets**, because the acknowledgement states a rule rather than
+reporting an outcome; **the form survives its own success** so a mistyped address can be corrected.
+**Costs named**: the first coined player-facing phrase and the first question this product asks a
+player; the browser's *Back* leaving the sign-in screen rather than closing the form, which is
+`ADR-0076`'s own harm in miniature and the strongest argument for the screen that was refused;
+recovery still two navigations deep and advertised nowhere; a typo nothing can detect; a mode on the
+one screen a player types a password into; and a two-sentence string fixed before `EPIC-06`.
+**Unblocks `STORY-0417`'s three held tickets.**
+
+**Nothing in it was the human's**: it applies the vision's *quiet, minimal* positioning to one word
+rather than changing what the product is, costs nothing, moves no roadmap row, and touches neither
+*What it is* nor *What it is not* — the same test `DEC-077` and `DEC-043` both passed.
 
 `DEC-080` asked **which storage key holds the offer's answer and which module owns it** — and
 therefore the third entry `one-module-owns-each-storage-key.test.ts` gains. It was the architect's,

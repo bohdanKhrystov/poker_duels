@@ -98,7 +98,8 @@ Read, and do not edit:
 - **Storing anything.** No session comes back.
 - **Client-side password length checks.** `ADR-0048` §2's rule is the server's, and the `422` carries
   the sentence.
-- **A *forgot password* door on this screen.** Held on `DEC-081`.
+- **A *forgot password* door on this screen.** There is none: `ADR-0087` §4 puts the flow's only
+  door on the sign-in screen.
 
 ## Tests
 
