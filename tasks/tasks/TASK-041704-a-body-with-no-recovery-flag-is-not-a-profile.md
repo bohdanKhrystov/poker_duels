@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041704
 title: A body with no recovery flag is not a profile, and the flag is that player's
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: XS

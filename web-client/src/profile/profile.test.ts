@@ -376,4 +376,76 @@ describe("the profile read", () => {
 
     expect(result2).toEqual({ kind: "unavailable" });
   });
+
+  it("refuses a body with no recovery flag, and one whose flag is not a boolean", async () => {
+    // Case 1: body with hasRecoveryEmail deleted
+    writeDeviceId(storage, "d-1");
+    const body1 = meBody();
+    delete body1.hasRecoveryEmail;
+    const mock1 = answering(ok(body1));
+    const result1 = await readProfile({
+      fetch: mock1.fetch,
+      storage,
+    });
+
+    expect(result1).toEqual({ kind: "unavailable" });
+
+    // Case 2: hasRecoveryEmail is a string "true"
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock2 = answering(ok(meBody({ hasRecoveryEmail: "true" })));
+    const result2 = await readProfile({
+      fetch: mock2.fetch,
+      storage,
+    });
+
+    expect(result2).toEqual({ kind: "unavailable" });
+
+    // Case 3: unmodified meBody() to ensure the fixture itself parses
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock3 = answering(ok(meBody()));
+    const result3 = await readProfile({
+      fetch: mock3.fetch,
+      storage,
+    });
+
+    expect(result3).toEqual({
+      kind: "profile",
+      profile: aProfile(),
+    });
+  });
+
+  it("reads the recovery flag the server sent, in both of its states", async () => {
+    // Case 1: hasRecoveryEmail is true, deviceRouteLive is false
+    writeDeviceId(storage, "d-1");
+    const mock1 = answering(
+      ok(meBody({ hasRecoveryEmail: true, deviceRouteLive: false })),
+    );
+    const result1 = await readProfile({
+      fetch: mock1.fetch,
+      storage,
+    });
+
+    expect(result1).toEqual({
+      kind: "profile",
+      profile: aProfile({ hasRecoveryEmail: true, deviceRouteLive: false }),
+    });
+
+    // Case 2: hasRecoveryEmail is false, deviceRouteLive is true
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock2 = answering(
+      ok(meBody({ hasRecoveryEmail: false, deviceRouteLive: true })),
+    );
+    const result2 = await readProfile({
+      fetch: mock2.fetch,
+      storage,
+    });
+
+    expect(result2).toEqual({
+      kind: "profile",
+      profile: aProfile({ hasRecoveryEmail: false, deviceRouteLive: true }),
+    });
+  });
 });
