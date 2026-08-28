@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041719
 title: The lobby answers a reset link, and sends the player to sign in
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
