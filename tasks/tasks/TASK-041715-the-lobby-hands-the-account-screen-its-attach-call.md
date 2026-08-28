@@ -19,7 +19,7 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- src/App.test.tsx 2>&1 | grep -qE 'Tests +37 passed \(37\)'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'puts the attach form on the account screen, wired to the account seam'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'offers no attach form where no account provider sits above'
-  - test "$(grep -oF 'attachRecoveryEmail' web-client/src/lobby/Lobby.tsx | wc -l | tr -d ' ')" = 1
+  - test "$(grep -oF 'attachRecoveryEmail' web-client/src/lobby/Lobby.tsx | wc -l | tr -d ' ')" = 2
   - test "$(grep -oF 'RecoveryEmailForm' web-client/src/lobby/Lobby.tsx | wc -l | tr -d ' ')" = 0
   - cd web-client && npm run check
 ---
@@ -97,10 +97,14 @@ clock; the submit is awaited through `findBy…`.
       — unmoved, because this diff adds no `../main` import. That file's `vi.mock("./main", …)` takes
       no `importOriginal` and has already forced three tickets in this epic; if it reddens, stop and
       report rather than editing it
-- [ ] `test "$(grep -oF 'attachRecoveryEmail' web-client/src/lobby/Lobby.tsx | wc -l | tr -d ' ')" = 1`
-      — the one prop expression, which mentions the name once as `account.attachRecoveryEmail` beside
-      the JSX attribute. If your formatting produces two, say so on landing; the intent is *one place,
-      no wrapper*
+- [ ] `test "$(grep -oF 'attachRecoveryEmail' web-client/src/lobby/Lobby.tsx | wc -l | tr -d ' ')" = 2`
+      — the one prop expression, and exactly two mentions: the JSX attribute name, fixed by
+      `AccountScreen`'s prop, and the `account.attachRecoveryEmail` read. **Two, not one** —
+      measured against the `## Scope` block above, and against the merged
+      `signUp={account !== null ? account.signUp : undefined}` line it copies, which scores two for
+      `signUp`. One is unreachable while the prop is supplied at all — every way of reading the
+      function off the seam names it. A **third** is the thing to refuse: a lambda around the call,
+      which this ticket does not write
 - [ ] `test "$(grep -oF 'RecoveryEmailForm' web-client/src/lobby/Lobby.tsx | wc -l | tr -d ' ')" = 0`
       — the lobby does not render the form itself
 - [ ] `cd web-client && npm run check` exits 0
