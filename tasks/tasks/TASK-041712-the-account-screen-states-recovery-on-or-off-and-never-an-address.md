@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041712
 title: The account screen states recovery on or off, and never an address
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
