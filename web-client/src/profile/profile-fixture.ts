@@ -17,6 +17,7 @@ export function aProfile(
     displayName: null,
     displayNameRemoved: false,
     deviceRouteLive: true,
+    hasRecoveryEmail: false,
     ...overrides,
   };
 }
@@ -58,6 +59,7 @@ export function meBody(
     displayName: null,
     displayNameRemoved: false,
     deviceRouteLive: true,
+    hasRecoveryEmail: false,
     ...overrides,
   };
 }

@@ -39,6 +39,7 @@ describe("accountServer", () => {
       displayName: "Alice",
       displayNameRemoved: false,
       deviceRouteLive: true,
+      hasRecoveryEmail: false,
     });
 
     // Request for player 1
@@ -53,6 +54,7 @@ describe("accountServer", () => {
       displayName: "Bob",
       displayNameRemoved: false,
       deviceRouteLive: true,
+      hasRecoveryEmail: false,
     });
 
     // Verify they are different
@@ -511,6 +513,7 @@ describe("accountServer", () => {
       displayName: "Alice",
       displayNameRemoved: false,
       deviceRouteLive: true,
+      hasRecoveryEmail: false,
     });
 
     // The two fixture players differ in every field below, so the wrong
@@ -578,6 +581,7 @@ describe("accountServer", () => {
       displayName: "Bob",
       displayNameRemoved: false,
       deviceRouteLive: true,
+      hasRecoveryEmail: false,
     });
   });
 
@@ -643,6 +647,7 @@ describe("accountServer", () => {
       displayName: "Bob",
       displayNameRemoved: false,
       deviceRouteLive: true,
+      hasRecoveryEmail: false,
     });
   });
 });
