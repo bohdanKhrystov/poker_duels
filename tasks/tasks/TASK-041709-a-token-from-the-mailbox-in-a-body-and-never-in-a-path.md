@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041709
 title: A token from the mailbox, in a body and never in a path
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
