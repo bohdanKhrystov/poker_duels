@@ -31,6 +31,10 @@ import { readLadderPage, type LadderRead } from "./ladder/ladder-read";
 import { readSessionToken } from "./protocol/session-token";
 import type { ApiFetch } from "./profile/api";
 import { hashForScreen } from "./routing/screen";
+import {
+  readOfferSettled,
+  markOfferSettled,
+} from "./result/account-offer-settled";
 
 // Module scope, built once, so every read below shares one wrapper rather
 // than each opening its own. authorizedFetch reads the session token on
@@ -143,6 +147,22 @@ const nullStorage: Storage = {
 // recomputes it. The hook never re-reads: there is no storage event listener and
 // no subscription.
 const signedIn = readSessionToken(localStorage ?? nullStorage) !== null;
+
+// The offer's own storage, bound here for the reason `signedIn`'s read is
+// (DEC-032): a component that reached for `localStorage` itself would be a
+// component whose tests do not test the browser, and `ADR-0086` §2 puts the
+// reach for the global in this file alone.
+const offerStorage: Storage = localStorage ?? nullStorage;
+
+/** Whether this browser has already answered the account offer (`ADR-0085` §2). */
+export function offerSettledHere(): boolean {
+  return readOfferSettled(offerStorage);
+}
+
+/** Records that this browser answered the account offer. Never reversed (`ADR-0086` §4). */
+export function settleOfferHere(): void {
+  markOfferSettled(offerStorage);
+}
 
 const HistoryContext = createContext<
   ((query: HistoryQuery) => Promise<DuelPageRead>) | null

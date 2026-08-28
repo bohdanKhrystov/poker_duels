@@ -67,6 +67,11 @@ vi.mock("./main", () => {
     // reconfigure this per test with mockReturnValue(true), and beforeEach
     // resets it to false so every other test keeps the signed-out default.
     useSignedIn: vi.fn(() => false),
+    // No test in this file reaches a finished duel, so both stand in as a
+    // browser that has answered nothing: this file's subject is the screen
+    // swap, not the offer (Lobby.test.tsx's, and TASK-041508's arc).
+    offerSettledHere: () => false,
+    settleOfferHere: vi.fn(),
   };
 });
 
