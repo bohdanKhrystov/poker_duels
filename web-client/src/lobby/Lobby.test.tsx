@@ -25,7 +25,11 @@ import { PROTOCOL_VERSION } from "../protocol";
 import { FakeSocket } from "../protocol/fake-socket";
 import { openReconnectingConnection } from "../protocol/reconnecting";
 import { aView } from "../table/view-fixture";
-import { ATTACH_LABEL } from "../account/recovery-text";
+import {
+  ATTACH_LABEL,
+  VERIFY_HEADING,
+  VERIFY_NO_LINK,
+} from "../account/recovery-text";
 
 // `read` (`useHistory()`) is wired by the real app boot in "../main", which
 // this suite never runs — every other test here leaves it `null` and never
@@ -147,6 +151,40 @@ function renderLobbyWithProfile(
         </DuelProvider>
       </SetNameProvider>
     </ProfileProvider>,
+  );
+}
+
+/**
+ * The eight calls `AccountProvider` demands, mostly unused stubs: the tests
+ * below care only about `verifyEmail`, and pass it in as an override so the
+ * spy each one asserts on is the exact one wired to `Lobby`.
+ */
+function accountCallsFixture(
+  overrides: Partial<AccountCalls> = {},
+): AccountCalls {
+  return {
+    signUp: vi.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    revokeThisDevice: vi.fn(),
+    attachRecoveryEmail: vi.fn(),
+    forgotPassword: vi.fn(),
+    verifyEmail: vi.fn(),
+    resetPassword: vi.fn(),
+    ...overrides,
+  };
+}
+
+function renderLobbyWithAccount(
+  calls: AccountCalls,
+  store: DuelStore = createDuelStore(),
+): void {
+  render(
+    <AccountProvider calls={calls}>
+      <DuelProvider store={store} send={vi.fn()} forgetRoom={vi.fn()}>
+        <Lobby />
+      </DuelProvider>
+    </AccountProvider>,
   );
 }
 
@@ -1652,5 +1690,66 @@ describe("the lobby", () => {
 
     await screen.findByRole("heading", { name: "Account" });
     expect(screen.queryByRole("button", { name: ATTACH_LABEL })).toBeNull();
+  });
+
+  it("opens a mailed verification link and sends the token behind the slug", () => {
+    window.location.hash = "#/verify/zqx-verify-token-zqx";
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+
+    renderLobbyWithAccount(accountCallsFixture({ verifyEmail }));
+
+    // The opaque literal, not the whole fragment or the slug: a branch that
+    // passed either of those instead would still show this heading, so the
+    // spy's argument is the only witness that the right substring travelled.
+    expect(screen.getByRole("heading", { name: VERIFY_HEADING })).toBeDefined();
+    expect(verifyEmail).toHaveBeenCalledOnce();
+    expect(verifyEmail).toHaveBeenCalledWith("zqx-verify-token-zqx");
+  });
+
+  it("takes the token out of the address and leaves the player on the screen", () => {
+    window.location.hash = "#/verify/zqx-verify-token-zqx";
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+
+    renderLobbyWithAccount(accountCallsFixture({ verifyEmail }));
+
+    // Three assertions, deliberately: the address changed, the screen did
+    // not, and nothing of the secret survives in the href either — a
+    // `push` instead of the intended replace would satisfy the first and
+    // still be wrong (ADR-0081 §5, and this ticket's own Proof).
+    expect(window.location.hash).toBe("#/verify");
+    expect(screen.getByRole("heading", { name: VERIFY_HEADING })).toBeDefined();
+    expect(window.location.href).not.toContain("zqx-verify-token-zqx");
+  });
+
+  it("renders the verification screen with nothing in hand at the bare address", () => {
+    window.location.hash = "#/verify";
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+
+    renderLobbyWithAccount(accountCallsFixture({ verifyEmail }));
+
+    expect(screen.getByRole("heading", { name: VERIFY_HEADING })).toBeDefined();
+    expect(screen.getByText(VERIFY_NO_LINK)).toBeDefined();
+    expect(verifyEmail).not.toHaveBeenCalled();
+    // Nothing was replaced, because nothing needed to be (ADR-0081 §6): a
+    // bare "#/verify" is already the correct address.
+    expect(window.location.hash).toBe("#/verify");
+  });
+
+  it("lets a frame that seats this tab outrank a mailed link", () => {
+    window.location.hash = "#/verify/zqx-verify-token-zqx";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+
+    renderLobbyWithAccount(accountCallsFixture({ verifyEmail }), store);
+
+    // ADR-0076 §3, and ADR-0081 §Consequences' accepted cost, asserted
+    // rather than assumed: the store outranks a mailed link's own address,
+    // even before the verify branch ever gets a chance to read it.
+    expect(screen.getByText("Pot 30")).toBeDefined();
+    expect(screen.queryByRole("heading", { name: VERIFY_HEADING })).toBeNull();
+    expect(window.location.hash).toBe("");
+    expect(verifyEmail).not.toHaveBeenCalled();
   });
 });

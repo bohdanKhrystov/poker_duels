@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041717
 title: The lobby answers a verification link, and the token leaves the address
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
