@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AccountScreen } from "./AccountScreen";
 import {
@@ -7,9 +7,10 @@ import {
   DEVICE_ROUTE_REVOKED,
   PASSWORD_ROUTE_LIVE,
 } from "./account-text";
-import { RECOVERY_ON, RECOVERY_OFF } from "./recovery-text";
+import { RECOVERY_ON, RECOVERY_OFF, ATTACH_LABEL } from "./recovery-text";
 import { aProfile } from "../profile/profile-fixture";
 import type { ProfileStripState } from "../profile/profile-strip";
+import type { AttachRecoveryOutcome } from "./attach-recovery-email";
 
 describe("the account screen", () => {
   it("says the device signs in, and says it stopped, from the server fact alone", () => {
@@ -158,5 +159,93 @@ describe("the account screen", () => {
     );
     expect(screen.queryByText(RECOVERY_ON)).not.toBeNull();
     expect(container.textContent).not.toMatch(/@/);
+  });
+
+  it("offers the attach form only with a profile in hand and a call to make", () => {
+    const attach = vi.fn<
+      [string, string],
+      Promise<AttachRecoveryOutcome>
+    >();
+    attach.mockResolvedValue({ kind: "accepted" });
+
+    // With profile and prop: form is present.
+    const profile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    };
+    const { rerender } = render(
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        attachRecoveryEmail={attach}
+      />,
+    );
+    expect(screen.getByRole("button", { name: ATTACH_LABEL })).not.toBeNull();
+
+    // With profile and no prop: form is absent.
+    rerender(<AccountScreen profile={profile} signedIn={false} />);
+    expect(screen.queryByRole("button", { name: ATTACH_LABEL })).toBeNull();
+
+    // With prop and profile=null: form is absent.
+    rerender(
+      <AccountScreen
+        profile={null}
+        signedIn={false}
+        attachRecoveryEmail={attach}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: ATTACH_LABEL })).toBeNull();
+
+    // With prop and kind="no-profile": form is absent.
+    const noProfile: ProfileStripState = { kind: "no-profile" };
+    rerender(
+      <AccountScreen
+        profile={noProfile}
+        signedIn={false}
+        attachRecoveryEmail={attach}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: ATTACH_LABEL })).toBeNull();
+  });
+
+  it("offers it whether recovery is already on or not", () => {
+    const attach = vi.fn<
+      [string, string],
+      Promise<AttachRecoveryOutcome>
+    >();
+    attach.mockResolvedValue({ kind: "accepted" });
+
+    // Recovery on: form is present and recovery sentence is RECOVERY_ON.
+    const recoveryOn: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasRecoveryEmail: true }),
+      duels: [],
+    };
+    const { rerender } = render(
+      <AccountScreen
+        profile={recoveryOn}
+        signedIn={false}
+        attachRecoveryEmail={attach}
+      />,
+    );
+    expect(screen.getByRole("button", { name: ATTACH_LABEL })).not.toBeNull();
+    expect(screen.queryByText(RECOVERY_ON)).not.toBeNull();
+
+    // Recovery off: form is present and recovery sentence is RECOVERY_OFF.
+    const recoveryOff: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasRecoveryEmail: false }),
+      duels: [],
+    };
+    rerender(
+      <AccountScreen
+        profile={recoveryOff}
+        signedIn={false}
+        attachRecoveryEmail={attach}
+      />,
+    );
+    expect(screen.getByRole("button", { name: ATTACH_LABEL })).not.toBeNull();
+    expect(screen.queryByText(RECOVERY_OFF)).not.toBeNull();
   });
 });

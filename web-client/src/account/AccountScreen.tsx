@@ -2,7 +2,9 @@ import type { ReactElement } from "react";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { SignUpOutcome } from "./sign-up";
 import type { SignOutOutcome } from "./sign-out";
+import type { AttachRecoveryOutcome } from "./attach-recovery-email";
 import { SignUpForm } from "./SignUpForm";
+import { RecoveryEmailForm } from "./RecoveryEmailForm";
 import { SignOutControl } from "./SignOutControl";
 import {
   ACCOUNT_HEADING,
@@ -41,8 +43,12 @@ export function AccountScreen(props: {
   ) => Promise<SignUpOutcome>;
   readonly signOut?: () => Promise<SignOutOutcome>;
   readonly onSignIn?: () => void;
+  readonly attachRecoveryEmail?: (
+    address: string,
+    currentPassword: string,
+  ) => Promise<AttachRecoveryOutcome>;
 }): ReactElement {
-  const { profile, signedIn, signUp, signOut, onSignIn } = props;
+  const { profile, signedIn, signUp, signOut, onSignIn, attachRecoveryEmail } = props;
 
   // With no profile in hand — still loading, no-profile, or unavailable — the
   // screen asserts neither route (`ADR-0037`): a sentence built from a read
@@ -80,6 +86,18 @@ export function AccountScreen(props: {
     profile.kind === "profile" &&
     signUp !== undefined;
 
+  // POST /api/auth/recovery-email answers 401 for a browser the server
+  // cannot resolve, and offering a form whose only possible answer is *that
+  // did not go through* is worse than offering none. The form is offered
+  // whether recovery is already on or off — attaching a second address
+  // replaces the pending claim on the server (ADR-0031 §3), and a screen that
+  // hid the form once recovery was on would strand a player whose address
+  // stopped working.
+  const showAttach =
+    profile !== null &&
+    profile.kind === "profile" &&
+    attachRecoveryEmail !== undefined;
+
   // `ADR-0083` §3: the one door to the sign-in screen, offered only when this
   // browser holds no session — never on whether a profile read answered,
   // since a browser whose only need is reaching an account it already has
@@ -100,6 +118,9 @@ export function AccountScreen(props: {
         <p className="text-small">{PASSWORD_ROUTE_LIVE}</p>
       ) : null}
       {showSignUp && signUp !== undefined && <SignUpForm signUp={signUp} />}
+      {showAttach && attachRecoveryEmail !== undefined && (
+        <RecoveryEmailForm attach={attachRecoveryEmail} />
+      )}
       {showSignInDoor && (
         <button type="button" onClick={onSignIn}>
           {SIGN_IN_HEADING}
