@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041702
 title: The token leaves the address bar, and the screen stays where it is
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
