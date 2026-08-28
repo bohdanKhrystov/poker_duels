@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041707
 title: Attaching an address costs the current password, and the answer says nothing
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
