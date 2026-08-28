@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041508
 title: The offer across two boots of a whole client, answered and unanswered
 type: task
-status: backlog
+status: done
 parent: STORY-0415
 module: web-client
 estimate: S

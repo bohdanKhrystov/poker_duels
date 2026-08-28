@@ -18,6 +18,10 @@ import { SetNameProvider } from "../profile/set-name-provider";
 import { openConnection } from "../protocol";
 import { FakeSocket } from "../protocol/fake-socket";
 import { readSessionToken } from "../protocol/session-token";
+import {
+  readOfferSettled,
+  markOfferSettled,
+} from "../result/account-offer-settled";
 import { hashForScreen } from "../routing/screen";
 import { bootDuelClient } from "../store/boot";
 import { DuelProvider } from "../store/duel-provider";
@@ -25,14 +29,16 @@ import type { AccountServer } from "./account-server";
 
 /**
  * The seam `main.tsx` cannot offer a prop for: `Lobby.tsx` reads
- * `useHistory` and `useSignedIn` from `../main`'s module scope, each read
- * once at import, so no prop passed to `bootClient` can reach them.
+ * `useHistory`, `useSignedIn`, `offerSettledHere` and `settleOfferHere`
+ * from `../main`'s module scope, each read straight off the import, so no
+ * prop passed to `bootClient` can reach them.
  *
- * `vi.mock` is hoisted and file-scoped, so the mock that redirects those two
- * hooks has to live in the test file, never here — this is the plain,
- * mutable object the two sides share: the test file builds it with
+ * `vi.mock` is hoisted and file-scoped, so the mock that redirects those
+ * four bindings has to live in the test file, never here — this is the
+ * plain, mutable object the two sides share: the test file builds it with
  * `vi.hoisted` and points a partial `vi.mock("../main", …)` at its fields,
- * and `bootClient` below writes both fields on every boot before rendering.
+ * and `bootClient` below writes all four fields on every boot before
+ * rendering.
  *
  * Carries no `ladder` field: `LadderProvider` is absent from the tree this
  * module builds, and no test in this story reaches the leaderboard through
@@ -42,6 +48,8 @@ import type { AccountServer } from "./account-server";
 export interface ArcWiring {
   history: ((query: HistoryQuery) => Promise<DuelPageRead>) | null;
   signedIn: boolean;
+  offerSettled: () => boolean;
+  settleOffer: () => void;
 }
 
 export interface BootOptions {
@@ -128,6 +136,8 @@ export function bootClient(options: BootOptions): BootResult {
 
   wiring.history = readHistory;
   wiring.signedIn = readSessionToken(storage) !== null;
+  wiring.offerSettled = () => readOfferSettled(storage);
+  wiring.settleOffer = () => markOfferSettled(storage);
 
   const socket = new FakeSocket();
   const client = bootDuelClient({
