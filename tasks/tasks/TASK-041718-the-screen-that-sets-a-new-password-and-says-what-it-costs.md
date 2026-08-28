@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041718
 title: The screen that sets a new password, and says what it costs before it acts
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
