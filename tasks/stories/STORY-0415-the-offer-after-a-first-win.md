@@ -2,7 +2,7 @@
 id: STORY-0415
 title: The offer — an account after a first win, dismissed for good
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: web-client
 labels: [client, ui, auth]
