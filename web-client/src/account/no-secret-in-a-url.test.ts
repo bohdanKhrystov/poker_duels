@@ -1,6 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { signUp } from "./sign-up";
 import { signIn } from "./sign-in";
+import { attachRecoveryEmail } from "./attach-recovery-email";
+import { forgotPassword } from "./forgot-password";
+import { verifyEmail } from "./verify-email";
+import { resetPassword } from "./reset-password";
 import { signOut } from "./sign-out";
 import { revokeThisDevice } from "./revoke-device";
 import { writeDeviceId } from "../protocol/device-id";
@@ -18,8 +22,25 @@ const PASSWORD = "zqx-password-zqx";
 const TOKEN = "zqx-token-zqx";
 const DEVICE_ID = "zqx-device-zqx";
 
-/** The three secrets a player types or is issued; checked against every path and the address bar. */
-const SECRETS = [HANDLE, PASSWORD, TOKEN] as const;
+/**
+ * The four recovery secrets, in the same `zqx-…-zqx` idiom: a recovery address the player types,
+ * the two tokens a mailed link carries, and the new password a reset sets.
+ */
+const ADDRESS = "zqx-address-zqx";
+const VERIFY_TOKEN = "zqx-verify-token-zqx";
+const RESET_TOKEN = "zqx-reset-token-zqx";
+const NEW_PASSWORD = "zqx-new-password-zqx";
+
+/** The seven secrets a player types, is issued or is mailed; checked against every path and the address bar. */
+const SECRETS = [
+  HANDLE,
+  PASSWORD,
+  TOKEN,
+  ADDRESS,
+  VERIFY_TOKEN,
+  RESET_TOKEN,
+  NEW_PASSWORD,
+] as const;
 
 /** `EPIC-04`'s non-negotiable: a request body carrying one of these is a defect, whatever its value. */
 const FORBIDDEN_BODY_KEYS = [
@@ -29,10 +50,14 @@ const FORBIDDEN_BODY_KEYS = [
   "id",
 ] as const;
 
-/** Fixed by the order `driveAllFourCalls` below calls them in — used to name a failing call. */
+/** Fixed by the order `driveEveryAccountCall` below calls them in — used to name a failing call. */
 const CALL_LABELS = [
   "signUp",
   "signIn",
+  "attachRecoveryEmail",
+  "forgotPassword",
+  "verifyEmail",
+  "resetPassword",
   "revokeThisDevice",
   "signOut",
 ] as const;
@@ -76,8 +101,8 @@ interface RecordedCall {
 
 /**
  * A `fetch` double that records every call it receives and answers them in order — the same shape
- * `profile-no-derivation.test.tsx`'s `answering` helper uses, extended to capture `body`, since two
- * of the four calls here write one and the sweep must see it.
+ * `profile-no-derivation.test.tsx`'s `answering` helper uses, extended to capture `body`, since six
+ * of the eight calls here write one and the sweep must see it.
  */
 function recordingFetch(...answers: readonly ApiResponse[]): {
   readonly calls: RecordedCall[];
@@ -105,12 +130,15 @@ function recordingFetch(...answers: readonly ApiResponse[]): {
 }
 
 /**
- * Drives all four account calls, in an order chosen so `signOut` — which forgets the stored session
- * token — runs last: `revokeThisDevice` needs that token still present when its own turn comes.
+ * Drives all eight account calls, in an order chosen so `signOut` — which forgets the stored
+ * session token — runs last: `revokeThisDevice` needs that token still present when its own turn
+ * comes, and the four recovery calls run between `signIn` and `revokeThisDevice` so neither one
+ * disturbs the token `revokeThisDevice` and `signOut` still need (none of the four write it).
  * Storage is (re-)seeded with both credentials right before every call that reads them, so no call
- * is ever skipped for want of a precondition and the recorder always ends with exactly four entries.
+ * is ever skipped for want of a precondition and the recorder always ends with exactly eight
+ * entries.
  */
-async function driveAllFourCalls(): Promise<{
+async function driveEveryAccountCall(): Promise<{
   readonly calls: readonly RecordedCall[];
   readonly hrefsAfterEachCall: readonly string[];
 }> {
@@ -118,6 +146,10 @@ async function driveAllFourCalls(): Promise<{
   const recorder = recordingFetch(
     { status: 201, json: async () => ({}) }, // signUp
     { status: 200, json: async () => ({ sessionToken: TOKEN }) }, // signIn
+    { status: 202, json: async () => ({}) }, // attachRecoveryEmail
+    { status: 202, json: async () => ({}) }, // forgotPassword
+    { status: 204, json: async () => ({}) }, // verifyEmail
+    { status: 204, json: async () => ({}) }, // resetPassword
     { status: 204, json: async () => ({}) }, // revokeThisDevice
     { status: 204, json: async () => ({}) }, // signOut — its response is never inspected
   );
@@ -142,6 +174,27 @@ async function driveAllFourCalls(): Promise<{
   });
   hrefsAfterEachCall.push(window.location.href);
 
+  await attachRecoveryEmail({
+    fetch: recorder.fetch,
+    storage,
+    address: ADDRESS,
+    currentPassword: PASSWORD,
+  });
+  hrefsAfterEachCall.push(window.location.href);
+
+  await forgotPassword({ fetch: recorder.fetch, address: ADDRESS });
+  hrefsAfterEachCall.push(window.location.href);
+
+  await verifyEmail({ fetch: recorder.fetch, token: VERIFY_TOKEN });
+  hrefsAfterEachCall.push(window.location.href);
+
+  await resetPassword({
+    fetch: recorder.fetch,
+    token: RESET_TOKEN,
+    newPassword: NEW_PASSWORD,
+  });
+  hrefsAfterEachCall.push(window.location.href);
+
   writeSessionToken(storage, TOKEN);
   await revokeThisDevice({ fetch: recorder.fetch, storage });
   hrefsAfterEachCall.push(window.location.href);
@@ -154,13 +207,17 @@ async function driveAllFourCalls(): Promise<{
 }
 
 describe("no secret reaches a URL", () => {
-  it("puts no handle, password or token in any path it requests", async () => {
-    const { calls } = await driveAllFourCalls();
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-    // Presence, before absence: the drive produced exactly the four calls it claims to, and the
+  it("puts no handle, password or token in any path it requests", async () => {
+    const { calls } = await driveEveryAccountCall();
+
+    // Presence, before absence: the drive produced exactly the eight calls it claims to, and the
     // secrets this test is about to search for really did reach a real request somewhere legitimate
     // — a body field, a header — so the checks below are over something, not over nothing.
-    expect(calls.length).toBe(4);
+    expect(calls.length).toBe(8);
     expect(calls.some((call) => call.body?.includes(HANDLE))).toBe(true);
     expect(calls.some((call) => call.body?.includes(PASSWORD))).toBe(true);
     expect(
@@ -168,8 +225,10 @@ describe("no secret reaches a URL", () => {
         Object.values(call.headers).some((value) => value.includes(TOKEN)),
       ),
     ).toBe(true);
+    expect(calls.some((call) => call.body?.includes(ADDRESS))).toBe(true);
+    expect(calls.some((call) => call.body?.includes(RESET_TOKEN))).toBe(true);
 
-    // Absence: four calls times three secrets, every failure naming both.
+    // Absence: eight calls times seven secrets, every failure naming both.
     for (const [index, call] of calls.entries()) {
       for (const secret of SECRETS) {
         expect(
@@ -181,9 +240,18 @@ describe("no secret reaches a URL", () => {
   });
 
   it("sends no player id in any body it writes", async () => {
-    const { calls } = await driveAllFourCalls();
-    expect(calls.length).toBe(4);
-    const [signUpCall, signInCall, revokeCall, signOutCall] = calls;
+    const { calls } = await driveEveryAccountCall();
+    expect(calls.length).toBe(8);
+    const [
+      signUpCall,
+      signInCall,
+      attachRecoveryEmailCall,
+      forgotPasswordCall,
+      verifyEmailCall,
+      resetPasswordCall,
+      revokeCall,
+      signOutCall,
+    ] = calls;
 
     // Presence: signUp and signIn really do carry a body, and it is the real credentials — not an
     // empty object a forbidden-keys check would pass over vacuously.
@@ -208,6 +276,13 @@ describe("no secret reaches a URL", () => {
     }> = [
       { label: "signUp", body: signUpCall.body as string },
       { label: "signIn", body: signInCall.body as string },
+      {
+        label: "attachRecoveryEmail",
+        body: attachRecoveryEmailCall.body as string,
+      },
+      { label: "forgotPassword", body: forgotPasswordCall.body as string },
+      { label: "verifyEmail", body: verifyEmailCall.body as string },
+      { label: "resetPassword", body: resetPasswordCall.body as string },
     ];
     for (const { label, body } of namedBodies) {
       const parsedKeys = Object.keys(JSON.parse(body));
@@ -224,9 +299,9 @@ describe("no secret reaches a URL", () => {
     const before = window.location.href;
     expect(before.length).toBeGreaterThan(0);
 
-    const { calls, hrefsAfterEachCall } = await driveAllFourCalls();
-    expect(calls.length).toBe(4);
-    expect(hrefsAfterEachCall.length).toBe(4);
+    const { calls, hrefsAfterEachCall } = await driveEveryAccountCall();
+    expect(calls.length).toBe(8);
+    expect(hrefsAfterEachCall.length).toBe(8);
 
     for (const [index, href] of hrefsAfterEachCall.entries()) {
       for (const secret of SECRETS) {
@@ -237,7 +312,7 @@ describe("no secret reaches a URL", () => {
       }
     }
 
-    // None of the four calls navigates, so the address bar this client controls is unchanged —
+    // None of the eight calls navigates, so the address bar this client controls is unchanged —
     // asserted rather than assumed. A real browser's Referer header is a different surface this
     // sweep cannot reach at all; see no-secret-in-a-url.md.
     expect(window.location.href).toBe(before);
@@ -248,38 +323,32 @@ describe("no secret reaches a URL", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    try {
-      const { calls } = await driveAllFourCalls();
-      expect(calls.length).toBe(4);
+    const { calls } = await driveEveryAccountCall();
+    expect(calls.length).toBe(8);
 
-      const logged = [
-        ...logSpy.mock.calls,
-        ...warnSpy.mock.calls,
-        ...errorSpy.mock.calls,
-      ]
-        .flat()
-        .map((argument) =>
-          typeof argument === "string" ? argument : JSON.stringify(argument),
-        )
-        .join(" ");
+    const logged = [
+      ...logSpy.mock.calls,
+      ...warnSpy.mock.calls,
+      ...errorSpy.mock.calls,
+    ]
+      .flat()
+      .map((argument) =>
+        typeof argument === "string" ? argument : JSON.stringify(argument),
+      )
+      .join(" ");
 
-      for (const secret of SECRETS) {
-        expect(
-          logged.includes(secret),
-          `console output (${JSON.stringify(logged)}) must not contain ${JSON.stringify(secret)}`,
-        ).toBe(false);
-      }
-    } finally {
-      logSpy.mockRestore();
-      warnSpy.mockRestore();
-      errorSpy.mockRestore();
+    for (const secret of SECRETS) {
+      expect(
+        logged.includes(secret),
+        `console output (${JSON.stringify(logged)}) must not contain ${JSON.stringify(secret)}`,
+      ).toBe(false);
     }
   });
 
   it("sends the device id and the session token in headers and nowhere else", async () => {
-    const { calls, hrefsAfterEachCall } = await driveAllFourCalls();
-    expect(calls.length).toBe(4);
-    const [signUpCall, , revokeCall, signOutCall] = calls;
+    const { calls, hrefsAfterEachCall } = await driveEveryAccountCall();
+    expect(calls.length).toBe(8);
+    const [signUpCall, , , , , , revokeCall, signOutCall] = calls;
 
     // Positive half: both bearer credentials really did travel, each in a header, at least once —
     // proving they were used, rather than proving nothing was ever sent.
