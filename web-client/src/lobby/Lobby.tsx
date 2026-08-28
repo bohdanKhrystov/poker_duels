@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
 import { useDuelState, useForgetRoom, useSend } from "../store/duel-provider";
 import { useScreen } from "../routing/use-screen";
+import { tokenFromHash } from "../routing/screen";
 import { useProfileStrip } from "../profile/profile-provider";
 import {
   useHistory,
@@ -28,6 +29,7 @@ import { AccountScreen } from "../account/AccountScreen";
 import { ACCOUNT_HEADING, SIGN_IN_HEADING } from "../account/account-text";
 import { useAccount } from "../account/account-provider";
 import { SignInForm } from "../account/SignInForm";
+import { VerifyScreen } from "../account/VerifyScreen";
 import { normalizeRoomCode, roomLink } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
@@ -47,8 +49,33 @@ export function Lobby(): ReactElement {
   // (below) takes the offer off screen without waiting for a reload.
   const [offerSettled, setOfferSettled] = useState(offerSettledHere);
   const [typedCode, setTypedCode] = useState("");
-  const { screen, open, leave } = useScreen();
+  const { screen, open, leave, clearToken } = useScreen();
+  // A lazy initialiser, so this runs once per mount rather than on every
+  // render (ADR-0081 §5): the effect below replaces the fragment this reads
+  // from, so a re-derivation after that replace would find nothing left to
+  // read, and no type checker catches a second read.
+  const [verifyToken] = useState(() => tokenFromHash(window.location.hash));
   const code = normalizeRoomCode(typedCode);
+
+  // ADR-0081 §5: the mailed secret leaves the address once the verify branch
+  // below is live, in an effect and not during render — writing to history
+  // during render is a side effect in a render path, and React may run it
+  // twice. Guarded on a token still being held, so a bare "#/verify" —
+  // already the correct address — never calls replaceState for nothing.
+  // Declared, and so run, before the effect below: ADR-0076 §3 makes the
+  // store outrank the address, and a frame that seats this tab while a
+  // mailed link is still open must have the last word on the two, not this
+  // one. The call below is a fresh closure every render (`useScreen()`
+  // memoises none of its returned functions), but its behaviour is already a
+  // pure function of `screen`, which is a dependency here, so the array
+  // deliberately omits it rather than re-running this effect on every render
+  // for no semantic reason.
+  useEffect(() => {
+    if (screen === "verify" && verifyToken !== null) {
+      clearToken();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, verifyToken]);
 
   // ADR-0076 §3: when the two disagree there is one authority, and it is the
   // store. A frame that seats a store-owned screen (outcome, view or
@@ -204,6 +231,24 @@ export function Lobby(): ReactElement {
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
         <h2 className="text-small">{SIGN_IN_HEADING}</h2>
         <SignInForm signIn={account.signIn} />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
+  // The verification screen a mailed link opens onto, reached only by its
+  // own fragment — never from a button anywhere in this file (`ADR-0081`
+  // §3). The way back is rendered here, by the swap, and VerifyScreen itself
+  // knows nothing about navigation (`ADR-0060` §4). `account` is null only
+  // where no AccountProvider sits above this tree; the branch falls through
+  // to the first screen in that case, the same fallback `sign-in` already
+  // takes above.
+  if (screen === "verify" && account !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+        <VerifyScreen token={verifyToken} verify={account.verifyEmail} />
         <button type="button" onClick={leave}>
           Back
         </button>
