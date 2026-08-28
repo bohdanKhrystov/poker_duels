@@ -30,6 +30,7 @@ describe("the set-name provider", () => {
         coinBalance: 100,
         displayNameRemoved: false,
         deviceRouteLive: false,
+        hasRecoveryEmail: false,
       },
     }));
 
