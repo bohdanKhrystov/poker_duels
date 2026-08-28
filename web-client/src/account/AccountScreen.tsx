@@ -48,7 +48,8 @@ export function AccountScreen(props: {
     currentPassword: string,
   ) => Promise<AttachRecoveryOutcome>;
 }): ReactElement {
-  const { profile, signedIn, signUp, signOut, onSignIn, attachRecoveryEmail } = props;
+  const { profile, signedIn, signUp, signOut, onSignIn, attachRecoveryEmail } =
+    props;
 
   // With no profile in hand — still loading, no-profile, or unavailable — the
   // screen asserts neither route (`ADR-0037`): a sentence built from a read

@@ -162,10 +162,7 @@ describe("the account screen", () => {
   });
 
   it("offers the attach form only with a profile in hand and a call to make", () => {
-    const attach = vi.fn<
-      [string, string],
-      Promise<AttachRecoveryOutcome>
-    >();
+    const attach = vi.fn<[string, string], Promise<AttachRecoveryOutcome>>();
     attach.mockResolvedValue({ kind: "accepted" });
 
     // With profile and prop: form is present.
@@ -210,10 +207,7 @@ describe("the account screen", () => {
   });
 
   it("offers it whether recovery is already on or not", () => {
-    const attach = vi.fn<
-      [string, string],
-      Promise<AttachRecoveryOutcome>
-    >();
+    const attach = vi.fn<[string, string], Promise<AttachRecoveryOutcome>>();
     attach.mockResolvedValue({ kind: "accepted" });
 
     // Recovery on: form is present and recovery sentence is RECOVERY_ON.
