@@ -74,4 +74,10 @@ describe("one module owns each storage key", () => {
       "account-offer-settled.ts",
     ]);
   });
+
+  it("only the room-memory module writes the room code key", () => {
+    expect(productionSourcesContaining("pd.roomCode")).toEqual([
+      "room-memory.ts",
+    ]);
+  });
 });
