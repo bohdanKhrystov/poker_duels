@@ -2,7 +2,7 @@
 id: STORY-0404
 title: Sign-up — one endpoint, and it attaches an account to the profile already here
 type: story
-status: ready
+status: done
 parent: EPIC-04
 module: poker-server
 labels: [server, auth, http]
