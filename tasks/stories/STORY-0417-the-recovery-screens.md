@@ -98,6 +98,9 @@ cuts this story cannot miss it, and so a reviewer can check that it was honoured
 | [TASK-041718](../tasks/TASK-041718-the-screen-that-sets-a-new-password-and-says-what-it-costs.md) | The screen that sets a new password, and says what it costs before it acts | backlog |
 | [TASK-041719](../tasks/TASK-041719-the-lobby-answers-a-reset-link-and-sends-the-player-to-sign-in.md) | The lobby answers a reset link, and sends the player to sign in | backlog |
 | [TASK-041720](../tasks/TASK-041720-the-secret-sweep-drives-the-four-recovery-calls-too.md) | The secret sweep drives the four recovery calls too | backlog |
+| [TASK-041721](../tasks/TASK-041721-the-words-the-forgot-password-flow-says.md) | The words the forgot-password flow says, and the second state it refuses to have | backlog |
+| [TASK-041722](../tasks/TASK-041722-the-one-field-form-that-asks-for-a-reset-link.md) | The one-field form that asks for a reset link, and answers everyone the same way | backlog |
+| [TASK-041723](../tasks/TASK-041723-the-door-on-the-sign-in-screen-and-the-form-it-opens-in-place.md) | The door on the sign-in screen, and the form it opens in place of the sign-in form | backlog |
 
 **`TASK-041701` is the single startable ticket**, and it is the debt the section above records — put
 first on purpose, because every screen below it is reached through `screenFromHash`.
@@ -115,6 +118,14 @@ tickets that edit `Lobby.tsx` are ordered by that file alone.
                                                                    ├─ 041713 ─┴→ 041714 → 041715 ─┐
                                                                    ├─ 041716 ────────────────────→ 041717 ─┐
                                                                    └─ 041718 ──────────────────────────────→ 041719 → 041720
+```
+
+`ADR-0087` unblocked the last three on 2026-08-28, and they hang off two already-merged ends — the
+copy module's, and `Lobby.tsx`'s:
+
+```
+041706 ──→ 041721 ──→ 041722 ─┐
+041719 ───────────────────────┴→ 041723
 ```
 
 **Every `verify:` block below the head pins per-file test counts rather than a whole-suite total**,
@@ -157,6 +168,12 @@ What was **never** held, and was written while the question was open: `TASK-0417
 behaviour, and no answer to `DEC-081` moved a line of it. `TASK-041711` puts it on the account seam
 beside the other three, where `revokeThisDevice` has already sat without a screen since
 `TASK-041220`.
+
+**The three are now written**: `TASK-041721` (the words), `TASK-041722` (the form) and
+`TASK-041723` (the door and the wiring). `ADR-0087` §7 left *which component holds the form* to the
+planner, and `TASK-041723` answers it: a local `SignInScreenBody` in `Lobby.tsx`, mounted only by the
+`sign-in` branch, so leaving the screen unmounts the open/closed mode rather than carrying it across
+a navigation. No slug is minted, and `screen.ts` is edited by none of the three.
 
 This was `STORY-0415`'s pattern: write what the answer cannot touch, hold what it determines, and
 register the question rather than guessing it. A guessed heading here would have coined player-facing
