@@ -167,15 +167,21 @@ describe("attaching a recovery email", () => {
     const [call] = mock.calls;
     expect(mock.calls).toHaveLength(1);
     expect(call.method).toBe("POST");
-    expect(call.path).toBe("/api/auth/recovery-email");
-    expect(call.path).not.toContain(ADDRESS);
-    expect(call.path).not.toContain(CURRENT);
 
+    // Presence first: prove both values really did travel
     const body = parsedBody(call) as Record<string, unknown>;
     expect(body).toEqual({
       address: ADDRESS,
       currentPassword: CURRENT,
     });
+
+    // Now absence assertions over something that was proven to exist
+    expect(call.path).toBe("/api/auth/recovery-email");
+    expect(call.path).not.toContain(ADDRESS);
+    expect(call.path).not.toContain(CURRENT);
+
+    // The device id binds this request to an account
+    expect(call.headers["X-Device-Id"]).toBe("d-1");
   });
 
   it("maps every status the endpoint documents to its own outcome", async () => {
