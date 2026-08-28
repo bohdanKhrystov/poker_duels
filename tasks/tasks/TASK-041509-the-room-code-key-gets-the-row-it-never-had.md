@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041509
 title: The room code key gets the row it never had
 type: task
-status: backlog
+status: done
 parent: STORY-0415
 module: web-client
 estimate: XS
