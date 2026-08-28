@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041722
 title: The one-field form that asks for a reset link, and answers everyone the same way
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
