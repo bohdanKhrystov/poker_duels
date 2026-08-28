@@ -30,6 +30,7 @@ import { ACCOUNT_HEADING, SIGN_IN_HEADING } from "../account/account-text";
 import { useAccount } from "../account/account-provider";
 import { SignInForm } from "../account/SignInForm";
 import { VerifyScreen } from "../account/VerifyScreen";
+import { ResetScreen } from "../account/ResetScreen";
 import { normalizeRoomCode, roomLink } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
@@ -53,15 +54,19 @@ export function Lobby(): ReactElement {
   // A lazy initialiser, so this runs once per mount rather than on every
   // render (ADR-0081 §5): the effect below replaces the fragment this reads
   // from, so a re-derivation after that replace would find nothing left to
-  // read, and no type checker catches a second read.
-  const [verifyToken] = useState(() => tokenFromHash(window.location.hash));
+  // read, and no type checker catches a second read. Shared by the verify
+  // and reset branches below — the fragment has one second segment, so only
+  // one of the two mailed screens can ever be showing, and one read serves
+  // both (TASK-041719).
+  const [mailedToken] = useState(() => tokenFromHash(window.location.hash));
   const code = normalizeRoomCode(typedCode);
 
-  // ADR-0081 §5: the mailed secret leaves the address once the verify branch
-  // below is live, in an effect and not during render — writing to history
-  // during render is a side effect in a render path, and React may run it
-  // twice. Guarded on a token still being held, so a bare "#/verify" —
-  // already the correct address — never calls replaceState for nothing.
+  // ADR-0081 §5: the mailed secret leaves the address once the verify or
+  // reset branch below is live, in an effect and not during render —
+  // writing to history during render is a side effect in a render path, and
+  // React may run it twice. Guarded on a token still being held, so a bare
+  // "#/verify" or "#/reset" — already the correct address — never calls
+  // replaceState for nothing.
   // Declared, and so run, before the effect below: ADR-0076 §3 makes the
   // store outrank the address, and a frame that seats this tab while a
   // mailed link is still open must have the last word on the two, not this
@@ -71,11 +76,11 @@ export function Lobby(): ReactElement {
   // deliberately omits it rather than re-running this effect on every render
   // for no semantic reason.
   useEffect(() => {
-    if (screen === "verify" && verifyToken !== null) {
+    if ((screen === "verify" || screen === "reset") && mailedToken !== null) {
       clearToken();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, verifyToken]);
+  }, [screen, mailedToken]);
 
   // ADR-0076 §3: when the two disagree there is one authority, and it is the
   // store. A frame that seats a store-owned screen (outcome, view or
@@ -248,7 +253,35 @@ export function Lobby(): ReactElement {
   if (screen === "verify" && account !== null) {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
-        <VerifyScreen token={verifyToken} verify={account.verifyEmail} />
+        <VerifyScreen token={mailedToken} verify={account.verifyEmail} />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
+  // The reset screen a mailed link opens onto, this branch's mirror and
+  // reached the same way: only by its own fragment, never from a button
+  // anywhere in this file (`ADR-0081` §3), and sharing the one token read
+  // above rather than deriving a second. The way back is rendered here, by
+  // the swap, and ResetScreen itself knows nothing about navigation
+  // (`ADR-0060` §4). `account` is null only where no AccountProvider sits
+  // above this tree; the branch falls through to the first screen in that
+  // case, the same fallback the verify branch above already takes.
+  // `onDone` sends the player on to sign-in with an in-page navigation, not
+  // the reload `signIn` uses (`ADR-0083` §5's reload carries a new identity;
+  // a reset carries none — no session was issued, the store is untouched,
+  // and this browser's session was deleted server-side along with every
+  // other one, not replaced here).
+  if (screen === "reset" && account !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+        <ResetScreen
+          token={mailedToken}
+          reset={account.resetPassword}
+          onDone={() => open("sign-in")}
+        />
         <button type="button" onClick={leave}>
           Back
         </button>

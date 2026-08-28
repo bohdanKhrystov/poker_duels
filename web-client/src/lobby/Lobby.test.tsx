@@ -27,9 +27,15 @@ import { openReconnectingConnection } from "../protocol/reconnecting";
 import { aView } from "../table/view-fixture";
 import {
   ATTACH_LABEL,
+  NEW_PASSWORD_LABEL,
+  RESET_ENDS_EVERY_SESSION,
+  RESET_HEADING,
+  RESET_LINK_DEAD,
   VERIFY_HEADING,
   VERIFY_NO_LINK,
 } from "../account/recovery-text";
+import { PASSWORD_REFUSED, SIGN_IN_HEADING } from "../account/account-text";
+import { readSessionToken, writeSessionToken } from "../protocol/session-token";
 
 // `read` (`useHistory()`) is wired by the real app boot in "../main", which
 // this suite never runs — every other test here leaves it `null` and never
@@ -118,6 +124,7 @@ beforeEach(() => {
 
 afterEach(() => {
   Reflect.deleteProperty(navigator, "clipboard");
+  Reflect.deleteProperty(window, "localStorage");
   vi.useRealTimers();
 });
 
@@ -232,6 +239,21 @@ function inMemoryStorage(): Storage {
       entries.set(key, value);
     },
   };
+}
+
+// Node defines its own inert `localStorage` global that shadows jsdom's
+// under Vitest (DEC-032, and the comment beside `signedIn` in `../main`):
+// `window.localStorage` reads `undefined` here, not jsdom's storage, so a
+// test that wants a working one has to install it itself. `configurable`
+// mirrors `withClipboard` below and lets `afterEach` remove the override
+// once the test is done with it.
+function withLocalStorage(): Storage {
+  const storage = inMemoryStorage();
+  Object.defineProperty(window, "localStorage", {
+    value: storage,
+    configurable: true,
+  });
+  return storage;
 }
 
 function reconnectingClient(joinRoomCode: string | null = null) {
@@ -1751,5 +1773,125 @@ describe("the lobby", () => {
     expect(screen.queryByRole("heading", { name: VERIFY_HEADING })).toBeNull();
     expect(window.location.hash).toBe("");
     expect(verifyEmail).not.toHaveBeenCalled();
+  });
+
+  it("opens a mailed reset link and sends the token behind the slug", () => {
+    window.location.hash = "#/reset/zqx-reset-token-zqx";
+    // A promise that never settles: this test's subject is the call the
+    // submit makes, not what happens once the server answers it — that is
+    // the next test's. Letting it resolve here would fire onDone() and move
+    // the address to "#/sign-in" on a microtask this test never awaits,
+    // bleeding into whichever test runs next.
+    const resetPassword = vi.fn(() => new Promise<never>(() => {}));
+
+    renderLobbyWithAccount(accountCallsFixture({ resetPassword }));
+
+    expect(screen.getByRole("heading", { name: RESET_HEADING })).toBeDefined();
+    expect(screen.getByText(RESET_ENDS_EVERY_SESSION)).toBeDefined();
+
+    fireEvent.change(screen.getByLabelText(NEW_PASSWORD_LABEL), {
+      target: { value: "a-new-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Set new password" }));
+
+    expect(resetPassword).toHaveBeenCalledOnce();
+    expect(resetPassword).toHaveBeenCalledWith(
+      "zqx-reset-token-zqx",
+      "a-new-password",
+    );
+    expect(window.location.hash).toBe("#/reset");
+    expect(window.location.href).not.toContain("zqx-reset-token-zqx");
+  });
+
+  it("lands the player on the sign-in screen once the password is set", async () => {
+    window.location.hash = "#/reset/zqx-reset-token-zqx";
+    const storage = withLocalStorage();
+    // Seeded before render, so the assertion below proves survival rather
+    // than the absence of a value the bug could never have touched anyway
+    // (this ticket's own Proof, step 6).
+    writeSessionToken(storage, "zqx-session-token-zqx");
+    const resetPassword = vi.fn(async () => ({ kind: "reset" }) as const);
+
+    renderLobbyWithAccount(accountCallsFixture({ resetPassword }));
+
+    fireEvent.change(screen.getByLabelText(NEW_PASSWORD_LABEL), {
+      target: { value: "a-new-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Set new password" }));
+
+    expect(
+      await screen.findByRole("heading", { name: SIGN_IN_HEADING }),
+    ).toBeDefined();
+    expect(screen.queryByRole("heading", { name: RESET_HEADING })).toBeNull();
+    expect(window.location.hash).toBe("#/sign-in");
+    // ADR-0083 §4: nothing on this path refreshes or reacts to a session, so
+    // a browser holding a dead string still reaches sign-in holding the same
+    // string — untouched, not cleared, not replaced.
+    expect(readSessionToken(storage)).toBe("zqx-session-token-zqx");
+  });
+
+  it("leaves the player on the reset screen when the server refuses", async () => {
+    for (const failure of [
+      { kind: "link-dead", message: RESET_LINK_DEAD } as const,
+      { kind: "password-refused", message: PASSWORD_REFUSED } as const,
+    ]) {
+      window.location.hash = "#/reset/zqx-reset-token-zqx";
+      const resetPassword = vi.fn(
+        async () => ({ kind: failure.kind }) as const,
+      );
+
+      renderLobbyWithAccount(accountCallsFixture({ resetPassword }));
+
+      fireEvent.change(screen.getByLabelText(NEW_PASSWORD_LABEL), {
+        target: { value: "a-new-password" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Set new password" }));
+
+      expect(await screen.findByText(failure.message)).toBeDefined();
+      expect(
+        screen.getByRole("heading", { name: RESET_HEADING }),
+      ).toBeDefined();
+      expect(
+        screen.queryByRole("heading", { name: SIGN_IN_HEADING }),
+      ).toBeNull();
+      expect(window.location.hash).toBe("#/reset");
+
+      cleanup();
+    }
+  });
+
+  it("reads one token for whichever mailed screen the address named", () => {
+    window.location.hash = "#/verify/zqx-verify-token-zqx";
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+    const resetPassword = vi.fn(() => new Promise<never>(() => {}));
+
+    renderLobbyWithAccount(accountCallsFixture({ verifyEmail, resetPassword }));
+
+    expect(verifyEmail).toHaveBeenCalledWith("zqx-verify-token-zqx");
+    expect(resetPassword).not.toHaveBeenCalled();
+
+    cleanup();
+
+    window.location.hash = "#/reset/zqx-reset-token-zqx";
+    const verifyEmail2 = vi.fn(async () => ({ kind: "verified" }) as const);
+    const resetPassword2 = vi.fn(() => new Promise<never>(() => {}));
+
+    renderLobbyWithAccount(
+      accountCallsFixture({
+        verifyEmail: verifyEmail2,
+        resetPassword: resetPassword2,
+      }),
+    );
+
+    fireEvent.change(screen.getByLabelText(NEW_PASSWORD_LABEL), {
+      target: { value: "a-new-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Set new password" }));
+
+    expect(resetPassword2).toHaveBeenCalledWith(
+      "zqx-reset-token-zqx",
+      "a-new-password",
+    );
+    expect(verifyEmail2).not.toHaveBeenCalled();
   });
 });
