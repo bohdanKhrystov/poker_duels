@@ -77,7 +77,9 @@ Read, and do not edit:
   `TASK-041702` adds the replace to `use-screen.ts`, which is the only module here allowed to touch
   `window` (`ADR-0076` §5).
 - **Any screen component, any request, any copy.** Later tickets.
-- **A slug for the *forgot password* flow.** Held on `DEC-081`; `ADR-0081` §3 fixes only these two,
+- **A slug for the *forgot password* flow.** There is none, and there is not to be one: `ADR-0087`
+  §3 answered `DEC-081` by making that flow a form on `#/sign-in`, so `Screen` gains no member and
+  `forgot-password` may not be written into this file. `ADR-0081` §3 fixes only these two slugs,
   because a server writes them into a mail.
 - **Changing the four merged tests in `screen.test.ts`.** They pass untouched — this diff appends
   three and edits none.

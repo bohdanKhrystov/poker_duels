@@ -88,8 +88,9 @@ Read, and do not edit:
 
 ## Out of scope
 
-- **Any word the *forgot password* flow says**, including whatever sentence the player reads after
-  asking for a link. Held on `DEC-081`.
+- **Any word the *forgot password* flow says**, including the sentence the player reads after asking
+  for a link. `ADR-0087` §1 fixes its four constants for this same module, and they belong to the
+  ticket that ADR unblocked; this ticket takes `recovery-text.ts` to twenty exports and no further.
 - **Naming the destination.** `SIGN_IN_HEADING` is `account-text.ts`'s and stays there.
 - **A second spelling of the password rule.** `PASSWORD_REFUSED` exists; a `verify:` line pins zero
   occurrences of `token is` so a sentence here cannot start explaining tokens either.
@@ -170,6 +171,7 @@ slugs behind them — `reset` and `verify` — were fixed by the same ADR becaus
 them into a mail.
 
 **The one flow whose words are still missing is deliberate.** Asking for a reset has no sentence in
-this module and no constant reserved for one, because what the product calls that screen is
-`DEC-081` and is the product owner's. A placeholder here would be exactly the guessed product
-decision that reads as settled to everyone who arrives later.
+this module and no constant reserved for one here, because what the product calls it was `DEC-081`
+and the product owner's. `ADR-0087` answered it — four constants, in this file, in a **later**
+ticket — so a placeholder added here would still be an export this ticket's key-set `toEqual` does
+not expect.
