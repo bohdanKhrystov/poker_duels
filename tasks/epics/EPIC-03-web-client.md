@@ -2,7 +2,7 @@
 id: EPIC-03
 title: Web client
 type: epic
-status: ready
+status: done
 module: web-client
 labels: [client, react, typescript, ui]
 ---
@@ -111,14 +111,14 @@ Every one of these is cheap to violate in a component and expensive to notice in
 | [STORY-0304](../stories/STORY-0304-client-store.md) | The store: state is the last frame the server sent | 0303 | done |
 | [STORY-0305](../stories/STORY-0305-lobby-and-room-link.md) | The lobby: create a room, join by code, share the link | 0302, 0304 | done |
 | [STORY-0306](../stories/STORY-0306-duel-table-screen.md) | The duel table renders a `PlayerView` | 0305 | done |
-| [STORY-0307](../stories/STORY-0307-action-bar.md) | The action bar: acting on your turn | 0306 | ready |
-| [STORY-0308](../stories/STORY-0308-result-screen.md) | The result screen: who won, and the coin | 0307 | backlog |
-| [STORY-0309](../stories/STORY-0309-rematch.md) | Rematch from the result screen | 0308, `STORY-0213` | ready |
-| [STORY-0310](../stories/STORY-0310-reconnect-and-resume.md) | Reconnect: the client resumes its seat | 0306 | backlog |
-| [STORY-0311](../stories/STORY-0311-profile-strip.md) | The profile strip: my coins and my recent duels | 0302, 0303 | backlog |
-| [STORY-0312](../stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | 0308, 0310 | backlog |
-| [STORY-0313](../stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent | 0307, 0310, `STORY-0214` | blocked |
-| [STORY-0314](../stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened | 0309 | ready |
+| [STORY-0307](../stories/STORY-0307-action-bar.md) | The action bar: acting on your turn | 0306 | done |
+| [STORY-0308](../stories/STORY-0308-result-screen.md) | The result screen: who won, and the coin | 0307 | done |
+| [STORY-0309](../stories/STORY-0309-rematch.md) | Rematch from the result screen | 0308, `STORY-0213` | done |
+| [STORY-0310](../stories/STORY-0310-reconnect-and-resume.md) | Reconnect: the client resumes its seat | 0306 | done |
+| [STORY-0311](../stories/STORY-0311-profile-strip.md) | The profile strip: my coins and my recent duels | 0302, 0303 | done |
+| [STORY-0312](../stories/STORY-0312-whole-duel-through-the-client.md) | A whole duel through the client, frame by frame | 0308, 0310 | done |
+| [STORY-0313](../stories/STORY-0313-the-table-names-an-absent-opponent.md) | The table names an absent opponent | 0307, 0310, `STORY-0214` | done |
+| [STORY-0314](../stories/STORY-0314-a-host-can-leave-the-room-they-opened.md) | A host can leave the room they opened | 0309 | done |
 
 ## What can run in parallel
 
@@ -149,16 +149,13 @@ And the honest non-parallelism, recorded so nobody tries to break it:
 
 ## Open decisions
 
-**One remains, and it does not wait on a human.** It is the architect's.
-
-| ID | Question | For | Blocks |
-| --- | --- | --- | --- |
-| `DEC-024` | Does this epic ship an automated two-browser end-to-end test, or is that proof manual in v0.1? | architect | nothing; decides whether a fourteenth story exists — but it is due **before this epic closes** |
+**None.** The last one, `DEC-024`, is answered below and closed this epic.
 
 ### Answered since this epic was written
 
 | ID | Answered by | What it means here |
 | --- | --- | --- |
+| `DEC-024` | [ADR-0088](../../docs/adr/ADR-0088-the-two-browser-proof-is-a-written-hand-check.md) | **The two-browser proof is a written hand-check, not a CI job.** This epic ships **no** automated two-browser end-to-end test, **no fifteenth story** and no browser runner — no Playwright, Puppeteer, Selenium, WebDriver or Cypress dependency, and `build.yml` keeps its two jobs. The automated ceiling stays where `STORY-0312` and `poker-server/.../e2e/` already put it. The *"decides whether a fourteenth story exists"* this row used to carry was arithmetic written before `STORY-0314` existed, and the answer is **no story at all**. The epic closes on its stories, fourteen of fourteen. **What that accepts, measured and named rather than assumed**: `main.tsx`'s composition and `index.html`'s `<div id="root">` are executed and asserted by nothing; `new WebSocket(socketUrl(window.location))` is never called, so **no test in this repository has ever opened a TCP connection to the duel server**; `npm run build`'s exit code is the only claim about `dist/`; and two storage partitions are outside every test's notion. **The Definition of done's last checkbox is now `ADR-0088` §2's eleven numbered steps**, each with a failure condition, and §3's receipt — the one line in that checklist a merge cannot write |
 | `DEC-070` | [ADR-0075](../../docs/adr/ADR-0075-the-mark-lives-as-long-as-the-absence-that-produced-it.md) | **The mark lives as long as the absence that produced it.** Exactly two frames take it off — an `OpponentPresence` carrying `PRESENT`, and `DuelFinished` — as two keys in two case bodies of `duel-state.ts`; every other frame leaves it standing, and there is **no timer, no fade and no dismiss control**. *Clears on the next `Snapshot`* and *clears on the next `YourTurn`* were eliminated on the server's own code rather than on taste: `AbsentSeats.kt` prepends the mark to `next.outbound` and `act` composes that through `framesFor` = `broadcast + turnFor`, so the mark and the `Snapshot` about the mark's own action are **consecutive frames in one delivery** and either rule would clear it microseconds after it was set. It clears on the **frame**, not on a transition, so it needs no `rivalReturned`-style bookkeeping. **No new string** — `ADR-0046` §4's six stand. The failure the decision was raised on is impossible by construction: the frame that puts *Your rival is back.* on screen is the same frame that takes the mark off. Accepted cost, stated rather than discovered: **a mark can be older than the hand on screen**, because the present player can fold the button pre-flop and the turn never reaches the absent seat — the price of §4's *no action log*. **`TASK-031314` and `TASK-031315` are `backlog`**, behind `TASK-031313` like the rest of the chain; no Kotlin, no frame, no protocol step |
 | `DEC-068` | [ADR-0073](../../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md) | The *waiting for your rival* screen gains a way out, and it reads **`Back to the lobby`** — the string `DuelResult.tsx` already renders for the same action on the same memory, so this epic keeps one phrase for one action. It calls `ADR-0072` §4's `forgetRoom()` from an event handler and **does nothing to the room**: still `WAITING`, seat 0 still the host's, the code still resolving, and `ADR-0022`'s idle timeout still the only thing that ends it. **Exactly one line says so** — *The room stays open. That link still works for your rival, and it brings you back.* — and it names no duration, because the client owns no clock against a server window. **No confirmation.** Those two strings are the whole addition; a third needs a new ADR. *Cancel*, *Close the room* and *Leave* are refused by name as untrue. `design/screens/create-duel.html`'s waiting frame gains both strings verbatim as `EPIC-06`'s work, and **`STORY-0314` does not wait on it**. No Kotlin, no frame, no protocol step — this epic's rules hold. **`STORY-0314` is `ready` and unsplit** |
 | `DEC-067` | [ADR-0072](../../docs/adr/ADR-0072-a-tab-remembers-its-room-until-the-player-leaves-it.md) | A tab remembers the room it is **seated in** until the player leaves it or the server refuses its own rejoin. `boot.ts`'s `DuelFinished` branch (`TASK-031009`) is **deleted**, so a reopened socket rejoins and `ADR-0044` §5's restatement becomes reachable; the way back to the lobby is what forgets, through a third member on `DuelClient` (`forgetRoom`), an optional third prop on `DuelProvider` and `useForgetRoom()` beside `useSend()` — `ADR-0032` §3's *event handlers only* extends to it. `DuelResult` keeps its `<a href="/">` and stays a function of its props. No reducer field, no frame, no Kotlin. **`STORY-0310` keeps its thirteen tickets** and `TASK-031009` stays `done` and unrewritten; **`STORY-0309` keeps its fourteen** and gains the transport half of its fourth criterion as a split of its own |
@@ -192,7 +189,22 @@ reopen them.
 - [ ] A player whose only duel was a loss sees a balance of `−1`, unclamped.
 - [ ] Checked by hand, once, and recorded: a link is sent, the other browser joins, and a duel is
       played to a winner. `docs/vision.md`'s success condition is not an automated assertion, and
-      pretending otherwise would be the dishonest kind of green.
+      pretending otherwise would be the dishonest kind of green. **The steps are
+      [`ADR-0088`](../../docs/adr/ADR-0088-the-two-browser-proof-is-a-written-hand-check.md) §2** —
+      eleven of them, each with a condition that fails it, because a sentence two people would run
+      two different ways is not a check. `DEC-024` settled that this proof is a human's and not a
+      CI job.
+
+### The receipt
+
+`ADR-0088` §3: a run that is not written down did not happen. One line per run, appended here by
+the person who ran it — date, the commit SHA it ran against, the two browsers, the room code, the
+winner, and both balances afterwards. It gates no merge and no ticket, and no agent can write it;
+it is filled in the same act that fills `Metrics` below.
+
+| Date | Commit | Browsers | Room | Winner | Balances after |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
 
 ## Metrics
 

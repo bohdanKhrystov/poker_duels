@@ -129,9 +129,11 @@ are startable at once. `TASK-050601` is `ready`; the rest are `backlog`.
 
 ## Out of scope
 
-- **A browser end-to-end test.** `DEC-024` — the architect's, open since `EPIC-03` — asks whether
-  the project ships one at all. This story is socket-level, like `EPIC-02`'s suite, and inherits
-  whatever `DEC-024` decides rather than pre-empting it.
+- **A browser end-to-end test.** `DEC-024` asked whether the project ships one at all, and
+  [`ADR-0088`](../../docs/adr/ADR-0088-the-two-browser-proof-is-a-written-hand-check.md) answered on
+  2026-08-28: **it does not.** No browser runner, and the automated ceiling stays socket-level on the
+  JVM and jsdom-level in the client. This story is socket-level, like `EPIC-02`'s suite, and is now
+  at that ceiling rather than waiting under an open decision.
 - **New production code.** If this story needs any, that is a defect in `STORY-0501`–`STORY-0504`
   and becomes a ticket against the story that owes it, not scope here.
 - **Performance, load or a ladder of ten thousand players.** No scale problem exists yet; inventing
