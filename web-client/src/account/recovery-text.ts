@@ -43,3 +43,31 @@ export const ATTACH_PASSWORD_WRONG =
   "That password does not match this account.";
 
 export const ATTACH_FAILED = "That did not go through. Try again.";
+
+export const VERIFY_HEADING = "Finish verifying an address";
+
+export const VERIFY_DONE =
+  "That address is attached. It can now set a new password for this account.";
+
+export const VERIFY_LINK_DEAD =
+  "That link has expired or has already been used. Ask for a new one from the account screen.";
+
+export const VERIFY_ADDRESS_TAKEN =
+  "That address is already attached to another account, so it cannot be attached to this one.";
+
+export const VERIFY_NO_LINK =
+  "Open the link from your mail to finish this. There is nothing on this screen to fill in.";
+
+export const RESET_HEADING = "Set a new password";
+
+export const NEW_PASSWORD_LABEL = "New password";
+
+/**
+ * ADR-0031 §4: a reset issues no session and returns no token, so a client that expected one
+ * is a client that hangs. The player is told before they act rather than after.
+ */
+export const RESET_ENDS_EVERY_SESSION =
+  "Setting a new password ends every session on every browser, including this one. You will sign in again with the new password.";
+
+export const RESET_LINK_DEAD =
+  "That link has expired or has already been used. Ask for a new one and try again.";

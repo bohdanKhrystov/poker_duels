@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as recoveryText from "./recovery-text";
+import { PASSWORD_REFUSED } from "./account-text";
 
 describe("the account screen's words about recovery", () => {
   it("states every sentence exactly, character for character", () => {
@@ -15,8 +16,17 @@ describe("the account screen's words about recovery", () => {
         "ATTACH_WHY",
         "ADDRESS_LABEL",
         "CURRENT_PASSWORD_LABEL",
+        "NEW_PASSWORD_LABEL",
         "RECOVERY_OFF",
         "RECOVERY_ON",
+        "RESET_ENDS_EVERY_SESSION",
+        "RESET_HEADING",
+        "RESET_LINK_DEAD",
+        "VERIFY_ADDRESS_TAKEN",
+        "VERIFY_DONE",
+        "VERIFY_HEADING",
+        "VERIFY_LINK_DEAD",
+        "VERIFY_NO_LINK",
         "recoveryLine",
       ].sort(),
     );
@@ -44,6 +54,27 @@ describe("the account screen's words about recovery", () => {
     );
     expect(recoveryText.ATTACH_FAILED).toBe(
       "That did not go through. Try again.",
+    );
+    expect(recoveryText.VERIFY_HEADING).toBe("Finish verifying an address");
+    expect(recoveryText.VERIFY_DONE).toBe(
+      "That address is attached. It can now set a new password for this account.",
+    );
+    expect(recoveryText.VERIFY_LINK_DEAD).toBe(
+      "That link has expired or has already been used. Ask for a new one from the account screen.",
+    );
+    expect(recoveryText.VERIFY_ADDRESS_TAKEN).toBe(
+      "That address is already attached to another account, so it cannot be attached to this one.",
+    );
+    expect(recoveryText.VERIFY_NO_LINK).toBe(
+      "Open the link from your mail to finish this. There is nothing on this screen to fill in.",
+    );
+    expect(recoveryText.RESET_HEADING).toBe("Set a new password");
+    expect(recoveryText.NEW_PASSWORD_LABEL).toBe("New password");
+    expect(recoveryText.RESET_ENDS_EVERY_SESSION).toBe(
+      "Setting a new password ends every session on every browser, including this one. You will sign in again with the new password.",
+    );
+    expect(recoveryText.RESET_LINK_DEAD).toBe(
+      "That link has expired or has already been used. Ask for a new one and try again.",
     );
   });
 
@@ -76,5 +107,26 @@ describe("the account screen's words about recovery", () => {
       expect(value.toLowerCase()).not.toContain("taken");
       expect(value.toLowerCase()).not.toContain("registered");
     }
+  });
+
+  it("tells a dead link and a refused password apart, in words a player can act on", () => {
+    // RESET_LINK_DEAD and PASSWORD_REFUSED are different strings, so a player told the password
+    // is wrong can then be told the link is dead without contradiction.
+    expect(recoveryText.RESET_LINK_DEAD).not.toBe(PASSWORD_REFUSED);
+    expect(recoveryText.RESET_LINK_DEAD).not.toContain(PASSWORD_REFUSED);
+    expect(PASSWORD_REFUSED).not.toContain(recoveryText.RESET_LINK_DEAD);
+
+    // RESET_LINK_DEAD and VERIFY_LINK_DEAD are different strings, because the two screens send
+    // a player to different places.
+    expect(recoveryText.RESET_LINK_DEAD).not.toBe(
+      recoveryText.VERIFY_LINK_DEAD,
+    );
+
+    // VERIFY_NO_LINK is not an error — no sentences here say invalid, error, expired or used,
+    // because an absent token is an empty input rather than a failure.
+    expect(recoveryText.VERIFY_NO_LINK).not.toContain("invalid");
+    expect(recoveryText.VERIFY_NO_LINK).not.toContain("error");
+    expect(recoveryText.VERIFY_NO_LINK).not.toContain("expired");
+    expect(recoveryText.VERIFY_NO_LINK).not.toContain("used");
   });
 });
