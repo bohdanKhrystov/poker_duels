@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041716
 title: The screen that finishes a verification, from a token it is handed once
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
