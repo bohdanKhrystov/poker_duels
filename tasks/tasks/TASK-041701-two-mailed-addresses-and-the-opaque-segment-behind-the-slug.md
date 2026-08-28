@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041701
 title: Two mailed addresses, and the opaque segment behind the slug
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
