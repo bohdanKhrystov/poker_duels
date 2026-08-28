@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041721
 title: The words the forgot-password flow says, and the second state it refuses to have
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
