@@ -19,7 +19,8 @@ verify:
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'offers the attach form only with a profile in hand and a call to make'
   - cd web-client && NO_COLOR=1 npm run --silent test -- --reporter=verbose 2>&1 | grep -qF 'offers it whether recovery is already on or not'
   - cd web-client && NO_COLOR=1 npm run --silent test -- src/account/RecoveryEmailForm.test.tsx 2>&1 | grep -qE 'Tests +7 passed \(7\)'
-  - test "$(grep -oF 'RecoveryEmailForm' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 2
+  - test "$(grep -oF 'from "./RecoveryEmailForm"' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 1
+  - test "$(grep -oF '<RecoveryEmailForm' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 1
   - test "$(grep -oF 'attachRecoveryEmail(' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 0
   - test "$(grep -oF 'await' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 0
   - cd web-client && npm run check
@@ -82,7 +83,10 @@ Read, and do not edit:
 - **Gating on `signedIn`.** The device id authenticates this endpoint too, so a browser that has never
   signed in can still attach — and `ADR-0031` §3's password check is the server's, not a reason to
   hide the form.
-- **Any change inside `RecoveryEmailForm`.** A `verify:` line pins its suite at seven.
+- **Any change inside `RecoveryEmailForm`, including its filename.** A `verify:` line pins its suite
+  at seven, and both `TASK-041713`'s merged `verify:` block and this ticket's own first gate name
+  `src/account/RecoveryEmailForm.test.tsx` by its PascalCase path. Renaming the file to satisfy a
+  count here would redden a merged gate.
 - **Any new sentence.** Nothing is added to `recovery-text.ts`.
 
 ## Tests
@@ -111,8 +115,14 @@ The nine merged tests pass unchanged: the new prop is optional, so none of them 
       failure line at all
 - [ ] `cd web-client && NO_COLOR=1 npm run --silent test -- src/account/RecoveryEmailForm.test.tsx 2>&1 | grep -qE 'Tests +7 passed \(7\)'`
       — the child is untouched
-- [ ] `test "$(grep -oF 'RecoveryEmailForm' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 2`
-      — the import and one element. A second element is a second form on one screen
+- [ ] `test "$(grep -oF 'from "./RecoveryEmailForm"' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 1`
+      and `test "$(grep -oF '<RecoveryEmailForm' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 1`
+      — imported once, rendered once. Two counts rather than one over the bare identifier, because
+      the identifier is also the module path: the idiomatic import and element score **three**, not
+      two, and `SignUpForm` scores three on this same file. Split, each count says one thing — a
+      second `from "./RecoveryEmailForm"` is a duplicate import, a second `<RecoveryEmailForm` is a
+      second form on one screen, and zero of the latter is a form imported and never rendered.
+      Neither count reads the closing tag, so `<X …/>` and `<X …></X>` both score one
 - [ ] `test "$(grep -oF 'attachRecoveryEmail(' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 0`
       and `test "$(grep -oF 'await' web-client/src/account/AccountScreen.tsx | wc -l | tr -d ' ')" = 0`
       — the screen never **calls** the attach function and never awaits anything. It declares the
@@ -154,3 +164,16 @@ props type and in the destructure, so counting the bare identifier would be a ga
 `attachRecoveryEmail(` and `await` instead says the one thing worth saying: this screen decides
 **whether** to offer the form and never what happens when it is used. `AccountScreen` holds no state
 and awaits nothing today, and it should still hold none after this.
+
+**Why the presence gate is two counts and not one.** The first version of this ticket carried
+`grep -oF 'RecoveryEmailForm' … = 2`, reading *the import and one element*. It was measured against
+six shapes of this file and it is not merely off by one — it is **inverted**. `TASK-041713` shipped
+the component at `src/account/RecoveryEmailForm.tsx`, so the identifier is also the module path and
+an ordinary `import { X } from "./X"` scores two on its own. The gate therefore **failed** every
+correct shape (three for a self-closing element, four for a tag pair — `SignUpForm` scores three on
+this same file) and **passed** exactly the two wrong ones: a form imported and never rendered, and a
+form imported under an alias so the element is called something else. Its only two satisfiable
+shapes were the two the ticket does not want, and both remaining escapes — renaming the merged file
+to kebab-case, or aliasing the import — cost either a merged gate or a component's name. Counting
+`from "./RecoveryEmailForm"` and `<RecoveryEmailForm` separately says the intended thing directly,
+and needs neither.
