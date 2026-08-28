@@ -7,6 +7,10 @@ import type { SignUpOutcome } from "./sign-up";
 import type { SignInOutcome } from "./sign-in";
 import type { SignOutOutcome } from "./sign-out";
 import type { RevokeOutcome } from "./revoke-device";
+import type { AttachRecoveryOutcome } from "./attach-recovery-email";
+import type { ForgotPasswordOutcome } from "./forgot-password";
+import type { VerifyEmailOutcome } from "./verify-email";
+import type { ResetPasswordOutcome } from "./reset-password";
 
 /** Renders what `useAccount()` answers, and calls it when mounted. */
 function Probe(props: {
@@ -43,6 +47,11 @@ describe("the account calls", () => {
       signIn: signInSpy,
       signOut: signOutSpy,
       revokeThisDevice: revokeThisDeviceSpy,
+      attachRecoveryEmail:
+        vi.fn() as unknown as AccountCalls["attachRecoveryEmail"],
+      forgotPassword: vi.fn() as unknown as AccountCalls["forgotPassword"],
+      verifyEmail: vi.fn() as unknown as AccountCalls["verifyEmail"],
+      resetPassword: vi.fn() as unknown as AccountCalls["resetPassword"],
     };
 
     let receivedCalls: AccountCalls | null = null;
@@ -115,6 +124,11 @@ describe("the account calls", () => {
       signIn: signInSpy,
       signOut: signOutSpy,
       revokeThisDevice: revokeThisDeviceSpy,
+      attachRecoveryEmail:
+        vi.fn() as unknown as AccountCalls["attachRecoveryEmail"],
+      forgotPassword: vi.fn() as unknown as AccountCalls["forgotPassword"],
+      verifyEmail: vi.fn() as unknown as AccountCalls["verifyEmail"],
+      resetPassword: vi.fn() as unknown as AccountCalls["resetPassword"],
     };
 
     let receivedCalls: AccountCalls | null = null;
@@ -156,6 +170,11 @@ describe("the account calls", () => {
       signIn: signInSpy,
       signOut: signOutSpy,
       revokeThisDevice: revokeThisDeviceSpy,
+      attachRecoveryEmail:
+        vi.fn() as unknown as AccountCalls["attachRecoveryEmail"],
+      forgotPassword: vi.fn() as unknown as AccountCalls["forgotPassword"],
+      verifyEmail: vi.fn() as unknown as AccountCalls["verifyEmail"],
+      resetPassword: vi.fn() as unknown as AccountCalls["resetPassword"],
     };
 
     let receivedCalls: AccountCalls | null = null;
@@ -182,5 +201,67 @@ describe("the account calls", () => {
     expect(signOutSpy).toHaveBeenCalledTimes(1);
     // Verify revokeThisDevice was NOT called
     expect(revokeThisDeviceSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it("hands every recovery call down unchanged, by reference", () => {
+    const attachRecoveryEmailSpy = vi.fn(
+      async (): Promise<AttachRecoveryOutcome> => ({ kind: "accepted" }),
+    );
+    const forgotPasswordSpy = vi.fn(
+      async (): Promise<ForgotPasswordOutcome> => ({ kind: "accepted" }),
+    );
+    const verifyEmailSpy = vi.fn(async (): Promise<VerifyEmailOutcome> => ({
+      kind: "verified",
+    }));
+    const resetPasswordSpy = vi.fn(async (): Promise<ResetPasswordOutcome> => ({
+      kind: "reset",
+    }));
+
+    const calls: AccountCalls = {
+      signUp: vi.fn() as unknown as AccountCalls["signUp"],
+      signIn: vi.fn() as unknown as AccountCalls["signIn"],
+      signOut: vi.fn() as unknown as AccountCalls["signOut"],
+      revokeThisDevice: vi.fn() as unknown as AccountCalls["revokeThisDevice"],
+      attachRecoveryEmail: attachRecoveryEmailSpy,
+      forgotPassword: forgotPasswordSpy,
+      verifyEmail: verifyEmailSpy,
+      resetPassword: resetPasswordSpy,
+    };
+
+    let receivedCalls: AccountCalls | null = null;
+
+    render(
+      <AccountProvider calls={calls}>
+        <Probe
+          onCall={(c) => {
+            receivedCalls = c;
+          }}
+        />
+      </AccountProvider>,
+    );
+
+    // Each recovery member is the exact spy that went in.
+    expect(receivedCalls!.attachRecoveryEmail).toBe(attachRecoveryEmailSpy);
+    expect(receivedCalls!.forgotPassword).toBe(forgotPasswordSpy);
+    expect(receivedCalls!.verifyEmail).toBe(verifyEmailSpy);
+    expect(receivedCalls!.resetPassword).toBe(resetPasswordSpy);
+
+    // Pairwise distinct: a provider that collapsed two members onto one
+    // function, or a fixture that reused one spy for two fields, reddens
+    // here even where the four toBe's above happen not to catch it.
+    expect(receivedCalls!.attachRecoveryEmail).not.toBe(
+      receivedCalls!.forgotPassword,
+    );
+    expect(receivedCalls!.attachRecoveryEmail).not.toBe(
+      receivedCalls!.verifyEmail,
+    );
+    expect(receivedCalls!.attachRecoveryEmail).not.toBe(
+      receivedCalls!.resetPassword,
+    );
+    expect(receivedCalls!.forgotPassword).not.toBe(receivedCalls!.verifyEmail);
+    expect(receivedCalls!.forgotPassword).not.toBe(
+      receivedCalls!.resetPassword,
+    );
+    expect(receivedCalls!.verifyEmail).not.toBe(receivedCalls!.resetPassword);
   });
 });

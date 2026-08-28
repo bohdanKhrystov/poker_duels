@@ -132,6 +132,12 @@ export function bootClient(options: BootOptions): BootResult {
       }),
     signOut: () => signOut({ fetch: server.fetch, storage, reload }),
     revokeThisDevice: () => revokeThisDevice({ fetch: server.fetch, storage }),
+    // Stubs, not real calls: this harness's fake server serves no recovery
+    // endpoint, and wiring one is a later ticket's, not this seam's.
+    attachRecoveryEmail: () => Promise.resolve({ kind: "failed" }),
+    forgotPassword: () => Promise.resolve({ kind: "failed" }),
+    verifyEmail: () => Promise.resolve({ kind: "failed" }),
+    resetPassword: () => Promise.resolve({ kind: "failed" }),
   };
 
   wiring.history = readHistory;

@@ -13,6 +13,10 @@ import { signIn } from "./account/sign-in";
 import { signOut } from "./account/sign-out";
 import { signUp } from "./account/sign-up";
 import { revokeThisDevice } from "./account/revoke-device";
+import { attachRecoveryEmail } from "./account/attach-recovery-email";
+import { forgotPassword } from "./account/forgot-password";
+import { verifyEmail } from "./account/verify-email";
+import { resetPassword } from "./account/reset-password";
 import { App } from "./App";
 import { roomCodeFromSearch } from "./lobby/room-link";
 import { connectToDuelServer } from "./protocol";
@@ -118,6 +122,24 @@ const accountCalls: AccountCalls = {
   signOut: () => signOut({ fetch: plainFetch, storage: localStorage, reload }),
   revokeThisDevice: () =>
     revokeThisDevice({ fetch: plainFetch, storage: localStorage }),
+  // Wrapped, unlike the three below: POST /api/auth/recovery-email accepts
+  // an X-Device-Id header or an Authorization: Bearer token, ADR-0027 makes
+  // the bearer outrank the device id, and the module itself only ever sends
+  // X-Device-Id. Binding this to the unwrapped fetch would authenticate a
+  // signed-in browser as its device instead of as itself.
+  attachRecoveryEmail: (address, currentPassword) =>
+    attachRecoveryEmail({
+      fetch: apiFetch,
+      storage: localStorage,
+      address,
+      currentPassword,
+    }),
+  // Unwrapped, like signIn above: these three endpoints take no
+  // authentication at all (docs/protocol.md's Authentication line for each).
+  forgotPassword: (address) => forgotPassword({ fetch: plainFetch, address }),
+  verifyEmail: (token) => verifyEmail({ fetch: plainFetch, token }),
+  resetPassword: (token, newPassword) =>
+    resetPassword({ fetch: plainFetch, token, newPassword }),
 };
 
 // One boot per tab, outside the tree (ADR-0032): StrictMode below may mount and

@@ -105,14 +105,19 @@ function seatView(index: number): SeatView {
 }
 
 // Stable across tests. signUp and signIn back the two forms TASK-041227
-// mounts (SignUpForm, SignInForm); signOut and revokeThisDevice back
-// controls no test in this file reaches yet, so they are stubbed only to
-// satisfy AccountCalls's shape and are never awaited.
+// mounts (SignUpForm, SignInForm); signOut, revokeThisDevice and the four
+// recovery calls back controls no test in this file reaches yet, so they
+// are stubbed only to satisfy AccountCalls's shape and are never awaited.
 const fakeAccountCalls: AccountCalls = {
   signUp: vi.fn() as unknown as AccountCalls["signUp"],
   signIn: vi.fn() as unknown as AccountCalls["signIn"],
   signOut: vi.fn() as unknown as AccountCalls["signOut"],
   revokeThisDevice: vi.fn() as unknown as AccountCalls["revokeThisDevice"],
+  attachRecoveryEmail:
+    vi.fn() as unknown as AccountCalls["attachRecoveryEmail"],
+  forgotPassword: vi.fn() as unknown as AccountCalls["forgotPassword"],
+  verifyEmail: vi.fn() as unknown as AccountCalls["verifyEmail"],
+  resetPassword: vi.fn() as unknown as AccountCalls["resetPassword"],
 };
 
 function renderApp(): void {
@@ -235,9 +240,12 @@ describe("App", () => {
     expect(mainSource).toMatch(/signOut\([^}]*fetch: plainFetch/);
     expect(mainSource).toMatch(/revokeThisDevice\([^}]*fetch: plainFetch/);
 
-    // Two needles, two different answers: one declaration, four bindings.
+    // Two needles, two different answers: one declaration, and a binding for
+    // every account call whose endpoint takes no authentication — these four
+    // plus the three recovery calls that join them on the same rule
+    // (forgotPassword, verifyEmail, resetPassword).
     expect(occurrencesIn(mainSource, "const plainFetch")).toBe(1);
-    expect(occurrencesIn(mainSource, "fetch: plainFetch")).toBe(4);
+    expect(occurrencesIn(mainSource, "fetch: plainFetch")).toBe(7);
   });
 
   it("refuses to wrap sign-in, the one request that must carry nothing", () => {
@@ -255,14 +263,18 @@ describe("App", () => {
     // main.tsx binds all four reads — readProfile, setName, readHistory and
     // readLadder — through the one authorizedFetch wrapper, so a signed-in
     // player's strip, name, record and ladder row all carry the session.
+    // attachRecoveryEmail shares the same wrapper for an unrelated reason —
+    // its endpoint accepts a bearer token that must outrank a device id — so
+    // the count below is the four reads plus that one account call.
     // Two needles, two different expected answers: wrapping a single read
-    // leaves "fetch: apiFetch" at 1 (short of 4) and "window.fetch(" at 4
-    // (short of 1), so a source that wraps some reads but not all reddens
-    // both assertions, and a helper that matched nothing or returned a
-    // constant could satisfy at most one of the two.
+    // leaves "fetch: apiFetch" at 2 (short of 5, since attachRecoveryEmail's
+    // own binding still counts) and "window.fetch(" at 4 (short of 1), so a
+    // source that wraps some reads but not all reddens both assertions, and
+    // a helper that matched nothing or returned a constant could satisfy at
+    // most one of the two.
     const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
 
-    expect(occurrencesIn(mainSource, "fetch: apiFetch")).toBe(4);
+    expect(occurrencesIn(mainSource, "fetch: apiFetch")).toBe(5);
     // plainFetch reads the browser fetch directly, one raw fetch for the
     // account calls that must not be wrapped.
     expect(occurrencesIn(mainSource, "window.fetch(")).toBe(2);
