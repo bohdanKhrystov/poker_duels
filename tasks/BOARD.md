@@ -2177,6 +2177,17 @@ produced cannot contain one. `DEC-024` — whether a two-browser run exists at a
 stays the architect's; its answer changes nothing here, which is what the story said when it was
 written and is still true.
 
+> **Two registers disagree about `EPIC-03`, and the disagreement is left standing rather than
+> resolved by the driver.** The epic's board row reads **done**, 14 of 14 stories, and every story
+> file under it is `done` — measured on `develop` at `e125011d`. But `EPIC-03`'s own
+> `## Open decisions` table still lists `DEC-024` as due **before this epic closes**, and no ADR
+> answers it. So either the row closed the epic early, or that "before it closes" is stale. The
+> driver will not pick: `DEC-024` is the architect's by the register's own labelling, and the epic
+> file is therefore held at `status: ready` until an answering PR strikes the row from all three
+> registers. `EPIC-02` had the same file-versus-row drift with no such contradiction — its only open
+> decision, `DEC-008`, blocks nothing and is due before `EPIC-08` — so its file is corrected to
+> `done` here.
+
 | Story | Title | Status |
 | --- | --- | --- |
 | **[STORY-0301](stories/STORY-0301-web-client-toolchain.md)** The web-client toolchain and its first green check — *schema 2* | | **done** |
