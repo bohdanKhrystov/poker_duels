@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041703
 title: The profile this client parses carries whether recovery is on
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
