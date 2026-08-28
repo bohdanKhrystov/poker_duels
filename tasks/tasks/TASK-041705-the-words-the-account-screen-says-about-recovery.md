@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041705
 title: The words the account screen says about recovery, and never the address
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
