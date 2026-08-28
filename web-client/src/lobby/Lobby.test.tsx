@@ -13,6 +13,10 @@ import { createDuelStore, type DuelStore } from "../store/duel-store";
 import { bootDuelClient } from "../store/boot";
 import { ProfileProvider } from "../profile/profile-provider";
 import { SetNameProvider } from "../profile/set-name-provider";
+import {
+  AccountProvider,
+  type AccountCalls,
+} from "../account/account-provider";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { SeatView, ServerMessage } from "../protocol";
 import type { SetNameOutcome } from "../profile/set-name";
@@ -21,6 +25,7 @@ import { PROTOCOL_VERSION } from "../protocol";
 import { FakeSocket } from "../protocol/fake-socket";
 import { openReconnectingConnection } from "../protocol/reconnecting";
 import { aView } from "../table/view-fixture";
+import { ATTACH_LABEL } from "../account/recovery-text";
 
 // `read` (`useHistory()`) is wired by the real app boot in "../main", which
 // this suite never runs — every other test here leaves it `null` and never
@@ -1556,5 +1561,96 @@ describe("the lobby", () => {
     expect(offerWiring.settle).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole("region", { name: "the offer" })).toBeNull();
     expect(screen.getByText("Victory")).toBeDefined();
+  });
+
+  it("puts the attach form on the account screen, wired to the account seam", async () => {
+    const attachRecoveryEmail = vi.fn(
+      async () => ({ kind: "accepted" }) as const,
+    );
+    const accountCalls: AccountCalls = {
+      signUp: vi.fn(),
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+      revokeThisDevice: vi.fn(),
+      attachRecoveryEmail,
+      forgotPassword: vi.fn(),
+      verifyEmail: vi.fn(),
+      resetPassword: vi.fn(),
+    };
+
+    window.location.hash = "#/account";
+
+    const profileState: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    };
+
+    const read = (): Promise<ProfileStripState> =>
+      Promise.resolve(profileState);
+
+    render(
+      <ProfileProvider read={read}>
+        <SetNameProvider setName={vi.fn()}>
+          <AccountProvider calls={accountCalls}>
+            <DuelProvider
+              store={createDuelStore()}
+              send={vi.fn()}
+              forgetRoom={vi.fn()}
+            >
+              <Lobby />
+            </DuelProvider>
+          </AccountProvider>
+        </SetNameProvider>
+      </ProfileProvider>,
+    );
+
+    // Wait for the profile to load by looking for recovery status text
+    await screen.findByText(/Recovery is/);
+
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Current password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: ATTACH_LABEL }));
+
+    await screen.findByText(
+      "If that address can take mail, a link is on its way. Recovery stays off until you follow it.",
+    );
+
+    expect(attachRecoveryEmail).toHaveBeenCalledOnce();
+    expect(attachRecoveryEmail).toHaveBeenCalledWith(
+      "test@example.com",
+      "password123",
+    );
+  });
+
+  it("offers no attach form where no account provider sits above", async () => {
+    const read = (): Promise<ProfileStripState> =>
+      Promise.resolve({ kind: "no-profile" });
+    const setName = vi.fn((): Promise<SetNameOutcome> =>
+      Promise.resolve({ kind: "named", profile: aProfile() }),
+    );
+
+    window.location.hash = "#/account";
+
+    render(
+      <ProfileProvider read={read}>
+        <SetNameProvider setName={setName}>
+          <DuelProvider
+            store={createDuelStore()}
+            send={vi.fn()}
+            forgetRoom={vi.fn()}
+          >
+            <Lobby />
+          </DuelProvider>
+        </SetNameProvider>
+      </ProfileProvider>,
+    );
+
+    await screen.findByRole("heading", { name: "Account" });
+    expect(screen.queryByRole("button", { name: ATTACH_LABEL })).toBeNull();
   });
 });

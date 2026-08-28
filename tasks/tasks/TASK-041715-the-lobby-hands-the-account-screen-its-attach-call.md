@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041715
 title: The lobby hands the account screen its attach call
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: XS

@@ -178,6 +178,9 @@ export function Lobby(): ReactElement {
           signedIn={signedIn}
           signUp={account !== null ? account.signUp : undefined}
           signOut={account !== null ? account.signOut : undefined}
+          attachRecoveryEmail={
+            account !== null ? account.attachRecoveryEmail : undefined
+          }
           onSignIn={() => open("sign-in")}
         />
         <button type="button" onClick={leave}>
