@@ -18,15 +18,18 @@ functions in one process can ever observe:
   or loads a resource from another origin. Whatever a real browser would put in a `Referer` header
   under those conditions is not something a jsdom-based test can produce or inspect, so this sweep
   says nothing about it in either direction.
-- **`ADR-0081`'s fragment token — reachable once it is in hand, not while it is still in the bar.**
-  The recovery links `ADR-0081` describes put a token in the fragment behind `#/reset` and
-  `#/verify`; the merged screens read it once and clear it with `history.replaceState`
-  (`ADR-0081` §5) before ever calling `verifyEmail` or `resetPassword`. This sweep drives those two
-  directly with `VERIFY_TOKEN` and `RESET_TOKEN` as plain arguments — the same shape a screen hands
-  them in — so the _value_ a mailed link carries is now in `SECRETS` and checked against
-  `window.location.href` after all eight calls: a regression that left either token in the address
-  bar once a screen already held it would redden here. The fragment itself — the moment
-  `#/reset/<token>` or `#/verify/<token>` sits in the bar while a screen mounts, `ADR-0081`'s one
-  sanctioned exception to "no secret in the address bar" — is not: this sweep drives no screen and
-  reads no `window.location.hash`, so that moment is invisible to it exactly as it was before this
-  ticket.
+- **`ADR-0081`'s fragment token — the two calls that receive it do not stand in the same relation
+  to it leaving the bar.** The recovery links `ADR-0081` describes put a token in the fragment
+  behind `#/reset` and `#/verify`; `Lobby`'s own mount effect (`clearToken`) is what clears it with
+  `history.replaceState` (`ADR-0081` §5). For `resetPassword`, fired from a submit handler that can
+  only run after mount and every mount effect has already completed, that clear is already done by
+  the time it is called. For `verifyEmail` it is not: `VerifyScreen` issues it from its **own**
+  mount effect, and React runs a child's mount effects before its parent's — `VerifyScreen` is the
+  child of `Lobby` here — so `verifyEmail`'s call precedes `Lobby`'s clear, both in the same commit
+  with no paint between them. Measured directly on the merged screens, the order is
+  `["verifyEmail", "replaceState"]`, the reverse of `resetPassword`'s. This sweep drives both
+  functions directly, as bare calls, with `VERIFY_TOKEN` and `RESET_TOKEN` as plain arguments; its
+  `window.location.href` check after each call would catch either function writing to
+  `window.location` itself, which neither does today — but it drives no screen and reads no
+  `window.location.hash`, so the ordering above, including the moment `verifyEmail`'s call and the
+  token's presence in the bar coincide, is invisible to it, exactly as it was before this ticket.
