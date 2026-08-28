@@ -27,6 +27,7 @@ import { openReconnectingConnection } from "../protocol/reconnecting";
 import { aView } from "../table/view-fixture";
 import {
   ATTACH_LABEL,
+  FORGOT_PASSWORD_LABEL,
   NEW_PASSWORD_LABEL,
   RESET_ENDS_EVERY_SESSION,
   RESET_HEADING,
@@ -34,7 +35,16 @@ import {
   VERIFY_HEADING,
   VERIFY_NO_LINK,
 } from "../account/recovery-text";
-import { PASSWORD_REFUSED, SIGN_IN_HEADING } from "../account/account-text";
+import {
+  ACCOUNT_HEADING,
+  CANCEL,
+  HANDLE_LABEL,
+  PASSWORD_LABEL,
+  PASSWORD_REFUSED,
+  SIGN_IN_HEADING,
+  SIGN_IN_LABEL,
+  SIGN_IN_REFUSED,
+} from "../account/account-text";
 import { readSessionToken, writeSessionToken } from "../protocol/session-token";
 
 // `read` (`useHistory()`) is wired by the real app boot in "../main", which
@@ -1893,5 +1903,148 @@ describe("the lobby", () => {
       "a-new-password",
     );
     expect(verifyEmail2).not.toHaveBeenCalled();
+  });
+
+  it("offers the way to a forgotten password under the sign-in form, refused or not", async () => {
+    window.location.hash = "#/sign-in";
+    const signIn = vi.fn(async () => ({ kind: "refused" }) as const);
+
+    renderLobbyWithAccount(accountCallsFixture({ signIn }));
+
+    // Presence first (ADR-0087 §4: conditional on nothing, so the door is
+    // here before any attempt has even been made).
+    expect(
+      screen.getByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeDefined();
+    expect(screen.getByLabelText(PASSWORD_LABEL)).toBeDefined();
+
+    fireEvent.change(screen.getByLabelText(HANDLE_LABEL), {
+      target: { value: "a-handle" },
+    });
+    fireEvent.change(screen.getByLabelText(PASSWORD_LABEL), {
+      target: { value: "a-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: SIGN_IN_LABEL }));
+
+    await screen.findByText(SIGN_IN_REFUSED);
+
+    // A door that vanished on a refusal would make a player who already
+    // knows the password is gone type a wrong one just to be shown the way
+    // out (ADR-0087 §4).
+    expect(
+      screen.getByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeDefined();
+  });
+
+  it("puts the recovery form where the sign-in form was, and takes the door with it", () => {
+    window.location.hash = "#/sign-in";
+    renderLobbyWithAccount(accountCallsFixture());
+
+    fireEvent.click(
+      screen.getByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    );
+
+    // Presence before absence: without this half every assertion below
+    // passes for a lobby that never opened the form at all.
+    expect(
+      screen.getByRole("heading", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeDefined();
+    // ADR-0087 §2: the words are never on screen twice at once, so the
+    // control is gone once it is a heading.
+    expect(
+      screen.queryByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeNull();
+    expect(screen.queryByLabelText(PASSWORD_LABEL)).toBeNull();
+    expect(screen.queryByLabelText(HANDLE_LABEL)).toBeNull();
+    expect(screen.queryByRole("button", { name: SIGN_IN_LABEL })).toBeNull();
+  });
+
+  it("sends what was typed to the account seam, and never a handle or a password", () => {
+    window.location.hash = "#/sign-in";
+    const forgotPassword = vi.fn(async () => ({ kind: "accepted" }) as const);
+    const signIn = vi.fn();
+
+    renderLobbyWithAccount(accountCallsFixture({ forgotPassword, signIn }));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    );
+    // A leading space, a trailing dot and capitals: a normalisation
+    // anywhere along the way reddens this assertion.
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: " Zqx-Address-Zqx. " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send a link" }));
+
+    expect(forgotPassword).toHaveBeenCalledOnce();
+    expect(forgotPassword).toHaveBeenCalledWith(" Zqx-Address-Zqx. ");
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it("opens the form and closes it again without touching the address", () => {
+    window.location.hash = "#/sign-in";
+    renderLobbyWithAccount(accountCallsFixture());
+
+    expect(window.location.hash).toBe("#/sign-in");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    );
+
+    // ADR-0087 §3: the fragment is not pushed, not replaced and not read by
+    // this flow — asserted with the form open, not assumed from the closed
+    // state above.
+    expect(window.location.hash).toBe("#/sign-in");
+    expect(
+      screen.getByRole("heading", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: CANCEL }));
+
+    expect(window.location.hash).toBe("#/sign-in");
+    expect(screen.getByLabelText(PASSWORD_LABEL)).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeDefined();
+    expect(
+      screen.queryByRole("heading", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeNull();
+  });
+
+  it("comes back to the sign-in form after a round trip through the lobby", async () => {
+    window.location.hash = "#/sign-in";
+    renderLobbyWithAccount(accountCallsFixture());
+
+    fireEvent.click(
+      screen.getByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    );
+    expect(
+      screen.getByRole("heading", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeDefined();
+
+    // leave() replaces the address and notifies its subscribers directly
+    // (`use-screen.ts`), but the round trip below also drives open(), which
+    // assigns location.hash and only fires hashchange on a later jsdom task
+    // — every leg of this trip is awaited through findBy* so a navigating
+    // control never leaves the previous screen's DOM behind to be queried.
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    await screen.findByRole("button", { name: "Create a duel room" });
+
+    fireEvent.click(screen.getByRole("button", { name: ACCOUNT_HEADING }));
+    await screen.findByRole("heading", { name: ACCOUNT_HEADING });
+
+    fireEvent.click(screen.getByRole("button", { name: SIGN_IN_HEADING }));
+    await screen.findByRole("heading", { name: SIGN_IN_HEADING });
+
+    // The mode belongs to the screen, not to the tab: a fresh mount of the
+    // sign-in screen always opens on the sign-in form, whatever was showing
+    // the last time this screen was on.
+    expect(screen.getByLabelText(PASSWORD_LABEL)).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeDefined();
+    expect(
+      screen.queryByRole("heading", { name: FORGOT_PASSWORD_LABEL }),
+    ).toBeNull();
   });
 });

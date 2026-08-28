@@ -27,8 +27,10 @@ import { LadderScreen } from "../ladder/LadderScreen";
 import { LADDER_HEADING } from "../ladder/ladder-text";
 import { AccountScreen } from "../account/AccountScreen";
 import { ACCOUNT_HEADING, SIGN_IN_HEADING } from "../account/account-text";
-import { useAccount } from "../account/account-provider";
+import { useAccount, type AccountCalls } from "../account/account-provider";
 import { SignInForm } from "../account/SignInForm";
+import { ForgotPasswordForm } from "../account/ForgotPasswordForm";
+import { FORGOT_PASSWORD_LABEL } from "../account/recovery-text";
 import { VerifyScreen } from "../account/VerifyScreen";
 import { ResetScreen } from "../account/ResetScreen";
 import { normalizeRoomCode, roomLink } from "./room-link";
@@ -235,7 +237,10 @@ export function Lobby(): ReactElement {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
         <h2 className="text-small">{SIGN_IN_HEADING}</h2>
-        <SignInForm signIn={account.signIn} />
+        <SignInScreenBody
+          signIn={account.signIn}
+          forgotPassword={account.forgotPassword}
+        />
         <button type="button" onClick={leave}>
           Back
         </button>
@@ -345,6 +350,35 @@ function refusalMessage(error: ProtocolError): string {
     default:
       return "The server refused that.";
   }
+}
+
+/**
+ * The sign-in screen's own mode: the sign-in form, or the recovery form in its place
+ * (`ADR-0087`). Held here rather than in `Lobby` (`ADR-0087` §7) so that leaving the sign-in
+ * screen — the only way back besides `CANCEL` once the form is open — drops the mode with no
+ * handler and no effect: mounted fresh, this component always starts closed.
+ */
+function SignInScreenBody(props: {
+  readonly signIn: AccountCalls["signIn"];
+  readonly forgotPassword: AccountCalls["forgotPassword"];
+}): ReactElement {
+  const [askingForALink, setAskingForALink] = useState(false);
+  if (askingForALink) {
+    return (
+      <ForgotPasswordForm
+        forgotPassword={props.forgotPassword}
+        onCancel={() => setAskingForALink(false)}
+      />
+    );
+  }
+  return (
+    <>
+      <SignInForm signIn={props.signIn} />
+      <button type="button" onClick={() => setAskingForALink(true)}>
+        {FORGOT_PASSWORD_LABEL}
+      </button>
+    </>
+  );
 }
 
 /**

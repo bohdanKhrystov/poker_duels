@@ -2,7 +2,7 @@
 id: EPIC-04
 title: Identity and profiles
 type: epic
-status: ready
+status: done
 module: poker-server, web-client
 labels: [server, client, identity, auth, persistence]
 ---

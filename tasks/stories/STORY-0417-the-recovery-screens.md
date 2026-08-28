@@ -2,7 +2,7 @@
 id: STORY-0417
 title: The recovery screens — attach an address, and reset a password
 type: story
-status: in-progress
+status: done
 parent: EPIC-04
 module: web-client
 labels: [client, ui, auth]
