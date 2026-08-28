@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041708
 title: One request, one answer, and nothing to read into it
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: XS
