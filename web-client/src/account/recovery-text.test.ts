@@ -16,6 +16,10 @@ describe("the account screen's words about recovery", () => {
         "ATTACH_WHY",
         "ADDRESS_LABEL",
         "CURRENT_PASSWORD_LABEL",
+        "FORGOT_PASSWORD_ACKNOWLEDGED",
+        "FORGOT_PASSWORD_FAILED",
+        "FORGOT_PASSWORD_LABEL",
+        "FORGOT_PASSWORD_SUBMIT",
         "NEW_PASSWORD_LABEL",
         "RECOVERY_OFF",
         "RECOVERY_ON",
@@ -76,6 +80,14 @@ describe("the account screen's words about recovery", () => {
     expect(recoveryText.RESET_LINK_DEAD).toBe(
       "That link has expired or has already been used. Ask for a new one and try again.",
     );
+    expect(recoveryText.FORGOT_PASSWORD_LABEL).toBe("Forgot your password?");
+    expect(recoveryText.FORGOT_PASSWORD_SUBMIT).toBe("Send a link");
+    expect(recoveryText.FORGOT_PASSWORD_ACKNOWLEDGED).toBe(
+      "If that address is verified on an account here, a link is on its way. Follow it to set a new password.",
+    );
+    expect(recoveryText.FORGOT_PASSWORD_FAILED).toBe(
+      "That did not go through. Try again.",
+    );
   });
 
   it("says recovery is on and recovery is off from one place", () => {
@@ -128,5 +140,40 @@ describe("the account screen's words about recovery", () => {
     expect(recoveryText.VERIFY_NO_LINK).not.toContain("error");
     expect(recoveryText.VERIFY_NO_LINK).not.toContain("expired");
     expect(recoveryText.VERIFY_NO_LINK).not.toContain("used");
+  });
+
+  it("says one thing to everyone who asks for a link, and never that mail was sent", () => {
+    // Exactly four FORGOT_PASSWORD_* exports and they are these four. ADR-0087 §6: a fifth
+    // sentence is the unknown-address state this flow refuses to have.
+    const forgotPasswordKeys = Object.keys(recoveryText)
+      .filter((key) => key.startsWith("FORGOT_PASSWORD_"))
+      .sort();
+    expect(forgotPasswordKeys).toEqual([
+      "FORGOT_PASSWORD_ACKNOWLEDGED",
+      "FORGOT_PASSWORD_FAILED",
+      "FORGOT_PASSWORD_LABEL",
+      "FORGOT_PASSWORD_SUBMIT",
+    ]);
+
+    // FORGOT_PASSWORD_ACKNOWLEDGED states the condition under which mail is sent and never
+    // reports that any was. ADR-0031 §5 answers 202 for five situations and ADR-0078
+    // Consequences forbids being congratulatory about it.
+    expect(
+      recoveryText.FORGOT_PASSWORD_ACKNOWLEDGED.toLowerCase(),
+    ).not.toContain("sent");
+
+    // None of the four values hints at what the product knows about the address. ADR-0087 §6
+    // forecloses this in the place the temptation to be helpful actually shows up.
+    for (const key of forgotPasswordKeys) {
+      const value = recoveryText[key as keyof typeof recoveryText];
+      if (typeof value === "string") {
+        expect(value.toLowerCase()).not.toContain("check");
+        expect(value.toLowerCase()).not.toContain("spelling");
+        expect(value.toLowerCase()).not.toContain("not found");
+        expect(value.toLowerCase()).not.toContain("does not exist");
+        expect(value.toLowerCase()).not.toContain("unknown");
+        expect(value.toLowerCase()).not.toContain("no such");
+      }
+    }
   });
 });

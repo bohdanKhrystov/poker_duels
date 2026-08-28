@@ -71,3 +71,17 @@ export const RESET_ENDS_EVERY_SESSION =
 
 export const RESET_LINK_DEAD =
   "That link has expired or has already been used. Ask for a new one and try again.";
+
+/**
+ * ADR-0087 §1 coins these four sentences. ADR-0031 §5 explains why the acknowledgement states
+ * the condition under which mail is sent rather than reporting that any was. ADR-0087 §6: this
+ * flow has one acknowledgement for all addresses and refuses a fifth sentence.
+ */
+export const FORGOT_PASSWORD_LABEL = "Forgot your password?";
+
+export const FORGOT_PASSWORD_SUBMIT = "Send a link";
+
+export const FORGOT_PASSWORD_ACKNOWLEDGED =
+  "If that address is verified on an account here, a link is on its way. Follow it to set a new password.";
+
+export const FORGOT_PASSWORD_FAILED = "That did not go through. Try again.";
