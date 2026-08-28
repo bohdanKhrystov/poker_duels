@@ -1,5 +1,6 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as screenModule from "./screen";
 import { useScreen } from "./use-screen";
 
 describe("the screen the address names", () => {
@@ -116,5 +117,61 @@ describe("the screen the address names", () => {
       window.dispatchEvent(new Event("hashchange"));
     });
     expect(result.current.screen).toBe("duels");
+  });
+
+  it("takes the token out of the address without moving the screen", () => {
+    window.location.hash = "#/verify/Xk93qQz7aa4bbCC1ddEE8ff2gg";
+    const { result } = renderHook(() => useScreen());
+    expect(result.current.screen).toBe("verify");
+
+    act(() => {
+      result.current.clearToken();
+    });
+
+    // Both halves: a replace to "/" (leave()'s target) would satisfy the
+    // hash check alone by leaving no fragment, so the screen is asserted
+    // too — the whole point is that the player stays on the screen the
+    // mailed link opened.
+    expect(window.location.hash).toBe("#/verify");
+    expect(result.current.screen).toBe("verify");
+  });
+
+  it("tells its subscribers the address changed, because replaceState will not", () => {
+    window.location.hash = "#/verify/Xk93qQz7aa4bbCC1ddEE8ff2gg";
+    const readSnapshot = vi.spyOn(screenModule, "screenFromHash");
+
+    const first = renderHook(() => useScreen());
+    const second = renderHook(() => useScreen());
+    expect(second.result.current.screen).toBe("verify");
+    readSnapshot.mockClear();
+
+    act(() => {
+      first.result.current.clearToken();
+    });
+
+    // clearToken() replaces the address with the screen it already had, so
+    // neither hook's own return value moves: useSyncExternalStore bails out
+    // of a re-render once the two snapshots are equal by value (measured in
+    // this worktree — a render counter on a second mounted instance never
+    // moves here, with or without notify()). What does move is that every
+    // listener in the module's set gets asked to re-check its snapshot, so
+    // the read count across both subscribers is the proof that notify()
+    // reached the second hook, not only the one that called clearToken.
+    expect(readSnapshot).toHaveBeenCalledTimes(2);
+
+    readSnapshot.mockRestore();
+  });
+
+  it("leaves an address with no token exactly as it found it", () => {
+    window.location.hash = "#/reset";
+    const { result } = renderHook(() => useScreen());
+    expect(result.current.screen).toBe("reset");
+
+    act(() => {
+      result.current.clearToken();
+    });
+
+    expect(window.location.hash).toBe("#/reset");
+    expect(result.current.screen).toBe("reset");
   });
 });

@@ -42,6 +42,13 @@ export function useScreen(): {
   readonly screen: Screen;
   readonly open: (screen: Exclude<Screen, "first">) => void;
   readonly leave: () => void;
+  /**
+   * Drops the mailed token from the address without moving the player off
+   * the screen it opened (`ADR-0081` §5). The token must already be read
+   * into component state before this runs — once it does, the address
+   * holds nothing left to re-read.
+   */
+  readonly clearToken: () => void;
 } {
   const screen = useSyncExternalStore(subscribe, getSnapshot);
 
@@ -59,6 +66,13 @@ export function useScreen(): {
       // notifies its own subscribers itself. The one bug here no type
       // checker catches.
       window.history.replaceState(null, "", hashForScreen("first"));
+      notify();
+    },
+    clearToken: () => {
+      // Unlike leave(), which always sends the player back to "first",
+      // this replaces with the screen already read above: leave() goes
+      // home, clearToken stays put — only the mailed secret disappears.
+      window.history.replaceState(null, "", hashForScreen(screen));
       notify();
     },
   };
