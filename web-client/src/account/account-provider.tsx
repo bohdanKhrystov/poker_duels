@@ -8,12 +8,26 @@ import type { SignUpOutcome } from "./sign-up";
 import type { SignInOutcome } from "./sign-in";
 import type { SignOutOutcome } from "./sign-out";
 import type { RevokeOutcome } from "./revoke-device";
+import type { AttachRecoveryOutcome } from "./attach-recovery-email";
+import type { ForgotPasswordOutcome } from "./forgot-password";
+import type { VerifyEmailOutcome } from "./verify-email";
+import type { ResetPasswordOutcome } from "./reset-password";
 
 export interface AccountCalls {
   readonly signUp: (handle: string, password: string) => Promise<SignUpOutcome>;
   readonly signIn: (handle: string, password: string) => Promise<SignInOutcome>;
   readonly signOut: () => Promise<SignOutOutcome>;
   readonly revokeThisDevice: () => Promise<RevokeOutcome>;
+  readonly attachRecoveryEmail: (
+    address: string,
+    currentPassword: string,
+  ) => Promise<AttachRecoveryOutcome>;
+  readonly forgotPassword: (address: string) => Promise<ForgotPasswordOutcome>;
+  readonly verifyEmail: (token: string) => Promise<VerifyEmailOutcome>;
+  readonly resetPassword: (
+    token: string,
+    newPassword: string,
+  ) => Promise<ResetPasswordOutcome>;
 }
 
 const AccountContext = createContext<AccountCalls | null>(null);
