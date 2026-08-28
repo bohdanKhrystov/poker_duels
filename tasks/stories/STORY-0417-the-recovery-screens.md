@@ -78,7 +78,74 @@ cuts this story cannot miss it, and so a reviewer can check that it was honoured
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *Not yet split. Run `/plan-story STORY-0417` once `STORY-0412` and `STORY-0416` have merged.* | — |
+| [TASK-041701](../tasks/TASK-041701-two-mailed-addresses-and-the-opaque-segment-behind-the-slug.md) | Two mailed addresses, and the opaque segment behind the slug — **the inherited debt** | backlog |
+| [TASK-041702](../tasks/TASK-041702-the-token-leaves-the-address-bar-and-the-screen-stays-where-it-is.md) | The token leaves the address bar, and the screen stays where it is | backlog |
+| [TASK-041703](../tasks/TASK-041703-the-profile-this-client-parses-carries-whether-recovery-is-on.md) | The profile this client parses carries whether recovery is on — **`atomic:`, 6 files** | backlog |
+| [TASK-041704](../tasks/TASK-041704-a-body-with-no-recovery-flag-is-not-a-profile.md) | A body with no recovery flag is not a profile, and the flag is that player's | backlog |
+| [TASK-041705](../tasks/TASK-041705-the-words-the-account-screen-says-about-recovery.md) | The words the account screen says about recovery, and never the address | backlog |
+| [TASK-041706](../tasks/TASK-041706-the-words-the-two-mailed-screens-say.md) | The words the two mailed screens say, including what a reset costs | backlog |
+| [TASK-041707](../tasks/TASK-041707-attaching-an-address-costs-the-current-password.md) | Attaching an address costs the current password, and the answer says nothing | backlog |
+| [TASK-041708](../tasks/TASK-041708-one-request-one-answer-and-nothing-to-read-into-it.md) | One request, one answer, and nothing to read into it | backlog |
+| [TASK-041709](../tasks/TASK-041709-a-token-from-the-mailbox-in-a-body-and-never-in-a-path.md) | A token from the mailbox, in a body and never in a path | backlog |
+| [TASK-041710](../tasks/TASK-041710-a-reset-takes-a-token-and-a-password-and-comes-back-with-no-session.md) | A reset takes a token and a password, and comes back with no session | backlog |
+| [TASK-041711](../tasks/TASK-041711-four-recovery-calls-on-the-seam-the-account-screens-already-use.md) | Four recovery calls on the seam the account screens already use — **`atomic:`, 5 files** | backlog |
+| [TASK-041712](../tasks/TASK-041712-the-account-screen-states-recovery-on-or-off-and-never-an-address.md) | The account screen states recovery on or off, and never an address | backlog |
+| [TASK-041713](../tasks/TASK-041713-the-form-that-attaches-an-address-and-says-why-it-asks.md) | The form that attaches an address, and says why it asks for the password | backlog |
+| [TASK-041714](../tasks/TASK-041714-the-account-screen-carries-the-attach-form.md) | The account screen carries the attach form, and only where it can be used | backlog |
+| [TASK-041715](../tasks/TASK-041715-the-lobby-hands-the-account-screen-its-attach-call.md) | The lobby hands the account screen its attach call | backlog |
+| [TASK-041716](../tasks/TASK-041716-the-screen-that-finishes-a-verification.md) | The screen that finishes a verification, from a token it is handed once | backlog |
+| [TASK-041717](../tasks/TASK-041717-the-lobby-answers-a-verification-link.md) | The lobby answers a verification link, and the token leaves the address | backlog |
+| [TASK-041718](../tasks/TASK-041718-the-screen-that-sets-a-new-password-and-says-what-it-costs.md) | The screen that sets a new password, and says what it costs before it acts | backlog |
+| [TASK-041719](../tasks/TASK-041719-the-lobby-answers-a-reset-link-and-sends-the-player-to-sign-in.md) | The lobby answers a reset link, and sends the player to sign in | backlog |
+| [TASK-041720](../tasks/TASK-041720-the-secret-sweep-drives-the-four-recovery-calls-too.md) | The secret sweep drives the four recovery calls too | backlog |
+
+**`TASK-041701` is the single startable ticket**, and it is the debt the section above records — put
+first on purpose, because every screen below it is reached through `screenFromHash`.
+
+`depends_on` is the sequence, and it is **not** a single chain. Four bundles have pairwise disjoint
+`Files` tables and can be dispatched together; everything else is strictly ordered, and the three
+tickets that edit `Lobby.tsx` are ordered by that file alone.
+
+```
+041701
+  ├─ 041702 ─┐
+  ├─ 041703 ──→ 041704 ─┐
+  └─ 041705 ──→ 041706 ──→ {041707, 041708, 041709, 041710} ──→ 041711
+                                                                   ├─ 041712 ─┐
+                                                                   ├─ 041713 ─┴→ 041714 → 041715 ─┐
+                                                                   ├─ 041716 ────────────────────→ 041717 ─┐
+                                                                   └─ 041718 ──────────────────────────────→ 041719 → 041720
+```
+
+**Every `verify:` block below the head pins per-file test counts rather than a whole-suite total**,
+because an absolute figure is wrong the moment two tickets are dispatched in one batch. The head
+pins both, since nothing else is in flight when it runs.
+
+## Held, on `DEC-081`
+
+**Three tickets are not written**, and they are exactly the ones the answer determines: the *forgot
+password* flow's **words**, its **form or screen**, and its **door, slug and wiring**. Their `Files`
+and `Tests` tables all depend on whether the flow is a screen with an address of its own or a form on
+`#/sign-in`, and on what the product calls it.
+
+What is **not** held, and is written now: `TASK-041708`, the transport. `POST /api/auth/forgot-password`
+has one field, one status and one merged sentence's worth of behaviour, and no answer to `DEC-081`
+moves a line of it. `TASK-041711` puts it on the account seam beside the other three, where
+`revokeThisDevice` has already sat without a screen since `TASK-041220`.
+
+This is `STORY-0415`'s pattern: write what the answer cannot touch, hold what it determines, and
+register the question rather than guessing it. A guessed heading here would coin player-facing
+vocabulary that `ADR-0076` §1 reserves, in a slug the product then owns forever.
+
+## Open decisions
+
+`DEC-081` — **the product owner's** — what the product calls the *forgot password* flow, whether it
+is a screen with its own address or a form on `#/sign-in`, and where its door is. Registered on
+2026-08-28 in [`docs/adr/README.md`](../../docs/adr/README.md#open-decisions). It is `DEC-077`'s
+question one screen later: `ADR-0076` §1 permits only a word the product already says to a player,
+`ADR-0083` §6 deferred the door here by name, and `ADR-0081` §3 granted this story an address without
+saying what it is. **It blocks three unwritten tickets and nothing else** — the other twenty hold
+under either answer, and `TASK-041701` is startable today.
 
 ## Acceptance criteria
 
@@ -96,6 +163,14 @@ cuts this story cannot miss it, and so a reviewer can check that it was honoured
       `#/reset/<token>` with opaque token values — the debt `TASK-041201` recorded and the section
       above spells out. A split that produces no such ticket has not met this story.
 - [ ] The suite's own count is asserted, and no test sleeps on a real clock.
+
+> **The seventh criterion is `TASK-041701`, and it is the story's head.** The eighth is met by every
+> ticket's `verify:` block, in the per-file form the split explains above.
+>
+> **Two criteria are partly held.** *"`forgot-password` renders one sentence for every outcome"*
+> is met at the transport by `TASK-041708` — two outcomes, asserted identical for every failing
+> status — and its rendering waits on `DEC-081`. The first criterion's *never renders an address* is
+> met by `TASK-041712`; the attach form's half is `TASK-041713`'s.
 
 ## Out of scope
 
