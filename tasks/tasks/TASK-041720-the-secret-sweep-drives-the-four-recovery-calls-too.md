@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041720
 title: The secret sweep drives the four recovery calls too
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
