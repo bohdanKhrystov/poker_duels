@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041711
 title: Four recovery calls on the seam the account screens already use
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
