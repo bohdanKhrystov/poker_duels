@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041713
 title: The form that attaches an address, and says why it asks for the password
 type: task
-status: done
+status: backlog
 parent: STORY-0417
 module: web-client
 estimate: S
