@@ -3,7 +3,7 @@ schema: 2
 id: TASK-041714
 title: The account screen carries the attach form, and only where it can be used
 type: task
-status: backlog
+status: done
 parent: STORY-0417
 module: web-client
 estimate: S
