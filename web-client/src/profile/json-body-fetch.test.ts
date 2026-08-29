@@ -69,4 +69,24 @@ describe("a fetch that labels its own body", () => {
       "application/xml",
     );
   });
+
+  it("keys off the body, not the method", async () => {
+    const wrapped = jsonBodyFetch(mockFetch);
+
+    // POST, no body: a wrapper gated on method rather than on init.body
+    // would label this anyway — sign-out and revokeThisDevice post exactly
+    // this shape today.
+    await wrapped("/api/auth/sign-out", { headers: {}, method: "POST" });
+
+    // DELETE, with a body: a wrapper gated on method would leave this
+    // unlabelled, since DELETE is neither POST nor PUT.
+    const body = '{"key":"value"}';
+    await wrapped("/api/legacy", { headers: {}, method: "DELETE", body });
+
+    expect(recordedCalls).toHaveLength(2);
+    expect(recordedCalls[0].init.headers).toEqual({});
+    expect(recordedCalls[1].init.headers["Content-Type"]).toBe(
+      "application/json",
+    );
+  });
 });
