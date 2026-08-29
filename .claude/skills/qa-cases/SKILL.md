@@ -51,4 +51,6 @@ deferred, and the command the human types next, with the scope filled in:
 /qa-cycle epic EPIC-04
 ```
 
-It prints that line; it does not run it.
+For more than one epic, name `regression` instead — the only scope that reaches them all in one
+command — and say plainly that it also covers every other suite in the catalogue, including ones
+this pass did not write. It prints that line; it does not run it.
