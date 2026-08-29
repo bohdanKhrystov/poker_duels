@@ -104,10 +104,15 @@ second settles how its catalogue gets written.
 | --- | --- | --- |
 | [STORY-1201](../stories/STORY-1201-the-qa-harness-two-agents-one-skill-one-catalogue.md) | The QA harness — two agents, one skill, one catalogue | done — a **retrospective record**; the code merged in `#1159` and `#1161` before the story existed |
 | `STORY-1202` | Round 1 — the smoke suite passed, and one case did not run as written | done |
-| `STORY-1203`+ | One story per QA round; the round number lives in the story, not the id | not written |
+| [STORY-1203](../stories/STORY-1203-the-qa-cases-skill-the-authoring-half.md) | The `qa-cases` skill — the authoring half, whose last act is a printed command | ready — **not a round story**; it builds the skill `ADR-0090` §3 licensed and runs no round |
+| `STORY-1204`+ | One story per QA round; the round number lives in the story, not the id | not written |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
-when it is run and the ids stay sequential without arithmetic.
+when it is run and the ids stay sequential without arithmetic. **`STORY-1203` is the one story here
+that is not a round**, the way `STORY-1201` is the one that is a retrospective record: it builds
+`qa-cases`, the authoring skill `ADR-0090` §3 licensed, which brings no stack up and reports no
+`B(N)`. The round stories therefore resume at `STORY-1204`. That is stated rather than done quietly,
+because a convention silently shifted by one is a convention nobody can rely on afterwards.
 
 ## Termination
 
