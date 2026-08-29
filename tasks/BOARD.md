@@ -3272,9 +3272,9 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120201](tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) `SMK-03` reads a device id from a profile that has been to the app | XS | done |
 | **[STORY-1203](stories/STORY-1203-the-qa-cases-skill-the-authoring-half.md)** The `qa-cases` skill — the authoring half, whose last act is a printed command — *not a round story; schema 2* | | | done |
 | | [TASK-120301](tasks/TASK-120301-the-qa-cases-skill-file.md) Create the `qa-cases` skill, whose terminal act is a printed command | S | done |
-| **[STORY-1204](stories/STORY-1204-the-epic-04-and-epic-05-catalogue-suites.md)** The `EPIC-04` and `EPIC-05` catalogue suites, authored from merged sources — *not a round story; schema 2* | | | ready |
+| **[STORY-1204](stories/STORY-1204-the-epic-04-and-epic-05-catalogue-suites.md)** The `EPIC-04` and `EPIC-05` catalogue suites, authored from merged sources — *not a round story; schema 2* | | | done |
 | | [TASK-120401](tasks/TASK-120401-the-epic-04-identity-suite.md) Write the `EPIC-04` identity suite into `docs/test-plan.md` | S | done |
-| | [TASK-120402](tasks/TASK-120402-the-epic-05-ladder-suite.md) Write the `EPIC-05` ladder suite into `docs/test-plan.md` | S | ready |
+| | [TASK-120402](tasks/TASK-120402-the-epic-05-ladder-suite.md) Write the `EPIC-05` ladder suite into `docs/test-plan.md` | S | done |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no

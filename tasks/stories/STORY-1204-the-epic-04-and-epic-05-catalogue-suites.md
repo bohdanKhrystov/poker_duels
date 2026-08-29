@@ -2,7 +2,7 @@
 id: STORY-1204
 title: The EPIC-04 and EPIC-05 catalogue suites, authored from merged sources
 type: story
-status: in-progress
+status: done
 parent: EPIC-12
 labels: [process, qa, meta]
 depends_on: [STORY-1203]
@@ -172,7 +172,7 @@ hand (`ADR-0089` §4).
 | ID | Title | Status |
 | --- | --- | --- |
 | [TASK-120401](../tasks/TASK-120401-the-epic-04-identity-suite.md) | Write the `EPIC-04` identity suite into `docs/test-plan.md` | done |
-| [TASK-120402](../tasks/TASK-120402-the-epic-05-ladder-suite.md) | Write the `EPIC-05` ladder suite into `docs/test-plan.md` | backlog |
+| [TASK-120402](../tasks/TASK-120402-the-epic-05-ladder-suite.md) | Write the `EPIC-05` ladder suite into `docs/test-plan.md` | done |
 
 **Two tickets, sequenced, because both edit one file.** A batch that started them together would
 conflict on `docs/test-plan.md` by construction. Splitting by epic also gives each reviewer one
@@ -180,15 +180,15 @@ Definition of done to check the rows against, which is the whole of the review i
 
 ## Acceptance criteria
 
-- [ ] `docs/test-plan.md` carries a `## EPIC-04 —` suite of exactly five rows and a `## EPIC-05 —`
+- [x] `docs/test-plan.md` carries a `## EPIC-04 —` suite of exactly five rows and a `## EPIC-05 —`
       suite of exactly five rows, every row five columns wide with a non-empty `source`.
-- [ ] Each suite carries `ADR-0090` §5's `Provisional` line byte-for-byte, inside its own section.
-- [ ] §*Not yet written*'s `EPIC-04` and `EPIC-05` rows no longer read *not written*.
-- [ ] §*What this catalogue does not cover* names both epics and the eleven promises neither suite
+- [x] Each suite carries `ADR-0090` §5's `Provisional` line byte-for-byte, inside its own section.
+- [x] §*Not yet written*'s `EPIC-04` and `EPIC-05` rows no longer read *not written*.
+- [x] §*What this catalogue does not cover* names both epics and the eleven promises neither suite
       reaches, with a reason for each.
-- [ ] `SMOKE` and `CORE` are byte-unchanged: 26 rows, four columns, not retrofitted
+- [x] `SMOKE` and `CORE` are byte-unchanged: 26 rows, four columns, not retrofitted
       (`ADR-0090` §4).
-- [ ] `python3 .github/scripts/lint_tickets.py` exits 0.
+- [x] `python3 .github/scripts/lint_tickets.py` exits 0.
 
 ## Out of scope
 
