@@ -3270,6 +3270,8 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | **[STORY-1201](stories/STORY-1201-the-qa-harness-two-agents-one-skill-one-catalogue.md)** The QA harness — two agents, one skill, one catalogue — *a retrospective record; no tickets* | | | done |
 | **[STORY-1202](stories/STORY-1202-the-first-round-smoke-passed-and-one-case-did-not-run-as-written.md)** Round 1 — the smoke suite passed, and one case did not run as written — *schema 2* | | | done |
 | | [TASK-120201](tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) `SMK-03` reads a device id from a profile that has been to the app | XS | done |
+| **[STORY-1203](stories/STORY-1203-the-qa-cases-skill-the-authoring-half.md)** The `qa-cases` skill — the authoring half, whose last act is a printed command — *not a round story; schema 2* | | | ready |
+| | [TASK-120301](tasks/TASK-120301-the-qa-cases-skill-file.md) Create the `qa-cases` skill, whose terminal act is a printed command | S | ready |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no
@@ -3282,3 +3284,16 @@ description of it"* — so until `ADR-0089` merged at 10:59 UTC no ticket built 
 and five minutes later the harness had merged. Its acceptance criteria are structural checks on
 merged files, each a command, all run at `5848e529`; they are not a coverage claim and `ADR-0089`
 §2c forbids citing them as one.
+
+`STORY-1203` is the **authoring half**, and it is **not a round story** — the epic's Stories table
+says so in its own row rather than leaving the reader to notice, and the round stories resume at
+`STORY-1204` instead of being renumbered. It builds `.claude/skills/qa-cases/SKILL.md`, the skill
+[`ADR-0090`](../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md) §3
+licensed the same day: `/qa-cases EPIC-04 EPIC-05` reads the epics, the ADRs, `docs/duel-rules.md`
+and the client's literals, plans and lands the suites through `build-epic` as ordinary reviewed PRs,
+and then **stops**, printing the `/qa-cycle` command the human types next. It runs no browser,
+brings no stack up and dispatches neither QA agent. The story also completes `ADR-0090` §2's
+allow-list: **exactly three** files under `.claude/` may name `qa-cycle`, the third is the file this
+story creates, and its ticket carries that check as a `verify:` line so the list is enforced from
+the moment it is complete. The gates were measured under both the shim `grep` an agent shell
+resolves and `/usr/bin/grep`, and agreed — `0` with three files, `1` with a fourth.
