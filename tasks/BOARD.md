@@ -93,7 +93,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | EPIC-09 | Bots and simulation | *not written* | later |
 | EPIC-10 | The AI software factory — the case study | *not written* | continuous |
 | [EPIC-11](epics/EPIC-11-status-notifications.md) | Status notifications — the run reports itself | **in progress** | v0.1 |
-| [EPIC-12](epics/EPIC-12-quality-and-defect-repair.md) | Quality and defect repair — the cycle that tests, triages and stops | **blocked** on `DEC-082` — opened 2026-08-29 on the human's instruction. A `qa` agent scoped to an epic, a smoke run or a regression run; a `qa-manager` that triages and is the only thing that files bug tickets; a `qa-cycle` skill that runs the loop and **stops** it. Bugs are ordinary `task`s under a round story, which is what lets `build-epic` repair them unmodified and needs no change to a merged gate. Its hardest requirement is termination — five budgets and a convergence rule, because a loop that reports more defects every round is the failure it is designed against | v0.1 |
+| [EPIC-12](epics/EPIC-12-quality-and-defect-repair.md) | Quality and defect repair — the cycle that tests, triages and stops | **ready** — `DEC-082` answered by [`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md) on 2026-08-29: a browser may drive this client for a QA round, never for a gate, on three standing conditions (no dependency, no gate, no coverage claim), and `ADR-0088` §1's heading is amended to match while its body stands. Opened 2026-08-29 on the human's instruction. A `qa` agent scoped to an epic, a smoke run or a regression run; a `qa-manager` that triages and is the only thing that files bug tickets; a `qa-cycle` skill that runs the loop and **stops** it. Bugs are ordinary `task`s under a round story, which is what lets `build-epic` repair them unmodified and needs no change to a merged gate. Its hardest requirement is termination — five budgets and a convergence rule, because a loop that reports more defects every round is the failure it is designed against | v0.1 |
 
 Numbers 03–05 and 07–10 are **reserved**, not planned in detail. Epics are written when the one
 before them is close to done, because writing them earlier means rewriting them. `EPIC-06` is
@@ -726,7 +726,44 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
-| DEC-082 | **The architect's** — may a browser-driving QA harness live in this repository, when [`ADR-0088`](../docs/adr/ADR-0088-the-two-browser-proof-is-a-written-hand-check.md) §1 refuses one by name? What `EPIC-12` proposes is narrower than what §1 refused — no CI job, no `web-client/package.json` dependency, no pull-request gate, an agent-driven harness a human invokes — and §1's stated reasoning was a **ratio** against a permanent third CI job, a cost this incurs none of. But §1's words are unconditional, and a harness under `.claude/skills/` is a browser runner in the repository whatever invokes it. §5 prices reversal at one superseding ADR plus one story and calls that reversibility the reason for the original choice. **Blocks all of `EPIC-12`** | [`EPIC-12`](epics/EPIC-12-quality-and-defect-repair.md) | before `STORY-1201` is split |
+
+`DEC-082` → [`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)
+on 2026-08-29 — **a browser drives this client for a QA round, never for a gate.** Raised the same
+day `EPIC-12` was written, and answered by the architect.
+
+**It was inside `ADR-0088` §1's words, and the answer says so rather than reading them narrowly.**
+*"No browser drives this client, here or in CI"* says *here*, and a driver under `scripts/qa/` is a
+browser runner in this repository whatever invokes it. So the route is the one `ADR-0088` §5 priced:
+amend the clause in the open. **The heading is amended and nothing else is** — it now reads *no
+browser drives this client in CI, and no browser stands between a pull request and `develop`*.
+§1's body, §§2–5 and `DEC-024`'s answer stand **byte-unchanged**: `EPIC-03` ships no fifteenth
+story, §2's eleven-step hand-check remains the proof of record, `build.yml` keeps its two jobs, no
+Playwright/Puppeteer/Selenium/WebDriver/Cypress dependency enters `web-client/package.json`, and
+`ADR-0032` §4's *"still jsdom, still no network"* still holds of every test suite — the harness is
+in none of them.
+
+**Why the amendment and not a refusal.** §1's stated reasoning was a **ratio** — *"rejected on the
+ratio, not on the principle"* — whose three cost terms were a third CI job, flake on pull requests
+that are mostly markdown, and a `package.json` dependency. **None is incurred**: `build.yml` is
+untouched, no PR waits on a case, and the driver has no `import` in 249 lines. And §2 of that same
+ADR already has a person driving two browsers through this client, so what §1 separates is the
+**position** — a hand-check that leaves a receipt, against a gate between a diff and `develop` —
+not the browser.
+
+**The permission is three conditions, jointly**: no browser dependency in any module; **no gate**
+(no pull request, `verify:` block or ticket waits on a case; a human's command starts a cycle, not
+a merge or a cron); **no coverage claim** (a QA round is a dated record, citable in no `Metrics`,
+Definition of done or `verify:`). Any one failing returns the question as a new `DEC`. The driver
+**reads anything and writes nothing** but `pd.roomCode`, because a case that seeds state to reach a
+screen is a client asserting a game fact (`ADR-0002`).
+
+**The clause `EPIC-12` §Termination lacked**: a failing case that does not reproduce by hand is a
+**harness** defect — filed against `EPIC-12`, **excluded from `B(N)`**, never repaired in production
+code. Without it a stale catalogue reads as a product getting worse and trips `STOP_DIVERGING` on a
+healthy product, or step 4 merges a diff to satisfy a moved string. **The cost, named:** `ADR-0088`
+§Consequences' precedent is weakened one day after it was set, `scripts/qa/` carries an unpinned
+macOS-only Chrome path, `dist/` is still unproven, and the reproduce-by-hand rule is prose an agent
+follows rather than an exit code.
 
 `DEC-081` → [`ADR-0087`](../docs/adr/ADR-0087-forgot-your-password-is-a-door-on-the-sign-in-screen.md)
 on 2026-08-28 — ***Forgot your password?* is a door on the sign-in screen, not a screen of its own.**
