@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120501
 title: Every request with a body declares that it is JSON
 type: task
-status: ready
+status: done
 parent: STORY-1205
 module: web-client
 estimate: S
