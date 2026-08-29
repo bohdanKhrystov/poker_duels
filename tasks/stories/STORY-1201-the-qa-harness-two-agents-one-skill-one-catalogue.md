@@ -33,10 +33,10 @@ the merge commits and from the pull requests themselves.
 | When | What |
 | --- | --- |
 | 10:39:05 | `#1158` opens, carrying the whole harness |
-| 10:39:18 | `EPIC-12` merges (`50dffbfe`, `#1157`) — *"opens the quality cycle, **blocked on `DEC-082`**"*. Its Stories table lists `STORY-1201` as `ready to split` |
+| 10:39:18 | `EPIC-12` merges (`50dffbfe`, `#1157`). Its Stories table lists `STORY-1201` as **`blocked on DEC-082`** — not `ready to split`, which the epic did not yet say |
 | 10:40:43 | `#1158` is closed 98 seconds old: its diff carried `EPIC-12`'s files, which had just merged separately via `#1157` |
 | 10:40:45 | `#1159` reopens the harness from a clean base |
-| 10:59:11 | `ADR-0089` merges (`bb897f14`, `#1160`), answering `DEC-082` |
+| 10:59:11 | `ADR-0089` merges (`bb897f14`, `#1160`), answering `DEC-082`. **The same commit flips `STORY-1201` to `ready to split`** |
 | 11:04:13 | `#1159` merges (`b1c8a753`) — **five minutes** after the ADR that licensed it |
 | 11:25:34 | `#1161` merges (`7f7b905f`) |
 
@@ -51,11 +51,18 @@ output of a split. That was a defensible thing to do: `ADR-0088` §1 forbade the
 name, and a description of a browser runner is a much weaker thing for an architect to rule on than
 the runner.
 
-But it left no moment at which a split was possible. Before 10:59 the story could not be split at
-all — `tasks/README.md` is explicit that *"the ADR must be merged before a ticket built on it is
-startable"*, and `DEC-082` was open. After 10:59 the code the tickets would have produced already
-existed, had been reviewed as a proposal, and merged five minutes later. The split step was never
-reached, and nobody returned to it.
+But it left no moment at which a split was possible, and the epic's own file is the proof. Until
+10:59 it recorded `STORY-1201` as **`blocked on DEC-082`**, which was accurate: `tasks/README.md`
+is explicit that *"the ADR must be merged before a ticket built on it is startable"*. The status
+`ready to split` first enters the file in `bb897f14` — **the very commit that merged `ADR-0089` and
+removed the block** (`git log -S 'ready to split' -- tasks/epics/EPIC-12-*.md` names no earlier
+one). Five minutes later the harness merged.
+
+So `ready to split` never described a state anyone could have acted on. It was true for five
+minutes, and for all five of them the thing it described was already written, already reviewed as a
+proposal, and already sitting in a mergeable pull request. The status went from `blocked` to
+code-merged with no window in between: the split was not skipped, it was never reachable. Nobody
+returned to it afterwards.
 
 **The lesson, stated once and not generalised further than the evidence:** a proposal written to
 settle a `DEC` becomes merged code the moment the `DEC` is answered, and the story that would have
@@ -94,9 +101,27 @@ message, and the terminal report always sends, whichever of the five states it r
 
 ## Acceptance criteria
 
-Every command was run at commit `5848e529` from the repository root and exited 0. They check
+Every command was run from the repository root against the merged tree and exited 0. They check
 **structure**, which is all a record can honestly check about merged code; none of them is a
 coverage claim, and `ADR-0089` §2c forbids citing any of this as one.
+
+**The four that could plausibly pass for the wrong reason — the two denied-verb checks, the
+`drive.mjs` one and the job count — were each probed in the failing direction**, because a check
+nobody has seen fail is not evidence. The other six compare an exact string or count a set of
+filenames, and fail visibly when they fail. Two mechanisms bit during that probing and are recorded
+so the next person does not pay for them twice:
+
+- `grep -E` here does **not** support `^` inside a mid-pattern alternation. `(^|[^A-Za-z])kill`
+  matches *nothing at all* rather than erroring — it reported zero hits on a file with three, and
+  would have passed on a file containing a real `kill`.
+- `grep -vq` over a piped multi-line stream **disagrees between grep binaries** on this machine:
+  `printf 'has deny\nhas not\n' | grep -vq den` exits 1 under the `grep` an agent shell resolves,
+  and 0 under `/usr/bin/grep`. A criterion built on it could not fail.
+
+Both live in `grep`, so the two criteria that need a *negative across many lines* are written in
+`awk`, which behaved identically under every probe. The rest either use plain `-q` over a single
+search or hand their **output** to `awk`, which does the deciding; each was run under both binaries
+and gave the same answer.
 
 - [x] **The six files exist.**
 
@@ -128,10 +153,13 @@ coverage claim, and `ADR-0089` §2c forbids citing any of this as one.
 
 - [x] **Every mention in the agent and the skill forbids the verb rather than using one.** Two
       lines name them — `.claude/agents/qa.md:51` and `.claude/skills/qa-cycle/SKILL.md:53` — and
-      both also say `den`ied/`den`y. Enumerate them first with the same pattern without `-v`; the
-      set is not empty, which is what stops this from passing vacuously.
+      both also say `den`ied/`den`y. The `n>0` term is not decoration: without it a pattern that
+      matched nothing would pass, and a check that passes on an empty set is a check that has
+      stopped looking. Probed four ways: the real files exit 0; appending
+      `Just run kill on the process if it hangs.` to `SKILL.md` exits 1; a file with no mention at
+      all exits 1; and adding a line containing the word *skill* leaves it at 0.
 
-      ! grep -hE '\b(kill|pkill|killall)\b' .claude/agents/qa.md .claude/skills/qa-cycle/SKILL.md | grep -vq 'den'
+      awk '{s=" " $0 " "; if (s ~ /[^A-Za-z](kill|pkill|killall)[^A-Za-z]/) {n++; if ($0 !~ /den/) bad=1}} END{exit (n>0 && !bad) ? 0 : 1}' .claude/agents/qa.md .claude/skills/qa-cycle/SKILL.md
 
 - [x] **The catalogue has a smoke suite, a CORE suite and a per-epic template.**
 
