@@ -78,6 +78,10 @@
       "Bash(git clean -n:*)",
       "Bash(git gc:*)",
       "Bash(git update-index:*)",
+      "Bash(./scripts/qa/stack.sh:*)",
+      "Bash(scripts/qa/stack.sh:*)",
+      "Bash(bash scripts/qa/stack.sh:*)",
+      "Bash(mktemp:*)",
 
       "Bash(gh pr view:*)",
       "Bash(gh pr list:*)",
