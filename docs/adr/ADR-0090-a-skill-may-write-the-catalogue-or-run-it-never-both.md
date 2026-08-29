@@ -197,19 +197,54 @@ For every case `qa-cases` writes, both rules become **one** fifth column, `sourc
 
 **A case whose expectation has no merged source is not written.** The gap is registered as a
 `DEC-NNN` for the **product owner**, and the case waits for the answer. This extends `ADR-0089` §5
-where it was silent — §5 governs cases that quote player-facing text — and amends nothing.
+where it was silent — *that ADR's* §5 governs cases which quote player-facing text — and amends
+nothing.
 
 This is the clause that answers §Context's fourth force. A transcribed expectation is a technical
 act; an invented one is a product claim, and step 4 of the loop will change production code to
 satisfy it. Existing suites are **not** retrofitted: this ADR buys no churn in `SMOKE` and `CORE`,
 and the resulting four-column-and-five-column catalogue is a cost named below.
 
-### 5. This licenses no schedule, and says so
+### 5. A suite authored blind is provisional until its first round
+
+`docs/test-plan.md` §*Per-epic suites* says, immediately above the rules §4 engages:
+
+> Filled in when an epic is first tested, **not before**. A suite written from ticket titles rather
+> than from exercising the screens is a suite that tests the titles.
+
+**§3 contradicts both sentences and this ADR does not pretend otherwise.** `qa-cases` has no browser,
+so it fills a suite in *before* the epic is tested; and it writes from neither grounding the second
+sentence contemplates — not ticket titles, and not exercised screens, but merged decisions. The
+sentence is therefore **amended in this ADR's PR** rather than left to disagree with it, in the same
+way §1 amends `ADR-0089` §2b: the ADR is where the amendment is argued, `docs/test-plan.md` is where
+the rule lives, and a reader of that file alone must not get the old rule.
+
+**What §4's grounding does not buy.** A merged ADR proves what was **decided**, not what **shipped**.
+It cannot show that the screen exists, that the control is reachable, that a literal has not moved
+since, or that the flow a case describes is the flow the product has. Only observation catches those,
+and `qa-cases` does not observe, by construction. §4 answers *"is this case invented?"* — a real
+question, and the one that keeps a product claim out of a test. It answers nothing about *"does this
+screen exist?"*, and conflating the two would be the most expensive sentence in this document.
+
+**So an authored suite carries one line, and the round that first runs it deletes that line:**
+
+> **Provisional** — authored YYYY-MM-DD from merged sources, not yet run (`ADR-0090` §5).
+
+The round record that strikes it names the cases it corrected. While the line stands:
+
+- the suite's failures are as much a claim about the catalogue as about the product, so `ADR-0089`
+  §4's hand-reproduction is not a formality for them — it is the whole point. **This changes nothing
+  about §4**: a failure that does not reproduce by hand is still a harness defect, repaired in
+  `docs/test-plan.md`, excluded from `B(N)`, with no production code changed for it;
+- corrections to those cases in that round are **expected rather than a surprise**, and they are
+  harness tickets against `EPIC-12`.
+
+### 6. This licenses no schedule, and says so
 
 Nothing here weakens §2b toward a nightly, a label trigger or a cron. `ADR-0089` §Alternatives 3
 already named what would: rounds as evidence, in an ADR of their own. That remains the only route.
 
-### 6. Reversing this is one superseding ADR and one skill file
+### 7. Reversing this is one superseding ADR and one skill file
 
 If two or three rounds show the boundary costs hours and buys nothing, the composite becomes a
 superseding ADR with those rounds in it — and that evidence is exactly what does not exist today.
@@ -222,8 +257,24 @@ unattended for hours precisely so a person need not be present; QA now cannot be
 The authoring pass ends at an hour nobody can predict, and the cycle then waits on one typed line —
 possibly overnight, possibly a weekend. That is a cost paid on **every** round, forever, against a
 failure that has not yet occurred once. Anyone who finds that a bad trade is holding the same facts
-this ADR held; the answer is §6, and the evidence they will have is exactly the evidence this
+this ADR held; the answer is §7, and the evidence they will have is exactly the evidence this
 decision lacked.
+
+**The first round over an authored suite is mostly harness triage, and that is chosen here rather
+than discovered later.** The three untested epics carry **24** Definition-of-done promises between
+them — 12, 9 and 3 — and §Template rule 1 is one case per promise, so an authoring pass roughly
+**doubles** a 26-case catalogue with cases nothing has ever run. Every one that fails must be
+reproduced by hand under `ADR-0089` §4 before `qa-manager` may file it, so the first `/qa-cycle`
+over a fresh suite is a round spent largely on telling a broken case from a broken product — which
+is precisely `ADR-0089` §Consequences' *"a round against a stale catalogue is **slower** than the
+hand-check it was meant to relieve"*, arriving on the **first** round rather than after months of
+drift. It is taken deliberately: authoring blind is cheap and every case it gets wrong is repaired
+in a markdown table, while the only alternative — letting `qa-cases` drive a browser to verify what
+it writes — puts an authoring skill inside the licence §1 has just narrowed to one caller. The
+consequence to state plainly, because its arithmetic looks wrong: since §4 excludes harness defects
+from `B(N)`, **a first round can end `PASS` with a dozen of its own cases found broken.** That is
+the correct result and not a bug in the rule; anyone reading such a `PASS` as a verdict on the
+product is making the coverage claim `ADR-0089` §2c already forbids.
 
 **The condition binds artifacts, not prompts.** The grep in §2 sees a committed file. It does not
 see a human — or a cron prompt — typing *"write the cases and then run a full QA cycle"* in one

@@ -768,8 +768,21 @@ merging production diffs. `SMK-03` is the evidence it is not theoretical. So eve
 writes carries a `source` column citing the merged decision its expectation transcribes, and **a
 case with no merged source is not written**: it becomes a `DEC` for the **product owner**.
 
-**The cost, named:** QA becomes the workflow's one unchainable step and a person waits at an hour
-nobody can predict, **every round, forever**, against a failure that has not yet happened once; the
+**A suite authored this way is provisional until its first round**, and `docs/test-plan.md`
+§*Per-epic suites*' *"filled in when an epic is first tested, not before"* is amended in the same PR
+to say so rather than left to disagree. Merged sources prove what was *decided*, not what *shipped*:
+they cannot show that a screen exists, that a control is reachable, or that a literal has not moved.
+So the provisional line stands on the suite until the round record that first runs it deletes it,
+naming the cases that round corrected.
+
+**The cost, named:** the three untested epics carry 24 Definition-of-done promises between them, so
+an authoring pass roughly **doubles** a 26-case catalogue with cases nothing has ever run, and the
+first round over one is spent largely telling a broken case from a broken product — `ADR-0089`'s
+*"slower than the hand-check it was meant to relieve"*, arriving on round 1 rather than after months
+of drift, and capable of ending **`PASS` with a dozen of its own cases found broken** because §4
+excludes harness defects from `B(N)`. QA becomes the workflow's one unchainable step and a person
+waits at an hour nobody can predict, **every round, forever**, against a failure that has not yet
+happened once; the
 condition binds committed files and not a prompt, so a human or a cron typing *"write the cases and
 then run a cycle"* defeats it with nothing mechanical to catch them; three ADRs and two amended
 headings now hold the browser rule; the `source` rule will slow the first authoring pass and raise
