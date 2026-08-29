@@ -3181,3 +3181,34 @@ the wall clock is an injected `java.time.Clock`, `ServerClock` keeps measuring d
 else, and `ADR-0061` §3 is amended in that one clause. `TASK-050106` is unblocked and names the type
 it takes, the absence of a default, and how its tests pin an instant — `Clock.fixed` for the two
 fixed cases and a private movable subclass for the one that crosses a year boundary.
+
+---
+
+## EPIC-12 — Quality and defect repair
+
+Opened 2026-08-29 on the human's instruction; licensed by
+[`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)
+(`DEC-082`) on three standing conditions — no dependency, no gate, no coverage claim. Rounds are
+stories: the round number lives in the story body, not in the id.
+
+**Round 1** ran `/qa-cycle smoke` on 2026-08-29 at commit `7f7b905f` and ended **`PASS`** with
+`B(1) = 0` — six smoke cases, none failed, nothing to dedupe against and no severity to argue.
+The fix set is empty, because `EPIC-12` §Termination rule 2 admits only `blocker` and `high` and
+there were none. The one ticket it filed is a **harness** defect under `ADR-0089` §4: `SMK-03`
+reads `pd.deviceId` from a profile the catalogue never tells anyone to open, so the case is red for
+the harness rather than for the product. It is excluded from `B(1)`, it is repaired in
+`docs/test-plan.md`, and no production code may change for it. `SMK-02`'s weak assertion was
+assessed the same round and **deliberately not filed**, with reasons in the story. A `PASS` here is
+a statement about one run, on one machine, at one commit — not coverage, and not citable as any
+(`ADR-0089` §2c).
+
+| Story | Task | Est | Status |
+| --- | --- | --- | --- |
+| **[STORY-1202](stories/STORY-1202-the-first-round-smoke-passed-and-one-case-did-not-run-as-written.md)** Round 1 — the smoke suite passed, and one case did not run as written — *schema 2* | | | in-progress |
+| | [TASK-120201](tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) `SMK-03` reads a device id from a profile that has been to the app | XS | ready |
+
+`STORY-1201` — the harness itself — is **written into the epic's Stories table and has no ticket
+file**: the two agents, the skill, the driver and the catalogue shipped in `#1159` and `#1161`
+without one. That is a gap in the trail, not in the code, and it is noted here rather than
+silently filed: the round manager's remit is defects in the product and the harness, and a missing
+ticket for merged work is neither.
