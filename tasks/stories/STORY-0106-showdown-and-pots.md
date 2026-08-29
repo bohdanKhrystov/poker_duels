@@ -2,7 +2,7 @@
 id: STORY-0106
 title: Showdown and pot resolution
 type: story
-status: backlog
+status: done
 parent: EPIC-01
 module: poker-engine
 labels: [engine, rules]

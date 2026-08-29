@@ -2,7 +2,7 @@
 id: STORY-0102
 title: Cards, deck and deterministic shuffle
 type: story
-status: ready
+status: done
 parent: EPIC-01
 module: poker-engine
 labels: [engine, domain]
