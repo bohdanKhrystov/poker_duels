@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120506
 title: A case can end a browser session, and says so
 type: task
-status: backlog
+status: done
 parent: STORY-1205
 estimate: XS
 tier: haiku
