@@ -93,7 +93,7 @@ question as a new `DEC`.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| `STORY-1201` | The QA harness — two agents, one skill, one catalogue | ready to split |
+| [STORY-1201](../stories/STORY-1201-the-qa-harness-two-agents-one-skill-one-catalogue.md) | The QA harness — two agents, one skill, one catalogue | done — a **retrospective record**; the code merged in `#1159` and `#1161` before the story existed |
 | `STORY-1202` | Round 1 — the smoke suite passed, and one case did not run as written | done |
 | `STORY-1203`+ | One story per QA round; the round number lives in the story, not the id | not written |
 
@@ -155,8 +155,13 @@ prevent.
 - [ ] A harness defect and a product defect have been told apart at least once, on the record: a
       failing case that did not reproduce by hand was filed against this epic and kept out of
       `B(N)` (§Termination rule 6). Until that happens the rule is untested prose.
-- [ ] `STORY-1201` is `done`: the two agents, the skill and the catalogue exist, and the skill's
-      stack lifecycle uses no denied verb.
+- [x] `STORY-1201` is `done`: the two agents, the skill and the catalogue exist, and the skill's
+      stack lifecycle uses no denied verb —
+      [`STORY-1201`](../stories/STORY-1201-the-qa-harness-two-agents-one-skill-one-catalogue.md),
+      2026-08-29, which carries the command for each half of that sentence. It is a **retrospective
+      record**: the harness merged in `#1159` and `#1161` with no story file and no tickets, and the
+      story was written afterwards to close the gap in the trail. The box is ticked on the
+      structural checks passing at commit `5848e529`, not on the story having been planned first.
 - [ ] One full cycle has run end to end and terminated in a named exit state, with its round
       ledger committed.
 - [ ] The cycle demonstrably stops: a round whose `B(N)` did not decrease ends the run, proved by
