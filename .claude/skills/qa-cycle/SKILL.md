@@ -143,15 +143,69 @@ Restated here because a skill that hides its own exit conditions is how a loop b
 Never override a stop because the next round "would probably fix it". The human asked for this
 loop not to run forever, in those words. A stop with a clear account is the deliverable.
 
+## Report while you run
+
+A cycle is long and mostly silent: a round is a stack boot, a suite, a triage and a `build-epic`
+pass. From outside, *round 2 of 3* and *dead an hour ago* look identical. So it reports itself over
+Telegram through `scripts/notify/notify.py`, the same channel `build-epic` uses
+(`ADR-0042`, `docs/notifications.md`).
+
+Set up at the **start of the cycle**, while the budget is healthy — this is not something to do
+later:
+
+```
+notify.py state --epic EPIC-12 --cron-armed armed|not-armed
+CronCreate(cron: "0 */2 * * *", recurring: true, prompt: "run: python3 scripts/notify/notify.py heartbeat")
+```
+
+Pass `--cron-armed armed` **only once `CronCreate` has returned successfully**, never
+optimistically — the flag is worth having precisely because the human can trust it.
+
+The same four reports, with the round as the unit:
+
+- **heartbeat** — the cron sends it every two hours. Call `notify.py heartbeat --force` yourself at
+  each **round boundary**, right after `qa-manager` returns its verdict, so a finished round is not
+  held until the clock comes round. It deduplicates on the last-sent stamp, so a forced report and
+  the cron cannot both fire.
+- **stop** — carried by the `Stop` hook, which stays silent unless the run state names a
+  `current_epic`. That is why `--epic EPIC-12` is set at the start, and why
+  `notify.py state --clear` runs at the end: the hook must fall silent with the cycle.
+- **blocked** — `notify.py blocked --decision DEC-NNN --question "…"` the moment a verdict is
+  `STOP_BLOCKED`. Send it when you park, not in the final report; the point is that the human can
+  answer while the cycle is still warm.
+- **budget** — `notify.py budget --cron-armed armed|not-armed|unknown` **the instant a usage
+  warning appears, before anything else.** A usage limit ends the turn and every turn after it, so
+  a plan that reports after the limit never reports. Ordering is load-bearing here: send it first,
+  then land whatever is already reviewed.
+
+**The verdict is the news, not the findings.** Report at round boundaries and at the terminal exit
+— never per case, per ticket or per merge. A round that found eleven defects is one message with
+`B(N)` and the verdict in it, not eleven. Narrating each finding is the noise this cycle exists to
+replace, and it would make the heartbeat useless exactly when it matters.
+
+Because the exit state is the whole point, **the terminal report always sends** — force a heartbeat
+before `state --clear`, whichever of the five states it ended in. A `STOP_DIVERGING` that nobody
+hears about is the same as a cycle that never ran.
+
+Failures here are ignorable by design: every command exits 0 whether or not it sent. **Never let a
+notification failure stop, retry or slow the cycle** — and never let one turn into a finding.
+
 ## Teardown — always, including on failure
 
 ```bash
+notify.py heartbeat --force        # the terminal report, whatever the exit state
 scripts/qa/stack.sh chrome-down 9232 9233
 scripts/qa/stack.sh db-down
+notify.py state --clear            # the Stop hook falls silent with the cycle
 ```
 
-and `TaskStop` the server and dev-server background tasks. A round that leaves a listener on `8080`
-or `5173` makes the next round fail on a port collision and report it as a product defect.
+and `TaskStop` the server and dev-server background tasks. Then `CronDelete` the heartbeat job you
+armed at the start — a cron outliving its cycle fires a report about a run that ended, and a stale
+resume prompt is worse than no prompt.
+
+**Order matters.** The heartbeat goes first, while the run state still names what happened;
+`state --clear` last, because it is what silences the Stop hook. A round that leaves a listener on
+`8080` or `5173` makes the next round fail on a port collision and report it as a product defect.
 
 ## Report to the user
 
