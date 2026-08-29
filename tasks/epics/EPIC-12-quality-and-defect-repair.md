@@ -2,7 +2,7 @@
 id: EPIC-12
 title: Quality and defect repair — the cycle that tests, triages and stops
 type: epic
-status: blocked
+status: ready
 labels: [process, meta, qa]
 ---
 
@@ -57,11 +57,23 @@ That sentence is the epic's hardest requirement, and §Termination below is the 
 
 ## Out of scope
 
-- **Any change to CI.** `build.yml` keeps its two jobs. This cycle is run by a human's command,
-  never by a pull request.
-- **Any browser dependency in `web-client/package.json`.** `ADR-0088` §1 forbids it by name and
-  `DEC-082` does not reopen that clause — the QA harness drives Chrome over the DevTools protocol
-  from the agent, and the client's dependency list is untouched.
+The first three are not this epic's self-restraint. They are the **standing conditions**
+[`ADR-0089`](../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)
+§2 attaches to the permission itself: any one of them failing withdraws the licence and returns the
+question as a new `DEC`.
+
+- **Any change to CI.** `build.yml` keeps its two jobs. A cycle is started by a human's command —
+  not a pull request, not a merge, not a cron, not another skill invoking it as a step
+  (`ADR-0089` §2b).
+- **Any browser dependency in `web-client/package.json`**, or in any other module's dependency set.
+  `ADR-0088` §1 forbids it by name and `ADR-0089` leaves that sentence byte-unchanged — the harness
+  drives Chrome over the DevTools protocol using only Node built-ins, and no dependency list is
+  touched (`ADR-0089` §2a).
+- **Any claim of coverage.** A round's output is a dated record. Neither it nor `docs/test-plan.md`
+  may be cited in an epic's `Metrics`, a Definition of done or a ticket's `verify:` (`ADR-0089` §2c).
+- **Writing application state to reach a screen.** The driver reads anything and writes nothing but
+  `pd.roomCode`; a case that seeds the store, a socket frame or a row is a client asserting a game
+  fact, which `ADR-0002` forbids (`ADR-0089` §3).
 - Fixing the defects. Repair runs as `build-epic` over ordinary tickets, which is the whole reason
   bugs are filed as `task`s: the linter knows `epic`/`story`/`task` and nothing else, so a bug that
   is a task needs **no change to a merged gate** and `build-epic` runs it unmodified.
@@ -69,15 +81,19 @@ That sentence is the epic's hardest requirement, and §Termination below is the 
 
 ## Open decisions
 
-| ID | Question | Where | Due |
-| --- | --- | --- | --- |
-| `DEC-082` | **The architect's** — may a browser-driving QA harness live in this repository, given [`ADR-0088`](../../docs/adr/ADR-0088-the-two-browser-proof-is-a-written-hand-check.md) §1 refuses one by name? §1 says *"No browser drives this client, here or in CI"* and forbids a browser runner; §5 prices reversal at *"a superseding ADR plus one story"* and states the reversibility **is** the reason for the choice. What is asked here is narrower than the thing §1 refused: no CI job, no `package.json` dependency, no pull-request gate — an agent-run harness a human invokes. Settle whether that is inside §1's refusal or outside it; if inside, what supersedes and in what terms; if outside, say so in a merged record so the next reader is not left reinterpreting a merged ADR from prose. **Blocks this entire epic** | [`ADR-0088`](../../docs/adr/ADR-0088-the-two-browser-proof-is-a-written-hand-check.md) §1 and §5 | before any story here is split |
+**None.** The only one, `DEC-082`, is answered below and unblocked this epic.
+
+### Answered since this epic was written
+
+| ID | Answered by | What it means here |
+| --- | --- | --- |
+| `DEC-082` | [ADR-0089](../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md) | **A browser drives this client for a QA round, never for a gate.** The harness may live here. It **was** inside `ADR-0088` §1's words — *"here or in CI"* says *here* — so §1's **heading** is amended in the open and nothing else is: `EPIC-03` still ships no fifteenth story, §2's eleven-step hand-check is still the proof of record, `build.yml` keeps its two jobs, no browser dependency enters `web-client/package.json`, and `ADR-0032` §4's *"still jsdom, still no network"* still holds of every test suite. **Four things change for this epic.** (1) The three constraints in *Out of scope* are no longer this epic's self-restraint but **standing conditions on the permission** — no dependency, no gate, no coverage claim — and any one failing returns the question as a new `DEC`. (2) §3: the driver **reads anything and writes nothing** but `pd.roomCode`; no case may seed store, socket or database state to reach a screen, because that is a client asserting a game fact (`ADR-0002`). (3) §4 adds the rule §Termination lacked — a failing case that does **not reproduce by hand** is a **harness** defect, filed against this epic, **excluded from `B(N)`**, and never repaired in production code. (4) §5: a case quoting player-facing text cites the module that owns the literal. A `PASS` is a dated record of one run on one machine at one commit, and `dist/` stays unproven |
 
 ## Stories
 
 | ID | Title | Status |
 | --- | --- | --- |
-| `STORY-1201` | The QA harness — two agents, one skill, one catalogue | blocked on `DEC-082` |
+| `STORY-1201` | The QA harness — two agents, one skill, one catalogue | ready to split |
 | `STORY-1202`+ | One story per QA round; the round number lives in the story, not the id | not written |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
@@ -105,6 +121,16 @@ judgemental.
    *"each time report more and more bugs"*: the loop is permitted to continue only while it is
    demonstrably winning.
 5. **At most three rounds per invocation**, whatever else is true.
+6. **A failure that does not reproduce by hand is a harness defect, and never enters `B(N)`.**
+   Added by [`ADR-0089`](../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)
+   §4. Before `qa-manager` may file a `blocker` or `high`, the failing case must reproduce by hand —
+   by the matching step of `ADR-0088` §2 where one exists, or by a stated sequence of player actions
+   where it does not. It reproduces → a product defect, counted in `B(N)`. It does not → a **harness**
+   defect: filed against this epic, repaired in `scripts/qa/` or `docs/test-plan.md`, excluded from
+   `B(N)`, and **no production code may be changed to make it pass**. Rules 1–5 bound how much work
+   a round does; this one bounds whether the work is real. Without it a stale catalogue reads as a
+   product getting worse and trips rule 4 on a healthy product, or step 4 of the loop merges a diff
+   to satisfy a string the client moved.
 
 **Exit states**, all terminal and all reported:
 
@@ -122,7 +148,12 @@ prevent.
 
 ## Definition of done
 
-- [ ] `DEC-082` is answered by a merged ADR.
+- [x] `DEC-082` is answered by a merged ADR —
+      [`ADR-0089`](../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md),
+      2026-08-29.
+- [ ] A harness defect and a product defect have been told apart at least once, on the record: a
+      failing case that did not reproduce by hand was filed against this epic and kept out of
+      `B(N)` (§Termination rule 6). Until that happens the rule is untested prose.
 - [ ] `STORY-1201` is `done`: the two agents, the skill and the catalogue exist, and the skill's
       stack lifecycle uses no denied verb.
 - [ ] One full cycle has run end to end and terminated in a named exit state, with its round
