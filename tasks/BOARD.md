@@ -3270,8 +3270,8 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | **[STORY-1201](stories/STORY-1201-the-qa-harness-two-agents-one-skill-one-catalogue.md)** The QA harness — two agents, one skill, one catalogue — *a retrospective record; no tickets* | | | done |
 | **[STORY-1202](stories/STORY-1202-the-first-round-smoke-passed-and-one-case-did-not-run-as-written.md)** Round 1 — the smoke suite passed, and one case did not run as written — *schema 2* | | | done |
 | | [TASK-120201](tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) `SMK-03` reads a device id from a profile that has been to the app | XS | done |
-| **[STORY-1203](stories/STORY-1203-the-qa-cases-skill-the-authoring-half.md)** The `qa-cases` skill — the authoring half, whose last act is a printed command — *not a round story; schema 2* | | | ready |
-| | [TASK-120301](tasks/TASK-120301-the-qa-cases-skill-file.md) Create the `qa-cases` skill, whose terminal act is a printed command | S | ready |
+| **[STORY-1203](stories/STORY-1203-the-qa-cases-skill-the-authoring-half.md)** The `qa-cases` skill — the authoring half, whose last act is a printed command — *not a round story; schema 2* | | | done |
+| | [TASK-120301](tasks/TASK-120301-the-qa-cases-skill-file.md) Create the `qa-cases` skill, whose terminal act is a printed command | S | done |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no

@@ -2,7 +2,7 @@
 id: STORY-1203
 title: The qa-cases skill — the authoring half, whose last act is a printed command
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa, meta]
 depends_on: []
@@ -84,7 +84,7 @@ be churn against a merged file.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-120301](../tasks/TASK-120301-the-qa-cases-skill-file.md) | Create the qa-cases skill, whose terminal act is a printed command | ready |
+| [TASK-120301](../tasks/TASK-120301-the-qa-cases-skill-file.md) | Create the qa-cases skill, whose terminal act is a printed command | done |
 
 **One ticket, because it is one file.** The deliverable is a single markdown document under 120
 lines; splitting it would produce a merged intermediate state in which a licensed skill exists
@@ -93,15 +93,15 @@ what a split is for.
 
 ## Acceptance criteria
 
-- [ ] `.claude/skills/qa-cases/SKILL.md` exists, and it is the only file this story adds under
+- [x] `.claude/skills/qa-cases/SKILL.md` exists, and it is the only file this story adds under
       `.claude/`.
-- [ ] `ADR-0090` §2's command exits 0, and the set of files under `.claude/skills` and
+- [x] `ADR-0090` §2's command exits 0, and the set of files under `.claude/skills` and
       `.claude/agents` naming `qa-cycle` is **exactly** the three that ADR declares.
-- [ ] The four §3 prohibitions are written in the file, in a section of their own, in the words a
+- [x] The four §3 prohibitions are written in the file, in a section of their own, in the words a
       later reader would have to delete rather than merely fail to add.
-- [ ] The file states §4's rule that a case with no merged source is not written and becomes a
+- [x] The file states §4's rule that a case with no merged source is not written and becomes a
       `DEC` for the product owner, and carries §5's `Provisional` line verbatim.
-- [ ] `python3 .github/scripts/lint_tickets.py` exits 0.
+- [x] `python3 .github/scripts/lint_tickets.py` exits 0.
 
 ## Out of scope
 
