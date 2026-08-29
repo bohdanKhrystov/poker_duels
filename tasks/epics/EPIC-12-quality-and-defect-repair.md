@@ -105,7 +105,7 @@ second settles how its catalogue gets written.
 | [STORY-1201](../stories/STORY-1201-the-qa-harness-two-agents-one-skill-one-catalogue.md) | The QA harness — two agents, one skill, one catalogue | done — a **retrospective record**; the code merged in `#1159` and `#1161` before the story existed |
 | `STORY-1202` | Round 1 — the smoke suite passed, and one case did not run as written | done |
 | [STORY-1203](../stories/STORY-1203-the-qa-cases-skill-the-authoring-half.md) | The `qa-cases` skill — the authoring half, whose last act is a printed command | done — **not a round story**; it builds the skill `ADR-0090` §3 licensed and runs no round |
-| [STORY-1204](../stories/STORY-1204-the-epic-04-and-epic-05-catalogue-suites.md) | The `EPIC-04` and `EPIC-05` catalogue suites, authored from merged sources | ready — **not a round story**; it is the first `/qa-cases` pass, and it takes the number the note below had reserved for the first round |
+| [STORY-1204](../stories/STORY-1204-the-epic-04-and-epic-05-catalogue-suites.md) | The `EPIC-04` and `EPIC-05` catalogue suites, authored from merged sources | done — **not a round story**; it is the first `/qa-cases` pass, and it takes the number the note below had reserved for the first round |
 | `STORY-1205`+ | One story per QA round; the round number lives in the story, not the id | not written |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
