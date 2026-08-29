@@ -3204,11 +3204,18 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
+| **[STORY-1201](stories/STORY-1201-the-qa-harness-two-agents-one-skill-one-catalogue.md)** The QA harness — two agents, one skill, one catalogue — *a retrospective record; no tickets* | | | done |
 | **[STORY-1202](stories/STORY-1202-the-first-round-smoke-passed-and-one-case-did-not-run-as-written.md)** Round 1 — the smoke suite passed, and one case did not run as written — *schema 2* | | | done |
 | | [TASK-120201](tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) `SMK-03` reads a device id from a profile that has been to the app | XS | done |
 
-`STORY-1201` — the harness itself — is **written into the epic's Stories table and has no ticket
-file**: the two agents, the skill, the driver and the catalogue shipped in `#1159` and `#1161`
-without one. That is a gap in the trail, not in the code, and it is noted here rather than
-silently filed: the round manager's remit is defects in the product and the harness, and a missing
-ticket for merged work is neither.
+`STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
+skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no
+tickets. That gap in the trail is now closed by a **retrospective record** rather than by a
+manufactured split, because tickets written against merged code can only be satisfied by an empty
+diff. The record says plainly that it was written afterwards, and it gives the specific reason no
+split was ever possible: `#1159` was opened as the **concrete proposal `DEC-082` would be decided
+against** — *"so the architect answering `DEC-082` can read what is actually proposed rather than a
+description of it"* — so until `ADR-0089` merged at 10:59 UTC no ticket built on it was startable,
+and five minutes later the harness had merged. Its acceptance criteria are structural checks on
+merged files, each a command, all run at `5848e529`; they are not a coverage claim and `ADR-0089`
+§2c forbids citing them as one.
