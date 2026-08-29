@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120505
 title: The driver does not click what a player cannot see
 type: task
-status: ready
+status: done
 parent: STORY-1205
 estimate: XS
 tier: haiku
