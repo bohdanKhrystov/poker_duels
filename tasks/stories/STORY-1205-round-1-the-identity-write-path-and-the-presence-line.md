@@ -1,6 +1,6 @@
 ---
 id: STORY-1205
-title: Round 1 — no request declares its body, and the presence line never arrives
+title: Round 1 — no request declares its body, and a navigation is not a disconnect
 type: story
 status: ready
 parent: EPIC-12
@@ -23,7 +23,7 @@ rounds, which is why the numbering resumes here.
 | Commit | `fe4bbf2a` |
 | Stack | `up` — db, server, web |
 | Cases | 36 catalogued; 32 run, 4 blocked. passed 27, failed 5 |
-| `B(1)` | **2** |
+| `B(1)` | **1** — was 2 at first triage; `CORE-18` was reclassified, see below |
 | `B(0)` | **n/a** — this is a new invocation, so the convergence rule cannot apply |
 | Verdict | **`PROCEED`** |
 
@@ -43,11 +43,12 @@ is not a coverage claim, it may not be cited as one, and nothing here is permitt
 `dist/` is still loaded by nothing — every case ran against `npm run dev`, so `ADR-0088` gap 3
 survives this round exactly as it survived `STORY-1202`.
 
-## The two product defects
+## The product defects — one, after re-triage
 
-Both were **reproduced by hand by the manager**, not merely relayed. `ADR-0089` §4 makes that a
-precondition of filing a `blocker` or a `high`, and the reproductions are written out below
-because *"it looked real"* is not a reproduction.
+Two were filed at first triage. **One survived re-triage.** `ADR-0089` §4 makes a by-hand
+reproduction a precondition of filing a `blocker` or a `high`, and both reproductions are
+written out below — including the one that turned out to reproduce the harness rather than the
+product, which is the more instructive of the two.
 
 ### `04-02` → `TASK-120501`: no request this client sends declares its body, so every write is a `400`
 
@@ -110,49 +111,85 @@ The screen capture in the hand reproduction above carries it. The refusal is wor
 not better — it blames the player's handle for a request the client malformed — but the finding
 should be true in its particulars.
 
-### `CORE-18` → `TASK-120502`: nothing on the presence channel ever reaches the other player
+### `CORE-18` → **reclassified as a harness defect** → `TASK-120506`
 
-`qa` graded this `medium`. **Upgraded to `high`, and the reason is below.**
+**This is the round's one reversal, and it is written out in full because a triage that quietly
+changes its mind is worth less than one that shows its work.**
 
-**The hand reproduction**, a full timeline on the live stack:
+`qa` graded this `medium`. At first triage I raised it to `high` and filed `TASK-120502` against
+three files under `web-client/src/`. **That was wrong.** The coder dispatched to it returned
+`blocked` having changed nothing, reporting that none of the three files is the cause and proposing
+`web-client/vite.config.ts`'s dev-server WebSocket proxy instead. I tested that hypothesis rather
+than adopting it, and it is also wrong. `TASK-120502` is `dropped`; `TASK-120506` replaces it.
+
+**What the product actually does**, when the player performs an action that ends their session —
+closing the tab — **through the Vite dev proxy, which was the accused component**:
 
 ```
-A create room 98GEYD8S, B join by link, hand 1 dealt, both screens agreeing
-node scripts/qa/drive.mjs 9232 eval "location.href='about:blank'"   # A leaves the app
-poll B at +4s +8s +12s +16s +20s +24s  → byte-identical screen every time,
-                                          no "Your rival is away", no countdown
-A confirmed on about:blank throughout (`location.href` read back twice)
-node scripts/qa/drive.mjs 9232 open "http://localhost:5173/?room=98GEYD8S"   # A returns
-poll B at +3s                          → still nothing; no "Your rival is back."
+close A's app tab over CDP (/json/close/<targetId>)
+  +4s   B: "Your rival is away. The duel is paused." 56   (seat plate reads Away)
+  +8s   ... 52     +12s ... 48     +16s ... 44            (the grace window ticking)
+reopen the room on A
+  +4s   B: "Your rival is back."
 ```
 
-**It reproduces.** A player navigating away from a tab is an ordinary player action. Product
-defect, counted in `B(1)`.
+Vite's upstream connections to Ktor fell from 3 to 1 at the instant of the close. **The teardown
+crossed the proxy and the `OpponentPresence` push came back through it**, in under four seconds,
+in both directions. There is no product defect here, and the proxy is exonerated by the same run
+that would have convicted it.
 
-**B's socket was alive the whole time**, which is what makes this a presence defect rather than a
-frozen client: the moment A acted, B's screen updated in full — stacks, committed, the turn and
-the action set. B receives everything except presence.
+**Why my own hand-reproduction was not a reproduction.** It produced A's "absence" with
+`location.href='about:blank'` — the method `qa` used, which I repeated. On this headless Chrome
+**that does not close the page's WebSocket at all.** A paired experiment, one tab, one socket
+type, one variable changed, on a socket that **never touches the proxy**:
 
-**Why `high` and not `medium`.** Three reasons, written down because an unexplained severity change
-is how a real defect gets buried, and because this change *raises* `B(1)` rather than lowering it:
+| done to a `ws://localhost:8080/ws` socket, proxy not in the path | after 30s |
+| --- | --- |
+| explicit `.close()` | **gone within 3s** — 2 sockets → 1 |
+| `location.href='about:blank'` | **still ESTABLISHED** — 2 sockets → 2 |
 
-1. **The whole channel is dark, not the away half.** `qa` reported the away marking missing. The
-   reproduction above shows the **return** notice missing in the same room, so `CORE-19`'s subject
-   is broken by the same cause. `qa` passed `CORE-19` earlier in the round and that pass is not
-   overturned here — but the defect is wider than the case that caught it.
-2. **A player mid-duel cannot tell a thinking rival from a vanished one.** The vision's one success
-   condition is *"we play a full heads-up match"*; a rival who leaves and a rival who is deciding
-   render identically, for as long as the grace window lasts. There is no workaround, which is the
-   `medium` row's own test.
-3. **Two shipped stories are inert in a browser** — `STORY-0214` (the wire names an absent
-   opponent) and `STORY-0313` (the table names an absent opponent) — while every gate under them
-   is green. `poker-server`'s `DuelSocketDisconnectTest` asserts the other seat is told
-   (`aClosingSocketTellsTheOpponentItIsAway`, `aClosingHostTellsTheGuestItIsAway`); the client's
-   `PresenceNotice.test.tsx`, `presence-copy.test.tsx` and `duel-state.test.ts` assert the render
-   and the reducer. Both halves pass and the whole is broken. That is `ADR-0088`'s gap exactly,
-   and it is the reason `EPIC-12` exists.
+The instrument was validated in the same run: opening the socket took the count 1 → 2 and closing
+it took it 2 → 1, so it detects a real close. **A player whose socket is still open is present,
+and the server is right to say so.** `CORE-18`'s precondition was never established, so the case
+was never run — it reported on a disconnect that had not happened.
 
-## The three harness defects, and why none of them counts
+**Why the dev-proxy hypothesis is rejected, having been tested rather than argued.** It predicts a
+teardown or a push lost in transit. Both cross that proxy above. And the paired table shows the
+missing teardown on a path with no proxy in it, so the proxy cannot be what swallows it — on this
+browser there was nothing to swallow. The coder's experiments 1, 2 and 5 (`.close()` direct,
+abrupt exit, `.close()` through the proxy) all agree with my results; its experiment 3 — a real
+tab, a real navigation, direct to the backend, `AWAY` arriving promptly — I could not reproduce,
+and the paired control above is the reason I do not accept it.
+
+**The coordinator's second question answers itself, and in the harness's favour twice over.** It
+asked whether production puts a WebSocket proxy between client and server, since that decides
+whether a player could ever hit this. `ADR-0026` §*What it forecloses* leaves both topologies open
+— *"Ktor serving the built assets, or a reverse proxy — a later deployment story's choice"* — so
+"production has no proxy" is not available as an argument. It does not matter: `server.proxy` is a
+**dev-server** key, `vite build` emits static assets that contain none of it, and the accused
+component therefore ships in no topology at all. And the proxy is not the cause anyway.
+
+**The real defect is that the harness has no way to make a player leave.** `drive.mjs`'s ten verbs
+are `open`, `text`, `click`, `wait`, `absent`, `type`, `link`, `device`, `forget-room`, `eval` —
+none of them ends a session — and `CORE-18`'s `do` cell is the whole of *"during A's absence"*,
+which does not say how absence is produced. So a tester improvises, and the improvisation was
+silently wrong. That is the same shape as `SMK-03` in `STORY-1202` and it is a **harness** defect:
+`TASK-120506`, repaired in `scripts/qa/drive.mjs` and `docs/test-plan.md`, excluded from `B(1)`,
+**no production code changed**.
+
+**`CORE-19` is not broken either.** My first triage recorded the return notice as missing and used
+it to justify the upgrade to `high`. It was missing for the same reason — A had never left — and
+it renders correctly above. That upgrade is withdrawn along with the classification.
+
+**What this cost, and the lesson worth keeping.** `ADR-0089` §4 asks whether a failure reproduces
+by hand. Round 1 answered yes for `CORE-18` — and every hand-check in this round reached the client
+through `localhost:5173` **and through the same improvised absence**, so the reproduction inherited
+the harness's own defect and satisfied §4's letter while inverting its purpose. §4 needs the
+by-hand path to differ from the harness's path in the specific respect under suspicion, not merely
+to be performed by a human. That sentence belongs in `ADR-0089` §4 and is not added here, because
+a round story may not amend an ADR; it is left as the finding it is.
+
+## The four harness defects, and why none of them counts
 
 `ADR-0089` §4 and `EPIC-12` §Termination rule 6: a failure that does not reproduce by hand is a
 **harness** defect — filed against this epic, repaired in `scripts/qa/` or `docs/test-plan.md`,
@@ -161,9 +198,11 @@ the load-bearing half: counted, a stale catalogue would read as a product gettin
 trip the convergence rule on a healthy product.
 
 **This ticks `EPIC-12`'s open Definition-of-done box.** `STORY-1202` explicitly declined to tick it
-because `SMK-03` never actually failed. This round has three failing cases and one reported
-observation that did not reproduce as product defects, filed against this epic and kept out of
-`B(1)`. The rule is no longer untested prose.
+because `SMK-03` never actually failed. This round has three failing cases, one reported
+observation and — after re-triage — **one defect that had already been filed as a product `high`
+and dispatched to a coder** that did not reproduce as product defects. All are filed against this
+epic and kept out of `B(1)`. The rule is no longer untested prose; `TASK-120502` is the proof that
+it bites late as well as early.
 
 ### `04-01`, `05-01`, `05-02` — and, unreported, `05-03` and `04-02` → `TASK-120503`
 
@@ -261,24 +300,33 @@ exist — `TASK-120201`, `TASK-120301`, `TASK-120401`, `TASK-120402` — and one
 - **Repeats: 0.** No finding this round matches a defect already filed and open.
 - **Regressions: 0.** `TASK-120201` is `done` and `SMK-03` **passed** this round, so the one closed
   defect stayed closed. Nothing filed-and-done came back.
-- **New: 6** — two product defects, three harness defects, one observation resolved as designed
+- **New: 6** — **one** product defect, **four** harness defects (one of them reclassified from
+  a product defect after the fix set was dispatched), and one observation resolved as designed
   behaviour.
 
-## `B(1)` = 2
+## `B(1)` = 1
 
-`blocker` 0 + `high` 2, after dedupe and after the three harness defects are excluded.
+`blocker` 0 + `high` 1, after dedupe and after the **four** harness defects are excluded.
 
-**Nothing was deferred**, so no deferral is hiding inside that number: the fix set is two tickets
-against a budget of eight, every qualifying defect is in it, and no severity was lowered. The one
-severity that moved went **up** — `CORE-18`, `medium` → `high` — which raises `B(1)` and makes
-round 2's convergence bar harder, the conservative direction.
+It was **2** at first triage. `CORE-18` was filed as a `high` product defect and reclassified as a
+harness defect once `ADR-0089` §4's test was re-run on a path that did not share the harness's own
+fault. The recount is recorded here rather than quietly applied, because a `B(N)` that moves after
+a fix set is dispatched is exactly the number a reader is entitled to distrust.
 
-**No `medium` and no `low` was filed to the backlog**, because after triage there were none: the
-three `low`s `qa` reported are harness defects, and the one remaining observation is designed
-behaviour. That is stated rather than padded with tickets nobody would schedule.
+**The correction makes the cycle stricter, not laxer, and that is the right direction.** With
+`B(1) = 1`, round 2 must reach `B(2) = 0` or the run ends `STOP_DIVERGING`. At `B(1) = 2` a round 2
+reporting one `high` would have counted as convergence. A bar built on a misclassification is worse
+than a hard one.
 
-**Verdict: `PROCEED`.** `B(1) = 2 > 0`, there is no `B(0)` to diverge from, and this is round 1 of
-a budget of 3. Repair the fix set, then retest.
+**Nothing was deferred**, so no deferral hides inside that number: the fix set is one ticket
+against a budget of eight, and no severity was lowered to make a count fall. The one severity that
+moved at first triage went **up** (`CORE-18`, `medium` → `high`); it is now withdrawn entirely,
+with the evidence, not downgraded to `medium` to tidy the arithmetic.
+
+**No `medium` and no `low` was filed to the backlog**, because after triage there were none.
+
+**Verdict: `PROCEED`.** `B(1) = 1 > 0`, there is no `B(0)` to diverge from, and this is round 1 of
+a budget of 3. `TASK-120501` has landed; retest.
 
 ## State this triage changed, disclosed
 
@@ -300,35 +348,42 @@ Neither affects `B(1)`, and both are wiped from the round's point of view by
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-120501](../tasks/TASK-120501-every-request-with-a-body-declares-that-it-is-json.md) | Every request with a body declares that it is JSON | ready |
-| [TASK-120502](../tasks/TASK-120502-the-rivals-presence-reaches-the-other-table.md) | The rival's presence reaches the other table | ready |
+| [TASK-120501](../tasks/TASK-120501-every-request-with-a-body-declares-that-it-is-json.md) | Every request with a body declares that it is JSON | done |
+| [TASK-120502](../tasks/TASK-120502-the-rivals-presence-reaches-the-other-table.md) | The rival's presence reaches the other table | **dropped** — reclassified as a harness defect; superseded by `TASK-120506` |
 | [TASK-120503](../tasks/TASK-120503-no-case-assumes-a-device-with-no-finished-duel.md) | No case assumes a device with no finished duel | ready |
 | [TASK-120504](../tasks/TASK-120504-a-round-allocates-the-third-profile-core-03-needs.md) | A round allocates the third profile `CORE-03` needs | backlog — goes `ready` when `TASK-120503` merges; both edit `docs/test-plan.md` |
-| [TASK-120505](../tasks/TASK-120505-the-driver-does-not-click-what-a-player-cannot-see.md) | The driver does not click what a player cannot see | ready |
+| [TASK-120505](../tasks/TASK-120505-the-driver-does-not-click-what-a-player-cannot-see.md) | The driver does not click what a player cannot see | done |
+| [TASK-120506](../tasks/TASK-120506-a-case-can-end-a-browser-session-and-says-so.md) | A case can end a browser session, and says so | backlog — supersedes `TASK-120502`; goes `ready` when `TASK-120503` merges |
 
-**The fix set is `TASK-120501` and `TASK-120502`** — the two `high`s, two tickets against a budget
-of eight. `TASK-120503`, `TASK-120504` and `TASK-120505` are **harness** tickets against `EPIC-12`:
-they are not in the fix set, they are not counted in `B(1)`, and no production file appears in any
-of their `## Files` tables.
+**The fix set is `TASK-120501` alone** — one `high`, against a budget of eight, and it has landed.
+`TASK-120503`, `TASK-120504`, `TASK-120505` and `TASK-120506` are **harness** tickets against
+`EPIC-12`: not in the fix set, not counted in `B(1)`, and no production file appears in any of
+their `## Files` tables.
 
-`TASK-120503` should nevertheless land **before** the round-2 retest, for the reason given above:
-without it, `04-02` and `05-03` are red in round 2 whatever the product does.
+**Two of them must land before the round-2 retest**, or round 2 reports failures the product did
+not cause:
+
+- `TASK-120503`, or `04-02` and `05-03` are red whatever the product does.
+- `TASK-120506`, or `CORE-18` is red again for the same reason it was red this round.
 
 ## Acceptance criteria
 
 - [ ] Every finding in round 1's report was deduped against the existing round stories and tickets
       before triage; the search and its result are recorded.
-- [ ] Every `high` filed reproduces by hand, and the reproduction is written out per finding
-      (`ADR-0089` §4).
-- [ ] `B(1)` is computed and stated: **2**.
+- [ ] Every `high` still filed reproduces by hand **on a path that does not share the harness's
+      own fault**, and the reproduction is written out per finding (`ADR-0089` §4).
+- [ ] `B(1)` is computed and stated: **1**, and the recount from 2 is recorded with its cause.
 - [ ] The verdict is exactly one of the five named exit states: **`PROCEED`**.
-- [ ] Every severity change is written down with its reason — one, `CORE-18` `medium` → `high`.
+- [ ] Every severity change is written down with its reason — `CORE-18` `medium` → `high` at
+      first triage, then **withdrawn entirely** when the finding was reclassified as a harness
+      defect. Both moves, and the evidence for each, are recorded.
 - [ ] Every harness defect is filed against `EPIC-12`, repaired in `scripts/qa/`,
       `docs/test-plan.md` or the skill, and excluded from `B(1)`; no production file appears in
       any of their `## Files` tables.
 - [ ] The record states, in its own words, that it is one run on one machine at one commit and not
       a coverage claim (`ADR-0089` §2c).
-- [ ] `TASK-120501` and `TASK-120502` are merged.
+- [x] `TASK-120501` is merged.
+- [ ] `TASK-120502` is `dropped` with its reasoning kept in the file, not deleted.
 
 ## Out of scope
 
@@ -338,6 +393,14 @@ without it, `04-02` and `05-03` are red in round 2 whatever the product does.
   round's bug set at triage; a defect found during repair or retest belongs to round 2's report.
 - **English-only dates.** Designed behaviour with a merged source; see above. A product request,
   not a defect, and not this cycle's.
+- **`web-client/vite.config.ts`.** Accused of dropping the socket teardown, tested, and
+  exonerated: the teardown and the `OpponentPresence` push both cross it in under four seconds.
+  Nothing in this round changes it.
+- **Serving `dist/` instead of `npm run dev` in a round.** Raised as a candidate repair for
+  `CORE-18`. Declined *as that repair*, because the dev server is not the cause and fixing a
+  phantom teaches the loop the wrong lesson. It remains a good idea on its own merits —
+  `ADR-0088` gap 3, that the built bundle is proven by nothing — and belongs in its own ticket
+  argued on that gap, not smuggled in as a defect repair.
 - **The triplicated comment block in `poker-server/.../http/AuthRoutes.kt`.** Noticed while reading
   the sign-up route, is in no case's `expect`, changes no behaviour, and is not a QA finding. If it
   is worth fixing it is its own ticket.

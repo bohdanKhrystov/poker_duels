@@ -3,19 +3,69 @@ schema: 2
 id: TASK-120502
 title: The rival's presence reaches the other table
 type: task
-status: ready
+status: dropped
 parent: STORY-1205
 module: web-client
 estimate: S
 tier: sonnet
 review: standard
 files_touched: 3
-labels: [qa, bug, high, manual-verify]
+labels: [qa, harness, superseded]
 depends_on: []
 verify:
   - cd web-client && NO_COLOR=1 npm run --silent check
   - ./gradlew :poker-server:test --tests '*DuelSocketDisconnectTest'
   - python3 .github/scripts/lint_tickets.py
+---
+
+## Dropped — reclassified as a harness defect, 2026-08-29
+
+**Do not implement this ticket.** `CORE-18` was upheld as a `high` product defect at triage and
+that classification was **wrong**. `qa-manager` re-ran `ADR-0089` §4's test on a path the original
+reproduction did not cover, and the product is correct. Superseded by
+[`TASK-120506`](TASK-120506-a-case-can-end-a-browser-session-and-says-so.md), a harness ticket.
+
+**What decides it.** Both notices work, end to end, through the Vite dev proxy, when the player
+performs an action that actually ends their session — closing the tab:
+
+```
+close A's app tab over CDP (/json/close/<targetId>)
+  +4s   B: "Your rival is away. The duel is paused." 56   (seat plate reads Away)
+  +8s   ... 52     +12s ... 48     +16s ... 44            (the grace window ticking)
+reopen the room on A
+  +4s   B: "Your rival is back."
+```
+
+Vite's upstream connections to Ktor fell from 3 to 1 at the moment of the close, so the teardown
+crossed the proxy and the `OpponentPresence` push came back through it.
+
+**Why the original reproduction was wrong.** It produced A's "absence" with
+`location.href='about:blank'`, and on this headless Chrome **that does not close the WebSocket**.
+A paired experiment on one tab, one socket type, one variable:
+
+| what was done to a `ws://localhost:8080/ws` socket **not** going through the proxy | after 30s |
+| --- | --- |
+| explicit `.close()` | **gone within 3s** (2 sockets → 1) |
+| `location.href='about:blank'` | **still ESTABLISHED** (2 sockets → 2) |
+
+The instrument was validated in the same run: opening the socket took the count 1 → 2 and closing
+it took it 2 → 1, so it detects a real close. The navigation leaves the connection up with the
+proxy entirely out of the path — so the proxy cannot be what swallows a teardown, because on this
+browser there is no teardown to swallow. **A player who is still connected is present, and the
+server is right to say so.** The case's precondition was never established, so `CORE-18` was never
+actually run.
+
+**Why the dev-proxy hypothesis is rejected**, having been tested rather than argued: it predicts a
+frame lost in transit, and the run above shows the frame arriving through that same proxy in under
+four seconds. `web-client/vite.config.ts` is not changed by anything in this round.
+
+**No production code may change for this** (`ADR-0089` §4, `EPIC-12` §Termination rule 6). This
+ticket named three files under `web-client/src/` and would have had a coder edit them to satisfy a
+defect in how the harness makes a player leave. That is the exact outcome §4 exists to prevent,
+which is why the record below is kept rather than deleted.
+
+`B(1)` falls from 2 to 1.
+
 ---
 
 ## Goal
