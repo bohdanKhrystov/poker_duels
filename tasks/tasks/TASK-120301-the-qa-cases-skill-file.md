@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120301
 title: Create the qa-cases skill, whose terminal act is a printed command
 type: task
-status: ready
+status: done
 parent: STORY-1203
 estimate: S
 tier: sonnet
