@@ -62,9 +62,16 @@ The first three are not this epic's self-restraint. They are the **standing cond
 §2 attaches to the permission itself: any one of them failing withdraws the licence and returns the
 question as a new `DEC`.
 
-- **Any change to CI.** `build.yml` keeps its two jobs. A cycle is started by a human's command —
-  not a pull request, not a merge, not a cron, not another skill invoking it as a step
-  (`ADR-0089` §2b).
+- **Any change to CI, and any second caller.** `build.yml` keeps its two jobs. A cycle is started by
+  **the human's own message and nothing else** — not a pull request, not a merge, not a cron, not a
+  hook, and not another skill invoking it as a step, whatever started that skill
+  ([`ADR-0089`](../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)
+  §2b, heading and sentence amended by
+  [`ADR-0090`](../../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md) §1).
+  **Writing catalogue cases and running them are two commands.** Authoring is licensed as its own
+  skill, `qa-cases`, which lands cases through ordinary reviewed PRs and whose terminal act is a
+  report naming the command the human types next — it runs no browser and invokes no cycle
+  (`ADR-0090` §3).
 - **Any browser dependency in `web-client/package.json`**, or in any other module's dependency set.
   `ADR-0088` §1 forbids it by name and `ADR-0089` leaves that sentence byte-unchanged — the harness
   drives Chrome over the DevTools protocol using only Node built-ins, and no dependency list is
@@ -81,12 +88,14 @@ question as a new `DEC`.
 
 ## Open decisions
 
-**None.** The only one, `DEC-082`, is answered below and unblocked this epic.
+**None.** Both — `DEC-082` and `DEC-083` — are answered below. The first unblocked this epic; the
+second settles how its catalogue gets written.
 
 ### Answered since this epic was written
 
 | ID | Answered by | What it means here |
 | --- | --- | --- |
+| `DEC-083` | [ADR-0090](../../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md) | **A skill may write the catalogue or run it, never both in one turn.** Raised and answered 2026-08-29, when the human asked for one skill that writes the missing cases and then runs a cycle over them. `ADR-0089` §2b's *"not another skill invoking it as a step"* is read as a rule about **composition**, not only about automation: *"a human's command"* is a condition only if it means the **immediate caller**, and the composite's sole value is that the cycle begins while the human is elsewhere — a cron whose clock is the length of its first half. **§2b's heading becomes *"No gate, and one caller"*** and its sentence becomes *a cycle is started by the human's own message and nothing else*; the rest of §2b and all of `ADR-0089` §§2a, 2c, 3, 4, 5, 6 stand byte-unchanged. **Three things change for this epic.** (1) The catalogue's missing suites are authored by **`qa-cases`**, a licensed skill that plans and lands cases through ordinary reviewed PRs, runs no browser, dispatches neither `qa` nor `qa-manager`, and whose **terminal act is a report naming the command the human types next**. (2) Every case `qa-cases` writes carries a `source` column citing the merged decision its `expect` is transcribed from — the module for player-facing text (`ADR-0089` §5), otherwise an ADR section or a `docs/duel-rules.md` heading; **a case with no merged source is not written**, and the gap is registered as a `DEC` for the product owner, because an invented expectation is a product claim that step 4 of the loop would change production code to satisfy. `SMOKE` and `CORE` are not retrofitted. (3) **A suite `qa-cases` writes is provisional until its first round** — merged sources prove what was *decided*, not what *shipped*, so they cannot show that a screen exists or that a literal has not moved. `docs/test-plan.md` §*Per-epic suites*' *"filled in when an epic is first tested, not before"* is amended in the same PR to admit the authored-then-tested path, a provisional suite carries a line the first round record deletes, and the honest expectation for that round is a pile of **harness** tickets against this epic — which, since `ADR-0089` §4 excludes them from `B(N)`, can end `PASS` with a dozen of its own cases found broken. (4) The condition is checkable by one command over a declared three-file set, and what no grep can catch is stated rather than claimed |
 | `DEC-082` | [ADR-0089](../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md) | **A browser drives this client for a QA round, never for a gate.** The harness may live here. It **was** inside `ADR-0088` §1's words — *"here or in CI"* says *here* — so §1's **heading** is amended in the open and nothing else is: `EPIC-03` still ships no fifteenth story, §2's eleven-step hand-check is still the proof of record, `build.yml` keeps its two jobs, no browser dependency enters `web-client/package.json`, and `ADR-0032` §4's *"still jsdom, still no network"* still holds of every test suite. **Four things change for this epic.** (1) The three constraints in *Out of scope* are no longer this epic's self-restraint but **standing conditions on the permission** — no dependency, no gate, no coverage claim — and any one failing returns the question as a new `DEC`. (2) §3: the driver **reads anything and writes nothing** but `pd.roomCode`; no case may seed store, socket or database state to reach a screen, because that is a client asserting a game fact (`ADR-0002`). (3) §4 adds the rule §Termination lacked — a failing case that does **not reproduce by hand** is a **harness** defect, filed against this epic, **excluded from `B(N)`**, and never repaired in production code. (4) §5: a case quoting player-facing text cites the module that owns the literal. A `PASS` is a dated record of one run on one machine at one commit, and `dist/` stays unproven |
 
 ## Stories

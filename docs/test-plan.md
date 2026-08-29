@@ -16,7 +16,7 @@ agent's definition. A document nothing points at is a document nothing runs.
 | **do** | the driver verbs, in order |
 | **expect** | the observation, stated so it can be false |
 | **fails if** | the concrete failure — what makes this case red |
-| **owner** | the module holding any player-facing string the case quotes (`ADR-0089` §5) |
+| **source** | where the expectation comes from: the module holding any player-facing string the case quotes (`ADR-0089` §5), otherwise an ADR section or a `docs/duel-rules.md` heading (`ADR-0090` §4). One column, not two — it *is* the `owner` field generalised |
 
 **A case that quotes player-facing text cites the module that owns the literal** — the shape
 `web-client/src/account/recovery-text.ts`. It is a reference, not a gate: whoever changes the words
@@ -117,8 +117,30 @@ loop to ignore it. Read the pair from the DOM first, then assert on that exact p
 
 ## Per-epic suites
 
-Filled in when an epic is first tested, not before. A suite written from ticket titles rather than
-from exercising the screens is a suite that tests the titles.
+Two paths in, and they produce different things
+([`ADR-0090`](adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md) §5, which
+amended the single sentence that used to stand here).
+
+**Authored, then tested.** The `qa-cases` skill fills a suite in from **merged sources** — the
+epic's Definition of done, the ADRs it names, `docs/duel-rules.md`, and the modules holding the
+literals — *before* the epic is tested, because `ADR-0090` §3 gives it no browser and no stack. What
+it produces is **provisional**, and that word is doing real work: a merged decision proves what was
+*decided*, not what *shipped*, so it cannot show that the screen exists, that the control is
+reachable, or that a literal has not moved since. A provisional suite carries this line, and the
+round record that first runs it is what deletes the line and names the cases that round corrected:
+
+> **Provisional** — authored YYYY-MM-DD from merged sources, not yet run (`ADR-0090` §5).
+
+While it stands, a failing case in that suite is as much a claim about the catalogue as about the
+product: `ADR-0089` §4's reproduce-by-hand step is the whole point for it, and a failure that does
+not reproduce is a **harness** defect — repaired here, excluded from `B(N)`, no production code
+changed for it. Corrections in that first round are expected rather than surprising.
+
+**Written while testing.** A suite filled in *during* an epic's first round is not provisional. Its
+cases were observed as they were written, so it carries no line and needs no round to strike one.
+
+**Neither path writes from ticket titles.** A suite written from titles rather than from a merged
+decision or from exercising the screens is a suite that tests the titles.
 
 ### Template
 
@@ -127,9 +149,9 @@ from exercising the screens is a suite that tests the titles.
 
 Sources: the epic's Definition of done, and the ADRs its Open decisions table names.
 
-| id | do | expect | fails if |
-| --- | --- | --- | --- |
-| NN-01 | <driver verbs> | <observation> | <the concrete failure> |
+| id | do | expect | fails if | source |
+| --- | --- | --- | --- | --- |
+| NN-01 | <driver verbs> | <observation> | <the concrete failure> | <ADR §, rules heading, or module> |
 ```
 
 Three rules for writing one:
@@ -138,8 +160,12 @@ Three rules for writing one:
    tickets are already gated by their own `verify:` blocks and re-testing them here is waste.
 2. **The `fails if` column is the case.** If you cannot state what makes it red, the case is not
    ready. `ADR-0088` §2 is the model: eleven steps, each with a named failure.
-3. **Cite the ADR** a case derives from, so a disagreement between the catalogue and a merged
-   decision is visible as a disagreement rather than silently resolved by whoever wrote the case.
+3. **The `source` column is where the expectation comes from**, so a disagreement between the
+   catalogue and a merged decision is visible as a disagreement rather than silently resolved by
+   whoever wrote the case (`ADR-0090` §4). A case whose expectation has **no** merged source is not
+   written: it is a `DEC` for the product owner, because an invented expectation is a product claim
+   that the cycle's repair step would change production code to satisfy. `SMOKE` and `CORE` predate
+   the column and are not retrofitted.
 
 ### Not yet written
 
