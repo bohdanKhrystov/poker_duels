@@ -18,19 +18,35 @@ Read [`EPIC-12`](../../../tasks/epics/EPIC-12-quality-and-defect-repair.md) befo
 `## Termination` section is the contract this skill enforces, and the two agents
 ([`qa`](../../agents/qa.md), [`qa-manager`](../../agents/qa-manager.md)) hold the halves.
 
-## Before anything: is this allowed yet?
+## The three conditions this harness runs under
 
-**Check that `DEC-082` is answered by a merged ADR.** `ADR-0088` §1 refuses a browser runner in
-this repository by name. Until a superseding ADR says otherwise, running this skill puts the
-repository in contradiction with a merged decision.
+[`ADR-0089`](../../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)
+permits a browser-driving harness here **only while all three of these hold**. They are the terms
+that made the cost zero. If any stops holding, the ADR stops licensing the harness and the question
+returns as a new `DEC`.
+
+- **a. No dependency.** Nothing enters any module's dependency set to drive a browser. `drive.mjs`
+  uses Node built-ins only; Chrome is a machine-local binary this repository does not vendor, pin
+  or ship.
+- **b. No gate.** `build.yml` keeps its two jobs. No pull request, `verify:` block or ticket waits
+  on a QA case — and **a cycle is started by a human's command.** Not a merge, not a cron, and
+  **not another skill invoking this one as a step.** If you arrived here from an automated trigger,
+  stop.
+- **c. No coverage claim.** The product of a run is a **dated round record**. Neither it nor
+  `docs/test-plan.md` may be cited as coverage in an epic's `Metrics`, a Definition of done, or a
+  ticket's `verify:`. A `PASS` is a statement about one run, on one machine, at one commit.
+
+`ADR-0088` §2's hand-check **remains the proof of record** and §3's receipt is still the one line a
+merge cannot write. A QA round substitutes for neither.
+
+Before running, confirm the ADR is merged:
 
 ```
-grep -rn "DEC-082" docs/adr/README.md | head -3
+grep -n "ADR-0089" docs/adr/README.md | head -3
 ```
 
-If `DEC-082` is still in `## Open decisions`, **stop** and tell the user the cycle is blocked and
-why. Do not run it anyway. An epic that closed on a rule the driver quietly stepped around is
-worth less than one that waited.
+If it is absent, or `DEC-082` is still listed under `## Open decisions`, **stop** and say the cycle
+is not licensed yet. Do not run it anyway.
 
 ## The stack, and why it is split
 
@@ -114,7 +130,11 @@ point, and the loop never terminates.
 Restated here because a skill that hides its own exit conditions is how a loop becomes infinite.
 `qa-manager` computes and enforces them; this skill obeys without arguing.
 
-- `B(N)` is the count of `blocker` + `high` in round `N`'s report, after dedupe.
+- `B(N)` is the count of `blocker` + `high` in round `N`'s report, after dedupe **and after
+  harness defects are excluded** (`ADR-0089` §4). A case that fails but does not reproduce by hand
+  is a defect in `scripts/qa/` or the catalogue, is repaired there, and **never counts toward
+  `B(N)`** — otherwise a stale catalogue reads as a product getting worse and the cycle ends
+  `STOP_DIVERGING` on a healthy product.
 - **Convergence:** if `B(N) >= B(N-1)`, stop with `STOP_DIVERGING`. Not "one more round".
 - **Budget:** at most **three** rounds per invocation.
 - **Fix set:** at most **eight** tickets; only `blocker` and `high` ever enter it.

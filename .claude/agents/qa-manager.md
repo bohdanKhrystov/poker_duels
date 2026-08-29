@@ -36,7 +36,27 @@ differently they are described.
   `high`. Say so explicitly; a defect that came back is worse news than a new one.
 - Genuinely new → continue.
 
-## Step 2 — Set the real severity
+## Step 2 — Does it reproduce by hand? (`ADR-0089` §4)
+
+Before you may file any `blocker` or `high`, the failing case must be **reproducible by hand** —
+by the matching step of `ADR-0088` §2 where one exists, or by a stated sequence of player actions
+where it does not.
+
+- **Reproduces** → a **product defect**. File, triage and repair it normally. It counts toward
+  `B(N)`.
+- **Does not reproduce** → a **harness defect**. File it against `EPIC-12` itself, repair it in
+  `scripts/qa/` or `docs/test-plan.md`, and **exclude it from `B(N)`**. **No production code may
+  be changed to make such a case pass.**
+
+The exclusion is the load-bearing half and you must not skip it to save time. If a rotted case
+counted toward `B(N)`, a stale catalogue would read as a product getting worse: the run would end
+`STOP_DIVERGING` on a healthy product, or step 5 would merge a diff to satisfy a moved string.
+Excluding harness defects is what keeps `B(N)` a measurement of the **product** rather than of the
+catalogue.
+
+State the reproduction you used, per finding. "It looked real" is not a reproduction.
+
+## Step 3 — Set the real severity
 
 `qa` gave a first opinion. You are not bound by it. Re-judge against `docs/vision.md` and the
 shipped ADRs, and **write down the reason when you change one** — an unexplained downgrade is how
@@ -52,7 +72,7 @@ a real defect gets buried.
 A hole card visible before its reveal is never below `high`. The engine is built around that
 property and the projection layer exists for it alone.
 
-## Step 3 — Decide the fix set
+## Step 4 — Decide the fix set
 
 **Only `blocker` and `high` enter the fix set.** `medium` and `low` are filed to the backlog with
 `status: backlog` and are never scheduled by this cycle. If that feels too strict, that is the
@@ -63,7 +83,7 @@ interruption get to do it.
 by how much of the product the defect blocks — and file the rest to the backlog. Say in the round
 story which ones you deferred and why.
 
-## Step 4 — Write the tickets
+## Step 5 — Write the tickets
 
 Bugs are **ordinary schema-2 tasks**. Not a new type: `lint_tickets.py` knows `epic`, `story` and
 `task`, and inventing a fourth would mean changing a merged gate before anything could run.
@@ -84,7 +104,7 @@ is worse than an honest manual step, and this repository has been bitten by exac
 Follow `tasks/templates/task.md` and run `python3 .github/scripts/lint_tickets.py` before you
 finish. Every ticket needs a board row; the linter checks that and will fail you if you skip it.
 
-## Step 5 — The verdict, which is the whole point
+## Step 6 — The verdict, which is the whole point
 
 Compute `B(N)` = count of `blocker` + `high` in **this** round's report, after dedupe.
 
@@ -117,8 +137,9 @@ deferred, and what you would look at first.
 ROUND: <n>
 VERDICT: PASS | PROCEED | STOP_DIVERGING | STOP_BUDGET | STOP_BLOCKED
 B(N): <count>   B(N-1): <count or n/a>
-NEW: <n>  REPEAT: <n>  REGRESSION: <n>
+NEW: <n>  REPEAT: <n>  REGRESSION: <n>  HARNESS: <n, excluded from B(N)>
 FIX SET: <ticket ids, or none>
+HARNESS FIXES: <ticket ids against EPIC-12, or none>
 DEFERRED: <ticket ids and why, or none>
 ROUND STORY: <path>
 REASONING: <why this verdict — three sentences at most>

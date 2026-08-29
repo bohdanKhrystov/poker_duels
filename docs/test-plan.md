@@ -16,6 +16,13 @@ agent's definition. A document nothing points at is a document nothing runs.
 | **do** | the driver verbs, in order |
 | **expect** | the observation, stated so it can be false |
 | **fails if** | the concrete failure — what makes this case red |
+| **owner** | the module holding any player-facing string the case quotes (`ADR-0089` §5) |
+
+**A case that quotes player-facing text cites the module that owns the literal** — the shape
+`web-client/src/account/recovery-text.ts`. It is a reference, not a gate: whoever changes the words
+finds by `grep` that a case depends on them. It is the cheapest thing that turns silent rot into
+findable rot, and rot is the failure mode `ADR-0088` §Alternatives 2 predicted for exactly this
+kind of harness.
 
 The driver is `node scripts/qa/drive.mjs <port> <verb>`; `A` is port 9232 and `B` is 9233. Verbs:
 `open`, `text`, `click`, `wait`, `absent`, `type`, `link`, `device`, `forget-room`, `eval`.

@@ -29,18 +29,28 @@ The catalogue is [`docs/test-plan.md`](../../docs/test-plan.md). Read the suites
 and **nothing else**. Do not survey the repository; context is the scarce resource and the
 catalogue is your budget.
 
-## Bringing the stack up
+## The stack is already up when you start
 
-Run `scripts/qa/stack.sh up`. It starts PostgreSQL, the duel server and the dev server, and exits
-non-zero if any of the three does not answer. Read its output rather than assuming.
+**You do not bring the stack up and you do not tear it down.** The `qa-cycle` skill owns its
+lifecycle, because two of the four pieces — the JVM server and the Vite dev server — must be
+stopped with `TaskStop`, which is a harness tool you do not have. There is no `stack.sh up` and no
+`stack.sh down`; the script's subcommands are `db-up`, `db-down`, `cp`, `wait-server`, `wait-web`,
+`chrome-up`, `chrome-down` and `status`.
 
-If it fails, run it once more. If it fails twice, stop and report `STACK: down` with the output —
-that is a `STOP_INFRA` exit and it is a successful run, not a failure of yours.
+Your one job here is to **check** before you test:
 
-**Never use `kill`, `pkill` or `killall`.** They are denied in `settings.json` and deny beats
-allow, so no override reaches them. Teardown is `scripts/qa/stack.sh down`, which uses
-`docker-compose down`, the DevTools `Browser.close` call, and nothing else. Always run it, including
-when you are reporting a failure.
+```
+scripts/qa/stack.sh status
+```
+
+All three of `db`, `server` and `web` must read `up`. If any reads `down`, stop immediately and
+report `STACK: down` with that output — the skill decides whether to retry, and a second failure is
+its `STOP_INFRA` exit. That is a successful run, not a failure of yours. Do not try to start
+anything yourself.
+
+**Never use `kill`, `pkill`, `killall` or `rm`.** All four are denied in `settings.json` and deny
+beats allow, so no override reaches them. This is why the lifecycle is split the way it is, and
+why you are given fresh browser profiles rather than cleaned ones.
 
 ## Driving the browsers
 
@@ -51,6 +61,22 @@ real `localStorage` partitions, which is what makes them two players rather than
 You **run** that script. You do not rewrite it. If a case cannot be expressed with the verbs it
 has, report the case as `BLOCKED` with the reason — a missing verb is a finding about the harness
 and `qa-manager` will file it.
+
+### What you may touch (`ADR-0089` §3)
+
+You act **with a player's hands** and read with anything.
+
+- **May do:** click, type, navigate, reload, and clear browser storage — what a player can reach.
+- **May read:** anything — the DOM, `localStorage`, the database, the server's log.
+- **May not write application state:** no dispatch into the client store, no synthesised socket
+  frame, no seeded database row to reach a screen the product would not otherwise have shown.
+
+A case that reaches its precondition by writing state is a client asserting a game fact, which
+`ADR-0002` forbids of a client — and the case then proves a fiction. `drive.mjs`'s `eval` verb is a
+**read** escape hatch; use it as one.
+
+The single licensed storage write is `forget-room`, which deletes `pd.roomCode` only. It forgets;
+it never makes the client believe something.
 
 Two things bite, both already measured on 2026-08-29:
 
