@@ -94,7 +94,7 @@ question as a new `DEC`.
 | ID | Title | Status |
 | --- | --- | --- |
 | `STORY-1201` | The QA harness — two agents, one skill, one catalogue | ready to split |
-| `STORY-1202` | Round 1 — the smoke suite passed, and one case did not run as written | in progress |
+| `STORY-1202` | Round 1 — the smoke suite passed, and one case did not run as written | done |
 | `STORY-1203`+ | One story per QA round; the round number lives in the story, not the id | not written |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created

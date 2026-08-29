@@ -2,7 +2,7 @@
 id: STORY-1202
 title: Round 1 — the smoke suite passed, and one case did not run as written
 type: story
-status: in-progress
+status: done
 parent: EPIC-12
 labels: [process, qa]
 depends_on: []
@@ -169,7 +169,7 @@ never-opened profile knows the verb will not tell it so.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-120201](../tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) | `SMK-03` reads a device id from a profile that has been to the app | ready |
+| [TASK-120201](../tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) | `SMK-03` reads a device id from a profile that has been to the app | done |
 
 One ticket, and it is a harness ticket. The fix set is **empty** — `EPIC-12` §Termination rule 2
 admits only `blocker` and `high`, and there were none. `TASK-120201` is not repaired by this cycle:
@@ -186,7 +186,7 @@ the verdict is `PASS`, which ends the run at step 3 of the loop and never reache
       from `B(1)`; no production file appears in its `## Files` table.
 - [x] The record states, in its own words, that it is one run on one machine at one commit and not
       a coverage claim (`ADR-0089` §2c).
-- [ ] `TASK-120201` is merged.
+- [x] `TASK-120201` is merged.
 
 ## Out of scope
 
