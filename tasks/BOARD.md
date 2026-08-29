@@ -3272,6 +3272,9 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120201](tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) `SMK-03` reads a device id from a profile that has been to the app | XS | done |
 | **[STORY-1203](stories/STORY-1203-the-qa-cases-skill-the-authoring-half.md)** The `qa-cases` skill — the authoring half, whose last act is a printed command — *not a round story; schema 2* | | | done |
 | | [TASK-120301](tasks/TASK-120301-the-qa-cases-skill-file.md) Create the `qa-cases` skill, whose terminal act is a printed command | S | done |
+| **[STORY-1204](stories/STORY-1204-the-epic-04-and-epic-05-catalogue-suites.md)** The `EPIC-04` and `EPIC-05` catalogue suites, authored from merged sources — *not a round story; schema 2* | | | ready |
+| | [TASK-120401](tasks/TASK-120401-the-epic-04-identity-suite.md) Write the `EPIC-04` identity suite into `docs/test-plan.md` | S | ready |
+| | [TASK-120402](tasks/TASK-120402-the-epic-05-ladder-suite.md) Write the `EPIC-05` ladder suite into `docs/test-plan.md` | S | backlog |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no
@@ -3286,8 +3289,8 @@ merged files, each a command, all run at `5848e529`; they are not a coverage cla
 §2c forbids citing them as one.
 
 `STORY-1203` is the **authoring half**, and it is **not a round story** — the epic's Stories table
-says so in its own row rather than leaving the reader to notice, and the round stories resume at
-`STORY-1204` instead of being renumbered. It builds `.claude/skills/qa-cases/SKILL.md`, the skill
+says so in its own row rather than leaving the reader to notice. It builds
+`.claude/skills/qa-cases/SKILL.md`, the skill
 [`ADR-0090`](../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md) §3
 licensed the same day: `/qa-cases EPIC-04 EPIC-05` reads the epics, the ADRs, `docs/duel-rules.md`
 and the client's literals, plans and lands the suites through `build-epic` as ordinary reviewed PRs,
@@ -3297,3 +3300,22 @@ allow-list: **exactly three** files under `.claude/` may name `qa-cycle`, the th
 story creates, and its ticket carries that check as a `verify:` line so the list is enforced from
 the moment it is complete. The gates were measured under both the shim `grep` an agent shell
 resolves and `/usr/bin/grep`, and agreed — `0` with three files, `1` with a fourth.
+
+`STORY-1204` is **the first pass that skill performs**, and it is **not a round story either** —
+which moves the numbering a second time, so the round stories now resume at **`STORY-1205`** and the
+epic's table says so in its own rows rather than leaving a reader to notice that `STORY-1203`'s
+sentence about `STORY-1204` no longer holds. It writes the `EPIC-04` and `EPIC-05` suites into
+`docs/test-plan.md` from merged sources — no stack, no browser, no cycle — and it lands as two
+sequenced tickets rather than one, because both edit the same file and a batch that started them
+together would conflict by construction. **Ten of the two epics' twenty-one Definition-of-done
+promises produced a case; eleven are recorded as uncovered with a reason each**, in
+§*What this catalogue does not cover*, and **none produced a `DEC`**: both epics closed behind long
+ADR chains, so every reachable promise's expectation was already a merged literal or a merged
+clause, and the refusal rule removed cases rather than expectations. Four findings came out of
+reading the client rather than the epics — a fresh profile's strip races its own socket, so every
+strip read follows a reload; three `wait` targets collide with the first screen's own door labels;
+no case may assert an absolute rank on a database that persists between rounds; and *"the ladder
+shows a month"* is an assertion that passes on the very defect `ADR-0061` §6 forbids. Both suites
+carry `ADR-0090` §5's `Provisional` line, so the round that first runs them is expected to correct
+cases, those corrections are **harness** tickets excluded from `B(N)`, and no production code may
+change for one until it has reproduced by hand (`ADR-0089` §4).
