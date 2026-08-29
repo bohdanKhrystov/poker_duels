@@ -172,6 +172,59 @@ player, so every case after it would read W's profile.
 
 ---
 
+## EPIC-05 — Ranking, duel coins and leaderboard
+
+> **Provisional** — authored 2026-08-29 from merged sources, not yet run (`ADR-0090` §5).
+
+Sources: the epic's Definition of done, and the ADRs its Open decisions table names.
+
+Five of its nine promises reach a browser; the other four are under §*What this catalogue does not
+cover*.
+
+**No case asserts an absolute rank.** The database persists between rounds, so every rank on the
+ladder depends on every duel ever played on that machine. What is deterministic is that a **fresh**
+profile's first finished duel moves its standing by exactly one (`ADR-0014`, `ADR-0061` §4), and
+`ADR-0089` §3 already requires a fresh Chrome profile per round. A case pinning `rank 1` would be
+red for the machine's history rather than for a defect.
+
+**The season line is compared against the response, never merely read.** A client that worked the
+season out from the browser's clock would print the right month on the day a round runs — so *"the
+screen shows a month"* is an assertion that passes on the defect `ADR-0061` §6 forbids. `05-05`
+reads `GET /api/standings` and compares.
+
+| id | do | expect | fails if | source |
+| --- | --- | --- | --- | --- |
+| `05-01` | fresh `A`: `A open`, `A open`, `A click "Leaderboard"`, `A wait "You have no place on this season's leaderboard."`, `A click "Back"`, `A wait "Create a duel room"` | a browser that never signed up opens the ladder from the first screen and leaves it again | the `Leaderboard` control is absent, the screen reads `The leaderboard did not load. Reload the page to try again.`, or *Back* does not return to `Create a duel room` | `web-client/src/ladder/ladder-text.ts` (`LADDER_FAILED`); `web-client/src/lobby/Lobby.tsx` |
+| `05-02` | on that same ladder screen: `A absent "You are rank "` and read `A text` | the self line is exactly `You have no place on this season's leaderboard.` — no rank, and no `0` standing anywhere in it | the self line reads `You are rank …`, or a `0` stands where a standing would — a player who finished no duel was given a place | `ADR-0065` §4; `web-client/src/ladder/ladder-text.ts` (`selfLine`, `NO_PLACE_THIS_SEASON`) |
+| `05-03` | read both self lines (both no-place); play a duel to a winner (`CORE-12`'s sequence); `forget-room`, reload and open the ladder on each; then the `duel_result` read below the table | **W**'s self line reads `on 1 duel coin.` and **L**'s reads `on −1 duel coins.` — U+2212, singular for one — and each player's season sum in `duel_result` is the number their own ladder printed | either standing moved by anything other than one, or a rendered standing disagrees with its `duel_result` sum — a coin was minted or destroyed between the row and the screen | `ADR-0014`; `ADR-0061` §4; `web-client/src/ladder/ladder-text.ts` (`selfLine`) |
+| `05-04` | on **L**'s ladder, walk the pages with `Show more`, reading each page's row lines with `A eval`, until L's own standing appears | a row whose standing is `−1` is listed, and the standings down the walk never increase — the negative sits below every larger one, since `rank = 1 + the number standing strictly higher` | no `−1` row appears at all, or it reads `0`, or its minus is an ASCII hyphen, or a standing later in the walk is greater than an earlier one | `ADR-0061` §4; `ADR-0064` §1; `web-client/src/profile/profile-text.ts` (`coinBalanceText`) |
+| `05-05` | on the ladder: `A eval "(async()=>(await (await fetch('/api/standings')).json()).season)()"`, then read the season line with `A text` | the screen prints the month and the year in English for exactly the season the response carried — `August 2026` for `2026-08` | the screen prints `2026-08`, prints no season line, or prints a month the response did not carry — the client worked the season out from the browser's clock (`ADR-0002`) | `ADR-0061` §6; `web-client/src/ladder/ladder-text.ts` (`seasonName`) |
+
+**`05-03` reads the database, and only as a second witness.** `ADR-0089` §3 names the database in
+what the harness may read, and this is `CORE-13`'s shape: the ladder's rendered number is still the
+observation, the row is what it is checked against, and the case is red when they disagree. A case
+whose *only* observation was a row would be a test of the server — which
+`poker-server/.../e2e/` already covers against real Postgres — and a `PASS` over it would read as
+the coverage claim `ADR-0089` §2c forbids. It writes nothing.
+
+A season is a calendar month in UTC and a duel belongs to the season its **finish** falls in
+(`ADR-0061` §§1, 2), so the read is bounded the same way:
+
+    docker exec poker_duels-postgres-1 psql -U poker -d poker_duels -At -c \
+      "SELECT p.device_id, SUM(dr.coin_delta)
+         FROM player p
+         JOIN duel_result dr ON dr.player_id = p.id
+         JOIN duel d ON d.id = dr.duel_id
+        WHERE p.device_id IN ('<A device>', '<B device>')
+          AND d.finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+        GROUP BY p.device_id"
+
+The device ids come from `A device` and `B device`; `player.device_id` is unique
+(`V1__initial_schema.sql`), so each browser resolves to one row without the driver ever learning a
+`player_id`.
+
+---
+
 ## Per-epic suites
 
 Two paths in, and they produce different things
@@ -232,7 +285,7 @@ Three rules for writing one:
 | `EPIC-02` duel server | not written — covered by `poker-server/.../e2e/` against real Postgres |
 | `EPIC-03` web client | **the CORE suite above is it** |
 | `EPIC-04` identity and profiles | **the `EPIC-04` suite above is it** — authored 2026-08-29 from merged sources, provisional until its first round |
-| `EPIC-05` ranking and leaderboard | not written — the ladder screen, standings order, rank after a duel |
+| `EPIC-05` ranking and leaderboard | **the `EPIC-05` suite above is it** — authored 2026-08-29 from merged sources, provisional until its first round |
 | `EPIC-06` design system | not written — and mostly not testable this way; `qa` is told not to report styling |
 
 ---
@@ -261,5 +314,14 @@ Stated so nobody reads a `PASS` as more than it is:
   only as `BYTEA` hashes (`V8__recovery_email.sql`), and no mailed link ever arrives for a driver to
   follow. **The whole of recovery — `#/verify`, `#/reset`, and *Forgot your password?* past its
   acknowledgement — is outside this catalogue for that reason.**
+- **Four of `EPIC-05`'s nine Definition-of-done promises**, and one clause of a fifth. *Every story
+  is `done` or `dropped`*, *`docs/protocol.md` contracts every endpoint this epic adds* and
+  *`poker-engine` is untouched by every commit in the epic* are facts about the repository and the
+  documents; no browser can see one. *`ADR-0012`'s gate is discharged in writing* was discharged by
+  [`ADR-0063`](adr/ADR-0063-nothing-gates-a-place-and-the-farm-is-accepted-until-the-ladder-is-public.md)
+  as an accepted risk with a named expiry, which is a written record rather than a behaviour. And
+  within the self-line promise, ***tied with a hundred others*** is the scenario `ADR-0065` §1 was
+  written for and the one a round cannot build: `05-02` tests that the self line exists and what it
+  says, never that it survives a tie.
 - **A real network.** Everything is `localhost`; latency, packet loss and a proxy in front of the
   socket are untested.
