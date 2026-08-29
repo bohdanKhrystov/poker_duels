@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom/client";
 import { authorizedFetch } from "./account/authorized-fetch";
+import { jsonBodyFetch } from "./profile/json-body-fetch";
 import { AccountProvider, type AccountCalls } from "./account/account-provider";
 import { signIn } from "./account/sign-in";
 import { signOut } from "./account/sign-out";
@@ -52,8 +53,16 @@ import {
 // receives and is never cleared and never overwritten, not on sign-in and
 // not on sign-out (ADR-0030 §8) — so every browser able to hold a session
 // token already holds a device id.
+//
+// jsonBodyFetch sits closest to window.fetch, wrapping the raw browser
+// call before authorizedFetch adds a bearer header, so a body reaches the
+// network labelled application/json no matter which wrapper a request
+// passes through — the defect that turned every write in the product into
+// an empty-bodied 400.
 const apiFetch = authorizedFetch(
-  (path, init) => window.fetch(path, init),
+  jsonBodyFetch(function (path, init) {
+    return window.fetch(path, init);
+  }),
   localStorage,
 );
 
@@ -95,7 +104,9 @@ const readLadder = (after: string | null): Promise<LadderRead> =>
     after,
   });
 
-const plainFetch: ApiFetch = (path, init) => window.fetch(path, init);
+const plainFetch: ApiFetch = jsonBodyFetch(function (path, init) {
+  return window.fetch(path, init);
+});
 
 const reload = (): void => window.location.reload();
 
