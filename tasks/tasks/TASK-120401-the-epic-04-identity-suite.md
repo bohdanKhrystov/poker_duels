@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120401
 title: Write the EPIC-04 identity suite into docs/test-plan.md
 type: task
-status: ready
+status: done
 parent: STORY-1204
 estimate: S
 tier: sonnet

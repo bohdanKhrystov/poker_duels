@@ -2,7 +2,7 @@
 id: STORY-1204
 title: The EPIC-04 and EPIC-05 catalogue suites, authored from merged sources
 type: story
-status: ready
+status: in-progress
 parent: EPIC-12
 labels: [process, qa, meta]
 depends_on: [STORY-1203]
@@ -171,7 +171,7 @@ hand (`ADR-0089` §4).
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-120401](../tasks/TASK-120401-the-epic-04-identity-suite.md) | Write the `EPIC-04` identity suite into `docs/test-plan.md` | ready |
+| [TASK-120401](../tasks/TASK-120401-the-epic-04-identity-suite.md) | Write the `EPIC-04` identity suite into `docs/test-plan.md` | done |
 | [TASK-120402](../tasks/TASK-120402-the-epic-05-ladder-suite.md) | Write the `EPIC-05` ladder suite into `docs/test-plan.md` | backlog |
 
 **Two tickets, sequenced, because both edit one file.** A batch that started them together would
