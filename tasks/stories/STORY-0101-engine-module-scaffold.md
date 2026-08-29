@@ -2,7 +2,7 @@
 id: STORY-0101
 title: Engine module and build scaffold
 type: story
-status: ready
+status: done
 parent: EPIC-01
 module: poker-engine
 labels: [build, foundation]

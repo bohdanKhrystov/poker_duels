@@ -2,7 +2,7 @@
 id: STORY-0108
 title: Event log, replay and simulation
 type: story
-status: backlog
+status: done
 parent: EPIC-01
 module: poker-engine
 labels: [engine, replay, simulation]

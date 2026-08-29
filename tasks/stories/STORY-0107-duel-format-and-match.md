@@ -2,7 +2,7 @@
 id: STORY-0107
 title: Duel format and match progression
 type: story
-status: backlog
+status: done
 parent: EPIC-01
 module: poker-engine
 labels: [engine, rules, duel]
