@@ -29,7 +29,7 @@ The driver is `node scripts/qa/drive.mjs <port> <verb>`; `A` is port 9232 and `B
 
 **Every round gets fresh Chrome profiles.** Clearing `pd.roomCode` is not isolation: the server
 re-seats a returning device by `pd.deviceId` (`ADR-0018`), so a reused profile rejoins its old room
-with client storage cleared. Measured 2026-08-29.
+with client storage cleared. Measured 2026-08-29. A case reading `localStorage` must navigate its profile to the app first — the stored id lives under the app's origin, and a fresh profile sits on `about:blank`.
 
 ---
 
@@ -42,7 +42,7 @@ are pointless.
 | --- | --- | --- | --- |
 | `SMK-01` | `stack.sh status` | all three of db, server, web report `up` | any reports `down` |
 | `SMK-02` | `A open` | `#root` renders and the text contains `Create a duel room` | the page is blank — this is `ADR-0088` gap 1, which fails green in every other gate |
-| `SMK-03` | `A device` and `B device` | two non-empty ids, and they differ | they are equal, or empty — two tabs are one player (`ADR-0018`) |
+| `SMK-03` | `A open`, `B open`, then `A device` and `B device` | two non-empty ids, and they differ | they are equal, or empty — two tabs are one player (`ADR-0018`) |
 | `SMK-04` | `A click "Create a duel room"`, `A wait "Waiting for your rival"` | a room code and an invite link containing `?room=` | no link, or a link with no `room=` |
 | `SMK-05` | `B open <link>`, `B wait "Blinds"` | B is seated at the table without typing a code | B lands on the lobby or shows *No duel room has that code* |
 | `SMK-06` | `A text` | A's screen offers actions or shows the rival's turn | neither screen ever offers an action |

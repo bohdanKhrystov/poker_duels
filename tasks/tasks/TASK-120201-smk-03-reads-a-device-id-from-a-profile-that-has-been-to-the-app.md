@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120201
 title: SMK-03 reads a device id from a profile that has been to the app
 type: task
-status: ready
+status: done
 parent: STORY-1202
 estimate: XS
 tier: haiku

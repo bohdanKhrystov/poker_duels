@@ -3204,8 +3204,8 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
-| **[STORY-1202](stories/STORY-1202-the-first-round-smoke-passed-and-one-case-did-not-run-as-written.md)** Round 1 — the smoke suite passed, and one case did not run as written — *schema 2* | | | in-progress |
-| | [TASK-120201](tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) `SMK-03` reads a device id from a profile that has been to the app | XS | ready |
+| **[STORY-1202](stories/STORY-1202-the-first-round-smoke-passed-and-one-case-did-not-run-as-written.md)** Round 1 — the smoke suite passed, and one case did not run as written — *schema 2* | | | done |
+| | [TASK-120201](tasks/TASK-120201-smk-03-reads-a-device-id-from-a-profile-that-has-been-to-the-app.md) `SMK-03` reads a device id from a profile that has been to the app | XS | done |
 
 `STORY-1201` — the harness itself — is **written into the epic's Stories table and has no ticket
 file**: the two agents, the skill, the driver and the catalogue shipped in `#1159` and `#1161`
