@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120503
 title: No case assumes a device with no finished duel
 type: task
-status: ready
+status: done
 parent: STORY-1205
 estimate: S
 tier: sonnet

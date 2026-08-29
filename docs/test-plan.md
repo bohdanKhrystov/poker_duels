@@ -117,14 +117,14 @@ loop to ignore it. Read the pair from the DOM first, then assert on that exact p
 
 ## EPIC-04 — Identity and profiles
 
-> **Provisional** — authored 2026-08-29 from merged sources, not yet run (`ADR-0090` §5).
-
 Sources: the epic's Definition of done, and the ADRs its Open decisions table names.
 
 Five of its twelve promises reach a browser; the other seven are under §*What this catalogue does
 not cover*. The cases run in order and each leaves state the next uses. **W** is the browser whose
 result screen named it the winner of `04-02`'s duel and **L** is the other — decided by reading the
-screens, never fixed to a port.
+screens, never fixed to a port. No case may assume a device with no finished duel: scope order
+decides what has already been played before a suite runs, and a round allocates only two profiles
+for the whole session.
 
 **Read the strip after a reload, never on the first load of a fresh profile.** `pd.deviceId` is
 written when the socket's `Welcome` lands (`web-client/src/store/boot.ts`) while the profile read
@@ -138,8 +138,8 @@ the swap. Wait on a string that exists only past the door.
 
 | id | do | expect | fails if | source |
 | --- | --- | --- | --- | --- |
-| `04-01` | fresh `A`: `A open`, `A open`, `A wait "Duel coins"`, `A click "Your duels"`, `A wait "Opponent name"` | the strip states a balance as `<n> Duel coins`, and the duels screen renders with `No duels yet.` — neither read refuses a device that never made an account | the strip still reads `No profile yet.` after the reload, or the screen reads `Your duels did not load. Reload the page to try again.` — `GET /api/me` or `GET /api/me/duels` answered `401` to an account-less device | `web-client/src/profile/ProfileStrip.tsx`; `web-client/src/history/history-text.ts` |
-| `04-02` | play a duel to a winner (`CORE-12`'s sequence); on the loser **L**, read the balance, claim the profile with a handle and a password, reload, read it again — steps below the table | both readings are the same string, and it is `−1 Duel coins` for a browser whose only duel was a loss — U+2212, not a hyphen | the two differ, or the second reads `0 Duel coins` — the claim rewrote the balance, or clamped it (`ADR-0014`) | `ADR-0014`; `web-client/src/profile/profile-text.ts` (`coinBalanceText`) |
+| `04-01` | fresh `A`: `A open`, `A open`, `A wait "Duel coins"`, `A click "Your duels"`, `A wait "Opponent name"` | the strip states a balance as `<n> Duel coins`, and the duels screen renders its own frame — the `Opponent name` header appears — whatever the device has already played; neither read refuses a device that never made an account | the strip still reads `No profile yet.` after the reload, or the screen reads `Your duels did not load. Reload the page to try again.` — `GET /api/me` or `GET /api/me/duels` answered `401` to an account-less device | `web-client/src/profile/ProfileStrip.tsx`; `web-client/src/history/history-text.ts` |
+| `04-02` | play a duel to a winner (`CORE-12`'s sequence); on the loser **L**, read the balance, claim the profile with a handle and a password, reload, read it again — steps below the table | both reads return exactly the same string, character for character — same digits, same sign — because giving the browser a password neither rewrites nor clamps a balance it already holds (`ADR-0014`) | the two strings differ in any character — the claim rewrote the balance, or clamped it toward zero (`ADR-0014`) | `ADR-0014`; `web-client/src/profile/profile-text.ts` (`coinBalanceText`) |
 | `04-03` | on **L**: set a display name that is not L's handle, then try to sign in with that display name and L's own password — steps below the table | the sign-in is refused with `That handle and password do not match an account.` | it signs in, or the account screen afterwards reads `Your password signs in to this account.` — something resolved a player from a display name | `ADR-0031` §1; `web-client/src/account/account-text.ts` (`SIGN_IN_REFUSED`) |
 | `04-04` | on **L**, sign in twice from the sign-in screen — once with L's own handle and a wrong password, once with a handle no account holds — capturing `L text` after each | both render `That handle and password do not match an account.`, and the two captures are identical | the two differ in any character, or either names a field, a handle or an account — the wire's indistinguishability was undone in words | `ADR-0027` §6; `web-client/src/account/account-text.ts` (`SIGN_IN_REFUSED`) |
 | `04-05` | on **W**: set a display name, then claim the profile with a second handle and password. On **L**: sign in with W's handle and password — steps below the table. **Runs last** | L lands on the account screen reading `Your password signs in to this account.`, and behind *Back* it shows W's display name, W's balance and W's duel — on a browser whose `device` differs from W's | any of the three differs from what W's own screen shows, or L is left on the sign-in screen | `ADR-0083` §5; `web-client/src/profile/ProfileStrip.tsx` |
@@ -174,8 +174,6 @@ player, so every case after it would read W's profile.
 
 ## EPIC-05 — Ranking, duel coins and leaderboard
 
-> **Provisional** — authored 2026-08-29 from merged sources, not yet run (`ADR-0090` §5).
-
 Sources: the epic's Definition of done, and the ADRs its Open decisions table names.
 
 Five of its nine promises reach a browser; the other four are under §*What this catalogue does not
@@ -185,7 +183,9 @@ cover*.
 ladder depends on every duel ever played on that machine. What is deterministic is that a **fresh**
 profile's first finished duel moves its standing by exactly one (`ADR-0014`, `ADR-0061` §4), and
 `ADR-0089` §3 already requires a fresh Chrome profile per round. A case pinning `rank 1` would be
-red for the machine's history rather than for a defect.
+red for the machine's history rather than for a defect. The same reasoning rules out a device with
+no finished duel at all: scope order decides what has already been played before this suite runs,
+and a round allocates only two profiles for the whole session.
 
 **The season line is compared against the response, never merely read.** A client that worked the
 season out from the browser's clock would print the right month on the day a round runs — so *"the
@@ -194,9 +194,9 @@ reads `GET /api/standings` and compares.
 
 | id | do | expect | fails if | source |
 | --- | --- | --- | --- | --- |
-| `05-01` | fresh `A`: `A open`, `A open`, `A click "Leaderboard"`, `A wait "You have no place on this season's leaderboard."`, `A click "Back"`, `A wait "Create a duel room"` | a browser that never signed up opens the ladder from the first screen and leaves it again | the `Leaderboard` control is absent, the screen reads `The leaderboard did not load. Reload the page to try again.`, or *Back* does not return to `Create a duel room` | `web-client/src/ladder/ladder-text.ts` (`LADDER_FAILED`); `web-client/src/lobby/Lobby.tsx` |
-| `05-02` | on that same ladder screen: `A absent "You are rank "` and read `A text` | the self line is exactly `You have no place on this season's leaderboard.` — no rank, and no `0` standing anywhere in it | the self line reads `You are rank …`, or a `0` stands where a standing would — a player who finished no duel was given a place | `ADR-0065` §4; `web-client/src/ladder/ladder-text.ts` (`selfLine`, `NO_PLACE_THIS_SEASON`) |
-| `05-03` | read both self lines (both no-place); play a duel to a winner (`CORE-12`'s sequence); `forget-room`, reload and open the ladder on each; then the `duel_result` read below the table | **W**'s self line reads `on 1 duel coin.` and **L**'s reads `on −1 duel coins.` — U+2212, singular for one — and each player's season sum in `duel_result` is the number their own ladder printed | either standing moved by anything other than one, or a rendered standing disagrees with its `duel_result` sum — a coin was minted or destroyed between the row and the screen | `ADR-0014`; `ADR-0061` §4; `web-client/src/ladder/ladder-text.ts` (`selfLine`) |
+| `05-01` | fresh `A`: `A open`, `A open`, `A click "Leaderboard"`, `A wait <the season line>` (`05-05`'s target — a month name, present whatever this device has already played), `A click "Back"`, `A wait "Create a duel room"` | a browser that never signed up opens the ladder from the first screen and leaves it again | the `Leaderboard` control is absent, the screen reads `The leaderboard did not load. Reload the page to try again.`, or *Back* does not return to `Create a duel room` | `web-client/src/ladder/ladder-text.ts` (`LADDER_FAILED`); `web-client/src/lobby/Lobby.tsx` |
+| `05-02` | on that same ladder screen: `A eval` `GET /api/standings` (`05-05`'s call) to learn whether this device already has a place, then read the self line with `A text` | the self line agrees with the response either way — `You have no place on this season's leaderboard.` if the response carries no entry for this device, or a `You are rank ` line naming the same rank the response gives it | the self line disagrees with the response in either direction — a rank shown where the response has no entry, or no-place shown where the response has one — a player who finished no duel was given a place, or the reverse | `ADR-0065` §4; `web-client/src/ladder/ladder-text.ts` (`selfLine`, `NO_PLACE_THIS_SEASON`) |
+| `05-03` | read both self lines and note each standing, whatever either already reads; play a duel to a winner (`CORE-12`'s sequence); `forget-room`, reload and open the ladder on each; read both self lines again; then the `duel_result` read below the table | each player's second standing is exactly one more than their first for the winner (**W**) and one fewer for the loser (**L**) — the change one duel makes, never either absolute value — and each player's season sum in `duel_result` agrees with the standing their own second reading named | either standing moves by anything other than exactly one, in either direction, or a rendered standing disagrees with its `duel_result` sum — a coin was minted or destroyed between the row and the screen | `ADR-0014`; `ADR-0061` §4; `web-client/src/ladder/ladder-text.ts` (`selfLine`) |
 | `05-04` | on **L**'s ladder, walk the pages with `Show more`, reading each page's row lines with `A eval`, until L's own standing appears | a row whose standing is `−1` is listed, and the standings down the walk never increase — the negative sits below every larger one, since `rank = 1 + the number standing strictly higher` | no `−1` row appears at all, or it reads `0`, or its minus is an ASCII hyphen, or a standing later in the walk is greater than an earlier one | `ADR-0061` §4; `ADR-0064` §1; `web-client/src/profile/profile-text.ts` (`coinBalanceText`) |
 | `05-05` | on the ladder: `A eval "(async()=>(await (await fetch('/api/standings')).json()).season)()"`, then read the season line with `A text` | the screen prints the month and the year in English for exactly the season the response carried — `August 2026` for `2026-08` | the screen prints `2026-08`, prints no season line, or prints a month the response did not carry — the client worked the season out from the browser's clock (`ADR-0002`) | `ADR-0061` §6; `web-client/src/ladder/ladder-text.ts` (`seasonName`) |
 
@@ -239,7 +239,7 @@ it produces is **provisional**, and that word is doing real work: a merged decis
 reachable, or that a literal has not moved since. A provisional suite carries this line, and the
 round record that first runs it is what deletes the line and names the cases that round corrected:
 
-> **Provisional** — authored YYYY-MM-DD from merged sources, not yet run (`ADR-0090` §5).
+> **provisional** — authored YYYY-MM-DD from merged sources, not yet run (`ADR-0090` §5).
 
 While it stands, a failing case in that suite is as much a claim about the catalogue as about the
 product: `ADR-0089` §4's reproduce-by-hand step is the whole point for it, and a failure that does
