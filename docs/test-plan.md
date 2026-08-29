@@ -115,6 +115,63 @@ loop to ignore it. Read the pair from the DOM first, then assert on that exact p
 
 ---
 
+## EPIC-04 — Identity and profiles
+
+> **Provisional** — authored 2026-08-29 from merged sources, not yet run (`ADR-0090` §5).
+
+Sources: the epic's Definition of done, and the ADRs its Open decisions table names.
+
+Five of its twelve promises reach a browser; the other seven are under §*What this catalogue does
+not cover*. The cases run in order and each leaves state the next uses. **W** is the browser whose
+result screen named it the winner of `04-02`'s duel and **L** is the other — decided by reading the
+screens, never fixed to a port.
+
+**Read the strip after a reload, never on the first load of a fresh profile.** `pd.deviceId` is
+written when the socket's `Welcome` lands (`web-client/src/store/boot.ts`) while the profile read
+runs once at mount (`web-client/src/profile/profile-provider.tsx`), and HTTP refuses a device the
+socket has not yet minted. A fresh profile's first render is therefore `No profile yet.`, and the
+strip is never re-read. A second `open` is deterministic. This is `SMK-03`'s mistake, avoided.
+
+**Three `wait` targets would prove nothing.** `Your duels`, `Leaderboard` and `Account` label the
+first screen's own doors as well as the screens behind them, so a wait on one is satisfied before
+the swap. Wait on a string that exists only past the door.
+
+| id | do | expect | fails if | source |
+| --- | --- | --- | --- | --- |
+| `04-01` | fresh `A`: `A open`, `A open`, `A wait "Duel coins"`, `A click "Your duels"`, `A wait "Opponent name"` | the strip states a balance as `<n> Duel coins`, and the duels screen renders with `No duels yet.` — neither read refuses a device that never made an account | the strip still reads `No profile yet.` after the reload, or the screen reads `Your duels did not load. Reload the page to try again.` — `GET /api/me` or `GET /api/me/duels` answered `401` to an account-less device | `web-client/src/profile/ProfileStrip.tsx`; `web-client/src/history/history-text.ts` |
+| `04-02` | play a duel to a winner (`CORE-12`'s sequence); on the loser **L**, read the balance, claim the profile with a handle and a password, reload, read it again — steps below the table | both readings are the same string, and it is `−1 Duel coins` for a browser whose only duel was a loss — U+2212, not a hyphen | the two differ, or the second reads `0 Duel coins` — the claim rewrote the balance, or clamped it (`ADR-0014`) | `ADR-0014`; `web-client/src/profile/profile-text.ts` (`coinBalanceText`) |
+| `04-03` | on **L**: set a display name that is not L's handle, then try to sign in with that display name and L's own password — steps below the table | the sign-in is refused with `That handle and password do not match an account.` | it signs in, or the account screen afterwards reads `Your password signs in to this account.` — something resolved a player from a display name | `ADR-0031` §1; `web-client/src/account/account-text.ts` (`SIGN_IN_REFUSED`) |
+| `04-04` | on **L**, sign in twice from the sign-in screen — once with L's own handle and a wrong password, once with a handle no account holds — capturing `L text` after each | both render `That handle and password do not match an account.`, and the two captures are identical | the two differ in any character, or either names a field, a handle or an account — the wire's indistinguishability was undone in words | `ADR-0027` §6; `web-client/src/account/account-text.ts` (`SIGN_IN_REFUSED`) |
+| `04-05` | on **W**: set a display name, then claim the profile with a second handle and password. On **L**: sign in with W's handle and password — steps below the table. **Runs last** | L lands on the account screen reading `Your password signs in to this account.`, and behind *Back* it shows W's display name, W's balance and W's duel — on a browser whose `device` differs from W's | any of the three differs from what W's own screen shows, or L is left on the sign-in screen | `ADR-0083` §5; `web-client/src/profile/ProfileStrip.tsx` |
+
+**`04-02`, `04-03` and `04-05` in full.** A duel leaves both browsers in a room (`ADR-0072`), so
+each begins `forget-room` then `open`. On the first screen the room-code box is input `0` and the
+name box is input `1`; on the account screen the sign-up handle is `0` and its password is `1`; on
+the sign-in screen the handle is `0` and the password is `1`.
+
+- `04-02` — `L forget-room`, `L open`, `L text` (read `… Duel coins`), `L click "Account"`,
+  `L wait "Give this profile a password"`, `L type 0 <handle>`, `L type 1 <password>`,
+  `L click "Give this profile a password"`, `L wait "This profile now has a password."`,
+  `L open`, `L text` (read it again).
+- `04-03` — `L type 1 <a display name with a space in it, so it cannot be a handle>`,
+  `L click "Set my name"`, `L click "Account"`, `L click "Sign in"`,
+  `L wait "Forgot your password?"`, `L type 0 <that display name>`, `L type 1 <L's password>`,
+  `L click "Sign in"`, `L wait "That handle and password do not match an account."`.
+- `04-05` — the same two flows on **W** with a second handle and a second display name, then on
+  **L**: `L click "Account"`, `L click "Sign in"`, `L wait "Forgot your password?"`,
+  `L type 0 <W's handle>`, `L type 1 <W's password>`, `L click "Sign in"`,
+  `L wait "Your password signs in to this account."`, `L click "Back"`, `L text`, and
+  `L device` against `W device`.
+
+**A handle is 3–32 of `[a-z0-9._-]` starting with `[a-z0-9]`, and a password is 8–128 characters**
+(`web-client/src/account/account-text.ts`, `HANDLE_REFUSED` and `PASSWORD_REFUSED`). A display
+name containing a space cannot be a handle, which is what makes `04-03` unambiguous.
+
+**`04-05` runs last because it ends L's own identity**: signing in binds that browser to W's
+player, so every case after it would read W's profile.
+
+---
+
 ## Per-epic suites
 
 Two paths in, and they produce different things
@@ -174,7 +231,7 @@ Three rules for writing one:
 | `EPIC-01` poker engine | not written — largely covered by the engine's own suite; a browser cannot see it |
 | `EPIC-02` duel server | not written — covered by `poker-server/.../e2e/` against real Postgres |
 | `EPIC-03` web client | **the CORE suite above is it** |
-| `EPIC-04` identity and profiles | not written — sign-up, sign-in, recovery, the name rules, history |
+| `EPIC-04` identity and profiles | **the `EPIC-04` suite above is it** — authored 2026-08-29 from merged sources, provisional until its first round |
 | `EPIC-05` ranking and leaderboard | not written — the ladder screen, standings order, rank after a duel |
 | `EPIC-06` design system | not written — and mostly not testable this way; `qa` is told not to report styling |
 
@@ -188,5 +245,21 @@ Stated so nobody reads a `PASS` as more than it is:
   which is `ADR-0088` gap 3 and survives this document exactly as it survived that ADR.
 - **Performance, load and security.** Out of `EPIC-12`'s scope.
 - **Anything `EPIC-06` owns** — placement, colour, type. `qa` is instructed not to report it.
+- **Seven of `EPIC-04`'s twelve Definition-of-done promises**, each for a stated reason rather than
+  by omission. *Every story is `done` or `dropped`*, *`V1` and `V2` are byte-unchanged*,
+  *`poker-engine` declares no dependency outside the `ADR-0010` allowlist* and *`verifyProtocolTypes`
+  still passes* are facts about the repository, answered by the board and by Gradle; no browser can
+  see one. *No response body, log line or `ServerMessage` contains a password or a password hash* is
+  promised **"asserted structurally rather than by inspection"** — the epic names its own method, and
+  it is not a browser: `drive.mjs` reads `#root.innerText`, which never contains an input's value, so
+  a DOM assertion for it would be green on any product. *History paging is total and disjoint* needs
+  more finished duels than a round can play — `DEFAULT_DUEL_LIMIT` is 10, so a second page needs
+  eleven — and its concurrent-insert half needs a duel to finish between two page reads, which two
+  browsers cannot do while one of them is paging. *Checked by hand, once, and recorded* asks for a
+  receipt rather than a repeatable case, and its recovery half is unreachable: a machine with no mail
+  transport binds `NoRecoveryMailer` (`ADR-0031` §7), the verification and reset tokens are stored
+  only as `BYTEA` hashes (`V8__recovery_email.sql`), and no mailed link ever arrives for a driver to
+  follow. **The whole of recovery — `#/verify`, `#/reset`, and *Forgot your password?* past its
+  acknowledgement — is outside this catalogue for that reason.**
 - **A real network.** Everything is `localhost`; latency, packet loss and a proxy in front of the
   socket are untested.
