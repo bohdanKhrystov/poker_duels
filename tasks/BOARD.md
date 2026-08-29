@@ -93,7 +93,7 @@ Startable right now: `python3 .github/scripts/lint_tickets.py --startable`
 | EPIC-09 | Bots and simulation | *not written* | later |
 | EPIC-10 | The AI software factory — the case study | *not written* | continuous |
 | [EPIC-11](epics/EPIC-11-status-notifications.md) | Status notifications — the run reports itself | **in progress** | v0.1 |
-| [EPIC-12](epics/EPIC-12-quality-and-defect-repair.md) | Quality and defect repair — the cycle that tests, triages and stops | **ready** — `DEC-082` answered by [`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md) on 2026-08-29: a browser may drive this client for a QA round, never for a gate, on three standing conditions (no dependency, no gate, no coverage claim), and `ADR-0088` §1's heading is amended to match while its body stands. Opened 2026-08-29 on the human's instruction. A `qa` agent scoped to an epic, a smoke run or a regression run; a `qa-manager` that triages and is the only thing that files bug tickets; a `qa-cycle` skill that runs the loop and **stops** it. Bugs are ordinary `task`s under a round story, which is what lets `build-epic` repair them unmodified and needs no change to a merged gate. Its hardest requirement is termination — five budgets and a convergence rule, because a loop that reports more defects every round is the failure it is designed against | v0.1 |
+| [EPIC-12](epics/EPIC-12-quality-and-defect-repair.md) | Quality and defect repair — the cycle that tests, triages and stops | **ready** — `DEC-082` answered by [`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md) on 2026-08-29: a browser may drive this client for a QA round, never for a gate, on three standing conditions (no dependency, no gate, no coverage claim), and `ADR-0088` §1's heading is amended to match while its body stands. **`DEC-083` answered** by [`ADR-0090`](../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md) the same day: **a skill may write the catalogue or run it, never both in one turn** — §2b's *"not another skill invoking it as a step"* is about **composition**, not automation alone, so its heading becomes *"No gate, and one caller"* and a cycle is started by **the human's own message and nothing else**. The missing suites (`EPIC-04`, `EPIC-05`, `EPIC-06`) are authored by a licensed **`qa-cases`** skill that lands them through ordinary reviewed PRs and whose terminal act is a report naming the command the human types next; every case it writes cites the merged source of its expectation, and one with no source is a `DEC` for the product owner rather than a case. Opened 2026-08-29 on the human's instruction. A `qa` agent scoped to an epic, a smoke run or a regression run; a `qa-manager` that triages and is the only thing that files bug tickets; a `qa-cycle` skill that runs the loop and **stops** it. Bugs are ordinary `task`s under a round story, which is what lets `build-epic` repair them unmodified and needs no change to a merged gate. Its hardest requirement is termination — five budgets and a convergence rule, because a loop that reports more defects every round is the failure it is designed against | v0.1 |
 
 Numbers 03–05 and 07–10 are **reserved**, not planned in detail. Epics are written when the one
 before them is close to done, because writing them earlier means rewriting them. `EPIC-06` is
@@ -726,6 +726,56 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
+
+`DEC-083` → [`ADR-0090`](../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md)
+on 2026-08-29 — **a skill may write the catalogue or run it, never both in one turn.** Raised the
+same day by the human's request for *"one skill"* that writes the missing cases for existing
+functionality and then runs a full QA cycle over them, and answered by the architect.
+
+**The question was which of two readings `ADR-0089` §2b carries**, since a composite is literally
+*"another skill invoking it as a step"* and plainly *"a human's command"* at the same time. §2 says
+a condition that stops holding *"returns the question as a new `DEC-NNN`"* — so it was raised rather
+than argued around. **The composition reading is taken, the automation reading rejected by name.**
+*"A human's command"* forbids nothing unless it means the **immediate caller**: every automated
+trigger has a human behind it at some distance, and provenance traced through one intermediary can
+be traced through five. `ADR-0089` §Consequences gave §2b a future job — *"the sentence to point at"*
+when someone proposes a nightly — and a clause satisfiable by relabelling the caller cannot do it.
+§2's own closing sentence pre-refuses the argument form: *"condition **b** failing, not a refinement
+of it."* And the composite's **sole** value is that the cycle starts while the human is elsewhere,
+which makes it a **cron whose clock is the length of its first half** — so it fails even the
+attended/unattended test the permissive reading proposes.
+
+**§2b is amended in the open, heading and one sentence.** *"No gate"* becomes ***"No gate, and one
+caller"***; *"a cycle is started by a human's command"* becomes *"a cycle is started by **the
+human's own message and nothing else**"*, with `/qa-cycle` the first act of the turn it starts. The
+rest of §2b and all of `ADR-0089` §§2a, 2c, 3, 4, 5, 6 stand **byte-unchanged**, as do `ADR-0088`
+§1's body and §§2–5. No schedule is licensed: a nightly still needs `ADR-0089` §Alternatives 3's own
+ADR, with rounds as evidence.
+
+**What the human types instead — two commands, and the expensive half is still one.** `qa-cases` is
+licensed to plan, write and land the suites `docs/test-plan.md` lists as *not yet written*
+(`EPIC-04`, `EPIC-05`, `EPIC-06`) through `build-epic` and the ordinary review gate. It may not
+bring the stack up, start a browser, dispatch `qa` or `qa-manager`, or invoke the cycle by any
+route; **its terminal act is a report naming, verbatim, the command the human types next.** Then
+`/qa-cycle epic EPIC-04`, typed by the human.
+
+**On the worry that a composite would grade its own cases**: the `qa`/`qa-manager` separation
+survives a composite untouched — `qa` still has no `Write` — so the blunt objection is answered by
+the reviewed PR. What a diff-versus-ticket review cannot answer is whether a case's `expect` is a
+claim the product ever made, and a composite hands `ADR-0089` §4 — *"a rule an agent follows, not an
+exit code"* — a catalogue of **never-executed** cases in the same unattended stretch that step 4 is
+merging production diffs. `SMK-03` is the evidence it is not theoretical. So every case `qa-cases`
+writes carries a `source` column citing the merged decision its expectation transcribes, and **a
+case with no merged source is not written**: it becomes a `DEC` for the **product owner**.
+
+**The cost, named:** QA becomes the workflow's one unchainable step and a person waits at an hour
+nobody can predict, **every round, forever**, against a failure that has not yet happened once; the
+condition binds committed files and not a prompt, so a human or a cron typing *"write the cases and
+then run a cycle"* defeats it with nothing mechanical to catch them; three ADRs and two amended
+headings now hold the browser rule; the `source` rule will slow the first authoring pass and raise
+product-owner `DEC`s, so the catalogue arrives smaller and later than asked. Chosen in the direction
+whose **mistake announces itself** — a visible wait generates its own evidence for reversal, an
+invisible precedent about how conditions are read does not come out with a `git rm`.
 
 `DEC-082` → [`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)
 on 2026-08-29 — **a browser drives this client for a QA round, never for a gate.** Raised the same
