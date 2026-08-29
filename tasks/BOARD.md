@@ -3281,7 +3281,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120503](tasks/TASK-120503-no-case-assumes-a-device-with-no-finished-duel.md) No case assumes a device with no finished duel — *harness; excluded from `B(1)`* | S | done |
 | | [TASK-120504](tasks/TASK-120504-a-round-allocates-the-third-profile-core-03-needs.md) A round allocates the third profile `CORE-03` needs — *harness; excluded from `B(1)`* | XS | backlog |
 | | [TASK-120505](tasks/TASK-120505-the-driver-does-not-click-what-a-player-cannot-see.md) The driver does not click what a player cannot see — *harness; excluded from `B(1)`* | XS | done |
-| | [TASK-120506](tasks/TASK-120506-a-case-can-end-a-browser-session-and-says-so.md) A case can end a browser session, and says so — *harness; supersedes `TASK-120502`* | XS | backlog |
+| | [TASK-120506](tasks/TASK-120506-a-case-can-end-a-browser-session-and-says-so.md) A case can end a browser session, and says so — *harness; supersedes `TASK-120502`* | XS | done |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no

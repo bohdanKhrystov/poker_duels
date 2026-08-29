@@ -233,6 +233,25 @@ try {
       break;
     }
 
+    case "close": {
+      // Close the app tab, leaving the browser alive by creating a new about:blank tab first.
+      // This is how a player closing their tab appears to the server — the WebSocket closes.
+      const blank = await (await fetch(`http://localhost:${PORT}/json/new?url=about:blank`, { method: "PUT" })).json();
+      const list = await targets();
+      const appTab = list.find((x) => x.type === "page" && x.url.includes("localhost:5173"));
+      if (!appTab) {
+        console.error(`drive: no app tab to close`);
+        process.exit(1);
+      }
+      const closeResp = await fetch(`http://localhost:${PORT}/json/close/${appTab.id}`);
+      if (!closeResp.ok) {
+        console.error(`drive: failed to close tab`);
+        process.exit(1);
+      }
+      console.log("closed app tab");
+      break;
+    }
+
     default:
       console.error(`usage: node scripts/qa/drive.mjs <port> <verb> [args]
 
@@ -245,7 +264,8 @@ try {
   link                    the invite link on screen
   device                  this profile's pd.deviceId
   forget-room             clear pd.roomCode (ADR-0072 room memory)
-  eval <expression>       escape hatch`);
+  eval <expression>       escape hatch
+  close                   end this profile's app session (closes WebSocket, keeps browser alive)`);
       process.exit(2);
   }
 } finally {

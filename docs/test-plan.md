@@ -101,11 +101,13 @@ loop to ignore it. Read the pair from the DOM first, then assert on that exact p
 
 ### Reconnect
 
+A navigation is not a disconnect on this browser; only `close` ends a session.
+
 | id | do | expect | fails if |
 | --- | --- | --- | --- |
 | `CORE-17` | mid-duel, `A open` (reload) | A returns to the **same seat**, same stacks, same board | A loses its seat, or is dealt in fresh |
-| `CORE-18` | during A's absence | B sees the away/absent marking (`ADR-0046`) | B is told nothing, or is told the rival *left* |
-| `CORE-19` | A returns | B sees *Your rival is back.* | the mark never clears |
+| `CORE-18` | A close | B sees the away/absent marking (`ADR-0046`) | B is told nothing, or is told the rival *left* |
+| `CORE-19` | A open <link> | B sees *Your rival is back.* | the mark never clears |
 
 ### Lobby
 
