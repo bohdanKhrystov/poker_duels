@@ -76,11 +76,15 @@ const ROOT_TEXT = "(document.getElementById('root')?.innerText ?? '')";
 // startsWith rather than includes: "Call 100" and "All in 10,000" both contain digits that change
 // every hand, and a substring match on "Call" would also hit a button labelled "Recall".
 const clickExpr = (label) => `(() => {
-  const els = [...document.querySelectorAll('button, a, [role=button]')]
-    .filter(e => !e.disabled);
+  const allEls = [...document.querySelectorAll('button, a, [role=button]')];
+  const els = allEls.filter(e => !e.disabled && e.offsetParent !== null);
   const want = ${JSON.stringify(label)}.toLowerCase();
   const el = els.find(e => (e.innerText || '').trim().toLowerCase().startsWith(want));
-  if (!el) return { ok: false, saw: els.map(e => (e.innerText || '').trim().split('\\n')[0]) };
+  if (!el) {
+    const hiddenMatches = allEls.filter(e => (e.innerText || '').trim().toLowerCase().startsWith(want) && (e.disabled || e.offsetParent === null));
+    const saw = els.map(e => (e.innerText || '').trim().split('\\n')[0]);
+    return { ok: false, saw, hiddenMatches: hiddenMatches.length };
+  }
   el.click();
   return { ok: true, clicked: (el.innerText || '').trim().split('\\n')[0] };
 })()`;
@@ -127,8 +131,12 @@ try {
       const label = args[0] ?? fail("click needs a label");
       const { value } = await page.evaluate(clickExpr(label));
       if (!value?.ok) {
-        console.error(`drive: no enabled control starting with ${JSON.stringify(label)}`);
-        console.error(`drive: controls present: ${JSON.stringify(value?.saw ?? [])}`);
+        if (value?.hiddenMatches > 0) {
+          console.error(`drive: found ${value.hiddenMatches} match(es) for ${JSON.stringify(label)}, all invisible`);
+        } else {
+          console.error(`drive: no visible control starting with ${JSON.stringify(label)}`);
+          console.error(`drive: visible controls: ${JSON.stringify(value?.saw ?? [])}`);
+        }
         process.exit(1);
       }
       console.log(`clicked: ${value.clicked}`);
