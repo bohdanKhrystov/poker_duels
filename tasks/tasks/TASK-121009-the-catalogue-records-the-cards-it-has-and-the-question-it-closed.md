@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121009
 title: The catalogue records the cards it now has, and the question two rounds have closed
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: docs
 estimate: XS
