@@ -3402,7 +3402,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120902](tasks/TASK-120902-a-card-for-the-duels-screen.md) A card for the `duels` screen — *missing card; `high` — **excluded from `B(1)`*** | S | done |
 | | [TASK-120903](tasks/TASK-120903-a-card-for-the-leaderboard-screen.md) A card for the `leaderboard` screen — *missing card; `high` — **excluded from `B(1)`*** | S | done |
 | | [TASK-120904](tasks/TASK-120904-a-card-for-the-account-screen.md) A card for the `account` screen — *missing card; `high` — **excluded from `B(1)`*** | S | ready |
-| | [TASK-120905](tasks/TASK-120905-a-card-for-the-sign-in-screen.md) A card for the `sign-in` screen — *missing card; `high` — **excluded from `B(1)`*** | S | ready |
+| | [TASK-120905](tasks/TASK-120905-a-card-for-the-sign-in-screen.md) A card for the `sign-in` screen — *missing card; `high` — **excluded from `B(1)`*** | S | done |
 | | [TASK-120906](tasks/TASK-120906-the-client-never-sends-on-a-socket-that-has-not-opened.md) The client never sends on a socket that has not opened — *product; `medium`, never scheduled by this cycle* | S | backlog |
 | | [TASK-120907](tasks/TASK-120907-the-join-path-ships-neither-screen-its-cards-draw.md) The join path ships neither of the two screens its cards draw — *product; `medium`, not startable until its `DEC` is answered* | S | backlog |
 | | [TASK-120908](tasks/TASK-120908-the-tables-sizing-control-is-the-cards-presets.md) The table's sizing control is the card's presets, not a range slider — *product; `medium`* | S | backlog |
