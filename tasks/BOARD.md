@@ -3384,7 +3384,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120701](tasks/TASK-120701-state-clear-leaves-only-the-heartbeats-dedupe-stamp.md) `state --clear` leaves only the heartbeat's dedupe stamp | S | done |
 | | [TASK-120702](tasks/TASK-120702-the-driver-captures-a-screen.md) The driver captures a screen — a `shot` verb over CDP | S | done |
 | | [TASK-120703](tasks/TASK-120703-the-uat-screen-inventory.md) The UAT screen inventory — the route map a round walks | S | done |
-| | [TASK-120704](tasks/TASK-120704-the-standing-questions-and-what-uat-does-not-cover.md) The standing questions, and what UAT does not cover | S | backlog |
+| | [TASK-120704](tasks/TASK-120704-the-standing-questions-and-what-uat-does-not-cover.md) The standing questions, and what UAT does not cover | S | done |
 | | [TASK-120705](tasks/TASK-120705-the-uat-agent-the-role-and-the-hands.md) The `uat` agent — the role, the refusals and the hands | S | backlog |
 | | [TASK-120706](tasks/TASK-120706-what-uat-may-file-and-what-it-may-only-ask.md) What `uat` may file, and what it may only ask | S | backlog |
 | | [TASK-120707](tasks/TASK-120707-the-uat-focus-of-the-qa-cycle-skill.md) The `uat` focus of the `qa-cycle` skill | S | backlog |

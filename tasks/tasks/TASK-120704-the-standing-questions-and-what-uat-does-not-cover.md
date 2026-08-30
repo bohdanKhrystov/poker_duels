@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120704
 title: The standing questions, and what UAT does not cover
 type: task
-status: backlog
+status: done
 parent: STORY-1207
 estimate: S
 tier: haiku
