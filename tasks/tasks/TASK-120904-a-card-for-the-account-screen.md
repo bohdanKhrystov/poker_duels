@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120904
 title: A card for the `account` screen
 type: task
-status: ready
+status: done
 parent: STORY-1209
 module: design
 estimate: S
