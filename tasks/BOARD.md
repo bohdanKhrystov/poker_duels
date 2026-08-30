@@ -3465,7 +3465,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-121101](tasks/TASK-121101-the-table-says-who-won-the-hand-it-just-finished.md) The table says who won the hand it just finished — *product; `medium`, blocked on a `DEC` the ticket registers first* | S | backlog |
 | | [TASK-121102](tasks/TASK-121102-accepting-a-rematch-draws-the-cards-dealing-frame.md) Accepting a rematch draws the card's dealing frame — *product; `low`, `manual-verify`* | S | backlog |
 | | [TASK-121103](tasks/TASK-121103-the-duels-rows-and-filter-carry-the-cards-remaining-cues.md) The `duels` screen's checked filter, faint date and outcome weight are the card's — *product; `medium`* | S | done |
-| | [TASK-121104](tasks/TASK-121104-a-leaderboard-rank-and-coin-figure-is-a-mono-figure.md) A leaderboard rank and coin figure is the card's mono figure — *product; `medium`* | XS | backlog |
+| | [TASK-121104](tasks/TASK-121104-a-leaderboard-rank-and-coin-figure-is-a-mono-figure.md) A leaderboard rank and coin figure is the card's mono figure — *product; `medium`* | XS | done |
 | | [TASK-121105](tasks/TASK-121105-the-account-forms-labels-are-the-cards-labels.md) The `account` screen's field labels are the card's left-aligned muted labels — *product; `low`* | XS | backlog |
 | | [TASK-121106](tasks/TASK-121106-the-sign-in-forms-labels-are-the-cards-labels.md) The `sign-in` screen's field labels are the card's left-aligned muted labels — *product; `low`* | XS | backlog |
 | | [TASK-121107](tasks/TASK-121107-a-player-with-no-place-reads-the-cards-muted-line.md) A player with no place this season reads the card's muted line, not the accent box — *product; `low`, carried from round 3's `BLOCKED` state and confirmed statically* | XS | backlog |

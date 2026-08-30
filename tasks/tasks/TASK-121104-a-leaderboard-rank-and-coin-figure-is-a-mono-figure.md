@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121104
 title: A leaderboard rank and coin figure is the card's mono figure
 type: task
-status: backlog
+status: done
 parent: STORY-1211
 module: web-client
 estimate: XS

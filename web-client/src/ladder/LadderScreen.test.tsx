@@ -821,6 +821,40 @@ describe("the ladder screen", () => {
     expect(cells).toEqual(["5", "P4", "5"]);
   });
 
+  it("a row's rank and coins are mono figures, and the rank is the muted one", async () => {
+    // One row with positive coins and one with negative — a treatment that
+    // only reaches the positive case, or that mutes every span rather than
+    // just the rank, has nowhere to hide against both rows checked below.
+    const rows: readonly LadderRow[] = [
+      { rank: 1, playerId: "ada", displayName: "Ada", coins: 5 },
+      { rank: 3, playerId: "bo", displayName: "Bo", coins: -2 },
+    ];
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: buildPage(rows),
+    }));
+
+    render(<LadderScreen read={read} />);
+
+    const items = await waitFor(() => {
+      const found = within(screen.getByRole("list")).getAllByRole("listitem");
+      expect(found).toHaveLength(2);
+      return found;
+    });
+
+    for (const item of items) {
+      const [rank, , coins] = Array.from(item.children) as HTMLElement[];
+
+      expect(rank.className).toContain("font-mono");
+      expect(rank.className).toContain("tabular-nums");
+      expect(rank.className).toContain("text-text-muted");
+
+      expect(coins.className).toContain("font-mono");
+      expect(coins.className).toContain("tabular-nums");
+      expect(coins.className).not.toContain("text-text-muted");
+    }
+  });
+
   it("the self line is the highlighted box the card draws", async () => {
     // A border alone can sit flush with the body colour — the box the card
     // draws carries both the tinted fill and the accent border.

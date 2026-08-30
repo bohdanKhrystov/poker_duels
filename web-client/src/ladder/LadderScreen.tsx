@@ -110,9 +110,19 @@ export function LadderScreen(props: {
             key={row.playerId}
             className="flex items-baseline gap-4 border-t border-hairline py-3 text-small first:border-t-0"
           >
-            <span>{row.rank}</span>{" "}
+            {/*
+              The card also sets `min-width: 2ch` on this span. Left off:
+              tokens.css names no width family, so expressing it would mean
+              either a new token or the bracket literal `min-w-[2ch]` that
+              ADR-0091 §4 refuses.
+            */}
+            <span className="text-right font-mono text-text-muted tabular-nums">
+              {row.rank}
+            </span>{" "}
             <span className="flex-1">{nameOrNone(row.displayName)}</span>{" "}
-            <span>{coinBalanceText(row.coins)}</span>
+            <span className="text-right font-mono tabular-nums">
+              {coinBalanceText(row.coins)}
+            </span>
           </li>
         ))}
       </ul>
