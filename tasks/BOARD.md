@@ -727,6 +727,34 @@ parallel with `EPIC-02`; no shared file.
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
 
+`DEC-084` → [`ADR-0091`](../docs/adr/ADR-0091-design-gets-no-agent-a-new-screen-owes-a-card.md)
+on 2026-08-30 — **design gets no agent: a new screen owes a card, and adoption is gated where it is
+consumed.** Raised the same day by the human — *does design work need its own agent, or does it fit
+the existing `coder`/`reviewer` workflow?* — registered and answered in the same PR by the
+architect.
+
+**No designer agent and no design skill**, because either would own no decision: `ADR-0024` §3 gave
+taste to the human at the rendered card and structure to the `light` review, and neither recorded
+failure was agent-shaped. `EPIC-04` and `EPIC-05` shipped six of the seven `Screen` members —
+`duels`, `leaderboard`, `account`, `sign-in`, `verify`, `reset` — with no design card because
+**nothing dispatched any design work at all**, and an agent nobody dispatches designs nothing. The
+missing trigger becomes **the plan-story rule**, in `.claude/agents/planner.md` alone: a story
+whose split adds a `Screen` member names the card it implements in `## Design notes`, or the
+split's first ticket *is* the card; minting new visual language stays interactive with the human,
+composing from the settled vocabulary is an ordinary dispatched ticket, and the human's visual
+verdict may **trail the merge** — the named price is rework when a trailing look rejects a shipped
+screen, bought so unattended runs never stall at a pane. `check-drift.sh` **stays out of
+`web-client/`**: the zero-token grep that raised the question measured direct references while
+`app.css`'s `@theme static` block rebinds every Tailwind utility to `var(--pd-*)` under three
+merged client guards, so the real leak is raw lengths in arbitrary values — `380px` ×21, `560px`
+×2, `460px`, `1.5em`, across fifteen files — and the client's own job gains a fourth guard that
+refuses them, while the shell gate keeps guarding `design/` against itself in `tickets.yml`. The
+debt is registered, not forgiven: `EPIC-06` reopens with a retrofit story for the six slugs (and
+the account offer), its 2026-08-15 close standing as history, and `ADR-0024`'s generator trigger —
+*"cards multiply or a grep actually fires"* — is recorded as **fired**, its promised ticket owed.
+Hands the planner three cuts: the planner-rule edit, the length-guard ticket, the retrofit story.
+Nothing in it was the product owner's.
+
 `DEC-083` → [`ADR-0090`](../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md)
 on 2026-08-29 — **a skill may write the catalogue or run it, never both in one turn.** Raised the
 same day by the human's request for *"one skill"* that writes the missing cases for existing
