@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121003
 title: The `account` screen's *Sign in* and *Sign out* are the card's buttons, not sentences
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: web-client
 estimate: S
