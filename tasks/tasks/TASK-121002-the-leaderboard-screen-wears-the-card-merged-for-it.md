@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121002
 title: The `leaderboard` screen wears the card merged for it, and a row reads as rank, name and coins
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: web-client
 estimate: S
