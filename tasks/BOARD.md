@@ -3381,7 +3381,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120602](tasks/TASK-120602-the-catalogues-coin-query-reads-the-device-binding-table.md) The catalogue's coin query reads the table the device id actually lives in — *harness; excluded from `B(2)`* | XS | ready |
 | | [TASK-120603](tasks/TASK-120603-05-02s-standings-read-carries-the-identity-the-app-sends.md) `05-02`'s standings read carries the identity the app sends — *harness; excluded from `B(2)`* | XS | backlog |
 | | [TASK-120604](tasks/TASK-120604-05-04-walks-the-pages-that-exist.md) `05-04` walks the pages that exist, and says what a hidden *Show more* proves — *harness; excluded from `B(2)`* | XS | backlog |
-| **[STORY-1207](stories/STORY-1207-the-uat-focus-the-observer-and-what-it-may-file.md)** The UAT focus — the observer, the harness verb, the route map and what may be filed — *not a round story; schema 2* | | | ready |
+| **[STORY-1207](stories/STORY-1207-the-uat-focus-the-observer-and-what-it-may-file.md)** The UAT focus — the observer, the harness verb, the route map and what may be filed — *not a round story; schema 2* | | | **done** |
 | | [TASK-120701](tasks/TASK-120701-state-clear-leaves-only-the-heartbeats-dedupe-stamp.md) `state --clear` leaves only the heartbeat's dedupe stamp | S | done |
 | | [TASK-120702](tasks/TASK-120702-the-driver-captures-a-screen.md) The driver captures a screen — a `shot` verb over CDP | S | done |
 | | [TASK-120703](tasks/TASK-120703-the-uat-screen-inventory.md) The UAT screen inventory — the route map a round walks | S | done |
@@ -3390,7 +3390,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120706](tasks/TASK-120706-what-uat-may-file-and-what-it-may-only-ask.md) What `uat` may file, and what it may only ask | S | done |
 | | [TASK-120707](tasks/TASK-120707-the-uat-focus-of-the-qa-cycle-skill.md) The `uat` focus of the `qa-cycle` skill | S | done |
 | | [TASK-120708](tasks/TASK-120708-the-merged-source-classifier-and-the-promotion-gate.md) `qa-manager` — the merged-source classifier and the promotion gate | S | done |
-| | [TASK-120709](tasks/TASK-120709-two-more-exclusions-a-baseline-round-and-a-qualified-verdict.md) `qa-manager` — two more exclusions, a baseline round and a qualified verdict | S | backlog |
+| | [TASK-120709](tasks/TASK-120709-two-more-exclusions-a-baseline-round-and-a-qualified-verdict.md) `qa-manager` — two more exclusions, a baseline round and a qualified verdict | S | done |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120709
 title: qa-manager — two more exclusions, a baseline round and a qualified verdict
 type: task
-status: backlog
+status: done
 parent: STORY-1207
 estimate: S
 tier: sonnet
