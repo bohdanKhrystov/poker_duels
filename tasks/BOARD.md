@@ -732,6 +732,45 @@ parallel with `EPIC-02`; no shared file.
 | DEC-090 | **The product owner's** — on the `account` screen, should *Attach a recovery address* — which asks for a *Current password* — appear on a device that has no password yet, or only once one exists? The section is offered on an unclaimed profile, where the field it requires cannot be filled. `ADR-0050` §4 settles what the screen **reads** (`deviceRouteLive`, and *no `ProfileResponse` field*) and no merged source settles what it **offers**, so the shipped state contradicts nothing and this is a question. Raised 2026-08-30 at round 1 of `/qa-cycle uat regression`'s triage and promoted by `qa-manager` under [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §5 — one of the three slots that round had, on one of three distinct screens, so `DEC-088`'s ordering question did not bite. It clears both halves of the bar: a concrete choice answerable in one sentence, and it bears on a player's ability to tell what is going on or what they may do. **Blocks nothing** — it gates no member of round 1's fix set, so the cycle continues (`ADR-0092` §5); an answer becomes a merged source either way, and any ticket it yields enters the **earliest subsequent** round's triage or the ordinary backlog, never the round that asked (`EPIC-12` §Termination rule 1). Recorded in [`STORY-1209`](stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | [`STORY-1209`](stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | before the cycle's next triage |
 | DEC-091 | **The product owner's** — on the `sign-in` screen, should *Back* on the sign-in screen return to the account screen it was opened from, or to the lobby? `ADR-0083` §2 settles where a **successful sign-in** lands (`#/account`) and nothing settles where a refusal or a retreat lands. The shipped *Back* returns to the lobby, two steps from where the player was. No merged source is contradicted. Raised 2026-08-30 at round 1 of `/qa-cycle uat regression`'s triage and promoted by `qa-manager` under [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §5 — one of the three slots that round had, on one of three distinct screens, so `DEC-088`'s ordering question did not bite. It clears both halves of the bar: a concrete choice answerable in one sentence, and it bears on a player's ability to tell what is going on or what they may do. **Blocks nothing** — it gates no member of round 1's fix set, so the cycle continues (`ADR-0092` §5); an answer becomes a merged source either way, and any ticket it yields enters the **earliest subsequent** round's triage or the ordinary backlog, never the round that asked (`EPIC-12` §Termination rule 1). Recorded in [`STORY-1209`](stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | [`STORY-1209`](stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | before the cycle's next triage |
 
+`DEC-092` → [`ADR-0094`](../docs/adr/ADR-0094-opening-the-invite-is-taking-the-seat.md)
+on 2026-08-30 — **opening the invite is taking the seat, and the two join cards are corrected to
+it.** Answered by the product owner, deriving from the first success condition — *"Send a link.
+She opens it in a browser. We play a full heads-up match. Someone wins. We hit Rematch."* — which
+has five verbs and not one of them is *accepts*, and which the vision follows with *"Everything
+else is downstream of that moment."* Registered and answered in the same PR (the `DEC-039` path),
+so it never sat in the open table above.
+
+**The question.** `design/screens/join-duel.html` draws an offered seat — *ImKate challenges you*,
+a stakes line, a room-code chip, *Take the seat* — and `design/screens/enter-code.html` draws a
+screen of its own for typing a code. The client has neither: an invite link seats the joining
+player straight into a dealt hand, and a code is typed inline on the first screen. Three
+consecutive UAT rounds (`STORY-1205`, `STORY-1209`, `STORY-1210`) filed the same `high`, because
+`ADR-0092` §3a judges the shipped screen against its merged card and nothing said which artefact
+was the product.
+
+**The answer: the client is the product, and the cards are what change.** The invite path renders
+no screen — presenting the code *is* taking the seat (`ADR-0022`: *"holding a room code is the
+invite… Whoever presents it takes the second seat"*, priced as *"one click with zero friction for
+the invited"*) — and the code field stays on the first screen, which `ADR-0060` §§1 and 4 already
+describe as carrying *"the join form"* and *"the room code box"*. No client, server, wire or
+`PROTOCOL_VERSION` change, and no `docs/test-plan.md` `expect` moves: `SMK-05`, `CORE-02` and
+`CORE-05` describe the blessed product and keep passing. `TASK-120907` becomes a `module: design`
+ticket; `enter-code.html` keeps its path (three registers cite it, `ADR-0092` §4's dedupe key
+*is* the path) and stops claiming to be a screen; `join-duel.html` has no subject left, and
+whatever the ticket does with it, no register may be left citing a path that is gone.
+
+**Costs named:** a link is a commitment with no decline — the seated player's only exit is to walk
+away and let `ADR-0023` play the hands out, at the cost of the coin `ADR-0014` stakes, and a link
+forwarded to a group chat gives the seat to whoever clicks first with no way for the host to evict
+them; the guest never learns who challenged them until they are in; two human-accepted card frames
+are thrown away; two `backlog` tickets (`TASK-120907`, `TASK-120911`) now touch one file. **It
+forecloses** a pre-join view of a room in v0.1, with the reversal trigger named: the day a duel's
+terms stop being constant (`ADR-0035` leaves stack and blinds as configuration), the screen would
+show a variable rather than a constant and the question is re-argued. **It does not license** the
+client's copy winning by default — strings are decided string by string by whichever merged source
+owns them, which is `TASK-120911`'s job, not this ADR's. Nothing is raised for the architect:
+`TASK-120907`'s technical half was conditional on a *yes*.
+
 `DEC-086` → [`ADR-0093`](../docs/adr/ADR-0093-ready-for-real-users-is-said-of-the-shipped-artifact.md)
 on 2026-08-30 — **"ready for real users" is said of the shipped artifact, and the bar is two
 facts, neither of them a test result.** Answered by the product owner, deriving from the success
