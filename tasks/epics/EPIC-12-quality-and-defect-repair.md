@@ -119,6 +119,7 @@ here; until it is answered, every round record honestly describes `npm run dev`.
 | [STORY-1207](../stories/STORY-1207-the-uat-focus-the-observer-and-what-it-may-file.md) | The UAT focus — the observer, the harness verb, the route map and what may be filed | ready — **not a round story**; it builds what `ADR-0092` §8 names, and runs no round |
 | [STORY-1208](../stories/STORY-1208-the-verdict-table-never-checks-for-a-baseline-round.md) | Step 6 stops a healthy cycle — the verdict table never checks for a baseline round | ready — **not a round story**; it repairs a defect in this cycle's own machinery, and runs no round |
 | [STORY-1209](../stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | Round 1 (UAT) — the front door was never dressed, and four screens have no card | ready — **the first round under the `uat` focus**; `B(1) = 1`, verdict `PROCEED (conformance unjudged on 4 of 11 screens)` |
+| [STORY-1210](../stories/STORY-1210-round-2-uat-the-four-new-cards-were-not-a-tautology.md) | Round 2 (UAT) — the four new cards were not a tautology, and the screens behind them are undressed | ready — **the first baseline round this cycle has run**; `B(2) = 3`, verdict `PROCEED`, unqualified because no cell read `BLOCKED` |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
 when it is run and the ids stay sequential without arithmetic. **`STORY-1207` is the third story here that
@@ -133,6 +134,12 @@ therefore resume at **`STORY-1205`**, which supersedes `STORY-1203`'s sentence r
 for the first round. That is stated rather than done quietly, because **this is the second time the
 convention has moved by one**, and a convention silently shifted twice is one nobody can rely on
 afterwards — each shift is written into this table's own rows, so a reader never has to infer it.
+
+**Round 2 is the first **baseline round** this cycle has run**, and `STORY-1210` records the
+determination in full: `duels`, `leaderboard`, `account` and `sign-in` became conformance-judgeable
+for the first time on cards merged in round 1's repairs, so rule 4's comparison is skipped and
+`B(2) = 3` is not compared against `B(1) = 1`. Rule 5's budget binds regardless — round 3 is the
+last, and it gets no exemption.
 
 **`STORY-1208` is the fourth non-round story, and the only one that repairs a defect in this
 cycle's own machinery.** `qa-manager`'s `## Step 6` and §Termination rule 4 below both special-case

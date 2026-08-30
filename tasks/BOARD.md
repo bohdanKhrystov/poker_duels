@@ -3410,6 +3410,16 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120910](tasks/TASK-120910-the-profile-strip-shows-the-name-it-was-just-given.md) The profile strip shows the display name it was just given — *product; `medium`* | S | backlog |
 | | [TASK-120911](tasks/TASK-120911-three-cards-carry-the-strings-their-adrs-settled.md) Three cards carry the strings the ADRs that superseded them settled — *design; card in arrears, `medium`, **not a product defect*** | S | backlog |
 | | [TASK-120912](tasks/TASK-120912-not-now-is-dressed-like-the-control-beside-it.md) The result screen's *Not now* is dressed like the control beside it — *product; `low`* | XS | backlog |
+| **[STORY-1210](stories/STORY-1210-round-2-uat-the-four-new-cards-were-not-a-tautology.md)** Round 2 (UAT) — the four new cards were not a tautology, and the screens behind them are undressed — *schema 2; **baseline round**; `B(2) = 3`, verdict `PROCEED`* | | | ready |
+| | [TASK-121001](tasks/TASK-121001-the-duels-screen-wears-the-card-merged-for-it.md) The `duels` screen wears the card merged for it, and its search field can be seen — *product; `high` — **counts in `B(2)`*** | S | ready |
+| | [TASK-121002](tasks/TASK-121002-the-leaderboard-screen-wears-the-card-merged-for-it.md) The `leaderboard` screen wears the card merged for it, and a row reads as rank, name and coins — *product; `high` — **counts in `B(2)`*** | S | ready |
+| | [TASK-121003](tasks/TASK-121003-the-account-screens-controls-look-like-controls.md) The `account` screen's *Sign in* and *Sign out* are the card's buttons, not sentences — *product; `high` — **counts in `B(2)`*** | S | ready |
+| | [TASK-121004](tasks/TASK-121004-the-front-door-finishes-the-card-it-started.md) The front door finishes the card `TASK-120901` started — the fill, the code well, the wordmark — *product; `medium`, never scheduled by this cycle* | S | backlog |
+| | [TASK-121005](tasks/TASK-121005-the-sign-in-screens-route-out-is-the-cards-link.md) The `sign-in` screen's route out is the card's link, and its submit is the card's fill button — *product; `medium`* | S | backlog |
+| | [TASK-121006](tasks/TASK-121006-the-account-forms-submits-are-the-cards-fill-button.md) The `account` screen's two form submits are the card's fill button — *product; `medium`* | XS | backlog |
+| | [TASK-121007](tasks/TASK-121007-two-cards-and-a-margin-note-catch-up-with-the-client.md) Two cards and a margin note catch up with the client that overtook them — *design; cards in arrears, `medium`, **not a product defect*** | XS | backlog |
+| | [TASK-121008](tasks/TASK-121008-the-driver-can-read-a-screen-that-auto-advances.md) The driver can read a screen that auto-advances between polls — *harness capability; `manual-verify` — **excluded from `B(2)`*** | S | ready |
+| | [TASK-121009](tasks/TASK-121009-the-catalogue-records-the-cards-it-has-and-the-question-it-closed.md) The catalogue records the cards it now has, and the question two rounds have closed — *harness — **excluded from `B(2)`*** | XS | ready |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no
