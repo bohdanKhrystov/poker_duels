@@ -3388,7 +3388,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120705](tasks/TASK-120705-the-uat-agent-the-role-and-the-hands.md) The `uat` agent — the role, the refusals and the hands | S | done |
 | | [TASK-120706](tasks/TASK-120706-what-uat-may-file-and-what-it-may-only-ask.md) What `uat` may file, and what it may only ask | S | done |
 | | [TASK-120707](tasks/TASK-120707-the-uat-focus-of-the-qa-cycle-skill.md) The `uat` focus of the `qa-cycle` skill | S | done |
-| | [TASK-120708](tasks/TASK-120708-the-merged-source-classifier-and-the-promotion-gate.md) `qa-manager` — the merged-source classifier and the promotion gate | S | backlog |
+| | [TASK-120708](tasks/TASK-120708-the-merged-source-classifier-and-the-promotion-gate.md) `qa-manager` — the merged-source classifier and the promotion gate | S | done |
 | | [TASK-120709](tasks/TASK-120709-two-more-exclusions-a-baseline-round-and-a-qualified-verdict.md) `qa-manager` — two more exclusions, a baseline round and a qualified verdict | S | backlog |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
