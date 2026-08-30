@@ -16,6 +16,7 @@ verify:
   - node --check scripts/qa/drive.mjs
   - node scripts/qa/drive.mjs 1 shot /tmp/pd-shot-probe.png 2>&1 | grep -qF "no browser on port 1"
   - node scripts/qa/drive.mjs 1 nosuchverb 2>&1 | grep -qF "usage: node scripts/qa/drive.mjs"
+  - "! node scripts/qa/drive.mjs 1 nosuchverb 2>&1 | grep -qF 'no browser on port 1'"
   - awk '/^import /{ if (!index($0,"node:")) bad=1 } /require\(/{bad=1} END{exit bad?1:0}' scripts/qa/drive.mjs
   - awk 'index($0,"shot <path>"){f=1} END{exit f?0:1}' scripts/qa/drive.mjs
 ---
