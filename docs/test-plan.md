@@ -329,6 +329,8 @@ existed, and `ADR-0089` §2c already forbids reading any round as the thing that
 
 ### The standing questions
 
+| id | question | source |
+| --- | --- | --- |
 | `UAT-Q1` | is the main info properly highlighted? | ADR-0092 §Context |
 | `UAT-Q2` | is it clear to user what is going on? | ADR-0092 §Context |
 | `UAT-Q3` | are all options accessible? | ADR-0092 §Context |
