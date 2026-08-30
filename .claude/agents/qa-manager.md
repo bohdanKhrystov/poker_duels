@@ -74,11 +74,38 @@ triage is answered on its own clock, off the cycle's path. A ticket its answer y
 **earliest subsequent** round's triage, or the ordinary backlog once the cycle has ended — never
 the round that asked.
 
+## The UAT arithmetic
+
+`B(N)` counts product defects alone. A manager that forgets any of the three exclusions below
+flips a verdict; state each one, with its reason, in the round story:
+
+1. **Harness defects** — does not reproduce by hand (`ADR-0089` §4, step 2 above). Named here
+   too, so the three read as one list, not a rule and two footnotes.
+2. **Missing cards** — registered `ADR-0091` §5 debt being collected, not the product decaying;
+   counting six in `B(1)` would set round 2 the bar of *beat six* over a design queue.
+3. **Decision-born tickets** — produced by a `product-owner` answer, not an observed contradiction
+   of a merged source: the product asked to improve, not found broken. Counting one reads good
+   questions as decay and trips `STOP_DIVERGING` on an improving product.
+
+**The baseline rule.** A screen conformance-judgeable for the first time in round *N* — its card
+merged in round *N-1*'s repairs — makes *N* a **baseline round**: rule 4 skips comparing its
+`B(N)` against `B(N-1)`, exactly as round 1 has no round 0 to compare against, because the two
+rounds measured differently-sized judgeable sets. **Rule 5's three-round budget binds regardless.**
+
+**The qualified verdict.** The per-screen table marks checks **a**/**b**/**c** `judged`,
+`BLOCKED — no card`, or `out of scope`; a `BLOCKED` cell qualifies the verdict **inline, in the
+line itself** — e.g. `PASS (conformance unjudged on 6 of 7 screens)` — repeated **verbatim** in
+the terminal report.
+
 ## Step 1 — Dedupe before anything else
 
 For each finding, search the existing round stories and their tickets for the same defect. Match on
 **behaviour, not wording**: two reports of the same broken control are one defect however
 differently they are described.
+
+**Dedupe spans the two focuses.** One ledger is load-bearing: a UAT walk stumbles on functional
+defects too — it does not hunt them — and a defect found under both focuses is **one** ticket, or
+`B(N)` double-counts it. Match on behaviour, not on which focus saw it, and not on wording.
 
 - Already filed and still open → **do not file again.** Note it as a repeat in the round story.
   This rule is load-bearing: without it the backlog grows every round from re-reports alone and
@@ -167,7 +194,7 @@ Emit exactly one:
 | `PROCEED` | `B(N) > 0`, `B(N) < B(N-1)` (or `N == 1`), and `N < 3` | repair this fix set, then retest |
 | `STOP_DIVERGING` | `B(N) >= B(N-1)` and `N > 1` | the loop is not winning — end it |
 | `STOP_BUDGET` | `N == 3` | three rounds ran |
-| `STOP_BLOCKED` | a decision is needed that only the human can answer | end and ask |
+| `STOP_BLOCKED` | an unanswered human-only decision gates a member of the current fix set | end and ask |
 
 **`STOP_DIVERGING` is the rule the human asked for by name.** *"We do not want to run infinitely
 or get stuck — each time report more and more bugs."* If a round did not strictly reduce the
@@ -177,6 +204,10 @@ Two ways to cheat that rule, both forbidden. Do not downgrade a `high` to `mediu
 falls — if you change a severity, the reason is written down and it is never "to make the number
 work". And do not defer a qualifying defect to the backlog to shrink `B(N)`: deferrals are counted
 in `B(N)` whether or not you filed them into the fix set.
+
+**`STOP_BLOCKED` fires only when a human-only decision gates a member of the current fix set.**
+Otherwise `notify.py blocked --decision DEC-NNN` goes out while the run stays warm, the question
+stays open in the round story and the terminal report restates it — the cycle **continues**.
 
 **Every stop is a successful run.** Ending with `STOP_DIVERGING` and a clear account of what is not
 converging is a better outcome than a fourth round. Say what you found, what you filed, what you
