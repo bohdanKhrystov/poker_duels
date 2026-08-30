@@ -726,7 +726,34 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
-| DEC-086 | **The product owner's** — what, if anything, is the written bar for *"ready for real users"*? Raised 2026-08-30 by the human's UAT request. [`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md) §2c forbids citing any round as coverage and [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §2 extends the corollary by name: no round record — a `PASS` included — may be cited as the thing that made the product ready, so a readiness bar, if the product ever has one, must be **decided**, not measured into existence. *There is no written bar; the human judges by reading the round records* is a complete answer and needs saying out loud. Blocks nothing today — UAT runs without it | [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) | before anything is offered to real users |
+| DEC-087 | **The architect's** — by what mechanism do the proofs of record load the built bundle a real user would receive: what serves `dist/` (the Ktor server, a static server, a `scripts/qa/stack.sh` mode), on what origin, and what supersedes [`ADR-0088`](../docs/adr/ADR-0088-the-two-browser-proof-is-a-written-hand-check.md) §2 step 3's `npm run dev` so the hand-check describes the same artifact? Raised 2026-08-30 by [`ADR-0093`](../docs/adr/ADR-0093-ready-for-real-users-is-said-of-the-shipped-artifact.md) §1a, whose readiness bar is unmeetable until this is answered. Blocks nothing running today — QA and UAT rounds continue against the dev server and their records say so | [`ADR-0093`](../docs/adr/ADR-0093-ready-for-real-users-is-said-of-the-shipped-artifact.md) | before anything is offered to real users |
+
+`DEC-086` → [`ADR-0093`](../docs/adr/ADR-0093-ready-for-real-users-is-said-of-the-shipped-artifact.md)
+on 2026-08-30 — **"ready for real users" is said of the shipped artifact, and the bar is two
+facts, neither of them a test result.** Answered by the product owner, deriving from the success
+condition's second clause — *"She opens it in a browser"*: what she opens is the artifact the
+product serves her, and today no proof of record describes it — every layer, unit to UAT, loads
+`npm run dev` on `localhost` while `dist/` is opened by nothing (`ADR-0088` gap 3, still true).
+
+**Fact a: the artifact under test is the artifact shipped** — the proofs of record (the
+`ADR-0088` §2 hand-check and the QA/UAT rounds the human reads) load the built bundle; the
+serving mechanism is **`DEC-087`, the architect's**, registered open above, and until it is
+answered the bar is unmeetable, on purpose. **Fact b: recovery is completable by a real user in
+the offered deployment** — a mail transport bound, never `NoRecoveryMailer` — because
+`ADR-0031` §7 scoped the senderless build's validity to *"development and tests"*, an offering
+to real users is neither, `ADR-0087`'s acknowledgement promises a link that must be able to
+arrive, and `ADR-0031`'s Consequences price the failure as the product's one total, permanent
+loss. **Meeting the bar does not make the product ready**: it is a precondition on the phrase,
+never a certificate — readiness stays the human's judgment made by reading, no record may ever
+be cited as the bar being met (`ADR-0089` §2c and `ADR-0092` §2 stand), and the bar gates the
+phrase, never the act of offering, which stays the human's own. The event is `ADR-0063` §5's —
+strangers beyond *"people the author invited personally"* — so the founding moment is not
+gated. Five absences are out under a written rule (in the bar only if failure falsifies the
+success condition at first contact or destroys what a player cannot get back): history paging
+past 10, ladder paging, the third device, the hundred-way tie, real network — each a known
+absence a round reports without it bearing on the bar. Costs named: the UAT pass cannot end at
+the phrase the human aimed it at; the bar waits on `DEC-087` and a transport; §1b may cost a
+mail bill; enforcement is prose plus the review gate.
 
 `DEC-085` → [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md)
 on 2026-08-30 — **a UAT round is a second focus of the same cycle: it files what a merged source
