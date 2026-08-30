@@ -7,6 +7,7 @@ import {
   type ReactElement,
 } from "react";
 import type { DuelPageRead } from "../profile/duel-page";
+import type { DuelOutcomeWord } from "../profile/recent-duels";
 import type { HistoryQuery, HistoryFilter } from "../profile/duels-query";
 import { NO_FILTER, isFiltered } from "../profile/duels-query";
 import {
@@ -150,9 +151,9 @@ export function HistoryScreen(props: {
       className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4"
     >
       <h2>{HISTORY_HEADING}</h2>
-      <fieldset>
+      <fieldset className="p-0 flex w-full flex-wrap items-center gap-4 border-0">
         <legend>{OUTCOME_LEGEND}</legend>
-        <label>
+        <label className="flex items-center gap-2 text-small text-text-muted">
           <input
             type="radio"
             name="outcome"
@@ -161,7 +162,7 @@ export function HistoryScreen(props: {
           />
           {EVERY_OUTCOME}
         </label>
-        <label>
+        <label className="flex items-center gap-2 text-small text-text-muted">
           <input
             type="radio"
             name="outcome"
@@ -170,7 +171,7 @@ export function HistoryScreen(props: {
           />
           {outcomeWord("WON")}
         </label>
-        <label>
+        <label className="flex items-center gap-2 text-small text-text-muted">
           <input
             type="radio"
             name="outcome"
@@ -179,7 +180,7 @@ export function HistoryScreen(props: {
           />
           {outcomeWord("LOST")}
         </label>
-        <label>
+        <label className="flex items-center gap-2 text-small text-text-muted">
           <input
             type="radio"
             name="outcome"
@@ -189,16 +190,25 @@ export function HistoryScreen(props: {
           {outcomeWord("DREW")}
         </label>
       </fieldset>
-      <form onSubmit={handleSearch}>
-        <label>
+      <form
+        onSubmit={handleSearch}
+        className="flex w-full flex-wrap items-end gap-3"
+      >
+        <label className="flex flex-col gap-2 text-small text-text-muted">
           {OPPONENT_LABEL}
           <input
             type="text"
             value={opponentTerm}
             onChange={(event) => setOpponentTerm(event.target.value)}
+            className="rounded-small border border-hairline bg-surface px-4 py-3 text-text"
           />
         </label>
-        <button type="submit">{SEARCH}</button>
+        <button
+          type="submit"
+          className="rounded-medium bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
+        >
+          {SEARCH}
+        </button>
       </form>
       {(state.phase === "loading" && isEmpty) ||
       (state.phase === "ready" && isEmpty) ? null : (
@@ -209,10 +219,13 @@ export function HistoryScreen(props: {
               className="border-t border-hairline py-3 first:border-t-0"
             >
               <p className="text-small">
-                {outcomeWord(duel.outcome)} {coinDeltaText(duel.coinDelta)}{" "}
-                {duel.handsPlayed} {duel.handsPlayed === 1 ? "hand" : "hands"}{" "}
-                vs {nameOrNone(duel.opponentDisplayName)}{" "}
-                {finishedAtText(duel.finishedAt)}
+                <span className={outcomeColour(duel.outcome)}>
+                  {outcomeWord(duel.outcome)}
+                </span>{" "}
+                {coinDeltaText(duel.coinDelta)} {duel.handsPlayed}{" "}
+                {duel.handsPlayed === 1 ? "hand" : "hands"} vs{" "}
+                <span>{nameOrNone(duel.opponentDisplayName)}</span>{" "}
+                <span>{finishedAtText(duel.finishedAt)}</span>
               </p>
             </li>
           ))}
@@ -226,4 +239,21 @@ export function HistoryScreen(props: {
       )}
     </section>
   );
+}
+
+/**
+ * The row's colour cue for its outcome word: win and loss carry the card's
+ * colours (`design/screens/duels.html`'s `.outcome-word.won`/`.lost`); a draw
+ * keeps the row's own text colour, exactly as the card assigns no colour of
+ * its own to a tie.
+ */
+function outcomeColour(outcome: DuelOutcomeWord): string {
+  switch (outcome) {
+    case "WON":
+      return "text-win";
+    case "LOST":
+      return "text-loss";
+    case "DREW":
+      return "";
+  }
 }

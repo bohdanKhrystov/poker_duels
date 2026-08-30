@@ -769,11 +769,16 @@ describe("the history screen", () => {
 
     render(<HistoryScreen read={read} />);
 
-    // First read: no filter, one WON row with a cursor
-    await waitFor(() => {
-      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    // First read: no filter, one WON row with a cursor. Scoped to the row
+    // itself, not the whole screen: the outcome filter carries its own "Won"
+    // label, so a screen-wide text match is ambiguous once the row states its
+    // outcome in its own element too (TASK-121001).
+    const firstItems = await waitFor(() => {
+      const items = screen.getAllByRole("listitem");
+      expect(items).toHaveLength(1);
+      return items;
     });
-    expect(screen.getByText("Won")).toBeDefined();
+    expect(firstItems[0].textContent).toContain("Won");
 
     // Change filter to LOST
     const lostRadio = screen.getByLabelText(outcomeWord("LOST"));
@@ -1034,5 +1039,112 @@ describe("the history screen", () => {
       opponent: "Ada",
       after: "cursor-for-ada",
     });
+  });
+
+  it("the filter and search controls are dressed, not bare", async () => {
+    // TASK-121001: the outcome fieldset, its four radio labels, the search
+    // input and the Search button all rendered with no `className` at all —
+    // checked one control at a time, because one dressed control standing in
+    // for six is exactly the failure TASK-120901 shipped on the lobby.
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [aDuelLine()],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    const { container } = render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    const fieldset = container.querySelector("fieldset");
+    const radioLabels = container.querySelectorAll("fieldset label");
+    const searchInput = screen.getByLabelText(OPPONENT_LABEL);
+    const searchButton = screen.getByRole("button", { name: SEARCH });
+
+    expect(radioLabels).toHaveLength(4);
+
+    const isDressed = (element: Element | null): boolean => {
+      const classAttr = element?.getAttribute("class") ?? "";
+      return classAttr.trim().length > 0;
+    };
+
+    expect(isDressed(fieldset)).toBe(true);
+    expect(isDressed(radioLabels[0])).toBe(true);
+    expect(isDressed(radioLabels[1])).toBe(true);
+    expect(isDressed(radioLabels[2])).toBe(true);
+    expect(isDressed(radioLabels[3])).toBe(true);
+    expect(isDressed(searchInput)).toBe(true);
+    expect(isDressed(searchButton)).toBe(true);
+  });
+
+  it("the opponent-search field is drawn, not invisible", async () => {
+    // TASK-121001: a transparent background and a zero-width border left a
+    // 167×23 region with nothing to see — the same defect TASK-120901 graded
+    // `high` on the room-code field. Named tokens, not merely a non-empty
+    // class, so the gate cannot be satisfied by any class at all.
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [aDuelLine()],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    const searchInput = screen.getByLabelText(OPPONENT_LABEL);
+
+    expect(searchInput.classList.contains("border-hairline")).toBe(true);
+    expect(searchInput.classList.contains("bg-surface")).toBe(true);
+  });
+
+  it("a history row states its outcome in its own element", async () => {
+    // TASK-121001: the row shipped as one flat <p>, folding outcome, opponent
+    // and date into a single sentence where design/screens/duels.html draws
+    // three spans. None of these three exact strings appears anywhere else in
+    // the row, so a match narrower than the whole sentence proves the split.
+    const duel = aDuelLine({
+      duelId: "row-1",
+      outcome: "WON",
+      opponentDisplayName: "Halvard",
+      finishedAt: "2026-02-03T04:05:06Z",
+    });
+
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [duel],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    const { container } = render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    const hasExactText = (text: string): boolean =>
+      Array.from(container.querySelectorAll("li *")).some(
+        (element) => element.textContent === text,
+      );
+
+    expect(hasExactText(outcomeWord("WON"))).toBe(true);
+    expect(hasExactText("Halvard")).toBe(true);
+    expect(hasExactText(finishedAtText(duel.finishedAt))).toBe(true);
   });
 });
