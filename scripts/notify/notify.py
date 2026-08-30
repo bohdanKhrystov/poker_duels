@@ -142,8 +142,13 @@ def cmd_state(args) -> int:
     if args.note is not None:
         state.note = args.note or None
     if args.clear:
-        state.current_epic = None
-        state.current_story = None
+        # Every field is a fact about the run that just ended, except last_report_at, the
+        # heartbeat's dedupe stamp — clearing that would let the next run's first heartbeat fire
+        # as though none had ever been sent. Derived from FIELDS so a field added later is
+        # cleared by default rather than surviving as a new stale breadcrumb.
+        for name in run_state_module.FIELDS:
+            if name != "last_report_at":
+                setattr(state, name, None)
     run_state_module.save(STATE_PATH, state)
     print(f"state: written to {STATE_PATH}")
     return 0

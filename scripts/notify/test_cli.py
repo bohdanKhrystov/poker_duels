@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import os
 import tempfile
 import unittest
@@ -8,6 +9,7 @@ from unittest import mock
 
 import credentials
 import notify
+import run_state
 import telegram
 
 
@@ -76,6 +78,71 @@ class UsageTest(unittest.TestCase):
     def test_no_subcommand_exits_two(self):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(2, notify.main([]))
+
+
+class StateClearTest(unittest.TestCase):
+    """TASK-120701: ``state --clear`` keeps only ``last_report_at``, the heartbeat's dedupe stamp."""
+
+    def _clear(self, path):
+        with mock.patch.object(notify, "STATE_PATH", path):
+            with contextlib.redirect_stdout(io.StringIO()):
+                notify.main(["state", "--clear"])
+
+    def test_clear_still_removes_the_current_epic(self):
+        # The half that already works: an absent current_epic is what silences the Stop hook.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "run-state.json"
+            run_state.save(path, run_state.RunState(current_epic="EPIC-12"))
+            self._clear(path)
+            self.assertIsNone(run_state.load(path).current_epic)
+
+    def test_clear_leaves_the_cron_flag_unknown(self):
+        # None, not False: --clear runs before CronDelete in qa-cycle's teardown, so it cannot
+        # know the cron is gone yet.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "run-state.json"
+            run_state.save(path, run_state.RunState(cron_armed=True))
+            self._clear(path)
+            self.assertIsNone(run_state.load(path).cron_armed)
+
+    def test_clear_drops_a_note_from_an_earlier_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "run-state.json"
+            run_state.save(
+                path,
+                run_state.RunState(note="qa-cases built and running; EPIC-04 suite in review (PR#1169)"),
+            )
+            self._clear(path)
+            self.assertIsNone(run_state.load(path).note)
+
+    def test_clear_keeps_the_heartbeat_dedupe_stamp(self):
+        stamp = "2026-08-29T21:11:36.245377+00:00"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "run-state.json"
+            run_state.save(path, run_state.RunState(last_report_at=stamp))
+            self._clear(path)
+            self.assertEqual(stamp, run_state.load(path).last_report_at)
+
+    def test_clear_leaves_only_the_dedupe_stamp(self):
+        # Every field set to a distinct non-default value first — a fixture that leaves a field
+        # at its default cannot tell "the clear removed it" from "it was never there".
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "run-state.json"
+            run_state.save(
+                path,
+                run_state.RunState(
+                    epics=["EPIC-11", "EPIC-03"],
+                    current_epic="EPIC-12",
+                    current_story="STORY-1207",
+                    last_report_at="2026-08-29T21:11:36.245377+00:00",
+                    cron_armed=True,
+                    started_at="2026-08-29T19:00:00+00:00",
+                    note="qa-cases built and running; EPIC-04 suite in review (PR#1169)",
+                ),
+            )
+            self._clear(path)
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual({"last_report_at"}, set(raw))
 
 
 if __name__ == "__main__":
