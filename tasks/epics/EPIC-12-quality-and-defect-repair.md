@@ -118,6 +118,7 @@ here; until it is answered, every round record honestly describes `npm run dev`.
 | `STORY-1205`+ | One story per QA round; the round number lives in the story, not the id | not written |
 | [STORY-1207](../stories/STORY-1207-the-uat-focus-the-observer-and-what-it-may-file.md) | The UAT focus — the observer, the harness verb, the route map and what may be filed | ready — **not a round story**; it builds what `ADR-0092` §8 names, and runs no round |
 | [STORY-1208](../stories/STORY-1208-the-verdict-table-never-checks-for-a-baseline-round.md) | Step 6 stops a healthy cycle — the verdict table never checks for a baseline round | ready — **not a round story**; it repairs a defect in this cycle's own machinery, and runs no round |
+| [STORY-1209](../stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | Round 1 (UAT) — the front door was never dressed, and four screens have no card | ready — **the first round under the `uat` focus**; `B(1) = 1`, verdict `PROCEED (conformance unjudged on 4 of 11 screens)` |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
 when it is run and the ids stay sequential without arithmetic. **`STORY-1207` is the third story here that
@@ -201,6 +202,11 @@ prevent.
 - [ ] A harness defect and a product defect have been told apart at least once, on the record: a
       failing case that did not reproduce by hand was filed against this epic and kept out of
       `B(N)` (§Termination rule 6). Until that happens the rule is untested prose.
+      **Still open after the first UAT round.** `STORY-1209` aimed rule 6 at its one candidate — a
+      silent no-op on *Create a duel room* — reproduced it by hand under a **varied mechanism**
+      (trusted CDP input rather than the driver's in-page click), three times in four, and found a
+      product defect with an `InvalidStateError` behind it. The rule was exercised; the box needs a
+      case that reproduces the *other* way.
 - [x] `STORY-1201` is `done`: the two agents, the skill and the catalogue exist, and the skill's
       stack lifecycle uses no denied verb —
       [`STORY-1201`](../stories/STORY-1201-the-qa-harness-two-agents-one-skill-one-catalogue.md),
