@@ -153,7 +153,7 @@ export function HistoryScreen(props: {
       <h2>{HISTORY_HEADING}</h2>
       <fieldset className="p-0 flex w-full flex-wrap items-center gap-4 border-0">
         <legend>{OUTCOME_LEGEND}</legend>
-        <label className="flex items-center gap-2 text-small text-text-muted">
+        <label className={outcomeLabelClass(state.filter.outcome === null)}>
           <input
             type="radio"
             name="outcome"
@@ -162,7 +162,7 @@ export function HistoryScreen(props: {
           />
           {EVERY_OUTCOME}
         </label>
-        <label className="flex items-center gap-2 text-small text-text-muted">
+        <label className={outcomeLabelClass(state.filter.outcome === "WON")}>
           <input
             type="radio"
             name="outcome"
@@ -171,7 +171,7 @@ export function HistoryScreen(props: {
           />
           {outcomeWord("WON")}
         </label>
-        <label className="flex items-center gap-2 text-small text-text-muted">
+        <label className={outcomeLabelClass(state.filter.outcome === "LOST")}>
           <input
             type="radio"
             name="outcome"
@@ -180,7 +180,7 @@ export function HistoryScreen(props: {
           />
           {outcomeWord("LOST")}
         </label>
-        <label className="flex items-center gap-2 text-small text-text-muted">
+        <label className={outcomeLabelClass(state.filter.outcome === "DREW")}>
           <input
             type="radio"
             name="outcome"
@@ -219,13 +219,17 @@ export function HistoryScreen(props: {
               className="border-t border-hairline py-3 first:border-t-0"
             >
               <p className="text-small">
-                <span className={outcomeColour(duel.outcome)}>
+                <span className={outcomeWordClass(duel.outcome)}>
                   {outcomeWord(duel.outcome)}
                 </span>{" "}
                 {coinDeltaText(duel.coinDelta)} {duel.handsPlayed}{" "}
                 {duel.handsPlayed === 1 ? "hand" : "hands"} vs{" "}
-                <span>{nameOrNone(duel.opponentDisplayName)}</span>{" "}
-                <span>{finishedAtText(duel.finishedAt)}</span>
+                <span className="text-text">
+                  {nameOrNone(duel.opponentDisplayName)}
+                </span>{" "}
+                <span className="text-text-faint">
+                  {finishedAtText(duel.finishedAt)}
+                </span>
               </p>
             </li>
           ))}
@@ -256,4 +260,26 @@ function outcomeColour(outcome: DuelOutcomeWord): string {
     case "DREW":
       return "";
   }
+}
+
+/**
+ * The outcome word's full class list: `outcomeColour` supplies the win/loss
+ * tint (or none, for a draw); the card's `.row .outcome-word { font-weight:
+ * 500 }` applies to all three alike, so it is added here rather than folded
+ * into the colour rule above.
+ */
+function outcomeWordClass(outcome: DuelOutcomeWord): string {
+  return [outcomeColour(outcome), "font-medium"].filter(Boolean).join(" ");
+}
+
+/**
+ * The outcome-filter label's text treatment: the checked one carries the
+ * card's distinction (`.radio.on` in `design/screens/duels.html`) and the
+ * other three keep the row's muted default. Driven off the same
+ * `state.filter.outcome` comparison each `checked` prop already uses.
+ */
+function outcomeLabelClass(checked: boolean): string {
+  return checked
+    ? "flex items-center gap-2 text-small text-text font-medium"
+    : "flex items-center gap-2 text-small text-text-muted";
 }

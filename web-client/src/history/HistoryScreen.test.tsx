@@ -1147,4 +1147,106 @@ describe("the history screen", () => {
     expect(hasExactText("Halvard")).toBe(true);
     expect(hasExactText(finishedAtText(duel.finishedAt))).toBe(true);
   });
+
+  it("the checked outcome filter is told apart from the unchecked ones", async () => {
+    // TASK-121103: TASK-121001 dressed all four labels alike — the card's
+    // `.radio.on` is full-bright and weight 500, the other three stay muted.
+    // Checked on both the checked (All) and an unchecked (Won) label, so a
+    // blanket restyle applied to all four cannot pass this.
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [aDuelLine()],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    const { container } = render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    const radioLabels = container.querySelectorAll("fieldset label");
+    const allLabel = radioLabels[0];
+    const wonLabel = radioLabels[1];
+
+    expect(allLabel.classList.contains("text-text")).toBe(true);
+    expect(allLabel.classList.contains("font-medium")).toBe(true);
+
+    expect(wonLabel.classList.contains("text-text")).toBe(false);
+    expect(wonLabel.classList.contains("font-medium")).toBe(false);
+    expect(wonLabel.classList.contains("text-text-muted")).toBe(true);
+  });
+
+  it("a row's date is fainter than the opponent beside it", async () => {
+    // TASK-121103: both spans were classless and computed the same colour.
+    // Scoped to the two spans of one row, not a screen-wide search, so a
+    // class present anywhere else cannot carry this.
+    const duel = aDuelLine({
+      duelId: "row-1",
+      opponentDisplayName: "Halvard",
+      finishedAt: "2026-02-03T04:05:06Z",
+    });
+
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [duel],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    const { container } = render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    const row = container.querySelector("li");
+    const spans = Array.from(row?.querySelectorAll("span") ?? []);
+    const opponentSpan = spans.find((span) => span.textContent === "Halvard");
+    const dateSpan = spans.find(
+      (span) => span.textContent === finishedAtText(duel.finishedAt),
+    );
+
+    expect(opponentSpan?.classList.contains("text-text")).toBe(true);
+    expect(opponentSpan?.classList.contains("text-text-faint")).toBe(false);
+
+    expect(dateSpan?.classList.contains("text-text-faint")).toBe(true);
+    expect(dateSpan?.classList.contains("text-text")).toBe(false);
+  });
+
+  it("the outcome word carries the card's weight", async () => {
+    // TASK-121103: outcomeColour gave WON/LOST their tint but no weight; the
+    // card's `.row .outcome-word` is font-weight 500 regardless of outcome.
+    const duel = aDuelLine({ duelId: "row-1", outcome: "WON" });
+
+    const read = vi.fn<[HistoryQuery], Promise<DuelPageRead>>(
+      async () =>
+        ({
+          kind: "page",
+          duels: [duel],
+          nextCursor: null,
+          restarted: false,
+        }) as DuelPageRead,
+    );
+
+    const { container } = render(<HistoryScreen read={read} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    const outcomeSpan = Array.from(container.querySelectorAll("li span")).find(
+      (span) => span.textContent === outcomeWord("WON"),
+    );
+
+    expect(outcomeSpan?.classList.contains("font-medium")).toBe(true);
+    expect(outcomeSpan?.classList.contains("text-win")).toBe(true);
+  });
 });

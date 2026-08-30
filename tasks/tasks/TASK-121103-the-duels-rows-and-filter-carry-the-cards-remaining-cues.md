@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121103
 title: The duels screen's checked filter, faint date and outcome weight are the card's
 type: task
-status: backlog
+status: done
 parent: STORY-1211
 module: web-client
 estimate: S
