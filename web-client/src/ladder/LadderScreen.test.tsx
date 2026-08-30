@@ -795,4 +795,82 @@ describe("the ladder screen", () => {
     expect(section.querySelectorAll("a")).toHaveLength(0);
     expect(within(section).queryAllByRole("button")).toHaveLength(0);
   });
+
+  it("a ladder row states its rank, its name and its coins in three elements", async () => {
+    // Rank and coins are deliberately the same integer — a row rendered as
+    // one flat string and a row rendered as three elements read alike to a
+    // test that only checks the text is present. Only distinct elements can
+    // tell "5 P4 5" apart without counting words.
+    const rows: readonly LadderRow[] = [
+      { rank: 5, playerId: "p4", displayName: "P4", coins: 5 },
+    ];
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: buildPage(rows),
+    }));
+
+    render(<LadderScreen read={read} />);
+
+    const item = await waitFor(() => {
+      const found = within(screen.getByRole("list")).getAllByRole("listitem");
+      expect(found).toHaveLength(1);
+      return found[0];
+    });
+
+    const cells = Array.from(item.children).map((child) => child.textContent);
+    expect(cells).toEqual(["5", "P4", "5"]);
+  });
+
+  it("the self line is the highlighted box the card draws", async () => {
+    // A border alone can sit flush with the body colour — the box the card
+    // draws carries both the tinted fill and the accent border.
+    const rows: readonly LadderRow[] = [
+      { rank: 1, playerId: "ada", displayName: "Ada", coins: 5 },
+    ];
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: {
+        season: "2026-08",
+        rows,
+        nextCursor: null,
+        self: { rank: 1, coins: 1 },
+      },
+    }));
+
+    render(<LadderScreen read={read} />);
+
+    const sentence = await waitFor(() =>
+      screen.getByText("You are rank 1 this season, on 1 duel coin."),
+    );
+    const box = sentence.closest("p");
+    if (box === null) {
+      throw new Error("expected the self line to sit inside a <p>");
+    }
+
+    expect(box.className).toContain("bg-accent-subtle");
+    expect(box.className).toContain("border-accent");
+  });
+
+  it("Show more is dressed, not bare", async () => {
+    // nextCursor must be non-null here, or the button stays `hidden` and
+    // out of the accessibility tree — the class list would never be reached.
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: {
+        season: "2026-08",
+        rows: [{ rank: 1, playerId: "ada", displayName: "Ada", coins: 5 }],
+        nextCursor: "c1",
+        self: null,
+      },
+    }));
+
+    render(<LadderScreen read={read} />);
+
+    const button = await waitFor(() =>
+      screen.getByRole("button", { name: "Show more" }),
+    );
+
+    expect(button.className).toContain("bg-accent-fill");
+    expect(button.className).toContain("text-on-accent");
+  });
 });
