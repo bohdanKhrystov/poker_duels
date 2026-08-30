@@ -117,12 +117,13 @@ here; until it is answered, every round record honestly describes `npm run dev`.
 | [STORY-1204](../stories/STORY-1204-the-epic-04-and-epic-05-catalogue-suites.md) | The `EPIC-04` and `EPIC-05` catalogue suites, authored from merged sources | done — **not a round story**; it is the first `/qa-cases` pass, and it takes the number the note below had reserved for the first round |
 | `STORY-1205`+ | One story per QA round; the round number lives in the story, not the id | not written |
 | [STORY-1207](../stories/STORY-1207-the-uat-focus-the-observer-and-what-it-may-file.md) | The UAT focus — the observer, the harness verb, the route map and what may be filed | ready — **not a round story**; it builds what `ADR-0092` §8 names, and runs no round |
+| [STORY-1208](../stories/STORY-1208-the-verdict-table-never-checks-for-a-baseline-round.md) | Step 6 stops a healthy cycle — the verdict table never checks for a baseline round | ready — **not a round story**; it repairs a defect in this cycle's own machinery, and runs no round |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
 when it is run and the ids stay sequential without arithmetic. **`STORY-1207` is the third story here that
 is not a round**, after `STORY-1203` and `STORY-1204`: it builds the `uat` observer, the `shot`
 verb, the catalogue's UAT section and `qa-manager`'s second-focus rules, and brings no stack up.
-Round stories continue to take the next free id, so the one after `STORY-1206` is `STORY-1208`. **`STORY-1203` and `STORY-1204` are
+Round stories continue to take the next free id, so the one after `STORY-1206` is `STORY-1209`. **`STORY-1203` and `STORY-1204` are
 the two stories here that are not rounds**, the way `STORY-1201` is the one that is a retrospective
 record: `STORY-1203` builds `qa-cases`, the authoring skill `ADR-0090` §3 licensed, and `STORY-1204`
 is the first pass that skill performs — writing the `EPIC-04` and `EPIC-05` suites from merged
@@ -131,6 +132,13 @@ therefore resume at **`STORY-1205`**, which supersedes `STORY-1203`'s sentence r
 for the first round. That is stated rather than done quietly, because **this is the second time the
 convention has moved by one**, and a convention silently shifted twice is one nobody can rely on
 afterwards — each shift is written into this table's own rows, so a reader never has to infer it.
+
+**`STORY-1208` is the fourth non-round story, and the only one that repairs a defect in this
+cycle's own machinery.** `qa-manager`'s `## Step 6` and §Termination rule 4 below both special-case
+round 1 and nothing else, so read literally they fire `STOP_DIVERGING` on the first round in which
+repaired cards became measurable — the outcome `ADR-0092` §6's baseline rule exists to prevent. It
+is the **third** time the convention has moved by one, and it moves the round stories' next free id
+to `STORY-1209`, which the sentence above now says.
 
 ## Termination
 
