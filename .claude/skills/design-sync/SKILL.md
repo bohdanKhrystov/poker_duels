@@ -1,6 +1,6 @@
 ---
 name: design-sync
-description: Push the whole design/ tree to the claude.ai/design mirror and prove nothing was missed. The only sanctioned caller of the DesignSync tool — human-invoked, never run by an agent, never a step inside another skill or a ticket's verify block. Use when the human asks to sync, push, mirror or refresh the design cards.
+description: Push the whole design/ tree to the claude.ai/design mirror and prove nothing was missed. The only sanctioned path to the DesignSync tool — the human starts it by invoking this skill, and the session that reads it then does the syncing. Never started by a subagent, another skill, a hook, a cron or a verify block. Use when the human asks to sync, push, mirror or refresh the design cards.
 ---
 
 # Sync the design tree to the mirror
@@ -12,22 +12,32 @@ merged*; it decides nothing.
 
 ## Who may run this
 
-**The human, by typing it. Nothing else.**
+**The human starts it by typing it. Then you — the session reading this — do the work.**
 
-- **No agent calls `DesignSync`.** Not the `coder`, not the `reviewer`, not the `architect`, not a
-  `claude` catch-all agent that happens to hold `*` tools.
+Read that twice before applying the restrictions below, because they are about the *trigger*, never
+about the *execution*. If the human invoked this skill, calling `DesignSync` **is the job**, and
+refusing to call it is the one way to fail here outright. There is no further confirmation to seek:
+typing `/design-sync` was the confirmation.
+
+What the restrictions actually forbid is anything else starting a sync:
+
+- **No subagent calls `DesignSync`.** Not the `coder`, `reviewer`, `architect`, `planner`,
+  `product-owner`, `qa` or `qa-manager` — none of them lists the tool in its `tools:` frontmatter —
+  and not the `claude` catch-all, which is denied it explicitly in `.claude/agents/claude.md`.
 - **No skill calls this skill**, and no `verify:` block, hook, cron or merge triggers it.
-- **The driver does not call it unprompted** either — not "while I'm here", not after landing a
-  design ticket, not because the mirror looks stale.
+- **The driver does not start one unprompted** — not "while I'm here", not after landing a design
+  ticket, not because the mirror looks stale. Say the mirror looks stale and name this skill; let
+  the human decide.
 
 The reason is mechanical, not ceremonial: `finalize_plan` raises a permission prompt and **blocks
 execution until the human answers it**. An agent that calls it mid-run stalls the run against a
 person who may be asleep, and an unattended run parks on a dialog nothing downstream can clear.
 The read methods (`list_projects`, `get_project`, `list_files`, `get_file`) do not prompt — but the
-rule is *no `DesignSync` from an agent at all*, because a read is one turn away from a write and
-the distinction is not worth defending per call site.
+rule for **subagents** is *no `DesignSync` at all*, because a read is one turn away from a write and
+the distinction is not worth defending per call site. (You, running this skill for the human, use
+whichever methods the procedure below calls for — reads included.)
 
-If an agent believes a sync is needed, its correct move is to **say so in its report** and name
+If a subagent believes a sync is needed, its correct move is to **say so in its report** and name
 this skill. That is the whole handoff.
 
 ## On `ADR-0091` §1's *"no design skill"*
