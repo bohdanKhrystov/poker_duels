@@ -12,6 +12,8 @@
 // did not (a wait that timed out, a control that was not there). A QA case reads the exit code,
 // never the prose.
 
+import { writeFileSync } from "node:fs";
+
 const [, , portArg, verb, ...args] = process.argv;
 const PORT = portArg;
 const APP = "http://localhost:5173/";
@@ -252,6 +254,17 @@ try {
       break;
     }
 
+    case "shot": {
+      page = await attach();
+      const path = args[0] ?? fail("shot needs a path");
+      const result = await page.send("Page.captureScreenshot", {});
+      const data = result.result.data;
+      const buffer = Buffer.from(data, "base64");
+      writeFileSync(path, buffer);
+      console.log(path);
+      break;
+    }
+
     default:
       console.error(`usage: node scripts/qa/drive.mjs <port> <verb> [args]
 
@@ -265,6 +278,7 @@ try {
   device                  this profile's pd.deviceId
   forget-room             clear pd.roomCode (ADR-0072 room memory)
   eval <expression>       escape hatch
+  shot <path>             write the rendered screen to <path> as a PNG
   close                   end this profile's app session (closes WebSocket, keeps browser alive)`);
       process.exit(2);
   }
