@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120901
 title: The front door and the waiting frame wear the client's tokens, and the room-code field can be seen
 type: task
-status: ready
+status: done
 parent: STORY-1209
 module: web-client
 estimate: S

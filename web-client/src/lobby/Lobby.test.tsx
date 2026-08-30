@@ -316,6 +316,34 @@ describe("the lobby", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it("the front door's controls are dressed, not bare", () => {
+    renderLobby();
+
+    // Three separate assertions, deliberately: a control dressed by only one
+    // of the three would still pass a single combined check, and the ticket
+    // this test guards (TASK-120901) was exactly one control's classes
+    // standing in for the other two's.
+    const create = screen.getByRole("button", { name: "Create a duel room" });
+    const roomCode = screen.getByLabelText("Room code");
+    const join = screen.getByRole("button", { name: "Join the duel" });
+
+    for (const control of [create, roomCode, join]) {
+      expect(control.className.trim()).not.toBe("");
+    }
+  });
+
+  it("the room-code field is drawn, not invisible", () => {
+    renderLobby();
+
+    // The bug this guards left the field a transparent, zero-border box no
+    // player could see (TASK-120901): a border alone can still sit flush
+    // with the body colour, so both tokens are required, not either.
+    const classes = screen.getByLabelText("Room code").className.split(" ");
+
+    expect(classes).toContain("border-hairline");
+    expect(classes).toContain("bg-surface");
+  });
+
   it("shows the room code the server named", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
@@ -334,6 +362,23 @@ describe("the lobby", () => {
 
     const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
     expect(inviteLink.value).toBe("http://localhost:3000/?room=ABCDEFGH");
+  });
+
+  it("the waiting frame's controls are dressed, not bare", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    // The copy button only renders with a clipboard to call (see CopyLink),
+    // and it is one of the three controls this test names.
+    withClipboard(() => Promise.resolve());
+    renderLobby(store);
+
+    const roomCode = screen.getByText("ABCDEFGH");
+    const inviteLink = screen.getByLabelText("Invite link");
+    const copyLink = screen.getByRole("button", { name: "Copy the link" });
+
+    for (const control of [roomCode, inviteLink, copyLink]) {
+      expect(control.className.trim()).not.toBe("");
+    }
   });
 
   it("leaves the invite link selectable and focused for a copy by hand", () => {
