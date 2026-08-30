@@ -315,10 +315,10 @@ poll. `record` installs a `MutationObserver` on `#root`; `frames` prints what it
 | `first` | the table across its turn, waiting, away and back states | `design/screens/duel-table-states.html` | walked | `CORE-01`, `CORE-07`, `CORE-18`, `CORE-19` |
 | `first` | the result screen once a duel concludes | `design/screens/duel-end.html` | walked | `CORE-12` |
 | `first` | the rematch offer, accepted by both and pending on one | `design/screens/rematch-states.html` | walked | `CORE-15`, `CORE-16` |
-| `duels` | the duel history list, headed `Opponent name` | — | walked | `04-01` |
-| `leaderboard` | the season standings, with the viewer's own rank line | — | walked | `05-01`, `05-03` |
-| `account` | claiming a profile with a password, or — once signed in — that profile's own page | — | walked | `04-02`, `04-03`, `04-05` |
-| `sign-in` | the sign-in form, reached from account, with a `Forgot your password?` link | — | walked | `04-03`, `04-04`, `04-05` |
+| `duels` | the duel history list, headed `Opponent name` | `design/screens/duels.html` | walked | `04-01` |
+| `leaderboard` | the season standings, with the viewer's own rank line | `design/screens/leaderboard.html` | walked | `05-01`, `05-03` |
+| `account` | claiming a profile with a password, or — once signed in — that profile's own page | `design/screens/account.html` | walked | `04-02`, `04-03`, `04-05` |
+| `sign-in` | the sign-in form, reached from account, with a `Forgot your password?` link | `design/screens/sign-in.html` | walked | `04-03`, `04-04`, `04-05` |
 | `verify` | confirming a mailed verification link | — | not walked | no mailed link ever arrives — `ADR-0031` §7 |
 | `reset` | setting a new password from a mailed link | — | not walked | no mailed link ever arrives — `ADR-0031` §7 |
 
@@ -342,6 +342,14 @@ existed, and `ADR-0089` §2c already forbids reading any round as the thing that
 | `UAT-Q4` | is the client matching the design? | ADR-0092 §Context |
 
 An observation may be filed as a finding **only when it contradicts a merged source** — a card, `design/tokens/tokens.css`, an owned literal, an ADR section, a `docs/duel-rules.md` heading, a `docs/vision.md` sentence. An observation with no merged source to contradict — *this could be clearer*, *the emphasis feels wrong* — is a **question**, and the `uat` agent's `QUESTIONS` section is its only route.
+
+### Settled, and not a finding
+
+An entry here is a closed question: re-raising it would itself contradict a merged source, so it is neither a finding nor a question eligible for the `uat` agent's `QUESTIONS` section.
+
+| observation | merged sources | round |
+| --- | --- | --- |
+| Duel-history timestamps render in the reader's locale — a Ukrainian browser sees `27 кв. 26`, not `2026-04` — and this is not a defect. | `web-client/src/profile/profile-text.ts` (`finishedAtText`); `ADR-0061` §*What it costs* | `STORY-1205`, `STORY-1209`, `STORY-1210` |
 
 ---
 
