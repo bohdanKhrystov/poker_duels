@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120707
 title: The uat focus of the qa-cycle skill
 type: task
-status: backlog
+status: done
 parent: STORY-1207
 estimate: S
 tier: sonnet
