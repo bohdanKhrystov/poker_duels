@@ -12,11 +12,19 @@ success, including the four that are stops.
 /qa-cycle smoke              the shortest path that proves the product is alive
 /qa-cycle epic EPIC-03       one epic's feature suite, plus smoke
 /qa-cycle regression         every suite in the catalogue
+/qa-cycle uat smoke          the same screens, judged against the cards and the merged copy
+/qa-cycle uat epic EPIC-03
+/qa-cycle uat regression
 ```
 
+`uat` is a second **focus** of this same cycle, never a second cycle (`ADR-0092` §1): the same
+loop, over the same catalogue's routes, judging conformance to the merged card, reachability and
+copy — instead of function.
+
 Read [`EPIC-12`](../../../tasks/epics/EPIC-12-quality-and-defect-repair.md) before running. Its
-`## Termination` section is the contract this skill enforces, and the two agents
-([`qa`](../../agents/qa.md), [`qa-manager`](../../agents/qa-manager.md)) hold the halves.
+`## Termination` section is the contract this skill enforces, and the agents it dispatches —
+[`qa`](../../agents/qa.md) or, under the UAT focus, [`uat`](../../agents/uat.md), plus
+[`qa-manager`](../../agents/qa-manager.md) — hold the halves.
 
 ## The three conditions this harness runs under
 
@@ -36,7 +44,16 @@ returns as a new `DEC`.
   earlier step of this same turn — stop, and say which.** A skill that runs a cycle as one of its
   steps is condition **b** failing, whatever started that skill. Heading and sentence amended by
   [`ADR-0090`](../../../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md)
-  §1; the rest of §2b stands byte-unchanged.
+  §1; the rest of §2b stands byte-unchanged. Three corollaries `ADR-0092` §1 states so no helpful
+  someone adds the check:
+  - **The QA focus never chains into the UAT focus.** One turn that runs both is a skill running a
+    cycle as one of its steps — condition **b** failing, `ADR-0090`'s exact holding. The human
+    types two commands, on two occasions of their choosing.
+  - **Neither focus's report prints the other's command.** A standing *"next: `/qa-cycle uat …`"*
+    line would teach the reader that UAT follows every QA pass, which is false.
+  - **A preceding QA cycle is the human's practice, never a checked precondition.** A step that
+    verified *"has a QA round passed at this commit?"* would cite a round as a gate — condition
+    **c** failing — so nothing checks it.
 - **c. No coverage claim.** The product of a run is a **dated round record**. Neither it nor
   `docs/test-plan.md` may be cited as coverage in an epic's `Metrics`, a Definition of done, or a
   ticket's `verify:`. A `PASS` is a statement about one run, on one machine, at one commit.
@@ -110,10 +127,16 @@ If the stack does not come up, retry **once**. On a second failure, tear down, r
 
 Round `N`, starting at 1.
 
-1. **Test.** Dispatch the `qa` agent with the scope and the two browser ports. It returns a report
-   in the fixed shape its definition sets.
+1. **Test.** Dispatch the `qa` agent under the QA focus, or the `uat` agent under the UAT focus,
+   with the scope and the two browser ports. Under the UAT focus, allocate one more directory the
+   same way the two browser profiles are — `S=$(mktemp -d)` — and pass it as the shots directory:
+   `ADR-0092` §2a's `shot` verb writes screenshots into it, never committed and never read back by
+   this skill. Either agent returns a report in the fixed shape its definition sets.
 2. **Triage.** Dispatch `qa-manager` with that report and the round number. It dedupes, sets
-   severity, writes the round story and its bug tickets, and returns a verdict.
+   severity, writes the round story and its bug tickets, and returns a verdict. Under the UAT
+   focus, the round story also carries a per-screen table — checks `a`/`b`/`c`, each `judged`,
+   `BLOCKED — no card`, or `out of scope` — and a verdict touching any `BLOCKED` cell is qualified
+   **inline, in the verdict line itself**.
 3. **Act on the verdict**, and only the verdict:
 
    | Verdict | Do |
@@ -144,6 +167,15 @@ Restated here because a skill that hides its own exit conditions is how a loop b
 - **Budget:** at most **three** rounds per invocation.
 - **Fix set:** at most **eight** tickets; only `blocker` and `high` ever enter it.
 - **Frozen set:** round `N` repairs only what round `N` reported.
+- **Baseline round (UAT only):** a round in which a screen becomes conformance-judgeable for the
+  first time — its card merged in the previous round's repairs — is a **baseline round**:
+  convergence skips comparing its `B(N)` against `B(N-1)`, exactly as round 1 is not compared with
+  a round 0 that does not exist. The three-round budget binds regardless — it is the only thing
+  keeping a baseline run finite.
+- **`STOP_BLOCKED` is scoped:** the cycle ends in `STOP_BLOCKED` only when the unanswered decision
+  **gates a member of the current fix set**. Otherwise `notify.py blocked --decision DEC-NNN` goes
+  out while the run is warm, the decision is carried open in the round story, and the cycle
+  **continues** — no step of the loop waits on a UX answer.
 
 Never override a stop because the next round "would probably fix it". The human asked for this
 loop not to run forever, in those words. A stop with a clear account is the deliverable.
@@ -223,6 +255,10 @@ FILED: <ticket ids>      MERGED: <ticket ids>
 DEFERRED: <ids, to the backlog>
 STILL OPEN: <what is not fixed, and the honest reason>
 ```
+
+Under the UAT focus, `EXIT` carries the round record's verdict qualification **inline and
+verbatim** — `PASS (conformance unjudged on 6 of 7 screens)` — never trimmed back to a bare
+`PASS`.
 
 Say what is still broken. A cycle that ends `STOP_DIVERGING` with three unfixed blockers named is
 more useful than one that reports `PASS` because the suite did not look.
