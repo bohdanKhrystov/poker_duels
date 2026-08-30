@@ -9,11 +9,13 @@ import {
   PASSWORD_ROUTE_LIVE,
   SIGN_IN_HEADING,
   SIGN_OUT_LABEL,
+  SIGN_UP_LABEL,
 } from "./account-text";
 import { RECOVERY_ON, RECOVERY_OFF, ATTACH_LABEL } from "./recovery-text";
 import { aProfile } from "../profile/profile-fixture";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { AttachRecoveryOutcome } from "./attach-recovery-email";
+import type { SignUpOutcome } from "./sign-up";
 
 describe("the account screen", () => {
   it("says the device signs in, and says it stopped, from the server fact alone", () => {
@@ -271,5 +273,34 @@ describe("the account screen", () => {
     const cancel = screen.getByRole("button", { name: CANCEL });
     expect(cancel.classList.contains("border-hairline")).toBe(true);
     expect(cancel.classList.contains("px-5")).toBe(true);
+  });
+
+  it("both account forms submit with the card's fill button", () => {
+    const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
+    signUp.mockResolvedValue({ kind: "signed-up" });
+    const attach = vi.fn<[string, string], Promise<AttachRecoveryOutcome>>();
+    attach.mockResolvedValue({ kind: "accepted" });
+
+    const profile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    };
+    render(
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signUp={signUp}
+        attachRecoveryEmail={attach}
+      />,
+    );
+
+    const signUpSubmit = screen.getByRole("button", { name: SIGN_UP_LABEL });
+    expect(signUpSubmit.classList.contains("bg-accent-fill")).toBe(true);
+    expect(signUpSubmit.classList.contains("text-on-accent")).toBe(true);
+
+    const attachSubmit = screen.getByRole("button", { name: ATTACH_LABEL });
+    expect(attachSubmit.classList.contains("bg-accent-fill")).toBe(true);
+    expect(attachSubmit.classList.contains("text-on-accent")).toBe(true);
   });
 });
