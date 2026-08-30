@@ -25,7 +25,7 @@ findable rot, and rot is the failure mode `ADR-0088` §Alternatives 2 predicted 
 kind of harness.
 
 The driver is `node scripts/qa/drive.mjs <port> <verb>`; `A` is port 9232 and `B` is 9233. Verbs:
-`open`, `text`, `click`, `wait`, `absent`, `type`, `link`, `device`, `forget-room`, `eval`.
+`open`, `text`, `click`, `wait`, `absent`, `type`, `link`, `device`, `forget-room`, `eval`, `close`, `shot`.
 
 **Every round gets fresh Chrome profiles.** Clearing `pd.roomCode` is not isolation: the server
 re-seats a returning device by `pd.deviceId` (`ADR-0018`), so a reused profile rejoins its old room
@@ -289,6 +289,43 @@ Three rules for writing one:
 | `EPIC-04` identity and profiles | **the `EPIC-04` suite above is it** — authored 2026-08-29 from merged sources, provisional until its first round |
 | `EPIC-05` ranking and leaderboard | **the `EPIC-05` suite above is it** — authored 2026-08-29 from merged sources, provisional until its first round |
 | `EPIC-06` design system | not written — and mostly not testable this way; `qa` is told not to report styling |
+
+---
+
+## UAT — the screens a round walks, and the questions it asks
+
+Not a suite: this section adds no case, changes no case and touches no row above it. The existing
+cases' `do` columns are already the routes to every screen-state the product has, and their
+`expect`/`fails if` columns stay exactly as functional as they were — no case here is regraded on
+UX (`ADR-0092` §7).
+
+### The screen inventory
+
+| screen | state | card | walk | routes |
+| --- | --- | --- | --- | --- |
+| `first` | hosting — the room code, the invite link, and the way back to the lobby | `design/screens/create-duel.html` | walked | `SMK-04`, `CORE-20` |
+| `first` | joining by a shared invite link — seated with no code ever typed | `design/screens/join-duel.html` | walked | `SMK-05`, `CORE-02` |
+| `first` | joining by typing a room code into the lobby's field | `design/screens/enter-code.html` | walked | `CORE-05` |
+| `first` | the table once a hand is under way, both screens agreeing on it | `design/screens/duel-table.html` | walked | `SMK-05`, `SMK-06`, `CORE-06` |
+| `first` | the table across its turn, waiting, away and back states | `design/screens/duel-table-states.html` | walked | `CORE-01`, `CORE-07`, `CORE-18`, `CORE-19` |
+| `first` | the result screen once a duel concludes | `design/screens/duel-end.html` | walked | `CORE-12` |
+| `first` | the rematch offer, accepted by both and pending on one | `design/screens/rematch-states.html` | walked | `CORE-15`, `CORE-16` |
+| `duels` | the duel history list, headed `Opponent name` | — | walked | `04-01` |
+| `leaderboard` | the season standings, with the viewer's own rank line | — | walked | `05-01`, `05-03` |
+| `account` | claiming a profile with a password, or — once signed in — that profile's own page | — | walked | `04-02`, `04-03`, `04-05` |
+| `sign-in` | the sign-in form, reached from account, with a `Forgot your password?` link | — | walked | `04-03`, `04-04`, `04-05` |
+| `verify` | confirming a mailed verification link | — | not walked | no mailed link ever arrives — `ADR-0031` §7 |
+| `reset` | setting a new password from a mailed link | — | not walked | no mailed link ever arrives — `ADR-0031` §7 |
+
+No missing-card finding is ever filed for `verify` or `reset`: `ADR-0092` §4 files a `high` for a
+screen in scope with no merged card, and a screen no route reaches is not in a round's scope, so
+their per-screen cells read `out of scope` rather than `BLOCKED — no card` (§6). Their cards are
+still owed — `ADR-0091` §5 registers all six cardless screens as debt, and `ADR-0092` §4 narrows
+only the vehicle that collects it: a UAT round files the cards for the screens its scope reaches,
+and the `EPIC-06` retrofit story covers whatever remains cardless, which for `verify` and `reset`
+is the whole of it. And once composed, neither card will ever have a conformance check behind it:
+it is accepted by the human at the pane alone, exactly as every card was before this section
+existed, and `ADR-0089` §2c already forbids reading any round as the thing that validated one.
 
 ---
 
