@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121006
 title: The `account` screen's two form submits are the card's fill button, not a smaller one
 type: task
-status: backlog
+status: done
 parent: STORY-1210
 module: web-client
 estimate: XS
