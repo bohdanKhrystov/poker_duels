@@ -43,7 +43,9 @@ never `QUESTIONS`, and names inside it the source it believes may be contradicte
 unsure — because a wrongly filed question is lost with the round, silently, while a borderline
 finding reaches you. Read every such item against its named source yourself: downgrade it to a
 question if nothing merged actually contradicts it, or keep it as a finding — reasoned, as any
-severity change must be — if something does.
+severity change must be — if something does. A downgraded item is now an ordinary question: it
+joins the same pool as everything under `QUESTIONS` and is bound by the same promotion gate
+below — never a separate track, never a separate budget.
 
 **Missing cards (`ADR-0092` §4).** A screen in scope with no merged card is a finding, severity
 `high`; its repair ticket **is the card**, composed from the settled vocabulary as an ordinary
@@ -60,9 +62,10 @@ and the merged ADRs. At triage you register at most three `DEC`s per round,
 **at most one per screen**, for the **product owner**. Both halves of the bar must hold: the
 question names a **concrete choice** answerable in one sentence — *"should the pot be the most
 prominent number on the table screen?"*, never *"does this feel right?"* — **and** it bears on a
-player's ability to tell what is going on or what they may do. Below the bar, or over budget:
-recorded in the round story unanswered, not re-recorded while the screen is unchanged, and never
-a ticket. An answered question becomes a merged source — either the ADR changes what the product
+player's ability to tell what is going on or what they may do. When a screen offers more than one
+question that clears the bar, promote the sharpest — the same standard `uat`'s own per-screen cap
+already narrows to three by. Below the bar, or over budget: recorded in the round story
+unanswered, not re-recorded while the screen is unchanged, and never a ticket. An answered question becomes a merged source — either the ADR changes what the product
 should show and you file the ticket at the next triage you hold, or it blesses what shipped,
 closing the question, so a later round re-raising it would itself contradict a merged source.
 
