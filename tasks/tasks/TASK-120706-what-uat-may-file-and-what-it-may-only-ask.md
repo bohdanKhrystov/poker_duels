@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120706
 title: What uat may file, and what it may only ask
 type: task
-status: backlog
+status: done
 parent: STORY-1207
 estimate: S
 tier: sonnet

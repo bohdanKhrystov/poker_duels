@@ -3386,7 +3386,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120703](tasks/TASK-120703-the-uat-screen-inventory.md) The UAT screen inventory — the route map a round walks | S | done |
 | | [TASK-120704](tasks/TASK-120704-the-standing-questions-and-what-uat-does-not-cover.md) The standing questions, and what UAT does not cover | S | done |
 | | [TASK-120705](tasks/TASK-120705-the-uat-agent-the-role-and-the-hands.md) The `uat` agent — the role, the refusals and the hands | S | done |
-| | [TASK-120706](tasks/TASK-120706-what-uat-may-file-and-what-it-may-only-ask.md) What `uat` may file, and what it may only ask | S | backlog |
+| | [TASK-120706](tasks/TASK-120706-what-uat-may-file-and-what-it-may-only-ask.md) What `uat` may file, and what it may only ask | S | done |
 | | [TASK-120707](tasks/TASK-120707-the-uat-focus-of-the-qa-cycle-skill.md) The `uat` focus of the `qa-cycle` skill | S | backlog |
 | | [TASK-120708](tasks/TASK-120708-the-merged-source-classifier-and-the-promotion-gate.md) `qa-manager` — the merged-source classifier and the promotion gate | S | backlog |
 | | [TASK-120709](tasks/TASK-120709-two-more-exclusions-a-baseline-round-and-a-qualified-verdict.md) `qa-manager` — two more exclusions, a baseline round and a qualified verdict | S | backlog |
