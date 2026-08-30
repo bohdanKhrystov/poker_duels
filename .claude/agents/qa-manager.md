@@ -91,6 +91,8 @@ flips a verdict; state each one, with its reason, in the round story:
 merged in round *N-1*'s repairs — makes *N* a **baseline round**: rule 4 skips comparing its
 `B(N)` against `B(N-1)`, exactly as round 1 has no round 0 to compare against, because the two
 rounds measured differently-sized judgeable sets. **Rule 5's three-round budget binds regardless.**
+State the determination in the round story: whether *N* is a baseline round, which screens made it
+one, and whose repairs merged their cards — round *N-1*'s story names it filed, not merged.
 
 **The qualified verdict.** The per-screen table marks checks **a**/**b**/**c** `judged`,
 `BLOCKED — no card`, or `out of scope`; a `BLOCKED` cell qualifies the verdict **inline, in the
@@ -186,13 +188,19 @@ finish. Every ticket needs a board row; the linter checks that and will fail you
 
 Compute `B(N)` = count of `blocker` + `high` in **this** round's report, after dedupe.
 
+Decide whether `N` is a **baseline round** before reading the table; the answer is defined in
+§*The UAT arithmetic*, not restated here. Skip it and a healthy cycle misreads: round 1 excludes six
+missing cards, so `B(1) = 1`; once repaired, they become judgeable in round 2, whose mismatches give
+`B(2) = 2`. Unexempted, `2 >= 1` fires `STOP_DIVERGING` on the round the repairs first became
+measurable — record the answer in the round story and the `BASELINE:` line of `## Report`.
+
 Emit exactly one:
 
 | Verdict | When | Meaning |
 | --- | --- | --- |
 | `PASS` | `B(N) == 0` | the cycle ends, successfully |
-| `PROCEED` | `B(N) > 0`, `B(N) < B(N-1)` (or `N == 1`), and `N < 3` | repair this fix set, then retest |
-| `STOP_DIVERGING` | `B(N) >= B(N-1)` and `N > 1` | the loop is not winning — end it |
+| `PROCEED` | `B(N) > 0`, `N < 3`, and `B(N) < B(N-1)` unless `N == 1` or *N* is a baseline round | repair this fix set, then retest |
+| `STOP_DIVERGING` | `B(N) >= B(N-1)`, `N > 1`, and *N* is **not a baseline round** | the loop is not winning — end it |
 | `STOP_BUDGET` | `N == 3` | three rounds ran |
 | `STOP_BLOCKED` | an unanswered human-only decision gates a member of the current fix set | end and ask |
 
@@ -219,6 +227,7 @@ deferred, and what you would look at first.
 ROUND: <n>
 VERDICT: PASS | PROCEED | STOP_DIVERGING | STOP_BUDGET | STOP_BLOCKED
 B(N): <count>   B(N-1): <count or n/a>
+BASELINE: <no | yes — screens newly judgeable, cards merged in round N-1>
 NEW: <n>  REPEAT: <n>  REGRESSION: <n>  HARNESS: <n, excluded from B(N)>
 FIX SET: <ticket ids, or none>
 HARNESS FIXES: <ticket ids against EPIC-12, or none>

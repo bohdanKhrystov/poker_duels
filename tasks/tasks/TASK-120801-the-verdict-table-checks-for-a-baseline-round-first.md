@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120801
 title: Step 6's verdict table checks for a baseline round first
 type: task
-status: ready
+status: done
 parent: STORY-1208
 estimate: XS
 tier: sonnet
