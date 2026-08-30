@@ -299,6 +299,11 @@ cases' `do` columns are already the routes to every screen-state the product has
 `expect`/`fails if` columns stay exactly as functional as they were — no case here is regraded on
 UX (`ADR-0092` §7).
 
+A frame that auto-advances between polls is read by arming `record` on the browser about to see
+it, then reading `frames` once the transition has passed — never by polling faster, since `wait`
+and `absent` sample every 250ms and a frame that lives for less time than that is invisible to any
+poll. `record` installs a `MutationObserver` on `#root`; `frames` prints what it caught.
+
 ### The screen inventory
 
 | screen | state | card | walk | routes |

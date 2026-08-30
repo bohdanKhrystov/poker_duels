@@ -176,6 +176,53 @@ try {
       break;
     }
 
+    case "record": {
+      // waitFor and absent poll #root every 250ms; a frame that renders and is replaced inside
+      // one interval is invisible to a poller at any interval, not merely slow to catch — round 2
+      // of /qa-cycle uat regression, 2026-08-30, lost the same two banners a second time. A
+      // MutationObserver's callback runs on the next microtask after a DOM change, so arming it
+      // here, before the action that triggers the transition, observes the transition instead of
+      // sampling past it.
+      page = await attach();
+      const { error } = await page.evaluate(`(() => {
+        const root = document.getElementById('root');
+        if (!root) throw new Error('no #root to observe');
+        if (window.__pdObserver) window.__pdObserver.disconnect();
+        window.__pdFrames = [];
+        let last = null;
+        const capture = () => {
+          const text = root.innerText;
+          if (text !== last) {
+            window.__pdFrames.push(text);
+            last = text;
+          }
+        };
+        capture();
+        window.__pdObserver = new MutationObserver(capture);
+        window.__pdObserver.observe(root, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+          attributes: true,
+        });
+      })()`);
+      if (error) fail(error);
+      console.log("armed: recording #root into window.__pdFrames");
+      break;
+    }
+
+    case "frames": {
+      page = await attach();
+      const { value } = await page.evaluate("window.__pdFrames ?? null");
+      if (value === null) fail("record was never armed on this page — run record before frames");
+      const n = Number(args[0] || value.length);
+      // Flattened to one physical line per frame — a reader tells frames apart by the newline
+      // between them, and by " | " where the frame's own rendered text had one.
+      const oneLine = (text) => text.split("\n").map((line) => line.trim()).filter(Boolean).join(" | ");
+      console.log(value.slice(-n).map(oneLine).join("\n"));
+      break;
+    }
+
     case "type": {
       page = await attach();
       const nth = Number(args[0] ?? 0);
@@ -273,6 +320,8 @@ try {
   click <label>           click the enabled control whose text starts with <label>
   wait <text> [ms]        block until text appears           (exit 1 on timeout)
   absent <text> [ms]      assert text does NOT appear for ms (exit 1 if it does)
+  record                  arm a MutationObserver on #root; clears + fills window.__pdFrames
+  frames [n]              the last n recorded frames, all by default  (exit 1 if none armed)
   type <index> <value>    fill the nth input, React-safely
   link                    the invite link on screen
   device                  this profile's pd.deviceId
