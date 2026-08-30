@@ -286,9 +286,9 @@ Three rules for writing one:
 | `EPIC-01` poker engine | not written — largely covered by the engine's own suite; a browser cannot see it |
 | `EPIC-02` duel server | not written — covered by `poker-server/.../e2e/` against real Postgres |
 | `EPIC-03` web client | **the CORE suite above is it** |
-| `EPIC-04` identity and profiles | **the `EPIC-04` suite above is it** — authored 2026-08-29 from merged sources, provisional until its first round |
-| `EPIC-05` ranking and leaderboard | **the `EPIC-05` suite above is it** — authored 2026-08-29 from merged sources, provisional until its first round |
-| `EPIC-06` design system | not written — and mostly not testable this way; `qa` is told not to report styling |
+| `EPIC-04` identity and profiles | **the `EPIC-04` suite above is it** — authored 2026-08-29 from merged sources, run in rounds 1 and 2 (corrections tracked under `STORY-1205` and `STORY-1206`) |
+| `EPIC-05` ranking and leaderboard | **the `EPIC-05` suite above is it** — authored 2026-08-29 from merged sources, run in rounds 1 and 2 (corrections tracked under `STORY-1205` and `STORY-1206`) |
+| `EPIC-06` design system | not written — `qa` is told not to report styling, and the `## UAT` section's focus reports exactly that |
 
 ---
 
@@ -327,6 +327,15 @@ is the whole of it. And once composed, neither card will ever have a conformance
 it is accepted by the human at the pane alone, exactly as every card was before this section
 existed, and `ADR-0089` §2c already forbids reading any round as the thing that validated one.
 
+### The standing questions
+
+| `UAT-Q1` | is the main info properly highlighted? | ADR-0092 §Context |
+| `UAT-Q2` | is it clear to user what is going on? | ADR-0092 §Context |
+| `UAT-Q3` | are all options accessible? | ADR-0092 §Context |
+| `UAT-Q4` | is the client matching the design? | ADR-0092 §Context |
+
+An observation may be filed as a finding **only when it contradicts a merged source** — a card, `design/tokens/tokens.css`, an owned literal, an ADR section, a `docs/duel-rules.md` heading, a `docs/vision.md` sentence. An observation with no merged source to contradict — *this could be clearer*, *the emphasis feels wrong* — is a **question**, and the `uat` agent's `QUESTIONS` section is its only route.
+
 ---
 
 ## What this catalogue does not cover
@@ -337,6 +346,7 @@ Stated so nobody reads a `PASS` as more than it is:
   which is `ADR-0088` gap 3 and survives this document exactly as it survived that ADR.
 - **Performance, load and security.** Out of `EPIC-12`'s scope.
 - **Anything `EPIC-06` owns** — placement, colour, type. `qa` is instructed not to report it.
+- **What UAT does not cover.** A UAT round makes three checks per screen (conformance, reachability, and copy against merged sources), but it does not answer taste questions: a judgment with no merged source to contradict is a question, never a finding, and only the `product-owner` answers one (`ADR-0092` §§3, 5). The human answers only what would change the vision. Recovery (`#/verify`, `#/reset`) is excluded for the reason this section already gives above about unreachable mail routes.
 - **Seven of `EPIC-04`'s twelve Definition-of-done promises**, each for a stated reason rather than
   by omission. *Every story is `done` or `dropped`*, *`V1` and `V2` are byte-unchanged*,
   *`poker-engine` declares no dependency outside the `ADR-0010` allowlist* and *`verifyProtocolTypes`
