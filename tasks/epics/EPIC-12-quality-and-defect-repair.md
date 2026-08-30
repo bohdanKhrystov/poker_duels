@@ -127,6 +127,7 @@ it was registered and answered in the same PR, and never appeared in an open tab
 | [STORY-1208](../stories/STORY-1208-the-verdict-table-never-checks-for-a-baseline-round.md) | Step 6 stops a healthy cycle — the verdict table never checks for a baseline round | ready — **not a round story**; it repairs a defect in this cycle's own machinery, and runs no round |
 | [STORY-1209](../stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | Round 1 (UAT) — the front door was never dressed, and four screens have no card | ready — **the first round under the `uat` focus**; `B(1) = 1`, verdict `PROCEED (conformance unjudged on 4 of 11 screens)` |
 | [STORY-1210](../stories/STORY-1210-round-2-uat-the-four-new-cards-were-not-a-tautology.md) | Round 2 (UAT) — the four new cards were not a tautology, and the screens behind them are undressed | ready — **the first baseline round this cycle has run**; `B(2) = 3`, verdict `PROCEED`, unqualified because no cell read `BLOCKED` |
+| [STORY-1211](../stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | Round 3 (UAT) — the count fell to zero, and what is still wrong is written down | ready — **the last round rule 5 permits, and the invocation's exit state**; `B(3) = 0`, verdict `PASS`, fix set empty |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
 when it is run and the ids stay sequential without arithmetic. **`STORY-1207` is the third story here that
@@ -147,6 +148,17 @@ determination in full: `duels`, `leaderboard`, `account` and `sign-in` became co
 for the first time on cards merged in round 1's repairs, so rule 4's comparison is skipped and
 `B(2) = 3` is not compared against `B(1) = 1`. Rule 5's budget binds regardless — round 3 is the
 last, and it gets no exemption.
+
+**Round 3 ended the invocation `PASS`**, and `STORY-1211` records it. `B(3) = 0`: no `blocker` and no
+`high` survived triage, so the fix set is empty and rule 4's comparison — which applied in full, round
+3 being **no** baseline round — could not trip at `0 >= 3`. Rule 5's condition held too (`N == 3`) and
+changed nothing, since round 3 was the last round at any `B(3)`; `PASS` is the stronger true statement
+and is the one emitted. **The `PASS` is not a coverage or a readiness claim** (`ADR-0089` §2c,
+`ADR-0093`): nineteen tickets across the three rounds remain open, eight of them filed by round 3
+itself. `STORY-1211` also **refused** to read `ADR-0092` §6's baseline rule onto a second candidate —
+two frames made judgeable for the first time by `TASK-121008`'s new harness verbs rather than by a
+card — and registered `DEC-093` for the architect instead of widening the rule at the triage the
+widening would have saved.
 
 **`STORY-1208` is the fourth non-round story, and the only one that repairs a defect in this
 cycle's own machinery.** `qa-manager`'s `## Step 6` and §Termination rule 4 below both special-case
