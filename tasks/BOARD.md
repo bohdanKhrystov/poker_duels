@@ -726,6 +726,44 @@ parallel with `EPIC-02`; no shared file.
 | --- | --- | --- | --- |
 | DEC-002 | Evaluator performance budget, how it is measured, and whether `HandRank` becomes a packed integer | [`STORY-0103`](stories/STORY-0103-hand-evaluator.md) | before benchmark tooling lands |
 | DEC-060 | **The product owner's** — does a **finished** season ever become reachable from a screen, and how is one chosen? Raised by [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) §7: a finished season is never *gone* — it recomputes exactly from rows nothing rewrites — but v0.3 ships no way to ask for one, so on the first of a month the previous ladder is computable, unreachable, and **nothing records who won it**. A selector is a control on a screen `ADR-0060` already said would crowd; *never* is a complete answer and needs saying out loud. Blocks nothing today | [`ADR-0061`](../docs/adr/ADR-0061-a-season-is-a-calendar-month-and-the-coin-never-resets.md) | before the first season boundary after the ladder ships |
+| DEC-086 | **The product owner's** — what, if anything, is the written bar for *"ready for real users"*? Raised 2026-08-30 by the human's UAT request. [`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md) §2c forbids citing any round as coverage and [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §2 extends the corollary by name: no round record — a `PASS` included — may be cited as the thing that made the product ready, so a readiness bar, if the product ever has one, must be **decided**, not measured into existence. *There is no written bar; the human judges by reading the round records* is a complete answer and needs saying out loud. Blocks nothing today — UAT runs without it | [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) | before anything is offered to real users |
+
+`DEC-085` → [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md)
+on 2026-08-30 — **a UAT round is a second focus of the same cycle: it files what a merged source
+settles and asks the product owner the rest.** Raised the same day by the human's request for a
+second testing pass after `/qa-cycle`, over the same catalogue, focused on UX and design
+conformance; registered and answered in the same PR by the architect, with two halves settled by
+the human mid-decision: **a UX question raised during UAT is delegated to the `product-owner`**,
+whose decision may create a bug ticket through `build-epic`, and **UAT runs now, filing the six
+missing cards**, rather than waiting for `ADR-0091` §5's retrofit story.
+
+`/qa-cycle uat <scope>` is the human's own message and chains from nothing — `ADR-0089` §2b as
+amended by `ADR-0090` holds word for word, neither focus prints the other's command, and a
+preceding QA cycle is practice, never a checked precondition, because the check would cite a round
+as a gate (§2c). The three standing conditions are checked one at a time and hold: a `shot` verb
+captures screenshots over CDP with Node built-ins, into the round's temp directory, never
+committed, **no image-diff tooling ever**; a screenshot and a rendered card are **reads** under §3;
+and §4 transposes to *observable by a human looking* — at the screen and the rendered card beside
+it, by eye. **The classifier at the boundary is the merged source**: an observation files as a
+finding only when it contradicts something merged — a card, a token, an owned literal, an ADR
+section, a vision sentence — and a judgment with no merged source is a **question**, promoted by
+`qa-manager` (at most three `DEC`s per round, one per screen, each a concrete choice answerable in
+one sentence and bearing on a player's ability to tell what is going on) for the product owner,
+whose answer becomes a merged source either way. **A missing card is `high`, outside `B(N)`** —
+registered debt being collected, not decay — its repair **is** the card, its dedupe key is the
+card's own path, and the screen is walked, not parked. `B(N)` gains its second and third
+exclusions — missing cards and decision-born improvements — because counting either trips
+`STOP_DIVERGING` on a cycle doing its job; a round that unlocks newly-carded screens is a
+**baseline round** rule 4 skips, rule 5's three-round budget still binding; and every UAT verdict
+line is qualified inline (`PASS (conformance unjudged on 6 of 7 screens)`) so a round that mostly
+authored cards says so in the one line anyone reads. One new `uat` observer agent — opposite
+refusal lists cannot share a file with `qa.md`, which stands byte-unchanged — one manager, one
+skill, one ledger. `ADR-0090` §2's declared set grows three→four (`agents/uat.md`, mention-only).
+Registers `DEC-086` open — the product owner's readiness bar — and hands the planner the
+`SKILL.md`, `uat.md`, `qa-manager.md`, `shot`-verb and test-plan-section tickets. Costs named:
+round 1's conformance is near-tautological until the pane verdicts land on cards composed from the
+very screens they judge; up to nine Opus dispatches per invocation; three prose exclusions in a
+count that used to be simple.
 
 `DEC-084` → [`ADR-0091`](../docs/adr/ADR-0091-design-gets-no-agent-a-new-screen-owes-a-card.md)
 on 2026-08-30 — **design gets no agent: a new screen owes a card, and adoption is gated where it is
