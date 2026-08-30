@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120705
 title: The uat agent — the role, the refusals and the hands
 type: task
-status: backlog
+status: done
 parent: STORY-1207
 estimate: S
 tier: sonnet
