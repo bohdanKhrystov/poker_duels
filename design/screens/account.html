@@ -1,0 +1,145 @@
+<!-- @dsCard group="Screens" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-surface-raised: #262421; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4; --pd-on-accent: #ffffff;
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
+    --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
+    --pd-track-caps: 0.08em;
+    --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px; --pd-space-7: 32px;
+    --pd-radius-medium: 8px; --pd-radius-small: 4px;
+    --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: var(--pd-fs-body); line-height: var(--pd-lh-body); padding: var(--pd-space-7);
+    -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: var(--pd-fs-micro); font-weight: 500; letter-spacing: var(--pd-track-caps);
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: var(--pd-space-3); }
+  h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: var(--pd-space-3); max-width: 56ch; }
+  .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: var(--pd-space-7); align-items: flex-start; }
+
+  /* Screen-specific: the frame itself is the account section's own box — bg-surface,
+   * border-hairline, rounded-medium and text-center, the same classes AccountScreen.tsx's
+   * root <section> carries — so the frame is the panel, not a wrapper drawn around a copy. */
+  .frame { width: min(380px, 100%); border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
+    background: var(--pd-surface); padding: var(--pd-space-7) var(--pd-space-5);
+    display: flex; flex-direction: column; gap: var(--pd-space-4); text-align: center; }
+  .frame h2 { font-size: var(--pd-fs-micro); letter-spacing: var(--pd-track-caps); text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; }
+  .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
+    margin-top: var(--pd-space-4); text-align: left; }
+
+  /* The screen's own small heading and the two status lines ADR-0037 requires — plain
+   * text-small, no muted step: the component gives them no color class of their own. */
+  .scrtitle { font-size: var(--pd-fs-small); font-weight: 500; }
+  .line { font-size: var(--pd-fs-small); }
+
+  /* A composed sub-section — SignUpForm and RecoveryEmailForm carry the same bg-surface /
+   * border-hairline / rounded-medium box as the screen's own root, so the shipped page is a
+   * card nested inside a card, told apart only by the hairline (AccountScreen.tsx). */
+  .panel { width: 100%; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
+    padding: var(--pd-space-5); display: flex; flex-direction: column; gap: var(--pd-space-4); }
+  .field { display: flex; flex-direction: column; gap: var(--pd-space-2); text-align: left; }
+  .field .lbl { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
+  .field .box { min-height: 1.5rem; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-small);
+    background: var(--pd-surface-raised); }
+
+  /* Screen-only glue: the lobby's standalone call-to-action, the same treatment the other
+   * flow screens share until it earns a component card. */
+  .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
+    line-height: var(--pd-lh-tight); padding: var(--pd-space-4) var(--pd-space-5);
+    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer;
+    text-align: center; }
+  .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
+  .btn.fill:hover { background: var(--pd-accent-fill-hover); }
+  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
+  .btn:focus-visible, .field .box:focus-within { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Screens</p>
+  <h1>Account</h1>
+  <p class="lede">What a browser sees once its own profile can speak for itself. The screen
+  states, in words, which routes currently sign in — the device, and the password once one
+  exists — never inferring either past a read the client actually got back (ADR-0037). The
+  same panel carries the form that gives a profile its first password, the door to an account
+  already made, and the address a forgotten password could still recover through.</p>
+
+  <div class="frames">
+    <div class="frame">
+      <h2>No password yet</h2>
+      <p class="scrtitle">Account</p>
+      <p class="line">This device signs in to this account.</p>
+      <p class="line">Recovery is off. With no verified address, a forgotten password cannot
+      be replaced and this account is lost.</p>
+      <div class="panel">
+        <div class="field"><span class="lbl">Handle</span><div class="box"></div></div>
+        <div class="field"><span class="lbl">Password</span><div class="box"></div></div>
+        <button class="btn fill" type="button">Give this profile a password</button>
+      </div>
+      <button class="btn ghost" type="button">Sign in</button>
+      <p class="note">account-text.ts's own words for a profile with no password yet
+      (ADR-0012): the sign-up form and the sign-in door both show once no session is live
+      (ADR-0083 §3) — that door opens a screen not drawn here, whose refusal is the one
+      sentence account-text.ts owns, identical for a wrong password and a handle no account
+      holds (ADR-0027 §6). The recovery line is recovery-text.ts's; the recovery-address panel
+      (last frame) composes onto this state too, exactly as shown there — AccountScreen.tsx
+      does not condition it on having a password yet, and whether it should is DEC-090,
+      open.</p>
+    </div>
+
+    <div class="frame">
+      <h2>Signed in</h2>
+      <p class="scrtitle">Account</p>
+      <p class="line">This device signs in to this account.</p>
+      <p class="line">Recovery is on. A verified address can set a new password for this
+      account.</p>
+      <p class="line">Your password signs in to this account.</p>
+      <button class="btn ghost" type="button">Sign out</button>
+      <p class="note">account-text.ts's words for the route only a live session can confirm —
+      no field carries that fact directly, so signedIn alone stands for it, and only once a
+      profile is in hand (AccountScreen.tsx; sign-in is the only endpoint docs/protocol.md
+      ever gives a session token). The recovery line is recovery-text.ts's. RevokeControl
+      (TASK-041220) exists but this screen does not place it yet — an absence, not a missing
+      frame. The recovery-address panel (last frame) composes onto this state too,
+      unconditionally, the same as the frame before it.</p>
+    </div>
+
+    <div class="frame">
+      <h2>Recovery address</h2>
+      <div class="panel">
+        <p class="line">Your password is asked for here because a browser someone else
+        reaches would otherwise become permanent ownership of this account.</p>
+        <div class="field"><span class="lbl">Email address</span><div class="box"></div></div>
+        <div class="field"><span class="lbl">Current password</span><div class="box"></div></div>
+        <button class="btn fill" type="button">Attach a recovery address</button>
+      </div>
+      <p class="note">recovery-text.ts's own words — the why-line, the two field labels and
+      the button — offered whether recovery is already on or off, since hiding it once an
+      address is attached would strand a player whose address stopped working
+      (AccountScreen.tsx). The condition that composes it onto a page does not check whether
+      that device has a password yet, so it renders on both frames above exactly as it does
+      here; whether it belongs on the no-password one is DEC-090, open — this card draws what
+      ships (ADR-0091 §3) and settles nothing. A settled attempt reads one of four sentences
+      from the same module — acknowledged, address refused, wrong password, or a generic
+      failure — not drawn as their own frames; the three states above are the ones this ticket
+      names.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
