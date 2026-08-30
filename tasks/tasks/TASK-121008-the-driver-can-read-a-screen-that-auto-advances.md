@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121008
 title: The driver can read a screen that auto-advances between polls
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: qa
 estimate: S
