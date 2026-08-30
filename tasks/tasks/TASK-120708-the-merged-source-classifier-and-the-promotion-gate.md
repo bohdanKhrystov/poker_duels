@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120708
 title: qa-manager — the merged-source classifier and the promotion gate
 type: task
-status: backlog
+status: done
 parent: STORY-1207
 estimate: S
 tier: sonnet
