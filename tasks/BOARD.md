@@ -3353,6 +3353,16 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120602](tasks/TASK-120602-the-catalogues-coin-query-reads-the-device-binding-table.md) The catalogue's coin query reads the table the device id actually lives in — *harness; excluded from `B(2)`* | XS | ready |
 | | [TASK-120603](tasks/TASK-120603-05-02s-standings-read-carries-the-identity-the-app-sends.md) `05-02`'s standings read carries the identity the app sends — *harness; excluded from `B(2)`* | XS | backlog |
 | | [TASK-120604](tasks/TASK-120604-05-04-walks-the-pages-that-exist.md) `05-04` walks the pages that exist, and says what a hidden *Show more* proves — *harness; excluded from `B(2)`* | XS | backlog |
+| **[STORY-1207](stories/STORY-1207-the-uat-focus-the-observer-and-what-it-may-file.md)** The UAT focus — the observer, the harness verb, the route map and what may be filed — *not a round story; schema 2* | | | ready |
+| | [TASK-120701](tasks/TASK-120701-state-clear-leaves-only-the-heartbeats-dedupe-stamp.md) `state --clear` leaves only the heartbeat's dedupe stamp | S | ready |
+| | [TASK-120702](tasks/TASK-120702-the-driver-captures-a-screen.md) The driver captures a screen — a `shot` verb over CDP | S | backlog |
+| | [TASK-120703](tasks/TASK-120703-the-uat-screen-inventory.md) The UAT screen inventory — the route map a round walks | S | backlog |
+| | [TASK-120704](tasks/TASK-120704-the-standing-questions-and-what-uat-does-not-cover.md) The standing questions, and what UAT does not cover | S | backlog |
+| | [TASK-120705](tasks/TASK-120705-the-uat-agent-the-role-and-the-hands.md) The `uat` agent — the role, the refusals and the hands | S | backlog |
+| | [TASK-120706](tasks/TASK-120706-what-uat-may-file-and-what-it-may-only-ask.md) What `uat` may file, and what it may only ask | S | backlog |
+| | [TASK-120707](tasks/TASK-120707-the-uat-focus-of-the-qa-cycle-skill.md) The `uat` focus of the `qa-cycle` skill | S | backlog |
+| | [TASK-120708](tasks/TASK-120708-the-merged-source-classifier-and-the-promotion-gate.md) `qa-manager` — the merged-source classifier and the promotion gate | S | backlog |
+| | [TASK-120709](tasks/TASK-120709-two-more-exclusions-a-baseline-round-and-a-qualified-verdict.md) `qa-manager` — two more exclusions, a baseline round and a qualified verdict | S | backlog |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no
@@ -3397,3 +3407,31 @@ shows a month"* is an assertion that passes on the very defect `ADR-0061` §6 fo
 carry `ADR-0090` §5's `Provisional` line, so the round that first runs them is expected to correct
 cases, those corrections are **harness** tickets excluded from `B(N)`, and no production code may
 change for one until it has reproduced by hand (`ADR-0089` §4).
+
+`STORY-1207` is the **third non-round story**, and it is the one that makes the cycle carry a
+second focus. [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md)
+(`DEC-085`) merged on 2026-08-30 naming its own deliverables, and this story is that split: a
+`shot` verb (CDP screenshot, Node built-ins, never committed, **no image-diff tooling ever**), a
+`## UAT` section of `docs/test-plan.md` reusing the catalogue as a **route map**, a `uat` observer
+with no `Write` and a `QUESTIONS` section capped at three per screen, the `uat` focus of
+`qa-cycle`, and a `qa-manager` that triages both focuses on one ledger. The chain is linear —
+harness, catalogue, observer, focus, manager — because §7 requires the catalogue section to merge
+**before the first UAT round** and because each ticket names something the one before it created.
+Three refusals are carried as refusals: the QA focus **never chains into** the UAT focus, neither
+report prints the other's command, and a preceding QA cycle is practice and **never a checked
+precondition** — a check would cite a round as a gate (`ADR-0089` §2c). `.claude/agents/qa.md`
+stands byte-unchanged with its `sha256` gated in four tickets, and `qa-manager.md` still names
+`qa-cycle` **nowhere**, which is the accident the split is most likely to produce and is gated
+from both directions. The split also folded in a measured defect the ADR does not mention:
+`notify.py state --clear` left `cron_armed: true` and a note from an earlier session behind, and
+since `ADR-0092` makes UAT a second focus of the **same** cycle — one run state, one `Stop` hook —
+a breadcrumb that lies after a QA teardown lies identically after a UAT one. It is the story's one
+unit-testable ticket and it goes first. **No `DEC` was raised.** The one contradiction found while
+splitting — `ADR-0091` §5 owes cards for `#/verify` and `#/reset`, which the catalogue puts
+permanently out of the harness's reach because no mailed link ever arrives — is answered by
+`ADR-0092`'s own text: §4 files a missing-card finding only for a screen **in scope**, §6 already
+admits `out of scope` as a per-screen cell, and §4 leaves that debt to `ADR-0091` §5's `EPIC-06`
+remainder. What is left is an asymmetry rather than a gap — those two cards will never have a
+conformance check behind them — and `TASK-120703` writes it into the inventory rather than letting
+it be discovered. `DEC-086`, the written bar for *"ready for real users"*, stays open for the
+product owner and blocks nothing: no round may be cited as what made the product ready.
