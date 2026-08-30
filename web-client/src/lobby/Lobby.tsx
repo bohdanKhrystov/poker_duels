@@ -297,7 +297,11 @@ export function Lobby(): ReactElement {
   return (
     <section>
       {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
-      <button type="button" onClick={() => send({ type: "CreateRoom" })}>
+      <button
+        type="button"
+        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        onClick={() => send({ type: "CreateRoom" })}
+      >
         Create a duel room
       </button>
       <form
@@ -312,10 +316,16 @@ export function Lobby(): ReactElement {
         <label htmlFor="room-code">Room code</label>
         <input
           id="room-code"
+          className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text"
           value={typedCode}
           onChange={(event) => setTypedCode(event.target.value)}
         />
-        <button type="submit">Join the duel</button>
+        <button
+          type="submit"
+          className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        >
+          Join the duel
+        </button>
       </form>
       {profile !== null && <ProfileStrip state={profile} />}
       {profile !== null && profile.kind === "profile" && setName !== null && (
@@ -393,11 +403,14 @@ function WaitingForRival(props: {
   return (
     <section>
       <h2>Waiting for your rival</h2>
-      <p>{props.code}</p>
+      <p className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text">
+        {props.code}
+      </p>
       <label htmlFor="invite-link">Invite link</label>
       <input
         autoFocus
         id="invite-link"
+        className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text"
         readOnly
         value={link}
         onFocus={(event) => event.currentTarget.select()}
@@ -426,6 +439,7 @@ function CopyLink(props: { link: string }): ReactElement | null {
     <>
       <button
         type="button"
+        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
         onClick={() => {
           void navigator.clipboard.writeText(props.link).then(
             () => setOutcome("copied"),
