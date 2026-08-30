@@ -110,9 +110,13 @@ arithmetic. (`DEC-086`, raised by `ADR-0092` and blocking nothing here, is regis
 | [STORY-1203](../stories/STORY-1203-the-qa-cases-skill-the-authoring-half.md) | The `qa-cases` skill — the authoring half, whose last act is a printed command | done — **not a round story**; it builds the skill `ADR-0090` §3 licensed and runs no round |
 | [STORY-1204](../stories/STORY-1204-the-epic-04-and-epic-05-catalogue-suites.md) | The `EPIC-04` and `EPIC-05` catalogue suites, authored from merged sources | done — **not a round story**; it is the first `/qa-cases` pass, and it takes the number the note below had reserved for the first round |
 | `STORY-1205`+ | One story per QA round; the round number lives in the story, not the id | not written |
+| [STORY-1207](../stories/STORY-1207-the-uat-focus-the-observer-and-what-it-may-file.md) | The UAT focus — the observer, the harness verb, the route map and what may be filed | ready — **not a round story**; it builds what `ADR-0092` §8 names, and runs no round |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
-when it is run and the ids stay sequential without arithmetic. **`STORY-1203` and `STORY-1204` are
+when it is run and the ids stay sequential without arithmetic. **`STORY-1207` is the third story here that
+is not a round**, after `STORY-1203` and `STORY-1204`: it builds the `uat` observer, the `shot`
+verb, the catalogue's UAT section and `qa-manager`'s second-focus rules, and brings no stack up.
+Round stories continue to take the next free id, so the one after `STORY-1206` is `STORY-1208`. **`STORY-1203` and `STORY-1204` are
 the two stories here that are not rounds**, the way `STORY-1201` is the one that is a retrospective
 record: `STORY-1203` builds `qa-cases`, the authoring skill `ADR-0090` §3 licensed, and `STORY-1204`
 is the first pass that skill performs — writing the `EPIC-04` and `EPIC-05` suites from merged
