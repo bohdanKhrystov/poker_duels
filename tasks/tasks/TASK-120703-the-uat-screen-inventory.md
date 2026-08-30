@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120703
 title: The UAT screen inventory — the route map a round walks
 type: task
-status: backlog
+status: done
 parent: STORY-1207
 estimate: S
 tier: sonnet
