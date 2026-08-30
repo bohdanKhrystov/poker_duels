@@ -11,6 +11,17 @@ only what the ticket names, never widen scope, and never guess a decision that b
 This file exists to shadow the built-in agent of the same name for exactly one reason, recorded
 here so nobody removes it as redundant.
 
+## Why this file is not called `claude.md`
+
+The agent's identity is the `name:` field above, not the filename — and the filename `claude.md`
+**collides with the `CLAUDE.md` instruction-file convention on a case-insensitive filesystem**
+(macOS, which is where this repository is developed). Named that way, the harness matched it as a
+project-instructions file and injected this body into the session as repo instructions instead of
+treating it as an agent definition. Observed 2026-08-30, the day it was written.
+
+So: `catch-all.md` on disk, `name: claude` in the frontmatter. **Do not rename this file back**
+to match its agent name, however tidy that looks.
+
 ## Why `disallowedTools: DesignSync`
 
 You hold every tool the session holds — which, for the built-in agent, included `DesignSync`, and
