@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { AccountScreen } from "./AccountScreen";
 import {
   ACCOUNT_HEADING,
+  CANCEL,
   DEVICE_ROUTE_LIVE,
   DEVICE_ROUTE_REVOKED,
   PASSWORD_ROUTE_LIVE,
+  SIGN_IN_HEADING,
+  SIGN_OUT_LABEL,
 } from "./account-text";
 import { RECOVERY_ON, RECOVERY_OFF, ATTACH_LABEL } from "./recovery-text";
 import { aProfile } from "../profile/profile-fixture";
@@ -241,5 +244,32 @@ describe("the account screen", () => {
     );
     expect(screen.getByRole("button", { name: ATTACH_LABEL })).not.toBeNull();
     expect(screen.queryByText(RECOVERY_OFF)).not.toBeNull();
+  });
+
+  it("the sign-in door is a drawn button, not a sentence", () => {
+    render(<AccountScreen profile={null} signedIn={false} />);
+
+    const signIn = screen.getByRole("button", { name: SIGN_IN_HEADING });
+    expect(signIn.classList.contains("border-hairline")).toBe(true);
+    expect(signIn.classList.contains("px-5")).toBe(true);
+  });
+
+  it("sign out and its confirmation are drawn buttons, not sentences", () => {
+    const signOut = vi.fn().mockResolvedValue({ kind: "signed-out" } as const);
+    render(<AccountScreen profile={null} signedIn={true} signOut={signOut} />);
+
+    const offered = screen.getByRole("button", { name: SIGN_OUT_LABEL });
+    expect(offered.classList.contains("border-hairline")).toBe(true);
+    expect(offered.classList.contains("px-5")).toBe(true);
+
+    fireEvent.click(offered);
+
+    const confirming = screen.getByRole("button", { name: SIGN_OUT_LABEL });
+    expect(confirming.classList.contains("border-hairline")).toBe(true);
+    expect(confirming.classList.contains("px-5")).toBe(true);
+
+    const cancel = screen.getByRole("button", { name: CANCEL });
+    expect(cancel.classList.contains("border-hairline")).toBe(true);
+    expect(cancel.classList.contains("px-5")).toBe(true);
   });
 });

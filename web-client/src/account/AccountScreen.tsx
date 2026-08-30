@@ -123,7 +123,11 @@ export function AccountScreen(props: {
         <RecoveryEmailForm attach={attachRecoveryEmail} />
       )}
       {showSignInDoor && (
-        <button type="button" onClick={onSignIn}>
+        <button
+          type="button"
+          className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+          onClick={onSignIn}
+        >
           {SIGN_IN_HEADING}
         </button>
       )}

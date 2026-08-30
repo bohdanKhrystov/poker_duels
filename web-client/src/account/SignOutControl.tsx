@@ -36,10 +36,18 @@ export function SignOutControl(props: {
     return (
       <div>
         <p>{SIGN_OUT_WARNING}</p>
-        <button type="button" onClick={confirm}>
+        <button
+          type="button"
+          className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+          onClick={confirm}
+        >
           {SIGN_OUT_LABEL}
         </button>
-        <button type="button" onClick={() => setStep({ kind: "offered" })}>
+        <button
+          type="button"
+          className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+          onClick={() => setStep({ kind: "offered" })}
+        >
           {CANCEL}
         </button>
       </div>
@@ -47,7 +55,11 @@ export function SignOutControl(props: {
   }
 
   return (
-    <button type="button" onClick={() => setStep({ kind: "confirming" })}>
+    <button
+      type="button"
+      className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+      onClick={() => setStep({ kind: "confirming" })}
+    >
       {SIGN_OUT_LABEL}
     </button>
   );
