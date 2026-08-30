@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121001
 title: The `duels` screen wears the card merged for it, and its search field can be seen
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: web-client
 estimate: S
