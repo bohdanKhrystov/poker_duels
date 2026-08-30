@@ -3400,7 +3400,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | **[STORY-1209](stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md)** Round 1 (UAT) — the front door was never dressed, and four screens have no card — *schema 2; `B(1) = 1`, verdict `PROCEED (conformance unjudged on 4 of 11 screens)`* | | | ready |
 | | [TASK-120901](tasks/TASK-120901-the-front-door-wears-the-clients-tokens.md) The front door and the waiting frame wear the client's tokens, and the room-code field can be seen — *product; `high` — **counts in `B(1)`*** | S | done |
 | | [TASK-120902](tasks/TASK-120902-a-card-for-the-duels-screen.md) A card for the `duels` screen — *missing card; `high` — **excluded from `B(1)`*** | S | done |
-| | [TASK-120903](tasks/TASK-120903-a-card-for-the-leaderboard-screen.md) A card for the `leaderboard` screen — *missing card; `high` — **excluded from `B(1)`*** | S | ready |
+| | [TASK-120903](tasks/TASK-120903-a-card-for-the-leaderboard-screen.md) A card for the `leaderboard` screen — *missing card; `high` — **excluded from `B(1)`*** | S | done |
 | | [TASK-120904](tasks/TASK-120904-a-card-for-the-account-screen.md) A card for the `account` screen — *missing card; `high` — **excluded from `B(1)`*** | S | ready |
 | | [TASK-120905](tasks/TASK-120905-a-card-for-the-sign-in-screen.md) A card for the `sign-in` screen — *missing card; `high` — **excluded from `B(1)`*** | S | ready |
 | | [TASK-120906](tasks/TASK-120906-the-client-never-sends-on-a-socket-that-has-not-opened.md) The client never sends on a socket that has not opened — *product; `medium`, never scheduled by this cycle* | S | backlog |
