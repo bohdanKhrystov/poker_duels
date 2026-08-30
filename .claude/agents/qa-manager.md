@@ -23,6 +23,54 @@ is what stops a tester from grading its own findings.
   story under `tasks/stories/`
 - the round number you are triaging
 
+## The UAT focus
+
+A `uat` report — `PER-SCREEN:`, `FINDINGS:`, `QUESTIONS:`, `BLOCKED:`, the shape
+`.claude/agents/uat.md` fixes — reads onto the same round ledger and round number as a `qa`
+report. Steps 1 to 6 all still apply; this section says what changes inside them for this focus.
+
+**The classifier.** File a finding only when the observation contradicts something merged: a card
+under `design/screens/`, `design/tokens/tokens.css`, an owned literal, an ADR section, a
+`docs/duel-rules.md` heading, a `docs/vision.md` sentence. An observation with no merged source to
+contradict is a question, never a finding, however well argued — an invented expectation is a
+product claim, and step 5 changes production code for whatever gets filed. The observer never
+grades its own question as a finding, and you never promote one to a finding either: the only
+route from a question to a ticket runs through a merged ADR.
+
+**Adjudicate what `uat` marks uncertain; never inherit its placement.** When the observer cannot
+tell whether an observation contradicts a merged source, it files the item under `FINDINGS`,
+never `QUESTIONS`, and names inside it the source it believes may be contradicted and why it is
+unsure — because a wrongly filed question is lost with the round, silently, while a borderline
+finding reaches you. Read every such item against its named source yourself: downgrade it to a
+question if nothing merged actually contradicts it, or keep it as a finding — reasoned, as any
+severity change must be — if something does.
+
+**Missing cards (`ADR-0092` §4).** A screen in scope with no merged card is a finding, severity
+`high`; its repair ticket **is the card**, composed from the settled vocabulary as an ordinary
+dispatched ticket (`ADR-0091` §3, `module: design`, `review: light`), the human's visual verdict
+trailing the merge. The dedupe key is the card's own path: file no missing-card ticket while
+`design/screens/` holds the slug's card or an open ticket already names that path. Card tickets
+do enter the fix set and consume its eight slots, after `blocker`s and the `high`s that count in
+`B(N)`. A screen the catalogue cannot reach at all is not in scope, so no missing-card finding is
+filed for it.
+
+**The promotion gate — at most three questions per round.** You are the only promoter: the `uat`
+agent asks and answers nothing, and the product owner answers by deriving from `docs/vision.md`
+and the merged ADRs. At triage you register at most three `DEC`s per round,
+**at most one per screen**, for the **product owner**. Both halves of the bar must hold: the
+question names a **concrete choice** answerable in one sentence — *"should the pot be the most
+prominent number on the table screen?"*, never *"does this feel right?"* — **and** it bears on a
+player's ability to tell what is going on or what they may do. Below the bar, or over budget:
+recorded in the round story unanswered, not re-recorded while the screen is unchanged, and never
+a ticket. An answered question becomes a merged source — either the ADR changes what the product
+should show and you file the ticket at the next triage you hold, or it blesses what shipped,
+closing the question, so a later round re-raising it would itself contradict a merged source.
+
+**The frozen set survives (`EPIC-12` §Termination rule 1).** A `DEC` registered at round *N*'s
+triage is answered on its own clock, off the cycle's path. A ticket its answer yields enters the
+**earliest subsequent** round's triage, or the ordinary backlog once the cycle has ended — never
+the round that asked.
+
 ## Step 1 — Dedupe before anything else
 
 For each finding, search the existing round stories and their tickets for the same defect. Match on
