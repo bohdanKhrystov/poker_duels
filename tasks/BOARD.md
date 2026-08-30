@@ -3393,7 +3393,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120709](tasks/TASK-120709-two-more-exclusions-a-baseline-round-and-a-qualified-verdict.md) `qa-manager` — two more exclusions, a baseline round and a qualified verdict | S | done |
 | **[STORY-1208](stories/STORY-1208-the-verdict-table-never-checks-for-a-baseline-round.md)** Step 6 stops a healthy cycle — the verdict table never checks for a baseline round — *not a round story; schema 2* | | | **ready** |
 | | [TASK-120801](tasks/TASK-120801-the-verdict-table-checks-for-a-baseline-round-first.md) Step 6's verdict table checks for a baseline round first | XS | done |
-| | [TASK-120802](tasks/TASK-120802-termination-rule-4-carries-its-own-exemption.md) `EPIC-12` §Termination rule 4 carries its own exemption | XS | backlog |
+| | [TASK-120802](tasks/TASK-120802-termination-rule-4-carries-its-own-exemption.md) `EPIC-12` §Termination rule 4 carries its own exemption | XS | done |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no

@@ -160,7 +160,13 @@ judgemental.
 4. **Convergence.** Let `B(N)` be the count of `blocker` + `high` in round *N*'s report. If
    `B(N) >= B(N-1)` the cycle **stops** and reports non-convergence. This is the direct answer to
    *"each time report more and more bugs"*: the loop is permitted to continue only while it is
-   demonstrably winning.
+   demonstrably winning. Two rounds are exempt from the comparison: round 1, which has no round 0
+   to compare against, and a **baseline round** — a round in which a screen becomes
+   conformance-judgeable for the first time, its card merged in the previous round's repairs. The
+   comparison would score the unlock as decay if both rounds were compared, since the two rounds
+   measured differently-sized judgeable sets. See
+   [`ADR-0092`](../../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md)
+   §6. **Rule 5's three-round budget binds regardless.**
 5. **At most three rounds per invocation**, whatever else is true.
 6. **A failure that does not reproduce by hand is a harness defect, and never enters `B(N)`.**
    Added by [`ADR-0089`](../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)

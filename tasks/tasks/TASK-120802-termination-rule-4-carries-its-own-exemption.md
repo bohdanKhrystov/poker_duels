@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120802
 title: EPIC-12 §Termination rule 4 carries its own exemption
 type: task
-status: backlog
+status: done
 parent: STORY-1208
 estimate: XS
 tier: haiku
