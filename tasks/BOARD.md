@@ -3418,7 +3418,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-121005](tasks/TASK-121005-the-sign-in-screens-route-out-is-the-cards-link.md) The `sign-in` screen's route out is the card's link, and its submit is the card's fill button — *product; `medium`* | S | backlog |
 | | [TASK-121006](tasks/TASK-121006-the-account-forms-submits-are-the-cards-fill-button.md) The `account` screen's two form submits are the card's fill button — *product; `medium`* | XS | backlog |
 | | [TASK-121007](tasks/TASK-121007-two-cards-and-a-margin-note-catch-up-with-the-client.md) Two cards and a margin note catch up with the client that overtook them — *design; cards in arrears, `medium`, **not a product defect*** | XS | backlog |
-| | [TASK-121008](tasks/TASK-121008-the-driver-can-read-a-screen-that-auto-advances.md) The driver can read a screen that auto-advances between polls — *harness capability; `manual-verify` — **excluded from `B(2)`*** | S | ready |
+| | [TASK-121008](tasks/TASK-121008-the-driver-can-read-a-screen-that-auto-advances.md) The driver can read a screen that auto-advances between polls — *harness capability; `manual-verify` — **excluded from `B(2)`*** | S | done |
 | | [TASK-121009](tasks/TASK-121009-the-catalogue-records-the-cards-it-has-and-the-question-it-closed.md) The catalogue records the cards it now has, and the question two rounds have closed — *harness — **excluded from `B(2)`*** | XS | ready |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
