@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useReducer, type ReactElement } from "react";
+import { nameOrNone } from "../profile/name-text";
+import { coinBalanceText } from "../profile/profile-text";
+import { CoinMark } from "../result/CoinMark";
 import type { LadderRead } from "./ladder-read";
 import { ladderReducer, initialLadder, nextPageAfter } from "./ladder-state";
 import {
@@ -7,7 +10,6 @@ import {
   EMPTY_LADDER,
   LADDER_FAILED,
   MORE,
-  rowLine,
   seasonName,
   selfLine,
 } from "./ladder-text";
@@ -96,14 +98,21 @@ export function LadderScreen(props: {
         Matching would be wrong on every page the reader's row is not on,
         which is nearly all of them (ADR-0065 §8).
       */}
-      {state.self !== null && <p>{selfLine(state.self)}</p>}
+      {state.self !== null && (
+        <p className="flex items-center gap-3 rounded-medium border border-accent bg-accent-subtle px-5 py-4">
+          <CoinMark />
+          <span>{selfLine(state.self)}</span>
+        </p>
+      )}
       <ul className="w-full">
         {state.rows.map((row) => (
           <li
             key={row.playerId}
-            className="border-t border-hairline py-3 first:border-t-0"
+            className="flex items-baseline gap-4 border-t border-hairline py-3 text-small first:border-t-0"
           >
-            <p className="text-small">{rowLine(row)}</p>
+            <span>{row.rank}</span>{" "}
+            <span className="flex-1">{nameOrNone(row.displayName)}</span>{" "}
+            <span>{coinBalanceText(row.coins)}</span>
           </li>
         ))}
       </ul>
@@ -113,7 +122,12 @@ export function LadderScreen(props: {
         control the guard can refuse — not on one already torn out of the
         tree, which would refuse for the wrong reason and prove nothing.
       */}
-      <button type="button" hidden={!canAskMore} onClick={askMore}>
+      <button
+        type="button"
+        hidden={!canAskMore}
+        onClick={askMore}
+        className="rounded-medium bg-accent-fill px-5 py-4 text-on-accent"
+      >
         {MORE}
       </button>
       {sentence && <p>{sentence}</p>}
