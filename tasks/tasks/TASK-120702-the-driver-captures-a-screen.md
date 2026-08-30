@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120702
 title: The driver captures a screen — a shot verb over CDP
 type: task
-status: backlog
+status: done
 parent: STORY-1207
 estimate: S
 tier: haiku
