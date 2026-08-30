@@ -136,7 +136,8 @@ list being worked, the last-sent stamp, and the armed-cron flag. Every field is 
 missing or corrupt file degrades a report rather than preventing one.
 
 The driver writes it — `notify.py state --epic … ` at the start of a run, `--clear` at the end so
-the stop hook falls silent again.
+the stop hook falls silent again — clearing every field except `last_report_at`, the heartbeat's
+dedupe stamp.
 
 ## The heartbeat clock, and its two expiry dates
 

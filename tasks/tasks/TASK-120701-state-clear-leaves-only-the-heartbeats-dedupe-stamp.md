@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120701
 title: state --clear leaves only the heartbeat's dedupe stamp
 type: task
-status: ready
+status: done
 parent: STORY-1207
 estimate: S
 tier: sonnet
