@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { PlayerView, SeatPresence } from "../protocol";
+import type { GameEvent, PlayerView, SeatPresence } from "../protocol";
 import { BoardCards } from "./BoardCards";
 import { PotStrip } from "./PotStrip";
 import { SeatPlate } from "./SeatPlate";
@@ -16,6 +16,7 @@ import { formatChips } from "./chips";
 export function DuelTable(props: {
   view: PlayerView;
   rivalPresence?: SeatPresence | null;
+  narration?: readonly GameEvent[];
 }): ReactElement {
   const { view } = props;
   const you = view.seats.find((seat) => seat.index === view.viewerSeat);
@@ -42,7 +43,7 @@ export function DuelTable(props: {
         </div>
       )}
       <div className="flex flex-col items-center gap-4">
-        <PotStrip view={view} />
+        <PotStrip view={view} narration={props.narration} />
         <BoardCards cards={view.board.cards} />
       </div>
       {you !== undefined && (

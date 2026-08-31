@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { PlayerView, Street } from "../protocol";
+import type { GameEvent, PlayerView, PotAwarded, Street } from "../protocol";
 import { formatChips } from "./chips";
 
 // The street the view names, written out. A side table rather than a switch so
@@ -14,17 +14,78 @@ const STREET_NAMES: Record<Street, string> = {
 };
 
 /**
+ * The `PotAwarded` events of the hand `handNumber` names: those after its
+ * `HandStarted` and up to the next one. Keyed to the view's hand number and
+ * not to "the last `HandStarted` seen" — the `Events` frame that starts the
+ * next hand can arrive before the `Snapshot` that moves the view onto it, and
+ * a window keyed to the last start would blink out for that tick.
+ *
+ * `Array.prototype.findLastIndex` is ES2023; this project targets ES2022, so
+ * the boundary is a forward loop that stops at the next `HandStarted`.
+ */
+function awardsForHand(
+  narration: readonly GameEvent[],
+  handNumber: number,
+): readonly PotAwarded[] {
+  const start = narration.findIndex(
+    (event) => event.type === "HandStarted" && event.handNumber === handNumber,
+  );
+  if (start === -1) return [];
+  const awards: PotAwarded[] = [];
+  for (let i = start + 1; i < narration.length; i++) {
+    const event = narration[i];
+    if (event.type === "HandStarted") break;
+    if (event.type === "PotAwarded") awards.push(event);
+  }
+  return awards;
+}
+
+/**
+ * The banner line for a hand that just ended, or `null` when the ordinary
+ * `Pot N` line should stand instead — mid-hand, or when this client never
+ * received the ended hand's award (`ADR-0095` §4). Every number is a
+ * `PotAwarded.amount` this client actually received, never a total the client
+ * works out, and a split states only the viewer's own share (`ADR-0095` §2).
+ */
+function awardLineFor(
+  view: PlayerView,
+  narration: readonly GameEvent[],
+): string | null {
+  if (view.street !== "COMPLETE") return null;
+  const awards = awardsForHand(narration, view.handNumber);
+  if (awards.length === 0) return null;
+  if (awards.length === 1) {
+    const [award] = awards;
+    return award.seat === view.viewerSeat
+      ? `You win ${formatChips(award.amount)}`
+      : `Your rival wins ${formatChips(award.amount)}`;
+  }
+  const own = awards.find((award) => award.seat === view.viewerSeat);
+  return own === undefined
+    ? null
+    : `Split pot — you win ${formatChips(own.amount)}`;
+}
+
+/**
  * The pot and the hand's standing facts, every one of them read straight off
  * the view: the pot is `view.pot` and not a sum of what the seats put in, and
  * the street is `view.street` and not a count of board cards — those two
  * disagree at exactly the moments that matter.
+ *
+ * When the hand just ended and this client saw its award, the amount slot
+ * states who took the pot instead (`ADR-0095`); every other tick it reads
+ * `Pot N` as it always has.
  */
-export function PotStrip(props: { view: PlayerView }): ReactElement {
-  const { view } = props;
+export function PotStrip(props: {
+  view: PlayerView;
+  narration?: readonly GameEvent[];
+}): ReactElement {
+  const { view, narration = [] } = props;
+  const awardLine = awardLineFor(view, narration);
   return (
     <div className="flex items-baseline gap-4 px-2 py-3">
       <span className="font-mono text-large tabular-nums">
-        Pot&nbsp;{formatChips(view.pot)}
+        {awardLine ?? <>Pot&nbsp;{formatChips(view.pot)}</>}
       </span>
       <span className="text-small text-text-muted">
         Blinds {formatChips(view.smallBlind)}/{formatChips(view.bigBlind)} ·
