@@ -83,7 +83,7 @@ on its own so no failing prefix could hide a later gate. Only these five paths w
 | `web-client/src/table/ActionBar.tsx` | modify | the change itself |
 | `web-client/src/lobby/Lobby.tsx` | modify | `npm run typecheck` — `TS2739` at `Lobby.tsx(166,10)`: the bar's two new props are missing at the one production render site |
 | `web-client/src/e2e/drive-duel.tsx` | modify | `npm run test` — 24 failures across `whole-duel.test.tsx`, `duel-secrecy.test.tsx`, `claimed-here-recovered-there.test.tsx` and `drive-duel.test.tsx`, all from `drive-duel.tsx:125`'s `getByRole("slider")` |
-| `web-client/src/table/ActionBar.test.tsx` | modify | `npm run typecheck` — `TS2739` at 20 render sites; `npm run test` — 10 of its 22 tests fail |
+| `web-client/src/table/ActionBar.test.tsx` | modify | `npm run typecheck` — `TS2739` at 21 render sites (20 direct, plus the one inside the shared `bar()` helper); `npm run test` — 10 of its 22 tests fail |
 | `web-client/src/table/bar-no-derivation.test.tsx` | modify | `npm run typecheck` — `TS2739` at 3 render sites; `npm run test` — *counts the ceiling that reaches the player only as a slider bound* fails at line 92, because the bound it counts is the thing being deleted |
 | `design/screens/duel-table.html` | read | the sizing row's anatomy — five chips, their labels, their order. `TASK-120914` corrects its one wrong amount first; that is why this ticket depends on it |
 | `docs/adr/ADR-0101-pot-means-a-pot-sized-raise-and-the-fractions-share-its-base.md` | read | §§1–4 — the formulas, the offer rule and the worked frames |
