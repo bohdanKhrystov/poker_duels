@@ -303,7 +303,7 @@ export function Lobby(): ReactElement {
       {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
       <button
         type="button"
-        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         onClick={() => send({ type: "CreateRoom" })}
       >
         Create a duel room
@@ -407,7 +407,7 @@ function WaitingForRival(props: {
   return (
     <section>
       <h2>Waiting for your rival</h2>
-      <p className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text">
+      <p className="rounded-medium border border-hairline bg-surface px-5 py-4 text-center font-mono text-display tracking-[var(--pd-track-code)] text-text">
         {props.code}
       </p>
       <label htmlFor="invite-link">Invite link</label>
@@ -443,7 +443,7 @@ function CopyLink(props: { link: string }): ReactElement | null {
     <>
       <button
         type="button"
-        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         onClick={() => {
           void navigator.clipboard.writeText(props.link).then(
             () => setOutcome("copied"),
