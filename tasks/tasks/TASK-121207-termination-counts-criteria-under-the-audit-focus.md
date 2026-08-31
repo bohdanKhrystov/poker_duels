@@ -74,7 +74,7 @@ Three edits inside `## Termination`, and nothing outside it.
 - **Any other section of the epic** — `## Goal`, `## Scope`, `## Out of scope`, `## Open
   decisions`, the answered-decisions table, `## Stories`, `## Definition of done` and `## Metrics`
   all stay as they are. §Metrics already carries `ADR-0096` §6's *criteria added per invocation*
-  row, and §Open decisions already reads **None**.
+  row, and §Open decisions carries `DEC-098`, which this ticket neither answers nor closes.
 - **Any change to `.claude/agents/qa-manager.md`.** `TASK-121206` owns it; gate 4 only reads it.
 - **Ticking any Definition-of-done box.** None of them asks for this.
 
