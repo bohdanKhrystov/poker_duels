@@ -734,7 +734,31 @@ parallel with `EPIC-02`; no shared file.
 | DEC-093 | **The architect's** — does [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §6's **baseline rule** extend to a round in which a screen-state becomes conformance-judgeable for the first time through **any** merged instrument, or only through a **card** merged in the previous round's repairs? Both §6 and `EPIC-12` §Termination rule 4 are written about a card. Round 3 met the other case: two frames of `design/screens/duel-table-states.html` and `rematch-states.html` were unreadable in rounds 1 and 2 — round 2 said so in as many words, *"check (a) on two of `duel-table-states.html`'s three frames is unreachable by any round with the verbs `drive.mjs` has"* — and became readable in round 3 only because `TASK-121008`'s `record`/`frames` verbs merged in round 2's repairs. The rule's stated **purpose** reaches that case exactly (*"the two rounds measured differently-sized judgeable sets"*); its **text** does not. Raised 2026-08-30 at round 3's triage, which **refused to extend the exemption itself**: a manager who widens a rule in the round that rule would save cannot prove it would have widened it anywhere else, and `STORY-1208` is the precedent for repairing this machinery by a merged sentence rather than by a generous reading at triage. **Not one of `ADR-0092` §5's three promotion slots** — those are the product owner's, and this is `CLAUDE.md` rule 5 routing. **Blocks nothing**: round 3's fix set is empty, `B(3) = 0` so rule 4 could not fire at any reading, and the cycle ended `PASS`. Answering it costs a future invocation a wrong `STOP_DIVERGING` or nothing at all. Recorded in [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | before the next `/qa-cycle` invocation |
 | DEC-094 | **The product owner's** — should a control that **no card draws** wear the client's control vocabulary, or is a bare control the intended treatment for navigation the cards do not draw? Concretely: the lobby's `Your duels`, `Leaderboard` and `Account` doors, and the `Back` on each secondary screen, all render with `className: ""` — computing as body text — beside a room-code input, `Create a duel room`, `Join the duel` and `Set my name` that carry the full recipe. No merged source is contradicted, which is why it is a question and not a finding: `design/tokens/tokens.css` is a `:root` sheet with **no selectors**, so an unclassed button contradicts nothing in it; `create-duel.html`'s front-door frame draws neither control and notes *"nothing else on the door — no lobby noise, no tables list"*; and `ADR-0060` §§2–4 settle the doors' **word**, **element** and **placement** and the way out's word, and say nothing about treatment. Raised 2026-08-30 at round 3's triage and promoted by `qa-manager` under [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §5 — **one of the three slots that round had, and the only one spent**, on the `first` screen, so `DEC-088`'s ordering question did not bite. It clears both halves of the bar: a concrete choice answerable in one sentence, and it bears on whether a player can tell that three words under a form are things they may activate. **Two rounds have now spent a finding on it** — the four `Back`s in round 2, the three doors in round 3 — and only a merged answer closes it mechanically, as `ADR-0094` closed the join path. **Blocks nothing** — round 3's fix set is empty and the cycle ended `PASS`; an answer becomes a merged source either way, and any ticket it yields enters the **ordinary backlog now the cycle has ended**, never the round that asked (`EPIC-12` §Termination rule 1). A *no* earns a row in `docs/test-plan.md` §*Settled, and not a finding*, so a later round re-raising it would itself contradict a merged source. Recorded in [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | before the cycle's next triage |
 
-`DEC-098` → [`ADR-0098`](../docs/adr/ADR-0098-the-rubric-is-the-adr-section-and-a-criterion-is-born-merged.md)
+`DEC-099` → [`ADR-0098`](../docs/adr/ADR-0098-the-wordmark-belongs-to-the-front-door-alone.md)
+on 2026-08-31 — **the wordmark belongs to the front door alone.** Raised the same day by
+`TASK-121004`, whose third scope item quotes `<h1 class="text-title">Poker Duels</h1>` and directs
+dressing it as `create-duel.html`'s front-door frame draws — but the markup lives in
+`web-client/src/App.tsx` above `<Lobby />`, not in the ticket's declared `Lobby.tsx`, and renders
+unconditionally on every surface the client has, so dressing it in place would have put the front
+door's wordmark on all of them. The coder shipped the other two scope items (PR #1234) and refused
+to guess this one (`CLAUDE.md` rule 5). The answer is **mostly a reading of merged sources, and
+says so**: eleven card files under `design/screens/` hold exactly one `.mark` between them —
+`create-duel.html`'s front-door frame — the four secondary-screen cards were composed under the
+shipped global heading and none drew it, and even the waiting frame gives its top to the code, so
+the lockup renders on the first screen's pre-create branch and **nowhere else**, the `<h1>` leaves
+`App.tsx`, and no product-name chrome replaces it. Confirmed by the vision's *Positioning*
+(*"dark, quiet, fast, minimal"*) and the success condition, played on the screens the mark stays
+off; `ADR-0060` §5 had already refused chrome above the table once. **The named cost**: `ADR-0094`
+seats the invited half of the product straight into a dealt hand, so those players now never read
+the product's name on-page — only the tab title — and the ADR refuses the cheap fix (persistent
+chrome) without designing a substitute nobody has asked for. **No card is in arrears — the client
+was.** The struck scope item becomes a follow-up client ticket over four files: `App.tsx` (the
+`h1` leaves), `Lobby.tsx` (the front-door branch gains the lockup; `CoinMark` exists),
+`App.test.tsx` (its four plain-title assertion sites cannot stand and are rewritten deliberately)
+and `Lobby.test.tsx` (gains the lockup assertion; its zero-headings test meets the lockup).
+Registered and answered in the same PR (the `DEC-039` path) — it never appeared in an open table.
+
+`DEC-098` → [`ADR-0099`](../docs/adr/ADR-0099-the-rubric-is-the-adr-section-and-a-criterion-is-born-merged.md)
 on 2026-08-31 — **the rubric is the ADR section, and a criterion is born merged.** Registered by
 the planner splitting `STORY-1212` and answered the same day, before any round cited a criterion —
 the free window its own *Due* named. The audit rubric is `ADR-0096` §2 **itself**, and **no
@@ -3652,11 +3676,11 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-121105](tasks/TASK-121105-the-account-forms-labels-are-the-cards-labels.md) The `account` screen's field labels are the card's left-aligned muted labels — *product; `low`* | XS | done |
 | | [TASK-121106](tasks/TASK-121106-the-sign-in-forms-labels-are-the-cards-labels.md) The `sign-in` screen's field labels are the card's left-aligned muted labels — *product; `low`* | XS | done |
 | | [TASK-121107](tasks/TASK-121107-a-player-with-no-place-reads-the-cards-muted-line.md) A player with no place this season reads the card's muted line, not the accent box — *product; `low`, carried from round 3's `BLOCKED` state and confirmed statically* | XS | done |
-| | [TASK-121108](tasks/TASK-121108-two-table-cards-name-the-street-their-pot-strip-prints.md) Two table cards name the street their pot strip prints — *design; card in arrears, `low`, **not a product defect*** | XS | backlog |
+| | [TASK-121108](tasks/TASK-121108-two-table-cards-name-the-street-their-pot-strip-prints.md) Two table cards name the street their pot strip prints — *design; card in arrears, `low`, **not a product defect*** | XS | done |
 | | [TASK-121109](tasks/TASK-121109-the-lobby-hands-the-duel-table-the-hands-events.md) The lobby hands the duel table the hand's events — *product; `medium`, the second half of `TASK-121101`'s chain — **not filed by round 3**, split out by the planner on 2026-08-31 because `Lobby` → `DuelTable` → `PotStrip` plus a test is four files and no merged gate forbids splitting it (`ADR-0068` §4)* | XS | done |
 | **[STORY-1212](stories/STORY-1212-the-audit-focus-the-observer-the-resize-and-what-a-criterion-costs.md)** The audit focus — the observer, the resize, and what an unmet criterion costs — *not a round story; schema 2* | | | ready |
-| | [TASK-121201](tasks/TASK-121201-the-driver-resizes-a-live-tab.md) The driver resizes a live tab — a `size` verb over CDP | S | ready |
-| | [TASK-121202](tasks/TASK-121202-the-audit-agent-the-walk-and-the-two-shapes.md) The `audit` agent — the walk, the hands and the two shapes | S | backlog |
+| | [TASK-121201](tasks/TASK-121201-the-driver-resizes-a-live-tab.md) The driver resizes a live tab — a `size` verb over CDP | S | done |
+| | [TASK-121202](tasks/TASK-121202-the-audit-agent-the-walk-and-the-two-shapes.md) The `audit` agent — the walk, the hands and the two shapes | S | ready |
 | | [TASK-121203](tasks/TASK-121203-what-audit-answers-and-the-three-it-may-propose.md) What `audit` answers, and the three criteria it may propose | S | backlog |
 | | [TASK-121204](tasks/TASK-121204-the-audit-focus-of-the-qa-cycle-skill.md) The `audit` focus of the `qa-cycle` skill | S | backlog |
 | | [TASK-121205](tasks/TASK-121205-the-rubric-classifier-and-the-ticket-it-promotes.md) `qa-manager` — the rubric classifier and the ticket it promotes | S | backlog |
@@ -3759,7 +3783,7 @@ the observer and the manager point at it exactly as the `uat` observer points at
 rubric is that ADR section grown by amendment or a working document elsewhere — and it **blocks
 nothing**: both readings have merged text behind them, the first audit round runs at either, and
 the cost of the answer is one line in each of two files. Answered the same day by
-[`ADR-0098`](../docs/adr/ADR-0098-the-rubric-is-the-adr-section-and-a-criterion-is-born-merged.md):
+[`ADR-0099`](../docs/adr/ADR-0099-the-rubric-is-the-adr-section-and-a-criterion-is-born-merged.md):
 the rubric is `ADR-0096` §2 **itself**, grown only by an amending ADR, and no working
 document ever exists — a criterion is *born* merged, so a document could only ever have
 held a copy — and the cost fell to **zero lines**: both tickets already cite the decided

@@ -186,7 +186,7 @@ second register that rots, which is why no ticket creates one — the default he
 same default `ADR-0090` §2 sets for a new mention of the cycle.
 
 **Answered 2026-08-31 by
-[`ADR-0098`](../../docs/adr/ADR-0098-the-rubric-is-the-adr-section-and-a-criterion-is-born-merged.md)**
+[`ADR-0099`](../../docs/adr/ADR-0099-the-rubric-is-the-adr-section-and-a-criterion-is-born-merged.md)**
 — the rubric is `ADR-0096` §2 **itself**, grown only by an amending ADR (`R6` next and never
 reused, the criterion in §2's own three-column form, the priority order restated as ids only, the
 index row annotated in the same PR), and **no working document ever exists**: a criterion is born

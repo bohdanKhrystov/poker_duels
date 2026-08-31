@@ -258,6 +258,29 @@ try {
       break;
     }
 
+    case "size": {
+      page = await attach();
+      const width = Number(args[0] ?? NaN);
+      const height = Number(args[1] ?? NaN);
+      if (!Number.isFinite(width) || !Number.isFinite(height)) {
+        fail("size needs a width and a height");
+      }
+      await page.send("Emulation.setDeviceMetricsOverride", {
+        width,
+        height,
+        deviceScaleFactor: 0,
+        mobile: false,
+      });
+      const { value } = await page.evaluate("[window.innerWidth, window.innerHeight]");
+      const [achievedWidth, achievedHeight] = value;
+      console.log(`size: ${achievedWidth}x${achievedHeight}`);
+      if (achievedWidth !== width || achievedHeight !== height) {
+        console.error(`drive: requested ${width}x${height}, got ${achievedWidth}x${achievedHeight}`);
+        process.exit(1);
+      }
+      break;
+    }
+
     case "device": {
       page = await attach();
       const { value } = await page.evaluate("localStorage.getItem('pd.deviceId')");
@@ -324,6 +347,7 @@ try {
   frames [n]              the last n recorded frames, all by default  (exit 1 if none armed)
   type <index> <value>    fill the nth input, React-safely
   link                    the invite link on screen
+  size <width> <height>   set this tab's viewport, in CSS pixels
   device                  this profile's pd.deviceId
   forget-room             clear pd.roomCode (ADR-0072 room memory)
   eval <expression>       escape hatch

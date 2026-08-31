@@ -1,4 +1,4 @@
-# ADR-0098 — The rubric is the ADR section, and a criterion is born merged
+# ADR-0099 — The rubric is the ADR section, and a criterion is born merged
 
 - **Status:** Accepted
 - **Date:** 2026-08-31
