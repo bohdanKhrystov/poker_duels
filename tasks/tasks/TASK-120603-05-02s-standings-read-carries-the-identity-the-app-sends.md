@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120603
 title: 05-02's standings read carries the identity the app sends
 type: task
-status: backlog
+status: done
 parent: STORY-1206
 estimate: XS
 tier: sonnet
