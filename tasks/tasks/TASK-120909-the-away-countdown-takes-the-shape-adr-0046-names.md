@@ -3,13 +3,13 @@ schema: 2
 id: TASK-120909
 title: The away countdown takes the shape ADR-0046 §3 names
 type: task
-status: backlog
+status: done
 parent: STORY-1209
 module: web-client
 estimate: XS
 tier: haiku
 review: light
-files_touched: 2
+files_touched: 3
 labels: [qa, uat, bug, medium]
 depends_on: []
 verify:
@@ -56,6 +56,7 @@ immediately followed by the `<span>`.
 | --- | --- |
 | `web-client/src/table/PresenceNotice.tsx` | modify |
 | `web-client/src/table/PresenceNotice.test.tsx` | modify |
+| `web-client/src/lobby/Lobby.test.tsx` | modify | `cd web-client && NO_COLOR=1 npm run --silent check` — updates to expected countdown values to match the new format with `s` suffix |
 
 ## Scope
 

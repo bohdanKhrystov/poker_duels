@@ -3595,7 +3595,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-120906](tasks/TASK-120906-the-client-never-sends-on-a-socket-that-has-not-opened.md) The client never sends on a socket that has not opened — *product; `medium`, never scheduled by this cycle* | S | backlog |
 | | [TASK-120907](tasks/TASK-120907-the-join-path-ships-neither-screen-its-cards-draw.md) The join path ships neither of the two screens its cards draw — *product; `medium`, not startable until its `DEC` is answered* | S | backlog |
 | | [TASK-120908](tasks/TASK-120908-the-tables-sizing-control-is-the-cards-presets.md) The table's sizing control is the card's presets, not a range slider — *product; `medium`* | S | backlog |
-| | [TASK-120909](tasks/TASK-120909-the-away-countdown-takes-the-shape-adr-0046-names.md) The away countdown takes the shape `ADR-0046` §3 names — *product; `medium`* | XS | backlog |
+| | [TASK-120909](tasks/TASK-120909-the-away-countdown-takes-the-shape-adr-0046-names.md) The away countdown takes the shape `ADR-0046` §3 names — *product; `medium`* | XS | done |
 | | [TASK-120910](tasks/TASK-120910-the-profile-strip-shows-the-name-it-was-just-given.md) The profile strip shows the display name it was just given — *product; `medium`* | S | backlog |
 | | [TASK-120911](tasks/TASK-120911-three-cards-carry-the-strings-their-adrs-settled.md) Three cards carry the strings the ADRs that superseded them settled — *design; card in arrears, `medium`, **not a product defect*** | S | backlog |
 | | [TASK-120912](tasks/TASK-120912-not-now-is-dressed-like-the-control-beside-it.md) The result screen's *Not now* is dressed like the control beside it — *product; `low`* | XS | backlog |
