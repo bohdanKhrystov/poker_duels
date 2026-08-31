@@ -57,3 +57,73 @@ check its verbs cannot express is `BLOCKED`, and a missing verb is a finding abo
   finding built on one is a **harness** defect (`ADR-0089` §4), never a product defect.
 - A resize is a real DOM event, so it pushes frames into `window.__pdFrames` that no player
   action caused (`ADR-0097` §Consequences).
+
+## The list is closed, and it is not yours
+
+`ADR-0096` §2 is the rubric — `R1` to `R5`, in priority order, at every beat — and it is the whole
+of what you may answer. Cite it — `R<n>` plus that section, never a path, because there is no
+second copy anywhere to point at instead — and **never transcribe a criterion**, here or in any
+report.
+
+- A criterion is **`met` or `not met`**, with nothing between the two and no severity.
+- **`not met` carries a quoted observation** — a rendered string, a measured geometry, a recorded
+  frame list — never *"this feels wrong"*.
+- A criterion failing at six beats is **one** unmet criterion, and its entry names all six:
+  criteria are counted, observations are not.
+- **One bar, checked more than once, never two bars.** `R2` and `R3` are answered at both shapes,
+  and a criterion is `met` only if it is met at **every shape it was answered at**. Nothing here
+  defines a relaxed phone bar, and no round may invent one.
+- **A finding needs no other merged source.** Under this focus the criterion *is* the merged
+  source (`ADR-0096` §2); hunting for a card, a token or an owned literal is `uat`'s classifier,
+  never yours.
+
+## The three you may propose, and nothing else
+
+An observation that answers no criterion is **not a finding**. It is a **proposed criterion** — a
+general standard the rubric does not yet have — at most **three per round**, one sentence each.
+You propose; you never add. A criterion merged mid-invocation applies to the **next** invocation,
+never this one (`ADR-0096` §3).
+
+Two things leave the count entirely:
+
+- A **functional** defect you stumble on goes under `FUNCTIONAL:` with a reproduction. It is not
+  a criterion answer, and it never enters the audit's count — `qa-manager` routes it to the next
+  `qa` round (`ADR-0096` §5).
+- An unmet criterion **a looking human cannot reproduce** is a **harness** defect — a resize that
+  silently did not apply, a geometry read taken mid-transition, a frame list read without arming
+  `record` — filed against `EPIC-12` and excluded from every count (`ADR-0089` §4).
+
+## Report
+
+One fenced block — `qa`'s and `uat`'s shape, plus this focus's own fields. `qa-manager` parses on
+these names, so each starts a line. Each `PER-CRITERION` entry carries `CRITERION:`, `VERDICT: met
+| not met`, `BEATS:`, `SHAPES:` and `OBSERVATION:`, and **the observation is required when the
+verdict is `not met`** — a quoted string, never a feeling.
+
+```
+SCOPE: <what you were given>
+FOCUS: audit
+STACK: up | down
+COMMIT: <git rev-parse --short HEAD>
+SHAPES: <shapes walked — phone always, laptop where R2/R3 were re-answered>
+
+PER-CRITERION:
+- CRITERION: R1 | R2 | R3 | R4 | R5
+  VERDICT: met | not met
+  BEATS: <beats answered at>
+  SHAPES: <shapes this criterion was answered at>
+  OBSERVATION: <required when VERDICT is not met — quoted verbatim>
+
+PROPOSED CRITERIA:
+- <one sentence — a general standard the rubric does not yet have>
+
+FUNCTIONAL:
+- <a stumbled-on functional defect, with its reproduction>
+
+BLOCKED:
+- <a beat or shape the walk could not reach, and why>
+```
+
+**Every criterion appears under `PER-CRITERION:` whatever its verdict.** A round ends when all
+five have been answered at all eight beats, because there is nothing else on the list to look at
+(`ADR-0096` §5).
