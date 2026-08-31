@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121108
 title: Two table cards name the street their pot strip prints
 type: task
-status: backlog
+status: done
 parent: STORY-1211
 module: design
 estimate: XS
@@ -81,7 +81,8 @@ the stale line survives beside it.
 
 ## Acceptance criteria
 
-- [ ] Both cards contain `Blinds 75/150 · Hand 14 · Turn`
+- [ ] `duel-table.html` contains `Blinds 75/150 · Hand 14 · Flop` and `duel-table-states.html`
+      contains `Blinds 75/150 · Hand 14 · Turn` — each card's own board decides its word
 - [ ] Neither card still contains the bare `<span class="meta">Blinds 75/150 · Hand 14</span>`
 - [ ] `sh design/check-drift.sh` exits 0 — the token copies are untouched
 - [ ] Every command in `verify:` exits 0
