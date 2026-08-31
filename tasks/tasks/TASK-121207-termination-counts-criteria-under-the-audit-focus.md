@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121207
 title: EPIC-12 Termination counts criteria under the audit focus
 type: task
-status: backlog
+status: ready
 parent: STORY-1212
 estimate: XS
 tier: haiku
