@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121004
 title: The front door finishes the card `TASK-120901` started — the fill, the code well, the wordmark
 type: task
-status: backlog
+status: done
 parent: STORY-1210
 module: web-client
 estimate: S
@@ -79,8 +79,19 @@ a coin, a bold *Poker*, a muted *Duels* (`create-duel.html:46, 115`).
   the waiting frame's *Copy the link* is the primary there.
 - **Give the room code the card's type treatment**: the mono family, the card's size, the code
   tracking token and centring. The box `TASK-120901` gave it stays.
-- **Give the header the card's wordmark**: the coin, a bold *Poker*, a muted *Duels*. `CoinMark`
-  already exists (`web-client/src/result/CoinMark.tsx`).
+- ~~**Give the header the card's wordmark**: the coin, a bold *Poker*, a muted *Duels*.~~
+  **Struck on 2026-08-31 and disposed by
+  [`ADR-0098`](../../docs/adr/ADR-0098-the-wordmark-belongs-to-the-front-door-alone.md)
+  (`DEC-099`).** The markup this item quotes is not in `Lobby.tsx` and never was: the
+  unconditional `<h1 className="text-title">Poker Duels</h1>` lives in `web-client/src/App.tsx`
+  and renders on **every** screen, so dressing it as the card draws it would put the front door's
+  lockup on all eleven — a change to what a player sees everywhere, not a dressing change on one
+  screen, and outside this ticket's two-file table. The coder refused to guess and routed it
+  (`CLAUDE.md` rule 5). The product owner answered from the merged cards, which hold exactly one
+  `.mark` between them: the lockup is the **front door's alone** and the `h1` leaves `App.tsx`.
+  The client work is its own ticket under `STORY-1210`, written by the planner from `ADR-0098`'s
+  file set — `App.tsx`, `App.test.tsx`, `Lobby.tsx`, `Lobby.test.tsx` — because four merged
+  `App.test.tsx` assertions that have gated since `EPIC-03` are rewritten deliberately by it.
 - No new token, no new value, no arbitrary length literal (`ADR-0091` §4's fourth client guard
   refuses `-[380px]`; `-[var(--pd-…)]` passes). If the card's `1.875rem` has no client utility, it is
   a token question and it is worked with the human, not minted here.
