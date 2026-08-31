@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121107
 title: A player with no place this season reads the card's muted line, not the accent box
 type: task
-status: backlog
+status: done
 parent: STORY-1211
 module: web-client
 estimate: XS

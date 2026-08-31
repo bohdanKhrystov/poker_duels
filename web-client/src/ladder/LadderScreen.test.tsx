@@ -885,6 +885,45 @@ describe("the ladder screen", () => {
     expect(box.className).toContain("border-accent");
   });
 
+  it("a player with no place reads the card's muted line, with no coin", async () => {
+    // rank and coins are both null — a standing that holds no place, not an
+    // absent standing (that is state.self === null, covered elsewhere). The
+    // negative assertions below are the ones that fail today, when the box
+    // renders unconditionally with the ranked recipe.
+    const rows: readonly LadderRow[] = [
+      { rank: 1, playerId: "ada", displayName: "Ada", coins: 5 },
+    ];
+    const read = vi.fn(async (): Promise<LadderRead> => ({
+      kind: "page",
+      page: {
+        season: "2026-08",
+        rows,
+        nextCursor: null,
+        self: { rank: null, coins: null },
+      },
+    }));
+
+    render(<LadderScreen read={read} />);
+
+    const sentence = await waitFor(() =>
+      screen.getByText("You have no place on this season's leaderboard."),
+    );
+    const box = sentence.closest("p");
+    if (box === null) {
+      throw new Error("expected the self line to sit inside a <p>");
+    }
+
+    expect(box.className).toContain("border-hairline");
+    expect(box.className).toContain("text-text-muted");
+    expect(box.className).not.toContain("bg-accent-subtle");
+    expect(box.className).not.toContain("border-accent");
+
+    // No CoinMark: the muted line holds exactly one child, the <span>
+    // carrying the sentence — a second child would be the coin the ranked
+    // recipe draws and the muted frame does not.
+    expect(Array.from(box.children)).toHaveLength(1);
+  });
+
   it("Show more is dressed, not bare", async () => {
     // nextCursor must be non-null here, or the button stays `hidden` and
     // out of the accessibility tree — the class list would never be reached.
