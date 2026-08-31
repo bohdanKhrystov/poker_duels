@@ -3628,7 +3628,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | **[STORY-1206](stories/STORY-1206-round-2-the-account-screen-forgets-the-password-it-has.md)** Round 2 — the account screen forgets the password the profile has, and the cycle ends — *schema 2* | | | ready |
 | | [TASK-120601](tasks/TASK-120601-a-claimed-profile-is-never-offered-the-claim-form-again.md) A claimed profile is never offered the claim form again — *product; `medium`, never scheduled by this cycle* | S | backlog |
 | | [TASK-120602](tasks/TASK-120602-the-catalogues-coin-query-reads-the-device-binding-table.md) The catalogue's coin query reads the table the device id actually lives in — *harness; excluded from `B(2)`* | XS | done |
-| | [TASK-120603](tasks/TASK-120603-05-02s-standings-read-carries-the-identity-the-app-sends.md) `05-02`'s standings read carries the identity the app sends — *harness; excluded from `B(2)`* | XS | backlog |
+| | [TASK-120603](tasks/TASK-120603-05-02s-standings-read-carries-the-identity-the-app-sends.md) `05-02`'s standings read carries the identity the app sends — *harness; excluded from `B(2)`* | XS | done |
 | | [TASK-120604](tasks/TASK-120604-05-04-walks-the-pages-that-exist.md) `05-04` walks the pages that exist, and says what a hidden *Show more* proves — *harness; excluded from `B(2)`* | XS | backlog |
 | **[STORY-1207](stories/STORY-1207-the-uat-focus-the-observer-and-what-it-may-file.md)** The UAT focus — the observer, the harness verb, the route map and what may be filed — *not a round story; schema 2* | | | **done** |
 | | [TASK-120701](tasks/TASK-120701-state-clear-leaves-only-the-heartbeats-dedupe-stamp.md) `state --clear` leaves only the heartbeat's dedupe stamp | S | done |
