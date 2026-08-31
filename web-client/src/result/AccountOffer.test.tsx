@@ -59,4 +59,13 @@ describe("the offer", () => {
     expect(result).toBe(true);
     expect(link.getAttribute("href")).toBe("/#/account");
   });
+
+  it("both of the offer's controls are dressed", () => {
+    render(<AccountOffer onAccept={vi.fn()} onDismiss={vi.fn()} />);
+
+    const link = screen.getByRole("link", { name: OFFER_ACCEPT });
+    const button = screen.getByRole("button", { name: OFFER_DISMISS });
+
+    expect(button.getAttribute("class")).toBe(link.getAttribute("class"));
+  });
 });
