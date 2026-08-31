@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121007
 title: Two cards and a margin note catch up with the client that overtook them
 type: task
-status: backlog
+status: done
 parent: STORY-1210
 module: design
 estimate: XS
