@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121109
 title: The lobby hands the duel table the hand's events
 type: task
-status: backlog
+status: done
 parent: STORY-1211
 module: web-client
 estimate: XS
