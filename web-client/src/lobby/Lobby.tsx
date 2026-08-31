@@ -15,6 +15,7 @@ import { ProfileStrip } from "../profile/ProfileStrip";
 import { NameSurface } from "../profile/NameSurface";
 import { useSetName } from "../profile/set-name-provider";
 import { ActionBar } from "../table/ActionBar";
+import { CoinMark } from "../result/CoinMark";
 import { DuelResult } from "../result/DuelResult";
 import { RematchControl } from "../result/RematchControl";
 import { AccountOffer } from "../result/AccountOffer";
@@ -300,6 +301,19 @@ export function Lobby(): ReactElement {
 
   return (
     <section>
+      {/* ADR-0098 §1: the coin-and-two-tone lockup, card-drawn only on the
+          front door's pre-create branch. `aria-label` pins the accessible
+          name to "Poker Duels" — the card's markup has no text node between
+          the two spans, so a screen reader's own concatenation reads
+          "PokerDuels" without it (ADR-0098's settlement, measured 2026-08-31). */}
+      <h1
+        aria-label="Poker Duels"
+        className="inline-flex items-center gap-4 text-display font-bold"
+      >
+        <CoinMark />
+        <span>Poker</span>
+        <span className="font-medium text-text-muted">Duels</span>
+      </h1>
       {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
       <button
         type="button"

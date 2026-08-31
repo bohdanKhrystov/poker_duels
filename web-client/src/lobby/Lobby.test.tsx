@@ -344,6 +344,47 @@ describe("the lobby", () => {
     expect(classes).toContain("bg-surface");
   });
 
+  it("the front door wears the card's wordmark", () => {
+    renderLobby();
+
+    // ADR-0098 §1: the level-1 heading carries the lockup, sized from the
+    // card's own token, and its accessible name is pinned by aria-label
+    // because the card's markup has no text node between the two spans — a
+    // screen reader's own concatenation is "PokerDuels", not the label.
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading.getAttribute("aria-label")).toBe("Poker Duels");
+    expect(heading.textContent).toBe("PokerDuels");
+    expect(heading.className.split(" ")).toContain("text-display");
+
+    // The coin: decorative, so hidden from the accessible tree.
+    expect(heading.querySelector('[aria-hidden="true"]')).not.toBeNull();
+
+    // Poker and Duels are two separate text elements, as the card draws
+    // them, and Duels alone carries the muted tone.
+    const poker = screen.getByText("Poker");
+    const duels = screen.getByText("Duels");
+    expect(poker.tagName).toBe("SPAN");
+    expect(duels.tagName).toBe("SPAN");
+    expect(duels.className.split(" ")).toContain("text-text-muted");
+  });
+
+  it("no state but the front door wears the wordmark", () => {
+    // ADR-0098 §2: not the waiting room, whose top the card gives to the
+    // room code.
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+
+    cleanup();
+
+    // Nor the result screen.
+    renderFinishedDuel(0);
+
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
+
   it("shows the room code the server named", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
@@ -988,9 +1029,13 @@ describe("the lobby", () => {
     // TestPlayer now appears in both ProfileStrip and NameSurface
     expect(await screen.findAllByText("TestPlayer")).toHaveLength(2);
     // The lobby mounts with SetNameProvider, so NameSurface will render.
-    // Verify NameSurface does not add any heading elements
+    // Verify NameSurface adds no heading of its own: the only heading on the
+    // front door is its own wordmark (ADR-0098 §1), so the count stays at
+    // one and it is that heading — a heading NameSurface contributed would
+    // make it two, which is the whole reason this test exists.
     const headings = screen.queryAllByRole("heading");
-    expect(headings.length).toBe(0);
+    expect(headings.length).toBe(1);
+    expect(headings[0].getAttribute("aria-label")).toBe("Poker Duels");
   });
 
   it("sends one OfferRematch when the rematch is pressed", () => {
