@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121106
 title: The sign-in screen's field labels are the card's left-aligned muted labels
 type: task
-status: backlog
+status: done
 parent: STORY-1211
 module: web-client
 estimate: XS

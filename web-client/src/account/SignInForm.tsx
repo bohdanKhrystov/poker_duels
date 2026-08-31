@@ -78,8 +78,11 @@ export function SignInForm(props: {
         </p>
       )}
       <form onSubmit={handleSubmit} className="w-full">
-        <div className="flex flex-col gap-3">
-          <label htmlFor="sign-in-handle" className="text-small">
+        <div className="flex flex-col gap-3 text-left">
+          <label
+            htmlFor="sign-in-handle"
+            className="text-small text-text-muted"
+          >
             {HANDLE_LABEL}
           </label>
           <input
@@ -89,7 +92,10 @@ export function SignInForm(props: {
             onChange={(e) => setHandle(e.target.value)}
             className="w-full rounded-small border border-hairline px-3 py-2"
           />
-          <label htmlFor="sign-in-password" className="text-small">
+          <label
+            htmlFor="sign-in-password"
+            className="text-small text-text-muted"
+          >
             {PASSWORD_LABEL}
           </label>
           <input
