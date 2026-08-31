@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120906
 title: The client never sends on a socket that has not opened
 type: task
-status: backlog
+status: done
 parent: STORY-1209
 module: web-client
 estimate: S
