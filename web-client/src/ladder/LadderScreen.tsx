@@ -98,12 +98,21 @@ export function LadderScreen(props: {
         Matching would be wrong on every page the reader's row is not on,
         which is nearly all of them (ADR-0065 §8).
       */}
-      {state.self !== null && (
-        <p className="flex items-center gap-3 rounded-medium border border-accent bg-accent-subtle px-5 py-4">
-          <CoinMark />
-          <span>{selfLine(state.self)}</span>
-        </p>
-      )}
+      {state.self !== null &&
+        (state.self.rank === null ? (
+          // No place this season: the card's muted frame — a hairline
+          // border and muted text, no tint and no coin. A coin before a
+          // sentence about having no coins to mark is the one part of the
+          // ranked recipe that would actually mislead here.
+          <p className="flex items-center gap-3 rounded-medium border border-hairline px-5 py-4 text-text-muted">
+            <span>{selfLine(state.self)}</span>
+          </p>
+        ) : (
+          <p className="flex items-center gap-3 rounded-medium border border-accent bg-accent-subtle px-5 py-4">
+            <CoinMark />
+            <span>{selfLine(state.self)}</span>
+          </p>
+        ))}
       <ul className="w-full">
         {state.rows.map((row) => (
           <li
