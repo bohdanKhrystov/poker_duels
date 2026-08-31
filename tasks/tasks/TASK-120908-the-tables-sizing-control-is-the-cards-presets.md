@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120908
 title: The table's sizing control is the card's presets, not a range slider
 type: task
-status: backlog
+status: blocked
 parent: STORY-1209
 module: web-client
 estimate: S
