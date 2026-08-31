@@ -15,16 +15,28 @@ success, including the four that are stops.
 /qa-cycle uat smoke          the same screens, judged against the cards and the merged copy
 /qa-cycle uat epic EPIC-03
 /qa-cycle uat regression
+/qa-cycle audit smoke        a whole duel walked beat by beat against the frozen rubric
+/qa-cycle audit epic EPIC-03
+/qa-cycle audit regression
 ```
 
 `uat` is a second **focus** of this same cycle, never a second cycle (`ADR-0092` §1): the same
 loop, over the same catalogue's routes, judging conformance to the merged card, reachability and
-copy — instead of function.
+copy — instead of function. `audit` is a **third focus** of this same cycle (`ADR-0096` §1) — the
+same loop, the same manager, the same ledger — judging a **whole duel against a frozen rubric**
+rather than a screen against a card. The scope word is recorded and narrows nothing: the walk is
+`ADR-0096` §1's eight beats, every round (§5).
+
+**No focus ever chains into another.** Just as the QA focus never chains into the UAT focus, the
+audit focus never chains into either of them, and neither of them ever chains into audit. One turn
+that runs two focuses is a skill running a cycle as one of its steps — `ADR-0089` §2b failing,
+`ADR-0090`'s exact holding.
 
 Read [`EPIC-12`](../../../tasks/epics/EPIC-12-quality-and-defect-repair.md) before running. Its
 `## Termination` section is the contract this skill enforces, and the agents it dispatches —
-[`qa`](../../agents/qa.md) or, under the UAT focus, [`uat`](../../agents/uat.md), plus
-[`qa-manager`](../../agents/qa-manager.md) — hold the halves.
+[`qa`](../../agents/qa.md), under the UAT focus [`uat`](../../agents/uat.md), or under the audit
+focus [`audit`](../../agents/audit.md) — plus [`qa-manager`](../../agents/qa-manager.md) — hold
+the halves.
 
 ## The three conditions this harness runs under
 
@@ -128,16 +140,26 @@ If the stack does not come up, retry **once**. On a second failure, tear down, r
 
 Round `N`, starting at 1.
 
-1. **Test.** Dispatch the `qa` agent under the QA focus, or the `uat` agent under the UAT focus,
-   with the scope and the two browser ports. Under the UAT focus, allocate one more directory the
-   same way the two browser profiles are — `S=$(mktemp -d)` — and pass it as the shots directory:
-   `ADR-0092` §2a's `shot` verb writes screenshots into it, never committed and never read back by
-   this skill. Either agent returns a report in the fixed shape its definition sets.
+1. **Test.** Dispatch the `qa` agent under the QA focus, the `uat` agent under the UAT focus, or
+   the `audit` agent under the audit focus, with the scope and the two browser ports. Under the
+   UAT or audit focus, allocate one more directory the same way the two browser profiles are —
+   `S=$(mktemp -d)` — and pass it as the shots directory: `ADR-0092` §2a's `shot` verb writes
+   screenshots into it, never committed and never read back by this skill. Each agent returns a
+   report in the fixed shape its definition sets.
+
+   Under the audit focus, the round record states the round's **two shapes**, named as a part of
+   the round: the whole walk at **`phone` 390 664**, and `R2`/`R3` re-answered at **`laptop`
+   720 900** at the beats where a player is asked to act, with both tabs moved together and both
+   returned to `phone` before the walk continues (`ADR-0097` §3). The record names where every
+   `size` was issued — a **forgotten** restore has no catch (`ADR-0097` §Consequences), and §2b
+   forbids making one.
 2. **Triage.** Dispatch `qa-manager` with that report and the round number. It dedupes, sets
    severity, writes the round story and its bug tickets, and returns a verdict. Under the UAT
    focus, the round story also carries a per-screen table — checks `a`/`b`/`c`, each `judged`,
    `BLOCKED — no card`, or `out of scope` — and a verdict touching any `BLOCKED` cell is qualified
-   **inline, in the verdict line itself**.
+   **inline, in the verdict line itself**. Under the audit focus, the round story carries a
+   per-criterion table instead — `R1` to `R5`, each `met` or `not met` — with `A(N)` in place of
+   `B(N)` and no severity column.
 3. **Act on the verdict**, and only the verdict:
 
    | Verdict | Do |
@@ -173,6 +195,17 @@ Restated here because a skill that hides its own exit conditions is how a loop b
   convergence skips comparing its `B(N)` against `B(N-1)`, exactly as round 1 is not compared with
   a round 0 that does not exist. The three-round budget binds regardless — it is the only thing
   keeping a baseline run finite.
+- **`A(N)`** is the number of criteria answered `not met` in round `N` under the audit focus, so
+  `A(N)` can never exceed the rubric's size — five today — a ceiling known before the round
+  starts.
+- **`PASS` at `A(N) == 0`**, meaning the list was satisfied at one commit on one machine at the two
+  declared shapes, and **never** that the product is finished (`ADR-0089` §2c, `ADR-0093` §2).
+- **`A(N) >= A(N-1)` stops with `STOP_DIVERGING`**, and the three-round budget binds regardless.
+- **No severity and no backlog under this focus** — a finding deferred by the eight-ticket cap
+  **stays an unmet criterion and is counted again next round**, and the cap orders repair by the
+  rubric's own order, top to bottom (`ADR-0096` §5).
+- **An audit round reports `A(N)` and no `B(N)`** — a functional defect it stumbles on is filed to
+  the one ledger and enters the next `qa` round's count.
 - **`STOP_BLOCKED` is scoped:** the cycle ends in `STOP_BLOCKED` only when the unanswered decision
   **gates a member of the current fix set**. Otherwise `notify.py blocked --decision DEC-NNN` goes
   out while the run is warm, the decision is carried open in the round story, and the cycle
@@ -260,6 +293,10 @@ STILL OPEN: <what is not fixed, and the honest reason>
 Under the UAT focus, `EXIT` carries the round record's verdict qualification **inline and
 verbatim** — `PASS (conformance unjudged on 6 of 7 screens)` — never trimmed back to a bare
 `PASS`.
+
+Under the audit focus, `A: <A(1)> → <A(2)> → …` replaces the `B:` line, and there is no
+`BASELINE:` line — `ADR-0096` §5 lists the audit's termination rules and none of them is a
+baseline round. `EXIT` names the two shapes walked, e.g. `PASS (phone, laptop)`.
 
 Say what is still broken. A cycle that ends `STOP_DIVERGING` with three unfixed blockers named is
 more useful than one that reports `PASS` because the suite did not look.

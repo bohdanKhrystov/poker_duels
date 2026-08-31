@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121205
 title: qa-manager — the rubric classifier and the ticket it promotes
 type: task
-status: backlog
+status: ready
 parent: STORY-1212
 estimate: S
 tier: sonnet
