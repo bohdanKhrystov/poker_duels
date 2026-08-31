@@ -152,22 +152,51 @@ describe("App", () => {
     vi.mocked(useSignedIn).mockReturnValue(false);
   });
 
-  it("renders the application heading", () => {
-    renderApp();
-    expect(screen.getByRole("heading").textContent).toBe("Poker Duels");
-  });
-
-  it("gives the heading a token-derived class", () => {
-    renderApp();
-    const heading = screen.getByRole("heading");
-    expect(heading.className.split(" ")).toContain("text-title");
-  });
-
   it("renders the lobby beneath the heading", () => {
     renderApp();
     expect(
       screen.getByRole("button", { name: "Create a duel room" }),
     ).toBeDefined();
+  });
+
+  it("adds no heading of its own above the screens it composes", async () => {
+    // On the record and on the account screen, getAllByRole("heading") has
+    // length 1 and that heading's textContent is the screen's own. A shell
+    // that kept product-name chrome makes both counts 2.
+    renderApp();
+
+    // Click "Your duels" button
+    const yourDuelsButton = screen.getByRole("button", { name: "Your duels" });
+    fireEvent.click(yourDuelsButton);
+
+    // The record has its own heading, settled asynchronously
+    await screen.findByRole("heading", { name: "Your duels" });
+
+    // Count headings on the record screen
+    const recordHeadings = screen.getAllByRole("heading");
+    expect(recordHeadings).toHaveLength(1);
+    expect(recordHeadings[0].textContent).toBe("Your duels");
+
+    // Click "Back" to return to the lobby
+    const backButton = screen.getByRole("button", { name: "Back" });
+    fireEvent.click(backButton);
+
+    // Wait for the lobby to come back
+    await screen.findByRole("button", { name: "Create a duel room" });
+
+    // Click the account door
+    const accountButton = screen.getByRole("button", {
+      name: ACCOUNT_HEADING,
+    });
+    fireEvent.click(accountButton);
+
+    // The account screen is shown with its own heading
+    await screen.findByRole("heading", { name: ACCOUNT_HEADING });
+
+    // Count headings on the account screen
+    const accountHeadings = screen.getAllByRole("heading");
+    expect(accountHeadings).toHaveLength(1);
+    expect(accountHeadings[0].textContent).toBe(ACCOUNT_HEADING);
   });
 
   it("binds the history read to the browser fetch and the browser storage", () => {
@@ -325,17 +354,9 @@ describe("App", () => {
   });
 
   it("leaves the lobby exactly as it was for a player who never opens the record", () => {
-    // The three merged tests still find the heading, its class and the
-    // *Create a duel room* button, and nothing from the history screen is on
-    // the first screen a player sees.
+    // The *Create a duel room* button is still there, and nothing from the
+    // history screen is on the first screen a player sees.
     renderApp();
-
-    // The app heading is still there
-    expect(screen.getByRole("heading").textContent).toBe("Poker Duels");
-
-    // The heading still has its token-derived class
-    const heading = screen.getByRole("heading");
-    expect(heading.className.split(" ")).toContain("text-title");
 
     // The create button is still there
     expect(
