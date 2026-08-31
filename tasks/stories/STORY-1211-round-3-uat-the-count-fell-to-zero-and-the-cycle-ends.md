@@ -2,7 +2,7 @@
 id: STORY-1211
 title: Round 3 (UAT) — the count fell to zero, and what is still wrong is written down
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa, uat]
 depends_on: []
