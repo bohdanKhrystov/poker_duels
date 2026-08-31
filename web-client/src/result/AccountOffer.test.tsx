@@ -66,9 +66,6 @@ describe("the offer", () => {
     const link = screen.getByRole("link", { name: OFFER_ACCEPT });
     const button = screen.getByRole("button", { name: OFFER_DISMISS });
 
-    expect(link.getAttribute("class")).not.toBe("");
-    expect(link.getAttribute("class")).not.toBeNull();
-    expect(button.getAttribute("class")).not.toBe("");
-    expect(button.getAttribute("class")).not.toBeNull();
+    expect(button.getAttribute("class")).toBe(link.getAttribute("class"));
   });
 });
