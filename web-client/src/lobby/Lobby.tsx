@@ -301,9 +301,12 @@ export function Lobby(): ReactElement {
   return (
     <section>
       {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
+      {/* The card's fill (create-duel.html:65): border-transparent keeps the
+          same 1px box model the ghost buttons reserve, so nothing shifts
+          between the two treatments — only the paint changes. */}
       <button
         type="button"
-        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         onClick={() => send({ type: "CreateRoom" })}
       >
         Create a duel room
@@ -407,7 +410,16 @@ function WaitingForRival(props: {
   return (
     <section>
       <h2>Waiting for your rival</h2>
-      <p className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text">
+      {/* The card's code well (create-duel.html:72): the box TASK-120901 gave
+          this stays, and the type treatment is added on top. `font-mono` and
+          `tracking-code` aren't confirmed utilities within this ticket's read
+          scope, so the family and tracking reference the tokens directly —
+          the `-[var(--pd-…)]` form ADR-0091 §4 allows — rather than betting
+          on a same-named class. The card's 1.875rem size has no matching
+          token in tokens.css (no --pd-fs- at that value): minting a bracketed
+          literal for it is exactly what ADR-0091 §4 refuses, so it is left
+          for the human, not decided here. */}
+      <p className="rounded-medium border border-hairline bg-surface px-5 py-4 text-center font-[family-name:var(--pd-font-mono)] tracking-[var(--pd-track-code)] text-text">
         {props.code}
       </p>
       <label htmlFor="invite-link">Invite link</label>
@@ -441,9 +453,11 @@ function CopyLink(props: { link: string }): ReactElement | null {
   }
   return (
     <>
+      {/* The waiting frame's primary, filled the same way the front door's is
+          (create-duel.html:130). */}
       <button
         type="button"
-        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         onClick={() => {
           void navigator.clipboard.writeText(props.link).then(
             () => setOutcome("copied"),

@@ -332,6 +332,30 @@ describe("the lobby", () => {
     }
   });
 
+  it("the primary call to action is filled, not ghosted", () => {
+    renderLobby();
+
+    // Named tokens, not a non-empty check: a non-empty check is exactly what
+    // let the ghost treatment ship past TASK-120901's own merged gate.
+    const create = screen.getByRole("button", { name: "Create a duel room" });
+    const createClasses = create.className.split(" ");
+    expect(createClasses).toContain("bg-accent-fill");
+    expect(createClasses).toContain("text-on-accent");
+
+    cleanup();
+
+    // The waiting frame's own primary carries the same fill.
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    withClipboard(() => Promise.resolve());
+    renderLobby(store);
+
+    const copyLink = screen.getByRole("button", { name: "Copy the link" });
+    const copyLinkClasses = copyLink.className.split(" ");
+    expect(copyLinkClasses).toContain("bg-accent-fill");
+    expect(copyLinkClasses).toContain("text-on-accent");
+  });
+
   it("the room-code field is drawn, not invisible", () => {
     renderLobby();
 
@@ -379,6 +403,18 @@ describe("the lobby", () => {
     for (const control of [roomCode, inviteLink, copyLink]) {
       expect(control.className.trim()).not.toBe("");
     }
+  });
+
+  it("the room code is the card's code well", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    // Two named utilities, not one: a mono code at body size and normal
+    // tracking is still not the well the card draws (create-duel.html:72).
+    const classes = screen.getByText("ABCDEFGH").className.split(" ");
+    expect(classes).toContain("font-[family-name:var(--pd-font-mono)]");
+    expect(classes).toContain("tracking-[var(--pd-track-code)]");
   });
 
   it("leaves the invite link selectable and focused for a copy by hand", () => {
