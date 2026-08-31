@@ -68,9 +68,18 @@ export function openReconnectingConnection(
       storage: options.storage,
       onMessage: forward,
     });
-    live = true;
-    // `openConnection` sets `onopen` and `onmessage` and nothing else, so
-    // there is no existing handler on `onclose` to preserve.
+    // `openConnection` has already claimed `onopen` to say Hello. Wrapping it
+    // rather than replacing it keeps that handshake intact, and makes `live`
+    // true only once the socket has actually opened — not once it has merely
+    // been constructed — so the guard in `send` below means what its comment
+    // says, on every attempt, not just the first.
+    const onOpen = socket.onopen;
+    socket.onopen = (event: Event): void => {
+      onOpen?.call(socket, event);
+      live = true;
+    };
+    // `openConnection` sets `onmessage`, and `onopen` has just been wrapped
+    // above, so there is no existing handler on `onclose` to preserve.
     socket.onclose = (): void => {
       // A socket this tab has already replaced. ADR-0018 has the server
       // close the first socket when the second adopts the seat, so this
