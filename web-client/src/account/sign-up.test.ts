@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { signUp, type SignUpOutcome } from "./sign-up";
 import type { ApiFetch, ApiResponse } from "../profile/api";
 import { writeDeviceId } from "../protocol/device-id";
+import { readSessionToken } from "../protocol/session-token";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -103,6 +104,14 @@ function emptyBody(status: number): ApiResponse {
     json: async () => {
       throw new Error(`the body for status ${status} must not be read`);
     },
+  };
+}
+
+/** Constructs a response with a JSON body, for a status `docs/protocol.md` answers one. */
+function jsonBody(status: number, body: unknown): ApiResponse {
+  return {
+    status,
+    json: async () => body,
   };
 }
 
@@ -306,5 +315,87 @@ describe("signing up", () => {
     });
 
     expect(mock.calls).toHaveLength(1);
+  });
+
+  it("a successful claim leaves this browser holding a session", async () => {
+    writeDeviceId(storage, "d-1");
+    const mock = answering(
+      emptyBody(201),
+      jsonBody(200, { sessionToken: "session-abc" }),
+    );
+
+    const outcome = await signUp({
+      fetch: mock.fetch,
+      storage,
+      handle: "winnerplayer",
+      password: "password123",
+    });
+
+    expect(outcome.kind).toBe("signed-up");
+    expect(mock.calls).toHaveLength(2);
+
+    const signInCalls = mock.calls.filter(
+      (call) => call.path === "/api/auth/sign-in",
+    );
+    expect(signInCalls).toHaveLength(1);
+    expect(signInCalls[0].method).toBe("POST");
+    const signInBody = parsedBody(signInCalls[0]) as Record<string, string>;
+    expect(signInBody.handle).toBe("winnerplayer");
+    expect(signInBody.password).toBe("password123");
+
+    expect(readSessionToken(storage)).toBe("session-abc");
+  });
+
+  it("a claim the server refuses leaves no session behind", async () => {
+    const refusals: ReadonlyArray<{
+      readonly status: number;
+      readonly kind: SignUpOutcome["kind"];
+    }> = [
+      { status: 409, kind: "unavailable-handle" },
+      { status: 422, kind: "password-refused" },
+    ];
+
+    for (const refusal of refusals) {
+      const s = inMemoryStorage();
+      writeDeviceId(s, "d-1");
+      const mock = answering(emptyBody(refusal.status));
+
+      const outcome = await signUp({
+        fetch: mock.fetch,
+        storage: s,
+        handle: "test",
+        password: "password123",
+      });
+
+      expect(outcome.kind).toBe(refusal.kind);
+      expect(mock.calls).toHaveLength(1);
+      expect(readSessionToken(s)).toBeNull();
+    }
+  });
+
+  it("a claim whose follow-up sign-in fails is still a claim", async () => {
+    const followUpStatuses = [401, 429];
+
+    for (const status of followUpStatuses) {
+      const s = inMemoryStorage();
+      writeDeviceId(s, "d-1");
+      const mock = answering(emptyBody(201), emptyBody(status));
+
+      const outcome = await signUp({
+        fetch: mock.fetch,
+        storage: s,
+        handle: "test",
+        password: "password123",
+      });
+
+      expect(outcome.kind).toBe("signed-up");
+      expect(readSessionToken(s)).toBeNull();
+
+      // The follow-up was attempted and failed — not skipped. Without this, a
+      // module that never attempts the follow-up at all would pass here too,
+      // proving nothing about the failure path this test names.
+      expect(mock.calls).toHaveLength(2);
+      expect(mock.calls[1].path).toBe("/api/auth/sign-in");
+    }
   });
 });

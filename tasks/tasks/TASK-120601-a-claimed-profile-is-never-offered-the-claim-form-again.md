@@ -3,13 +3,15 @@ schema: 2
 id: TASK-120601
 title: A claimed profile is never offered the claim form again
 type: task
-status: backlog
+status: done
 parent: STORY-1206
 module: web-client
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 2
+files_touched: 4
+atomic:
+  - cd web-client && NO_COLOR=1 npm run --silent check
 labels: [qa, bug, medium]
 depends_on: []
 verify:
@@ -109,6 +111,18 @@ neither direction, since `B(N)` counts `blocker` and `high` only.
 | `web-client/src/account/sign-up.ts` | modify |
 | `web-client/src/account/sign-up.test.ts` | modify |
 | `web-client/src/account/sign-in.ts` | read |
+| `web-client/src/account/no-secret-in-a-url.test.ts` | modify |
+| `web-client/src/e2e/claimed-here-recovered-there.test.tsx` | modify |
+
+`ADR-0070` §4: `npm run --silent check` — one of this ticket's own `verify:` commands — fails
+without the two rows above. Both are a direct, unavoidable consequence of the Scope fix itself, not
+an optional extra: `signUp` now sends one more request on a `201`, so
+`no-secret-in-a-url.test.ts`'s hard-coded call count (`8`) and its two positional destructurings are
+one short, and `claimed-here-recovered-there.test.tsx` asserted `readSessionToken(storageA)` was
+`null` right after a successful claim — the very falsehood this ticket repairs, now proven false by
+the fix. Every edit is a numeric or polarity correction bringing an existing expectation back into
+agreement with the required behaviour: no assertion is weakened, deleted or made to derive from the
+code it checks, and no new `it(...)` is added. See the PR description for the exact failure output.
 
 ## Scope
 
@@ -160,8 +174,15 @@ neither direction, since `B(N)` counts `blocker` and `high` only.
 - [ ] `sign-up.test.ts > a claim the server refuses leaves no session behind` passes, over two
       different refusal statuses rather than one
 - [ ] `sign-up.test.ts > a claim whose follow-up sign-in fails is still a claim` passes
-- [ ] Reverting `sign-up.ts` alone reddens all three; the reviewer runs this rather than reading it,
-      because a test that passes against the pre-fix module gates nothing
+- [ ] Reverting `sign-up.ts` alone reddens **the two that name the `201` path**; the reviewer runs
+      this rather than reading it, because a test that passes against the pre-fix module gates
+      nothing. **Corrected on 2026-08-31 at landing**: this criterion originally said *all three*,
+      which is not achievable. The refusal test exercises only `409`/`422`, and Scope requires those
+      branches to be byte-identical before and after the fix — so no true assertion scoped to that
+      path can tell the fixed module from the reverted one. Demanding it would have been a demand
+      to write a false test. The coder reported the discrepancy rather than weakening a sibling to
+      satisfy it, and strengthened the follow-up-fails test with a call-count assertion after
+      finding it passed vacuously against the unfixed module
 - [ ] **By hand, on a live stack** — the browser-level half no jsdom test reaches: claim an
       unclaimed profile, navigate to `/`, open *Account*, and read
       `Your password signs in to this account.` with no *Give this profile a password* control on
