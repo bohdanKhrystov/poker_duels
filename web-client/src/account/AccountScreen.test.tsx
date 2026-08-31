@@ -6,12 +6,20 @@ import {
   CANCEL,
   DEVICE_ROUTE_LIVE,
   DEVICE_ROUTE_REVOKED,
+  HANDLE_LABEL,
+  PASSWORD_LABEL,
   PASSWORD_ROUTE_LIVE,
   SIGN_IN_HEADING,
   SIGN_OUT_LABEL,
   SIGN_UP_LABEL,
 } from "./account-text";
-import { RECOVERY_ON, RECOVERY_OFF, ATTACH_LABEL } from "./recovery-text";
+import {
+  RECOVERY_ON,
+  RECOVERY_OFF,
+  ATTACH_LABEL,
+  ADDRESS_LABEL,
+  CURRENT_PASSWORD_LABEL,
+} from "./recovery-text";
 import { aProfile } from "../profile/profile-fixture";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { AttachRecoveryOutcome } from "./attach-recovery-email";
@@ -302,5 +310,46 @@ describe("the account screen", () => {
     const attachSubmit = screen.getByRole("button", { name: ATTACH_LABEL });
     expect(attachSubmit.classList.contains("bg-accent-fill")).toBe(true);
     expect(attachSubmit.classList.contains("text-on-accent")).toBe(true);
+  });
+
+  it("both account forms left-align their fields and mute their labels", () => {
+    const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
+    signUp.mockResolvedValue({ kind: "signed-up" });
+    const attach = vi.fn<[string, string], Promise<AttachRecoveryOutcome>>();
+    attach.mockResolvedValue({ kind: "accepted" });
+
+    const profile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    };
+    render(
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signUp={signUp}
+        attachRecoveryEmail={attach}
+      />,
+    );
+
+    // Every field on both forms, enumerated — a fix applied to one label or
+    // one form and not the rest must fail this, not just the first field.
+    const fieldLabels = [
+      HANDLE_LABEL,
+      PASSWORD_LABEL,
+      ADDRESS_LABEL,
+      CURRENT_PASSWORD_LABEL,
+    ];
+
+    for (const labelText of fieldLabels) {
+      const label = screen.getByText(labelText);
+      expect(label.tagName).toBe("LABEL");
+      expect(label.classList.contains("text-small")).toBe(true);
+      expect(label.classList.contains("text-text-muted")).toBe(true);
+
+      const wrapper = label.parentElement;
+      expect(wrapper).not.toBeNull();
+      expect(wrapper?.classList.contains("text-left")).toBe(true);
+    }
   });
 });

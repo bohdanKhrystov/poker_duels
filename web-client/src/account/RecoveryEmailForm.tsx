@@ -99,29 +99,36 @@ export function RecoveryEmailForm(props: {
       )}
       <form onSubmit={handleSubmit} className="w-full">
         <div className="flex flex-col gap-3">
-          <label htmlFor="attach-recovery-address" className="text-small">
-            {ADDRESS_LABEL}
-          </label>
-          <input
-            id="attach-recovery-address"
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="w-full rounded-small border border-hairline px-3 py-2"
-          />
-          <label
-            htmlFor="attach-recovery-current-password"
-            className="text-small"
-          >
-            {CURRENT_PASSWORD_LABEL}
-          </label>
-          <input
-            id="attach-recovery-current-password"
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full rounded-small border border-hairline px-3 py-2"
-          />
+          <div className="text-left">
+            <label
+              htmlFor="attach-recovery-address"
+              className="text-small text-text-muted"
+            >
+              {ADDRESS_LABEL}
+            </label>
+            <input
+              id="attach-recovery-address"
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full rounded-small border border-hairline px-3 py-2"
+            />
+          </div>
+          <div className="text-left">
+            <label
+              htmlFor="attach-recovery-current-password"
+              className="text-small text-text-muted"
+            >
+              {CURRENT_PASSWORD_LABEL}
+            </label>
+            <input
+              id="attach-recovery-current-password"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full rounded-small border border-hairline px-3 py-2"
+            />
+          </div>
           <button
             type="submit"
             disabled={isSubmitting}
