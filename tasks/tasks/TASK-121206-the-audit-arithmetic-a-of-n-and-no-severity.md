@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121206
 title: qa-manager — the audit arithmetic, A(N) and no severity
 type: task
-status: ready
+status: done
 parent: STORY-1212
 estimate: S
 tier: sonnet
