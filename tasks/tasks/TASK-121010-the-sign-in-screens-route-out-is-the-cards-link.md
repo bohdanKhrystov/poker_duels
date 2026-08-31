@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121010
 title: The `sign-in` screen's route out is the card's link, not body text
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: web-client
 estimate: XS

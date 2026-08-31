@@ -2020,6 +2020,24 @@ describe("the lobby", () => {
     ).toBeDefined();
   });
 
+  it("the forgotten-password route out is a link, not body text", () => {
+    window.location.hash = "#/sign-in";
+    renderLobbyWithAccount(accountCallsFixture());
+
+    const forgotPasswordButton = screen.getByRole("button", {
+      name: FORGOT_PASSWORD_LABEL,
+    });
+
+    // Three membership checks against named tokens: a colour, a size and the
+    // cursor, because an accent-coloured control at body size is not the
+    // card's `.link` and a small control in body colour is not either.
+    expect(forgotPasswordButton.classList.contains("text-accent")).toBe(true);
+    expect(forgotPasswordButton.classList.contains("text-small")).toBe(true);
+    expect(forgotPasswordButton.classList.contains("cursor-pointer")).toBe(
+      true,
+    );
+  });
+
   it("puts the recovery form where the sign-in form was, and takes the door with it", () => {
     window.location.hash = "#/sign-in";
     renderLobbyWithAccount(accountCallsFixture());

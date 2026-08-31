@@ -388,7 +388,11 @@ function SignInScreenBody(props: {
   return (
     <>
       <SignInForm signIn={props.signIn} />
-      <button type="button" onClick={() => setAskingForALink(true)}>
+      <button
+        type="button"
+        className="cursor-pointer text-small text-accent"
+        onClick={() => setAskingForALink(true)}
+      >
         {FORGOT_PASSWORD_LABEL}
       </button>
     </>
