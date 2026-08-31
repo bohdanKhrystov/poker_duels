@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
+import type { GameEvent } from "../protocol";
 import { DuelTable } from "./DuelTable";
 import { aView, aSeat } from "./view-fixture";
 
@@ -9,6 +10,25 @@ function plateFor(name: string): HTMLElement {
   if (plate === null) throw new Error(`no seat plate named ${name}`);
   return plate;
 }
+
+/** A `HandStarted` opening `handNumber`, with a seed unrelated to any award. */
+const started = (handNumber: number): GameEvent => ({
+  type: "HandStarted",
+  sequence: handNumber * 10,
+  handNumber,
+  buttonSeat: 0,
+  smallBlind: 25,
+  bigBlind: 50,
+  stacks: [1500, 1500],
+});
+
+/** A `PotAwarded` of `amount` to `seat`. */
+const awarded = (seat: number, amount: number): GameEvent => ({
+  type: "PotAwarded",
+  sequence: 99,
+  seat,
+  amount,
+});
 
 describe("the duel table", () => {
   it("seats you and your rival from the view's viewerSeat", () => {
@@ -245,5 +265,105 @@ describe("the duel table", () => {
     const timedOutElements2 = screen.queryAllByText("Timed out");
     expect(timedOutElements2).toHaveLength(1);
     expect(within(plateFor("Your rival")).getByText("Timed out")).toBeDefined();
+  });
+
+  it("states the viewer's own win in place of the pot line", () => {
+    const view = aView({
+      viewerSeat: 0,
+      handNumber: 3,
+      street: "COMPLETE",
+      pot: 0,
+    });
+    const narration: GameEvent[] = [started(3), awarded(0, 4850)];
+
+    render(<DuelTable view={view} narration={narration} />);
+
+    expect(screen.getByText("You win 4,850")).toBeDefined();
+    expect(screen.queryByText(/Pot/)).toBeNull();
+  });
+
+  it("names the rival when the rival took the pot", () => {
+    const view = aView({
+      viewerSeat: 1,
+      handNumber: 3,
+      street: "COMPLETE",
+      pot: 0,
+    });
+    const narration: GameEvent[] = [started(3), awarded(0, 4850)];
+
+    render(<DuelTable view={view} narration={narration} />);
+
+    expect(screen.getByText("Your rival wins 4,850")).toBeDefined();
+    expect(screen.queryByText(/You win/)).toBeNull();
+  });
+
+  it("states only the viewer's share of a split pot", () => {
+    const view = aView({
+      viewerSeat: 1,
+      handNumber: 3,
+      street: "COMPLETE",
+      pot: 0,
+    });
+    const narration: GameEvent[] = [
+      started(3),
+      awarded(0, 2425),
+      awarded(1, 2426),
+    ];
+
+    render(<DuelTable view={view} narration={narration} />);
+
+    expect(screen.getByText("Split pot — you win 2,426")).toBeDefined();
+    expect(screen.queryByText(/2,425/)).toBeNull();
+  });
+
+  it("leaves the pot line alone while the hand is still being played", () => {
+    const view = aView({
+      handNumber: 3,
+      street: "TURN",
+      pot: 5675,
+    });
+    const narration: GameEvent[] = [started(3), awarded(0, 4850)];
+
+    const { container } = render(
+      <DuelTable view={view} narration={narration} />,
+    );
+
+    expect(screen.getByText(/Pot 5,675/)).toBeDefined();
+    expect(container.innerHTML).not.toMatch(/win/i);
+  });
+
+  it("leaves the pot line alone when this client never saw the award", () => {
+    const view = aView({
+      street: "COMPLETE",
+      pot: 0,
+    });
+    const narration: GameEvent[] = [];
+
+    const { container } = render(
+      <DuelTable view={view} narration={narration} />,
+    );
+
+    expect(screen.getByText(/Pot 0/)).toBeDefined();
+    expect(container.innerHTML).not.toMatch(/win/i);
+  });
+
+  it("reads the ended hand's award and not an earlier hand's", () => {
+    const view = aView({
+      viewerSeat: 0,
+      handNumber: 2,
+      street: "COMPLETE",
+      pot: 0,
+    });
+    const narration: GameEvent[] = [
+      started(1),
+      awarded(0, 1200),
+      started(2),
+      awarded(0, 4850),
+    ];
+
+    render(<DuelTable view={view} narration={narration} />);
+
+    expect(screen.getByText("You win 4,850")).toBeDefined();
+    expect(screen.queryByText(/1,200/)).toBeNull();
   });
 });

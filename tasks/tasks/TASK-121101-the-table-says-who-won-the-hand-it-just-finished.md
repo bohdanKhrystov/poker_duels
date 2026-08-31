@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121101
 title: The table says who won the hand it just finished
 type: task
-status: ready
+status: done
 parent: STORY-1211
 module: web-client
 estimate: S
