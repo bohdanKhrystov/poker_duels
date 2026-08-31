@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121102
 title: Accepting a rematch draws the card's dealing frame
 type: task
-status: backlog
+status: done
 parent: STORY-1211
 module: web-client
 estimate: S

@@ -114,6 +114,45 @@ describe("the rematch control", () => {
     );
   });
 
+  it("draws the card's dealing frame once the accepting seat takes the button", () => {
+    const onOffer = vi.fn();
+    render(
+      <RematchControl
+        mySeat={0}
+        onOffer={onOffer}
+        offers={[1]}
+        refusal={null}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Rematch" });
+    fireEvent.click(button);
+
+    expect(onOffer).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText(/The button changes sides.*dealing hand 1…/),
+    ).toBeDefined();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByText("Your rival offers a rematch")).toBeNull();
+  });
+
+  it("draws the same dealing frame when the store already carries both seats", () => {
+    const onOffer = vi.fn();
+    render(
+      <RematchControl
+        mySeat={0}
+        onOffer={onOffer}
+        offers={[0, 1]}
+        refusal={null}
+      />,
+    );
+
+    expect(
+      screen.getByText(/The button changes sides.*dealing hand 1…/),
+    ).toBeDefined();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it("takes the button away for seat zero too", () => {
     const onOffer = vi.fn();
     render(

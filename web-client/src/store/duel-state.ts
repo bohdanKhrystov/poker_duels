@@ -30,6 +30,14 @@ export interface DuelState {
    * The seats whose rematch offers stand, in the order the server stated them.
    * Client bookkeeping the store accumulates across frames, in the same class as
    * `rejectionCount` — no single frame carries it (`ADR-0044`, Consequences).
+   *
+   * Rarely holds both seats: `ADR-0044` §4 answers the second offer with the new
+   * hand's `Snapshot` directly, never a restated `RematchOffered`, so no frame ever
+   * states "both sides now want it." The card's *"it begins"* frame between
+   * accepting and that `Snapshot` (`TASK-121102`) is therefore `RematchControl`'s
+   * own local state, not a field here — only the accepting seat's own click can
+   * know it, and only for as long as that component stays mounted waiting on the
+   * `Snapshot` that ends it.
    */
   readonly rematchOffers: readonly number[];
   /**
