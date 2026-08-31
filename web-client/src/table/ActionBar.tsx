@@ -23,6 +23,19 @@ import { rejectionText } from "./rejection-text";
  */
 export function ActionBar(props: {
   turn: PendingTurn | null;
+  /**
+   * `view.pot` plus every seat's `committedThisStreet` (`ADR-0100` §6,
+   * `ADR-0101` §1) — the pot the sizing row's presets are fractions of. A
+   * function of what `Lobby.tsx` hands the bar, never of the store itself.
+   */
+  potIncludingStreet: number;
+  /**
+   * The acting seat's own street commitment, or `0` when there is no
+   * pending turn (`ADR-0101` §1, §7). Kept apart from `potIncludingStreet`
+   * because a re-raise is the one frame that needs it: the call still
+   * *costs* `callTo` minus this, not `callTo` itself.
+   */
+  committedThisStreet: number;
   rejection: Rejection | null;
   refusal: ProtocolError | null;
   /**
@@ -48,6 +61,8 @@ export function ActionBar(props: {
         <Live
           key={`${turn.handNumber}:${turn.actionSequence}:${props.rejectionCount ?? 0}`}
           turn={turn}
+          potIncludingStreet={props.potIncludingStreet}
+          committedThisStreet={props.committedThisStreet}
           send={props.send}
         />
       )}
@@ -58,10 +73,13 @@ export function ActionBar(props: {
 
 /**
  * Your turn. One button per action the server allowed, in the order it sent
- * them, and an amount control only when a bet or a raise is on offer.
+ * them, and a sizing row of named presets only when a bet or a raise is on
+ * offer (`ADR-0101`).
  */
 function Live(props: {
   turn: PendingTurn;
+  potIncludingStreet: number;
+  committedThisStreet: number;
   send: (message: ClientMessage) => void;
 }): ReactElement {
   const actions = props.turn.legalActions;
@@ -71,30 +89,36 @@ function Live(props: {
   const [to, setTo] = useState(floor ?? 0);
   const [sent, setSent] = useState(false);
   const filled = filledAction(actions.allowed);
+  const chips =
+    floor === null
+      ? []
+      : sizingChips(
+          actions,
+          floor,
+          props.potIncludingStreet,
+          props.committedThisStreet,
+        );
 
   return (
     <>
-      <div className="flex min-h-7 items-center gap-3">
-        {floor !== null && (
-          <>
-            <input
-              aria-label={
-                actions.allowed.includes("RAISE") ? "raise to" : "bet to"
-              }
-              className="flex-1"
-              max={actions.allInTo}
-              min={floor}
-              onChange={(event) => setTo(Number(event.target.value))}
-              step={1}
-              type="range"
-              value={to}
-              disabled={sent}
-            />
-            <span className="font-mono tabular-nums">{formatChips(to)}</span>
-          </>
-        )}
+      <div
+        aria-label="amount"
+        className="flex min-h-7 items-center gap-3"
+        role="group"
+      >
+        {chips.map((chip) => (
+          <button
+            className="rounded-medium border border-hairline px-3 py-2 font-mono text-small leading-tight text-text disabled:border-hairline disabled:text-text-faint"
+            disabled={sent}
+            key={chip.label}
+            onClick={() => setTo(chip.amount)}
+            type="button"
+          >
+            {chip.label}
+          </button>
+        ))}
       </div>
-      <div className="flex gap-3">
+      <div aria-label="actions" className="flex gap-3" role="group">
         {actions.allowed.map((type) => {
           const text = actionText(type, actions, to);
           return (
@@ -137,6 +161,47 @@ function amountFloor(actions: LegalActions): number | null {
   if (actions.allowed.includes("RAISE")) return actions.minRaiseTo;
   if (actions.allowed.includes("BET")) return actions.minBetTo;
   return null;
+}
+
+/** One named preset on the sizing row, and the street total pressing it sets. */
+interface SizingChip {
+  readonly label: string;
+  readonly amount: number;
+}
+
+/**
+ * The card's five sizing presets (`design/screens/duel-table.html`), each
+ * computing the street total its own label names (`ADR-0101` §§1–2):
+ *
+ * ```
+ * toCall = actions.callTo − committedThisStreet
+ * base   = potIncludingStreet + toCall
+ * ```
+ *
+ * A preset is offered only when the amount it computes is one the server
+ * would accept — `floor` through `allInTo` — never clamped into range and
+ * never rendered dead (`ADR-0101` §3). `min` and `all-in` always satisfy
+ * that by construction, because the engine caps both into range itself
+ * (`minRaiseTo`/`minBetTo ≤ allInTo`); one rule offers all five.
+ */
+function sizingChips(
+  actions: LegalActions,
+  floor: number,
+  potIncludingStreet: number,
+  committedThisStreet: number,
+): readonly SizingChip[] {
+  const toCall = actions.callTo - committedThisStreet;
+  const base = potIncludingStreet + toCall;
+  const presets: readonly SizingChip[] = [
+    { label: "min", amount: floor },
+    { label: "⅓", amount: actions.callTo + Math.floor(base / 3) },
+    { label: "½", amount: actions.callTo + Math.floor(base / 2) },
+    { label: "pot", amount: actions.callTo + base },
+    { label: "all-in", amount: actions.allInTo },
+  ];
+  return presets.filter(
+    (chip) => chip.amount >= floor && chip.amount <= actions.allInTo,
+  );
 }
 
 /**

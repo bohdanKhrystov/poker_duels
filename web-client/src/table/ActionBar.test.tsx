@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { ActionBar } from "./ActionBar";
 import { aTurn, aLegalActions } from "./turn-fixture";
@@ -9,6 +9,11 @@ describe("the action bar", () => {
     const rendered = render(
       <ActionBar
         turn={props.turn === undefined ? aTurn() : props.turn}
+        // Frame A (`ADR-0101` §4) — a real hero-turn frame, not a bare zero,
+        // so a test that renders through this helper without naming its own
+        // pot still exercises a full sizing row rather than an empty one.
+        potIncludingStreet={props.potIncludingStreet ?? 2850}
+        committedThisStreet={props.committedThisStreet ?? 0}
         rejection={props.rejection ?? null}
         refusal={props.refusal ?? null}
         send={props.send ?? send}
@@ -28,17 +33,14 @@ describe("the action bar", () => {
   });
 
   it("offers no control when there is no turn", () => {
-    const { queryAllByRole, queryByRole } = bar({ turn: null });
+    const { queryAllByRole } = bar({ turn: null });
 
     const buttons = queryAllByRole("button");
     expect(buttons).toEqual([]);
-
-    const slider = queryByRole("slider");
-    expect(slider).toBeNull();
   });
 
   it("renders one button per action the server allowed, in the order it sent them", () => {
-    const { getAllByRole } = bar({
+    const { getByRole } = bar({
       turn: aTurn({
         legalActions: aLegalActions({
           allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
@@ -46,7 +48,9 @@ describe("the action bar", () => {
       }),
     });
 
-    const buttons = getAllByRole("button");
+    const buttons = within(
+      getByRole("group", { name: "actions" }),
+    ).getAllByRole("button");
     const texts = buttons.map((b) => b.textContent);
     expect(texts).toEqual([
       "Fold",
@@ -57,7 +61,7 @@ describe("the action bar", () => {
   });
 
   it("renders no button for an action the server withheld", () => {
-    const { queryAllByRole, queryByRole } = bar({
+    const { getByRole } = bar({
       turn: aTurn({
         legalActions: aLegalActions({
           allowed: ["FOLD", "CALL", "RAISE"],
@@ -65,15 +69,13 @@ describe("the action bar", () => {
       }),
     });
 
-    const buttons = queryAllByRole("button");
-    expect(buttons).toHaveLength(3);
-
-    const checkButton = queryByRole("button", { name: "Check" });
-    expect(checkButton).toBeNull();
+    const actions = within(getByRole("group", { name: "actions" }));
+    expect(actions.getAllByRole("button")).toHaveLength(3);
+    expect(actions.queryByRole("button", { name: "Check" })).toBeNull();
   });
 
   it("fills the raise and leaves the other buttons ghosts", () => {
-    const { getAllByRole } = bar({
+    const { getByRole } = bar({
       turn: aTurn({
         legalActions: aLegalActions({
           allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
@@ -81,7 +83,9 @@ describe("the action bar", () => {
       }),
     });
 
-    const buttons = getAllByRole("button");
+    const buttons = within(
+      getByRole("group", { name: "actions" }),
+    ).getAllByRole("button");
     const raiseButton = buttons[2]; // "Raise to 1,200"
     const foldButton = buttons[0]; // "Fold"
 
@@ -105,24 +109,231 @@ describe("the action bar", () => {
     expect(allInButton.className).toContain("bg-accent-fill");
   });
 
-  it("clamps the amount control to the bounds the server sent", () => {
-    const { getByRole } = bar();
-    const slider = getByRole("slider", { name: "raise to" });
-    expect(slider.getAttribute("min")).toBe("1200");
-    expect(slider.getAttribute("max")).toBe("13400");
-
-    const { getByRole: getByRole2 } = bar({
+  it("the sizing row offers the card's five presets", () => {
+    const { getByRole, container } = bar({
       turn: aTurn({
         legalActions: aLegalActions({
+          callTo: 400,
+          minRaiseTo: 800,
+          allInTo: 13400,
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+        }),
+      }),
+      potIncludingStreet: 2850,
+      committedThisStreet: 0,
+    });
+
+    const chips = within(getByRole("group", { name: "amount" })).getAllByRole(
+      "button",
+    );
+    expect(chips.map((chip) => chip.textContent)).toEqual([
+      "min",
+      "⅓",
+      "½",
+      "pot",
+      "all-in",
+    ]);
+    chips.forEach((chip) => {
+      expect(chip.textContent ?? "").not.toMatch(/\d/);
+      expect(chip.getAttribute("aria-label") ?? "").not.toMatch(/\d/);
+    });
+
+    expect(container.querySelector("input")).toBeNull();
+  });
+
+  it("each preset sets the amount its own name states", () => {
+    const frameA = aLegalActions({
+      callTo: 400,
+      minRaiseTo: 800,
+      allInTo: 13400,
+      allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+    });
+    const frameB = aLegalActions({
+      callTo: 600,
+      minRaiseTo: 1000,
+      allInTo: 13400,
+      allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+    });
+
+    function totalsFor(
+      legalActions: ReturnType<typeof aLegalActions>,
+      potIncludingStreet: number,
+      committedThisStreet: number,
+    ): (string | null)[] {
+      const { getByRole, unmount } = bar({
+        turn: aTurn({ legalActions }),
+        potIncludingStreet,
+        committedThisStreet,
+      });
+      const chips = within(getByRole("group", { name: "amount" })).getAllByRole(
+        "button",
+      );
+      const totals = chips.map((chip) => {
+        fireEvent.click(chip);
+        return getByRole("button", { name: /^Raise to /i }).textContent;
+      });
+      unmount();
+      return totals;
+    }
+
+    // Frame A: the hero frame, committedThisStreet 0.
+    expect(totalsFor(frameA, 2850, 0)).toEqual([
+      "Raise to 800",
+      "Raise to 1,483",
+      "Raise to 2,025",
+      "Raise to 3,650",
+      "Raise to 13,400",
+    ]);
+
+    // Frame B: the re-raise frame, committedThisStreet 200 — the one frame
+    // that separates this answer from every near-miss formula (`ADR-0101`
+    // §7).
+    expect(totalsFor(frameB, 1400, 200)).toEqual([
+      "Raise to 1,000",
+      "Raise to 1,200",
+      "Raise to 1,500",
+      "Raise to 2,400",
+      "Raise to 13,400",
+    ]);
+  });
+
+  it("a preset the stack cannot afford is not offered", () => {
+    const { getByRole } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          callTo: 400,
+          minRaiseTo: 800,
+          allInTo: 3000,
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+        }),
+      }),
+      potIncludingStreet: 2850,
+      committedThisStreet: 0,
+    });
+
+    const sizing = within(getByRole("group", { name: "amount" }));
+    const chips = sizing.getAllByRole("button");
+    expect(chips.map((chip) => chip.textContent)).toEqual([
+      "min",
+      "⅓",
+      "½",
+      "all-in",
+    ]);
+    expect(sizing.queryByRole("button", { name: "pot" })).toBeNull();
+
+    const totals = chips.map((chip) => {
+      fireEvent.click(chip);
+      return getByRole("button", { name: /^Raise to /i }).textContent;
+    });
+    expect(totals).toEqual([
+      "Raise to 800",
+      "Raise to 1,483",
+      "Raise to 2,025",
+      "Raise to 3,000",
+    ]);
+  });
+
+  it("a preset under the server's minimum is not offered", () => {
+    const { getByRole } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          callTo: 150,
+          minRaiseTo: 300,
+          allInTo: 10000,
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+        }),
+      }),
+      potIncludingStreet: 225,
+      committedThisStreet: 75,
+    });
+
+    const sizing = within(getByRole("group", { name: "amount" }));
+    const chips = sizing.getAllByRole("button");
+    expect(chips.map((chip) => chip.textContent)).toEqual([
+      "min",
+      "½",
+      "pot",
+      "all-in",
+    ]);
+    expect(sizing.queryByRole("button", { name: "⅓" })).toBeNull();
+
+    fireEvent.click(sizing.getByRole("button", { name: "min" }));
+    expect(getByRole("button", { name: "Raise to 300" })).toBeDefined();
+
+    fireEvent.click(sizing.getByRole("button", { name: "½" }));
+    expect(getByRole("button", { name: "Raise to 300" })).toBeDefined();
+
+    fireEvent.click(sizing.getByRole("button", { name: "pot" }));
+    expect(getByRole("button", { name: "Raise to 450" })).toBeDefined();
+  });
+
+  it("offers only totals inside the bounds the server sent, betting and raising", () => {
+    function totalsFor(
+      turn: ReturnType<typeof aTurn>,
+      potIncludingStreet: number,
+      committedThisStreet: number,
+      floor: number,
+      allInTo: number,
+    ): number[] {
+      const { getByRole, unmount } = bar({
+        turn,
+        potIncludingStreet,
+        committedThisStreet,
+      });
+      const chips = within(getByRole("group", { name: "amount" })).getAllByRole(
+        "button",
+      );
+      expect(chips.length).toBeGreaterThan(0);
+
+      const totals = chips.map((chip) => {
+        fireEvent.click(chip);
+        const printed =
+          getByRole("button", {
+            name: (name) =>
+              name.startsWith("Bet") || name.startsWith("Raise to"),
+          }).textContent ?? "";
+        return Number(printed.replace(/\D+/g, ""));
+      });
+      totals.forEach((total) => {
+        expect(total).toBeGreaterThanOrEqual(floor);
+        expect(total).toBeLessThanOrEqual(allInTo);
+      });
+
+      unmount();
+      return totals;
+    }
+
+    totalsFor(
+      aTurn({
+        legalActions: aLegalActions({
+          callTo: 400,
+          minRaiseTo: 800,
+          allInTo: 13400,
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+        }),
+      }),
+      2850,
+      0,
+      800,
+      13400,
+    );
+
+    // Frame E, the BET branch: half the pot with no call to add on top.
+    const frameE = totalsFor(
+      aTurn({
+        legalActions: aLegalActions({
+          callTo: 0,
           minBetTo: 2750,
           allInTo: 9100,
           allowed: ["CHECK", "BET", "ALL_IN"],
         }),
       }),
-    });
-    const slider2 = getByRole2("slider", { name: "bet to" });
-    expect(slider2.getAttribute("min")).toBe("2750");
-    expect(slider2.getAttribute("max")).toBe("9100");
+      9000,
+      0,
+      2750,
+      9100,
+    );
+    expect(frameE[2]).toBe(4500); // the "½" chip, in the row's own order
   });
 
   it("starts the amount at the server's minimum for the action it allowed", () => {
@@ -134,10 +345,7 @@ describe("the action bar", () => {
       }),
     });
 
-    const slider = getByRole("slider", { name: "raise to" });
-    expect(slider.getAttribute("value")).toBe("1200");
-    expect(slider.getAttribute("min")).toBe("1200");
-    expect(slider.getAttribute("max")).toBe("13400");
+    expect(getByRole("button", { name: "Raise to 1,200" })).toBeDefined();
 
     const { getByRole: getByRole2 } = bar({
       turn: aTurn({
@@ -149,14 +357,11 @@ describe("the action bar", () => {
       }),
     });
 
-    const slider2 = getByRole2("slider", { name: "bet to" });
-    expect(slider2.getAttribute("value")).toBe("350");
-    expect(slider2.getAttribute("min")).toBe("350");
-    expect(slider2.getAttribute("max")).toBe("8200");
+    expect(getByRole2("button", { name: "Bet 350" })).toBeDefined();
   });
 
   it("offers no amount control when neither a bet nor a raise is allowed", () => {
-    const { queryByRole } = bar({
+    const { getByRole } = bar({
       turn: aTurn({
         legalActions: aLegalActions({
           allowed: ["FOLD", "CALL", "ALL_IN"],
@@ -164,23 +369,37 @@ describe("the action bar", () => {
       }),
     });
 
-    const slider = queryByRole("slider");
-    expect(slider).toBeNull();
+    expect(
+      within(getByRole("group", { name: "amount" })).queryAllByRole("button"),
+    ).toEqual([]);
+    expect(
+      within(getByRole("group", { name: "actions" }))
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Fold", "Call 400", "All in 13,400"]);
   });
 
-  it("writes the raise button's total from the amount control", () => {
+  it("writes the raise button's total from the preset the player pressed", () => {
     const { getByRole } = bar({
       turn: aTurn({
         legalActions: aLegalActions({
+          callTo: 400,
+          minRaiseTo: 800,
+          allInTo: 13400,
           allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
         }),
       }),
+      potIncludingStreet: 2850,
+      committedThisStreet: 0,
     });
 
-    const slider = getByRole("slider", { name: "raise to" });
-    fireEvent.change(slider, { target: { value: "3250" } });
+    fireEvent.click(
+      within(getByRole("group", { name: "amount" })).getByRole("button", {
+        name: "pot",
+      }),
+    );
 
-    const raiseButton = getByRole("button", { name: "Raise to 3,250" });
+    const raiseButton = getByRole("button", { name: "Raise to 3,650" });
     expect(raiseButton).toBeDefined();
   });
 
@@ -189,6 +408,8 @@ describe("the action bar", () => {
     const { rerender, getByRole } = render(
       <ActionBar
         turn={aTurn({ handNumber: 61, actionSequence: 103 })}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         send={send}
@@ -210,6 +431,8 @@ describe("the action bar", () => {
           actionSequence: 88,
           legalActions: aLegalActions({ seat: 1 }),
         })}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         send={send}
@@ -233,24 +456,32 @@ describe("the action bar", () => {
       <ActionBar
         turn={aTurn({
           legalActions: aLegalActions({
+            callTo: 400,
+            minRaiseTo: 800,
+            allInTo: 13400,
             allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
           }),
         })}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         send={send}
       />,
     );
 
-    let slider = getByRole("slider", { name: "raise to" });
-    fireEvent.change(slider, { target: { value: "3250" } });
-    fireEvent.click(getByRole("button", { name: "Raise to 3,250" }));
+    fireEvent.click(
+      within(getByRole("group", { name: "amount" })).getByRole("button", {
+        name: "pot",
+      }),
+    );
+    fireEvent.click(getByRole("button", { name: "Raise to 3,650" }));
 
     expect(send).toHaveBeenNthCalledWith(1, {
       type: "Act",
       handNumber: 14,
       actionSequence: 27,
-      action: { type: "Raise", seat: 0, to: 3250 },
+      action: { type: "Raise", seat: 0, to: 3650 },
     });
 
     rerender(
@@ -258,24 +489,32 @@ describe("the action bar", () => {
         turn={aTurn({
           actionSequence: 28,
           legalActions: aLegalActions({
+            callTo: 600,
+            minRaiseTo: 1000,
+            allInTo: 13400,
             allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
           }),
         })}
+        potIncludingStreet={1400}
+        committedThisStreet={200}
         rejection={null}
         refusal={null}
         send={send}
       />,
     );
 
-    slider = getByRole("slider", { name: "raise to" });
-    fireEvent.change(slider, { target: { value: "5000" } });
-    fireEvent.click(getByRole("button", { name: "Raise to 5,000" }));
+    fireEvent.click(
+      within(getByRole("group", { name: "amount" })).getByRole("button", {
+        name: "½",
+      }),
+    );
+    fireEvent.click(getByRole("button", { name: "Raise to 1,500" }));
 
     expect(send).toHaveBeenNthCalledWith(2, {
       type: "Act",
       handNumber: 14,
       actionSequence: 28,
-      action: { type: "Raise", seat: 0, to: 5000 },
+      action: { type: "Raise", seat: 0, to: 1500 },
     });
 
     expect(send).toHaveBeenCalledTimes(2);
@@ -292,17 +531,18 @@ describe("the action bar", () => {
 
     fireEvent.click(getByRole("button", { name: "Fold" }));
 
-    const slider = getByRole("slider", {
-      name: "raise to",
-    }) as HTMLInputElement;
-    expect(slider.disabled).toBe(true);
+    const region = getByRole("region", { name: "your move" });
+    const everyButton = within(region).getAllByRole("button");
+    const actionButtons = within(
+      getByRole("group", { name: "actions" }),
+    ).getAllByRole("button");
 
-    const buttons = getByRole("button", {
-      name: "Fold",
-    }).parentElement?.querySelectorAll("button");
-    buttons?.forEach((button) => {
+    everyButton.forEach((button) => {
       expect((button as HTMLButtonElement).disabled).toBe(true);
     });
+    // Strictly more buttons than the actions row alone holds — the sizing
+    // chips are in this set too.
+    expect(everyButton.length).toBeGreaterThan(actionButtons.length);
   });
 
   it("sends nothing more once an action is sent", () => {
@@ -323,7 +563,14 @@ describe("the action bar", () => {
   it("comes back to life on the next turn, at the new minimum", () => {
     const send = vi.fn();
     const { rerender, getByRole } = render(
-      <ActionBar turn={aTurn()} rejection={null} refusal={null} send={send} />,
+      <ActionBar
+        turn={aTurn()}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
+        rejection={null}
+        refusal={null}
+        send={send}
+      />,
     );
     fireEvent.click(getByRole("button", { name: "Fold" }));
 
@@ -333,15 +580,15 @@ describe("the action bar", () => {
           actionSequence: 28,
           legalActions: aLegalActions({ minRaiseTo: 2400 }),
         })}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         send={send}
       />,
     );
 
-    expect(
-      (getByRole("slider", { name: "raise to" }) as HTMLInputElement).value,
-    ).toBe("2400");
+    expect(getByRole("button", { name: "Raise to 2,400" })).toBeDefined();
     fireEvent.click(getByRole("button", { name: "Fold" }));
     expect(send).toHaveBeenCalledTimes(2);
   });
@@ -352,6 +599,8 @@ describe("the action bar", () => {
     const { rerender, getByRole } = render(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         rejectionCount={0}
@@ -367,6 +616,8 @@ describe("the action bar", () => {
     rerender(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={{ type: "AmountTooSmall", attempted: 900, minimum: 1200 }}
         refusal={null}
         rejectionCount={1}
@@ -391,6 +642,8 @@ describe("the action bar", () => {
     const { rerender, getByRole } = render(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         rejectionCount={0}
@@ -406,6 +659,8 @@ describe("the action bar", () => {
     rerender(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         rejectionCount={0}
@@ -437,6 +692,8 @@ describe("the action bar", () => {
     const { rerender, getByRole } = render(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         rejectionCount={0}
@@ -449,6 +706,8 @@ describe("the action bar", () => {
     rerender(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={rejection}
         refusal={null}
         rejectionCount={1}
@@ -460,6 +719,8 @@ describe("the action bar", () => {
     rerender(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={rejection}
         refusal={null}
         rejectionCount={2}
@@ -478,12 +739,17 @@ describe("the action bar", () => {
     const send = vi.fn();
     const turn = aTurn({
       legalActions: aLegalActions({
+        callTo: 400,
+        minRaiseTo: 1200,
+        allInTo: 13400,
         allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
       }),
     });
     const { rerender, getByRole } = render(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         rejectionCount={0}
@@ -491,13 +757,18 @@ describe("the action bar", () => {
       />,
     );
 
-    const slider = getByRole("slider", { name: "raise to" });
-    fireEvent.change(slider, { target: { value: "3250" } });
-    expect((slider as HTMLInputElement).value).toBe("3250");
+    fireEvent.click(
+      within(getByRole("group", { name: "amount" })).getByRole("button", {
+        name: "pot",
+      }),
+    );
+    expect(getByRole("button", { name: "Raise to 3,650" })).toBeDefined();
 
     rerender(
       <ActionBar
         turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={{ type: "AmountTooSmall", attempted: 900, minimum: 1200 }}
         refusal={null}
         rejectionCount={1}
@@ -505,9 +776,8 @@ describe("the action bar", () => {
       />,
     );
 
-    expect(
-      (getByRole("slider", { name: "raise to" }) as HTMLInputElement).value,
-    ).toBe("1200");
+    // Reached by a remount at the server's minimum, not by a clamp.
+    expect(getByRole("button", { name: "Raise to 1,200" })).toBeDefined();
   });
 
   it("states a rejection in the server's own numbers", () => {
@@ -515,6 +785,8 @@ describe("the action bar", () => {
     const { rerender, getByText, queryByText } = render(
       <ActionBar
         turn={aTurn()}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={{ type: "AmountTooSmall", attempted: 900, minimum: 1200 }}
         refusal={null}
         send={send}
@@ -528,6 +800,8 @@ describe("the action bar", () => {
     rerender(
       <ActionBar
         turn={aTurn()}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={{ type: "AmountTooSmall", attempted: 500, minimum: 2500 }}
         refusal={null}
         send={send}
@@ -542,6 +816,8 @@ describe("the action bar", () => {
     rerender(
       <ActionBar
         turn={aTurn()}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={{
           type: "NotYourTurn",
           seatToAct: 1,
@@ -560,6 +836,8 @@ describe("the action bar", () => {
     const { rerender, getByText, queryByText } = render(
       <ActionBar
         turn={aTurn()}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal="DUEL_PAUSED"
         send={send}
@@ -573,6 +851,8 @@ describe("the action bar", () => {
     rerender(
       <ActionBar
         turn={aTurn()}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal="NOT_IN_DUEL"
         send={send}

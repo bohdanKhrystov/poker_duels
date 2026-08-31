@@ -145,10 +145,27 @@ export function Lobby(): ReactElement {
   // The first Snapshot is how the host learns the guest arrived: seating the
   // guest starts the duel, and there is no "opponent joined" frame to wait for.
   if (state.view !== null) {
+    // ADR-0101 §7: every term the bar's two extra props need is already on
+    // the wire and already in `view`/`pendingTurn` — no wire change, no
+    // `PROTOCOL_VERSION` move, no new store field.
+    const { view, pendingTurn } = state;
+    const potIncludingStreet = view.seats.reduce(
+      (sum, seat) => sum + seat.committedThisStreet,
+      view.pot,
+    );
+    // 0 when there is no pending turn: the sizing row is not shown then, and
+    // no amount reaches a frame either way.
+    const committedThisStreet =
+      pendingTurn === null
+        ? 0
+        : (view.seats.find(
+            (seat) => seat.index === pendingTurn.legalActions.seat,
+          )?.committedThisStreet ?? 0);
+
     return (
       <div className="mx-auto flex max-w-[560px] flex-col gap-5">
         <DuelTable
-          view={state.view}
+          view={view}
           rivalPresence={state.rivalPresence}
           narration={state.narration}
         />
@@ -164,7 +181,9 @@ export function Lobby(): ReactElement {
           </p>
         )}
         <ActionBar
-          turn={state.pendingTurn}
+          turn={pendingTurn}
+          potIncludingStreet={potIncludingStreet}
+          committedThisStreet={committedThisStreet}
           rejection={state.rejection}
           refusal={state.refusal}
           rejectionCount={state.rejectionCount}

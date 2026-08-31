@@ -1,7 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { ActionBar } from "./ActionBar";
-import { formatChips } from "./chips";
 import { aLegalActions, aTurn } from "./turn-fixture";
 
 /**
@@ -44,7 +43,14 @@ describe("the bar offers and derives nothing", () => {
   it("shows no number the turn does not carry", () => {
     const turn = aTurn();
     const { container } = render(
-      <ActionBar turn={turn} rejection={null} refusal={null} send={vi.fn()} />,
+      <ActionBar
+        turn={turn}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
+        rejection={null}
+        refusal={null}
+        send={vi.fn()}
+      />,
     );
 
     const allowed = new Set([
@@ -59,7 +65,7 @@ describe("the bar offers and derives nothing", () => {
     expect(shown.filter((n) => !allowed.has(n))).toEqual([]);
   });
 
-  it("counts the ceiling that reaches the player only as a slider bound", () => {
+  it("counts the ceiling that reaches the player only after they press for it", () => {
     for (const allowed of [
       ["CHECK", "BET"],
       ["FOLD", "CALL", "RAISE"],
@@ -67,9 +73,11 @@ describe("the bar offers and derives nothing", () => {
       const turn = aTurn({
         legalActions: aLegalActions({ allowed: [...allowed] }),
       });
-      const { container, unmount } = render(
+      const { container, getByRole, unmount } = render(
         <ActionBar
           turn={turn}
+          potIncludingStreet={2850}
+          committedThisStreet={0}
           rejection={null}
           refusal={null}
           send={vi.fn()}
@@ -77,19 +85,16 @@ describe("the bar offers and derives nothing", () => {
       );
       const ceiling = turn.legalActions.allInTo;
 
-      const printedOrSpoken = [
-        container.textContent ?? "",
-        ...[...container.querySelectorAll("[aria-label], [title]")].flatMap(
-          (element) => [
-            element.getAttribute("aria-label") ?? "",
-            element.getAttribute("title") ?? "",
-          ],
-        ),
-      ].join(" ");
-      expect(printedOrSpoken).not.toContain(formatChips(ceiling));
-      expect(printedOrSpoken).not.toContain(String(ceiling));
+      // Before a press: nowhere at all — not printed, not spoken, and (there
+      // being no bound-carrying control left in this bar) not sitting in an
+      // attribute either.
+      expect(numbersOnScreen(container)).not.toContain(ceiling);
 
-      expect(numbersOnScreen(container)).toContain(ceiling);
+      fireEvent.click(
+        within(getByRole("group", { name: "amount" })).getByRole("button", {
+          name: "all-in",
+        }),
+      );
 
       const fromTheTurn = new Set([
         turn.legalActions.callTo,
@@ -97,9 +102,11 @@ describe("the bar offers and derives nothing", () => {
         turn.legalActions.minRaiseTo,
         turn.legalActions.allInTo,
       ]);
-      expect(
-        numbersOnScreen(container).filter((n) => !fromTheTurn.has(n)),
-      ).toEqual([]);
+      const afterPress = numbersOnScreen(container);
+      // Only after asking for it does the ceiling reach the player — as the
+      // action button's own printed total.
+      expect(afterPress).toContain(ceiling);
+      expect(afterPress.filter((n) => !fromTheTurn.has(n))).toEqual([]);
 
       unmount();
     }
@@ -109,6 +116,8 @@ describe("the bar offers and derives nothing", () => {
     const { container } = render(
       <ActionBar
         turn={aTurn({ legalActions: aLegalActions({ allowed: ["CHECK"] }) })}
+        potIncludingStreet={2850}
+        committedThisStreet={0}
         rejection={null}
         refusal={null}
         send={vi.fn()}
@@ -118,7 +127,6 @@ describe("the bar offers and derives nothing", () => {
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
       "Check",
     ]);
-    expect(screen.queryByRole("slider")).toBeNull();
     expect(container.textContent).not.toMatch(
       /\b(Fold|Call|Bet|Raise|All in)\b/,
     );
