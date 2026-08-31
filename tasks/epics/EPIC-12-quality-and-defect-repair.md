@@ -88,7 +88,21 @@ question as a new `DEC`.
 
 ## Open decisions
 
-**None.** `DEC-097`, the last one this epic carried, was answered on 2026-08-31 by
+**One, and it blocks nothing.** `DEC-098` — **the architect's** — is the audit rubric
+[`ADR-0096`](../../docs/adr/ADR-0096-the-audit-judges-a-whole-duel-against-a-frozen-rubric.md) §2
+**itself**, grown by an amending ADR the way `ADR-0092` §2 and `ADR-0097` §4 both grew `ADR-0090`
+§2's declared-file set, or a **working document elsewhere** that §2 founds? `ADR-0096` §7 lists
+*"the rubric"* as a deletion distinct from *"the ADR that says why"*, which reads as a file; against
+that, §2 calls the rubric *"merged, closed and general"* and supplies all five criteria, §3's *"a
+criterion **merged** mid-invocation"* is satisfied exactly by an amending ADR, and `ADR-0097` —
+whose job was *"what text changes in which files"* — names four files and none for the rubric.
+Raised 2026-08-31 by the planner splitting
+[`STORY-1212`](../stories/STORY-1212-the-audit-focus-the-observer-the-resize-and-what-a-criterion-costs.md),
+which routed rather than guessed. **It blocks nothing**: `ADR-0096` §2 is merged, closed and
+citable by criterion id today, so the observer and the manager cite it and the first audit round
+runs at either answer; the answer costs one line in each of two files.
+
+`DEC-097`, the one this epic carried before it, was answered on 2026-08-31 by
 [`ADR-0097`](../../docs/adr/ADR-0097-a-resize-is-two-numbers-and-the-observer-is-the-fifth-file.md)
 — see the table below. Both of its halves landed with the architect and **neither returned anything
 to the product owner**: `ADR-0096` §4 is buildable exactly as merged, so nothing about what an audit
@@ -155,6 +169,7 @@ untouched; it was registered and answered in the same PR, and never appeared in 
 | [STORY-1209](../stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | Round 1 (UAT) — the front door was never dressed, and four screens have no card | ready — **the first round under the `uat` focus**; `B(1) = 1`, verdict `PROCEED (conformance unjudged on 4 of 11 screens)` |
 | [STORY-1210](../stories/STORY-1210-round-2-uat-the-four-new-cards-were-not-a-tautology.md) | Round 2 (UAT) — the four new cards were not a tautology, and the screens behind them are undressed | ready — **the first baseline round this cycle has run**; `B(2) = 3`, verdict `PROCEED`, unqualified because no cell read `BLOCKED` |
 | [STORY-1211](../stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | Round 3 (UAT) — the count fell to zero, and what is still wrong is written down | ready — **the last round rule 5 permits, and the invocation's exit state**; `B(3) = 0`, verdict `PASS`, fix set empty |
+| [STORY-1212](../stories/STORY-1212-the-audit-focus-the-observer-the-resize-and-what-a-criterion-costs.md) | The audit focus — the observer, the resize, and what an unmet criterion costs | ready — **not a round story**; it builds what `ADR-0096` §7 and `ADR-0097` §7 name, and runs no round |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
 when it is run and the ids stay sequential without arithmetic. **`STORY-1207` is the third story here that
@@ -193,6 +208,17 @@ round 1 and nothing else, so read literally they fire `STOP_DIVERGING` on the fi
 repaired cards became measurable — the outcome `ADR-0092` §6's baseline rule exists to prevent. It
 is the **third** time the convention has moved by one, and it moves the round stories' next free id
 to `STORY-1209`, which the sentence above now says.
+
+**`STORY-1212` is the fifth non-round story, and it makes the cycle carry a third focus** — the
+same shape `STORY-1207` had one focus earlier. It builds the `size` verb `ADR-0097` §2 specifies,
+the `audit` observer that `ADR-0097` §4 makes the **fifth** declared file, the `audit` focus of
+`qa-cycle`, `qa-manager`'s rubric classifier and `A(N)` arithmetic, and this section's own copy of
+the audit's stopping rules. It brings no stack up and reports no `A(N)`. It is the **fourth** time
+the convention has moved by one, and it moves the round stories' next free id to **`STORY-1213`**,
+which the first audit round will take. It writes **no rubric document and transcribes no
+criterion** — `ADR-0096` §2 supplies the rubric merged, closed and citable by id — and it registers
+**`DEC-098`** for the architect on whether a working copy should exist at all; that decision blocks
+nothing here.
 
 ## Termination
 
