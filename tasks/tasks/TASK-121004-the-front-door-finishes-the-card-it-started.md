@@ -99,8 +99,9 @@ a coin, a bold *Poker*, a muted *Duels* (`create-duel.html:46, 115`).
   **no card draws them**: `create-duel.html`'s front-door frame carries the note *"nothing else on
   the door — no lobby noise"*. They contradict nothing and are deliberately not filed
   (`STORY-1210` §*What was not filed*).
-- **`Forgot your password?` and the sign-in submit.** Same file, different card: `TASK-121005`,
-  which depends on this one so two coders never hold `Lobby.tsx` at once.
+- **`Forgot your password?`.** Same file, different card: `TASK-121010`, which depends on this one
+  so two coders never hold `Lobby.tsx` at once. The sign-in submit is a second ticket in a second
+  file, `TASK-121005`; the two were one ticket until the 2026-08-31 split.
 
 ## Tests
 

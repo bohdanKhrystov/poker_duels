@@ -58,8 +58,11 @@ merged, open ticket's scope a round later rewrites the trail rather than extendi
 
 ## Out of scope
 
-- **The submit button and `Forgot your password?`.** `TASK-121005` owns both, is still open, and is
-  this ticket's `depends_on`.
+- **The submit button.** `TASK-121005` owns it, is still open, and is this ticket's `depends_on` —
+  the same file, held by one coder at a time.
+- **`Forgot your password?`.** `TASK-121010`, in `Lobby.tsx`. It and `TASK-121005` were one ticket
+  until the 2026-08-31 split, which is why this ticket's `depends_on` names only the half that
+  touches `SignInForm.tsx`.
 - **The refusal box.** Round 2 confirmed it matches the card exactly — `role="status"`, above the
   fields, values retained. Do not touch it.
 - **Where `Back` returns to.** That is `DEC-091`, open, the product owner's.

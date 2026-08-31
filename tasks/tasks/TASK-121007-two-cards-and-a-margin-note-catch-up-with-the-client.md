@@ -66,7 +66,8 @@ The control **does** render, and always did — from `Lobby.tsx:387–389`'s `Si
 component. **The drawing was right and the note was wrong about where the control lives**, so the
 note has to be corrected rather than deleted: the card's prediction succeeded, and the gap round 2
 found is a treatment gap, not an absence — it renders unclassed where the card draws `class="link"`.
-That repair is `TASK-121005`, in the client.
+That repair is `TASK-121010`, in the client — the half of `TASK-121005` that the 2026-08-31 split
+gave its own id.
 
 ## Files
 
@@ -103,7 +104,8 @@ That repair is `TASK-121005`, in the client.
   retrofit story, named in `TASK-120911`'s *Out of scope*.
 - **`TASK-120911`'s three corrections.** Still open, still backlog, and this ticket does not absorb
   them — a second round's findings do not silently rewrite a first round's ticket.
-- **Changing any client file.** These are drawings. `TASK-121005` is the client half of finding 3.
+- **Changing any client file.** These are drawings. `TASK-121010` is the client half of finding 3,
+  and `TASK-121005` the submit standing beside the control this card draws.
 
 ## Tests
 
