@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120910
 title: The profile strip shows the display name it was just given
 type: task
-status: backlog
+status: done
 parent: STORY-1209
 module: web-client
 estimate: S
@@ -88,8 +88,12 @@ real defect, and this is what `medium` is for.
       the fixture's returned name different from the submitted one
 - [ ] `profile-provider.test.tsx > a name the server refused leaves the held profile alone` passes
 - [ ] Reverting `profile-provider.tsx` alone reddens the first
-- [ ] **By hand, on a live stack, on a device with no name**: set a name, and read the same name in
-      both lobby sections **without** reloading
+- [ ] *(moved to [`TASK-120913`](TASK-120913-the-name-the-server-accepted-reaches-the-profile-the-provider-holds.md))*
+      **By hand, on a live stack, on a device with no name**: set a name, and read the same name in
+      both lobby sections **without** reloading. This ticket's two files give the provider the
+      capability; the call site that makes it observable is `NameSurface.tsx`, which this ticket's
+      `## Files` table does not name, so the hand check moved with the work rather than being
+      claimed here (`CLAUDE.md` rule 4)
 - [ ] Every command in `verify:` exits 0
 
 ## Definition of done
