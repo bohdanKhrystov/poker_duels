@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120914
 title: The duel table card's selected pot chip reads the raise it sizes, not the pot
 type: task
-status: ready
+status: done
 parent: STORY-1209
 module: design
 estimate: XS
