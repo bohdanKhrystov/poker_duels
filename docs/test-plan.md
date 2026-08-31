@@ -24,7 +24,7 @@ finds by `grep` that a case depends on them. It is the cheapest thing that turns
 findable rot, and rot is the failure mode `ADR-0088` §Alternatives 2 predicted for exactly this
 kind of harness.
 
-The driver is `node scripts/qa/drive.mjs <port> <verb>`; `A` is port 9232 and `B` is 9233. Verbs:
+The driver is `node scripts/qa/drive.mjs <port> <verb>`; `A` is port 9232, `B` is 9233 and `C` is 9234. Verbs:
 `open`, `text`, `click`, `wait`, `absent`, `type`, `link`, `device`, `forget-room`, `eval`, `close`, `shot`.
 
 **Every round gets fresh Chrome profiles.** Clearing `pd.roomCode` is not isolation: the server
@@ -63,7 +63,7 @@ full heads-up match. Someone wins. We hit Rematch."*
 | --- | --- | --- | --- |
 | `CORE-01` | A creates; read both screens | exactly one seat shows `YOUR TURN` | both do, or neither does for 30s |
 | `CORE-02` | B joins by **link** | B seated, nobody typed a code | B must type anything |
-| `CORE-03` | fresh profile C, `open /?room=<code>` on a **full** room | a refusal naming the room, not a crash or a third seat | a third player is seated — the vision says *"Two players. Never three."* |
+| `CORE-03` | C open `/?room=<code>` on a **full** room | a refusal naming the room, not a crash or a third seat | a third player is seated — the vision says *"Two players. Never three."* |
 | `CORE-04` | `open /?room=NOSUCH0` | *No duel room has that code* | a blank screen, a hang, or a seat |
 | `CORE-05` | A creates, B joins **by code** typed into the lobby field | same result as `CORE-02` | the code path and the link path disagree |
 

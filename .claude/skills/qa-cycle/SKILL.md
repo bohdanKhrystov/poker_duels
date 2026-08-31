@@ -110,9 +110,10 @@ Browsers get **fresh profile directories every round**, from `mktemp -d`. Not re
 cleaned — `rm` is denied, and a reused profile is worse than a stale directory:
 
 ```bash
-A=$(mktemp -d); B=$(mktemp -d)
+A=$(mktemp -d); B=$(mktemp -d); C=$(mktemp -d)
 scripts/qa/stack.sh chrome-up 9232 "$A"
 scripts/qa/stack.sh chrome-up 9233 "$B"
+scripts/qa/stack.sh chrome-up 9234 "$C"
 ```
 
 **A fresh profile is not optional.** Clearing `pd.roomCode` is not enough: the server re-seats a
@@ -231,7 +232,7 @@ notification failure stop, retry or slow the cycle** — and never let one turn 
 
 ```bash
 notify.py heartbeat --force        # the terminal report, whatever the exit state
-scripts/qa/stack.sh chrome-down 9232 9233
+scripts/qa/stack.sh chrome-down 9232 9233 9234
 scripts/qa/stack.sh db-down
 notify.py state --clear            # the Stop hook falls silent with the cycle
 ```
