@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120604
 title: 05-04 walks the pages that exist, and says what a hidden Show more proves
 type: task
-status: backlog
+status: done
 parent: STORY-1206
 estimate: XS
 tier: sonnet
