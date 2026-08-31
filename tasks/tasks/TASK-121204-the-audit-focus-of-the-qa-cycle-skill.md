@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121204
 title: The audit focus of the qa-cycle skill
 type: task
-status: ready
+status: done
 parent: STORY-1212
 estimate: S
 tier: sonnet
