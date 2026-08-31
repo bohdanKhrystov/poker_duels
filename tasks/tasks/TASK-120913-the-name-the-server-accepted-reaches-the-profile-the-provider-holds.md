@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120913
 title: The name the server accepted reaches the profile the provider holds
 type: task
-status: ready
+status: done
 parent: STORY-1209
 estimate: XS
 tier: sonnet
