@@ -23,7 +23,7 @@
   load-bearing rather than accidental), and
   [`ADR-0094`](ADR-0094-opening-the-invite-is-taking-the-seat.md) (opening the invite is taking
   the seat — the merged fact that makes this decision's sharpest cost real)
-- **Constrains:** the follow-up client ticket that `TASK-121004`'s struck third scope item
+- **Constrains:** the follow-up client tickets that `TASK-121004`'s struck third scope item
   becomes — §4 names its four-file set — and, until it lands, any reading of
   `web-client/src/App.tsx`'s `<h1>` as intended rather than as arrears
 - **Amends nothing:** no card changes (§5), no engine, server or wire change, no
@@ -107,7 +107,10 @@ so to spare the coder the same detour.
 
 **5. No card is in arrears.** No card gains or loses a line under this decision; the eleven
 merged cards already draw it. The arrears ran the other way — the shipped client drew chrome no
-card draws — and the follow-up client ticket retires it. (The rejected *every screen* answer
+card draws — and the follow-up client tickets retire it. (They are two, not one: `TASK-121011`
+takes the `h1` out of `App.tsx` and `TASK-121012` gives the front door the lockup. The planner
+probed for a merged gate that would refuse the smaller commit, found none, and split under
+`ADR-0068` §4 rather than claim an `atomic:` exemption it had just disproved.) (The rejected *every screen* answer
 would have put ten cards in arrears at once, four of them merged this same week.)
 
 ## Consequences
