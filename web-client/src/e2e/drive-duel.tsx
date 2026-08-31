@@ -89,10 +89,12 @@ const ACTION_TYPE_OF: Record<PlayerAction["type"], ActionType> = {
 
 /**
  * Answers one recorded `"client"` step through the real action bar: finds the
- * button the server's own recorded action names, dials in the amount first
- * when the action carries one, then clicks. Never `send`, `actFrame` or
- * `socket.send` — the frame that reaches the double is whatever the real bar
- * built from a real click, not one handed to it.
+ * button the server's own recorded action names, presses the sizing row's
+ * presets — the way a player reaches an amount, `ADR-0100` §1 — when the
+ * action carries one that the button does not already print, then clicks.
+ * Never `send`, `actFrame` or `socket.send` — the frame that reaches the
+ * double is whatever the real bar built from a real click, not one handed to
+ * it.
  *
  * @throws If no button's accessible name starts with the recorded action's
  *   verb, naming the step, the hand and what was on screen instead — a driver
@@ -106,11 +108,41 @@ function actThroughTheBar(
 ): void {
   const { action } = step.act;
   const verb = actionVerb(ACTION_TYPE_OF[action.type]);
-  const button = within(container).queryByRole("button", {
-    name: (name) => name.startsWith(verb),
-  });
+  const button = reachTheAmount(container, step, index, verb);
+  fireEvent.click(button);
+}
 
-  if (button === null) {
+/**
+ * Finds the action button the recorded step names and, for a `Bet` or
+ * `Raise`, drives its printed total there first (`ADR-0100` §1):
+ *
+ * 1. Read the total the button already prints. If it already matches, this
+ *    is the server's minimum — the bar opens there — so there is nothing to
+ *    press.
+ * 2. Otherwise press the sizing row's presets, one at a time in document
+ *    order, re-querying the action button after every press because React
+ *    has replaced it, and stop as soon as the printed total matches.
+ *
+ * @throws If no button's accessible name starts with `verb` (naming what was
+ *   on screen instead), or if no preset ever makes the printed total match
+ *   the recorded amount (naming every total the row reached) — a chip that
+ *   computes wrongly presents exactly as a script that recorded oddly, so
+ *   both sides are named.
+ */
+function reachTheAmount(
+  container: HTMLElement,
+  step: ClientStep,
+  index: number,
+  verb: string,
+): HTMLElement {
+  const { action } = step.act;
+  const findActionButton = (): HTMLElement | null =>
+    within(container).queryByRole("button", {
+      name: (name) => name.startsWith(verb),
+    });
+
+  const first = findActionButton();
+  if (first === null) {
     const onScreen = within(container)
       .queryAllByRole("button")
       .map((element) => element.textContent);
@@ -121,13 +153,36 @@ function actThroughTheBar(
     );
   }
 
-  if (action.type === "Bet" || action.type === "Raise") {
-    fireEvent.change(within(container).getByRole("slider"), {
-      target: { value: String(action.to) },
-    });
+  if (action.type !== "Bet" && action.type !== "Raise") {
+    return first;
+  }
+  if (totalOn(first) === action.to) {
+    return first;
   }
 
-  fireEvent.click(button);
+  const reached = [totalOn(first)];
+  const chips = within(
+    within(container).getByRole("group", { name: "amount" }),
+  ).queryAllByRole("button");
+
+  for (const chip of chips) {
+    fireEvent.click(chip);
+    const button = findActionButton();
+    if (button === null) continue;
+    reached.push(totalOn(button));
+    if (totalOn(button) === action.to) return button;
+  }
+
+  throw new Error(
+    `driveScriptedDuel: step ${index} (hand ${step.act.handNumber}) recorded ` +
+      `"${action.type}" to ${action.to}, but no sizing control reached it — ` +
+      `the row reached: ${reached.join(", ")}`,
+  );
+}
+
+/** The amount an action button prints, read the way a player reads it. */
+function totalOn(button: HTMLElement): number {
+  return Number(button.textContent?.replace(/\D+/g, "") ?? "");
 }
 
 /**
@@ -186,9 +241,12 @@ export function driveScriptedDuel(options: {
         socket.receive(step.frame);
       });
     } else {
-      act(() => {
-        actThroughTheBar(container, step, index);
-      });
+      // Not act()-wrapped (`ADR-0100` §1): Testing Library's own fireEvent
+      // calls inside actThroughTheBar are already act-wrapped and flush a
+      // render after every press. Wrapping the whole step in one more act()
+      // defers all of those renders to its end, so the action button never
+      // updates between presses and every press reads the same stale total.
+      actThroughTheBar(container, step, index);
     }
     options.onStep?.(step, index, container);
   });
