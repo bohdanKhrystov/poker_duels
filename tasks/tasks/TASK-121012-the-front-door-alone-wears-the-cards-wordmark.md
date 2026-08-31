@@ -163,8 +163,11 @@ too (table above). An assertion written that way would be green over a lockup th
 **Why `verify:` runs the file three times.** `--reporter=verbose` prints a test's name whether it
 passed or failed, and the exit code of a piped run is `grep`'s, not the suite's. The two greps
 prove the named tests **exist**; the unpiped run's exit code is the suite's and proves they
-**pass**, and re-runs the 75 merged tests in this file — including `TASK-121004`'s and
-`TASK-121010`'s — so this change cannot undo them.
+**pass**, and re-runs every merged test in this file — including the ones `TASK-121004` and
+`TASK-121010` add ahead of it — so this change cannot undo them. **No count is pinned here on
+purpose**: the file holds 75 tests on `develop` at `6c4965dd` and both tickets ahead of this one
+add to it, so any number written today would be wrong by the time this is worked. The unpiped
+run's exit code is the assertion.
 
 **The planner ran this whole change on 2026-08-31** against `develop` at `6c4965dd`:
 `npm run check` gave 117 files, 959 tests, exit 0. Deleting the `aria-label` from `Lobby.tsx`
