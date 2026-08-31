@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120602
 title: The catalogue's coin query reads the table the device id actually lives in
 type: task
-status: ready
+status: done
 parent: STORY-1206
 estimate: XS
 tier: sonnet

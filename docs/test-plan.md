@@ -213,17 +213,20 @@ A season is a calendar month in UTC and a duel belongs to the season its **finis
 (`ADR-0061` §§1, 2), so the read is bounded the same way:
 
     docker exec poker_duels-postgres-1 psql -U poker -d poker_duels -At -c \
-      "SELECT p.device_id, SUM(dr.coin_delta)
-         FROM player p
-         JOIN duel_result dr ON dr.player_id = p.id
+      "SELECT b.device_id, SUM(dr.coin_delta)
+         FROM device_binding b
+         JOIN duel_result dr ON dr.player_id = b.player_id
          JOIN duel d ON d.id = dr.duel_id
-        WHERE p.device_id IN ('<A device>', '<B device>')
+        WHERE b.device_id IN ('<A device>', '<B device>')
+          AND b.revoked_at IS NULL
           AND d.finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
-        GROUP BY p.device_id"
+        GROUP BY b.device_id"
 
-The device ids come from `A device` and `B device`; `player.device_id` is unique
-(`V1__initial_schema.sql`), so each browser resolves to one row without the driver ever learning a
-`player_id`.
+The device ids come from `A device` and `B device`; a live binding is unique per device by the
+partial index `device_binding_live_device` in `V7__device_binding.sql`, so each browser resolves to
+one row without the driver ever learning a `player_id`. When a query here stops running, check
+`poker-server/src/main/resources/db/migration/` for the migration that changed the table or column
+it reads, rather than waiting for the next round to fail.
 
 ---
 
