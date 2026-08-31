@@ -102,26 +102,36 @@ export function SignUpForm(props: {
       )}
       <form onSubmit={handleSubmit} className="w-full">
         <div className="flex flex-col gap-3">
-          <label htmlFor="sign-up-handle" className="text-small">
-            {HANDLE_LABEL}
-          </label>
-          <input
-            id="sign-up-handle"
-            type="text"
-            value={handle}
-            onChange={(e) => setHandle(e.target.value)}
-            className="w-full rounded-small border border-hairline px-3 py-2"
-          />
-          <label htmlFor="sign-up-password" className="text-small">
-            {PASSWORD_LABEL}
-          </label>
-          <input
-            id="sign-up-password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-small border border-hairline px-3 py-2"
-          />
+          <div className="text-left">
+            <label
+              htmlFor="sign-up-handle"
+              className="text-small text-text-muted"
+            >
+              {HANDLE_LABEL}
+            </label>
+            <input
+              id="sign-up-handle"
+              type="text"
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
+              className="w-full rounded-small border border-hairline px-3 py-2"
+            />
+          </div>
+          <div className="text-left">
+            <label
+              htmlFor="sign-up-password"
+              className="text-small text-text-muted"
+            >
+              {PASSWORD_LABEL}
+            </label>
+            <input
+              id="sign-up-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-small border border-hairline px-3 py-2"
+            />
+          </div>
           <button
             type="submit"
             disabled={isSubmitting}
