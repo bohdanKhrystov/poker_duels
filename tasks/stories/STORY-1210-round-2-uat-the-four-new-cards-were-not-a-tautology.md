@@ -383,7 +383,8 @@ written down so nobody reads this round as uniform inflation.**
   anyway — no mail arrives (`ADR-0031` §7).
 
 That is two specific elements diverging inside a transcribed screen, which is the `medium` row. It
-goes to the backlog as `TASK-121005` and is **not** scheduled by this cycle (rule 2).
+goes to the backlog as `TASK-121005` and is **not** scheduled by this cycle (rule 2). One finding,
+and since 2026-08-31 two tickets — one per element, for the reason §Tasks records.
 
 **`account` is `high` on the first clause, not on a stretched reading of the second.** Every one of
 the four buttons the card draws — *Give this profile a password* and *Attach a recovery address* as
@@ -463,7 +464,8 @@ Three consequences, all recorded rather than left to inference:
 1. **The prediction succeeded on its own terms.** The next UAT round *did* catch a gap on that
    control. The gap is a treatment gap, not an absence: it renders with no class where the card
    draws `class="link"` — accent-coloured, `--pd-fs-small` — so it is indistinguishable from body
-   text. That is `TASK-121005`, `medium`.
+   text. That is `TASK-121010`, `medium` — the half of `TASK-121005` that the 2026-08-31 split gave
+   its own id (§Tasks).
 2. **The note is corrected**, in `TASK-121007` alongside the two card corrections above: it should
    say the control is rendered by `Lobby.tsx`'s `SignInScreenBody` and is unstyled, which is what
    the next round should check.
@@ -510,7 +512,7 @@ with its reason, because a manager that forgets one flips a verdict.**
 | **2. missing cards** | **0** | no — excluded | `ADR-0092` §4. There are none: round 1's four merged, which is what makes this a baseline round. The exclusion is stated with a zero because forgetting it next round is how the rule dies |
 | **3. decision-born tickets** | **0** | no — excluded | `ADR-0092` §5. No ticket this round comes from a `product-owner` answer, and none could — no `DEC` was promoted (§*The promotion gate*). `DEC-089`–`DEC-091` are answered on their own clock; anything they yield enters the earliest **subsequent** triage, never this one (rule 1) |
 | cards in arrears | 1 ticket | no | not a fourth exclusion — the product contradicts nothing, so there is no product defect to count. `TASK-121007` |
-| `medium` | 3 new | no | rule 4 counts `blocker` and `high` only. `TASK-121004`, `TASK-121005`, `TASK-121006` |
+| `medium` | 3 new | no | rule 4 counts `blocker` and `high` only. `TASK-121004`, `TASK-121005`, `TASK-121006` — and `TASK-121010` since 2026-08-31, which is `TASK-121005`'s second half and not a fourth finding (§Tasks) |
 | `low` | 0 new | no | as above |
 | repeats | 8 | no | removed by dedupe before the count |
 | not findings | 2 | no | closed by merged sources before severity was set |
@@ -664,15 +666,38 @@ The two harness tickets are scheduled beside the fix set and counted in neither 
 | [TASK-121008](../tasks/TASK-121008-the-driver-can-read-a-screen-that-auto-advances.md) | The driver can read a screen that auto-advances between polls — *harness capability, `manual-verify`, **excluded from `B(2)`*** | ready |
 | [TASK-121009](../tasks/TASK-121009-the-catalogue-records-the-cards-it-has-and-the-question-it-closed.md) | The catalogue records the cards it now has, and the question two rounds have closed — *harness, **excluded from `B(2)`*** | ready |
 | [TASK-121004](../tasks/TASK-121004-the-front-door-finishes-the-card-it-started.md) | The front door finishes the card `TASK-120901` started — the fill, the code well, the wordmark — *product, `medium`, never scheduled by this cycle* | backlog |
-| [TASK-121005](../tasks/TASK-121005-the-sign-in-screens-route-out-is-the-cards-link.md) | The `sign-in` screen's route out is the card's link, and its submit is the card's fill button — *product, `medium`, backlog* | backlog |
+| [TASK-121005](../tasks/TASK-121005-the-sign-in-submit-is-the-cards-fill-button.md) | The `sign-in` form's submit is the card's fill button, not a smaller one — *product, `medium`, one half of what was filed here* | backlog → **ready** (2026-08-31) |
+| [TASK-121010](../tasks/TASK-121010-the-sign-in-screens-route-out-is-the-cards-link.md) | The `sign-in` screen's route out is the card's link, not body text — *product, `medium`, the other half* | backlog |
 | [TASK-121006](../tasks/TASK-121006-the-account-forms-submits-are-the-cards-fill-button.md) | The `account` screen's two form submits are the card's fill button — *product, `medium`, backlog* | backlog |
 | [TASK-121007](../tasks/TASK-121007-two-cards-and-a-margin-note-catch-up-with-the-client.md) | Two cards and a margin note catch up with the client that overtook them — *design; cards in arrears, `medium`, **not a product defect*** | backlog |
 
-**Nine tickets, three in the fix set.** `TASK-121004`–`TASK-121006` carry `depends_on` edges onto
-the ticket that touches the same file first — `TASK-121005` onto `TASK-121004` (`Lobby.tsx`),
-`TASK-121006` onto `TASK-121003` (the account screen) — so that two coders can never hold the same
-component at once. All three are `backlog` and none is scheduled by this cycle; the edges are for
-whoever drains the backlog later.
+**Nine tickets at triage, three in the fix set; ten since the split below.** The `medium` tickets
+carry `depends_on` edges onto the ticket that touches the same file first — `TASK-121010` onto
+`TASK-121004` (`Lobby.tsx`), `TASK-121006` onto `TASK-121003` (the account screen) — so that two
+coders can never hold the same component at once. None of them is scheduled by this cycle; the edges
+are for whoever drains the backlog later.
+
+**Amended 2026-08-31: `TASK-121005` is two tickets.** As filed it covered both undressed controls on
+the `sign-in` screen, and it could not be worked: its `verify:` block required a new test in
+`SignInForm.test.tsx` while its `## Files` table named three other files, so its own definition of
+done was unreachable inside its own scope. A coder took it and blocked before writing code. Adding
+the fourth row is not the fix — `ADR-0068` caps a ticket at three files and grants `atomic:` only to
+a change some **merged gate** refuses to let land in pieces, and no gate refuses this one: the two
+controls live in different components with independent suites. So the ticket split. `TASK-121005`
+keeps the *Sign in* submit, because `TASK-121006`, `TASK-121106` and `STORY-1211` already point at
+that half by that id; `TASK-121010` takes *Forgot your password?* with `TASK-121005`'s `depends_on`
+onto `TASK-121004`, which existed only to keep two coders off `Lobby.tsx` at once.
+
+**This changes no finding of round 2.** One finding, still `medium`, still the same two controls on
+one screen; nothing is re-scoped, re-graded, added or dropped, and neither half is scheduled by this
+cycle. `EPIC-12` §Termination rule 1 freezes what a round may **repair**, and this round repaired
+three `high`s and neither of these.
+
+**The `ready` beside `TASK-121005` is the ordinary backlog's, not this cycle's.** The invocation
+ended at round 3's `PASS`, and rule 2's *never scheduled by this cycle* stopped binding with it;
+these tickets are now the driver's to schedule like any other. `TASK-121005` is startable because
+the split left it with no dependency — the edge onto `TASK-121004` went with the half that touches
+`Lobby.tsx` — and `TASK-121010` stays `backlog` behind that edge, so no two coders hold one file.
 
 ## Acceptance criteria
 
@@ -694,7 +719,7 @@ whoever drains the backlog later.
 - [ ] Zero `DEC`s are promoted, and each of the report's two questions is shown closed by a named
       merged section.
 - [ ] `python3 .github/scripts/lint_tickets.py` exits 0 with this story and its nine tickets on the
-      board.
+      board — ten since the 2026-08-31 split, which added a ticket and no finding.
 
 ## Out of scope
 

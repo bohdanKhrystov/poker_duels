@@ -142,9 +142,9 @@ Behaviour, not wording, and not which focus or which round saw it.
 | duel end: *Not now* is a bare, unclassed button | `high` | `TASK-120912` | **`low`** — round 1's grade, held again |
 | duel end: *Back to the lobby* vs the card's *Back to lobby* | `low` | `TASK-120911` | **`low`** |
 | account: the two form submits use the small bordered recipe | `high` (half) | `TASK-121006` | **`medium`** |
-| sign-in: the submit's recipe, and *Forgot your password?* unclassed | `high` (half) | `TASK-121005` | **`medium`** |
+| sign-in: the submit's recipe, and *Forgot your password?* unclassed | `high` (half) | `TASK-121005` — since its 2026-08-31 split, the submit half; the route out is `TASK-121010` | **`medium`** |
 
-Seven rows, six distinct open tickets. **None is refiled.** Four of the seven arrived at `high`;
+Seven rows, six distinct open tickets, both counts as at this round. **None is refiled.** Four of the seven arrived at `high`;
 refiling them would put `B(3)` at 4 and end the cycle `STOP_DIVERGING` on a backlog read aloud. That
 is precisely the illusion `qa-manager` §Step 1 calls load-bearing.
 
