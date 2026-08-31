@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121203
 title: What audit answers, and the three criteria it may propose
 type: task
-status: ready
+status: done
 parent: STORY-1212
 estimate: S
 tier: sonnet
