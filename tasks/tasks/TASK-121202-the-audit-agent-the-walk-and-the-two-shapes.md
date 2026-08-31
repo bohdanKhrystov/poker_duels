@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121202
 title: The audit agent — the walk, the hands and the two shapes
 type: task
-status: ready
+status: done
 parent: STORY-1212
 estimate: S
 tier: sonnet
