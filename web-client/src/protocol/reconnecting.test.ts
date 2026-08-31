@@ -257,6 +257,54 @@ describe("the reconnecting connection", () => {
     ).toEqual(["Hello"]);
   });
 
+  it("a message sent before the socket opens is not sent, and does not throw", () => {
+    const { sockets, connection } = openOverFakeSockets();
+
+    // sockets[0] is still CONNECTING: FakeSocket.open() has not run, so
+    // nothing — not even the Hello handshake — has reached it yet.
+    expect(() => connection.send({ type: "CreateRoom" })).not.toThrow();
+
+    expect(sockets[0].sent).toHaveLength(0);
+  });
+
+  it("a message sent after the socket opens reaches it", () => {
+    const { sockets, connection } = openOverFakeSockets();
+
+    // Sent while still CONNECTING: if this were queued rather than dropped,
+    // it would show up ahead of "Hello" below instead of nowhere at all.
+    connection.send({ type: "CreateRoom" });
+
+    sockets[0].open();
+    connection.send({ type: "CreateRoom" });
+
+    expect(
+      sockets[0].sent.map(
+        (frame) => (JSON.parse(frame) as { type: string }).type,
+      ),
+    ).toEqual(["Hello", "CreateRoom"]);
+  });
+
+  it("a retry attempt does not accept a send until its own socket opens", () => {
+    const { sockets, connection } = openOverFakeSockets();
+
+    sockets[0].open();
+    sockets[0].close();
+    vi.advanceTimersByTime(250);
+    expect(sockets).toHaveLength(2);
+
+    // sockets[1] is a fresh attach, CONNECTING exactly as sockets[0] once was.
+    connection.send({ type: "CreateRoom" });
+
+    sockets[1].open();
+    connection.send({ type: "CreateRoom" });
+
+    expect(
+      sockets[1].sent.map(
+        (frame) => (JSON.parse(frame) as { type: string }).type,
+      ),
+    ).toEqual(["Hello", "CreateRoom"]);
+  });
+
   it("opens no further socket once the Welcome named another protocol version", () => {
     const { sockets } = openOverFakeSockets();
 
