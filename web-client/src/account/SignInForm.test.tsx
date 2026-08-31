@@ -238,4 +238,21 @@ describe("signing in", () => {
     expect(secondMarkup).toContain(SIGN_IN_REFUSED);
     expect(firstMarkup).toBe(secondMarkup);
   });
+
+  it("the sign-in submit is the card's fill button", () => {
+    const signIn = vi.fn(async (): Promise<SignInOutcome> => ({
+      kind: "signed-in",
+    }));
+    render(<SignInForm signIn={signIn} />);
+
+    const button = submitButton();
+
+    // The submit's class list contains bg-accent-fill, contains text-on-accent,
+    // and does not contain bg-surface — three membership checks against named
+    // tokens, the third pinning that the quiet recipe went away rather than
+    // gained a neighbour.
+    expect(button.classList.contains("bg-accent-fill")).toBe(true);
+    expect(button.classList.contains("text-on-accent")).toBe(true);
+    expect(button.classList.contains("bg-surface")).toBe(false);
+  });
 });

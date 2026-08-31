@@ -102,7 +102,7 @@ export function SignInForm(props: {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-small border border-hairline bg-surface px-4 py-2 text-small"
+            className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
           >
             {SIGN_IN_LABEL}
           </button>
