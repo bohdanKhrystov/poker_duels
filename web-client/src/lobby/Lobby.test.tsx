@@ -2092,4 +2092,98 @@ describe("the lobby", () => {
       screen.queryByRole("heading", { name: FORGOT_PASSWORD_LABEL }),
     ).toBeNull();
   });
+
+  it("the table states who took the pot of the hand that just ended", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 0 });
+    store.apply({
+      type: "Events",
+      events: [
+        {
+          type: "HandStarted",
+          sequence: 0,
+          handNumber: 1,
+          buttonSeat: 0,
+          smallBlind: 25,
+          bigBlind: 50,
+          stacks: [1500, 1500],
+        },
+        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850 },
+      ],
+    });
+    renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "Snapshot",
+        view: aView({
+          viewerSeat: 0,
+          handNumber: 1,
+          street: "COMPLETE",
+          pot: 0,
+        }),
+      });
+    });
+
+    expect(screen.getByText("You win 4,850")).toBeDefined();
+  });
+
+  it("the statement goes when the next hand is dealt", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 0 });
+    store.apply({
+      type: "Events",
+      events: [
+        {
+          type: "HandStarted",
+          sequence: 0,
+          handNumber: 1,
+          buttonSeat: 0,
+          smallBlind: 25,
+          bigBlind: 50,
+          stacks: [1500, 1500],
+        },
+        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850 },
+      ],
+    });
+    renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "Snapshot",
+        view: aView({
+          viewerSeat: 0,
+          handNumber: 1,
+          street: "COMPLETE",
+          pot: 0,
+        }),
+      });
+      store.apply({
+        type: "Events",
+        events: [
+          {
+            type: "HandStarted",
+            sequence: 10,
+            handNumber: 2,
+            buttonSeat: 1,
+            smallBlind: 25,
+            bigBlind: 50,
+            stacks: [5850, -350],
+          },
+        ],
+      });
+      store.apply({
+        type: "Snapshot",
+        view: aView({
+          viewerSeat: 0,
+          handNumber: 2,
+          street: "PREFLOP",
+          pot: 75,
+        }),
+      });
+    });
+
+    expect(screen.getByText(/Pot 75/)).toBeDefined();
+    expect(screen.queryByText(/You win/)).toBeNull();
+  });
 });

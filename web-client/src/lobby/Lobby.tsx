@@ -146,7 +146,11 @@ export function Lobby(): ReactElement {
   if (state.view !== null) {
     return (
       <div className="mx-auto flex max-w-[560px] flex-col gap-5">
-        <DuelTable view={state.view} rivalPresence={state.rivalPresence} />
+        <DuelTable
+          view={state.view}
+          rivalPresence={state.rivalPresence}
+          narration={state.narration}
+        />
         <PresenceNotice
           key={state.presenceCount}
           presence={state.rivalPresence}
