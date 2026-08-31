@@ -33,7 +33,11 @@ export function AccountOffer(props: {
       >
         {OFFER_ACCEPT}
       </a>
-      <button type="button" onClick={props.onDismiss}>
+      <button
+        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        type="button"
+        onClick={props.onDismiss}
+      >
         {OFFER_DISMISS}
       </button>
     </section>
