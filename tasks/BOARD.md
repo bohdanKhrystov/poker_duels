@@ -734,6 +734,50 @@ parallel with `EPIC-02`; no shared file.
 | DEC-093 | **The architect's** — does [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §6's **baseline rule** extend to a round in which a screen-state becomes conformance-judgeable for the first time through **any** merged instrument, or only through a **card** merged in the previous round's repairs? Both §6 and `EPIC-12` §Termination rule 4 are written about a card. Round 3 met the other case: two frames of `design/screens/duel-table-states.html` and `rematch-states.html` were unreadable in rounds 1 and 2 — round 2 said so in as many words, *"check (a) on two of `duel-table-states.html`'s three frames is unreachable by any round with the verbs `drive.mjs` has"* — and became readable in round 3 only because `TASK-121008`'s `record`/`frames` verbs merged in round 2's repairs. The rule's stated **purpose** reaches that case exactly (*"the two rounds measured differently-sized judgeable sets"*); its **text** does not. Raised 2026-08-30 at round 3's triage, which **refused to extend the exemption itself**: a manager who widens a rule in the round that rule would save cannot prove it would have widened it anywhere else, and `STORY-1208` is the precedent for repairing this machinery by a merged sentence rather than by a generous reading at triage. **Not one of `ADR-0092` §5's three promotion slots** — those are the product owner's, and this is `CLAUDE.md` rule 5 routing. **Blocks nothing**: round 3's fix set is empty, `B(3) = 0` so rule 4 could not fire at any reading, and the cycle ended `PASS`. Answering it costs a future invocation a wrong `STOP_DIVERGING` or nothing at all. Recorded in [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | before the next `/qa-cycle` invocation |
 | DEC-094 | **The product owner's** — should a control that **no card draws** wear the client's control vocabulary, or is a bare control the intended treatment for navigation the cards do not draw? Concretely: the lobby's `Your duels`, `Leaderboard` and `Account` doors, and the `Back` on each secondary screen, all render with `className: ""` — computing as body text — beside a room-code input, `Create a duel room`, `Join the duel` and `Set my name` that carry the full recipe. No merged source is contradicted, which is why it is a question and not a finding: `design/tokens/tokens.css` is a `:root` sheet with **no selectors**, so an unclassed button contradicts nothing in it; `create-duel.html`'s front-door frame draws neither control and notes *"nothing else on the door — no lobby noise, no tables list"*; and `ADR-0060` §§2–4 settle the doors' **word**, **element** and **placement** and the way out's word, and say nothing about treatment. Raised 2026-08-30 at round 3's triage and promoted by `qa-manager` under [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §5 — **one of the three slots that round had, and the only one spent**, on the `first` screen, so `DEC-088`'s ordering question did not bite. It clears both halves of the bar: a concrete choice answerable in one sentence, and it bears on whether a player can tell that three words under a form are things they may activate. **Two rounds have now spent a finding on it** — the four `Back`s in round 2, the three doors in round 3 — and only a merged answer closes it mechanically, as `ADR-0094` closed the join path. **Blocks nothing** — round 3's fix set is empty and the cycle ended `PASS`; an answer becomes a merged source either way, and any ticket it yields enters the **ordinary backlog now the cycle has ended**, never the round that asked (`EPIC-12` §Termination rule 1). A *no* earns a row in `docs/test-plan.md` §*Settled, and not a finding*, so a later round re-raising it would itself contradict a merged source. Recorded in [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | before the cycle's next triage |
 
+`DEC-095` → [`ADR-0095`](../docs/adr/ADR-0095-the-table-states-who-took-the-pot-and-never-names-a-hand.md)
+on 2026-08-30 — **the table states who took the pot, and never names a hand.** Answered by the
+product owner, deriving from two sentences of `docs/vision.md`: *On variance* — *"**Luck decides a
+hand.** Skill decides whether you come back tomorrow"* — for the banner, since the vision names the
+hand as the unit at which luck lands and a table that resolves one in silence asks a player to
+absorb a variance it never told them about; and *What it is* — *"Every hand is stored as an event
+log, so a match can be replayed and analysed **afterwards**"*, with *Positioning* and the roadmap
+(the replay viewer is v0.4) — for the refusal. Registered and answered in the same PR (the `DEC-039`
+path), so it never sat in the open table above.
+
+**The question.** `design/screens/duel-table-states.html` draws two hand-ending frames and the
+client renders no banner at any tick — `PotStrip.tsx` has one `return` and no branch that could
+carry one. The card's banner has two lines and only one is buildable: `PotAwarded` carries `seat`
+and `amount`, so *You win 4,850* is a transcription, while *Two pair, aces and sevens* is on no
+`GameEvent` and could only be computed by the client, which `CLAUDE.md`'s non-negotiables and
+`ADR-0002` forbid and `no-derivation.test.tsx`'s `HAND_TALK` matcher gates.
+
+**The answer: yes to the banner, no to the hand name.** At `street: COMPLETE` the table replaces
+`Pot N` with exactly one line — `You win 4,850`, `Your rival wins 4,850`, or `Split pot — you win
+2,425` for a split, always the **viewer's own** award because the odd chip can make the two shares
+differ (`duel-rules.md` §Showdown). The facts line beside it is untouched, nothing is added beneath
+it, and the line lives while the street is `COMPLETE` and goes when the next hand starts — never on
+a timer, never on a fade (`ADR-0046` §2, `ADR-0075`). **No hand is named anywhere on the table**, at
+any street, in text or in an `aria-label`; the card's showdown line goes, and so does its fold line,
+because `settleHand` returns the uncalled bet *before* it awards the pot, so the printed amount and
+the stack movement already agree to the chip. No engine, server, wire or `PROTOCOL_VERSION` change:
+`PotAwarded` passes `EventRedaction` unfiltered and already lands in `DuelState.narration`.
+**`no-derivation.test.tsx` is not touched** — its fixture is a `street: "TURN"` view, so a correctly
+triggered banner leaves it green, and a coder who meets it red has built the wrong trigger.
+
+**Costs named:** a player who cannot read seven cards is not helped, and that falls hardest on the
+person the vision was written for; a deferred protocol change is a dearer one, and today a
+made-hand field would cost a version bump with no deployed client to migrate; two human-accepted
+card frames lose a line each; a reload during the between-hands pause loses the statement, because
+the banner is a moment and no `PlayerView` field is added to make it survivable; and the split line
+never states the rival's share. **It forecloses** client-side hand naming permanently, at every
+street — by an ADR now, not only by a test — and forecloses naming a made hand *at the table*; the
+event log still holds every revealed card, so a replay viewer (v0.4) or `ADR-0005`'s analysis
+interface can name one from stored data with no wire commitment. **Reversal has a named trigger**:
+the first duels played by people who are not the author showing that a player cannot say why they
+lost, at which point the fix is a **server-sent** descriptor and the architect's wire question
+arises. Nothing is raised for the architect today: `TASK-121101`'s technical half was conditional
+on a *yes*.
+
 `DEC-092` → [`ADR-0094`](../docs/adr/ADR-0094-opening-the-invite-is-taking-the-seat.md)
 on 2026-08-30 — **opening the invite is taking the seat, and the two join cards are corrected to
 it.** Answered by the product owner, deriving from the first success condition — *"Send a link.
@@ -3462,7 +3506,7 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-121008](tasks/TASK-121008-the-driver-can-read-a-screen-that-auto-advances.md) The driver can read a screen that auto-advances between polls — *harness capability; `manual-verify` — **excluded from `B(2)`*** | S | done |
 | | [TASK-121009](tasks/TASK-121009-the-catalogue-records-the-cards-it-has-and-the-question-it-closed.md) The catalogue records the cards it now has, and the question two rounds have closed — *harness — **excluded from `B(2)`*** | XS | done |
 | **[STORY-1211](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md)** Round 3 (UAT) — the count fell to zero, and what is still wrong is written down — *schema 2; **the last round rule 5 permits**; `B(3) = 0`, verdict `PASS`, fix set empty* | | | ready |
-| | [TASK-121101](tasks/TASK-121101-the-table-says-who-won-the-hand-it-just-finished.md) The table says who won the hand it just finished — *product; `medium`, blocked on a `DEC` the ticket registers first* | S | backlog |
+| | [TASK-121101](tasks/TASK-121101-the-table-says-who-won-the-hand-it-just-finished.md) The table says who won the hand it just finished — *product; `medium`, unblocked — `DEC-095` answered by [ADR-0095](../docs/adr/ADR-0095-the-table-states-who-took-the-pot-and-never-names-a-hand.md); awaits the planner's rewrite* | S | backlog |
 | | [TASK-121102](tasks/TASK-121102-accepting-a-rematch-draws-the-cards-dealing-frame.md) Accepting a rematch draws the card's dealing frame — *product; `low`, `manual-verify`* | S | backlog |
 | | [TASK-121103](tasks/TASK-121103-the-duels-rows-and-filter-carry-the-cards-remaining-cues.md) The `duels` screen's checked filter, faint date and outcome weight are the card's — *product; `medium`* | S | done |
 | | [TASK-121104](tasks/TASK-121104-a-leaderboard-rank-and-coin-figure-is-a-mono-figure.md) A leaderboard rank and coin figure is the card's mono figure — *product; `medium`* | XS | done |
