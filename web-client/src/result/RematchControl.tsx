@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol/protocol.gen";
 import { rematchStand } from "./rematch-stand";
 
@@ -8,10 +8,16 @@ import { rematchStand } from "./rematch-stand";
  * Returns nothing for a client that holds no seat — one with no identity has
  * no authority to offer anything. A button that can only fail is not offered.
  *
- * No `disabled` state or in-flight `useState`: `ADR-0044` §3 makes `OfferRematch`
- * idempotent on the wire — a repeat is answered with the same `RematchOffered`,
- * never an error. A double press cannot produce an error state and needs no guard.
- * Unlike `ActionBar`'s `sent` lock, which exists because `Act` is not idempotent.
+ * `ADR-0044` §3 makes `OfferRematch` idempotent on the wire — a repeat is answered
+ * with the same `RematchOffered`, never an error — so no `disabled` lock guards the
+ * button, unlike `ActionBar`'s `sent` lock, which exists because `Act` is not
+ * idempotent. The one `useState` below is not that kind of guard: it marks that
+ * this seat has just matched a standing offer, which `ADR-0044` §4 answers with the
+ * new hand's `Snapshot` directly and never a restated `RematchOffered` — no message
+ * ever states "both sides now want it," so this is the only way the accepting
+ * seat's own client can show the card's *"it begins"* frame
+ * (`design/screens/rematch-states.html`) for the span between that click and the
+ * `Snapshot` that ends it (`TASK-121102`).
  *
  * When the room is reaped, `refusal` becomes `UNKNOWN_ROOM`, the control retires
  * with a message, and no other refusal touches it — as per `ADR-0044` §6, this is
@@ -23,6 +29,8 @@ export function RematchControl(props: {
   offers: readonly number[];
   refusal: ProtocolError | null;
 }): ReactElement | null {
+  const [accepted, setAccepted] = useState(false);
+
   if (props.mySeat === null) {
     return null;
   }
@@ -38,8 +46,19 @@ export function RematchControl(props: {
 
   const { mine, theirs } = rematchStand(props.offers, props.mySeat);
 
-  // When both mine and theirs are true, show the chip (this should not happen per ADR-0044 §4,
-  // as the second offer starts the duel and sends no RematchOffered, but handle it for completeness).
+  // Both sides want it and the new hand has not arrived: `accepted` is this seat's own click
+  // matching a standing offer, and `mine && theirs` is the store carrying both seats (the
+  // restatement case the old comment here called "should not happen per ADR-0044 §4" — now it
+  // gets the same frame instead of the stale "waiting" chip below).
+  if (accepted || (mine && theirs)) {
+    return (
+      <div className="text-center text-text-muted">
+        Rematch. The button changes sides —<br />
+        dealing hand 1…
+      </div>
+    );
+  }
+
   if (mine) {
     return (
       <div className="rounded-medium border border-accent bg-accent-subtle px-5 py-4 text-center leading-tight font-medium text-text">
@@ -56,7 +75,10 @@ export function RematchControl(props: {
         </div>
         <button
           type="button"
-          onClick={props.onOffer}
+          onClick={() => {
+            setAccepted(true);
+            props.onOffer();
+          }}
           className="rounded-medium bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         >
           Rematch
