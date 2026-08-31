@@ -411,8 +411,10 @@ describe("the lobby", () => {
     store.apply(ROOM_JOINED);
     renderLobby(store);
 
-    // Two, because a mono code at body size and normal tracking is still not
-    // the well the card draws.
+    // Two, because a mono code that kept the shipped body size and normal
+    // tracking would still not be the well the card draws: it sets this
+    // large and tracked (1.875rem, create-duel.html:72), which text-display
+    // and the tracking utility below both assert.
     const classes = screen.getByText("ABCDEFGH").className.split(" ");
     expect(classes).toContain("font-mono");
     expect(classes).toContain("tracking-[var(--pd-track-code)]");
