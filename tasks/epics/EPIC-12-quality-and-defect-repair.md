@@ -177,7 +177,7 @@ and answered in the same PR, and never appeared in an open table.)
 | [STORY-1209](../stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | Round 1 (UAT) — the front door was never dressed, and four screens have no card | ready — **the first round under the `uat` focus**; `B(1) = 1`, verdict `PROCEED (conformance unjudged on 4 of 11 screens)` |
 | [STORY-1210](../stories/STORY-1210-round-2-uat-the-four-new-cards-were-not-a-tautology.md) | Round 2 (UAT) — the four new cards were not a tautology, and the screens behind them are undressed | ready — **the first baseline round this cycle has run**; `B(2) = 3`, verdict `PROCEED`, unqualified because no cell read `BLOCKED` |
 | [STORY-1211](../stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | Round 3 (UAT) — the count fell to zero, and what is still wrong is written down | ready — **the last round rule 5 permits, and the invocation's exit state**; `B(3) = 0`, verdict `PASS`, fix set empty |
-| [STORY-1212](../stories/STORY-1212-the-audit-focus-the-observer-the-resize-and-what-a-criterion-costs.md) | The audit focus — the observer, the resize, and what an unmet criterion costs | ready — **not a round story**; it builds what `ADR-0096` §7 and `ADR-0097` §7 name, and runs no round |
+| [STORY-1212](../stories/STORY-1212-the-audit-focus-the-observer-the-resize-and-what-a-criterion-costs.md) | The audit focus — the observer, the resize, and what an unmet criterion costs | done — **not a round story**; it builds what `ADR-0096` §7 and `ADR-0097` §7 name, and runs no round |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
 when it is run and the ids stay sequential without arithmetic. **`STORY-1207` is the third story here that
@@ -252,7 +252,12 @@ judgemental.
    still governs both other focuses word for word.
 3. **A fix set is at most eight tickets.** A round that would exceed it takes the eight
    highest-priority and files the rest to the backlog. A round is a bounded unit of work, not a
-   queue drain.
+   queue drain. Under the **audit** focus the eight-ticket cap orders repair by the rubric's own
+   order, top to bottom — a deterministic tiebreak with no judgment in it — and a finding the cap
+   defers stays an unmet criterion and is counted again next round, because filing does not reduce
+   `A(N)`, only repair does
+   ([`ADR-0096`](../../docs/adr/ADR-0096-the-audit-judges-a-whole-duel-against-a-frozen-rubric.md)
+   §5).
 4. **Convergence.** Let `B(N)` be the count of `blocker` + `high` in round *N*'s report. If
    `B(N) >= B(N-1)` the cycle **stops** and reports non-convergence. This is the direct answer to
    *"each time report more and more bugs"*: the loop is permitted to continue only while it is
@@ -262,7 +267,10 @@ judgemental.
    comparison would score the unlock as decay if both rounds were compared, since the two rounds
    measured differently-sized judgeable sets. See
    [`ADR-0092`](../../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md)
-   §6. **Rule 5's three-round budget binds regardless.**
+   §6. **Rule 5's three-round budget binds regardless.** Under the **audit** focus the quantity
+   compared is `A(N)`, the number of criteria answered `not met`, so the rule reads
+   `A(N) >= A(N-1)` and `A(N)` can never exceed the rubric's size — a ceiling known before the
+   round starts. Round 1 has no `A(0)`, exactly as it has no `B(0)`.
 5. **At most three rounds per invocation**, whatever else is true.
 6. **A failure that does not reproduce by hand is a harness defect, and never enters `B(N)`.**
    Added by [`ADR-0089`](../../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md)
@@ -279,7 +287,7 @@ judgemental.
 
 | State | Condition |
 | --- | --- |
-| `PASS` | a round's report has zero `blocker` and zero `high` |
+| `PASS` | a round's report has zero `blocker` and zero `high` — or, under the audit focus, `A(N) = 0` |
 | `STOP_BUDGET` | three rounds ran |
 | `STOP_DIVERGING` | rule 4 tripped |
 | `STOP_BLOCKED` | a `DEC` was raised that only the human can answer |

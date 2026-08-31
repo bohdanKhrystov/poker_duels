@@ -3680,14 +3680,14 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-121107](tasks/TASK-121107-a-player-with-no-place-reads-the-cards-muted-line.md) A player with no place this season reads the card's muted line, not the accent box — *product; `low`, carried from round 3's `BLOCKED` state and confirmed statically* | XS | done |
 | | [TASK-121108](tasks/TASK-121108-two-table-cards-name-the-street-their-pot-strip-prints.md) Two table cards name the street their pot strip prints — *design; card in arrears, `low`, **not a product defect*** | XS | done |
 | | [TASK-121109](tasks/TASK-121109-the-lobby-hands-the-duel-table-the-hands-events.md) The lobby hands the duel table the hand's events — *product; `medium`, the second half of `TASK-121101`'s chain — **not filed by round 3**, split out by the planner on 2026-08-31 because `Lobby` → `DuelTable` → `PotStrip` plus a test is four files and no merged gate forbids splitting it (`ADR-0068` §4)* | XS | done |
-| **[STORY-1212](stories/STORY-1212-the-audit-focus-the-observer-the-resize-and-what-a-criterion-costs.md)** The audit focus — the observer, the resize, and what an unmet criterion costs — *not a round story; schema 2* | | | ready |
+| **[STORY-1212](stories/STORY-1212-the-audit-focus-the-observer-the-resize-and-what-a-criterion-costs.md)** The audit focus — the observer, the resize, and what an unmet criterion costs — *not a round story; schema 2* | | | **done** |
 | | [TASK-121201](tasks/TASK-121201-the-driver-resizes-a-live-tab.md) The driver resizes a live tab — a `size` verb over CDP | S | done |
 | | [TASK-121202](tasks/TASK-121202-the-audit-agent-the-walk-and-the-two-shapes.md) The `audit` agent — the walk, the hands and the two shapes | S | done |
 | | [TASK-121203](tasks/TASK-121203-what-audit-answers-and-the-three-it-may-propose.md) What `audit` answers, and the three criteria it may propose | S | done |
 | | [TASK-121204](tasks/TASK-121204-the-audit-focus-of-the-qa-cycle-skill.md) The `audit` focus of the `qa-cycle` skill | S | done |
 | | [TASK-121205](tasks/TASK-121205-the-rubric-classifier-and-the-ticket-it-promotes.md) `qa-manager` — the rubric classifier and the ticket it promotes | S | done |
 | | [TASK-121206](tasks/TASK-121206-the-audit-arithmetic-a-of-n-and-no-severity.md) `qa-manager` — the audit arithmetic, `A(N)` and no severity | S | done |
-| | [TASK-121207](tasks/TASK-121207-termination-counts-criteria-under-the-audit-focus.md) `EPIC-12` §Termination counts criteria under the audit focus | XS | ready |
+| | [TASK-121207](tasks/TASK-121207-termination-counts-criteria-under-the-audit-focus.md) `EPIC-12` §Termination counts criteria under the audit focus | XS | done |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
 skill, the driver and the catalogue merged in `#1159` and `#1161` with no story file and no

@@ -2,7 +2,7 @@
 id: STORY-1212
 title: The audit focus — the observer, the resize, and what an unmet criterion costs
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa, audit, meta]
 depends_on: []
