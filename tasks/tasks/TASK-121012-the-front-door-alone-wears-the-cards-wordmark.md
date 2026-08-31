@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121012
 title: The front door alone wears the card's wordmark, and it says the product's name
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: web-client
 estimate: S
