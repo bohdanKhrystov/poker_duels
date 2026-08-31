@@ -99,15 +99,55 @@ one, and whose repairs merged their cards — round *N-1*'s story names it filed
 line itself** — e.g. `PASS (conformance unjudged on 6 of 7 screens)` — repeated **verbatim** in
 the terminal report.
 
+## The audit focus
+
+An `audit` report — `PER-CRITERION:`, `PROPOSED CRITERIA:`, `FUNCTIONAL:`, `BLOCKED:`, the shape
+`.claude/agents/audit.md` fixes — reads onto the same round ledger and round number as a `qa` or
+`uat` report. Steps 1 to 6 all still apply; this section says what changes inside them for this
+focus.
+
+**The classifier, relocated rather than replaced.** Under this focus an observation is a finding
+when it contradicts a criterion in `ADR-0096` §2's frozen rubric, and it needs no other merged
+source — no card, no token, no owned literal. The merged-source principle still holds because the
+rubric is merged, closed and general: what was missing was never the rule, only a merged source of
+the *general* kind. Say the other half out loud too: `ADR-0092` §3 stands byte-unchanged for the
+`qa` and `uat` focuses, where the same observation is still a question capped at three. One file
+now holds two readings, one per focus, and a reader must not carry either across.
+
+**The proposed criteria.** At most three per round, each a general standard rather than an
+observation — `PROPOSED CRITERIA:` in the report, never `PER-CRITERION:`. They are recorded in the
+round story and routed exactly as `ADR-0092` §5 routes a question: a `DEC` for the product owner
+where `docs/vision.md` settles it, the human where it does not, and a merged PR either way. You
+never add one to the rubric yourself.
+
+**The rubric is frozen for the invocation** (`ADR-0096` §3). No round may add a criterion to
+itself or to a later round of the same invocation; a criterion merged mid-invocation applies to
+the **next** invocation. This is `EPIC-12` §Termination rule 1's frozen set one level up, and it is
+what makes `A(N)` and `A(N-1)` comparable at all.
+
+**The audit promotes, it does not duplicate** (`ADR-0096` §5). Before filing anything, search the
+backlog the way Step 1 already searches for repeats — behaviour, not wording. Where an unmet
+criterion's quoted observation matches the defect a `status: backlog` ticket from a `qa` or `uat`
+round already names, move that ticket into the audit round's fix set rather than filing a second —
+one ledger, `ADR-0092` §6. Only once that search comes back empty do you write a new one. Seventeen
+such tickets existed when `ADR-0096` was written; this is the mechanism by which a criterion
+reaches them.
+
+**A `not met` with no quoted observation is not yet an answer.** Send it back to `audit` or record
+it as `BLOCKED`; never invent the evidence. An unmet criterion a looking human cannot reproduce is
+a harness defect under `ADR-0089` §4 — filed against `EPIC-12`, repaired in `scripts/qa/`, excluded
+from every count, and never repaired in production code.
+
 ## Step 1 — Dedupe before anything else
 
 For each finding, search the existing round stories and their tickets for the same defect. Match on
 **behaviour, not wording**: two reports of the same broken control are one defect however
 differently they are described.
 
-**Dedupe spans the two focuses.** One ledger is load-bearing: a UAT walk stumbles on functional
-defects too — it does not hunt them — and a defect found under both focuses is **one** ticket, or
-`B(N)` double-counts it. Match on behaviour, not on which focus saw it, and not on wording.
+**Dedupe spans three focuses now.** One ledger is load-bearing: a UAT or audit walk stumbles on
+functional defects too — neither hunts them — and a defect found under any of the three focuses is
+**one** ticket, or `B(N)` double-counts it. Match on behaviour, not on which focus saw it, and not
+on wording.
 
 - Already filed and still open → **do not file again.** Note it as a repeat in the round story.
   This rule is load-bearing: without it the backlog grows every round from re-reports alone and
