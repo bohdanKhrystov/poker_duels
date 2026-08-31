@@ -255,4 +255,34 @@ describe("signing in", () => {
     expect(button.classList.contains("text-on-accent")).toBe(true);
     expect(button.classList.contains("bg-surface")).toBe(false);
   });
+
+  it("the sign-in fields are left-aligned and their labels are muted", () => {
+    const signIn = vi.fn(async (): Promise<SignInOutcome> => ({
+      kind: "signed-in",
+    }));
+    const { container } = render(<SignInForm signIn={signIn} />);
+
+    const handleLabel = screen.getByText(HANDLE_LABEL);
+    const passwordLabel = screen.getByText(PASSWORD_LABEL);
+
+    // Both labels sit in the one wrapper that also holds their inputs — the
+    // fix left-aligns that field block, not the panel.
+    const fieldWrapper = handleLabel.parentElement;
+    expect(fieldWrapper).not.toBeNull();
+    expect(passwordLabel.parentElement).toBe(fieldWrapper);
+    expect(fieldWrapper?.classList.contains("text-left")).toBe(true);
+
+    // Both labels read as muted, the way the card's `.field label` rule does.
+    expect(handleLabel.classList.contains("text-text-muted")).toBe(true);
+    expect(passwordLabel.classList.contains("text-text-muted")).toBe(true);
+
+    // The panel itself still carries the centring the heading and the
+    // refusal box depend on — proving the fix is the field block moving,
+    // not a blanket un-centring of the whole card.
+    const panel = container.querySelector(
+      '[aria-label="sign in to an account"]',
+    );
+    expect(panel).not.toBeNull();
+    expect(panel?.classList.contains("text-center")).toBe(true);
+  });
 });
