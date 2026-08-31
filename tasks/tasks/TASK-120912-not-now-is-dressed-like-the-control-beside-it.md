@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120912
 title: The result screen's Not now is dressed like the control beside it
 type: task
-status: backlog
+status: done
 parent: STORY-1209
 module: web-client
 estimate: XS
