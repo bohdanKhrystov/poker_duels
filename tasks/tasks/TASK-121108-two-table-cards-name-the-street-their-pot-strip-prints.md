@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121108
 title: Two table cards name the street their pot strip prints
 type: task
-status: backlog
+status: done
 parent: STORY-1211
 module: design
 estimate: XS
@@ -13,7 +13,7 @@ files_touched: 2
 labels: [qa, uat, bug, low, design]
 depends_on: []
 verify:
-  - grep -qF 'Blinds 75/150 · Hand 14 · Turn' design/screens/duel-table.html
+  - grep -qF 'Blinds 75/150 · Hand 14 · Flop' design/screens/duel-table.html
   - grep -qF 'Blinds 75/150 · Hand 14 · Turn' design/screens/duel-table-states.html
   - test "$(grep -c '<span class="meta">Blinds 75/150 · Hand 14</span>' design/screens/duel-table.html)" -eq 0
   - test "$(grep -c '<span class="meta">Blinds 75/150 · Hand 14</span>' design/screens/duel-table-states.html)" -eq 0
@@ -56,9 +56,12 @@ against `design/` rather than at any severity against `web-client/`.
 ## Scope
 
 - **Add the street segment to every `.meta` line that carries the blinds-and-hand prefix**, in the
-  form the client prints: `Blinds 75/150 · Hand 14 · Turn`. The frames draw a turn board — three
-  community cards plus one — so `Turn` is the street those frames are actually in; read each frame's
-  own board before choosing its word rather than pasting one.
+  form the client prints: `Blinds 75/150 · Hand 14 · {street}`. The two cards draw different streets —
+  read each frame's own board before choosing its word rather than pasting one: `duel-table.html`'s
+  board is three community cards with the turn and the river both still to come, a flop board, so its
+  line becomes `Blinds 75/150 · Hand 14 · Flop`; `duel-table-states.html`'s *Waiting — their turn on
+  the turn card* frame is four cards with only the river still to come, a genuine turn board, so its
+  line becomes `Blinds 75/150 · Hand 14 · Turn`.
 - **Leave the two banner frames' `.meta` alone.** `Two pair, aces and sevens` and `Nobody shows — …`
   are the banner's own meta line, not the pot's, and they are the subject of `TASK-121101`.
 
@@ -78,7 +81,8 @@ the stale line survives beside it.
 
 ## Acceptance criteria
 
-- [ ] Both cards contain `Blinds 75/150 · Hand 14 · Turn`
+- [ ] `duel-table.html` contains `Blinds 75/150 · Hand 14 · Flop` and `duel-table-states.html`
+      contains `Blinds 75/150 · Hand 14 · Turn` — each card's own board decides its word
 - [ ] Neither card still contains the bare `<span class="meta">Blinds 75/150 · Hand 14</span>`
 - [ ] `sh design/check-drift.sh` exits 0 — the token copies are untouched
 - [ ] Every command in `verify:` exits 0
