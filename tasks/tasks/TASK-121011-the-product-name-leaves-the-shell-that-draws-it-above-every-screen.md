@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121011
 title: The product's name leaves the shell that draws it above every screen
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: web-client
 estimate: S
