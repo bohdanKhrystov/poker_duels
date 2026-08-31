@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120601
 title: A claimed profile is never offered the claim form again
 type: task
-status: backlog
+status: done
 parent: STORY-1206
 module: web-client
 estimate: S
@@ -174,8 +174,15 @@ code it checks, and no new `it(...)` is added. See the PR description for the ex
 - [ ] `sign-up.test.ts > a claim the server refuses leaves no session behind` passes, over two
       different refusal statuses rather than one
 - [ ] `sign-up.test.ts > a claim whose follow-up sign-in fails is still a claim` passes
-- [ ] Reverting `sign-up.ts` alone reddens all three; the reviewer runs this rather than reading it,
-      because a test that passes against the pre-fix module gates nothing
+- [ ] Reverting `sign-up.ts` alone reddens **the two that name the `201` path**; the reviewer runs
+      this rather than reading it, because a test that passes against the pre-fix module gates
+      nothing. **Corrected on 2026-08-31 at landing**: this criterion originally said *all three*,
+      which is not achievable. The refusal test exercises only `409`/`422`, and Scope requires those
+      branches to be byte-identical before and after the fix — so no true assertion scoped to that
+      path can tell the fixed module from the reverted one. Demanding it would have been a demand
+      to write a false test. The coder reported the discrepancy rather than weakening a sibling to
+      satisfy it, and strengthened the follow-up-fails test with a call-count assertion after
+      finding it passed vacuously against the unfixed module
 - [ ] **By hand, on a live stack** — the browser-level half no jsdom test reaches: claim an
       unclaimed profile, navigate to `/`, open *Account*, and read
       `Your password signs in to this account.` with no *Give this profile a password* control on
