@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121005
 title: The `sign-in` form's submit is the card's fill button, not a smaller one
 type: task
-status: ready
+status: done
 parent: STORY-1210
 module: web-client
 estimate: XS
