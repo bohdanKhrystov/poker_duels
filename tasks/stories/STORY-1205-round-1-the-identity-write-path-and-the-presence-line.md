@@ -2,7 +2,7 @@
 id: STORY-1205
 title: Round 1 — no request declares its body, and a navigation is not a disconnect
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa]
 depends_on: []

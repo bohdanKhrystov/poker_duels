@@ -2,7 +2,7 @@
 id: STORY-1209
 title: Round 1 (UAT) — the front door was never dressed, and four screens have no card
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa, uat]
 depends_on: []

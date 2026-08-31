@@ -2,7 +2,7 @@
 id: STORY-1206
 title: Round 2 — the account screen forgets the password the profile has, and the cycle ends
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa]
 depends_on: [STORY-1205]

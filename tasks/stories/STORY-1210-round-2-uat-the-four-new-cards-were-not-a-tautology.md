@@ -2,7 +2,7 @@
 id: STORY-1210
 title: Round 2 (UAT) — the four new cards were not a tautology, and the screens behind them are undressed
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa, uat]
 depends_on: []
