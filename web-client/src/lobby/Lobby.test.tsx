@@ -381,6 +381,43 @@ describe("the lobby", () => {
     }
   });
 
+  it("the primary call to action is filled, not ghosted", () => {
+    renderLobby();
+
+    // Named tokens, not merely non-empty: a non-empty check is what let the
+    // ghost treatment ship in the first place (see "dressed, not bare" above).
+    const create = screen.getByRole("button", { name: "Create a duel room" });
+    const createClasses = create.className.split(" ");
+    expect(createClasses).toContain("bg-accent-fill");
+    expect(createClasses).toContain("text-on-accent");
+
+    cleanup();
+
+    // The waiting frame has its own primary: Copy the link. Join the duel and
+    // Back to the lobby are secondary in their frames and stay ghosted.
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    withClipboard(() => Promise.resolve());
+    renderLobby(store);
+
+    const copyLink = screen.getByRole("button", { name: "Copy the link" });
+    const copyLinkClasses = copyLink.className.split(" ");
+    expect(copyLinkClasses).toContain("bg-accent-fill");
+    expect(copyLinkClasses).toContain("text-on-accent");
+  });
+
+  it("the room code is the card's code well", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    // Two, because a mono code at body size and normal tracking is still not
+    // the well the card draws.
+    const classes = screen.getByText("ABCDEFGH").className.split(" ");
+    expect(classes).toContain("font-mono");
+    expect(classes).toContain("tracking-[var(--pd-track-code)]");
+  });
+
   it("leaves the invite link selectable and focused for a copy by hand", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
