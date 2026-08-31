@@ -125,8 +125,8 @@ Five of its twelve promises reach a browser; the other seven are under §*What t
 not cover*. The cases run in order and each leaves state the next uses. **W** is the browser whose
 result screen named it the winner of `04-02`'s duel and **L** is the other — decided by reading the
 screens, never fixed to a port. No case may assume a device with no finished duel: scope order
-decides what has already been played before a suite runs, and a round allocates only two profiles
-for the whole session.
+decides what has already been played before a suite runs, and this suite uses profiles A and B
+throughout.
 
 **Read the strip after a reload, never on the first load of a fresh profile.** `pd.deviceId` is
 written when the socket's `Welcome` lands (`web-client/src/store/boot.ts`) while the profile read
@@ -187,7 +187,7 @@ profile's first finished duel moves its standing by exactly one (`ADR-0014`, `AD
 `ADR-0089` §3 already requires a fresh Chrome profile per round. A case pinning `rank 1` would be
 red for the machine's history rather than for a defect. The same reasoning rules out a device with
 no finished duel at all: scope order decides what has already been played before this suite runs,
-and a round allocates only two profiles for the whole session.
+and this suite works with profiles A and B.
 
 **The season line is compared against the response, never merely read.** A client that worked the
 season out from the browser's clock would print the right month on the day a round runs — so *"the
