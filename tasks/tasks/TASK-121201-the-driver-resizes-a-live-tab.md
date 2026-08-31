@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121201
 title: The driver resizes a live tab — a size verb over CDP
 type: task
-status: ready
+status: done
 parent: STORY-1212
 estimate: S
 tier: haiku
