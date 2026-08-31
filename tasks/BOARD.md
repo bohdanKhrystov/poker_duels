@@ -3685,8 +3685,8 @@ a statement about one run, on one machine, at one commit — not coverage, and n
 | | [TASK-121202](tasks/TASK-121202-the-audit-agent-the-walk-and-the-two-shapes.md) The `audit` agent — the walk, the hands and the two shapes | S | done |
 | | [TASK-121203](tasks/TASK-121203-what-audit-answers-and-the-three-it-may-propose.md) What `audit` answers, and the three criteria it may propose | S | done |
 | | [TASK-121204](tasks/TASK-121204-the-audit-focus-of-the-qa-cycle-skill.md) The `audit` focus of the `qa-cycle` skill | S | done |
-| | [TASK-121205](tasks/TASK-121205-the-rubric-classifier-and-the-ticket-it-promotes.md) `qa-manager` — the rubric classifier and the ticket it promotes | S | ready |
-| | [TASK-121206](tasks/TASK-121206-the-audit-arithmetic-a-of-n-and-no-severity.md) `qa-manager` — the audit arithmetic, `A(N)` and no severity | S | backlog |
+| | [TASK-121205](tasks/TASK-121205-the-rubric-classifier-and-the-ticket-it-promotes.md) `qa-manager` — the rubric classifier and the ticket it promotes | S | done |
+| | [TASK-121206](tasks/TASK-121206-the-audit-arithmetic-a-of-n-and-no-severity.md) `qa-manager` — the audit arithmetic, `A(N)` and no severity | S | ready |
 | | [TASK-121207](tasks/TASK-121207-termination-counts-criteria-under-the-audit-focus.md) `EPIC-12` §Termination counts criteria under the audit focus | XS | backlog |
 
 `STORY-1201` — the harness itself — **shipped before its story existed**: the two agents, the
