@@ -60,6 +60,9 @@
    * with no bet live — so nothing below ever shifts */
   .opp { display: flex; flex-direction: column; gap: var(--pd-space-2); }
   .oppcards { display: flex; gap: var(--pd-space-2); justify-content: center; }
+  /* the word is the field's, not an action's — DuelTable.tsx's BetLine states how much a
+   * seat has committed this street and never which action (blind, call, bet, raise) put it
+   * there; naming the action would be the client asserting a game fact (ADR-0002) */
   .bet-line { text-align: center; font-size: var(--pd-fs-small);
     min-height: calc(var(--pd-fs-small) * var(--pd-lh-body)); color: var(--pd-text-faint); }
   .bet-line .amt { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
@@ -142,7 +145,7 @@
       <span class="back" style="--w:40px" role="img" aria-label="ImKate's hidden hand"></span>
       <span class="back" style="--w:40px" aria-hidden="true"></span>
     </div>
-    <div class="bet-line">bets <span class="amt">400</span></div>
+    <div class="bet-line">committed <span class="amt">400</span></div>
   </div>
 
   <div class="center">

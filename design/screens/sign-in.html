@@ -103,8 +103,9 @@
       <p class="note">Sign in titles both this card and the submit button — SIGN_IN_HEADING and
       SIGN_IN_LABEL, two constants sharing one string (account-text.ts). Handle and Password are
       HANDLE_LABEL and PASSWORD_LABEL, same module. Forgot your password? is
-      FORGOT_PASSWORD_LABEL (recovery-text.ts) — SignInForm.tsx does not render it yet, so this
-      card draws the gap the next UAT round should catch.</p>
+      FORGOT_PASSWORD_LABEL (recovery-text.ts), rendered by Lobby.tsx's SignInScreenBody, not
+      SignInForm.tsx. What ships carries no class where this card draws .link — a treatment
+      gap, not an absence, and what the next UAT round should check.</p>
     </div>
 
     <div class="frame">
