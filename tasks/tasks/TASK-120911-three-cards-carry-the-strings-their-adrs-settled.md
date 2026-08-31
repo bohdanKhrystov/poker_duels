@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120911
 title: Three cards carry the strings the ADRs that superseded them settled
 type: task
-status: backlog
+status: done
 parent: STORY-1209
 module: design
 estimate: S

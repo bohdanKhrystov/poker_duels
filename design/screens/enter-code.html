@@ -95,13 +95,15 @@
 
     <div class="frame">
       <h2>When the code refuses</h2>
-      <div class="refusal"><span class="r">This code doesn't open a duel.</span>
+      <div class="refusal"><span class="r">No duel room has that code.</span>
         It may have expired — a room waits ten minutes for its second player — or a
         character is off. Check it with your rival.</div>
       <p class="ratelimit">Too many tries — wait a minute.</p>
       <p class="note">both refusals are the join screen's words, not a second source:
       typing a code and opening a link reach the same server answer (ADR-0022), so
       they must not drift apart in the copy</p>
+      <p class="note">the refusal is Lobby.tsx's shipped text — ADR-0072 and ADR-0073
+      both name it as the correction; this card carried the pre-fix wording</p>
     </div>
   </div>
 </div>
