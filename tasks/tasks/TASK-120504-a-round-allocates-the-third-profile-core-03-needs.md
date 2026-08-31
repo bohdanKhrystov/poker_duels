@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120504
 title: A round allocates the third profile CORE-03 needs
 type: task
-status: backlog
+status: done
 parent: STORY-1205
 estimate: XS
 tier: haiku
