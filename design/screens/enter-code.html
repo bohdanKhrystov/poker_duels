@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Enter a code — Poker Duels</title>
+<title>Joining by code — Poker Duels</title>
 <style>
   /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
   :root {
@@ -49,8 +49,6 @@
     background: var(--pd-surface); border: 1px solid var(--pd-hairline);
     border-radius: var(--pd-radius-medium); cursor: text; }
   .code:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
-  /* what is not typed yet keeps its place, so the well never resizes mid-entry */
-  .code .rest { color: var(--pd-text-faint); }
   .caret { display: inline-block; width: 2px; height: 1.1em; margin-bottom: -0.16em;
     background: var(--pd-accent); }
   .hint { font-size: var(--pd-fs-small); color: var(--pd-text-faint); text-align: center; }
@@ -64,8 +62,8 @@
     text-align: center; }
   .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
   .btn.fill:hover { background: var(--pd-accent-fill-hover); }
-  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
   .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+  .fieldlabel { font-size: var(--pd-fs-small); color: var(--pd-text-muted); font-weight: 500; }
 
   .refusal { border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
     padding: var(--pd-space-5); color: var(--pd-text-muted); font-size: var(--pd-fs-body); }
@@ -76,21 +74,21 @@
 <body>
 <div class="wrap">
   <p class="eyebrow">Poker Duels · Screens</p>
-  <h1>Enter a code</h1>
-  <p class="lede">What "I have a code" opens. The rival read the code aloud or sent it
-  in a message, so this screen is one field and one action — the same well the create
-  screen shows, now typed into. The wire is the validator (ADR-0022); nothing here
-  guesses whether a code is real.</p>
+  <h1>Joining by code</h1>
+  <p class="lede">Not a screen — a state of the first one. The code field and its refusals
+  live there, beside Create a duel room (ADR-0060 §§1, 4; ADR-0094 §2). Opening an invite
+  link draws nothing at all: presenting the code is taking the seat (ADR-0022), and what
+  she sees next is the table (ADR-0094 §1).</p>
 
   <div class="frames">
     <div class="frame">
-      <h2>Typing it in</h2>
-      <div class="code" tabindex="0">7Q4M<span class="caret"></span><span class="rest">····</span></div>
+      <h2>The code field, on the first screen</h2>
+      <div class="fieldlabel">Room code</div>
+      <div class="code" tabindex="0">7Q4M<span class="caret"></span></div>
       <div class="hint">Eight characters, letters and numbers</div>
-      <button class="btn fill">Open the duel</button>
-      <button class="btn ghost">Back</button>
-      <p class="note">the untyped glyphs hold their place, so the well never resizes
-      mid-entry; the code well is the create screen's, at the same size and tracking</p>
+      <button class="btn fill">Join the duel</button>
+      <p class="note">the code well is the create screen's, at the same size and
+      tracking; an inline field has no untyped rest to hold its place (ADR-0094 §§1–2)</p>
     </div>
 
     <div class="frame">
@@ -99,9 +97,10 @@
         It may have expired — a room waits ten minutes for its second player — or a
         character is off. Check it with your rival.</div>
       <p class="ratelimit">Too many tries — wait a minute.</p>
-      <p class="note">both refusals are the join screen's words, not a second source:
-      typing a code and opening a link reach the same server answer (ADR-0022), so
-      they must not drift apart in the copy</p>
+      <p class="note">both refusals are the first screen's words, not a second source:
+      typing a code and opening a link reach the same server answer (ADR-0022), and
+      neither travels to a screen of its own (ADR-0094 §§1–2), so they must not drift
+      apart in the copy</p>
       <p class="note">the refusal is Lobby.tsx's shipped text — ADR-0072 and ADR-0073
       both name it as the correction; this card carried the pre-fix wording</p>
     </div>

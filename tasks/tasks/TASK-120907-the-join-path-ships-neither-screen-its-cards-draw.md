@@ -3,7 +3,7 @@ schema: 2
 id: TASK-120907
 title: The join path ships neither of the two screens its cards draw
 type: task
-status: ready
+status: done
 parent: STORY-1209
 module: design
 estimate: S
