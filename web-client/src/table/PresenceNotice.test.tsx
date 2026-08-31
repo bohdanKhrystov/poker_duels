@@ -21,7 +21,7 @@ describe("the presence notice", () => {
     );
 
     getByText("Your rival is away. The duel is paused.");
-    getByText("47");
+    getByText("47s");
   });
 
   it("counts down as time passes", () => {
@@ -39,12 +39,12 @@ describe("the presence notice", () => {
     act(() => {
       vi.advanceTimersByTime(3_000);
     });
-    getByText("44");
+    getByText("44s");
 
     act(() => {
       vi.advanceTimersByTime(20_000);
     });
-    getByText("24");
+    getByText("24s");
   });
 
   it("holds at zero, and says nothing new there", () => {
@@ -61,12 +61,12 @@ describe("the presence notice", () => {
     act(() => {
       vi.advanceTimersByTime(120_000);
     });
-    getByText("0");
+    getByText("0s");
 
     act(() => {
       vi.advanceTimersByTime(120_000);
     });
-    getByText("0");
+    getByText("0s");
     getByText("Your rival is away. The duel is paused.");
     expect(container.textContent).not.toMatch(
       /expired|time.s up|too late|gone/i,
@@ -112,5 +112,44 @@ describe("the presence notice", () => {
 
     getByText("Your rival is back.");
     expect(container.textContent).not.toMatch(/\d/);
+  });
+
+  it("the countdown is separated from the line it counts under", () => {
+    vi.useFakeTimers();
+
+    const { container } = render(
+      <PresenceNotice
+        presence="AWAY"
+        returned={false}
+        graceRemainingMillis={47_000}
+      />,
+    );
+
+    // The rendered text should not contain "paused." immediately followed by a digit
+    // (the bug was "paused.47" with no space)
+    expect(container.textContent).not.toMatch(/paused\.\d/);
+  });
+
+  it("the countdown carries the numeral shape ADR-0046 fixes", () => {
+    vi.useFakeTimers();
+
+    const { getByText } = render(
+      <PresenceNotice
+        presence="AWAY"
+        returned={false}
+        graceRemainingMillis={47_000}
+      />,
+    );
+
+    // First value: 47s
+    getByText("47s");
+
+    // Advance time to get a different value
+    act(() => {
+      vi.advanceTimersByTime(3_000);
+    });
+
+    // Second value: 44s - confirms the format is consistent across different values
+    getByText("44s");
   });
 });

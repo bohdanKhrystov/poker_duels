@@ -630,7 +630,7 @@ describe("the lobby", () => {
     expect(
       screen.getByText("Your rival is away. The duel is paused."),
     ).toBeDefined();
-    expect(screen.getByText("47")).toBeDefined();
+    expect(screen.getByText("47s")).toBeDefined();
     expect(screen.getByText("Away")).toBeDefined();
   });
 
@@ -672,14 +672,14 @@ describe("the lobby", () => {
       });
     });
 
-    expect(screen.getByText("47")).toBeDefined();
+    expect(screen.getByText("47s")).toBeDefined();
 
     // Advance time by 20 seconds
     act(() => {
       vi.advanceTimersByTime(20000);
     });
 
-    expect(screen.getByText("27")).toBeDefined();
+    expect(screen.getByText("27s")).toBeDefined();
 
     // Apply the same OpponentPresence frame again
     act(() => {
@@ -690,7 +690,7 @@ describe("the lobby", () => {
       });
     });
 
-    expect(screen.getByText("47")).toBeDefined();
+    expect(screen.getByText("47s")).toBeDefined();
   });
 
   it("the countdown reaching zero sends nothing and changes nothing", () => {
@@ -724,7 +724,7 @@ describe("the lobby", () => {
     // Positive control: the countdown is live at 47 before anything is recorded. A
     // screen that never rendered a real number would pass every clause below for
     // the wrong reason.
-    expect(screen.getByText("47")).toBeDefined();
+    expect(screen.getByText("47s")).toBeDefined();
 
     const barButtons = () =>
       within(screen.getByRole("region", { name: "your move" }))
@@ -742,7 +742,7 @@ describe("the lobby", () => {
 
     // Second positive control: still ticking partway through the window, so the
     // final zero below is a crossing, not a value that was never moving.
-    expect(screen.getByText("27")).toBeDefined();
+    expect(screen.getByText("27s")).toBeDefined();
 
     // The remaining 100 000 ms brings the total advance to 120 000 — more than
     // twice the 47 000 ms window — well past the point the deadline was crossed.
@@ -764,7 +764,7 @@ describe("the lobby", () => {
     expect(screen.queryByText("Timed out")).toBeNull();
     // The number stops: clamped at zero, scoped to the notice that carries it.
     const notice = screen.getByText("Your rival is away. The duel is paused.");
-    expect(within(notice).getByText("0")).toBeDefined();
+    expect(within(notice).getByText("0s")).toBeDefined();
   });
 
   it("a window with nothing left of it renders as waiting", () => {
@@ -783,7 +783,7 @@ describe("the lobby", () => {
     });
 
     const notice = screen.getByText("Your rival is away. The duel is paused.");
-    expect(within(notice).getByText("0")).toBeDefined();
+    expect(within(notice).getByText("0s")).toBeDefined();
     expect(screen.queryByText("Timed out")).toBeNull();
     expect(screen.queryByText("Your rival did not come back.")).toBeNull();
     expect(send).toHaveBeenCalledTimes(0);
@@ -1364,7 +1364,7 @@ describe("the lobby", () => {
     expect(
       screen.getByText("Your rival is away. The duel is paused."),
     ).toBeDefined();
-    expect(screen.getByText("47")).toBeDefined();
+    expect(screen.getByText("47s")).toBeDefined();
     expect(screen.getByText("Away")).toBeDefined();
   });
 

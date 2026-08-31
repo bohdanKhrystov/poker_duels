@@ -37,9 +37,12 @@ export function PresenceNotice(props: {
     <p className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-center text-small text-text-muted">
       {presenceLine(props.presence, props.returned)}
       {deadline !== null && (
-        <span className="font-mono tabular-nums">
-          {secondsRemaining(deadline, now)}
-        </span>
+        <>
+          {" "}
+          <span className="font-mono tabular-nums">
+            {secondsRemaining(deadline, now)}s
+          </span>
+        </>
       )}
     </p>
   );
