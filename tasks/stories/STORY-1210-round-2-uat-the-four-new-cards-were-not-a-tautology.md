@@ -512,7 +512,7 @@ with its reason, because a manager that forgets one flips a verdict.**
 | **2. missing cards** | **0** | no — excluded | `ADR-0092` §4. There are none: round 1's four merged, which is what makes this a baseline round. The exclusion is stated with a zero because forgetting it next round is how the rule dies |
 | **3. decision-born tickets** | **0** | no — excluded | `ADR-0092` §5. No ticket this round comes from a `product-owner` answer, and none could — no `DEC` was promoted (§*The promotion gate*). `DEC-089`–`DEC-091` are answered on their own clock; anything they yield enters the earliest **subsequent** triage, never this one (rule 1) |
 | cards in arrears | 1 ticket | no | not a fourth exclusion — the product contradicts nothing, so there is no product defect to count. `TASK-121007` |
-| `medium` | 3 new | no | rule 4 counts `blocker` and `high` only. `TASK-121004`, `TASK-121005`, `TASK-121006` — and `TASK-121010` since 2026-08-31, which is `TASK-121005`'s second half and not a fourth finding (§Tasks) |
+| `medium` | 3 new | no | rule 4 counts `blocker` and `high` only. `TASK-121004`, `TASK-121005`, `TASK-121006` — and, since 2026-08-31, `TASK-121010`, `TASK-121011` and `TASK-121012`, which are the two halves of `TASK-121005` and the two halves of `TASK-121004`'s third scope item, and not further findings (§Tasks) |
 | `low` | 0 new | no | as above |
 | repeats | 8 | no | removed by dedupe before the count |
 | not findings | 2 | no | closed by merged sources before severity was set |
@@ -670,8 +670,10 @@ The two harness tickets are scheduled beside the fix set and counted in neither 
 | [TASK-121010](../tasks/TASK-121010-the-sign-in-screens-route-out-is-the-cards-link.md) | The `sign-in` screen's route out is the card's link, not body text — *product, `medium`, the other half* | backlog |
 | [TASK-121006](../tasks/TASK-121006-the-account-forms-submits-are-the-cards-fill-button.md) | The `account` screen's two form submits are the card's fill button — *product, `medium`, backlog* | backlog |
 | [TASK-121007](../tasks/TASK-121007-two-cards-and-a-margin-note-catch-up-with-the-client.md) | Two cards and a margin note catch up with the client that overtook them — *design; cards in arrears, `medium`, **not a product defect*** | backlog |
+| [TASK-121011](../tasks/TASK-121011-the-product-name-leaves-the-shell-that-draws-it-above-every-screen.md) | The product's name leaves the shell that draws it above every screen — *product, `medium`, the first half of `TASK-121004`'s struck third scope item* | backlog |
+| [TASK-121012](../tasks/TASK-121012-the-front-door-alone-wears-the-cards-wordmark.md) | The front door alone wears the card's wordmark, and it says the product's name — *product, `medium`, the second half* | backlog |
 
-**Nine tickets at triage, three in the fix set; ten since the split below.** The `medium` tickets
+**Nine tickets at triage, three in the fix set; twelve since the two splits below.** The `medium` tickets
 carry `depends_on` edges onto the ticket that touches the same file first — `TASK-121010` onto
 `TASK-121004` (`Lobby.tsx`), `TASK-121006` onto `TASK-121003` (the account screen) — so that two
 coders can never hold the same component at once. None of them is scheduled by this cycle; the edges
@@ -692,6 +694,31 @@ onto `TASK-121004`, which existed only to keep two coders off `Lobby.tsx` at onc
 one screen; nothing is re-scoped, re-graded, added or dropped, and neither half is scheduled by this
 cycle. `EPIC-12` §Termination rule 1 freezes what a round may **repair**, and this round repaired
 three `high`s and neither of these.
+
+**Amended 2026-08-31: `TASK-121004`'s third scope item is two tickets.** That ticket's coder shipped
+its fill and its code well (PR #1234) and refused to guess the third — the wordmark — because the
+markup it quoted lives in `web-client/src/App.tsx` above every screen, not in the `Lobby.tsx` the
+ticket declared, so dressing it in place would have put the front door's wordmark on all ten
+surfaces. Routed as `DEC-099` under `CLAUDE.md` rule 5 and answered by
+[`ADR-0098`](../../docs/adr/ADR-0098-the-wordmark-belongs-to-the-front-door-alone.md): **the front
+door alone**, and the unconditional `<h1>` leaves `App.tsx`.
+
+That ADR's §4 names four files, and four is one past `ADR-0068`'s cap. `atomic:` is bought only by
+naming a **merged gate that fails on the smaller commit**, so the planner probed for one rather than
+assuming it (`ADR-0069`): the shell half alone — `App.tsx` and `App.test.tsx` — runs the client
+job's whole command, `npm run check`, at **117 files, 956 tests, exit 0**. Green, so no gate
+forbids the split and under `ADR-0068` §4 it is two tickets. `TASK-121011` takes the shell;
+`TASK-121012` puts the lockup on the front door and settles the one choice `ADR-0098` left to the
+ticket — the lockup is an `h1` carrying `aria-label="Poker Duels"`, because the card's markup
+concatenates to `PokerDuels` and, as the planner measured, a `getByRole` name query finds the
+unlabelled markup too and so cannot gate the difference. The order is forced: with the shell's
+`<h1>` still standing, the lockup is a second heading on the front door and
+`screen.getByRole("heading")` throws in three merged `App.test.tsx` tests.
+
+**This changes no finding of round 2 either.** The wordmark was already one third of one `medium`
+finding filed as `TASK-121004`; nothing is re-scoped, re-graded, added or dropped, and neither half
+is scheduled by this cycle. `TASK-121004`'s own row and status are untouched — its PR is in flight
+and that row is the scheduler's.
 
 **The `ready` beside `TASK-121005` is the ordinary backlog's, not this cycle's.** The invocation
 ended at round 3's `PASS`, and rule 2's *never scheduled by this cycle* stopped binding with it;
