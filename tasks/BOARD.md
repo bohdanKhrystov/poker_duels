@@ -733,7 +733,67 @@ parallel with `EPIC-02`; no shared file.
 | DEC-091 | **The product owner's** — on the `sign-in` screen, should *Back* on the sign-in screen return to the account screen it was opened from, or to the lobby? `ADR-0083` §2 settles where a **successful sign-in** lands (`#/account`) and nothing settles where a refusal or a retreat lands. The shipped *Back* returns to the lobby, two steps from where the player was. No merged source is contradicted. Raised 2026-08-30 at round 1 of `/qa-cycle uat regression`'s triage and promoted by `qa-manager` under [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §5 — one of the three slots that round had, on one of three distinct screens, so `DEC-088`'s ordering question did not bite. It clears both halves of the bar: a concrete choice answerable in one sentence, and it bears on a player's ability to tell what is going on or what they may do. **Blocks nothing** — it gates no member of round 1's fix set, so the cycle continues (`ADR-0092` §5); an answer becomes a merged source either way, and any ticket it yields enters the **earliest subsequent** round's triage or the ordinary backlog, never the round that asked (`EPIC-12` §Termination rule 1). Recorded in [`STORY-1209`](stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | [`STORY-1209`](stories/STORY-1209-round-1-uat-the-front-door-was-never-dressed.md) | before the cycle's next triage |
 | DEC-093 | **The architect's** — does [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §6's **baseline rule** extend to a round in which a screen-state becomes conformance-judgeable for the first time through **any** merged instrument, or only through a **card** merged in the previous round's repairs? Both §6 and `EPIC-12` §Termination rule 4 are written about a card. Round 3 met the other case: two frames of `design/screens/duel-table-states.html` and `rematch-states.html` were unreadable in rounds 1 and 2 — round 2 said so in as many words, *"check (a) on two of `duel-table-states.html`'s three frames is unreachable by any round with the verbs `drive.mjs` has"* — and became readable in round 3 only because `TASK-121008`'s `record`/`frames` verbs merged in round 2's repairs. The rule's stated **purpose** reaches that case exactly (*"the two rounds measured differently-sized judgeable sets"*); its **text** does not. Raised 2026-08-30 at round 3's triage, which **refused to extend the exemption itself**: a manager who widens a rule in the round that rule would save cannot prove it would have widened it anywhere else, and `STORY-1208` is the precedent for repairing this machinery by a merged sentence rather than by a generous reading at triage. **Not one of `ADR-0092` §5's three promotion slots** — those are the product owner's, and this is `CLAUDE.md` rule 5 routing. **Blocks nothing**: round 3's fix set is empty, `B(3) = 0` so rule 4 could not fire at any reading, and the cycle ended `PASS`. Answering it costs a future invocation a wrong `STOP_DIVERGING` or nothing at all. Recorded in [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | before the next `/qa-cycle` invocation |
 | DEC-094 | **The product owner's** — should a control that **no card draws** wear the client's control vocabulary, or is a bare control the intended treatment for navigation the cards do not draw? Concretely: the lobby's `Your duels`, `Leaderboard` and `Account` doors, and the `Back` on each secondary screen, all render with `className: ""` — computing as body text — beside a room-code input, `Create a duel room`, `Join the duel` and `Set my name` that carry the full recipe. No merged source is contradicted, which is why it is a question and not a finding: `design/tokens/tokens.css` is a `:root` sheet with **no selectors**, so an unclassed button contradicts nothing in it; `create-duel.html`'s front-door frame draws neither control and notes *"nothing else on the door — no lobby noise, no tables list"*; and `ADR-0060` §§2–4 settle the doors' **word**, **element** and **placement** and the way out's word, and say nothing about treatment. Raised 2026-08-30 at round 3's triage and promoted by `qa-manager` under [`ADR-0092`](../docs/adr/ADR-0092-a-uat-round-files-what-a-source-settles-and-asks-the-rest.md) §5 — **one of the three slots that round had, and the only one spent**, on the `first` screen, so `DEC-088`'s ordering question did not bite. It clears both halves of the bar: a concrete choice answerable in one sentence, and it bears on whether a player can tell that three words under a form are things they may activate. **Two rounds have now spent a finding on it** — the four `Back`s in round 2, the three doors in round 3 — and only a merged answer closes it mechanically, as `ADR-0094` closed the join path. **Blocks nothing** — round 3's fix set is empty and the cycle ended `PASS`; an answer becomes a merged source either way, and any ticket it yields enters the **ordinary backlog now the cycle has ended**, never the round that asked (`EPIC-12` §Termination rule 1). A *no* earns a row in `docs/test-plan.md` §*Settled, and not a finding*, so a later round re-raising it would itself contradict a merged source. Recorded in [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | [`STORY-1211`](stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | before the cycle's next triage |
-| DEC-097 | **The architect's** — by what mechanism does [`ADR-0096`](../docs/adr/ADR-0096-the-audit-judges-a-whole-duel-against-a-frozen-rubric.md)'s **audit focus** run under [`ADR-0089`](../docs/adr/ADR-0089-a-browser-drives-this-client-for-a-qa-round-never-for-a-gate.md) §2's three conditions? **(a) The declared-file set.** [`ADR-0090`](../docs/adr/ADR-0090-a-skill-may-write-the-catalogue-or-run-it-never-both.md) §2 permits exactly the files that may name `qa-cycle`; `ADR-0092` §2 grew that set from three to four for `agents/uat.md`, *mention-only*, on the rule that *"a new mention is a new caller until an ADR says otherwise"*. An audit observer saying the cycle owns the stack lifecycle would be a **fifth**: amend the set again on that precedent, or run the focus with no new agent file? **(b) Two viewports inside one round — now load-bearing.** `ADR-0096` §4 walks the whole duel at **390 × 664** and re-answers `R2`/`R3` at **720 × 900**, in one round, so *"launch the browser at a size"* no longer answers it: a duel is a live match between two sockets, and relaunching mid-duel re-seats the device by `pd.deviceId` (`ADR-0089`) and deals a different board, so the two shapes cannot be two passes over the same beat. Either the harness resizes a **live tab** — `Emulation.setDeviceMetricsOverride`, which a player's hands arguably reach by dragging a window (`ADR-0018` §3's *click, type, navigate, reload*) but which also carries `deviceScaleFactor` and a mobile flag that make the client believe it is on hardware it is not — or §4 is unbuildable as written and its second shape must move to its own round, **which is a product change and comes back to the product owner.** The architect's answer decides which, and the ADR does not foreclose it. **The product halves are settled and are not reopened**: that the audit is a focus of the one cycle with one manager and one ledger (`ADR-0092` §§6, 8, applied), what it walks, what it judges against, and how it terminates. **Blocks the first audit round** and every ticket that builds the focus — the planner cannot write a `Files` table without (a), and cannot walk a beat at two shapes without (b). Registered 2026-08-31 by `ADR-0096`; **(b) restated the same day**, after the human's *"we have to support phone size"* turned one viewport into two | [`ADR-0096`](../docs/adr/ADR-0096-the-audit-judges-a-whole-duel-against-a-frozen-rubric.md) | before the first audit round |
+
+`DEC-097` → [`ADR-0097`](../docs/adr/ADR-0097-a-resize-is-two-numbers-and-the-observer-is-the-fifth-file.md)
+on 2026-08-31 — **a resize is two numbers, and the audit's observer is the fifth declared file.**
+Answered by the architect, both halves, without returning anything to the product owner: the
+mechanism `ADR-0096` §4 needs exists, so §4 stands exactly as merged and its second shape does not
+move to its own round. **(b), the load-bearing half.** `ADR-0089` §3 is a **three-way** partition —
+acts a player's hands reach (*click, type, navigate, reload, clear storage*), reads (*anything*),
+and application-state writes (*forbidden*) — so read-versus-write was the wrong axis, and both wrong
+answers were expensive: a *read* licenses every field on the CDP call, a *write* makes §4
+unbuildable. **A viewport resize is an act**, the sixth member of that first list, and §3 stands
+byte-unchanged. `scripts/qa/drive.mjs` gains one verb, `size <width> <height>`, which sends
+`Emulation.setDeviceMetricsOverride` with **`width`, `height`, `deviceScaleFactor: 0`, `mobile:
+false` and no other field**, reads the viewport back from the page, and **exits 1 if it is not the
+viewport it was asked for**. **The classification is a property of the fields, not of the method
+name**, and that is measured rather than argued: with the app's own `width=device-width` meta,
+`mobile: true` applies mobile shrink-to-fit, widens the layout viewport **390 → 520** to contain
+overflowing content and makes an `R2` *not met* read **`met`** — a silent false pass in the
+criterion `ADR-0096` predicts will fire hardest — while fabricating `screen` and
+`devicePixelRatio`, which puts any finding outside `ADR-0089` §4's reproducibility test. It also
+buys nothing: `pointer: coarse`, `hover: none`, `maxTouchPoints` and `ontouchstart` were unchanged
+in all three states, because touch is a separate CDP domain. **Three measured facts make the verb
+possible at all** in a driver that runs one process per verb: the override **survives the session
+detaching**, **survives `Page.navigate`**, and is **per-target**. And the live-tab claim was
+measured directly — across a 390 × 664 → 720 × 900 resize the page's JS identity value was
+byte-identical (so a live socket and a seated player survive it), exactly one `resize` fired, and a
+`min-height: 100dvh` column re-measured 664 → 900. So §4's two shapes are **two measurements of one
+tab**, and `ADR-0018`'s mid-duel re-seat is never approached. **Both tabs are resized, read and
+returned to `phone` together**, because moving only one confounds the shape with the seat and the
+finding stops being attributable. `Browser.setWindowBounds` — the honest-by-construction fallback
+`DEC-097` anticipated — is **rejected on measurement, not preference**: Chrome clamps a window to a
+**500 px minimum width**, so a request for 390 × 664 produced a **500 × 577** viewport, and the
+window carries 87 px of chrome the viewport does not, so 720 × 900 produced **720 × 813**.
+`ADR-0096` §4's numbers are viewport numbers — 664 is the smallest `100dvh` the column is asked to
+fill — and window sizing cannot express either of them. **(a) The declared-file set becomes five.**
+`.claude/agents/audit.md` is licensed to **mention** `qa-cycle` in the one stack-lifecycle sentence
+`qa.md` and `uat.md` both carry, and never to invoke it, on `ADR-0092` §2's precedent — and it is
+amended because `ADR-0092` §8's own test is met, not because a focus was added: the briefs
+contradict at the sentence level, since `ADR-0096` §2 froze `ADR-0092` §3 **byte-unchanged for `qa`
+and `uat`**, where an observation with no card, token or literal behind it is a **question** capped
+at three, while under the audit it is a **finding** against a rubric criterion. One file switched by
+a scope word is the leak §8 built two files to make impossible, and the evidence it is not
+hypothetical is round 3 promoting **zero** questions, correctly, on a product the human called raw.
+`ADR-0092` §8 otherwise applies unamended — one manager, one ledger, no new skill, no `Write` on the
+observer, and `qa-manager.md` still names the cycle nowhere. The check gains `audit` and was
+verified to exit **0** on today's tree, **0** with the five, **1** with a sixth. **Portrait only.**
+The human settled orientation after `ADR-0096` merged — ***"we are ok to support only one
+orientation for mobile form factor"*** — and §5 records it where §4 left the question: no rotation
+handling, no reflow decision, no second mobile shape, and `screenOrientation` is the third field
+`size` pins by omission. `ADR-0089` §§2a, 2b and 2c are re-checked one at a time — no package
+enters, the verb spawns no process so no denied verb is approached, `build.yml` keeps its two jobs —
+with the corollary this focus needed said out loud: **a shape walked is not a surface supported.**
+It also refines one stated reason in two merged ADRs without moving either decision: the ~500 px
+clip `ADR-0092` §2 and `ADR-0096` §4 both attribute to headless *capture* belongs to window
+*sizing*, and an overridden 390 × 664 captures faithfully at exactly 390 × 664 — so `shot` keeps
+working at the shape the whole duel is walked at. **The costs are named rather than waved at**: a
+resize is a real event, so the `record`/`frames` evidence `R1` rests on gets noisier at exactly the
+beats §4 doubles; the current shape is *tab* state, so a **forgotten** restore has no catch, only a
+printed transcript line; the field discipline is a convention in one file that fails toward a false
+pass and no CI job may guard it, because §2b forbids one; and device emulation is foreclosed
+permanently, so a future criterion about tap targets or hover-only affordances returns as a new
+`DEC` rather than being widened into by a ticket.
 
 `DEC-096` → [`ADR-0096`](../docs/adr/ADR-0096-the-audit-judges-a-whole-duel-against-a-frozen-rubric.md)
 on 2026-08-31 — **the audit judges a whole duel against a frozen rubric, and no round may grow
@@ -761,8 +821,10 @@ answered `not met`, so the ceiling is known before a round starts; the rubric is
 invocation**, no round may grow itself, and `PASS` at `A(N) = 0` says the list is satisfied and
 never that the product is finished. **No severity and no backlog under this focus**: a finding
 deferred by the eight-cap stays counted. Registered and answered in the same PR (the `DEC-039`
-path), so it never sat in the open table above. Registers `DEC-097` — **the architect's**, the
-mechanism. Its one escalation to the human — **is a phone a supported surface?** — was answered the
+path), so it never sat in the open table above. Registered `DEC-097` — **the architect's**, the
+mechanism — which
+[`ADR-0097`](../docs/adr/ADR-0097-a-resize-is-two-numbers-and-the-observer-is-the-fifth-file.md)
+answered the same day, above, so §4 is buildable as merged. Its one escalation to the human — **is a phone a supported surface?** — was answered the
 same day in their own words, ***"we have to support phone size"***, and §4 is rewritten around it
 rather than reasoned toward it: the walk runs at **two shapes**, the whole duel at `phone`
 **390 × 664** and `R2`/`R3` again at `laptop` **720 × 900**, with **one bar checked twice and never
@@ -772,7 +834,9 @@ a browser"* and *"Two browsers, one room link"* name a browser and **no device**
 call resolves a silence in the direction the vision's own words already permit rather than
 contradicting a sentence — and §4 names what would change that answer (a second layout, a reduced
 feature set or a separate application would be a real second surface and would belong in the
-vision). **Phone landscape is left open** and named rather than answered by the walk's silence.
+vision). **Phone landscape was left open by §4 and is now answered** — the human's *"we are ok to support
+only one orientation for mobile form factor"*, recorded by
+[`ADR-0097`](../docs/adr/ADR-0097-a-resize-is-two-numbers-and-the-observer-is-the-fifth-file.md) §5.
 
 `DEC-095` → [`ADR-0095`](../docs/adr/ADR-0095-the-table-states-who-took-the-pot-and-never-names-a-hand.md)
 on 2026-08-30 — **the table states who took the pot, and never names a hand.** Answered by the
