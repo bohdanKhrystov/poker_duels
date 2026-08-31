@@ -990,9 +990,10 @@ it("the first client is unaffected by the second signing out", async () => {
 
   await within(signUpForm).findByText(SIGNED_UP);
 
-  // Verify A's storage before B's sign-out
+  // Verify A's storage before B's sign-out. A's claim signs it in right afterwards
+  // (`TASK-120601`), so this browser now holds a session rather than none.
   expect(readDeviceId(storageA)).toBe(PLAYER_SEAT_0.deviceId);
-  expect(readSessionToken(storageA)).toBeNull();
+  expect(readSessionToken(storageA)).not.toBeNull();
 
   cleanup();
 
@@ -1075,9 +1076,10 @@ it("the first client is unaffected by the second signing out", async () => {
 
   cleanup();
 
-  // Verify A's storage is unchanged
+  // Verify A's storage is unchanged: still its device id, and still the session
+  // its own claim opened — B signing out never touches A's storage.
   expect(readDeviceId(storageA)).toBe(PLAYER_SEAT_0.deviceId);
-  expect(readSessionToken(storageA)).toBeNull();
+  expect(readSessionToken(storageA)).not.toBeNull();
 
   // Boot A fresh to verify it renders unchanged
   window.location.hash = "";

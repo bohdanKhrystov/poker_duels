@@ -50,9 +50,30 @@ const FORBIDDEN_BODY_KEYS = [
   "id",
 ] as const;
 
-/** Fixed by the order `driveEveryAccountCall` below calls them in — used to name a failing call. */
+/**
+ * Fixed by the order `driveEveryAccountCall` below awaits them in — used to name a failing call
+ * against `hrefsAfterEachCall`, which has one entry per awaited call, not per request sent.
+ */
 const CALL_LABELS = [
   "signUp",
+  "signIn",
+  "attachRecoveryEmail",
+  "forgotPassword",
+  "verifyEmail",
+  "resetPassword",
+  "revokeThisDevice",
+  "signOut",
+] as const;
+
+/**
+ * Fixed by the order `driveEveryAccountCall` below sends requests in — used to name a failing
+ * entry in `calls`, which `signUp` now contributes two of (`TASK-120601`): the request it sends
+ * itself, and the `POST /api/auth/sign-in` it sends right after a `201`, before this file's own
+ * explicit `signIn` gets its turn.
+ */
+const FETCH_LABELS = [
+  "signUp",
+  "signUp's follow-up signIn",
   "signIn",
   "attachRecoveryEmail",
   "forgotPassword",
@@ -135,8 +156,9 @@ function recordingFetch(...answers: readonly ApiResponse[]): {
  * comes, and the four recovery calls run between `signIn` and `revokeThisDevice` so neither one
  * disturbs the token `revokeThisDevice` and `signOut` still need (none of the four write it).
  * Storage is (re-)seeded with both credentials right before every call that reads them, so no call
- * is ever skipped for want of a precondition and the recorder always ends with exactly eight
- * entries.
+ * is ever skipped for want of a precondition and the recorder always ends with exactly nine
+ * entries — eight named calls, plus the sign-in `signUp` now sends on its own behalf after a `201`
+ * (`TASK-120601`).
  */
 async function driveEveryAccountCall(): Promise<{
   readonly calls: readonly RecordedCall[];
@@ -145,6 +167,7 @@ async function driveEveryAccountCall(): Promise<{
   const storage = inMemoryStorage();
   const recorder = recordingFetch(
     { status: 201, json: async () => ({}) }, // signUp
+    { status: 200, json: async () => ({ sessionToken: TOKEN }) }, // signUp's own follow-up signIn
     { status: 200, json: async () => ({ sessionToken: TOKEN }) }, // signIn
     { status: 202, json: async () => ({}) }, // attachRecoveryEmail
     { status: 202, json: async () => ({}) }, // forgotPassword
@@ -214,10 +237,10 @@ describe("no secret reaches a URL", () => {
   it("puts no handle, password or token in any path it requests", async () => {
     const { calls } = await driveEveryAccountCall();
 
-    // Presence, before absence: the drive produced exactly the eight calls it claims to, and the
+    // Presence, before absence: the drive produced exactly the nine calls it claims to, and the
     // secrets this test is about to search for really did reach a real request somewhere legitimate
     // — a body field, a header — so the checks below are over something, not over nothing.
-    expect(calls.length).toBe(8);
+    expect(calls.length).toBe(9);
     expect(calls.some((call) => call.body?.includes(HANDLE))).toBe(true);
     expect(calls.some((call) => call.body?.includes(PASSWORD))).toBe(true);
     expect(
@@ -228,12 +251,12 @@ describe("no secret reaches a URL", () => {
     expect(calls.some((call) => call.body?.includes(ADDRESS))).toBe(true);
     expect(calls.some((call) => call.body?.includes(RESET_TOKEN))).toBe(true);
 
-    // Absence: eight calls times seven secrets, every failure naming both.
+    // Absence: nine calls times seven secrets, every failure naming both.
     for (const [index, call] of calls.entries()) {
       for (const secret of SECRETS) {
         expect(
           call.path.includes(secret),
-          `${CALL_LABELS[index]}'s path (${JSON.stringify(call.path)}) must not contain ${JSON.stringify(secret)}`,
+          `${FETCH_LABELS[index]}'s path (${JSON.stringify(call.path)}) must not contain ${JSON.stringify(secret)}`,
         ).toBe(false);
       }
     }
@@ -241,9 +264,10 @@ describe("no secret reaches a URL", () => {
 
   it("sends no player id in any body it writes", async () => {
     const { calls } = await driveEveryAccountCall();
-    expect(calls.length).toBe(8);
+    expect(calls.length).toBe(9);
     const [
       signUpCall,
+      ,
       signInCall,
       attachRecoveryEmailCall,
       forgotPasswordCall,
@@ -300,7 +324,7 @@ describe("no secret reaches a URL", () => {
     expect(before.length).toBeGreaterThan(0);
 
     const { calls, hrefsAfterEachCall } = await driveEveryAccountCall();
-    expect(calls.length).toBe(8);
+    expect(calls.length).toBe(9);
     expect(hrefsAfterEachCall.length).toBe(8);
 
     for (const [index, href] of hrefsAfterEachCall.entries()) {
@@ -324,7 +348,7 @@ describe("no secret reaches a URL", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const { calls } = await driveEveryAccountCall();
-    expect(calls.length).toBe(8);
+    expect(calls.length).toBe(9);
 
     const logged = [
       ...logSpy.mock.calls,
@@ -347,8 +371,8 @@ describe("no secret reaches a URL", () => {
 
   it("sends the device id and the session token in headers and nowhere else", async () => {
     const { calls, hrefsAfterEachCall } = await driveEveryAccountCall();
-    expect(calls.length).toBe(8);
-    const [signUpCall, , , , , , revokeCall, signOutCall] = calls;
+    expect(calls.length).toBe(9);
+    const [signUpCall, , , , , , , revokeCall, signOutCall] = calls;
 
     // Positive half: both bearer credentials really did travel, each in a header, at least once —
     // proving they were used, rather than proving nothing was ever sent.
@@ -363,12 +387,12 @@ describe("no secret reaches a URL", () => {
       for (const secret of bearerSecrets) {
         expect(
           call.path.includes(secret),
-          `${CALL_LABELS[index]}'s path must not contain ${JSON.stringify(secret)}`,
+          `${FETCH_LABELS[index]}'s path must not contain ${JSON.stringify(secret)}`,
         ).toBe(false);
         if (call.body !== undefined) {
           expect(
             call.body.includes(secret),
-            `${CALL_LABELS[index]}'s body must not contain ${JSON.stringify(secret)}`,
+            `${FETCH_LABELS[index]}'s body must not contain ${JSON.stringify(secret)}`,
           ).toBe(false);
         }
       }

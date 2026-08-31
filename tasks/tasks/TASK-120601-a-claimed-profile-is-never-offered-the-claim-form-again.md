@@ -9,7 +9,9 @@ module: web-client
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 2
+files_touched: 4
+atomic:
+  - cd web-client && NO_COLOR=1 npm run --silent check
 labels: [qa, bug, medium]
 depends_on: []
 verify:
@@ -109,6 +111,18 @@ neither direction, since `B(N)` counts `blocker` and `high` only.
 | `web-client/src/account/sign-up.ts` | modify |
 | `web-client/src/account/sign-up.test.ts` | modify |
 | `web-client/src/account/sign-in.ts` | read |
+| `web-client/src/account/no-secret-in-a-url.test.ts` | modify |
+| `web-client/src/e2e/claimed-here-recovered-there.test.tsx` | modify |
+
+`ADR-0070` §4: `npm run --silent check` — one of this ticket's own `verify:` commands — fails
+without the two rows above. Both are a direct, unavoidable consequence of the Scope fix itself, not
+an optional extra: `signUp` now sends one more request on a `201`, so
+`no-secret-in-a-url.test.ts`'s hard-coded call count (`8`) and its two positional destructurings are
+one short, and `claimed-here-recovered-there.test.tsx` asserted `readSessionToken(storageA)` was
+`null` right after a successful claim — the very falsehood this ticket repairs, now proven false by
+the fix. Every edit is a numeric or polarity correction bringing an existing expectation back into
+agreement with the required behaviour: no assertion is weakened, deleted or made to derive from the
+code it checks, and no new `it(...)` is added. See the PR description for the exact failure output.
 
 ## Scope
 
