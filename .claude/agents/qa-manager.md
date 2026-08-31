@@ -138,6 +138,30 @@ it as `BLOCKED`; never invent the evidence. An unmet criterion a looking human c
 a harness defect under `ADR-0089` §4 — filed against `EPIC-12`, repaired in `scripts/qa/`, excluded
 from every count, and never repaired in production code.
 
+## The audit arithmetic
+
+`qa-manager` ends an audit round the same way it ends a `qa` or `uat` round — a count, a
+comparison and a verdict — but the count is a different shape, and Step 6 gains a second, parallel
+table for it below.
+
+- **`A(N)` is the number of criteria answered `not met` in round `N`** — not observations. A
+  criterion failing at six beats is **one** unmet criterion whose ticket names all six, so `A(N)`
+  can never exceed the rubric's size: **five today**, a ceiling known before the round starts
+  (`ADR-0096` §5). *"Each time report more and more bugs"* is not a shape this quantity can take.
+- **A round ends when every criterion has been answered at every beat.** The auditor has no
+  discretion to keep looking — there is nothing else on the list for it to look at.
+- **No severity, and no backlog.** `EPIC-12` §Termination rule 2 is scoped to the `qa` and `uat`
+  focuses (`ADR-0096` §5) and stays byte-unchanged there. Under this focus a finding deferred by
+  rule 3's eight-ticket cap **stays an unmet criterion and is counted again in the next round** —
+  filing does not reduce `A(N)`, only repair does — and the cap orders repair by the rubric's own
+  order, **top to bottom**, a deterministic tiebreak with no judgment in it.
+- **An audit round reports `A(N)` and no `B(N)`.** A functional defect the round stumbles on is
+  filed to the one ledger and enters the next `qa` round's `B(N)`, never the audit's count — the
+  same reason `ADR-0089` §4 and `ADR-0092` §5 keep three other classes out of `B(N)`: each count
+  must measure one thing.
+- **Round 1 has no `A(0)` to compare against**, exactly as round 1 has no `B(0)`. State it in the
+  round story, so nobody reads the missing comparison as an exemption somebody granted.
+
 ## Step 1 — Dedupe before anything else
 
 For each finding, search the existing round stories and their tickets for the same defect. Match on
@@ -261,6 +285,28 @@ stays open in the round story and the terminal report restates it — the cycle 
 converging is a better outcome than a fourth round. Say what you found, what you filed, what you
 deferred, and what you would look at first.
 
+**Under the audit focus, the verdict comes from `A(N)` instead of `B(N)`** — a second table, not a
+rewrite of the one above, because `ADR-0096` §5's *"each count must measure one thing"* forbids
+folding the two counts into one:
+
+| Verdict | When | Meaning |
+| --- | --- | --- |
+| `PASS` | `A(N) == 0` | every criterion in the frozen rubric was met, at every beat, at one commit, on one machine, at the two shapes `ADR-0096` §4 names |
+| `PROCEED` | `A(N) > 0`, `N < 3`, and `A(N) < A(N-1)` unless `N == 1` | repair this fix set, then retest |
+| `STOP_DIVERGING` | `A(N) >= A(N-1)` and `N > 1` | the loop is not winning — end it |
+| `STOP_BUDGET` | `N == 3` | three rounds ran |
+| `STOP_BLOCKED` | an unanswered human-only decision gates a member of the current fix set | end and ask |
+
+**`PASS` means one thing only, and no more: every criterion in the frozen rubric was met, at every
+beat, at one commit, on one machine, at the two shapes `ADR-0096` §4 names.** It never means the
+product is finished — `ADR-0089` §2c and `ADR-0093` §2 forbid citing it as that, here or in any
+other register.
+
+`STOP_DIVERGING` and `STOP_BUDGET` both say *the product is still raw and here is the list of
+how* — the same successful-stop reading the `B(N)` table gives them above, not a failure of the
+round. `STOP_BLOCKED` is unchanged: it fires only when an unanswered human-only decision gates a
+member of the current fix set, whichever count triggered the round.
+
 ## Report
 
 ```
@@ -277,3 +323,9 @@ REASONING: <why this verdict — three sentences at most>
 ```
 
 If you changed any severity `qa` assigned, list each change and its reason under `REASONING`.
+
+**Under the audit focus**, `A(N): <count>   A(N-1): <count or n/a>` replaces the `B(N):` line, the
+report carries no `BASELINE:` line — `ADR-0096` §5 lists this focus's termination rules and a
+baseline exemption is not one of them — and `PROPOSED CRITERIA:` names each proposal routed at
+triage and who it was routed to: a `DEC-NNN` for the product owner, or the human, per `ADR-0092`
+§5's routing.
