@@ -1,5 +1,6 @@
 import { type ReactElement, useRef, useState } from "react";
 import type { PlayerProfile } from "./profile";
+import { useReportNameWrite } from "./profile-provider";
 import type { SetNameOutcome } from "./set-name";
 import {
   PERMANENCE_LINE,
@@ -32,6 +33,9 @@ export function NameSurface(props: {
     SetNameOutcome["kind"],
     "named"
   > | null>(null);
+  // So the profile the provider holds — and every consumer of it — carries
+  // the accepted name on this render, not on the next boot.
+  const reportNameWrite = useReportNameWrite();
 
   const displayName = wonName ?? profile.displayName;
 
@@ -57,6 +61,9 @@ export function NameSurface(props: {
     submitInFlight.current = true;
     setIsSubmitting(true);
     setName(inputValue).then((outcome) => {
+      // Unconditional: the hook itself is a no-op on every refusal kind, so
+      // branching on `kind` here would only duplicate that decision.
+      reportNameWrite(outcome);
       if (outcome.kind === "named") {
         setWonName(outcome.profile.displayName);
         return;

@@ -8,8 +8,16 @@ import {
 } from "@testing-library/react";
 import { NameSurface } from "./NameSurface";
 import { aProfile } from "./profile-fixture";
+import { useReportNameWrite } from "./profile-provider";
 import type { SetNameOutcome } from "./set-name";
 import { PERMANENCE_LINE } from "./name-text";
+
+// A stubbed no-op by default, matching `useReportNameWrite`'s own answer
+// where no provider is above — the one test that cares what it was called
+// with overrides this return value for its own render.
+vi.mock("./profile-provider", () => ({
+  useReportNameWrite: vi.fn(() => (): void => {}),
+}));
 
 describe("the name surface", () => {
   it("shows the name the server sent, and offers no way to change it", () => {
@@ -247,6 +255,49 @@ describe("the name surface", () => {
       "";
     expect(renderedText).not.toContain("  ada  ");
     expect(screen.queryByText(/^ada$/)).toBeNull();
+  });
+
+  it("a successful write is reported to the profile provider", async () => {
+    const reportNameWrite = vi.fn();
+    // `mockReturnValue`, not `...Once`: typing into the field re-renders the
+    // surface before the click does, so more than one render calls the hook
+    // before `handleSubmit` is the one attached to the form. Every call in
+    // this test must answer with the same spy, or the closure the click
+    // actually invokes would close over the default no-op instead.
+    vi.mocked(useReportNameWrite).mockReturnValue(reportNameWrite);
+
+    // The returned name differs from what is typed below: a call that
+    // forwarded the typed input instead of the server's outcome would carry
+    // "ada", never "Grace", and fail the assertion.
+    const outcome: SetNameOutcome = {
+      kind: "named",
+      profile: aProfile({ displayName: "Grace" }),
+    };
+    const setNameSpy = vi.fn<[string], Promise<SetNameOutcome>>(() =>
+      Promise.resolve(outcome),
+    );
+
+    try {
+      render(
+        <NameSurface
+          profile={aProfile({ displayName: null })}
+          setName={setNameSpy}
+        />,
+      );
+
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "ada" },
+      });
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(reportNameWrite).toHaveBeenCalledWith(outcome);
+      });
+    } finally {
+      // Leaves the shared module mock the way every other test in this file
+      // finds it: answering with a fresh no-op, never this test's spy.
+      vi.mocked(useReportNameWrite).mockReturnValue((): void => {});
+    }
   });
 
   it("gives every refusal its own sentence, from one render each", async () => {
