@@ -368,18 +368,26 @@ export function Lobby(): ReactElement {
       {profile !== null && profile.kind === "profile" && setName !== null && (
         <NameSurface profile={profile.profile} setName={setName} />
       )}
-      <button type="button" onClick={() => open("duels")}>
-        {HISTORY_HEADING}
-      </button>
-      <button type="button" onClick={() => open("leaderboard")}>
-        {LADDER_HEADING}
-      </button>
-      {/* ADR-0036: the door is offered whatever the profile read answered —
-          nothing here gates on having an account, the same rule the record's
-          and the ladder's doors already carry. */}
-      <button type="button" onClick={() => open("account")}>
-        {ACCOUNT_HEADING}
-      </button>
+      {/* TASK-121303: the three doors were adjacent inline-level buttons with
+          no text node between them (JSX elides it) and no layout on the
+          bare section around them, so they abutted with no space at any
+          zoom. A flex column blockifies each button and gives it a gap —
+          separation only. DEC-094 (open) still owns whether a door should
+          wear the client's control dress; nothing here answers it. */}
+      <div className="flex flex-col gap-2">
+        <button type="button" onClick={() => open("duels")}>
+          {HISTORY_HEADING}
+        </button>
+        <button type="button" onClick={() => open("leaderboard")}>
+          {LADDER_HEADING}
+        </button>
+        {/* ADR-0036: the door is offered whatever the profile read answered —
+            nothing here gates on having an account, the same rule the record's
+            and the ladder's doors already carry. */}
+        <button type="button" onClick={() => open("account")}>
+          {ACCOUNT_HEADING}
+        </button>
+      </div>
     </section>
   );
 }
