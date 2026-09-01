@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121301
 title: The runout arrives street by street on the screen, not only in the log
 type: task
-status: ready
+status: blocked
 parent: STORY-1213
 module: web-client
 estimate: S
