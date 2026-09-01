@@ -217,7 +217,7 @@ export function Lobby(): ReactElement {
   // They can reach the history screen from here.
   if (screen === "duels" && read !== null) {
     return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <HistoryScreen read={read} />
         <button type="button" onClick={leave}>
           Back
@@ -232,7 +232,7 @@ export function Lobby(): ReactElement {
   // no transport at all.
   if (screen === "leaderboard" && readLadder !== null) {
     return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <LadderScreen read={readLadder} />
         <button type="button" onClick={leave}>
           Back
@@ -246,7 +246,7 @@ export function Lobby(): ReactElement {
   // and AccountScreen itself knows nothing about navigation (ADR-0060 §4).
   if (screen === "account") {
     return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <AccountScreen
           profile={profile}
           signedIn={signedIn}
@@ -275,7 +275,7 @@ export function Lobby(): ReactElement {
   // `leaderboard` already take when their own read is unavailable.
   if (screen === "sign-in" && account !== null) {
     return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <h2 className="text-small">{SIGN_IN_HEADING}</h2>
         <SignInScreenBody
           signIn={account.signIn}
@@ -297,7 +297,7 @@ export function Lobby(): ReactElement {
   // takes above.
   if (screen === "verify" && account !== null) {
     return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <VerifyScreen token={mailedToken} verify={account.verifyEmail} />
         <button type="button" onClick={leave}>
           Back
@@ -321,7 +321,7 @@ export function Lobby(): ReactElement {
   // other one, not replaced here).
   if (screen === "reset" && account !== null) {
     return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4">
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <ResetScreen
           token={mailedToken}
           reset={account.resetPassword}
@@ -335,7 +335,7 @@ export function Lobby(): ReactElement {
   }
 
   return (
-    <section>
+    <section className="p-6">
       {/* ADR-0098 §1: the coin-and-two-tone lockup, card-drawn only on the
           front door's pre-create branch. `aria-label` pins the accessible
           name to "Poker Duels" — the card's markup has no text node between
