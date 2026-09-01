@@ -1605,12 +1605,31 @@ describe("the duel state", () => {
       presence: "AWAY",
       graceRemainingMillis: 60000,
     });
-    expect(stateWithPresence.presenceCount).toBe(1);
-    const state = duelState.applyServerMessage(stateWithPresence, {
+    // rejectionCount is driven to a value distinct from presenceCount's: two different counters
+    // that both happen to read 1 could not catch an implementation that carries one over as the
+    // other's value.
+    const stateAfterFirstRejection = duelState.applyServerMessage(
+      stateWithPresence,
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 3, minimum: 25 },
+      },
+    );
+    const stateWithBothCounters = duelState.applyServerMessage(
+      stateAfterFirstRejection,
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 4, minimum: 25 },
+      },
+    );
+    expect(stateWithBothCounters.presenceCount).toBe(1);
+    expect(stateWithBothCounters.rejectionCount).toBe(2);
+    const state = duelState.applyServerMessage(stateWithBothCounters, {
       type: "RoomJoined",
       code: "EFGH",
       seat: 1,
     });
     expect(state.presenceCount).toBe(1);
+    expect(state.rejectionCount).toBe(2);
   });
 });
