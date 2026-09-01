@@ -155,7 +155,7 @@ question it is. The case that would check the answer is written when the answer 
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-121401](../tasks/TASK-121401-the-catalogue-sees-a-present-player-marked-away.md) | The catalogue sees a present player marked away | ready |
+| [TASK-121401](../tasks/TASK-121401-the-catalogue-sees-a-present-player-marked-away.md) | The catalogue sees a present player marked away | done |
 | [TASK-121402](../tasks/TASK-121402-the-duel-table-column-fits-the-phone-it-is-nested-in.md) | The duel table's column fits the phone it is nested in | ready |
 | [TASK-121404](../tasks/TASK-121404-a-connections-room-becomes-a-session-type-the-directory-can-read.md) | A connection's room becomes a session type the directory can read | ready |
 | [TASK-121403](../tasks/TASK-121403-presence-is-about-the-room-the-reader-is-in.md) | Presence is about the room the reader is sitting in | backlog |
