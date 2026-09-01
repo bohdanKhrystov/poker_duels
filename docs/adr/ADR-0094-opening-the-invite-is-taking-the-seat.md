@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-30
+- **Qualified by** [`ADR-0105`](ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md)
+  in exactly one case: §1's *opening an invite seats the player* holds for every player who is free
+  to sit down, and **not** for one who already holds a seat in a running duel — that player takes no
+  seat, is handed back the duel they are in, and is told so. §1's *no confirmation, no accept-or-
+  decline, no pre-join view* is untouched, and §§2–4 are untouched.
 - **Resolves:** `DEC-092` — does the product build the two screens its merged cards draw — an
   offered-seat confirmation on the invite path, and a dedicated code-entry screen — or are those
   two cards corrected to the join path that shipped? Registered and answered in the same PR (the
