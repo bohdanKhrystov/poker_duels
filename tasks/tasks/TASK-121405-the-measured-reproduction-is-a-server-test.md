@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121405
 title: The measured reproduction is a server test
 type: task
-status: ready
+status: done
 parent: STORY-1214
 module: poker-server
 estimate: XS

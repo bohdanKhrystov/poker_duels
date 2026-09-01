@@ -480,6 +480,38 @@ class DuelSocketDisconnectTest {
         }
     }
 
+    /**
+     * `ADR-0104` §7's first bullet, "the measured reproduction, as a server test": the connection
+     * told the guest is away is the room the disconnecting seat left, not the player who held it.
+     * The host's *own* device opens a second, roomless `/ws` connection — under `ADR-0018` this
+     * adopts the seat, so the directory's writer for `"host"` becomes this new, roomless
+     * connection — and the guest then disconnects from the room the old connection held. Unlike
+     * [aThirdSocketInNoRoomIsToldNothing], whose stranger resolves to a different player entirely
+     * and so was never at risk, this connection *is* the seat the presence frame is addressed to;
+     * only a lookup scoped by room, not merely by player, can tell it apart from the room it left.
+     */
+    @Test
+    fun thehostsOwnLobbySocketIsToldNothingAboutTheRoomItLeft(): Unit = testApplication {
+        val rooms = testRoomRegistry(MutableClock())
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val setup = client.startDuel()
+
+            val lobby = client.webSocketSession("/ws")
+            lobby.completeHandshake("host")
+
+            setup.guest.close()
+            awaitRoom(rooms, setup.code) { it.isPaused }
+
+            assertTrue(lobby.drainServerMessages().isEmpty())
+        }
+    }
+
     @Test
     fun theFrameIsWrittenEvenWhenTheCloseCancels(): Unit = testApplication {
         val rooms = testRoomRegistry(MutableClock())
