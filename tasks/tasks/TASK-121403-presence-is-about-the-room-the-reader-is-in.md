@@ -3,39 +3,53 @@ schema: 2
 id: TASK-121403
 title: Presence is about the room the reader is sitting in
 type: task
-status: blocked
+status: backlog
 parent: STORY-1214
 module: poker-server
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 2
-labels: [bug, blocker, presence, blocked-on-dec]
-depends_on: []
+files_touched: 6
+labels: [bug, blocker, presence]
+depends_on: [TASK-121404]
+atomic:
+  - the Kotlin compiler — deleting `ConnectionDirectory.writerFor(player)` breaks its call sites in one step, measured 2026-09-01 by `:poker-server:compileTestKotlin` — `SeatDelivery.kt:40` and `DuelSocketWriterDirectoryTest.kt:72,114,119,155`, all `No value passed for parameter 'room'`
+  - the Kotlin compiler — `register` gaining the membership breaks every caller in the same step — `DuelSocket.kt:195`, `SeatDeliveryTest.kt:59` and `ConnectionDirectoryTest.kt:18,36,37,48,49,61,73`, all `No value passed for parameter 'membership'`
+  - ADR-0104 §1 — the unscoped overload is deleted rather than left beside the scoped one, because "a rule that can be bypassed by calling the other method is a convention; a rule with no other method is structural". Keeping both is the only smaller cut, and it is the design the ADR rejects by name
 verify:
-  - ./gradlew :poker-server:test --tests 'duels.poker.server.SeatDeliveryTest'
-  - ./gradlew :poker-server:test --tests 'duels.poker.server.room.RoomPresenceTest'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
+  - ./gradlew :poker-server:test --tests duels.poker.server.SeatDeliveryTest && python3 -c "import xml.etree.ElementTree as ET; r = ET.parse('poker-server/build/test-results/test/TEST-duels.poker.server.SeatDeliveryTest.xml').getroot(); assert r.get('tests') == '8' and r.get('failures') == '0'"
+  - ./gradlew :poker-server:test --tests duels.poker.server.session.ConnectionDirectoryTest && python3 -c "import xml.etree.ElementTree as ET; r = ET.parse('poker-server/build/test-results/test/TEST-duels.poker.server.session.ConnectionDirectoryTest.xml').getroot(); assert r.get('tests') == '9' and r.get('failures') == '0'"
+  - ./gradlew :poker-server:test --tests duels.poker.server.DuelSocketWriterDirectoryTest && python3 -c "import xml.etree.ElementTree as ET; r = ET.parse('poker-server/build/test-results/test/TEST-duels.poker.server.DuelSocketWriterDirectoryTest.xml').getroot(); assert r.get('tests') == '4' and r.get('failures') == '0'"
+  - python3 -c "import pathlib; s = pathlib.Path('poker-server/src/main/kotlin/duels/poker/server/session/ConnectionDirectory.kt').read_text(); d = [l for l in s.splitlines() if l.strip().startswith('public fun writerFor')]; assert len(d) == 1 and 'RoomCode' in d[0], d"
+  - ./gradlew check -PrequireDocker=true
   - python3 .github/scripts/lint_tickets.py
 ---
 
-## Blocked on `DEC-107`. Do not start it, and do not implement from the *Files* table below.
-
-`DEC-107` is registered open for the **architect** and decides *where* a presence frame is scoped
-to the room it is about — which is to say whether this ticket lands in `poker-server`, in
-`web-client`, or in both behind a `PROTOCOL_VERSION` bump that would make it `atomic:`.
-
-**The `## Files` table and the `verify:` block below are placeholders, not evidence.** They name
-the seam the measurements point at so the ticket is not empty, and nothing more. They were **not**
-produced by the `ADR-0069` probe, because the probe needs a change to stub and the change is what
-`DEC-107` decides. When the answering ADR merges, the planner **re-cuts this ticket whole** — the
-`TASK-121301` and `TASK-121302` precedent — measures the file set by stubbing and running
-`.github/workflows/build.yml`'s pull-request gate set in full, and only then does it go `ready`.
-A coder who implements the table as written is implementing a guess.
-
 ## Goal
 
-A player reads presence about the room they are sitting in, and never about a room they have left.
+A frame is delivered to the connection that is in the room the frame is about, so a player reading
+a lobby is never told anything about a room they have left.
+
+## The decision this is cut against
+
+`DEC-107` is **answered and merged**:
+[`ADR-0104`](../../docs/adr/ADR-0104-a-frame-reaches-the-connection-in-the-room-it-is-about.md) — *a
+frame reaches the connection that is in the room it is about*. The placeholder *Files* table and
+`verify:` block this ticket carried until now are gone; both are measured below. Nothing here asks
+for a `DEC`.
+
+The whole mechanism is three edits to production code:
+
+1. **`ConnectionDirectory.writerFor(player: PlayerId)` is deleted** and replaced by
+   `public fun writerFor(player: PlayerId, room: RoomCode): ConnectionWriter?`, which answers the
+   registered writer only when the connection registered for `player` is, **at the instant of the
+   call**, in `room`. A connection that has entered no room answers `null` for every room (§1).
+2. **`register` takes the connection's `RoomMembership`** —
+   `register(player: PlayerId, writer: ConnectionWriter, membership: RoomMembership)` — one object
+   shared by reference with the socket loop that writes it, never copied, so the two cannot drift (§2).
+3. **`deliver`'s one edited line** — `val writer = connections.writerFor(player, room.code) ?: continue`.
+   Its signature does not change and **none of its seven call sites is edited**: `Application.kt:182`
+   and `DuelSocket.kt:222,498,568,586,642,645` (§1).
 
 ## The defect
 
@@ -55,98 +69,196 @@ them.* Neither had left. Reproduced four times on the live stack at `e1a37a80`.
 ```
 
 A holds no seat anywhere at `021602`. The frame is about the room A **left**, produced when the
-*other* player's socket closed there, and delivered to the connection A opened afterwards. A
-second capture has the same frame landing 307 ms after `Welcome` on a connection that then sat in
-the lobby for ninety seconds. The client stores it, and renders it in whatever room it enters next.
+*other* player's socket closed there, and delivered to the connection A opened afterwards.
 
-**Controlled negative.** With both profiles roomless — so a reload produces no presence frame at
-all — a create-and-join was clean: **zero `OpponentPresence` frames on either wire, and neither
-screen marked anything.** Remove the stale frame and the symptom goes, in both directions.
-
-**Two facts that bound what a fix may claim.**
+**Two facts that bound what this ticket may claim.**
 
 - **The server is not confused about the duel.** Under *The duel is paused.* the acting player's
-  `Call 100` was **accepted**: stack 9,950 → 9,900, turn passed. The engine and the room were
-  correct throughout. Nothing here is a rules or pot defect.
-- **Nobody was folded.** In every reproduction the hand stayed at Hand 1, preflop.
-  `RoomRegistry.expireGracePeriods()` folding an expired seat is real code, but a *present* player
-  being folded was **not reproduced**. Do not write a test asserting it, and do not repair it here.
+  `Call 100` was **accepted**: stack 9,950 → 9,900, turn passed. Nothing here is a rules or pot
+  defect, and nothing in this ticket touches the engine or the room model.
+- **Nobody was folded.** In every reproduction the hand stayed at Hand 1, preflop. `ADR-0104` §9
+  states a mechanism that fits the human's report of repeated folding and says in as many words
+  that it is **not** evidence of the cause. **Do not write a test asserting a fold, and do not
+  claim in the PR body that this explains one.** If a fold of a *present* player is ever
+  reproduced after this lands, it is a new defect and a new ticket.
 
-## Why this is a decision and not a patch
+## Three things a coder can get wrong here
 
-Read from source, and offered as a reading rather than as a cause:
-
-- `poker-server/src/main/kotlin/duels/poker/server/SeatDelivery.kt` — `deliver` resolves
-  `Addressed.seat` to a `PlayerId` through the room's seating, then takes
-  `connections.writerFor(player)`: that player's **current** connection, whatever room it is in.
-  Its KDoc says it *"reads `Addressed.seat` and nothing else"*, on purpose.
-- `poker-server/src/main/kotlin/duels/poker/server/protocol/ServerMessage.kt` —
-  `OpponentPresence(presence, graceRemainingMillis)` carries **no room and no seat**. `ADR-0028` §1
-  chose that: *"a seat field would be a second thing to get wrong at the one place that already
-  decides where a frame goes"*.
-- `web-client/src/store/duel-state.ts` — the `OpponentPresence` case applies the frame
-  unconditionally.
-
-So there is **no point on the path at which a stale frame could be recognised**, and the four
-places it could be given one differ in cost — one of them moves `PROTOCOL_VERSION`. Choosing is
-`CLAUDE.md` rule 5's *never guess a decision*, which is why this ticket blocks rather than picks.
+- **`@Volatile` is not this ticket's, and must not be undone by it.** `RoomMembership.code` carries
+  it from [`TASK-121404`](TASK-121404-a-connections-room-becomes-a-session-type-the-directory-can-read.md),
+  gated there by `RoomMembershipTest`. This ticket **stores the object and reads `membership.code`
+  at lookup time**; it must not copy the `RoomCode` out at registration, because a copied value is
+  read once and then stale forever, and no single-threaded test can see the difference.
+  `ConnectionDirectoryTest.alookupFollowsTheRoomTheConnectionMovesTo` is the gate on that.
+- **Membership-before-delivery becomes load-bearing ordering.** `replyToJoinRoom` sets `room.code`
+  *before* delivering its resume frames and before a seating's outbound; `replyToCreateRoom` sets
+  it before it replies. All four sites are already correct — a future one that delivered first
+  would silently drop the frames it had just produced. `ADR-0104` §2 says to pin this with a test
+  rather than a comment, and `DuelSocketWriterDirectoryTest` is where it is pinned: every one of
+  its four cases now sends `CreateRoom` and looks the writer up by the room the server named back,
+  so a connection whose membership were written after its frames would fail there.
+- **A silent drop now has two indistinguishable causes.** A frame for a seat with no writer and a
+  frame for a connection in another room are dropped identically, and `ADR-0104` accepts that as a
+  cost: *"neither is counted or logged … no instrument points at it."* The ADR designs no counter
+  and no log, so **this ticket adds none** — but do not write a comment or a PR sentence claiming
+  the ambiguity is absent.
+- **`forget` loses its one-line atomicity, and no test in this repo will tell you.** Today it is
+  `writers.remove(player, writer)` — one `ConcurrentHashMap` compare-and-remove. Once the stored
+  value is a pair, the obvious rewrite is *read, compare the writer, then remove by key*, and that
+  is a read-modify-write with a window in it: an `ADR-0018` adoption landing between the two calls
+  makes the older socket's cleanup delete the **newer** socket's entry, and the surviving
+  connection silently stops receiving frames — which is the exact failure
+  `ConnectionDirectory.forget`'s two-argument shape was built to prevent. Both `forget` tests in
+  `ConnectionDirectoryTest` are single-threaded and pass either way, and so does the rest of the
+  suite. **The removal must stay a single compare-and-remove against the stored value** — e.g. read
+  the entry once and pass *that instance* to the two-argument `remove` — and the PR body must say
+  which call performs it. This is the one requirement in the ticket that no gate catches, which is
+  why it is written out rather than left to §Scope's *"how the entry is stored is the coder's"*.
 
 ## Files
 
-**Placeholder. See the block at the top of this ticket.**
+Measured by probing, not remembered (`ADR-0069`, `ADR-0070`). The three edits above were stubbed in
+one tree on top of `TASK-121404`'s move, and `.github/workflows/build.yml`'s pull-request gate set
+was run in full and repeatedly until it exited 0: `./gradlew check -PrequireDocker=true` with
+Docker up (Colima, Engine 29.5.2), **no suite skipped**, `verifyProtocolTypes` and `verifyDuelScript`
+both executed, ending **2 453 tests, 0 failures, exit 0**; then `npm ci`, `npm run check` (117 files,
+985 tests) and `npm run build` in `web-client/`, all exit 0. Three red runs preceded it and each
+named its own paths: a `ktlint` `no-consecutive-blank-lines`, then the twelve `compileTestKotlin`
+errors quoted in `atomic:`, then an import-order violation. The probe was reverted and `git status`
+came back empty. **No gate named a seventh path.**
 
-| File | Action |
-| --- | --- |
-| `poker-server/src/main/kotlin/duels/poker/server/SeatDelivery.kt` | modify |
-| `poker-server/src/test/kotlin/duels/poker/server/SeatDeliveryTest.kt` | modify |
+**`files_touched: 2` on the previous cut was a pre-decision placeholder and is not evidence.**
 
-Evidence to **read**, whatever the answer:
-`poker-server/src/main/kotlin/duels/poker/server/room/RoomRegistry.kt` (`disconnect`, `resume`,
-`expireGracePeriods`), `.../protocol/ServerMessage.kt` (`OpponentPresence`),
-`web-client/src/store/duel-state.ts` (the reducer case) — five at most, and the re-cut will say
-which five.
+| File | Action | Why it cannot be fewer |
+| --- | --- | --- |
+| `poker-server/src/main/kotlin/duels/poker/server/session/ConnectionDirectory.kt` | modify | the change itself — `register` takes the membership, the unscoped `writerFor` is deleted, the scoped one replaces it, and `forget` still compares the writer |
+| `poker-server/src/main/kotlin/duels/poker/server/SeatDelivery.kt` | modify | the Kotlin compiler — `writerFor(player)` is gone and line 40 is its **only** production call site in the tree |
+| `poker-server/src/main/kotlin/duels/poker/server/DuelSocket.kt` | modify | the Kotlin compiler — `deps.connections.register(player.id, writer)` at line 195 loses its arity. One line; the `RoomMembership` this function already holds is the object to pass |
+| `poker-server/src/test/kotlin/duels/poker/server/session/ConnectionDirectoryTest.kt` | modify | the Kotlin compiler — seven `register` and six `writerFor` call sites, `No value passed for parameter 'membership'` / `'room'` at lines 18, 20, 27, 36, 37, 39, 48, 49, 54, 61, 66 and 73 |
+| `poker-server/src/test/kotlin/duels/poker/server/SeatDeliveryTest.kt` | modify | the Kotlin compiler — `connections.register(player, writer)` at line 59, `No value passed for parameter 'membership'` |
+| `poker-server/src/test/kotlin/duels/poker/server/DuelSocketWriterDirectoryTest.kt` | modify | the Kotlin compiler — `connections.writerFor(player.id)` at lines 72, 114, 119 and 155, `No value passed for parameter 'room'` |
+| `docs/adr/ADR-0104-a-frame-reaches-the-connection-in-the-room-it-is-about.md` | read | §1 the deletion, §2 the shared membership, §3 what production keeps doing, §7 what the tests must prove, §8 what does not change |
+| `poker-server/src/main/kotlin/duels/poker/server/session/RoomMembership.kt` | read | `TASK-121404` created it; this ticket only registers it and reads `code` |
+
+**Why this declares `atomic:` when `ADR-0104` §6 says it is not.** §6's subject is the version
+bump — *"no declaration changes … `TASK-121403` is therefore not `atomic:` and carries none of the
+twelve artifacts a bump carries"* — and that half is right: `PROTOCOL_VERSION` does not move.
+`atomic:` is not a property of version bumps, though; it is a property of any merged gate that
+refuses the intermediate state, and the probe found one. `ADR-0069` is the merged authority for
+sizing by measurement over recollection, and it was applied here.
+
+**Paths the gate set did not name, recorded so nobody adds them.** `RoomRegistry.kt`, `Room.kt`,
+`ServerMessage.kt`, `protocol.gen.ts`, `docs/protocol-versions.md`, `Application.kt` and every e2e
+suite stayed green untouched. `DuelSocketDisconnectTest` also stayed green untouched — including
+`aThirdSocketInNoRoomIsToldNothing`, which **passes on the broken product**, because its third
+socket uses a different `deviceId` and is therefore a different player. That is the same shape of
+blind spot `STORY-1214` found in `CORE-18`, and closing it is
+[`TASK-121405`](TASK-121405-the-measured-reproduction-is-a-server-test.md), not this ticket.
 
 ## Scope
 
-Written as properties, because the mechanism is undecided:
-
-- A presence frame a player receives is about the room that player currently holds a seat in.
-- A player holding **no** seat — sitting in the lobby, or between rooms — is told nothing about
-  anyone's presence, and carries nothing stale into the room they enter next.
-- A genuine absence still produces the away marking, the countdown and the return notice: `CORE-18`
-  and `CORE-19` describe wanted behaviour and must still pass by hand.
+- `ConnectionDirectory` stores the writer **and** the `RoomMembership` it was registered with, and
+  `writerFor(player, room)` answers the writer only when `membership.code == room`, **read at the
+  time of the call**. How the pair is stored is the coder's; the requirements are `ADR-0104` §2's
+  two — `forget(player, writer)` still compares the writer and still returns `false` for an adopted
+  socket's cleanup (`ADR-0018`), and the room is never cached by the caller.
+- `deliver` resolves a seat to a player exactly as it does today, then looks the writer up with
+  `room.code`, and skips silently when there is none — the same `?: continue` the missing-writer
+  case already uses. Its KDoc gains the room-scoping sentence; `ADR-0104` records that it *amends*
+  the contract stated there.
+- `ConnectionDirectory`'s KDoc retracts *"no room, no seat"* to *"no seat, no `ServerMessage`, no
+  Ktor"* and says why exactly one `RoomCode` is now in scope. The rest of that KDoc stands.
+- Every existing test in the three test files keeps its intent. The four
+  `DuelSocketWriterDirectoryTest` cases become room-scoped by sending `CreateRoom` and using the
+  `RoomJoined` code they get back — they are **not** weakened to `connections.size`, and no
+  assertion is deleted.
 
 ## Out of scope
 
-- **Answering `DEC-107`.** It is the architect's.
-- **The action bar's enabled state under a paused notice.** `ADR-0046` §6 declines it by
-  name; it is `DEC-108`, the product owner's, and it is a separate change if it is one at all.
-- **The grace window's length, `ADR-0023`'s absent-seat action, or what the server does for an
-  absent seat.** `RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS` stays `60_000`.
-- **`ADR-0046`'s three sentences.** The words are correct; they were shown to the wrong player.
-- **Folding a present player.** Unreproduced — see §The defect.
-- **`docs/test-plan.md`.** `TASK-121401` owns the catalogue, and `CORE-21` is the case this repair
-  is measured against by hand.
+- **Anything on the wire.** No `ClientMessage` or `ServerMessage` declaration changes, so
+  `PROTOCOL_VERSION` stays at 5, `ADR-0047` §2's fingerprint is unchanged, `docs/protocol-versions.md`
+  gains no row and `protocol.gen.ts` stays byte-identical (`ADR-0104` §6). `verifyProtocolTypes`
+  ran green throughout the probe.
+- **Editing any of the seven `deliver` call sites.** `ADR-0104` §1 states they are untouched, and
+  the probe confirmed it.
+- **`RoomRegistry`, `Room` and `Room.presenceOf`.** `disconnect()` still produces
+  `OpponentPresence(AWAY, …)` whether or not the other seat has a connection in that room —
+  `ADR-0104` §3 answers that half of `DEC-107` *yes, unchanged* — and the registry must not learn
+  about writers.
+- **The client half.** `ADR-0104` §4's `RoomJoined` reset is
+  [`TASK-121406`](TASK-121406-the-store-is-scoped-to-the-room-the-server-last-named.md), and the
+  ADR says in as many words that it is **not** what makes the system correct.
+- **The socket-level reproduction.** `TASK-121405`.
+- **A counter, a log line or a metric for a dropped frame.** `ADR-0104` leaves that open by name;
+  inventing one here would be a design decision this ticket has no mandate for.
+- **`DEC-109`** — may one player hold seats in two live rooms at once. The product owner's, and
+  `ADR-0104` §10 says it blocks nothing here.
+- **The action bar under a paused notice** (`DEC-108`), **the grace window's length**,
+  **`ADR-0023`'s absent-seat action**, and **`ADR-0046`'s three sentences**. The words were
+  correct; they were shown to the wrong player.
+- **`docs/test-plan.md`.** `TASK-121401` owns the catalogue.
 
 ## Tests
 
-To be named by the re-cut, because a test asserting where the frame is stopped **is** the decision.
-What is certain: the repair lands a test that is **red before it and green after**, and the PR
-body quotes both runs. What must not happen is a suite that passes either way — every unit here
-already passes on the broken product, which is precisely how `TASK-120502` came to be dropped.
+Three classes. The counts in `verify:` are today's measured numbers plus the additions below —
+`SeatDeliveryTest` 5 → 8, `ConnectionDirectoryTest` 6 → 9, `DuelSocketWriterDirectoryTest` 4 → 4.
+
+`SeatDeliveryTest` — its `deliverAndDrain` helper gains one defaulted parameter,
+`connectedTo: Map<PlayerId, RoomCode?> = emptyMap()`, naming the room each writer's connection is
+in; anybody absent from it is registered in `room.code`, so the five existing tests keep their
+current text and their current meaning.
+
+| Test | Proves |
+| --- | --- |
+| `aframeIsNotDeliveredToAConnectionInAnotherRoom` | the guest's connection is in a second room; seat 1's frame reaches nothing, and seat 0's still reaches the host — so the drop is scoped, not total |
+| `aframeIsNotDeliveredToAConnectionInNoRoom` | the measured reproduction at the unit that performs the composition: the guest's connection has entered no room and receives nothing, while the host still receives its own frame |
+| `apresenceFrameCrossesNoRoomEither` | the same crossing for an `OpponentPresence`. `deliver` does not read the message, so this cannot fail while the two above pass — it is here because §7 asks for it in as many words, and because a later change that special-cased presence inside `deliver` would break it |
+
+`ConnectionDirectoryTest` — the six existing tests migrate to `writerFor(player, room)`; the
+negatives need a second, distinct room code. **`ZYXWVUTS` is not a legal `RoomCode`** — `U` is
+excluded from the Crockford alphabet, and the probe hit exactly that `IllegalArgumentException`.
+`ZYXWVTSR` is legal.
+
+| Test | Proves |
+| --- | --- |
+| `awriterIsFoundOnlyForTheRoomItsConnectionIsIn` | two inputs, one registration: the writer for its own room, `null` for the other. One input could not tell scoping from an unconditional answer |
+| `aconnectionInNoRoomHasNoWriterForAnyRoom` | a membership with `code == null` answers `null` for both rooms while `size` stays `1` — registered, and reachable from nowhere |
+| `alookupFollowsTheRoomTheConnectionMovesTo` | the membership is shared by reference and read at lookup time: mutating `code` after `register` moves the answer. This is the gate on §2's "never cached by the caller" |
+
+`DuelSocketWriterDirectoryTest` — no new tests. All four keep their names and their assertions and
+become room-scoped, which is what pins membership-before-delivery at the socket level.
+
+**The negative that fails if scoping is too strong** is the rest of the suite, which is why
+`./gradlew check -PrequireDocker=true` is in `verify:` and not the three filters alone. An ordinary
+duel, a disconnect and a resume must still deliver everything they deliver today — **including the
+routed refusals**, `Rejected` and `Room.act`'s `Failure(DUEL_PAUSED)`, which travel through
+`deliver` back to the seat that acted and which a reader thinking of `deliver` as the fan-out path
+alone will not expect. A `deliver` that dropped everything would pass the three filters above and
+fail here.
+
+**Red before, green after — measured, not asserted.** With the change staged and the single
+expression `writerFor` returns mutated back to `develop`'s semantics (the room ignored), exactly
+six tests fail and no others: the three new `SeatDeliveryTest` cases and the three new
+`ConnectionDirectoryTest` cases. Run it both ways and quote both runs in the PR body.
 
 ## Acceptance criteria
 
-To be written by the re-cut. Two hold whatever the answer, and are recorded now so the re-cut
-cannot quietly drop them:
-
-- [ ] The reproduction in §The defect is run **before** and **after**, by hand, on the live stack,
-      and both runs are pasted into the PR body as text. The before-run must show the away marking
-      on a connected player; the after-run must show `CORE-21` passing — neither screen marks the
-      other for 75 s.
-- [ ] `CORE-18` and `CORE-19` still pass by hand: a real `close` still produces the away marking
-      and a real return still clears it. A repair that silences presence altogether satisfies
-      `CORE-21` and breaks the feature.
+- [ ] `SeatDeliveryTest` reports **8** tests, 0 failures — including
+      `aframeIsNotDeliveredToAConnectionInAnotherRoom`, `aframeIsNotDeliveredToAConnectionInNoRoom`
+      and `apresenceFrameCrossesNoRoomEither`
+- [ ] `ConnectionDirectoryTest` reports **9** tests, 0 failures — including
+      `awriterIsFoundOnlyForTheRoomItsConnectionIsIn`, `aconnectionInNoRoomHasNoWriterForAnyRoom`
+      and `alookupFollowsTheRoomTheConnectionMovesTo`
+- [ ] `DuelSocketWriterDirectoryTest` reports **4** tests, 0 failures, with all four names unchanged
+- [ ] `ConnectionDirectory.kt` declares exactly one `public fun writerFor` and it names a
+      `RoomCode` — the fourth `verify` command, which exits 1 on `develop` today
+- [ ] `forget` removes with a **single** compare-and-remove against the stored value, and the PR
+      body names the call that performs it. No gate catches this one; see §Three things a coder can
+      get wrong here
+- [ ] `./gradlew check -PrequireDocker=true` exits 0 with no suite skipped
+- [ ] The PR body quotes the run with the scoping and the run with it mutated away, and the second
+      shows exactly the six failures named in §Tests
+- [ ] Every command in `verify:` exits 0
 
 ## Definition of done
 
