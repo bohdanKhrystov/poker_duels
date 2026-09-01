@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121402
 title: The duel table's column fits the phone it is nested in
 type: task
-status: ready
+status: done
 parent: STORY-1214
 module: web-client
 estimate: XS
