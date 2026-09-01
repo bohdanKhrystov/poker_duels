@@ -2,7 +2,7 @@
 id: STORY-1207
 title: The UAT focus — the observer, the harness verb, the route map and what may be filed
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa, uat, meta]
 depends_on: []

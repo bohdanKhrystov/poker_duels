@@ -2,7 +2,7 @@
 id: STORY-1208
 title: Step 6 stops a healthy cycle — the verdict table never checks for a baseline round
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa, uat, meta, defect]
 depends_on: [STORY-1207]
