@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121304
 title: The table reads this duel's award, not the last duel's
 type: task
-status: ready
+status: done
 parent: STORY-1213
 module: web-client
 estimate: XS
