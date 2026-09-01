@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121401
 title: The catalogue sees a present player marked away
 type: task
-status: ready
+status: done
 parent: STORY-1214
 estimate: S
 tier: haiku
