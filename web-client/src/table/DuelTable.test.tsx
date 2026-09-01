@@ -366,4 +366,53 @@ describe("the duel table", () => {
     expect(screen.getByText("You win 4,850")).toBeDefined();
     expect(screen.queryByText(/1,200/)).toBeNull();
   });
+
+  it("reads this duel's award and not the previous duel's", () => {
+    const view = aView({
+      viewerSeat: 0,
+      handNumber: 1,
+      street: "COMPLETE",
+      pot: 0,
+    });
+    const narration: GameEvent[] = [
+      started(1),
+      awarded(0, 100),
+      awarded(1, 100),
+      started(2),
+      awarded(1, 200),
+      started(1),
+      awarded(0, 200),
+    ];
+
+    render(<DuelTable view={view} narration={narration} />);
+
+    expect(screen.getByText("You win 200")).toBeDefined();
+    expect(screen.queryByText(/Split pot/)).toBeNull();
+  });
+
+  it("names this duel's winner even once the next hand has started", () => {
+    const view = aView({
+      viewerSeat: 0,
+      handNumber: 2,
+      street: "COMPLETE",
+      pot: 0,
+    });
+    const narration: GameEvent[] = [
+      started(2),
+      awarded(1, 9800),
+      started(1),
+      awarded(0, 200),
+      started(2),
+      awarded(0, 200),
+      started(3),
+      awarded(1, 5000),
+    ];
+
+    render(<DuelTable view={view} narration={narration} />);
+
+    expect(screen.getByText("You win 200")).toBeDefined();
+    expect(screen.queryByText(/Your rival wins/)).toBeNull();
+    expect(screen.queryByText(/9,800/)).toBeNull();
+    expect(screen.queryByText(/5,000/)).toBeNull();
+  });
 });
