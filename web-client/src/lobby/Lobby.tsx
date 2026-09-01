@@ -163,7 +163,14 @@ export function Lobby(): ReactElement {
           )?.committedThisStreet ?? 0);
 
     return (
-      <div className="mx-auto flex max-w-[560px] flex-col gap-5">
+      // The card's `.table` (design/screens/duel-table.html): at least one
+      // screen tall, so DuelTable's pot-and-board block — now a direct flex
+      // child of this div, not of a second nested column — can grow into
+      // whatever room is left and keep the action bar on screen
+      // (TASK-121302). `container-type` moves up from DuelTable's old
+      // wrapper to here, so board-card sizing still reads this column's
+      // inline size, unchanged from before.
+      <div className="[container-type:inline-size] mx-auto flex min-h-[100dvh] max-w-[560px] flex-col gap-5">
         <DuelTable
           view={view}
           rivalPresence={state.rivalPresence}

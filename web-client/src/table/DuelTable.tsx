@@ -7,7 +7,12 @@ import { Hand } from "./Hand";
 import { formatChips } from "./chips";
 
 /**
- * The duel table: one column, rival above, board between, you below.
+ * The duel table: one column, rival above, board between, you below. The
+ * column itself is the caller's div (`Lobby.tsx`), not this component's: that
+ * div carries the card's `.table` viewport-height budget, and the
+ * pot-and-board block below has to be its direct flex child to absorb the
+ * leftover space (TASK-121302) — so this renders a fragment, not a second
+ * nested column.
  *
  * Everything on it is read off the `PlayerView` the server computed. Nothing is
  * worked out here — not the pot, not the street, not whose cards these are, and
@@ -22,7 +27,7 @@ export function DuelTable(props: {
   const you = view.seats.find((seat) => seat.index === view.viewerSeat);
   const rival = view.seats.find((seat) => seat.index !== view.viewerSeat);
   return (
-    <div className="[container-type:inline-size] mx-auto flex max-w-[560px] flex-col gap-5">
+    <>
       {rival !== undefined && (
         <div className="flex flex-col gap-2">
           <SeatPlate
@@ -42,7 +47,11 @@ export function DuelTable(props: {
           <BetLine committed={rival.committedThisStreet} />
         </div>
       )}
-      <div className="flex flex-col items-center gap-4">
+      {/* The card's `.center`: `flex-1` and `justify-center` so this block —
+          not the seats around it — absorbs whatever room the viewport-height
+          column has left over (TASK-121302), the same as `.center` does in
+          design/screens/duel-table.html. */}
+      <div className="flex flex-1 flex-col items-center justify-center gap-4">
         <PotStrip view={view} narration={props.narration} />
         <BoardCards cards={view.board.cards} />
       </div>
@@ -60,7 +69,7 @@ export function DuelTable(props: {
           />
         </div>
       )}
-    </div>
+    </>
   );
 }
 
