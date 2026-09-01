@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121303
 title: The front door's three doors read as three doors, not as one word
 type: task
-status: ready
+status: done
 parent: STORY-1213
 module: web-client
 estimate: XS
