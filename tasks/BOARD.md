@@ -740,6 +740,36 @@ parallel with `EPIC-02`; no shared file.
 | DEC-110 | **The architect's** — by what mechanism is a player who asks for a second room while holding a seat in a `PLAYING` room refused, and returned to the duel they are in? Registered open 2026-09-01 by [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md) §6, which fixes what must be true and deliberately writes no repair. The product half is answered: the request takes no seat, nothing moves, the player lands back on their own table, and the words are `ADR-0105` §4's. What is open is the carrier — a new `ProtocolError` value and the `PROTOCOL_VERSION` step `ADR-0047` prices, or an answer assembled from frames that already exist (`replyToJoinRoom`'s `ALREADY_SEATED` branch already answers a seated player with `RoomJoined(code, seat)` *"exactly as a fresh seating would"*, derived fresh from the registry). Three constraints are `ADR-0105` §6's, not this decision's: nothing is vacated or forfeited; the client must be able to **name** the room it puts the player back in, including a tab that has never heard of it; and the refusal must not meter as a guess when `ADR-0022` §2's failed-join budget is built — nothing implements it at `develop` (`JoinLimits` and `TOO_MANY_ATTEMPTS` do not exist). **Blocks the ticket that implements `ADR-0105` §1**, and nothing else | [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md) §6 | before `ADR-0105` §1 is cut into a ticket |
 | DEC-111 | **The product owner's** — may one player hold more than one `WAITING` room at once? Registered open 2026-09-01 by [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md), which answered `DEC-109` for the **running** case and names this hole in its own Consequences rather than quietly covering it. Reachable in three presses of shipped controls: *Create a duel room*, `Back to the lobby` (`ADR-0073` §1, which forgets the room and keeps the seat), *Create a duel room* again. Each waiting room a player holds can be joined by a rival and become a duel that player is not at — `ADR-0013`'s window, `ADR-0023`'s absent seat, `ADR-0014`'s coin — so `ADR-0105` §1 refuses a **second seat taken while a duel runs** but does not stop two duels **starting** in rooms whose seats were taken earlier. `ADR-0073` already accepted that cost for **one** waiting room, in as many words; whether it survives being multiplied is the question, and it is `docs/vision.md`'s *"Not a multi-table poker room"* against `ADR-0073` §3's shipped promise that *"The room stays open"*. `ADR-0105`'s Alternatives records the shape this will have to weigh — refusing the **rival's** join, which lands a refusal on a blameless stranger. **Blocks nothing** | [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md) §Consequences | before the first public link |
 
+`DEC-112` → [`ADR-0106`](../docs/adr/ADR-0106-a-sub-pixel-residual-is-a-fit-and-one-pixel-is-the-fence.md)
+on 2026-09-02 — **a sub-pixel residual is a fit, and one pixel is the fence.** Raised the same day by
+[`TASK-121402`](tasks/TASK-121402-the-duel-table-column-fits-the-phone-it-is-nested-in.md), whose 48 px
+repair left the duel-table document at a true **664.90625 px against 664** — `scrollHeight` reads 665 —
+with both action buttons at or above the fold and every other criterion met; the ticket's acceptance
+criterion demanded `≤` and predicted 664 / 664, its Out of scope ordered the implementer to stop short
+of the next give, and the implementer stopped and said so, which is `ADR-0103` §3's stop rule operating
+at its first live boundary. Registered and answered in the same PR (the `DEC-039` path — it never
+appeared in an open table). **The answer: yes, at exactly one boundary.** `ADR-0103` §1's
+`scrollHeight ≤ clientHeight` stays the contract; a reading of exactly **one integer over** is judged on
+the true geometry (`document.documentElement.getBoundingClientRect().height`, same stack, same beat),
+and a true excess **strictly under one CSS pixel is met** — nothing readable can hide inside it — while
+one pixel or more, or a two-integer excess, is `R2` `not met` as ever. **The fence cannot widen**: a
+tolerance that can hold painted content is the *"relaxed phone bar"* `ADR-0096` §2 forbids by name, so
+widening is the human's and no vision-derived ADR can reach it. **`TASK-121402` merges as scoped** — the
+664 / 664 prediction was unreachable from the day it was written, because the defect table's 712 was
+itself a rounded 712.90625 — and **the last 0.90625 px is re-filed once**, ordinary backlog, buying
+headroom (the column stands 0.09375 px from the fence) and retiring the second read; its closer spends
+`ADR-0103` §3.1 whitespace and nothing further down the give list. **The QA clause**: a sub-pixel
+overflow may not be filed — not as a finding, a criterion, a `DEC` or precedent — and it shields nothing
+else; clipped content (`R3`), imperceivable events (`R1`), unmeasured beats and any full-pixel excess
+walk the ordinary path. Costs named: `ADR-0103` §1's one-`eval` contract is spent at the boundary — two
+reads and a rule, until a residual ticket nothing forces to land — a citable tolerance now exists, the
+product ships 0.09375 px from the fence, a criterion merges undischarged as literally written (carried
+by the PR body's readings plus the ADR), and a classic-scrollbar window at phone width can grow a
+scrollbar track for a rounded pixel. Qualifies `ADR-0103` §1 by one boundary case; upholds `ADR-0096`
+§2 rather than relaxing it. Derived from the vision's first success condition — *"Send a link. She opens
+it in a browser. We play a full heads-up match."* — read as `ADR-0103` read it: *fits* is for playing
+unscrolled.
+
 `DEC-109` → [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md)
 on 2026-09-01 — **one duel at a time, and the refusal hands the player back their duel.** Registered open the
 same day by [`ADR-0104`](../docs/adr/ADR-0104-a-frame-reaches-the-connection-in-the-room-it-is-about.md) §10,
