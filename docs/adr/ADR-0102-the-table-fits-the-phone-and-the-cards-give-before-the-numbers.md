@@ -159,8 +159,7 @@ shows a different table**.
 
 **The action bar does not give; it may grow.** At 390 the sizing row wraps to two rows and the
 action buttons wrap their labels to two lines — 59 and 61.5 measured at 390, against 32 and 44.3
-at 720.
-Wrapping is *fitting*, not *giving*, and it is allowed. Truncating a label, hiding a chip, or
+at 720. Wrapping is *fitting*, not *giving*, and it is allowed. Truncating a label, hiding a chip, or
 dropping a row is not. (Whether `Raise to 3,650` may break *between* the words and the number is
 `DEC-103`, open, and this ADR does not answer it — §6.)
 
