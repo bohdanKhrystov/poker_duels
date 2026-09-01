@@ -27,8 +27,8 @@ under the **audit** focus. It is the round `STORY-1212` reserved `STORY-1213` fo
 | `A(1)` | **3** — `R1`, `R2`, `R4` |
 | `A(0)` | **n/a** — round 1 has no round 0, exactly as it has no `B(0)` |
 | Verdict | **`PROCEED`** — unqualified; no criterion went unanswered at any beat |
-| Fix set | **3** — `TASK-121301`, `TASK-121302`, `TASK-121303`, in the rubric's own order |
-| Also filed | **1** — `TASK-121304`, a functional defect, **outside the fix set and outside `A(1)`** |
+| Fix set | **3** — `TASK-121301`, `TASK-121302`, `TASK-121303`, in the rubric's own order. Member 2 gained a **predecessor**, `TASK-121305`, on 2026-09-01; the set is still 3, because `A(1)` counts criteria and not tickets |
+| Also filed | **2** — `TASK-121304`, a functional defect, and `TASK-121305`, the design predecessor: both **outside the fix set and outside `A(1)`** |
 | Proposed criteria | **2**, routed as `DEC-103` and `DEC-104`; **neither reaches the rubric before the next invocation** |
 
 ## What this record is not
@@ -135,6 +135,18 @@ width and none at another, on the same page, is measuring the page.
 must scroll to show the amount to call is `R2` `not met`, whether that happens at 390 px or at
 720"*. Reading the laptop pass as a partial credit would be inventing the relaxed phone bar §2
 forbids, and it is named here so no later round tries.
+
+**Amended 2026-09-01 — the reading above is true and it is not the whole cause.** The finding stands
+exactly as measured; what the first repair attempt discovered is that the height budget cannot
+*close* it. `min-height` is a floor and `flex-grow` only distributes slack, and at 885 px of content
+in a 664 px viewport there is no slack to distribute. **The merged card itself measures 732 against
+664 at 390 × 664** — `.bar` ending at 715.7, the hero's hole cards 134.4 tall at a hardcoded
+`--w:96px`, the rival's mini hand hardcoded at `--w:40px`, and exactly one rule in the whole file
+(`--bw`, read by the board alone) that narrows with the column. So a client transcribing the card
+*perfectly* would still have failed `R2` by 68 px. That made the repair a **decision** rather than a
+conformance, it was registered as `DEC-106` and answered by
+[`ADR-0103`](../../docs/adr/ADR-0103-the-table-fits-the-phone-and-the-cards-give-before-the-numbers.md)
+the same day, and it is why member 2 now runs `TASK-121305` → `TASK-121302`.
 
 ### `R4` — three inline buttons with nothing between them
 
@@ -394,22 +406,52 @@ Filed alongside, and **not** a member of the set:
 
 | | ID | what |
 | --- | --- | --- |
-| — | [TASK-121304](../tasks/TASK-121304-the-table-reads-this-duels-award-and-not-the-last-ones.md) | the functional defect — `high`, outside `A(1)`, `status: ready` |
+| — | [TASK-121304](../tasks/TASK-121304-the-table-reads-this-duels-award-and-not-the-last-ones.md) | the functional defect — `high`, outside `A(1)`; filed `ready`, merged 2026-09-01 |
+| — | [TASK-121305](../tasks/TASK-121305-the-duel-table-card-draws-the-phone-too.md) | the design predecessor member 2 acquired on 2026-09-01 — `module: design`, amends `design/screens/duel-table.html` per [`ADR-0103`](../../docs/adr/ADR-0103-the-table-fits-the-phone-and-the-cards-give-before-the-numbers.md) §4 |
 
-### Three of the four `verify:` blocks are honest manual steps, and here is why
+### The fix set is still **three**, and a fourth ticket is not a fourth criterion
+
+`A(1) = 3` counts **criteria that were `not met`**, not tickets. `TASK-121305` is a **predecessor to
+member 2**, not a fourth criterion: it answers no criterion of its own, and `R2` is `met` or `not
+met` on what the client does, whatever the card draws. So the fix set stays `R1`, `R2`, `R4` —
+`TASK-121301`, `TASK-121302`, `TASK-121303` — and member 2 has grown a two-ticket chain,
+`TASK-121305` → `TASK-121302`, in that order, because **design precedes client** (`ADR-0103` §5).
+
+`ADR-0103`'s own *Consequences* prices what that costs the ledger, and it is recorded here rather
+than discovered later: under `ADR-0096` §5, *"filing does not reduce `A(N)`, only repair does"* — so
+if round 2 runs before **both** land, `R2` is counted `not met` again and `A(2)` does not fall for
+it. **The metric will read worse than the work is**, and that is `A(N)` doing exactly what it was
+built to do: count unrepaired criteria.
+
+### The browser half of every repair is an honest manual step, and here is why
 
 **`ADR-0089` §2b forbids the gate that would be natural here.** *"No dependency. **No gate.** No
 coverage claim"* are the three conditions that license a browser-driving harness at all, and **b**
-reads *"No pull request, `verify:` block or ticket waits on a QA case"*. `R2`'s defect is a measured
-geometry and `R4`'s is a rendered adjacency; both are browser facts, and a browser fact may not be a
-`verify:` line in this repository. `R1`'s is worse than ungateable — half of what it must build is
-undecided (§*What `R1` needs decided first*).
+reads *"No pull request, `verify:` block or ticket waits on a QA case"*. `R1`'s defect is a paint a
+player either perceives or does not, `R2`'s is a measured geometry, `R4`'s is a rendered adjacency
+and `TASK-121305`'s subject is a rendered card; all four are browser facts, and a browser fact may
+not be a `verify:` line in this repository.
 
-So `TASK-121301`, `TASK-121302` and `TASK-121303` carry `labels: [… manual-verify]`, state the
-manual reproduction as the acceptance criterion, and say inside the ticket why no command can
-express the failure. `TASK-121302` and `TASK-121303` additionally run `npm run check`, and each
-says in as many words that **`check` gates the diff and cannot fail on the defect** — it is there so
-a repair cannot merge a broken client, not to look like a gate.
+So `TASK-121301`, `TASK-121302`, `TASK-121303` and `TASK-121305` all carry `labels: [… manual-verify]`,
+state the browser measurement as an acceptance criterion, and say inside the ticket why no command
+can express it. What each ticket's `verify:` block *does* gate is written out in the ticket rather
+than left to be inferred, because a gate presented as proving something it cannot prove is the
+failure mode this repository has already been bitten by:
+
+- **`TASK-121301`** — re-cut against [`ADR-0102`](../../docs/adr/ADR-0102-a-hand-ends-in-steps-and-the-client-owns-the-clock.md)
+  on 2026-09-01 — carries the largest real gate of the four, because the *mechanism* is unit-testable
+  even though the *perception* is not: nine named tests, three per-file counts, a SHA-256 pinning
+  `no-derivation.test.tsx` byte-unchanged, and the four recorded-frame e2e suites' 24 as `ADR-0100`
+  §3's evidence that nothing they prove was traded away.
+- **`TASK-121302`** and **`TASK-121303`** run `npm run check`, and each says in as many words that
+  **`check` gates the diff and cannot fail on the defect** — it is there so a repair cannot merge a
+  broken client, not to look like a gate. `TASK-121302` adds one `grep` that gates the *nesting* —
+  exactly one of `Lobby.tsx` and `DuelTable.tsx` still carries a `max-w-[560px]` — and says plainly
+  that this says nothing about whether anything is on screen.
+- **`TASK-121305`** runs `./design/check-drift.sh` plus four `grep`s that gate the card's structure:
+  `--w:96px` and `--w:40px` gone, and the hero's and the rival's hands each appearing exactly twice,
+  so the markup really is duplicated into two frames and there are two rather than three. None of the
+  five gates the fit.
 
 **A gate that cannot fail is worse than an honest manual step**, and this repository has been bitten
 by exactly that. `TASK-121102` is the merged precedent for the shape: `verify:` carrying the linter
@@ -435,14 +477,37 @@ structural*: whether the server sends a snapshot per street during a runout, or 
 the snapshot it has and reveals the board in steps, and how long a step lasts. No card can carry
 either answer.
 
-So `TASK-121301`'s **first acceptance criterion is to register the `DEC` and route it to the
-architect, before any diff exists** — `ADR-0096` §2's own routing, and the shape `TASK-120907` and
-`TASK-121101` both merged with. **It is not registered from this triage**: `STORY-1211`'s reasoning
+So `TASK-121301`'s **first acceptance criterion was to register the `DEC` and route it to the
+architect, before any diff existed** — `ADR-0096` §2's own routing, and the shape `TASK-120907` and
+`TASK-121101` both merged with. **It was not registered from this triage**: `STORY-1211`'s reasoning
 governs — *a `DEC` nobody is working is noise in the open table* — and `ADR-0096` §2 places the
 registration in the repairing ticket rather than in the round record, in as many words.
 
-**It does not make the verdict `STOP_BLOCKED`.** That fires only for an **unanswered human-only
-decision** gating a member of the fix set. This one is the architect's, and it does not exist yet.
+**It did not make the verdict `STOP_BLOCKED`.** That fires only for an **unanswered human-only
+decision** gating a member of the fix set. This one was the architect's.
+
+**Answered and merged on 2026-09-01.** `DEC-105` → [`ADR-0102`](../../docs/adr/ADR-0102-a-hand-ends-in-steps-and-the-client-owns-the-clock.md)
+— *a hand ends in steps, and the client owns the clock*. **The pacing lives in `web-client`**: a
+`Snapshot` at `COMPLETE` is painted as one step per `StreetDealt` in the `Events` frame that
+immediately preceded it, then a final step carrying the whole snapshot and `ADR-0095`'s award line,
+with every frame arriving during the steps **queued in arrival order** and applied when the last step
+has stood. Exactly two fields lag — the board, as a prefix of the server's own `view.board.cards`,
+and the street label — so no card face ever comes from an event payload. **A step costs 600 ms**,
+named once in `web-client/src/store/boot.ts`, with **`0` meaning synchronous**, which is how
+`drive-duel.tsx` keeps `ADR-0100` §3's evidence intact; a resuming client jumps to the end
+structurally, because `resumeFrames` passes `newEvents = emptyList()`. `poker-server` is not changed,
+`poker-engine` is not opened and `PROTOCOL_VERSION` does not move.
+
+`TASK-121301` was **re-cut whole against that answer** the same day — *Files*, *Tests* and `verify:`
+all replaced, `manual-verify` kept, `status:` `blocked` → `ready` — and it is `atomic:` at **10**
+files, measured by probing the gate set rather than remembered. The two facts the probe established
+that no reading of the ADR would have given: `duel-state.test.ts` reddens on the first commit that
+gives the reducer a field or an export, and **all four recorded-frame suites** redden on any commit
+where the default step is 600 without `drive-duel.tsx` booting at `0` — `Test Files 5 failed | 112
+passed (117)` against `1 failed` with the driver at `0`. Those are the gates the exemption names.
+The probe also cleared two files the previous cut might have dragged in: `drive-arc.tsx`, which boots
+directly and needs no parameter because it never replays past a hand-completing `Snapshot`, and
+`PotStrip.test.tsx`, all five of whose tests stay green untouched.
 
 ## Verdict: `PROCEED`
 
@@ -488,6 +553,11 @@ Then `TASK-121302`, because it is the criterion the human named twice — *"scro
 see the whole picture"* and *"we have to support phone size"* — and because it is the one defect
 here that touches every betting decision in every hand at the shape the product was just told to
 support.
+
+**Read after 2026-09-01, that means `TASK-121305` first**, since `TASK-121302` cannot start until the
+card draws the phone (`ADR-0103` §5). `TASK-121304` and `TASK-121303` have since merged, so the
+startable ticket at the head of this story is `TASK-121301`; `TASK-121305` and then `TASK-121302`
+follow it.
 
 ## Owed to a later round, and not smuggled into this one
 
