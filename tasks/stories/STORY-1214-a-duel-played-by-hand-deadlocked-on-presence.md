@@ -159,7 +159,7 @@ question it is. The case that would check the answer is written when the answer 
 | [TASK-121402](../tasks/TASK-121402-the-duel-table-column-fits-the-phone-it-is-nested-in.md) | The duel table's column fits the phone it is nested in | done |
 | [TASK-121404](../tasks/TASK-121404-a-connections-room-becomes-a-session-type-the-directory-can-read.md) | A connection's room becomes a session type the directory can read | done |
 | [TASK-121403](../tasks/TASK-121403-presence-is-about-the-room-the-reader-is-in.md) | Presence is about the room the reader is sitting in | done |
-| [TASK-121405](../tasks/TASK-121405-the-measured-reproduction-is-a-server-test.md) | The measured reproduction is a server test | ready |
+| [TASK-121405](../tasks/TASK-121405-the-measured-reproduction-is-a-server-test.md) | The measured reproduction is a server test | done |
 | [TASK-121406](../tasks/TASK-121406-the-store-is-scoped-to-the-room-the-server-last-named.md) | The store is scoped to the room the server last named | ready |
 
 **`TASK-121401` and `TASK-121402` are independent of everything, and `depends_on` says so.** They
