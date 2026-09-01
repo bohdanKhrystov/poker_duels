@@ -163,7 +163,22 @@ export function Lobby(): ReactElement {
           )?.committedThisStreet ?? 0);
 
     return (
-      <div className="mx-auto flex max-w-[560px] flex-col gap-5">
+      // ADR-0103 §5: one column, not two — this is now the only element that
+      // carries the container-query context, the `560px` cap and the height
+      // budget; `DuelTable` renders no wrapper of its own, so its centre
+      // block's `flex-1` claims slack against this column's full height,
+      // action bar included, rather than against a nested column with
+      // nothing to grow into.
+      // `min-h-[100dvh]` is the floor `ADR-0103` §5 says is still owed: on
+      // its own it does not shrink content past the fold (`flex-grow` only
+      // distributes slack that already exists), but once the give order
+      // below brings the column's own content under budget, this is what
+      // keeps the laptop shape's fit a property instead of an accident.
+      // `--wgap` is `ADR-0103` §3.1's first give — the column's outer
+      // padding and the gaps between its blocks tighten before anything
+      // else does, continuously with the column's own width and never with
+      // a breakpoint.
+      <div className="[container-type:inline-size] mx-auto flex min-h-[100dvh] max-w-[560px] flex-col gap-[var(--wgap)] p-[var(--wgap)] [--wgap:clamp(8px,calc((100cqi-220px)/21.25),16px)]">
         <DuelTable
           view={view}
           rivalPresence={state.rivalPresence}

@@ -12,6 +12,12 @@ import { formatChips } from "./chips";
  * Everything on it is read off the `PlayerView` the server computed. Nothing is
  * worked out here — not the pot, not the street, not whose cards these are, and
  * not what anyone may do next.
+ *
+ * Renders no wrapping column of its own (`ADR-0103` §5): the container-query
+ * context, the width cap and the height budget live once, on the screen that
+ * assembles this with the action bar below it — a second copy of that cap
+ * here was the duplicate column the ADR names, and duplicating it left the
+ * centre block's `flex-1` with no slack to claim.
  */
 export function DuelTable(props: {
   view: PlayerView;
@@ -29,7 +35,7 @@ export function DuelTable(props: {
   const you = view.seats.find((seat) => seat.index === view.viewerSeat);
   const rival = view.seats.find((seat) => seat.index !== view.viewerSeat);
   return (
-    <div className="[container-type:inline-size] mx-auto flex max-w-[560px] flex-col gap-5">
+    <>
       {rival !== undefined && (
         <div className="flex flex-col gap-2">
           <SeatPlate
@@ -40,7 +46,10 @@ export function DuelTable(props: {
             isViewer={false}
             presence={props.rivalPresence ?? null}
           />
-          <div className="flex justify-center gap-2 [--w:40px]">
+          {/* ADR-0103 §3.2: the rival's face-down hand narrows furthest of
+              anything on the table — her name, her stack, her button and
+              whose turn it is are on the plate directly above it. */}
+          <div className="flex justify-center gap-2 [--w:clamp(24px,calc((100cqi-135px)/10.625),40px)]">
             <Hand
               cards={rival.holeCards}
               hiddenLabel="your rival's hidden hand"
@@ -49,7 +58,10 @@ export function DuelTable(props: {
           <BetLine committed={rival.committedThisStreet} />
         </div>
       )}
-      <div className="flex flex-col items-center gap-4">
+      {/* ADR-0103 §1: the centre block is the one that claims the column's
+          slack (`flex-1`) — it can only do that as a direct child of the
+          `min-h-[100dvh]` column the screen above provides. */}
+      <div className="flex flex-1 flex-col items-center justify-center gap-4">
         <PotStrip
           view={view}
           narration={props.narration}
@@ -59,7 +71,13 @@ export function DuelTable(props: {
       </div>
       {you !== undefined && (
         <div className="flex flex-col gap-4">
-          <div className="flex justify-center gap-3 [--w:96px]">
+          {/* ADR-0103 §3.3: the hero's own hole cards narrow too, floored at
+              the board's own card width — `clamp(48px,calc((100cqi-64px)/5),72px)`
+              is `BoardCards.tsx`'s own `--w`, repeated as the floor rather than
+              shared through a variable, so this block never depends on a name
+              declared outside it. A table that drew the shared five larger
+              than the private two would invert the game's own emphasis. */}
+          <div className="flex justify-center gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]">
             <Hand cards={you.holeCards} hiddenLabel="your hidden hand" />
           </div>
           <SeatPlate
@@ -71,7 +89,7 @@ export function DuelTable(props: {
           />
         </div>
       )}
-    </div>
+    </>
   );
 }
 
