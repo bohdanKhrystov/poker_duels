@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121404
 title: A connection's room becomes a session type the directory can read
 type: task
-status: ready
+status: done
 parent: STORY-1214
 module: poker-server
 estimate: S

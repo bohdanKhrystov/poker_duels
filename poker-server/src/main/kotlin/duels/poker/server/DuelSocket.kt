@@ -22,6 +22,7 @@ import duels.poker.server.session.ConnectionWriter
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
 import duels.poker.server.session.PlayerId
+import duels.poker.server.session.RoomMembership
 import duels.poker.server.session.Session
 import duels.poker.server.session.SessionId
 import duels.poker.server.session.SessionRegistry
@@ -403,21 +404,6 @@ private suspend fun DefaultWebSocketServerSession.refuseHandshake(
     pump.join()
     close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, HANDSHAKE_REQUIRED))
     return null
-}
-
-/**
- * The room, if any, this connection currently occupies.
- *
- * One instance per connection: created in [serve] and threaded through
- * [serveUntilEvictedOrClosed] into [ConnectionWriter.replyTo]. [code] is a plain `var`, not
- * behind a lock, because every read and write of it happens inside the single coroutine
- * [serveUntilEvictedOrClosed] runs in — one connection's frames are already processed one at a
- * time, never concurrently — unlike [SeatOwnership], which is shared by every connection an
- * [Application] accepts and needs its own locking for exactly that reason.
- */
-private class RoomMembership {
-    /** The code of the room this connection has entered, or `null` before it has entered one. */
-    var code: RoomCode? = null
 }
 
 /**
