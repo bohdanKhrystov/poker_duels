@@ -210,8 +210,21 @@ connection already seated — and §4 is the insurance against a client that one
 
 No `ClientMessage` or `ServerMessage` declaration changes, so `protocolDeclarations()` emits the
 same text, `ADR-0047` §2's fingerprint is unchanged, `docs/protocol-versions.md` gains no row, and
-`protocol.gen.ts` is byte-identical. `TASK-121403` is therefore **not** `atomic:` and carries none
-of the twelve artifacts a bump carries.
+`protocol.gen.ts` is byte-identical. `TASK-121403` therefore carries **none of the twelve artifacts
+a bump carries**, and is not `atomic:` **on the wire's account**.
+
+**Corrected 2026-09-02.** As first written this section said `TASK-121403` is *"therefore not
+`atomic:`"* full stop, and the board repeated it. That does not follow, and the ticket cut from this
+ADR declares `atomic:` for a reason this section never weighed: **the compiler is a gate too.**
+`ADR-0068` §4 makes a compiler-forced interface change an ordinary `atomic:` gate, independently of
+any bump. Deleting `writerFor(player)` in favour of a room-scoped lookup — §1's *delete, don't
+duplicate*, which forecloses an expand/contract split — changes an arity that `SeatDelivery.kt`,
+`DuelSocket.kt` and three test files all compile against, so no intermediate commit builds. Every
+premise above is about the **wire** and each remains true; only the unqualified conclusion drawn
+from them was wrong. Corrected here rather than only in the ticket, on the precedent of
+[`ADR-0068`](ADR-0068-a-ticket-may-declare-a-file-count-and-name-the-gates.md) §6, which amended
+`ADR-0047` §6's artifact count in the ADR itself instead of leaving the right number to live only
+downstream.
 
 ### 7. What the tests must prove
 

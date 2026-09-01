@@ -797,8 +797,10 @@ because the ticker and the other seat's socket read it and a stale read is invis
 `ServerMessage` declaration changes, `ADR-0047` §2's fingerprint is unchanged, `docs/protocol-versions.md`
 gains no row, and **`TASK-121403` is not `atomic:`**. *(That last clause is about the bump, and the bump is
 real: the version does not move. The `ADR-0069` probe run for the 2026-09-02 re-cut found a different merged
-gate — the Kotlin compiler — so the ticket does declare `atomic:`, at 6 files. `ADR-0104` is not amended; a
-ticket's size is measured, never inferred from the absence of a version step.)* **Production is unchanged** — `disconnect()` still
+gate — the Kotlin compiler — so the ticket does declare `atomic:`, at 6 files. **`ADR-0104` §6 is now amended**
+to say so — corrected 2026-09-02, after review noted the correction was living only downstream, on the precedent
+of `ADR-0068` §6 amending `ADR-0047`'s artifact count in the ADR itself. A ticket's size is measured, never
+inferred from the absence of a version step.)* **Production is unchanged** — `disconnect()` still
 builds the frame whether or not the other seat is connected to that room, because `RoomRegistry` knows nothing
 of writers by design and `Room.presenceOf` is a pure projection; that half of the registered question is
 answered *yes, unchanged*. **`ADR-0028` §1 is upheld rather than reopened**: `OpponentPresence` gains neither
