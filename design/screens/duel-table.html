@@ -7,9 +7,10 @@
 <title>Duel table — Poker Duels</title>
 <style>
   /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024).
-   * This file IS the screen: one column, the page is the table, no oval. Component
-   * rules are faithful copies of the merged component cards; screen-only glue is
-   * commented as such. */
+   * This file IS the screen: one column, the page is the table, no oval — drawn at
+   * both shapes the product is judged at (ADR-0103 §4), the same table markup boxed
+   * at 720x900 and 390x664. Component rules are faithful copies of the merged
+   * component cards; screen-only glue is commented as such. */
   :root {
     --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
@@ -25,17 +26,44 @@
     --pd-fs-large: 1.125rem;
     --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
     --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px;
-    --pd-space-7: 32px;
+    --pd-space-6: 24px; --pd-space-7: 32px;
     --pd-radius-medium: 8px; --pd-radius-pill: 999px;
     --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
   }
   * { margin: 0; box-sizing: border-box; }
   body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
-    font-size: var(--pd-fs-body); line-height: var(--pd-lh-body);
+    font-size: var(--pd-fs-body); line-height: var(--pd-lh-body); padding: var(--pd-space-7);
     -webkit-font-smoothing: antialiased; }
-  .table { max-width: 560px; min-height: 100vh; min-height: 100dvh; margin: 0 auto;
-    padding: var(--pd-space-5); display: flex; flex-direction: column;
-    gap: var(--pd-space-5); container-type: inline-size; }
+
+  /* screen-only glue (ADR-0103 §4): the card draws the duel table at both shapes the
+   * product is judged at. .viewport is the exact device box each frame is measured
+   * against, and the sole container-query context on the page; .frame is only the
+   * bordered, labeled card around it, the .frames / .frame form duel-table-states.html
+   * already uses. The two .table copies below are the same markup — only the
+   * .viewport that boxes them differs, which is what makes one layout at two widths
+   * checkable by diff rather than merely claimed. */
+  .frames { display: flex; gap: var(--pd-space-6); flex-wrap: wrap; align-items: flex-start; }
+  .frame { border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
+    padding: var(--pd-space-5); }
+  .frame h2 { font-size: var(--pd-fs-micro); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; margin-bottom: var(--pd-space-5); }
+  .viewport { overflow: auto; container-type: inline-size; }
+  .viewport.laptop { width: 720px; height: 900px; }
+  .viewport.phone { width: 390px; height: 664px; }
+
+  .table { max-width: 560px; margin: 0 auto; min-height: 100%;
+    display: flex; flex-direction: column;
+    /* the board's own card width, read by .board below and by --herow's floor —
+     * declared here, on the column itself, so both card groups can read one name */
+    --bw: clamp(48px, calc((100cqi - 64px) / 5), 72px);
+    /* ADR-0103 §3.1: outer padding and the gaps between the column's three blocks
+     * are the first give, a continuous function of the column's own width */
+    --wgap: clamp(var(--pd-space-3), calc((100cqi - 220px) / 21.25), var(--pd-space-5));
+    padding: var(--wgap); gap: var(--wgap);
+    /* §3.2: the rival's mini hand narrows furthest of anything on the table */
+    --miniw: clamp(24px, calc((100cqi - 135px) / 10.625), 40px);
+    /* §3.3: the hero's hole cards narrow too, floored at a board card's own width */
+    --herow: clamp(var(--bw), calc((100cqi - 40px) / 5), 96px); }
 
   /* seat plate — faithful copy of components/seat-and-pot.html */
   .seat { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
@@ -78,9 +106,10 @@
   .pot .meta { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
 
   /* playing card — faithful copy of components/playing-card.html;
-   * --bw sizes the board row from the column itself, not the viewport */
-  .board { display: flex; gap: var(--pd-space-3);
-    --bw: clamp(48px, calc((100cqi - 64px) / 5), 72px); }
+   * --bw (declared on .table, above) sizes the board row from the column itself,
+   * not the viewport, and is read by --herow too so the hero's floor can never
+   * drift from the board's own width */
+  .board { display: flex; gap: var(--pd-space-3); }
   .pc, .back, .slot { width: var(--w, 96px); aspect-ratio: 5 / 7;
     border-radius: calc(var(--w, 96px) * 0.0625);
     display: inline-block; vertical-align: bottom; flex-shrink: 0; }
@@ -133,56 +162,122 @@
 </style>
 </head>
 <body>
-<div class="table">
-  <div class="opp">
-    <div class="seat">
-      <span class="who"><span class="name">ImKate</span>
-        <span class="status"></span></span>
-      <span class="dealer">D</span>
-      <span class="chips">4,150</span>
-    </div>
-    <div class="oppcards">
-      <span class="back" style="--w:40px" role="img" aria-label="ImKate's hidden hand"></span>
-      <span class="back" style="--w:40px" aria-hidden="true"></span>
-    </div>
-    <div class="bet-line">committed <span class="amt">400</span></div>
-  </div>
+<div class="frames">
+  <div class="frame">
+    <h2>Laptop — 720 &times; 900</h2>
+    <div class="viewport laptop">
+      <div class="table">
+        <div class="opp">
+          <div class="seat">
+            <span class="who"><span class="name">ImKate</span>
+              <span class="status"></span></span>
+            <span class="dealer">D</span>
+            <span class="chips">4,150</span>
+          </div>
+          <div class="oppcards">
+            <span class="back" style="--w:var(--miniw)" role="img" aria-label="ImKate's hidden hand"></span>
+            <span class="back" style="--w:var(--miniw)" aria-hidden="true"></span>
+          </div>
+          <div class="bet-line">committed <span class="amt">400</span></div>
+        </div>
 
-  <div class="center">
-    <div class="pot">
-      <span class="amount">Pot&nbsp;2,450</span>
-      <span class="meta">Blinds 75/150 · Hand 14 · Flop</span>
-    </div>
-    <div class="board">
-      <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
-      <span class="pc red" style="--w:var(--bw)" role="img" aria-label="seven of diamonds"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
-      <span class="pc" style="--w:var(--bw)" role="img" aria-label="two of clubs"><span class="ix" aria-hidden="true"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
-      <span class="slot" style="--w:var(--bw)" role="img" aria-label="turn card, not yet dealt"></span>
-      <span class="slot" style="--w:var(--bw)" role="img" aria-label="river card, not yet dealt"></span>
-    </div>
-  </div>
+        <div class="center">
+          <div class="pot">
+            <span class="amount">Pot&nbsp;2,450</span>
+            <span class="meta">Blinds 75/150 · Hand 14 · Flop</span>
+          </div>
+          <div class="board">
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="seven of diamonds"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="two of clubs"><span class="ix" aria-hidden="true"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
+            <span class="slot" style="--w:var(--bw)" role="img" aria-label="turn card, not yet dealt"></span>
+            <span class="slot" style="--w:var(--bw)" role="img" aria-label="river card, not yet dealt"></span>
+          </div>
+        </div>
 
-  <div class="hero">
-    <div class="hole">
-      <span class="pc red" style="--w:96px" role="img" aria-label="ace of hearts"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
-      <span class="pc" style="--w:96px" role="img" aria-label="king of spades"><span class="ix" aria-hidden="true"><span class="r">K</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
-    </div>
-    <div class="seat on-turn">
-      <span class="who"><span class="name">You</span>
-        <span class="status turn">Your turn</span></span>
-      <span class="chips">13,400</span>
-    </div>
-    <div class="bar">
-      <div class="sizing">
-        <button class="chip">min</button><button class="chip">⅓</button>
-        <button class="chip">½</button><button class="chip sel">pot</button>
-        <button class="chip">all-in</button>
-        <span class="stepper"><button aria-label="decrease the raise">−</button><span aria-label="raise to amount">3,650</span><button aria-label="increase the raise">+</button></span>
+        <div class="hero">
+          <div class="hole">
+            <span class="pc red" style="--w:var(--herow)" role="img" aria-label="ace of hearts"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="pc" style="--w:var(--herow)" role="img" aria-label="king of spades"><span class="ix" aria-hidden="true"><span class="r">K</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+          </div>
+          <div class="seat on-turn">
+            <span class="who"><span class="name">You</span>
+              <span class="status turn">Your turn</span></span>
+            <span class="chips">13,400</span>
+          </div>
+          <div class="bar">
+            <div class="sizing">
+              <button class="chip">min</button><button class="chip">⅓</button>
+              <button class="chip">½</button><button class="chip sel">pot</button>
+              <button class="chip">all-in</button>
+              <span class="stepper"><button aria-label="decrease the raise">−</button><span aria-label="raise to amount">3,650</span><button aria-label="increase the raise">+</button></span>
+            </div>
+            <div class="actions">
+              <button class="btn ghost">Fold</button>
+              <button class="btn ghost">Call <span class="amt">400</span></button>
+              <button class="btn fill">Raise to <span class="amt">3,650</span></button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="actions">
-        <button class="btn ghost">Fold</button>
-        <button class="btn ghost">Call <span class="amt">400</span></button>
-        <button class="btn fill">Raise to <span class="amt">3,650</span></button>
+    </div>
+  </div>
+  <div class="frame">
+    <h2>Phone — 390 &times; 664</h2>
+    <div class="viewport phone">
+      <div class="table">
+        <div class="opp">
+          <div class="seat">
+            <span class="who"><span class="name">ImKate</span>
+              <span class="status"></span></span>
+            <span class="dealer">D</span>
+            <span class="chips">4,150</span>
+          </div>
+          <div class="oppcards">
+            <span class="back" style="--w:var(--miniw)" role="img" aria-label="ImKate's hidden hand"></span>
+            <span class="back" style="--w:var(--miniw)" aria-hidden="true"></span>
+          </div>
+          <div class="bet-line">committed <span class="amt">400</span></div>
+        </div>
+
+        <div class="center">
+          <div class="pot">
+            <span class="amount">Pot&nbsp;2,450</span>
+            <span class="meta">Blinds 75/150 · Hand 14 · Flop</span>
+          </div>
+          <div class="board">
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="seven of diamonds"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="two of clubs"><span class="ix" aria-hidden="true"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
+            <span class="slot" style="--w:var(--bw)" role="img" aria-label="turn card, not yet dealt"></span>
+            <span class="slot" style="--w:var(--bw)" role="img" aria-label="river card, not yet dealt"></span>
+          </div>
+        </div>
+
+        <div class="hero">
+          <div class="hole">
+            <span class="pc red" style="--w:var(--herow)" role="img" aria-label="ace of hearts"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="pc" style="--w:var(--herow)" role="img" aria-label="king of spades"><span class="ix" aria-hidden="true"><span class="r">K</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+          </div>
+          <div class="seat on-turn">
+            <span class="who"><span class="name">You</span>
+              <span class="status turn">Your turn</span></span>
+            <span class="chips">13,400</span>
+          </div>
+          <div class="bar">
+            <div class="sizing">
+              <button class="chip">min</button><button class="chip">⅓</button>
+              <button class="chip">½</button><button class="chip sel">pot</button>
+              <button class="chip">all-in</button>
+              <span class="stepper"><button aria-label="decrease the raise">−</button><span aria-label="raise to amount">3,650</span><button aria-label="increase the raise">+</button></span>
+            </div>
+            <div class="actions">
+              <button class="btn ghost">Fold</button>
+              <button class="btn ghost">Call <span class="amt">400</span></button>
+              <button class="btn fill">Raise to <span class="amt">3,650</span></button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
