@@ -778,7 +778,7 @@ link and the friend who sent it are both left slightly in the dark, on purpose, 
 copy that guesses; one more string with nothing keeping it in one voice; and **§2's hole stays open** —
 several `WAITING` rooms can each become a duel the player is not at, so *never in two duels at once* is what
 this decision aims at and **not** what it guarantees, registered as **`DEC-111`**. Qualifies `ADR-0094` §1 by
-exactly one case: opening the invite is taking the seat, except when the opener is already in a duel.
+exactly one case: opening the invite is taking the seat, except when the opener is already in a duel. **The authority is the human's, not the vision's.** The first draft cited *What it is not*'s *"Not a multi-table poker room…"*; review rejected that reading — every item in that sentence's list names a table or game **format**, and nothing in `docs/vision.md` speaks to per-player concurrency across duel instances — which by the product owner's own boundary made it the human's call. **Put to the human on 2026-09-02, who chose the same answer for a different reason**, and declined **resign** in the same breath (*not now — record it*), so the cost below is knowingly accepted rather than merely disclosed. `docs/vision.md` is unchanged. `ADR-0105` §*How this ADR was decided* carries the full record.
 
 `DEC-107` → [`ADR-0104`](../docs/adr/ADR-0104-a-frame-reaches-the-connection-in-the-room-it-is-about.md)
 on 2026-09-01 — **a frame reaches the connection that is in the room it is about.** Raised the same day by

@@ -5,16 +5,15 @@
 - **Resolves:** `DEC-109` — may one player hold seats in **two live rooms at once**? Registered open
   2026-09-01 by [`ADR-0104`](ADR-0104-a-frame-reaches-the-connection-in-the-room-it-is-about.md)
   §10, which answered `DEC-107` and split this off rather than deciding it.
-- **Where the answer came from:** **derived from the vision; the human did not state this call.**
-  The licensing sentence is [`docs/vision.md`](../vision.md)'s *What it is not* — ***"Not a
-  multi-table poker room. No 6-max, no 9-max, no tournaments, no sit & go, no cash games."*** Two
-  seats in two running duels is multi-tabling; that sentence names the furniture rather than the
-  activity only because the furniture is how the activity arrives. The *shape* of the answer — a
-  refusal rather than a forfeit — comes from *What it is*: ***"One duel coin per win. Not chips,
-  not currency, not a balance. A counter of duels won."*** and ***"A duel is a match, not a
-  hand."*** A coin that moves because a player clicked a link is not counting a duel won. Where
-  those leave slack, the tiebreak is *Positioning* — ***"Dark, quiet, fast, minimal"*** — the same
-  sentence [`ADR-0073`](ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md)
+- **Where the answer came from:** **the human stated this call on 2026-09-02.** It is not derived
+  from the vision, and an earlier draft of this ADR that claimed it was has been withdrawn — see
+  *How this ADR was decided* below. The *shape* of the answer — a refusal rather than a forfeit —
+  **is** derived, from *What it is*: ***"One duel coin per win. Not chips, not currency, not a
+  balance. A counter of duels won."*** and ***"A duel is a match, not a hand."*** A coin that moves
+  because a player clicked a link is not counting a duel won, so a forfeit was never the vision's to
+  license either; the human was asked about it in the same breath and declined it. The wording of
+  the refusal follows *Positioning* — ***"Dark, quiet, fast, minimal"*** — the same sentence
+  [`ADR-0073`](ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md)
   and [`ADR-0046`](ADR-0046-the-table-says-away-timed-out-and-back.md) derive their strings from.
 - **Applies, and reopens none of:** [`ADR-0013`](ADR-0013-disconnect-grace-period.md) (the seat is
   held for a window, then the duel goes on without the player);
@@ -252,6 +251,45 @@ when they click a second link is one human's afternoon, and it did not survive r
 rule is the one an afternoon undoes: a server answer and two sentences, no schema, nothing stored,
 nothing a player keeps. Every heavier option in the set writes something down that cannot be taken
 back — a duel result, a coin, a ladder position.
+
+## How this ADR was decided, and why the first attempt was wrong
+
+**This is the record of a boundary being tested, and it belongs in the ADR rather than only in the
+git history.**
+
+The first draft answered `DEC-109` on the product owner's own authority and named a licensing
+sentence: `docs/vision.md`'s *What it is not* — *"Not a multi-table poker room. No 6-max, no 9-max,
+no tournaments, no sit & go, no cash games."* Review rejected that reading, and the rejection holds:
+
+- Every item in that sentence's own elaborating list — 6-max, 9-max, tournaments, sit & go, cash
+  games — names a **table or game format**. `DEC-109` asks a different-axis question: whether one
+  *account* may hold seats in two *separate* heads-up duels at once. Nothing in that list reaches it,
+  and **no other sentence in the vision speaks to per-player concurrency across duel instances.**
+- The draft conceded as much in its own words — *"that sentence names the furniture rather than the
+  activity only because the furniture is how the activity arrives"* — which is an argued bridge, not
+  a citation. Needing the bridge was the tell.
+- [`.claude/agents/product-owner.md`](../../.claude/agents/product-owner.md) paraphrases that same
+  vision sentence, in its own *What the vision already settles* section, as a statement about table
+  size. The agent's settled reading of the sentence contradicted the use it was being put to.
+
+That agent's boundary is *"say which sentence of the vision licensed your answer; if you cannot
+point at one, you are inventing."* A competing and textually stronger reading existed under which
+the vision is simply **silent**, which by that rule made this **the human's call** — and the draft
+carried `FOR THE HUMAN: none`.
+
+**So it was put to the human, who chose the same answer for a different reason.** The conclusion in
+§1 is unchanged; what changed is the authority under it. That distinction is the whole point of the
+rule: an answer that is right by luck and licensed by a misreading would have stood as precedent for
+the next misreading.
+
+**Asked in the same breath and answered:** whether a player may **resign** a duel they are in. The
+answer was **not now — record it**. The cost in `## Consequences` therefore stands **knowingly
+accepted** rather than merely disclosed: until a resign or a turn clock exists, a player who wants
+out of a duel has no exit but to stop being there and let their rival play the seat out.
+
+**The vision is unchanged.** This ADR does not amend `docs/vision.md`, and no one should read it as
+having done so. If the product ever wants that sentence to exist, it is its own change and its own
+approval.
 
 ## Alternatives considered
 
