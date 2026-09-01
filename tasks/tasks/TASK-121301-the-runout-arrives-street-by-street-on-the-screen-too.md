@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121301
 title: The runout arrives street by street on the screen, not only in the log
 type: task
-status: ready
+status: blocked
 parent: STORY-1213
 module: web-client
 estimate: S
@@ -49,6 +49,20 @@ routing authority, add the row to `tasks/BOARD.md` §*Open decisions* and to thi
 back `blocked`. This ticket is then **re-cut** against the merged answer, the way `TASK-120907` was
 re-cut against `ADR-0094` and `TASK-121101` against `ADR-0095`. That is the merged pattern for this
 shape and it is not a failure of the ticket.
+
+## Registration record
+
+Done, on 2026-09-01: `DEC-105` — the architect's — is raised, framed as the one question named
+above (where the pacing lives, between `poker-server` sending one `Snapshot` per street and
+`web-client` holding a `Snapshot` it already has; what a step costs, in hold time and reconnect
+behaviour), and routed under `ADR-0096` §2. **This ticket is `blocked` pending its merged
+answer** — nothing under `## Files` has been opened, and no production diff exists.
+
+The row for `tasks/BOARD.md` §*Open decisions* and for `STORY-1213` is carried in this ticket's
+pull request description rather than committed here, so a `tasks/BOARD.md` edit is never in
+flight from two worktrees at once. Both land together with this ticket's own `status:` flip to
+`blocked`, keeping `.github/scripts/lint_tickets.py`'s board/file cross-check consistent
+throughout rather than for one commit only.
 
 ## The defect
 
