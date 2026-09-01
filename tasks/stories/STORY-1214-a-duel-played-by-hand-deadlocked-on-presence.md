@@ -141,7 +141,7 @@ answered here.
 
 | | |
 | --- | --- |
-| [`DEC-107`](../../docs/adr/README.md) | **The architect's** — where is a presence frame scoped to the room it is about? Blocks `TASK-121403`. |
+| [`DEC-107`](../../docs/adr/README.md) | **The architect's** — where is a presence frame scoped to the room it is about? Blocked `TASK-121403`. **Answered and merged 2026-09-01** as [`ADR-0104`](../../docs/adr/ADR-0104-a-frame-reaches-the-connection-in-the-room-it-is-about.md); it also split off `DEC-109`, the product owner's, which blocks nothing here. |
 | [`DEC-108`](../../docs/adr/README.md) | **The product owner's** — may the action bar stay enabled while the table says the duel is paused? Blocks no ticket here. |
 
 `DEC-108` exists because `ADR-0046` §6 **already declined this question by name** —
@@ -157,24 +157,57 @@ question it is. The case that would check the answer is written when the answer 
 | --- | --- | --- |
 | [TASK-121401](../tasks/TASK-121401-the-catalogue-sees-a-present-player-marked-away.md) | The catalogue sees a present player marked away | ready |
 | [TASK-121402](../tasks/TASK-121402-the-duel-table-column-fits-the-phone-it-is-nested-in.md) | The duel table's column fits the phone it is nested in | ready |
-| [TASK-121403](../tasks/TASK-121403-presence-is-about-the-room-the-reader-is-in.md) | Presence is about the room the reader is sitting in | blocked |
+| [TASK-121404](../tasks/TASK-121404-a-connections-room-becomes-a-session-type-the-directory-can-read.md) | A connection's room becomes a session type the directory can read | ready |
+| [TASK-121403](../tasks/TASK-121403-presence-is-about-the-room-the-reader-is-in.md) | Presence is about the room the reader is sitting in | backlog |
+| [TASK-121405](../tasks/TASK-121405-the-measured-reproduction-is-a-server-test.md) | The measured reproduction is a server test | backlog |
+| [TASK-121406](../tasks/TASK-121406-the-store-is-scoped-to-the-room-the-server-last-named.md) | The store is scoped to the room the server last named | backlog |
 
-**The three are independent, and `depends_on` says so.** They share no file and no module —
-`docs/test-plan.md`, `web-client/`, `poker-server/` — and no merged gate couples them, so any of
-them may be worked at any time, in any order, concurrently. An earlier draft of this story chained
-them `121401 → 121402 → 121403` and gave *"the run is sequential"* as the reason. That is
-scheduling convenience, and `depends_on` is not where it belongs: `tasks/README.md` makes CI refuse
-a `ready` task whose dependency is unfinished, so the chain would have held `TASK-121403` — the
-defect that makes the product unplayable by hand — un-startable behind an XS padding fix it shares
-nothing with. This repo's precedent for a real chain is `STORY-0313`, which states the condition in
-as many words: *"every one of them touches at least one file another touches."* These do not.
+**`TASK-121401` and `TASK-121402` are independent of everything, and `depends_on` says so.** They
+share no file and no module — `docs/test-plan.md`, `web-client/`, `poker-server/` — and no merged
+gate couples them, so either may be worked at any time. An earlier draft of this story chained
+`121401 → 121402 → 121403` and gave *"the run is sequential"* as the reason. That is scheduling
+convenience, and `depends_on` is not where it belongs: `tasks/README.md` makes CI refuse a `ready`
+task whose dependency is unfinished, so the chain would have held the presence repair un-startable
+behind an XS padding fix it shares nothing with. This repo's precedent for a real chain is
+`STORY-0313`, which states the condition in as many words: *"every one of them touches at least one
+file another touches."* Those two do not.
 
 There is still a **preference** about order, and it is only that. Writing `TASK-121401` first gives
-`TASK-121403` a negative case to be measured against rather than one written afterwards to match
-it. A scheduler should prefer that order; nothing enforces it, and nothing should.
+the repair a negative case to be measured against rather than one written afterwards to match it. A
+scheduler should prefer that order; nothing enforces it, and nothing should.
 
-`TASK-121403` is `blocked` on `DEC-107` alone — the architect's decision about where a presence
-frame is scoped to its room. That is a real block, and it is the only one.
+### The presence repair is four tickets, and the chain among them is real
+
+`DEC-107` was **answered and merged** on 2026-09-01 as
+[`ADR-0104`](../../docs/adr/ADR-0104-a-frame-reaches-the-connection-in-the-room-it-is-about.md), so
+`TASK-121403` is no longer blocked on a decision. Re-cutting it against that ADR — by stubbing the
+change and running `.github/workflows/build.yml`'s pull-request gate set to exhaustion, which is
+`ADR-0069` — produced four tickets rather than one, and the split is forced rather than chosen:
+
+- **`TASK-121404`** moves `RoomMembership` into `duels.poker.server.session` and makes its `code`
+  `@Volatile` (`ADR-0104` §2). The probe found this half **green on its own** — `./gradlew check
+  -PrequireDocker=true` exits 0 with the move applied and nothing else — and `ADR-0068` is explicit
+  that a change with a green intermediate state is two tickets, not one declared `atomic:`. It also
+  gives the ADR's *"single most important word"* a gate: a reflection test that fails if the
+  annotation is dropped, which is the only instrument that can, since its absence *"never [fails] on
+  one thread."*
+- **`TASK-121403`** is the repair, and keeps its ID because `ADR-0104` §Constrains, `docs/adr/README.md`
+  and this story all name it as the ticket the ADR's *Files* table is re-cut into. It is `atomic:`
+  at **6 files** on the Kotlin compiler: deleting `ConnectionDirectory.writerFor(player)` and giving
+  `register` a third parameter breaks `SeatDelivery.kt`, `DuelSocket.kt` and three test files in one
+  step. `ADR-0104` §6 says *"`TASK-121403` is therefore not `atomic:`"* — that sentence is about the
+  `PROTOCOL_VERSION` bump it does not carry, and the version does not move; `atomic:` is a property
+  of any merged gate that refuses the intermediate state, and the probe found one.
+- **`TASK-121405`** is `ADR-0104` §7's first requirement as a socket test. No gate drags
+  `DuelSocketDisconnectTest.kt` into the repair's blast radius, so it is a separate ticket; it is a
+  regression guard rather than the proof of the fix, and it says so.
+- **`TASK-121406`** is the client half, §4. It shares no file with the server tickets and could
+  technically start at any time — it depends on `TASK-121403` because landing it first would ship,
+  alone, the option `ADR-0104`'s *Alternatives* calls *"the trap in the option set"*: one line that
+  turns the recorded trace green while the defect stands.
+
+So `TASK-121404` is the story's single startable presence ticket, and the rest are `backlog` until
+their dependency merges.
 
 ## Acceptance criteria
 
