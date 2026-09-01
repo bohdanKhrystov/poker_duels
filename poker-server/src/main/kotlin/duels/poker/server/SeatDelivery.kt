@@ -15,11 +15,13 @@ import duels.poker.server.session.ConnectionDirectory
  * the frame goes. Seat `0` names [Room.host], seat `1` names [Room.guest].
  *
  * A seat with no seated player — a [duels.poker.server.room.RoomState.WAITING] room has no
- * guest — or a seated player with no writer currently registered in [connections] — a player
- * mid-reconnect has none — is **skipped silently**. Both are ordinary conditions, never a reason
- * to fail the caller, and never a reason to send that frame to the *other* seat instead: silently
- * dropping an undeliverable frame is safe, silently broadcasting it to whoever is present is the
- * hole-card leak this function exists to prevent.
+ * guest — a seated player with no writer currently registered in [connections] — a player
+ * mid-reconnect has none — or a seated player whose connection is currently in a different room,
+ * or in none at all, is **skipped silently**: [duels.poker.server.session.ConnectionDirectory.writerFor]
+ * answers only for the room this frame is about (`ADR-0104` §1). All three are ordinary
+ * conditions, never a reason to fail the caller, and never a reason to send that frame to the
+ * *other* seat instead: silently dropping an undeliverable frame is safe, silently broadcasting it
+ * to whoever is present is the hole-card leak this function exists to prevent.
  *
  * Each frame is encoded with [ProtocolCodec.encode] once, inside the loop, immediately before it
  * is sent to the writer that frame named — never hoisted out and reused across frames. Two seats'
@@ -37,7 +39,7 @@ internal suspend fun deliver(frames: List<Addressed>, room: Room, connections: C
             1 -> room.guest
             else -> null
         } ?: continue
-        val writer = connections.writerFor(player) ?: continue
+        val writer = connections.writerFor(player, room.code) ?: continue
         writer.send(ProtocolCodec.encode(frame.message))
     }
 }
