@@ -78,21 +78,28 @@ function awardLineFor(
 }
 
 /**
- * The pot and the hand's standing facts, every one of them read straight off
- * the view: the pot is `view.pot` and not a sum of what the seats put in, and
- * the street is `view.street` and not a count of board cards — those two
- * disagree at exactly the moments that matter.
+ * The pot and the hand's standing facts, most of them read straight off the
+ * view: the pot is `view.pot` and not a sum of what the seats put in, and the
+ * street is `view.street` unless `props.street` names a different one — a
+ * runout's own step, held in its own prop rather than folded into `view`,
+ * because a doctored view would be the client assembling a fact the server
+ * never sent as a unit (`ADR-0102` §§2–3).
  *
- * When the hand just ended and this client saw its award, the amount slot
- * states who took the pot instead (`ADR-0095`); every other tick it reads
- * `Pot N` as it always has.
+ * When the street in effect is `COMPLETE` and this client saw the hand's
+ * award, the amount slot states who took the pot instead (`ADR-0095`); every
+ * other tick it reads `Pot N` as it always has. A step's own street is never
+ * `COMPLETE`, so the award line is held back for exactly as long as one
+ * stands (`ADR-0102` §2).
  */
 export function PotStrip(props: {
   view: PlayerView;
   narration?: readonly GameEvent[];
+  street?: Street;
 }): ReactElement {
   const { view, narration = [] } = props;
-  const awardLine = awardLineFor(view, narration);
+  const street = props.street ?? view.street;
+  const awardLine =
+    street === "COMPLETE" ? awardLineFor(view, narration) : null;
   return (
     <div className="flex items-baseline gap-4 px-2 py-3">
       <span className="font-mono text-large tabular-nums">
@@ -100,7 +107,7 @@ export function PotStrip(props: {
       </span>
       <span className="text-small text-text-muted">
         Blinds {formatChips(view.smallBlind)}/{formatChips(view.bigBlind)} ·
-        Hand {view.handNumber} · {STREET_NAMES[view.street]}
+        Hand {view.handNumber} · {STREET_NAMES[street]}
       </span>
     </div>
   );

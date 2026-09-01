@@ -168,6 +168,7 @@ export function Lobby(): ReactElement {
           view={view}
           rivalPresence={state.rivalPresence}
           narration={state.narration}
+          revealStep={state.reveal?.steps[0] ?? null}
         />
         <PresenceNotice
           key={state.presenceCount}

@@ -1,6 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import type { GameEvent } from "../protocol";
+import {
+  advanceReveal,
+  applyServerMessage,
+  initialState,
+} from "../store/duel-state";
 import { DuelTable } from "./DuelTable";
 import { aView, aSeat } from "./view-fixture";
 
@@ -414,5 +419,166 @@ describe("the duel table", () => {
     expect(screen.queryByText(/Your rival wins/)).toBeNull();
     expect(screen.queryByText(/9,800/)).toBeNull();
     expect(screen.queryByText(/5,000/)).toBeNull();
+  });
+
+  it("paints the snapshot's own cards when the StreetDealt carried different ones", () => {
+    const view = aView({
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c"] },
+    });
+    const narration: GameEvent[] = [
+      started(1),
+      {
+        type: "StreetDealt",
+        sequence: 5,
+        street: "FLOP",
+        // Deliberately not the snapshot's own cards: if the board were ever read from the
+        // event instead of `view.board.cards`, this is what would show (ADR-0102 §3).
+        cards: ["9h", "9c", "9d"],
+      },
+    ];
+
+    render(
+      <DuelTable
+        view={view}
+        narration={narration}
+        revealStep={{ board: view.board.cards, street: "FLOP" }}
+      />,
+    );
+
+    expect(screen.getByLabelText("ace of spades")).toBeDefined();
+    expect(screen.getByLabelText("seven of diamonds")).toBeDefined();
+    expect(screen.getByLabelText("two of clubs")).toBeDefined();
+    expect(screen.queryByLabelText("nine of hearts")).toBeNull();
+    expect(screen.queryByLabelText("nine of clubs")).toBeNull();
+    expect(screen.queryByLabelText("nine of diamonds")).toBeNull();
+  });
+
+  it("a runout paints three cards then four then five, naming Flop, Turn and River", () => {
+    const board = ["As", "7d", "2c", "Kh", "3s"];
+    const withEvents = applyServerMessage(initialState(), {
+      type: "Events",
+      events: [
+        {
+          type: "StreetDealt",
+          sequence: 10,
+          street: "FLOP",
+          cards: ["As", "7d", "2c"],
+        },
+        { type: "StreetDealt", sequence: 11, street: "TURN", cards: ["Kh"] },
+        { type: "StreetDealt", sequence: 12, street: "RIVER", cards: ["3s"] },
+      ],
+    });
+    const afterSnapshot = applyServerMessage(withEvents, {
+      type: "Snapshot",
+      view: aView({ street: "COMPLETE", board: { cards: board } }),
+    });
+    const view = afterSnapshot.view;
+    if (view === null) throw new Error("expected a view");
+
+    const { rerender } = render(
+      <DuelTable
+        view={view}
+        revealStep={afterSnapshot.reveal?.steps[0] ?? null}
+      />,
+    );
+    expect(screen.getByLabelText("ace of spades")).toBeDefined();
+    expect(screen.getByLabelText("seven of diamonds")).toBeDefined();
+    expect(screen.getByLabelText("two of clubs")).toBeDefined();
+    expect(screen.getByLabelText("turn card, not yet dealt")).toBeDefined();
+    expect(screen.queryByLabelText("king of hearts")).toBeNull();
+    expect(screen.getByText(/· Flop$/)).toBeDefined();
+
+    const afterFlopStep = advanceReveal(afterSnapshot);
+    rerender(
+      <DuelTable
+        view={view}
+        revealStep={afterFlopStep.reveal?.steps[0] ?? null}
+      />,
+    );
+    expect(screen.getByLabelText("king of hearts")).toBeDefined();
+    expect(screen.getByLabelText("river card, not yet dealt")).toBeDefined();
+    expect(screen.queryByLabelText("three of spades")).toBeNull();
+    expect(screen.getByText(/· Turn$/)).toBeDefined();
+
+    const afterTurnStep = advanceReveal(afterFlopStep);
+    rerender(
+      <DuelTable
+        view={view}
+        revealStep={afterTurnStep.reveal?.steps[0] ?? null}
+      />,
+    );
+    expect(screen.getByLabelText("three of spades")).toBeDefined();
+    expect(screen.queryByLabelText("river card, not yet dealt")).toBeNull();
+    expect(screen.getByText(/· River$/)).toBeDefined();
+  });
+
+  it("holds the award line back until the last step", () => {
+    const board = ["As", "7d", "2c", "Kh", "3s"];
+    const withEvents = applyServerMessage(initialState(), {
+      type: "Events",
+      events: [
+        {
+          type: "StreetDealt",
+          sequence: 10,
+          street: "FLOP",
+          cards: ["As", "7d", "2c"],
+        },
+        { type: "StreetDealt", sequence: 11, street: "TURN", cards: ["Kh"] },
+        { type: "StreetDealt", sequence: 12, street: "RIVER", cards: ["3s"] },
+      ],
+    });
+    const afterSnapshot = applyServerMessage(withEvents, {
+      type: "Snapshot",
+      view: aView({
+        viewerSeat: 0,
+        handNumber: 3,
+        street: "COMPLETE",
+        pot: 0,
+        board: { cards: board },
+      }),
+    });
+    const view = afterSnapshot.view;
+    if (view === null) throw new Error("expected a view");
+    const narration: GameEvent[] = [started(3), awarded(0, 4850)];
+
+    const { rerender } = render(
+      <DuelTable
+        view={view}
+        narration={narration}
+        revealStep={afterSnapshot.reveal?.steps[0] ?? null}
+      />,
+    );
+    expect(screen.queryByText(/You win/)).toBeNull();
+
+    const afterFlop = advanceReveal(afterSnapshot);
+    rerender(
+      <DuelTable
+        view={view}
+        narration={narration}
+        revealStep={afterFlop.reveal?.steps[0] ?? null}
+      />,
+    );
+    expect(screen.queryByText(/You win/)).toBeNull();
+
+    const afterTurn = advanceReveal(afterFlop);
+    rerender(
+      <DuelTable
+        view={view}
+        narration={narration}
+        revealStep={afterTurn.reveal?.steps[0] ?? null}
+      />,
+    );
+    expect(screen.queryByText(/You win/)).toBeNull();
+
+    const afterRiver = advanceReveal(afterTurn);
+    rerender(
+      <DuelTable
+        view={view}
+        narration={narration}
+        revealStep={afterRiver.reveal?.steps[0] ?? null}
+      />,
+    );
+    expect(screen.getByText("You win 4,850")).toBeDefined();
   });
 });

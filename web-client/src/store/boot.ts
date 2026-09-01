@@ -2,6 +2,13 @@ import { forgetRoomCode, readRoomCode, writeRoomCode } from "../protocol";
 import type { ClientMessage, Connection, ServerMessage } from "../protocol";
 import { createDuelStore, type DuelStore } from "./duel-store";
 
+/**
+ * How long a runout's step stands (`ADR-0102` §4), named once so nowhere else in the client
+ * spells out the number. A runout from preflop therefore takes four of these; an ordinary hand's
+ * ending takes one.
+ */
+export const REVEAL_STEP_MS = 600;
+
 /** The tab's store, and the one way out to the server. */
 export interface DuelClient {
   readonly store: DuelStore;
@@ -26,6 +33,13 @@ export interface BootOptions {
    * invent a Storage — but `main.tsx` always passes one.
    */
   readonly storage?: Storage;
+  /**
+   * How long a reveal step stands, in milliseconds, or absent for `REVEAL_STEP_MS` — the
+   * production seam `ADR-0102` §4 fixes this at, not a test-only door. `0` means synchronous,
+   * which is what lets `web-client/src/e2e/drive-duel.tsx` replay a recorded frame log with no
+   * clock in the way.
+   */
+  readonly stepMillis?: number;
 }
 
 /**
@@ -34,7 +48,12 @@ export interface BootOptions {
  * connection — closing the tab is the close.
  */
 export function bootDuelClient(options: BootOptions): DuelClient {
-  const store = createDuelStore();
+  const store = createDuelStore({
+    stepMillis: options.stepMillis ?? REVEAL_STEP_MS,
+    schedule: (run, delayMillis) => {
+      setTimeout(run, delayMillis);
+    },
+  });
   // Whether the JoinRoom this reaction sent is still unanswered. A refusal is
   // only about our room when it is answering our rejoin — the same UNKNOWN_ROOM
   // reaches a player who mistyped a code in the lobby, and that must not throw

@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { GameEvent, PlayerView, SeatPresence } from "../protocol";
+import type { GameEvent, PlayerView, SeatPresence, Street } from "../protocol";
 import { BoardCards } from "./BoardCards";
 import { PotStrip } from "./PotStrip";
 import { SeatPlate } from "./SeatPlate";
@@ -17,8 +17,15 @@ export function DuelTable(props: {
   view: PlayerView;
   rivalPresence?: SeatPresence | null;
   narration?: readonly GameEvent[];
+  /**
+   * The board and street a hand's ending is currently standing on, or absent for ordinary play
+   * (`ADR-0102` §2). The only two fields a runout ever lags — every seat plate below is still
+   * the snapshot's own, unlagged.
+   */
+  revealStep?: { board: readonly string[]; street: Street } | null;
 }): ReactElement {
   const { view } = props;
+  const board = props.revealStep?.board ?? view.board.cards;
   const you = view.seats.find((seat) => seat.index === view.viewerSeat);
   const rival = view.seats.find((seat) => seat.index !== view.viewerSeat);
   return (
@@ -43,8 +50,12 @@ export function DuelTable(props: {
         </div>
       )}
       <div className="flex flex-col items-center gap-4">
-        <PotStrip view={view} narration={props.narration} />
-        <BoardCards cards={view.board.cards} />
+        <PotStrip
+          view={view}
+          narration={props.narration}
+          street={props.revealStep?.street}
+        />
+        <BoardCards cards={board} />
       </div>
       {you !== undefined && (
         <div className="flex flex-col gap-4">

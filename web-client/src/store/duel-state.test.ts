@@ -4,6 +4,7 @@ import type {
   LegalActions,
   PlayerView,
   SeatView,
+  StreetDealt,
 } from "../protocol";
 import * as duelState from "./duel-state";
 
@@ -57,6 +58,8 @@ describe("the duel state", () => {
       presenceCount: 0,
       rivalReturned: false,
       serverAction: null,
+      pendingStreetDealt: [],
+      reveal: null,
     });
   });
 
@@ -86,8 +89,9 @@ describe("the duel state", () => {
     expect(welcomed).toBe(stateWithSeat);
   });
 
-  it("exports only the reducer and the initial state", () => {
+  it("exports only the reducer, the initial state and the per-tick advance", () => {
     expect(Object.keys(duelState).sort()).toEqual([
+      "advanceReveal",
       "applyServerMessage",
       "initialState",
     ]);
@@ -1468,5 +1472,74 @@ describe("the duel state", () => {
       },
     });
     expect(state.serverAction).toBeNull();
+  });
+
+  it("lays out one step per StreetDealt and a final step for the whole snapshot", () => {
+    const streetDealt: readonly StreetDealt[] = [
+      {
+        type: "StreetDealt",
+        sequence: 10,
+        street: "FLOP",
+        cards: ["As", "7d", "2c"],
+      },
+      { type: "StreetDealt", sequence: 11, street: "TURN", cards: ["Kh"] },
+      { type: "StreetDealt", sequence: 12, street: "RIVER", cards: ["3s"] },
+    ];
+    const stateWithEvents = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: streetDealt },
+    );
+    const view = samplePlayerView({
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+    });
+    const state = duelState.applyServerMessage(stateWithEvents, {
+      type: "Snapshot",
+      view,
+    });
+    expect(state.reveal?.steps).toEqual([
+      { board: ["As", "7d", "2c"], street: "FLOP" },
+      { board: ["As", "7d", "2c", "Kh"], street: "TURN" },
+      { board: ["As", "7d", "2c", "Kh", "3s"], street: "RIVER" },
+      { board: ["As", "7d", "2c", "Kh", "3s"], street: "COMPLETE" },
+    ]);
+  });
+
+  it("a snapshot at COMPLETE with no events before it takes one step, not four", () => {
+    const view = samplePlayerView({
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+    });
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Snapshot",
+      view,
+    });
+    expect(state.reveal?.steps).toEqual([
+      { board: ["As", "7d", "2c", "Kh", "3s"], street: "COMPLETE" },
+    ]);
+  });
+
+  it("a snapshot that does not end a hand lays out no steps at all", () => {
+    const streetDealt: readonly StreetDealt[] = [
+      {
+        type: "StreetDealt",
+        sequence: 5,
+        street: "FLOP",
+        cards: ["As", "7d", "2c"],
+      },
+    ];
+    const stateWithEvents = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: streetDealt },
+    );
+    const view = samplePlayerView({
+      street: "FLOP",
+      board: { cards: ["As", "7d", "2c"] },
+    });
+    const state = duelState.applyServerMessage(stateWithEvents, {
+      type: "Snapshot",
+      view,
+    });
+    expect(state.reveal).toBeNull();
   });
 });
