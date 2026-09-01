@@ -177,13 +177,29 @@ export function applyServerMessage(
     };
   }
   switch (message.type) {
-    case "RoomJoined":
+    case "RoomJoined": {
+      // ADR-0104 §4: a RoomJoined naming a room other than the one the store already holds means
+      // the connection has moved on the same socket (ADR-0104 §5's third window), so what the old
+      // room left behind — presence, narration, the rest — is discarded before this room's own
+      // fields are applied. The monotone counters carry over rather than reset: they exist to be
+      // strictly-increasing change tokens, and resetting them could make two different states
+      // compare equal. Naming the room the store already holds (a resume, ADR-0028 §5) clears
+      // nothing beyond the refusal this case has always cleared.
+      const base =
+        state.roomCode !== null && state.roomCode !== message.code
+          ? {
+              ...initialState(),
+              rejectionCount: state.rejectionCount,
+              presenceCount: state.presenceCount,
+            }
+          : state;
       return {
-        ...state,
+        ...base,
         mySeat: message.seat,
         roomCode: message.code,
         refusal: null,
       };
+    }
     case "YourTurn":
       return {
         ...state,

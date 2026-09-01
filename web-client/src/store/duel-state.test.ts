@@ -1542,4 +1542,94 @@ describe("the duel state", () => {
     });
     expect(state.reveal).toBeNull();
   });
+
+  it("a RoomJoined naming a different room clears what the old room left behind", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RoomJoined",
+        code: "ABCD",
+        seat: 0,
+      },
+    );
+    const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 60000,
+    });
+    const state = duelState.applyServerMessage(stateWithPresence, {
+      type: "RoomJoined",
+      code: "EFGH",
+      seat: 1,
+    });
+    expect(state.roomCode).toBe("EFGH");
+    expect(state.mySeat).toBe(1);
+    expect(state.rivalPresence).toBeNull();
+    expect(state.graceRemainingMillis).toBeNull();
+  });
+
+  it("a RoomJoined naming the room the store already holds clears nothing", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RoomJoined",
+        code: "ABCD",
+        seat: 0,
+      },
+    );
+    const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 60000,
+    });
+    const state = duelState.applyServerMessage(stateWithPresence, {
+      type: "RoomJoined",
+      code: "ABCD",
+      seat: 0,
+    });
+    expect(state.rivalPresence).toBe("AWAY");
+    expect(state.graceRemainingMillis).toBe(60000);
+  });
+
+  it("the monotone counters carry across a room change", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RoomJoined",
+        code: "ABCD",
+        seat: 0,
+      },
+    );
+    const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 60000,
+    });
+    // rejectionCount is driven to a value distinct from presenceCount's: two different counters
+    // that both happen to read 1 could not catch an implementation that carries one over as the
+    // other's value.
+    const stateAfterFirstRejection = duelState.applyServerMessage(
+      stateWithPresence,
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 3, minimum: 25 },
+      },
+    );
+    const stateWithBothCounters = duelState.applyServerMessage(
+      stateAfterFirstRejection,
+      {
+        type: "Rejected",
+        rejection: { type: "AmountTooSmall", attempted: 4, minimum: 25 },
+      },
+    );
+    expect(stateWithBothCounters.presenceCount).toBe(1);
+    expect(stateWithBothCounters.rejectionCount).toBe(2);
+    const state = duelState.applyServerMessage(stateWithBothCounters, {
+      type: "RoomJoined",
+      code: "EFGH",
+      seat: 1,
+    });
+    expect(state.presenceCount).toBe(1);
+    expect(state.rejectionCount).toBe(2);
+  });
 });
