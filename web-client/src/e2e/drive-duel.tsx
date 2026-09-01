@@ -223,6 +223,10 @@ export function driveScriptedDuel(options: {
       openConnection({ socket: socket.asWebSocket(), storage, onMessage }),
     joinRoomCode: duel.roomCode,
     storage,
+    // ADR-0102 §4: synchronous, so a replayed frame settles inside the same
+    // act() that delivered it — the four recorded-frame suites this driver
+    // serves may not be edited, and none may gain a clock (ADR-0100 §3).
+    stepMillis: 0,
   });
 
   const { container } = render(
