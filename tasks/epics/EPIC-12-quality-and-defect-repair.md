@@ -201,6 +201,7 @@ and answered in the same PR, and never appeared in an open table.)
 | [STORY-1210](../stories/STORY-1210-round-2-uat-the-four-new-cards-were-not-a-tautology.md) | Round 2 (UAT) — the four new cards were not a tautology, and the screens behind them are undressed | done — **the first baseline round this cycle has run**; `B(2) = 3`, verdict `PROCEED`, unqualified because no cell read `BLOCKED` |
 | [STORY-1211](../stories/STORY-1211-round-3-uat-the-count-fell-to-zero-and-the-cycle-ends.md) | Round 3 (UAT) — the count fell to zero, and what is still wrong is written down | done — **the last round rule 5 permits, and the invocation's exit state**; `B(3) = 0`, verdict `PASS`, fix set empty |
 | [STORY-1212](../stories/STORY-1212-the-audit-focus-the-observer-the-resize-and-what-a-criterion-costs.md) | The audit focus — the observer, the resize, and what an unmet criterion costs | done — **not a round story**; it builds what `ADR-0096` §7 and `ADR-0097` §7 name, and runs no round |
+| [STORY-1213](../stories/STORY-1213-round-1-audit-three-criteria-unmet-and-a-table-that-names-the-wrong-winner.md) | Round 1 (audit) — three criteria unmet, and a table that names the wrong winner | ready — **the first round under the `audit` focus**; `A(1) = 3` of a five-criterion rubric (`R1`, `R2`, `R4`), `A(0)` **n/a**, verdict `PROCEED`, fix set **3** in the rubric's own order |
 
 Rounds are numbered in the story body rather than encoded in the id, because a round is created
 when it is run and the ids stay sequential without arithmetic. **`STORY-1207` is the third story here that
@@ -252,6 +253,32 @@ criterion** — `ADR-0096` §2 supplies the rubric merged, closed and citable by
 blocked nothing here and was answered the same day by
 [`ADR-0099`](../../docs/adr/ADR-0099-the-rubric-is-the-adr-section-and-a-criterion-is-born-merged.md)
 — no working copy, ever, and the story's refusal to transcribe became the standing rule.
+
+**`STORY-1213` is the first audit round, and it took the id `STORY-1212` reserved for it** — the
+convention has now moved by one five times, and each shift is written into this table's rows rather
+than left to be inferred. Three things about it are worth having in the epic rather than only in the
+story, because each is the first time a merged rule was exercised rather than only written:
+
+- **`A(1) = 3`, and round 1 has no `A(0)`.** The absence is stated in the round record so nobody
+  reads the missing comparison as an exemption somebody granted. Rule 4 applies in full at round 2,
+  and the bar is already explicit: **`A(2) ≤ 2` or the invocation ends `STOP_DIVERGING`.**
+- **The count excludes one functional defect, on `ADR-0096` §5.** `TASK-121304` — the table
+  announcing the previous duel's winner and amount after a rematch — is `high`, is filed to the one
+  ledger, is scheduled in round 1's repairs because the eight-cap does not bind, and is **not** in
+  `A(1)`: `A(N)` counts criteria, and folding a defect in would break `A(N) ≤ |rubric|`. Repairing
+  it here means no `B(N)` ever counts it, which is what that rule wants rather than an evasion of
+  it.
+- **`ADR-0096` §5's promotion mechanism was searched and came back empty.** There is no
+  `status: backlog` ticket anywhere in `tasks/` any more — the seventeen rows that ADR was written
+  about were all repaired between 2026-08-30 and 2026-08-31 — so all four tickets are new. The
+  mechanism is unexercised in the first round that could have exercised it, and the trail says so.
+
+**No baseline determination is recorded for an audit round, and the report carries no `BASELINE:`
+line.** Rule 4's exemption is defined by a *screen* becoming conformance-judgeable on a card merged
+in the previous round's repairs; this focus judges **beats against criteria** and has no per-screen
+conformance check to unlock, and `ADR-0096` §5 does not list a baseline exemption among this focus's
+termination rules. `DEC-093` — whether the exemption extends beyond a card — is open, the
+architect's, and gates nothing here.
 
 ## Termination
 
