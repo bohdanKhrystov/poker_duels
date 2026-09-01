@@ -239,9 +239,10 @@ by measurement.
 - **No viewport smaller than 390 × 664 is promised.** 390 × 664 is the shape `ADR-0096` §4 fixed and
   the shape this fits. Nothing here says anything about 320 px, and a future device that needs it
   gets its own question.
-- **How a beat is paced** stays where `ADR-0096` §2 left it and where `DEC-105` now sits. A runout
-  that reveals streets over time changes nothing about the table's height (§1: every slot is
-  reserved), so the two repairs do not collide.
+- **How a beat is paced** stays where `ADR-0096` §2 left it and where `DEC-105` settled it —
+  [`ADR-0102`](ADR-0102-a-hand-ends-in-steps-and-the-client-owns-the-clock.md), merged the same
+  day as this one. A runout that reveals streets over time changes nothing about the table's
+  height (§1: every slot is reserved), so the two repairs do not collide.
 
 ## Consequences
 
