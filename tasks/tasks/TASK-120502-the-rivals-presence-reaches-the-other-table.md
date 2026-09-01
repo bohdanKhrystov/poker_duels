@@ -18,6 +18,51 @@ verify:
   - python3 .github/scripts/lint_tickets.py
 ---
 
+## Addendum, 2026-09-01 — the reclassification below was wrong
+
+**This ticket stays `dropped`, and this section is why it must.** On 2026-09-01 a human played a
+real duel through two browsers and could not play it: both tables rendered correct, agreeing game
+state and **each seat was told the other one had vanished**. That is this ticket's defect, alive,
+and it reached a person because a round classified it as the round's own instrumentation.
+
+**The sentence that was wrong** is in the drop note below: *"A player who is still connected is
+present, and the server is right to say so."* Measured on the live stack at `e1a37a80`, four
+reproductions and a controlled negative: the server sends
+`{"type":"OpponentPresence","presence":"AWAY","graceRemainingMillis":60000}` to a **connected**
+player, **320 ms before that player sends `CreateRoom`** — a frame about the room they left,
+delivered to the connection they opened after it. With no stale frame in flight the same
+create-and-join is clean, with zero presence frames on either wire.
+
+**The experiment below was sound; its scope was not.** `location.href='about:blank'` really does
+leave this browser's socket `ESTABLISHED`, and the original reproduction really had not established
+its precondition. What was not tested is the navigation the catalogue actually uses: `drive.mjs
+open` produces `OpponentPresence AWAY` on the other screen within milliseconds. So *"a navigation
+is not a disconnect on this browser"* — the sentence in `docs/test-plan.md` that this drop note
+rests on — is false, and `TASK-121401` removes it. A negative measured on one path was generalised
+to a claim about the product.
+
+**The process lesson, which is the point of keeping this file.** A failing case that does not
+reproduce by hand is a harness defect (`ADR-0089` §4) — and that rule is right. What it does not
+supply is the step this round skipped: **before reclassifying, reproduce the defect by a second
+mechanism.** The paired experiment varied the *operator* (`close` versus `about:blank`) but never
+the *mechanism*, so it could only ever confirm the instrument. `B(1)` was reduced from 2 to 1 on
+that basis, and the cycle went on to report `PASS` three rounds later on a product that deadlocks
+two connected players on the first hand of a fresh room.
+
+**Where the repair lives now.** [`TASK-121403`](TASK-121403-presence-is-about-the-room-the-reader-is-in.md),
+under [`STORY-1214`](../stories/STORY-1214-a-duel-played-by-hand-deadlocked-on-presence.md),
+blocked on `DEC-107`. **`TASK-120506` is not withdrawn** — it is `done`, and a case that can end a
+browser session is correct and still wanted. The error was the reclassification, not the ticket it
+produced. `B(1)` is **not** recomputed and round 1 is not reopened: `EPIC-12` §Termination rule 1
+freezes a round's set at triage, and rewriting a closed round's arithmetic afterwards would hide
+this event exactly as un-dropping this file would.
+
+**Nothing below this line is edited.** `tasks/README.md` keeps a dropped ticket's file *"because
+rewriting it as done would hide a real event in the trail"*, and the mistaken reclassification is
+itself the event worth keeping.
+
+---
+
 ## Dropped — reclassified as a harness defect, 2026-08-29
 
 **Do not implement this ticket.** `CORE-18` was upheld as a `high` product defect at triage and
