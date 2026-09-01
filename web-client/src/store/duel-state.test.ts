@@ -1542,4 +1542,75 @@ describe("the duel state", () => {
     });
     expect(state.reveal).toBeNull();
   });
+
+  it("a RoomJoined naming a different room clears what the old room left behind", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RoomJoined",
+        code: "ABCD",
+        seat: 0,
+      },
+    );
+    const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 60000,
+    });
+    const state = duelState.applyServerMessage(stateWithPresence, {
+      type: "RoomJoined",
+      code: "EFGH",
+      seat: 1,
+    });
+    expect(state.roomCode).toBe("EFGH");
+    expect(state.mySeat).toBe(1);
+    expect(state.rivalPresence).toBeNull();
+    expect(state.graceRemainingMillis).toBeNull();
+  });
+
+  it("a RoomJoined naming the room the store already holds clears nothing", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RoomJoined",
+        code: "ABCD",
+        seat: 0,
+      },
+    );
+    const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 60000,
+    });
+    const state = duelState.applyServerMessage(stateWithPresence, {
+      type: "RoomJoined",
+      code: "ABCD",
+      seat: 0,
+    });
+    expect(state.rivalPresence).toBe("AWAY");
+    expect(state.graceRemainingMillis).toBe(60000);
+  });
+
+  it("the monotone counters carry across a room change", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "RoomJoined",
+        code: "ABCD",
+        seat: 0,
+      },
+    );
+    const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 60000,
+    });
+    expect(stateWithPresence.presenceCount).toBe(1);
+    const state = duelState.applyServerMessage(stateWithPresence, {
+      type: "RoomJoined",
+      code: "EFGH",
+      seat: 1,
+    });
+    expect(state.presenceCount).toBe(1);
+  });
 });
