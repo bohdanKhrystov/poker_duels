@@ -1,4 +1,4 @@
-# ADR-0102 — The table fits the phone, and the cards give before the numbers
+# ADR-0103 — The table fits the phone, and the cards give before the numbers
 
 - **Status:** Accepted
 - **Date:** 2026-09-01
