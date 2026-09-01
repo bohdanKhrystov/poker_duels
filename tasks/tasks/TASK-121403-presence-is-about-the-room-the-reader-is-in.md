@@ -102,6 +102,18 @@ A holds no seat anywhere at `021602`. The frame is about the room A **left**, pr
   cost: *"neither is counted or logged … no instrument points at it."* The ADR designs no counter
   and no log, so **this ticket adds none** — but do not write a comment or a PR sentence claiming
   the ambiguity is absent.
+- **`forget` loses its one-line atomicity, and no test in this repo will tell you.** Today it is
+  `writers.remove(player, writer)` — one `ConcurrentHashMap` compare-and-remove. Once the stored
+  value is a pair, the obvious rewrite is *read, compare the writer, then remove by key*, and that
+  is a read-modify-write with a window in it: an `ADR-0018` adoption landing between the two calls
+  makes the older socket's cleanup delete the **newer** socket's entry, and the surviving
+  connection silently stops receiving frames — which is the exact failure
+  `ConnectionDirectory.forget`'s two-argument shape was built to prevent. Both `forget` tests in
+  `ConnectionDirectoryTest` are single-threaded and pass either way, and so does the rest of the
+  suite. **The removal must stay a single compare-and-remove against the stored value** — e.g. read
+  the entry once and pass *that instance* to the two-argument `remove` — and the PR body must say
+  which call performs it. This is the one requirement in the ticket that no gate catches, which is
+  why it is written out rather than left to §Scope's *"how the entry is stored is the coder's"*.
 
 ## Files
 
@@ -240,6 +252,9 @@ six tests fail and no others: the three new `SeatDeliveryTest` cases and the thr
 - [ ] `DuelSocketWriterDirectoryTest` reports **4** tests, 0 failures, with all four names unchanged
 - [ ] `ConnectionDirectory.kt` declares exactly one `public fun writerFor` and it names a
       `RoomCode` — the fourth `verify` command, which exits 1 on `develop` today
+- [ ] `forget` removes with a **single** compare-and-remove against the stored value, and the PR
+      body names the call that performs it. No gate catches this one; see §Three things a coder can
+      get wrong here
 - [ ] `./gradlew check -PrequireDocker=true` exits 0 with no suite skipped
 - [ ] The PR body quotes the run with the scoping and the run with it mutated away, and the second
       shows exactly the six failures named in §Tests
