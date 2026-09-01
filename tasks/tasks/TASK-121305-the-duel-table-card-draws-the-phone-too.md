@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121305
 title: The duel-table card draws the phone too, and the cards give before the numbers
 type: task
-status: backlog
+status: done
 parent: STORY-1213
 module: design
 estimate: S

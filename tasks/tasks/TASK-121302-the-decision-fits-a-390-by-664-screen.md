@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121302
 title: The decision fits a 390 by 664 screen, because the client draws the card's phone
 type: task
-status: backlog
+status: ready
 parent: STORY-1213
 module: web-client
 estimate: S
