@@ -106,39 +106,41 @@ export function Lobby(): ReactElement {
   // branch placed after either is a branch that never runs.
   if (state.outcome !== null) {
     return (
-      <DuelResult
-        outcome={state.outcome}
-        mySeat={state.mySeat}
-        rematch={
-          <RematchControl
-            offers={state.rematchOffers}
-            mySeat={state.mySeat}
-            refusal={state.refusal}
-            onOffer={() => send({ type: "OfferRematch" })}
-          />
-        }
-        offer={
-          offerAccount({
-            verdict: verdictOf(state.outcome, state.mySeat),
-            signedIn,
-            settled: offerSettled,
-          }) ? (
-            // The two handlers deliberately differ (`ADR-0086` §6). Taking the
-            // offer settles it and stops there: the anchor still loads the
-            // account screen, and that page load is what replaces this tree.
-            // Dismissing settles it *and* hides it, because nothing else
-            // will — there is no page load coming to do it instead.
-            <AccountOffer
-              onAccept={settleOfferHere}
-              onDismiss={() => {
-                settleOfferHere();
-                setOfferSettled(true);
-              }}
+      <section className="p-6">
+        <DuelResult
+          outcome={state.outcome}
+          mySeat={state.mySeat}
+          rematch={
+            <RematchControl
+              offers={state.rematchOffers}
+              mySeat={state.mySeat}
+              refusal={state.refusal}
+              onOffer={() => send({ type: "OfferRematch" })}
             />
-          ) : undefined
-        }
-        onLeave={forgetRoom}
-      />
+          }
+          offer={
+            offerAccount({
+              verdict: verdictOf(state.outcome, state.mySeat),
+              signedIn,
+              settled: offerSettled,
+            }) ? (
+              // The two handlers deliberately differ (`ADR-0086` §6). Taking the
+              // offer settles it and stops there: the anchor still loads the
+              // account screen, and that page load is what replaces this tree.
+              // Dismissing settles it *and* hides it, because nothing else
+              // will — there is no page load coming to do it instead.
+              <AccountOffer
+                onAccept={settleOfferHere}
+                onDismiss={() => {
+                  settleOfferHere();
+                  setOfferSettled(true);
+                }}
+              />
+            ) : undefined
+          }
+          onLeave={forgetRoom}
+        />
+      </section>
     );
   }
 
