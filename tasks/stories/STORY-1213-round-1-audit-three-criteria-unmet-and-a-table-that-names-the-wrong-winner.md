@@ -2,7 +2,7 @@
 id: STORY-1213
 title: Round 1 (audit) — three criteria unmet, and a table that names the wrong winner
 type: story
-status: ready
+status: done
 parent: EPIC-12
 labels: [process, qa, audit]
 depends_on: []
@@ -463,6 +463,34 @@ data-selection bug reachable from a unit test. Its new case builds a narration h
 reads this duel's award. Today that case renders the observer's exact string,
 `Split pot — you win 100`; after the repair it reads `You win 200`. The gate fails today, for the
 reason the defect exists, and passes only when it is gone.
+
+### The manual step `TASK-121302` owed, and did not get
+
+**Recorded because it is the one obligation this round left unmet.** `TASK-121302`'s acceptance
+criterion is a *measurement* — `ADR-0103` states the answer as *"the whole column fits 390 × 664 at
+every beat (`scrollHeight <= clientHeight`, no scroll to act)"* — and **nobody ran it.** Its coder
+and its reviewer each tried, independently, and each was refused by the sandbox: `scripts/qa/drive.mjs`'s
+merged `eval` verb was declined as *"runs a string through eval"*, and a from-scratch script calling
+only the read-only `Page.getLayoutMetrics` CDP method was declined too. Neither refusal came from
+this repository; both came from the environment the agents run in.
+
+What was observed instead, and it is not nothing:
+
+- **Screenshots at the exact viewport.** `Page.captureScreenshot` is not blocked. At 390 x 664,
+  560 x 800 and 720 x 900 — each confirmed by its own PNG's pixel dimensions — every control
+  including the sizing row and all action buttons is on screen with margin below it, at all four
+  decision beats, growing continuously with no jump between the three widths.
+- **Formula identity with a card that *was* measured.** `TASK-121305` measured the amended card at
+  **664/664** at 390 x 664 with its own CDP harness, which did run. Two agents then independently
+  checked that the client's four clamps are byte-identical to that card's.
+
+So the inference is strong and the number is still missing. **The honest statement is that `R2` is
+repaired to the best evidence available and unconfirmed by the instrument its own ADR names.**
+`ADR-0089` §2b forbids making it a gate, so this was never CI's to catch; `manual-verify` is exactly
+the label for an obligation discharged outside CI, and here it was not discharged. **Round 2 of
+`/qa-cycle audit` measures `R2` directly**, and `ADR-0096` §5 already says filing does not reduce
+`A(N)` — only repair does. If the fit is wrong, that round finds it, and this paragraph is what tells
+its observer not to treat round 1's `done` as a measurement.
 
 ### What `R1` needs decided first
 
