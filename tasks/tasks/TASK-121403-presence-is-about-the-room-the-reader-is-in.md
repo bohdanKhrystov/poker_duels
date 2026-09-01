@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121403
 title: Presence is about the room the reader is sitting in
 type: task
-status: ready
+status: done
 parent: STORY-1214
 module: poker-server
 estimate: S
