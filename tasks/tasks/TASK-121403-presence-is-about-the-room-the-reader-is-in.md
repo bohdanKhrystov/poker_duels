@@ -11,7 +11,7 @@ tier: sonnet
 review: deep
 files_touched: 2
 labels: [bug, blocker, presence, blocked-on-dec]
-depends_on: [TASK-121402]
+depends_on: []
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.SeatDeliveryTest'
   - ./gradlew :poker-server:test --tests 'duels.poker.server.room.RoomPresenceTest'
@@ -119,7 +119,7 @@ Written as properties, because the mechanism is undecided:
 ## Out of scope
 
 - **Answering `DEC-107`.** It is the architect's.
-- **The action bar's enabled state under a paused notice.** `ADR-0046` §Out of scope declines it by
+- **The action bar's enabled state under a paused notice.** `ADR-0046` §6 declines it by
   name; it is `DEC-108`, the product owner's, and it is a separate change if it is one at all.
 - **The grace window's length, `ADR-0023`'s absent-seat action, or what the server does for an
   absent seat.** `RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS` stays `60_000`.

@@ -144,7 +144,7 @@ answered here.
 | [`DEC-107`](../../docs/adr/README.md) | **The architect's** — where is a presence frame scoped to the room it is about? Blocks `TASK-121403`. |
 | [`DEC-108`](../../docs/adr/README.md) | **The product owner's** — may the action bar stay enabled while the table says the duel is paused? Blocks no ticket here. |
 
-`DEC-108` exists because `ADR-0046` §Out of scope **already declined this question by name** —
+`DEC-108` exists because `ADR-0046` §6 **already declined this question by name** —
 *"Whether the action bar's controls look disabled while the duel is paused"* — leaving `YourTurn`
 standing and `DUEL_PAUSED` as the refusal. So the live bar contradicts no merged source and is not
 a bug; filing it as one would contradict a merged ADR. It is asked, once, of the owner whose
@@ -156,13 +156,25 @@ question it is. The case that would check the answer is written when the answer 
 | ID | Title | Status |
 | --- | --- | --- |
 | [TASK-121401](../tasks/TASK-121401-the-catalogue-sees-a-present-player-marked-away.md) | The catalogue sees a present player marked away | ready |
-| [TASK-121402](../tasks/TASK-121402-the-duel-table-column-fits-the-phone-it-is-nested-in.md) | The duel table's column fits the phone it is nested in | backlog |
+| [TASK-121402](../tasks/TASK-121402-the-duel-table-column-fits-the-phone-it-is-nested-in.md) | The duel table's column fits the phone it is nested in | ready |
 | [TASK-121403](../tasks/TASK-121403-presence-is-about-the-room-the-reader-is-in.md) | Presence is about the room the reader is sitting in | blocked |
 
-The chain is linear because the run is sequential. The catalogue goes first: it is the process
-lesson, and its negative case is the manual gate `TASK-121403` is checked against, so writing it
-first means the repair has something to be measured by rather than something written afterwards to
-match it.
+**The three are independent, and `depends_on` says so.** They share no file and no module —
+`docs/test-plan.md`, `web-client/`, `poker-server/` — and no merged gate couples them, so any of
+them may be worked at any time, in any order, concurrently. An earlier draft of this story chained
+them `121401 → 121402 → 121403` and gave *"the run is sequential"* as the reason. That is
+scheduling convenience, and `depends_on` is not where it belongs: `tasks/README.md` makes CI refuse
+a `ready` task whose dependency is unfinished, so the chain would have held `TASK-121403` — the
+defect that makes the product unplayable by hand — un-startable behind an XS padding fix it shares
+nothing with. This repo's precedent for a real chain is `STORY-0313`, which states the condition in
+as many words: *"every one of them touches at least one file another touches."* These do not.
+
+There is still a **preference** about order, and it is only that. Writing `TASK-121401` first gives
+`TASK-121403` a negative case to be measured against rather than one written afterwards to match
+it. A scheduler should prefer that order; nothing enforces it, and nothing should.
+
+`TASK-121403` is `blocked` on `DEC-107` alone — the architect's decision about where a presence
+frame is scoped to its room. That is a real block, and it is the only one.
 
 ## Acceptance criteria
 

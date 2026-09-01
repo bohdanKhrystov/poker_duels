@@ -93,7 +93,7 @@ own rule, so nothing is resequenced to make the new section contiguous with Reco
 The obvious fourth case is *a paused notice and enabled action controls never appear together* —
 both were on screen at once, and that contradiction is what made a human stop playing. **Do not
 write that case.** [`ADR-0046`](../../docs/adr/ADR-0046-the-table-says-away-timed-out-and-back.md)
-§Out of scope declines the question **by name** — *"Whether the action bar's controls look disabled
+§6 declines the question **by name** — *"Whether the action bar's controls look disabled
 while the duel is paused"* — and records that `ADR-0028` §6 keeps `YourTurn` standing with
 `DUEL_PAUSED` as the refusal, and that `STORY-0313`'s criteria *"already assume a live bar and an
 explained refusal"*. A live bar therefore contradicts **no merged source**, and a case with no

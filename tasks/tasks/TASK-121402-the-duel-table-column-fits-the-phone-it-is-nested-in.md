@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121402
 title: The duel table's column fits the phone it is nested in
 type: task
-status: backlog
+status: ready
 parent: STORY-1214
 module: web-client
 estimate: XS
@@ -11,7 +11,7 @@ tier: sonnet
 review: standard
 files_touched: 2
 labels: [bug, audit, manual-verify, R2]
-depends_on: [TASK-121401]
+depends_on: []
 verify:
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && FORCE_COLOR=0 npm run --silent build
@@ -113,7 +113,7 @@ genuinely required, say so in the PR and raise `files_touched` (`ADR-0068`, `ADR
   **not** touched, no clamp changes, and no card measurement moves. If 48 px turns out not to be
   enough, stop — do not take the next thing on the list — and say so.
 - **A breakpoint, a media query, a `sm:`/`md:` phone switch, a sticky action bar.** `ADR-0103`
-  §Out of scope and its rejected alternative B, unchanged.
+  §6 and its rejected alternative B, unchanged.
 - **`design/screens/duel-table.html`.** Not read, not edited. It fits at 664 / 664 already.
 - **`DEC-103` and `DEC-104`.** Still open, still the product owner's, still not answered here.
 - **Any presence behaviour.** `TASK-121403`.
