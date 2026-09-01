@@ -193,7 +193,7 @@ private suspend fun DefaultWebSocketServerSession.serve(
     val session = Session(SessionRegistry.newSessionId(), player)
     val room = RoomMembership()
     val eviction = seats.adopt(deps.sessions, session)
-    deps.connections.register(player.id, writer)
+    deps.connections.register(player.id, writer, room)
     try {
         writer.send(ProtocolCodec.encode(message))
         serveUntilEvictedOrClosed(

@@ -3,6 +3,7 @@ package duels.poker.server
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.server.duel.Addressed
 import duels.poker.server.protocol.ProtocolCodec
+import duels.poker.server.protocol.SeatPresence
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.room.JoinResult
 import duels.poker.server.room.Room
@@ -10,6 +11,7 @@ import duels.poker.server.room.RoomCode
 import duels.poker.server.session.ConnectionDirectory
 import duels.poker.server.session.ConnectionWriter
 import duels.poker.server.session.PlayerId
+import duels.poker.server.session.RoomMembership
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -47,16 +49,24 @@ internal class SeatDeliveryTest {
      * Closing and draining happen only after [deliver] returns, so a bug that writes a frame to
      * the wrong writer still lands in that writer's own list rather than being lost to a drain
      * that finished too early.
+     *
+     * [connectedTo] names the room each writer's connection is in. A player absent from it is
+     * registered in [room]'s own code, so every test written before rooms were scoped keeps
+     * registering exactly the connection [deliver] expects to find there.
      */
     private suspend fun deliverAndDrain(
         frames: List<Addressed>,
         room: Room,
         writers: Map<PlayerId, ConnectionWriter>,
+        connectedTo: Map<PlayerId, RoomCode?> = emptyMap(),
     ): Map<PlayerId, List<String>> = coroutineScope {
         val connections = ConnectionDirectory()
         val sinks: Map<PlayerId, MutableList<String>> = writers.mapValues { mutableListOf() }
         val drains = writers.map { (player, writer) ->
-            connections.register(player, writer)
+            val membership = RoomMembership().apply {
+                code = if (player in connectedTo) connectedTo.getValue(player) else room.code
+            }
+            connections.register(player, writer, membership)
             launch { writer.writeAll { frame -> sinks.getValue(player).add(frame) } }
         }
 
@@ -154,5 +164,55 @@ internal class SeatDeliveryTest {
         assertEquals(guestEncoded, sinks.getValue(guestId))
         hostEncoded.forEach { text -> assertFalse(sinks.getValue(guestId).contains(text)) }
         guestEncoded.forEach { text -> assertFalse(sinks.getValue(hostId).contains(text)) }
+    }
+
+    @Test
+    fun aframeIsNotDeliveredToAConnectionInAnotherRoom(): Unit = runBlocking {
+        val elsewhere = RoomCode("ZYXWVTSR")
+        val seat0 = Addressed(0, messageFor("host-frame"))
+        val seat1 = Addressed(1, messageFor("guest-frame"))
+
+        val sinks = deliverAndDrain(
+            frames = listOf(seat0, seat1),
+            room = seatedRoom(),
+            writers = mapOf(hostId to ConnectionWriter(), guestId to ConnectionWriter()),
+            connectedTo = mapOf(guestId to elsewhere),
+        )
+
+        assertEquals(listOf(ProtocolCodec.encode(seat0.message)), sinks.getValue(hostId))
+        assertEquals(emptyList<String>(), sinks.getValue(guestId))
+    }
+
+    @Test
+    fun aframeIsNotDeliveredToAConnectionInNoRoom(): Unit = runBlocking {
+        val seat0 = Addressed(0, messageFor("host-frame"))
+        val seat1 = Addressed(1, messageFor("guest-frame"))
+
+        val sinks = deliverAndDrain(
+            frames = listOf(seat0, seat1),
+            room = seatedRoom(),
+            writers = mapOf(hostId to ConnectionWriter(), guestId to ConnectionWriter()),
+            connectedTo = mapOf(guestId to null),
+        )
+
+        assertEquals(listOf(ProtocolCodec.encode(seat0.message)), sinks.getValue(hostId))
+        assertEquals(emptyList<String>(), sinks.getValue(guestId))
+    }
+
+    @Test
+    fun apresenceFrameCrossesNoRoomEither(): Unit = runBlocking {
+        val elsewhere = RoomCode("ZYXWVTSR")
+        val seat0 = Addressed(0, messageFor("host-frame"))
+        val presence = Addressed(1, ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 60000L))
+
+        val sinks = deliverAndDrain(
+            frames = listOf(seat0, presence),
+            room = seatedRoom(),
+            writers = mapOf(hostId to ConnectionWriter(), guestId to ConnectionWriter()),
+            connectedTo = mapOf(guestId to elsewhere),
+        )
+
+        assertEquals(listOf(ProtocolCodec.encode(seat0.message)), sinks.getValue(hostId))
+        assertEquals(emptyList<String>(), sinks.getValue(guestId))
     }
 }

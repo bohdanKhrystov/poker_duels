@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121406
 title: The store is scoped to the room the server last named
 type: task
-status: backlog
+status: ready
 parent: STORY-1214
 module: web-client
 estimate: XS

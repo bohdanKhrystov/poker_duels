@@ -1,9 +1,11 @@
 package duels.poker.server
 
+import duels.poker.server.protocol.CreateRoom
 import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.ProtocolCodec
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.protocolJson
+import duels.poker.server.room.RoomCode
 import duels.poker.server.session.ConnectionDirectory
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.InMemoryPlayerDirectory
@@ -29,6 +31,19 @@ import kotlin.time.Duration.Companion.seconds
 private suspend fun DefaultClientWebSocketSession.nextServerMessage(): ServerMessage {
     val frame = incoming.receive() as Frame.Text
     return protocolJson.decodeFromString(frame.readText())
+}
+
+/**
+ * Sends [CreateRoom] on [this] session and answers the [RoomCode] the server names back.
+ *
+ * `ConnectionDirectory.writerFor` now takes a room, so every test below that looks a writer up
+ * needs one its connection has actually entered — `replyToCreateRoom` sets that membership before
+ * this reply is sent, which is the ordering `ADR-0104` §2 requires.
+ */
+private suspend fun DefaultClientWebSocketSession.enterFreshRoom(): RoomCode {
+    send(Frame.Text(ProtocolCodec.encode(CreateRoom)))
+    val joined = nextServerMessage() as ServerMessage.RoomJoined
+    return RoomCode.parse(joined.code) ?: error("server named an illegal room code: ${joined.code}")
 }
 
 /** Waits, without a fixed sleep, for [connections] to reach [expected] entries. */
@@ -67,9 +82,9 @@ class DuelSocketWriterDirectoryTest {
             session.nextServerMessage()
 
             val player = directory.resolve(DeviceId("d1"))
+            val room = session.enterFreshRoom()
 
-            // Registration precedes the Welcome reply, so no waiting is required here.
-            assertNotNull(connections.writerFor(player.id))
+            assertNotNull(connections.writerFor(player.id, room))
             assertEquals(1, connections.size)
         }
     }
@@ -111,12 +126,13 @@ class DuelSocketWriterDirectoryTest {
             session.nextServerMessage()
 
             val player = directory.resolve(DeviceId("d1"))
-            assertNotNull(connections.writerFor(player.id))
+            val room = session.enterFreshRoom()
+            assertNotNull(connections.writerFor(player.id, room))
 
             session.close()
             awaitSize(connections, 0)
 
-            assertNull(connections.writerFor(player.id))
+            assertNull(connections.writerFor(player.id, room))
         }
     }
 
@@ -145,6 +161,7 @@ class DuelSocketWriterDirectoryTest {
             val second = client.webSocketSession("/ws")
             second.send(Frame.Text(ProtocolCodec.encode(Hello(deviceId = "d1"))))
             second.nextServerMessage()
+            val room = second.enterFreshRoom()
 
             // sessions.remove and connections.forget for the evicted first connection are
             // sequential statements in the same finally block, so once the eviction has dropped
@@ -152,7 +169,7 @@ class DuelSocketWriterDirectoryTest {
             awaitSize(sessions, 1)
 
             val player = directory.resolve(DeviceId("d1"))
-            assertNotNull(connections.writerFor(player.id))
+            assertNotNull(connections.writerFor(player.id, room))
             assertEquals(1, connections.size)
         }
     }
