@@ -295,10 +295,23 @@ comparison, against a version step that can never be taken back.
 - **An ordering requirement becomes load-bearing.** Membership must be written before `deliver` on
   every path that delivers. It is true at all four sites today; a future path that delivers first
   drops its own frames and reads as a mystery, not as a rule broken.
-- **Sending to a player wherever they are stops being available.** That is deliberate, and it has a
-  named victim: `EPIC-11` — status notifications — has no scoped room to deliver into, so it will
-  need its own path and its own decision about what a player may be told while sitting at another
-  table. This ADR makes that a decision instead of an accident.
+- **Sending to a player wherever they are stops being available.** That is deliberate, and it has
+  **no current victim** — which is the honest statement, and a weaker one than it first appears.
+  `ConnectionDirectory.writerFor(player)` has exactly one call site in the tree, `SeatDelivery.kt`'s
+  own, and this decision is the change to that call site. Nothing else in the product asks to reach a
+  player irrespective of where they are sitting, so nothing loses a capability today. The cost is
+  **prospective**: a future feature that genuinely needs to reach a player who is not in the room the
+  message is about — an account-level notice, a cross-room invitation — must add its own scoped path
+  and make its own decision about what a player may be told while sitting at another table. This ADR
+  makes that a decision instead of an accident, and the price of that is one more thing to build
+  before such a feature can exist.
+
+  An earlier draft of this section named `EPIC-11` as that victim. It is not one: `EPIC-11` is
+  **status notifications, the run reporting itself** — an unattended agent run messaging the human
+  operator over Telegram, composed from `tasks/BOARD.md`, `git log` and `gh pr list`. Its *player* is
+  a developer's phone, not a seat, and it never touches `deliver`, `ConnectionDirectory` or a room.
+  The claim is retracted here rather than quietly deleted, because a fabricated cost propping up a
+  sound conclusion is the failure this section exists to prevent.
 - **The client half is unreachable from the shipped UI.** §4's branch guards a window only a client
   that moves rooms on one socket can open, so it can rot with every test green unless a test drives
   the reducer directly. It is written because the protocol permits the move, not because the product
@@ -307,7 +320,7 @@ comparison, against a version step that can never be taken back.
   room and read after it left is correct at the write and stale at the read; no server-side check
   removes that. §4 bounds it; nothing eliminates it.
 
-**What it forecloses.** The unscoped lookup, on purpose — see the `EPIC-11` cost above. It does not
+**What it forecloses.** The unscoped lookup, on purpose — see the prospective cost above. It does not
 foreclose a room on the wire: if a future client ever needs to check a frame's room itself (a
 spectator under `ADR-0040`, a replay, a proxy), `OpponentPresence` can gain the field at the price of
 a version step, and this decision makes that a choice rather than a repair. It does not foreclose

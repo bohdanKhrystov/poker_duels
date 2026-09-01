@@ -776,8 +776,9 @@ room, and the same rule closes that path whether or not it was what happened. **
 `ConnectionDirectory`'s documented ignorance of rooms is retracted; a `@Volatile` obligation nothing in the
 type system asks for, whose omission fails invisibly and never on one thread; a silent drop gains a second
 indistinguishable cause with no counter and no log; membership-before-delivery becomes load-bearing ordering
-pinned by a test rather than a comment; **`EPIC-11` loses *send to a player wherever they are*** as a one-call
-operation and will need its own path; and §4's client branch is unreachable from today's UI, so it can rot
+pinned by a test rather than a comment; the unscoped ***send to a player wherever they are*** is foreclosed
+deliberately, with **no current victim** — `writerFor` has one call site and this is it, so the cost is
+prospective and falls on whatever first needs it; and §4's client branch is unreachable from today's UI, so it can rot
 green. **The deadline argued for the option not taken and is recorded anyway** — no client is deployed, so a
 wire break is free today and never again; it was declined because the frame is not where the defect is.
 `DEC-108` is untouched, and **`DEC-109` is split off for the product owner**.
