@@ -2,7 +2,7 @@
 id: STORY-1215
 title: The duel table's last sub-pixel, and the headroom it buys
 type: story
-status: ready
+status: done
 parent: EPIC-12
 module: web-client
 labels: [design, layout, R2, process]
@@ -62,7 +62,7 @@ Everything below is merged and is not re-litigated by the ticket:
 
 | ID | Title | Status |
 | --- | --- | --- |
-| [TASK-121501](../tasks/TASK-121501-the-columns-whitespace-gives-one-token-step-at-the-phone.md) | The column's whitespace gives one token step at the phone | ready |
+| [TASK-121501](../tasks/TASK-121501-the-columns-whitespace-gives-one-token-step-at-the-phone.md) | The column's whitespace gives one token step at the phone | done |
 
 ## Acceptance criteria
 
