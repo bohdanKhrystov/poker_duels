@@ -109,4 +109,29 @@
   --pd-focus-offset: 2px;
   --pd-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
   --pd-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  /* Motion — the first motion value the product has ever had (ADR-0115 §4):
+   * the acting seat's mark pulses at this cycle, with this ease. The one
+   * prefers-reduced-motion block below is the product's whole answer to the
+   * signal — every surface that ever animates with a --pd-motion-* token is
+   * stilled by it automatically, not re-decided per surface. */
+  --pd-motion-turn-period: 2400ms;
+  --pd-motion-turn-ease: ease-in-out;
+}
+
+/* prefers-reduced-motion: reduce (ADR-0115 §2, §4) — snaps every animated
+ * surface to its base, unanimated frame. Chosen over zeroing the
+ * --pd-motion-* values above: a zeroed duration would leave whichever frame
+ * the animation was mid-cycle through frozen where it stood, an artefact
+ * nobody drew; `animation: none` on the universal selector resolves every
+ * animated rule back to its own non-animated declarations instead — the
+ * same surface at rest, exactly ADR-0115 §2's still form. web-client/src
+ * declares no CSS transition of any kind today, so this rule costs nothing
+ * that exists yet. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+  }
 }
