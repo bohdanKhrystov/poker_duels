@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130201
 title: The card seats the host alone at the phone, at rest
 type: task
-status: ready
+status: done
 parent: STORY-1302
 module: design
 estimate: S
