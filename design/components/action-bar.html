@@ -14,7 +14,7 @@
     --pd-on-accent: #ffffff;
     --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-    --pd-fs-micro: 0.6875rem; --pd-fs-body: 0.9375rem;
+    --pd-fs-micro: 0.6875rem; --pd-fs-body: 0.9375rem; --pd-fs-small: 0.8125rem;
     --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
     --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-7: 32px;
     --pd-radius-medium: 8px; --pd-radius-pill: 999px;
@@ -54,6 +54,7 @@
   .stepper button { width: var(--pd-space-7); height: var(--pd-space-7);
     border-radius: var(--pd-radius-medium); border: 1px solid var(--pd-hairline);
     background: none; color: var(--pd-text); cursor: pointer; font-size: var(--pd-fs-body); }
+  .total { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; font-size: var(--pd-fs-body); color: var(--pd-text); background: none; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium); text-align: center; width: 92px; padding: var(--pd-space-2) var(--pd-space-3); }
 
   .actions { display: flex; gap: var(--pd-space-3); }
   .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
@@ -66,10 +67,12 @@
   .btn.fill:hover { background: var(--pd-accent-fill-hover); }
   .btn.focused { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
 
-  .bar.disabled .btn, .bar.disabled .chip, .bar.disabled .stepper button {
+  .bar.disabled .btn, .bar.disabled .chip, .bar.disabled .stepper button, .bar.disabled .total {
     color: var(--pd-text-faint); border-color: var(--pd-hairline); background: none;
     cursor: default; }
   .bar.off .sizing { visibility: hidden; }
+  .notice { font-size: var(--pd-fs-small); color: var(--pd-text-muted); text-align: center;
+    min-height: calc(var(--pd-fs-small) * var(--pd-lh-body)); margin-top: var(--pd-space-2); }
   .waiting { display: flex; align-items: center; justify-content: center;
     color: var(--pd-text-muted);
     min-height: calc(var(--pd-fs-body) * var(--pd-lh-tight) + 2 * var(--pd-space-4) + 2px); }
@@ -82,7 +85,9 @@
   <h1>Action bar</h1>
   <p class="lede">Never more than three choices, exactly as the engine's legal actions offer
   them — folding does not exist until something is owed. The one filled button is the
-  aggressive line; both rows are reserved in every state, so the bar never changes height.</p>
+  aggressive line; both rows are reserved in every state, so the bar never changes height.
+  The total is typed as well as pressed; an illegal one is refused in the server's own numbers
+  and nothing is rewritten.</p>
 
   <h2>Your move — nothing owed: check or bet</h2>
   <div class="bar">
@@ -90,12 +95,13 @@
       <button class="chip">min</button><button class="chip">⅓</button>
       <button class="chip sel">½</button><button class="chip">pot</button>
       <button class="chip">all-in</button>
-      <span class="stepper"><button>−</button><span>250</span><button>+</button></span>
+      <span class="stepper"><button>−</button><input class="total" value="250"><button>+</button></span>
     </div>
     <div class="actions">
       <button class="btn ghost">Check</button>
       <button class="btn fill focused">Bet <span class="amt">250</span></button>
     </div>
+    <p class="notice"></p>
   </div>
   <span class="l">two actions only — the engine offers no fold here (BettingRules: folding
   is legal only facing a bet); the fill carries the focus outline</span>
@@ -106,14 +112,66 @@
       <button class="chip">min</button><button class="chip">⅓</button>
       <button class="chip">½</button><button class="chip sel">pot</button>
       <button class="chip">all-in</button>
-      <span class="stepper"><button>−</button><span>1,200</span><button>+</button></span>
+      <span class="stepper"><button>−</button><input class="total" value="1,200"><button>+</button></span>
     </div>
     <div class="actions">
       <button class="btn ghost">Fold</button>
       <button class="btn ghost">Call <span class="amt">400</span></button>
       <button class="btn fill">Raise to <span class="amt">1,200</span></button>
     </div>
+    <p class="notice"></p>
   </div>
+
+  <h2>Typed total — under the server's minimum</h2>
+  <div class="bar">
+    <div class="sizing">
+      <button class="chip">min</button><button class="chip">⅓</button>
+      <button class="chip">½</button><button class="chip">pot</button>
+      <button class="chip">all-in</button>
+      <span class="stepper"><button>−</button><input class="total" value="500"><button>+</button></span>
+    </div>
+    <div class="actions">
+      <button class="btn ghost">Fold</button>
+      <button class="btn ghost">Call <span class="amt">400</span></button>
+      <button class="btn fill">Raise to</button>
+    </div>
+    <p class="notice">500 is under the minimum of 1,200.</p>
+  </div>
+  <span class="l">the entry stands exactly as typed — no reset, no nudge — and the press sends nothing</span>
+
+  <h2>Typed total — over the stack</h2>
+  <div class="bar">
+    <div class="sizing">
+      <button class="chip">min</button><button class="chip">⅓</button>
+      <button class="chip">½</button><button class="chip">pot</button>
+      <button class="chip">all-in</button>
+      <span class="stepper"><button>−</button><input class="total" value="20,000"><button>+</button></span>
+    </div>
+    <div class="actions">
+      <button class="btn ghost">Fold</button>
+      <button class="btn ghost">Call <span class="amt">400</span></button>
+      <button class="btn fill">Raise to</button>
+    </div>
+    <p class="notice">20,000 is over the maximum of 13,400.</p>
+  </div>
+  <span class="l">the bound is this turn's own all-in total, in the server's own numbers</span>
+
+  <h2>Typed total — not an amount</h2>
+  <div class="bar">
+    <div class="sizing">
+      <button class="chip">min</button><button class="chip">⅓</button>
+      <button class="chip">½</button><button class="chip">pot</button>
+      <button class="chip">all-in</button>
+      <span class="stepper"><button>−</button><input class="total" value="1o0"><button>+</button></span>
+    </div>
+    <div class="actions">
+      <button class="btn ghost">Fold</button>
+      <button class="btn ghost">Call <span class="amt">400</span></button>
+      <button class="btn fill">Raise to</button>
+    </div>
+    <p class="notice">That is not an amount.</p>
+  </div>
+  <span class="l">an empty field and a negative are this same state; nothing is ever coerced to a number</span>
 
   <h2>Sent — waiting on the server</h2>
   <div class="bar disabled">
@@ -121,13 +179,14 @@
       <button class="chip">min</button><button class="chip">⅓</button>
       <button class="chip">½</button><button class="chip sel">pot</button>
       <button class="chip">all-in</button>
-      <span class="stepper"><button>−</button><span>1,200</span><button>+</button></span>
+      <span class="stepper"><button>−</button><input class="total" value="1,200"><button>+</button></span>
     </div>
     <div class="actions">
       <button class="btn">Fold</button>
       <button class="btn">Call <span class="amt">400</span></button>
       <button class="btn">Raise to <span class="amt">1,200</span></button>
     </div>
+    <p class="notice"></p>
   </div>
   <span class="l">.disabled — both rows stay, everything faint, no spinner: same geometry
   as the live bar by construction</span>
@@ -138,9 +197,10 @@
       <button class="chip">min</button><button class="chip">⅓</button>
       <button class="chip">½</button><button class="chip">pot</button>
       <button class="chip">all-in</button>
-      <span class="stepper"><button>−</button><span>1,200</span><button>+</button></span>
+      <span class="stepper"><button>−</button><input class="total" value="1,200"><button>+</button></span>
     </div>
     <div class="waiting">Waiting for ImKate<span class="dots">…</span></div>
+    <p class="notice"></p>
   </div>
   <span class="l">.off — the hidden sizing row mirrors the live content, and the client
   keeps the stepper amount it last showed, so the rows wrap at the same points and the
