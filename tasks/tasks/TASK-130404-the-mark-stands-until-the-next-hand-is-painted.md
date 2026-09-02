@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130404
 title: The mark stands until the next hand is painted, the duel's end retires it, and nothing else touches it
 type: task
-status: backlog
+status: ready
 parent: STORY-1304
 module: web-client
 estimate: S

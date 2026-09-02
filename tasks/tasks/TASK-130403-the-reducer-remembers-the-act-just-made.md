@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130403
 title: The reducer remembers the act just made, and the deal that opens a hand takes it off
 type: task
-status: ready
+status: done
 parent: STORY-1304
 module: web-client
 estimate: S
