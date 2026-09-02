@@ -84,10 +84,10 @@ eye, six need a merged answer first.
 | 2 | `Pot` names the pot the player is playing for | `web-client` | **`DEC-114`** — answered by [`ADR-0107`](../../docs/adr/ADR-0107-pot-names-every-chip-committed-to-the-hand.md): the total |
 | 3 | The rival's last act stands on screen | `web-client`, `design` | **`DEC-117`** — answered 2026-09-02 by [`ADR-0109`](../../docs/adr/ADR-0109-the-table-marks-the-last-act-and-the-next-deal-clears-it.md); splittable |
 | 4 | 30 s a move, a 3 m timebank, and a clock that ticks | `poker-server`, `web-client`, `design` | **Answered** — [`ADR-0108`](../../docs/adr/ADR-0108-expiry-plays-the-seat-and-the-timebank-replaces-the-grace-window.md): an expiry checks or folds the one decision and never forfeits the duel, and the timebank replaces the grace window; the mechanism is `DEC-120`, the architect's |
-| 5 | Creating a duel lands the host at the table | `web-client`, `design` | **`DEC-116`** — product owner |
+| 5 | Creating a duel lands the host at the table | `web-client`, `design` | **`DEC-116`** — answered by [`ADR-0110`](../../docs/adr/ADR-0110-creating-a-duel-seats-the-host-at-the-table.md): the host waits at the table |
 | 6 | A stack is chips, and chips move | `design`, `web-client` | **A card.** Pacing follows `ADR-0102`'s shape — the client owns it and states no fact the server did not send |
-| 7 | A bet amount can be typed | `web-client`, `design` | **`DEC-118`** — product owner, for the illegal-amount case only |
-| 8 | A refresh leaves the player where they were | `web-client` | **`DEC-119`** — product owner; **the reported symptom does not reproduce**, and what does is its inverse |
+| 7 | A bet amount can be typed | `web-client`, `design` | **`DEC-118`** — answered by [`ADR-0111`](../../docs/adr/ADR-0111-an-illegal-typed-amount-is-refused-in-the-servers-own-numbers.md): refused, and it says why |
+| 8 | A refresh leaves the player where they were | `web-client` | **Answered** — [`ADR-0112`](../../docs/adr/ADR-0112-only-a-running-duel-refuses-another-screen.md): only a running duel refuses another screen and the refusal restores the address; a waiting or finished room honors the ask; the mechanism is `DEC-123`, the architect's |
 
 ## What is already true
 
@@ -202,16 +202,18 @@ running circle* is a choice between two drawings and the human is the one who lo
 
 ## Open decisions
 
-All six are the **product owner's**, registered in
-[`docs/adr/README.md`](../../docs/adr/README.md); the rows below are the ones **still open**. The
-epic is `backlog` until all six are answered, because six of the eight items cannot be split into
-tickets without them. Those already answered are listed under *Answered*, below.
+**None — all six are answered.** They were the **product owner's**, and all six were settled on
+2026-09-02 by the `product-owner` agent; the ADRs are listed under *Answered*, below, and struck in
+[`docs/adr/README.md`](../../docs/adr/README.md). The epic was `backlog` until they landed, because
+six of the eight items could not be split into tickets without them. It is now splittable.
 
-| ID | Question | Gates |
+Two **architect's** decisions were registered by the answering ADRs and gate the wire work rather
+than the split — see *What the answers handed the architect*:
+
+| ID | Question | Registered by |
 | --- | --- | --- |
-| `DEC-116` | Does creating a duel land the host at the table, what stands in the rival's seat until they arrive, and what becomes of `ADR-0073` §3's promise? | Item 5 |
-| `DEC-118` | What becomes of a typed amount that is not a legal raise? | Item 7 |
-| `DEC-119` | While a player holds a room, what does the address name, and may they leave the table by asking for another screen? | Item 8 |
+| `DEC-120` | By what mechanism is the turn clock carried, enforced and resumed? | `ADR-0108` |
+| `DEC-123` | By what mechanism is a mid-duel navigation refused and the address restored? | `ADR-0112` |
 
 ### Answered
 
@@ -220,6 +222,9 @@ tickets without them. Those already answered are listed under *Answered*, below.
 | `DEC-114` | [ADR-0107](../../docs/adr/ADR-0107-pot-names-every-chip-committed-to-the-hand.md) | `Pot` names the **total**: `view.pot` plus both seats' `committedThisStreet` — `Lobby.tsx:154`'s `potIncludingStreet`, the same `P` the sizing row already uses, so item 2's strip prints the number the `pot` chip sizes against. One figure, one word, and the blinds are in it from the first frame (`Pot 150` at 50/100, never `Pot 0`). Item 2's card correction is measured in the ADR's §6: `duel-table.html`'s two `Pot 2,450` nodes read **2,850**; `duel-table-states.html`'s 3,250 already agrees. The never-derives guard admits exactly this one sum (ADR §5), no wire moves, and whether the bet-lines keep standing under item 6's chips is that card's question, not resettled |
 | `DEC-115` | [ADR-0108](../../docs/adr/ADR-0108-expiry-plays-the-seat-and-the-timebank-replaces-the-grace-window.md) | An expiry gives up **one decision** with `ADR-0023`'s conduct — fold facing a bet, check when checking is free — and never ends the duel; the coin moves only on the outcome the engine reaches. 30 s a decision plus one 3 m timebank per duel, and the timebank **replaces** `ADR-0013`'s grace window, so there is one clock and the duel never pauses. The mechanism is `DEC-120`, the architect's |
 | `DEC-117` | [ADR-0109](../../docs/adr/ADR-0109-the-table-marks-the-last-act-and-the-next-deal-clears-it.md) | **The table marks the last act, and the next deal clears it.** One mark — the most recent of the six acts, at the seat that made it, never one per seat — saying what that seat's own button said: `actionVerb`'s verb, with the event's own `to` total on `Call`/`Bet`/`Raise to`/`All in`, `Fold` and `Check` bare, nothing computed. Within a hand it is only ever replaced; street ends, timers, fades and presence never touch it; the next hand's deal **as painted** (`ADR-0102` §1's queue) removes it, so a fold's mark stands through the award window, and `DuelFinished` retires it. Item 3's card owes **six states**, one per act, four with a figure — icon-versus-text and placement stay the human's by `ADR-0024` §3 — and item 3 is now splittable. A refresh loses the mark until the next act (`PlayerView` carries no last-act field); accepted in the ADR, registered nowhere. |
+| `DEC-116` | [ADR-0110](../../docs/adr/ADR-0110-creating-a-duel-seats-the-host-at-the-table.md) | Creating a duel seats the host **at the table**: the dedicated waiting screen is retired, the rival's empty seat says **`Waiting for your rival`** — the shipped heading relocated, rendered once, at the seat — and the table states **no game fact** before the opening `Snapshot`: no stacks, cards, pot, button or action bar. **Both of `ADR-0073`'s promises move verbatim and keep being made** — `Back to the lobby`, and *"The room stays open. That link still works for your rival, and it brings you back."* — so `ADR-0105` §2's ground is unchanged. The invite moves **whole** (bare code, selectable link box, `Copy the link` with its two feedback lines), the state adds **zero new strings**, the arrival is the `Snapshot` and is silent, and item 5's card owes the host-alone frame in **four named variants** under `ADR-0103`'s budget. `DEC-111` and `DEC-119` untouched |
+| `DEC-118` | [ADR-0111](../../docs/adr/ADR-0111-an-illegal-typed-amount-is-refused-in-the-servers-own-numbers.md) | The table **refuses the press and says why in the server's own numbers — never clamps, never knowingly sends**. Under-floor and over-`allInTo` are one case, refused with `rejection-text.ts`'s merged sentences quoting the violated bound from this turn's `LegalActions`; a non-number is `That is not an amount.`, never coerced; nothing typed is ever rewritten and no act is converted (a typed `callTo` is not a `Call`, an over-stack amount is not an `AllIn`). For item 7's split: the card draws the *outside the interval* and *not an amount* states before the implementing ticket is startable (ADR §7), the action button may print the proposal or nothing but never a different amount, and **`ADR-0100` §5 stands in full** — the driver gains no typing branch, so no story here touches `drive-duel.tsx`'s amount path. `DEC-102` stays open with its ground shifted: every legal total is now typeable |
+| `DEC-119` | [ADR-0112](../../docs/adr/ADR-0112-only-a-running-duel-refuses-another-screen.md) | **Only a running duel refuses another screen, and the refusal restores the address.** The address names the screen the player chose and never the room — no `Screen` member for the table, and the address is not expected to name a duel (`ADR-0076` §§1–2 applied). Mid-duel (`PLAYING`, grace included) an ask for `duels`, `leaderboard`, `account` or a mailed screen moves nothing: the table stays and `/` is restored — one act, silent, no new string, which confirms the behaviour item 8 measured on a playing browser as intent. A `WAITING`, `FINISHED` or `ABANDONED` room **honors** the ask with the seat, the tab's memory and the socket untouched, and a frame that seats a duel overrules any chosen screen exactly as `ADR-0076` §3 wrote it — phrased in room states, so `DEC-116` may put the waiting host anywhere. `ADR-0086` §6's accept lands on the account screen it names (the derived bounce is resolved in its favour), and a mailed link refused mid-duel must not spend its token. Item 8's story owes the DoD reproduction attempt on the undriven paths — the result screen, a runout, a dropped socket, real latency, the `AccountOffer` anchor, a mailed link over a held room — and the mechanism is `DEC-123`, the architect's, registered in the ADR's §7 |
 
 ### What the answers will hand the architect
 
@@ -241,7 +246,7 @@ that moves the version.
 
 ## Stories
 
-Written once `DEC-114`–`DEC-119` are merged. Splitting before then would be inventing the answers.
+`DEC-114`–`DEC-119` are merged, so the split is unblocked — run `/plan-story EPIC-13`. The first ticket of each story that puts a new surface in front of a player is its **design card** (`ADR-0091` §2), and the card merges before the ticket that implements it is startable.
 
 | ID | Title | Status |
 | --- | --- | --- |
