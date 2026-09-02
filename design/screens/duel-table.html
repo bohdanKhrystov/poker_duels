@@ -13,7 +13,10 @@
    * component cards; screen-only glue is commented as such.
    * ADR-0110 §§1–5: the file now draws the table before the duel too — the host
    * waits there alone, the rival's seat carrying §2's words and no game fact shown
-   * before the opening Snapshot, with the invite and the way out drawn beside it. */
+   * before the opening Snapshot, with the invite and the way out drawn beside it.
+   * ADR-0115 §§1–2: the acting seat's mark now moves too — the on-turn pulse
+   * transcribed character for character from the canonical
+   * components/seat-and-pot.html, never re-derived here. */
   :root {
     --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
@@ -33,6 +36,10 @@
     --pd-space-6: 24px; --pd-space-7: 32px;
     --pd-radius-medium: 8px; --pd-radius-pill: 999px;
     --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
+    --pd-accent-subtle: rgba(77, 139, 201, 0.14);
+    /* the acting seat's mark: values mirror design/tokens/tokens.css (ADR-0115 §4) */
+    --pd-motion-turn-period: 2400ms;
+    --pd-motion-turn-ease: ease-in-out;
   }
   * { margin: 0; box-sizing: border-box; }
   body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
@@ -85,7 +92,15 @@
     color: var(--pd-accent); font-weight: 500; }
   .seat .who { flex: 1; min-width: 0; }
   .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
-  .seat.on-turn { border-left-color: var(--pd-accent); }
+  .seat.on-turn { border-left-color: var(--pd-accent);
+    animation: pd-acting-seat var(--pd-motion-turn-period) var(--pd-motion-turn-ease) infinite; }
+  /* pd-acting-seat pulses at --pd-motion-turn-period, eased by
+   * --pd-motion-turn-ease — beside the always-reserved accent edge above,
+   * never instead of it (ADR-0115 §1, §6). */
+  @keyframes pd-acting-seat {
+    0%, 100% { box-shadow: 0 0 0 0 var(--pd-accent-subtle); }
+    50% { box-shadow: 0 0 0 5px var(--pd-accent-subtle); }
+  }
   .dealer { font-family: var(--pd-font-mono); font-size: var(--pd-fs-micro);
     color: var(--pd-text-muted); border: 1px solid var(--pd-hairline);
     border-radius: var(--pd-radius-pill); padding: 2px var(--pd-space-3); }
@@ -199,6 +214,13 @@
 
   .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
     margin-top: var(--pd-space-4); }
+
+  /* this card's own answer to the signal (ADR-0115 §4) — at rest is a state
+   * drawn once, named, on components/seat-and-pot.html; this rule only lets
+   * a reduced-motion reader see that same state here too */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; }
+  }
 </style>
 </head>
 <body>
