@@ -88,6 +88,49 @@ describe("the duel table", () => {
     expect(screen.queryByText("Your turn")).toBeNull();
   });
 
+  it("marks the seat the view says is to act, at either seat", () => {
+    // Both directions in one test: a mark hard-coded to a seat index would
+    // pass the first half below and fail the second.
+    const heroToAct = aView({
+      viewerSeat: 0,
+      seatToAct: 0,
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    const { container, rerender } = render(<DuelTable view={heroToAct} />);
+
+    expect(container.querySelectorAll(".acting-mark")).toHaveLength(1);
+    const heroMark = container.querySelector(".acting-mark");
+    expect(plateFor("You").contains(heroMark)).toBe(true);
+    expect(plateFor("Your rival").contains(heroMark)).toBe(false);
+
+    const rivalToAct = aView({
+      viewerSeat: 0,
+      seatToAct: 1,
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    rerender(<DuelTable view={rivalToAct} />);
+
+    expect(container.querySelectorAll(".acting-mark")).toHaveLength(1);
+    const rivalMark = container.querySelector(".acting-mark");
+    expect(plateFor("Your rival").contains(rivalMark)).toBe(true);
+    expect(plateFor("You").contains(rivalMark)).toBe(false);
+  });
+
+  it("marks no seat when the view names none", () => {
+    // `seatToAct` is nullable on the wire (`protocol.gen.ts:290`): a mark that
+    // appeared whenever a plate rendered would be the client inventing a turn.
+    const view = aView({
+      seatToAct: null,
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    const { container } = render(<DuelTable view={view} />);
+
+    expect(container.querySelectorAll(".acting-mark")).toHaveLength(0);
+  });
+
   it("shows the pot and the board the view carries", () => {
     const view = aView({
       pot: 2450,

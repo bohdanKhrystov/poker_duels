@@ -2,7 +2,7 @@
 id: STORY-1303
 title: The acting seat is marked, and the mark moves
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: web-client
 labels: [client, design, table]
