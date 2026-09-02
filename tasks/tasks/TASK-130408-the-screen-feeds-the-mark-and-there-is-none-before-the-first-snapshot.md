@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130408
 title: The screen feeds the mark, and there is none before the first snapshot
 type: task
-status: backlog
+status: ready
 parent: STORY-1304
 module: web-client
 estimate: XS
