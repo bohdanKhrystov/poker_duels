@@ -106,15 +106,15 @@ not reach a turn clock: a turn clock decides whether a player forfeits, so `ADR-
 the server, and the engine's purity bars a clock from `poker-engine` outright.
 
 **Item 7 has no input element.** `ActionBar.tsx` renders `<button>` only. `ADR-0100` §5 refuses *by
-name* any driver-only control, test-only prop or `data-testid` — a typed field is the opposite of
-that, a real player control, and is welcome. But `ADR-0100`'s whole point was that the e2e driver
+name* a driver-only **slider**, any test-only prop or `data-testid` — a typed field is the opposite
+of all three, a real player control, and is welcome. But `ADR-0100`'s whole point was that the e2e driver
 must **press what a player presses** rather than set a value; a text input hands back a settable
 value, and the driver may not start using it. Any story here says so.
 
 **Item 6 has no art.** `design/graphics/` holds the coin, the suits and the wordmark. There is no
 chip. `web-client/src/table/chips.ts` is digit grouping, not a chip.
 
-**Item 5 contradicts a shipped promise, in one direction only.**
+**Item 5 sits on top of a shipped promise.**
 [`ADR-0073`](../../docs/adr/ADR-0073-the-waiting-screen-says-back-to-the-lobby-and-the-room-stays-open.md)
 §3 tells the host on screen that the room stays open and they may walk away, and `ADR-0105` §2
 leans on exactly that sentence to *not* refuse a `WAITING` seat. Moving the host to the table does
