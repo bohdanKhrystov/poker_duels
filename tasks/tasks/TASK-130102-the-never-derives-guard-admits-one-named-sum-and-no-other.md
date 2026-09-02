@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130102
 title: The never-derives guard admits one named sum and no other
 type: task
-status: ready
+status: done
 parent: STORY-1301
 module: web-client
 estimate: S
