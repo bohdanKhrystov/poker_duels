@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130206
 title: What the table shows when there is no view, written down as a gate
 type: task
-status: ready
+status: done
 parent: STORY-1302
 module: web-client
 estimate: S
