@@ -312,6 +312,10 @@ export function applyServerMessage(
         // renders nowhere either way; this is what stops one surviving into a rematch, since a
         // Snapshot clears `outcome` and brings the table back (ADR-0044 §4).
         serverAction: null,
+        // ADR-0109 §3: the duel's end retires the mark with the table, the same boundary guard
+        // as serverAction just above — so nothing survives into a rematch, since a Snapshot
+        // clears `outcome` and brings the table back (ADR-0044 §4).
+        lastAct: null,
       };
     case "Failure":
       // ADR-0044 §6 documents REMATCH_UNAVAILABLE as transient: nothing was recorded and the

@@ -1743,4 +1743,169 @@ describe("the duel state", () => {
     });
     expect(actLast.lastAct).toEqual(bet);
   });
+
+  it("stands through the award window and goes only when the next hand is painted", () => {
+    const fold = { type: "PlayerFolded", sequence: 100, seat: 1 } as const;
+    const stateWithFold = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: [fold] },
+    );
+    expect(stateWithFold.lastAct).toEqual(fold);
+
+    // ADR-0102 §2: a hand-completing Snapshot with no StreetDealt in front of it lays out one
+    // step — the fold case — so reveal is non-null and the award window is open.
+    const handOneComplete = samplePlayerView({
+      handNumber: 1,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+    });
+    const stateAfterHandOneSnapshot = duelState.applyServerMessage(
+      stateWithFold,
+      { type: "Snapshot", view: handOneComplete },
+    );
+    expect(stateAfterHandOneSnapshot.reveal).not.toBeNull();
+    // ADR-0109 §3: the fold's mark stands through ADR-0095 §4's award window.
+    expect(stateAfterHandOneSnapshot.lastAct).toEqual(fold);
+
+    const handStarted = {
+      type: "HandStarted",
+      sequence: 101,
+      handNumber: 2,
+      buttonSeat: 1,
+      smallBlind: 10,
+      bigBlind: 20,
+      stacks: [480, 520],
+    } as const;
+    const stateWithHandTwoEvents = duelState.applyServerMessage(
+      stateAfterHandOneSnapshot,
+      { type: "Events", events: [handStarted] },
+    );
+    const handTwoView = samplePlayerView({ handNumber: 2, street: "PREFLOP" });
+    const stateWithHandTwoSnapshot = duelState.applyServerMessage(
+      stateWithHandTwoEvents,
+      { type: "Snapshot", view: handTwoView },
+    );
+    // ADR-0102 §1: hand 2's Events (carrying HandStarted) and hand 2's Snapshot have both
+    // arrived, but reveal's one step still stands, so ADR-0102 §1's queue has only queued them —
+    // neither has been applied yet. A reducer that cleared lastAct on the arriving frame rather
+    // than the painted one fails exactly this assertion.
+    expect(stateWithHandTwoSnapshot.lastAct).toEqual(fold);
+
+    const statePainted = duelState.advanceReveal(stateWithHandTwoSnapshot);
+    expect(statePainted.reveal).toBeNull();
+    expect(statePainted.lastAct).toBeNull();
+  });
+
+  it("a street's end, a deal, a snapshot, a presence and a rejection leave the mark standing", () => {
+    const bet = { type: "PlayerBet", sequence: 110, seat: 1, to: 60 } as const;
+    let state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Events",
+      events: [bet],
+    });
+    expect(state.lastAct).toEqual(bet);
+
+    const bettingRoundEnded = {
+      type: "BettingRoundEnded",
+      sequence: 111,
+      street: "PREFLOP",
+    } as const;
+    state = duelState.applyServerMessage(state, {
+      type: "Events",
+      events: [bettingRoundEnded],
+    });
+    expect(state.lastAct, "a street's end leaves the mark standing").toEqual(
+      bet,
+    );
+
+    const streetDealt = {
+      type: "StreetDealt",
+      sequence: 112,
+      street: "FLOP",
+      cards: ["As", "7d", "2c"],
+    } as const;
+    state = duelState.applyServerMessage(state, {
+      type: "Events",
+      events: [streetDealt],
+    });
+    expect(state.lastAct, "a street's deal leaves the mark standing").toEqual(
+      bet,
+    );
+
+    state = duelState.applyServerMessage(state, {
+      type: "Snapshot",
+      view: samplePlayerView({
+        street: "FLOP",
+        board: { cards: ["As", "7d", "2c"] },
+      }),
+    });
+    expect(state.lastAct, "a snapshot leaves the mark standing").toEqual(bet);
+
+    state = duelState.applyServerMessage(state, {
+      type: "OpponentPresence",
+      presence: "AWAY",
+      graceRemainingMillis: 47000,
+    });
+    expect(state.lastAct, "a presence frame leaves the mark standing").toEqual(
+      bet,
+    );
+
+    state = duelState.applyServerMessage(state, {
+      type: "Rejected",
+      rejection: { type: "AmountTooSmall", attempted: 5, minimum: 10 },
+    });
+    expect(state.lastAct, "a rejection leaves the mark standing").toEqual(bet);
+  });
+
+  it("the duel ending takes the mark off", () => {
+    const allIn = {
+      type: "PlayerAllIn",
+      sequence: 120,
+      seat: 0,
+      to: 500,
+    } as const;
+    const stateWithAct = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: [allIn] },
+    );
+    expect(stateWithAct.lastAct).toEqual(allIn);
+    const state = duelState.applyServerMessage(stateWithAct, {
+      type: "DuelFinished",
+      outcome: {
+        winner: 0,
+        handsPlayed: 9,
+        finalStacks: [1000, 0],
+      },
+    });
+    expect(state.lastAct).toBeNull();
+  });
+
+  it("a resume rebuilds no mark", () => {
+    const stateAfterJoin = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "RoomJoined", code: "ABCD", seat: 0 },
+    );
+    // ADR-0102 §5: a resume's Snapshot has no Events in front of it.
+    const stateAfterSnapshot = duelState.applyServerMessage(stateAfterJoin, {
+      type: "Snapshot",
+      view: samplePlayerView(),
+    });
+    expect(stateAfterSnapshot.lastAct).toBeNull();
+    const legalActions: LegalActions = {
+      seat: 0,
+      allowed: ["CHECK", "BET"],
+      callTo: 0,
+      minBetTo: 10,
+      minRaiseTo: 20,
+      allInTo: 100,
+    };
+    const state = duelState.applyServerMessage(stateAfterSnapshot, {
+      type: "YourTurn",
+      handNumber: 1,
+      actionSequence: 1,
+      legalActions,
+    });
+    // ADR-0109 §Consequences: PlayerView carries no last-act field, so a refresh loses the mark
+    // until the next act — this is the accepted cost, not a bug to work around.
+    expect(state.lastAct).toBeNull();
+  });
 });
