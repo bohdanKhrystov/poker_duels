@@ -92,6 +92,16 @@
     color: var(--pd-accent); font-weight: 500; }
   .seat .who { flex: 1; min-width: 0; }
   .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
+  /* the last act: the plate's mark for the most recent act of the hand, at the seat that
+   * made it — one mark, never one per seat (ADR-0109 §1). It says the actor's own button
+   * word, bare for two of the six acts and with the event's own total for the other four
+   * (§2); nothing here ever times out, fades or otherwise dismisses it (§4). It rides as
+   * another child of .seat's own flex row, so .who gives ground by truncating the name
+   * first and the plate never grows a pixel taller. */
+  .last-act { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 0.6875rem; color: var(--pd-text-muted); background: var(--pd-accent-subtle);
+    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill);
+    padding: 2px 8px; white-space: nowrap; }
   .seat.on-turn { border-left-color: var(--pd-accent);
     animation: pd-acting-seat var(--pd-motion-turn-period) var(--pd-motion-turn-ease) infinite; }
   /* pd-acting-seat pulses at --pd-motion-turn-period, eased by
@@ -233,6 +243,7 @@
           <div class="seat">
             <span class="who"><span class="name">ImKate</span>
               <span class="status"></span></span>
+            <span class="last-act">Bet&nbsp;400</span>
             <span class="dealer">D</span>
             <span class="chips">4,150</span>
           </div>
@@ -292,6 +303,7 @@
           <div class="seat">
             <span class="who"><span class="name">ImKate</span>
               <span class="status"></span></span>
+            <span class="last-act">Bet&nbsp;400</span>
             <span class="dealer">D</span>
             <span class="chips">4,150</span>
           </div>
