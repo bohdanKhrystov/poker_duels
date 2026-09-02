@@ -73,6 +73,28 @@
   --shadow-pop: var(--pd-shadow-pop);
 }
 
+/* The acting seat's mark: pd-acting-seat pulses at --pd-motion-turn-period,
+ * eased by --pd-motion-turn-ease, beside the border-l-accent edge SeatPlate
+ * already draws — never instead of it (ADR-0115 §1, §6). Kept outside
+ * @theme static: theme.test.ts requires every line in that block to be a
+ * reset or a var(--pd-*) reference, and neither a keyframe nor a utility is. */
+@keyframes pd-acting-seat {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--pd-accent-subtle);
+  }
+  50% {
+    box-shadow: 0 0 0 5px var(--pd-accent-subtle);
+  }
+}
+
+@utility acting-mark {
+  animation-name: pd-acting-seat;
+  animation-duration: var(--pd-motion-turn-period);
+  animation-timing-function: var(--pd-motion-turn-ease);
+  animation-iteration-count: infinite;
+}
+
 /* Dark only. STORY-0601 scoped light out epic-wide: no light mode,
  * no theme switch, no second palette. */
 :root {

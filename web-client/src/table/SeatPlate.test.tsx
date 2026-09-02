@@ -88,4 +88,55 @@ describe("a seat plate", () => {
     expect(queryByText2("Away")).toBeNull();
     expect(queryByText2("Timed out")).toBeNull();
   });
+
+  it("marks whichever seat is on turn, hero or rival", () => {
+    const { container, unmount } = plate({}, { isToAct: true, isViewer: true });
+    expect(container.querySelectorAll(".acting-mark")).toHaveLength(1);
+    unmount();
+
+    const { container: rivalContainer, unmount: unmountRival } = plate(
+      {},
+      { isToAct: true, isViewer: false },
+    );
+    expect(rivalContainer.querySelectorAll(".acting-mark")).toHaveLength(1);
+    unmountRival();
+
+    const { container: offTurnContainer } = plate({}, { isToAct: false });
+    expect(offTurnContainer.querySelectorAll(".acting-mark")).toHaveLength(0);
+  });
+
+  it("keeps the still mark beside the moving one", () => {
+    const { container, unmount } = plate({}, { isToAct: true });
+    const onTurnPlate = container.firstElementChild as HTMLElement;
+    expect(onTurnPlate.classList.contains("border-l-accent")).toBe(true);
+    expect(onTurnPlate.classList.contains("acting-mark")).toBe(true);
+    unmount();
+
+    const { container: offTurnContainer } = plate({}, { isToAct: false });
+    const offTurnPlate = offTurnContainer.firstElementChild as HTMLElement;
+    expect(offTurnPlate.classList.contains("border-l-transparent")).toBe(true);
+    expect(offTurnPlate.classList.contains("border-l-accent")).toBe(false);
+    expect(offTurnPlate.classList.contains("acting-mark")).toBe(false);
+  });
+
+  it("leaves an away or timed-out seat unmarked, even on turn", () => {
+    const { container, getByText, unmount } = plate(
+      {},
+      { presence: "AWAY", isToAct: true },
+    );
+    expect(container.querySelectorAll(".acting-mark")).toHaveLength(0);
+    const awayPlate = container.firstElementChild as HTMLElement;
+    expect(awayPlate.classList.contains("border-l-accent")).toBe(false);
+    getByText("Away");
+    unmount();
+
+    const { container: absentContainer, getByText: getByTextAbsent } = plate(
+      {},
+      { presence: "ABSENT", isToAct: true },
+    );
+    expect(absentContainer.querySelectorAll(".acting-mark")).toHaveLength(0);
+    const absentPlate = absentContainer.firstElementChild as HTMLElement;
+    expect(absentPlate.classList.contains("border-l-accent")).toBe(false);
+    getByTextAbsent("Timed out");
+  });
 });
