@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130304
 title: The mark is at the seat the server named, and nowhere before it names one
 type: task
-status: backlog
+status: ready
 parent: STORY-1303
 module: web-client
 estimate: S

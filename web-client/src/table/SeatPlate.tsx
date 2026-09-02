@@ -22,7 +22,7 @@ export function SeatPlate(props: {
   return (
     <div
       className={`flex items-center gap-4 rounded-medium border border-l-2 border-hairline bg-surface px-5 py-4 ${
-        onTurn ? "border-l-accent" : "border-l-transparent"
+        onTurn ? "border-l-accent acting-mark" : "border-l-transparent"
       }`}
     >
       <span className="min-w-0 flex-1">
