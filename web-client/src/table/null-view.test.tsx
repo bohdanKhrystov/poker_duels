@@ -19,6 +19,11 @@ import { aView } from "./view-fixture";
  * file is that refusal made enforceable: a surface a later `EPIC-13` story
  * adds to the table either renders nothing while `view` is `null`, or says
  * here what it renders instead.
+ *
+ * The acting mark (`TASK-130303`) renders nothing here: the host-alone
+ * screen is `WaitingTable`, which mounts no `SeatPlate` at all, and the mark
+ * itself speaks no `aria-label` and no `title` on any screen it does reach —
+ * so neither `spoken()` nor the digit sweep below changes shape to admit it.
  */
 
 afterEach(() => {
@@ -183,5 +188,24 @@ describe("what the table shows when there is no view", () => {
       [...BASELINE, "Copy the link", "Copy it from the box above."].sort(),
     );
     expect(spoken(rejected.container)).toEqual([]);
+  });
+
+  it("marks no acting seat before the server has named one", () => {
+    // The positive half is the guard on the guard, exactly as this file's
+    // third test already does it for the four ADR-0110 probes: without it,
+    // ".acting-mark" is a selector that could match nothing anywhere in this
+    // app and the refusal below would pass forever for the wrong reason.
+    const { container, store } = renderNullView("ABCDEFGH");
+
+    expect(container.querySelectorAll(".acting-mark")).toHaveLength(0);
+    expect(spoken(container)).toEqual([]);
+
+    act(() => {
+      store.apply({ type: "Snapshot", view: aView() });
+    });
+
+    expect(container.querySelectorAll(".acting-mark").length).toBeGreaterThan(
+      0,
+    );
   });
 });
