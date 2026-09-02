@@ -2,7 +2,7 @@
 id: STORY-1302
 title: The host waits at the table, and both promises move with them
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: web-client
 labels: [client, design, table, lobby]
