@@ -80,9 +80,26 @@ the human's by `ADR-0024` §3, given by looking at the rendered card, and may tr
 
 ## Tasks
 
+Split on 2026-09-02 into seven, in one chain. Two decisions the split made and the story did not:
+
+- **The frames land in `design/screens/duel-table.html`, not in a new card file.** `ADR-0110` §8.2
+  makes the arrival frame *that file's existing `Phone — 390 × 664` drawing*, so putting the
+  host-alone frames beside it turns the transition into an adjacency a reader can see; it is also
+  the only card declaring a 390 × 664 box, which is where §8 puts the fit; and a new file would
+  copy about ninety lines of preamble, column and seat plate before drawing anything.
+- **The null-view contract lands as a file, `web-client/src/table/null-view.test.tsx`**
+  (`TASK-130206`), rendering the real branch and sweeping text nodes *and* `aria-label`/`title`.
+  A clock, a chip pile or a last-act figure drawn at the empty seat prints a digit and fails it.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *not yet split — run `/plan-story STORY-1302`* | — |
+| [TASK-130201](../tasks/TASK-130201-the-card-seats-the-host-alone-at-the-phone.md) | The card seats the host alone at the phone, at rest | ready |
+| [TASK-130202](../tasks/TASK-130202-the-cards-three-remaining-variants-and-the-arrival.md) | The card's three remaining host-alone variants, and the arrival | backlog |
+| [TASK-130203](../tasks/TASK-130203-the-invite-is-a-component-of-its-own.md) | The invite is a component of its own, and the DOM does not move | backlog |
+| [TASK-130204](../tasks/TASK-130204-the-host-alone-table-is-a-component.md) | The host-alone table is a component, drawn as the card draws it | backlog |
+| [TASK-130205](../tasks/TASK-130205-creating-a-duel-lands-the-host-at-the-table.md) | Creating a duel lands the host at the table, and the waiting screen is gone | backlog |
+| [TASK-130206](../tasks/TASK-130206-what-the-table-shows-when-there-is-no-view.md) | What the table shows when there is no view, written down as a gate | backlog |
+| [TASK-130207](../tasks/TASK-130207-the-retired-frame-leaves-the-card-and-the-inventory.md) | The retired frame leaves the card, and the inventory names where the host waits | backlog |
 
 ## Acceptance criteria
 
@@ -108,6 +125,14 @@ the human's by `ADR-0024` §3, given by looking at the rendered card, and may tr
   [`ADR-0112`](../../docs/adr/ADR-0112-only-a-running-duel-refuses-another-screen.md)'s and lands in
   `STORY-1311`. `ADR-0112` §3 is phrased in room states precisely so this story may put the waiting
   host anywhere.
+- **The one-render `waiting` window on a resume into a `PLAYING` room.** `ADR-0114` §6 measured it
+  off merged source — `RoomJoined` and `Snapshot` are two socket frames, so the standing reads
+  `waiting` for one render — and settles ownership in the same breath: it *"cannot be closed from
+  the client"*, closing it exactly would need the server to name the room's state in the join
+  answer, which `ADR-0112` §7 forbids, and any observation of it belongs to `ADR-0114` §7's drive.
+  That drive is **`STORY-1311`'s**. This story changes what that one render *draws* and nothing
+  about its width; no ticket here adds a guard, a delay or a spinner for it, and if the drive later
+  observes a token spent in that window, `ADR-0114` §6 makes it a new `DEC`.
 - **Pre-duel facts on the empty table** — starting stacks or blinds from configuration.
   `ADR-0110` §3 is `ADR-0002` applied; a future *preview stacks* idea amends a foundational rule.
 - **The engine.** Nothing here opens `poker-engine`.
