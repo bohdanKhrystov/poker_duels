@@ -123,7 +123,7 @@ A navigation **is** a disconnect on this browser: `open` closes the socket and t
 
 | id | do | expect | fails if |
 | --- | --- | --- | --- |
-| `CORE-20` | on the waiting screen, `click "Back to the lobby"` | A returns to the lobby and **the room stays open** — the link still works | the room closes, or the link stops working (`ADR-0073`) |
+| `CORE-20` | at the table, while the room is still waiting, `click "Back to the lobby"` | A returns to the lobby and **the room stays open** — the link still works | the room closes, or the link stops working (`ADR-0073`) |
 
 ---
 
@@ -324,7 +324,7 @@ poll. `record` installs a `MutationObserver` on `#root`; `frames` prints what it
 
 | screen | state | card | walk | routes |
 | --- | --- | --- | --- | --- |
-| `first` | hosting — the room code, the invite link, and the way back to the lobby | `design/screens/create-duel.html` | walked | `SMK-04`, `CORE-20` |
+| `first` | hosting — the host at the table with the rival's seat empty and the invite on it | `design/screens/duel-table.html` | walked | `SMK-04`, `CORE-20` |
 | `first` | joining by a shared invite link — seated with no code ever typed | `design/screens/duel-table.html` | walked | `SMK-05`, `CORE-02` |
 | `first` | joining by typing a room code into the lobby's field | `design/screens/enter-code.html` | walked | `CORE-05` |
 | `first` | the table once a hand is under way, both screens agreeing on it | `design/screens/duel-table.html` | walked | `SMK-05`, `SMK-06`, `CORE-06` |

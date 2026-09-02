@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130207
 title: The retired frame leaves the card, and the inventory names where the host waits
 type: task
-status: ready
+status: done
 parent: STORY-1302
 module: design
 estimate: XS
