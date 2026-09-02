@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130402
 title: The two table cards carry the last act in place, and the host-alone frames carry none
 type: task
-status: backlog
+status: ready
 parent: STORY-1304
 module: design
 estimate: S
