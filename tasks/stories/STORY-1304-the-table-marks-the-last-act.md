@@ -83,9 +83,40 @@ this story's tests say so rather than leaving it to chance.
 
 ## Tasks
 
+Split into eight tickets on 2026-09-02, one chain; `TASK-130401` is the only startable one.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *not yet split — run `/plan-story STORY-1304`* | — |
+| [TASK-130401](../tasks/TASK-130401-the-seat-card-draws-the-last-act-in-all-six-states.md) | The seat card draws the last act, in all six of its states, at both seats | ready |
+| [TASK-130402](../tasks/TASK-130402-the-two-table-cards-carry-the-mark-and-the-host-alone-frames-carry-none.md) | The two table cards carry the last act in place, and the host-alone frames carry none | backlog |
+| [TASK-130403](../tasks/TASK-130403-the-reducer-remembers-the-act-just-made.md) | The reducer remembers the act just made, and the deal that opens a hand takes it off | backlog |
+| [TASK-130404](../tasks/TASK-130404-the-mark-stands-until-the-next-hand-is-painted.md) | The mark stands until the next hand is painted, the duel's end retires it, and nothing else touches it | backlog |
+| [TASK-130405](../tasks/TASK-130405-the-marks-words-are-the-buttons-words.md) | The mark's words are the button's words, and its figure is the event's own total | backlog |
+| [TASK-130406](../tasks/TASK-130406-the-seat-plate-draws-the-last-act-it-is-handed.md) | The seat plate draws the last act it is handed, and speaks nothing | backlog |
+| [TASK-130407](../tasks/TASK-130407-one-mark-at-the-seat-the-act-names.md) | One mark, at the seat the act names, and it moves when the other seat acts | backlog |
+| [TASK-130408](../tasks/TASK-130408-the-screen-feeds-the-mark-and-there-is-none-before-the-first-snapshot.md) | The screen feeds the mark, and there is none before the first snapshot | backlog |
+
+**Three things the split settled, having read `develop` rather than the story's notes.**
+
+- **The mark is a reducer field, `lastAct`, holding the whole act event** — `serverAction`'s
+  register, and `ADR-0109` §Consequences' own *"two reducer keys"*. `ADR-0102` §1's queue then gives
+  *the deal as painted* for free: frames that arrive while a hand's ending is being painted are
+  held and only reach the reducer once the last step has stood, so a `HandStarted` clears the mark
+  at the moment a player sees the new hand and never at the moment its frame lands. The recorded
+  script confirms the shape — the next hand's `HandStarted` rides its **own** `Events` frame, after
+  the hand-completing `Snapshot`.
+- **`view === null` shows nothing, and a refresh loses the mark**, both written into tickets rather
+  than left for a coder to find. `Lobby.tsx` renders `WaitingTable` when there is no view and that
+  component mounts no `SeatPlate`, so no element, class, text or attribute reaches the null view;
+  the mark speaks no `aria-label` and no `title` on **any** screen, so `null-view.test.tsx`'s
+  `spoken()` closure and its digit sweep do not change shape. A resume delivers a `Snapshot` with no
+  `Events` in front of it, so `lastAct` stays `null` until the next act — `TASK-130404` pins that as
+  a named reducer test rather than repairing it.
+- **`no-derivation.test.tsx` stays green because it never sees a mark**, not because the mark is
+  admitted: all seven of its tests render `<DuelTable view={…} />` and pass no act, so the act's
+  `to` — which is not a `PlayerView` field — never reaches its sweeps. Two tickets pin the file at
+  **7** to prove it, and widening that guard is named as a later ticket's debt if one ever renders a
+  mark into it.
 
 ## Acceptance criteria
 
