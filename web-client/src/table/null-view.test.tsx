@@ -46,7 +46,10 @@ function textNodes(root: HTMLElement): string[] {
  * Every `aria-label` and every `title` attribute value under `root`. A figure
  * or a name the client worked out for itself reaches the player from either
  * of those just as surely as from print, so a text-only sweep is not enough
- * to stand as the whole guard.
+ * to stand as the whole guard: this file asserts the result closed to the
+ * empty set on the null view, on top of folding it into `digitBearing`'s
+ * figure sweep — a name spoken here is caught on its own, not only when it
+ * happens to contain a digit.
  */
 function spoken(root: HTMLElement): string[] {
   return [...root.querySelectorAll("[aria-label], [title]")]
@@ -105,12 +108,17 @@ describe("what the table shows when there is no view", () => {
   });
 
   it("deals no card, draws no button, offers no bar and names no pot", () => {
-    renderNullView("ABCDEFGH");
+    const { container } = renderNullView("ABCDEFGH");
 
     expect(screen.queryAllByRole("img")).toHaveLength(0);
     expect(screen.queryByLabelText("the button")).toBeNull();
     expect(screen.queryByLabelText("your move")).toBeNull();
     expect(screen.queryByText(/^Pot/)).toBeNull();
+    // Closed, not filtered: `digitBearing` only ever asks `spoken()` for its
+    // digits, so a *name* — a card, a street, a made hand — spoken through
+    // `aria-label` or `title` would pass every assertion above it in this
+    // file undetected. Nothing is spoken here at all.
+    expect(spoken(container)).toEqual([]);
   });
 
   it("finds all four of those on the live table", () => {
@@ -150,12 +158,14 @@ describe("what the table shows when there is no view", () => {
     expect(textNodes(resolved.container).sort()).toEqual(
       [...BASELINE, "Copy the link"].sort(),
     );
+    expect(spoken(resolved.container)).toEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "Copy the link" }));
     await screen.findByText("Link copied.");
     expect(textNodes(resolved.container).sort()).toEqual(
       [...BASELINE, "Copy the link", "Link copied."].sort(),
     );
+    expect(spoken(resolved.container)).toEqual([]);
 
     cleanup();
     Reflect.deleteProperty(navigator, "clipboard");
@@ -166,5 +176,6 @@ describe("what the table shows when there is no view", () => {
     expect(textNodes(rejected.container).sort()).toEqual(
       [...BASELINE, "Copy the link", "Copy it from the box above."].sort(),
     );
+    expect(spoken(rejected.container)).toEqual([]);
   });
 });
