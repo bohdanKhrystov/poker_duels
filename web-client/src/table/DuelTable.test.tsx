@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import type { GameEvent } from "../protocol";
+import type { ActEvent } from "../store/duel-state";
 import {
   advanceReveal,
   applyServerMessage,
@@ -129,6 +130,93 @@ describe("the duel table", () => {
     const { container } = render(<DuelTable view={view} />);
 
     expect(container.querySelectorAll(".acting-mark")).toHaveLength(0);
+  });
+
+  it("marks the seat the act names, at either seat", () => {
+    // Both directions in one test: a mark wired to the rival regardless of
+    // the event's own seat — the ask as literally written, which `ADR-0109`
+    // §Alternative 6 refused — passes the first half below and fails the
+    // second.
+    const view = aView({
+      viewerSeat: 0,
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+    const rivalBet: ActEvent = {
+      type: "PlayerBet",
+      sequence: 20,
+      seat: 1,
+      to: 950,
+    };
+
+    const { container, rerender } = render(
+      <DuelTable view={view} lastAct={rivalBet} />,
+    );
+
+    expect(container.querySelectorAll(".last-act")).toHaveLength(1);
+    const rivalMark = container.querySelector(".last-act");
+    expect(plateFor("Your rival").contains(rivalMark)).toBe(true);
+    expect(plateFor("You").contains(rivalMark)).toBe(false);
+
+    const heroBet: ActEvent = {
+      type: "PlayerBet",
+      sequence: 21,
+      seat: 0,
+      to: 950,
+    };
+
+    rerender(<DuelTable view={view} lastAct={heroBet} />);
+
+    expect(container.querySelectorAll(".last-act")).toHaveLength(1);
+    const heroMark = container.querySelector(".last-act");
+    expect(plateFor("You").contains(heroMark)).toBe(true);
+    expect(plateFor("Your rival").contains(heroMark)).toBe(false);
+  });
+
+  it("moves the mark rather than adding one when the other seat acts", () => {
+    // A per-seat mark — the shape `ADR-0109` §Alternative 2 rejected — would
+    // leave both this hand's marks standing and fail every assertion below.
+    const view = aView({
+      viewerSeat: 0,
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+    const rivalBet: ActEvent = {
+      type: "PlayerBet",
+      sequence: 30,
+      seat: 1,
+      to: 950,
+    };
+
+    const { container, rerender } = render(
+      <DuelTable view={view} lastAct={rivalBet} />,
+    );
+
+    const heroCall: ActEvent = {
+      type: "PlayerCalled",
+      sequence: 31,
+      seat: 0,
+      to: 400,
+    };
+
+    rerender(<DuelTable view={view} lastAct={heroCall} />);
+
+    expect(container.querySelectorAll(".last-act")).toHaveLength(1);
+    const mark = container.querySelector(".last-act");
+    expect(plateFor("You").contains(mark)).toBe(true);
+    expect(container.textContent).not.toMatch(/950/);
+  });
+
+  it("marks no seat when no act has been made", () => {
+    const view = aView({
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    const { container: omitted } = render(<DuelTable view={view} />);
+    expect(omitted.querySelectorAll(".last-act")).toHaveLength(0);
+
+    const { container: nulled } = render(
+      <DuelTable view={view} lastAct={null} />,
+    );
+    expect(nulled.querySelectorAll(".last-act")).toHaveLength(0);
   });
 
   it("shows the pot and the board the view carries", () => {

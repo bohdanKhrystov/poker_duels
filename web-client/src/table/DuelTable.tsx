@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import type { GameEvent, PlayerView, SeatPresence, Street } from "../protocol";
+import type { ActEvent } from "../store/duel-state";
 import { BoardCards } from "./BoardCards";
 import { PotStrip } from "./PotStrip";
 import { SeatPlate } from "./SeatPlate";
@@ -29,6 +30,12 @@ export function DuelTable(props: {
    * the snapshot's own, unlagged.
    */
   revealStep?: { board: readonly string[]; street: Street } | null;
+  /**
+   * The most recent act of the hand on screen (`ADR-0109` §1), or absent before the hand has
+   * made one. The store's own `lastAct` field, never worked out here — and never handed to both
+   * plates: exactly one `SeatPlate` below receives it, chosen by `lastAct.seat` alone.
+   */
+  lastAct?: ActEvent | null;
 }): ReactElement {
   const { view } = props;
   const board = props.revealStep?.board ?? view.board.cards;
@@ -45,6 +52,7 @@ export function DuelTable(props: {
             isToAct={view.seatToAct === rival.index}
             isViewer={false}
             presence={props.rivalPresence ?? null}
+            lastAct={props.lastAct?.seat === rival.index ? props.lastAct : null}
           />
           {/* ADR-0103 §3.2: the rival's face-down hand narrows furthest of
               anything on the table — her name, her stack, her button and
@@ -86,6 +94,7 @@ export function DuelTable(props: {
             hasButton={view.buttonSeat === you.index}
             isToAct={view.seatToAct === you.index}
             isViewer
+            lastAct={props.lastAct?.seat === you.index ? props.lastAct : null}
           />
         </div>
       )}
