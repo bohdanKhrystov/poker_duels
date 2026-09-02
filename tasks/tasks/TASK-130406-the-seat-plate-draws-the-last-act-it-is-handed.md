@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130406
 title: The seat plate draws the last act it is handed, and speaks nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-1304
 module: web-client
 estimate: S
