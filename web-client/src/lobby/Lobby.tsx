@@ -179,8 +179,10 @@ export function Lobby(): ReactElement {
       // `--wgap` is `ADR-0103` §3.1's first give — the column's outer
       // padding and the gaps between its blocks tighten before anything
       // else does, continuously with the column's own width and never with
-      // a breakpoint.
-      <div className="[container-type:inline-size] mx-auto flex min-h-[100dvh] max-w-[560px] flex-col gap-[var(--wgap)] p-[var(--wgap)] [--wgap:clamp(8px,calc((100cqi-220px)/21.25),16px)]">
+      // a breakpoint. `ADR-0106` §4: the ramp steps down one token at the
+      // phone width — measured, the floor is inert there, so it is the ramp
+      // that moves and not the floor.
+      <div className="[container-type:inline-size] mx-auto flex min-h-[100dvh] max-w-[560px] flex-col gap-[var(--wgap)] p-[var(--wgap)] [--wgap:clamp(4px,calc((100cqi-340px)/12.5),16px)]">
         <DuelTable
           view={view}
           rivalPresence={state.rivalPresence}
