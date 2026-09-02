@@ -2,7 +2,7 @@
 id: EPIC-13
 title: The living table — the turn clock, the chips, and the act just made
 type: epic
-status: backlog
+status: ready
 labels: [client, design, table, server]
 ---
 
@@ -215,6 +215,8 @@ than the split — see *What the answers handed the architect*:
 | `DEC-120` | By what mechanism is the turn clock carried, enforced and resumed? | `ADR-0108` |
 | `DEC-123` | By what mechanism is a mid-duel navigation refused and the address restored? | `ADR-0112` |
 
+**And one more, raised by the split on 2026-09-02: `DEC-124`, the product owner's** — does a surface this product animates owe a **still form** for a player whose system asks for reduced motion? Items 1 and 6 are the product's first continuous motion, and no merged source, token or ADR reaches it: `ADR-0102` §4 licensed a client-owned display *schedule* and says in as many words that it *"fixes no duration, no animation and no transition"*. This epic's own line — that items 1 and 6 are *"decided that way entirely"* by the human's eye — is about **which drawing**, and a media query is not a drawing. It blocks the implementing tickets of `STORY-1303` and `STORY-1306`, and nothing else.
+
 ### Answered
 
 | ID | Answered by | What it means here |
@@ -246,15 +248,36 @@ that moves the version.
 
 ## Stories
 
-`DEC-114`–`DEC-119` are merged, so the split is unblocked — run `/plan-story EPIC-13`. The first ticket of each story that puts a new surface in front of a player is its **design card** (`ADR-0091` §2), and the card merges before the ticket that implements it is startable.
+`DEC-114`–`DEC-119` are merged, so the split ran on 2026-09-02: **eleven stories**, written but not yet split into tickets. The first ticket of each story that puts a new surface in front of a player is its **design card** (`ADR-0091` §2), and the card merges before the ticket that implements it is startable.
+
+**The eight items are the seam, with two exceptions.** Item 4 splits into **three** — its card, its server half and its client half — because the card is the only part of it no decision blocks, and keeping it in one story would have parked the epic's largest item behind `DEC-120`. Item 8 splits into **two** for the same reason: `ADR-0112` §6's reproduction attempt needs no decision, and the guard it feeds waits on `DEC-123`. Nothing merged: each item owns a card, a lifetime and a human's visual verdict of its own.
+
+**The order is a single chain, and it is not arbitrary.** `STORY-1301` first because it changes a pot figure **every later card copies**. `STORY-1302` second because `ADR-0110` makes a table that is not a duel, and every later surface must say what it shows there — a tax paid once, early. Then the two seat marks and the bar, in the order in which each card proves `ADR-0103`'s phone fit **against everything merged before it**. `STORY-1310` runs before `STORY-1302`'s successors touch the waiting state, so its measurement is against the product the human reported on.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *none yet — blocked on `DEC-114`–`DEC-119`* | — |
+| [STORY-1301](../stories/STORY-1301-pot-names-every-chip-committed-to-the-hand.md) | `Pot` names every chip committed to the hand — *item 2; a two-node card correction, no new surface* | **ready — the one story startable now** |
+| [STORY-1302](../stories/STORY-1302-the-host-waits-at-the-table.md) | The host waits at the table, and both promises move with them — *item 5; card owes 4 host-alone variants + the arrival* | ready — waits on `STORY-1301` |
+| [STORY-1303](../stories/STORY-1303-the-acting-seat-is-marked-and-the-mark-moves.md) | The acting seat is marked, and the mark moves — *item 1; card owes acting + waiting; raises `DEC-124`* | ready — card startable, implementing tickets blocked on `DEC-124` |
+| [STORY-1304](../stories/STORY-1304-the-table-marks-the-last-act.md) | The table marks the last act, and the next deal clears it — *item 3; card owes six states, four with a figure* | ready — waits on `STORY-1303` |
+| [STORY-1305](../stories/STORY-1305-a-bet-amount-can-be-typed.md) | A bet amount can be typed, and an illegal one is refused in the server's own numbers — *item 7* | ready — waits on `STORY-1304` |
+| [STORY-1306](../stories/STORY-1306-a-stack-is-chips-and-chips-move.md) | A stack is chips, and chips move — *item 6; the chip is **minted** interactively (`ADR-0091` §3); `DEC-124`* | ready — minting and card startable, client tickets blocked on `DEC-124` |
+| [STORY-1307](../stories/STORY-1307-the-turn-clocks-card.md) | The turn clock's card — regular, running out, on timebank, expired — *item 4a; the half no decision blocks* | ready — waits on `STORY-1306` |
+| [STORY-1308](../stories/STORY-1308-the-server-states-a-deadline-and-plays-the-expired-seat.md) | The server states a deadline and plays the seat whose clock ran out — *item 4b; the **only** wire move in this epic; `atomic:` by `ADR-0070`'s probe, `ADR-0047`'s lock* | **blocked on `DEC-120`** — the architect's |
+| [STORY-1309](../stories/STORY-1309-the-table-counts-down-and-the-pause-leaves-the-screen.md) | The table counts down, and the pause leaves the screen — *item 4c* | **blocked on `DEC-120`** — the architect's |
+| [STORY-1310](../stories/STORY-1310-the-refresh-paths-nobody-drove.md) | The refresh paths nobody drove, driven and written down — *item 8a; `ADR-0112` §6's six paths* | ready — decision-free, waits on `STORY-1301` |
+| [STORY-1311](../stories/STORY-1311-only-a-running-duel-refuses-another-screen.md) | Only a running duel refuses another screen, and the refusal restores the address — *item 8b* | **blocked on `DEC-123`** — the architect's |
+
+**One decision was raised by the split**, and it is the only thing in this epic the answered six did not cover:
+
+| ID | Question | Whose | What it blocks |
+| --- | --- | --- | --- |
+| `DEC-124` | Does a surface this product animates owe a **still form** for a player whose system asks for reduced motion, and what governs it? Items 1 and 6 introduce the product's **first continuous motion**; nothing in `docs/vision.md`, `docs/adr/` or `design/tokens/tokens.css` says anything about motion preferences, and `ADR-0102` §4 *"fixes no duration, no animation and no transition"*. It is **not** a choice between two drawings, so `ADR-0024` §3 does not place it with the human's eye — a card cannot render a media query | **The product owner's** | The **implementing** tickets of `STORY-1303` and `STORY-1306` only. Not their cards, not the minting, not this epic |
 
 ## Definition of done
 
 - [ ] `DEC-114`–`DEC-119` are answered by merged ADRs.
+- [ ] `DEC-120`, `DEC-123` and `DEC-124` are answered by merged ADRs.
 - [ ] Every story is `done`.
 - [ ] Every surface this epic adds is drawn on a card under `design/` **before** its implementing
       ticket is startable, and each card draws every state of what it draws (`ADR-0091` §2).
