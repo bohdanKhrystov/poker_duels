@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130301
 title: The first motion tokens, the sheet's one still-block, and the seat's mark in both forms
 type: task
-status: ready
+status: done
 parent: STORY-1303
 module: design
 estimate: S
