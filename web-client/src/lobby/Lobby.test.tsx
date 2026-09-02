@@ -552,9 +552,7 @@ describe("the lobby", () => {
       store.apply(SNAPSHOT);
     });
 
-    expect(
-      screen.queryByRole("heading", { name: "Waiting for your rival" }),
-    ).toBeNull();
+    expect(screen.queryByText("Waiting for your rival")).toBeNull();
     expect(screen.getByText("Pot 30")).toBeDefined();
   });
 
@@ -884,9 +882,7 @@ describe("the lobby", () => {
 
     expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
     expect(screen.getByText("Victory")).toBeDefined();
-    expect(
-      screen.queryByRole("heading", { name: "Waiting for your rival" }),
-    ).toBeNull();
+    expect(screen.queryByText("Waiting for your rival")).toBeNull();
 
     cleanup();
 
@@ -904,9 +900,7 @@ describe("the lobby", () => {
 
     expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
     expect(screen.getByText("Defeat")).toBeDefined();
-    expect(
-      screen.queryByRole("heading", { name: "Waiting for your rival" }),
-    ).toBeNull();
+    expect(screen.queryByText("Waiting for your rival")).toBeNull();
   });
 
   it("puts the result over the table it replaces", () => {
@@ -1291,7 +1285,7 @@ describe("the lobby", () => {
     ).toBeDefined();
   });
 
-  it("adds exactly two strings to the waiting screen and no third", () => {
+  it("states the six strings the host-alone table renders with no clipboard, and no seventh", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
     renderLobby(store);
@@ -1300,10 +1294,31 @@ describe("the lobby", () => {
       .getByText("Waiting for your rival")
       .closest("section");
     expect(waiting).not.toBeNull();
-    const normalizedText = waiting?.textContent?.trim().replace(/\s+/g, " ");
 
-    expect(normalizedText).toBe(
-      "Waiting for your rivalABCDEFGHInvite linkBack to the lobbyThe room stays open. That link still works for your rival, and it brings you back.",
+    // Every text node under the section, not `.textContent` as a whole: a
+    // concatenated string would say something about the order the markup
+    // draws these in, which is the card's and the human's (ADR-0024 §3), not
+    // this test's.
+    const texts: string[] = [];
+    const walker = document.createTreeWalker(waiting!, NodeFilter.SHOW_TEXT);
+    for (
+      let node = walker.nextNode();
+      node !== null;
+      node = walker.nextNode()
+    ) {
+      const text = node.textContent?.trim() ?? "";
+      if (text !== "") texts.push(text);
+    }
+
+    expect(texts.sort()).toEqual(
+      [
+        "Waiting for your rival",
+        "ABCDEFGH",
+        "Invite link",
+        "You",
+        "Back to the lobby",
+        "The room stays open. That link still works for your rival, and it brings you back.",
+      ].sort(),
     );
   });
 

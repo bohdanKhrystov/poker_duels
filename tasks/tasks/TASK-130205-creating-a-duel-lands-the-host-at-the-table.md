@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130205
 title: Creating a duel lands the host at the table, and the waiting screen is gone
 type: task
-status: ready
+status: done
 parent: STORY-1302
 module: web-client
 estimate: S
