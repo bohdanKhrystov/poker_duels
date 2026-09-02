@@ -34,11 +34,13 @@ depends on their rival still acting."* `ADR-0105` §1 then made *Create a duel r
 which means a rival who walks away now blocks their opponent from starting anything else. The clock
 is what unsticks that, and it is the largest single item in this epic.
 
-[`ADR-0091`](../../docs/adr/ADR-0091-design-gets-no-agent-a-new-screen-owes-a-card.md) §5 records
-the table's card debt: `design/screens/duel-table-states.html` predates the states this epic adds,
-and the account offer is already cited there as accretion shipped without a card. Every item below
-puts something new in front of a player, so every one of them owes a card first — see *Design
-first*.
+[`ADR-0091`](../../docs/adr/ADR-0091-design-gets-no-agent-a-new-screen-owes-a-card.md) §5 registers
+design debt rather than forgiving it, and its second clause is exactly what this epic is made of:
+a reopening `EPIC-06` story for every uncarded `Screen` member *"plus the carded-screen accretions
+the planner judges worth a card"*. Nothing here adds a screen — every item adds a surface to one
+that already has a card, which is the harder case to notice. `design/screens/duel-table.html` and
+`duel-table-states.html` draw the table as it stands and not one of the states below, so every item
+owes a card first — see *Design first*.
 
 **And the product is at the point where legibility is what is left.** `EPIC-01` through `EPIC-06`
 are closed, `EPIC-12`'s cycle has run three UAT rounds to `PASS`, and the defects that remain are
