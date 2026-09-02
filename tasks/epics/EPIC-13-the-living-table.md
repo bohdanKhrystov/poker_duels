@@ -83,7 +83,7 @@ eye, six need a merged answer first.
 | 1 | The acting seat is marked, and the mark moves | `web-client`, `design` | **A card.** Taste is the human's by `ADR-0024` §3 — *pulsing or running circle* is an option offered, not a decision owed |
 | 2 | `Pot` names the pot the player is playing for | `web-client` | **`DEC-114`** — answered by [`ADR-0107`](../../docs/adr/ADR-0107-pot-names-every-chip-committed-to-the-hand.md): the total |
 | 3 | The rival's last act stands on screen | `web-client`, `design` | **`DEC-117`** — product owner |
-| 4 | 30 s a move, a 3 m timebank, and a clock that ticks | `poker-server`, `web-client`, `design` | **`DEC-115`** — product owner; the mechanism follows |
+| 4 | 30 s a move, a 3 m timebank, and a clock that ticks | `poker-server`, `web-client`, `design` | **Answered** — [`ADR-0108`](../../docs/adr/ADR-0108-expiry-plays-the-seat-and-the-timebank-replaces-the-grace-window.md): an expiry checks or folds the one decision and never forfeits the duel, and the timebank replaces the grace window; the mechanism is `DEC-120`, the architect's |
 | 5 | Creating a duel lands the host at the table | `web-client`, `design` | **`DEC-116`** — product owner |
 | 6 | A stack is chips, and chips move | `design`, `web-client` | **A card.** Pacing follows `ADR-0102`'s shape — the client owns it and states no fact the server did not send |
 | 7 | A bet amount can be typed | `web-client`, `design` | **`DEC-118`** — product owner, for the illegal-amount case only |
@@ -202,13 +202,13 @@ running circle* is a choice between two drawings and the human is the one who lo
 
 ## Open decisions
 
-All six are the **product owner's**. `DEC-114` is answered below; the rest are registered open
-in [`docs/adr/README.md`](../../docs/adr/README.md). The epic is `backlog` until all are
-answered, because six of the eight items cannot be split into tickets without them.
+All six are the **product owner's**, registered in
+[`docs/adr/README.md`](../../docs/adr/README.md); the rows below are the ones **still open**. The
+epic is `backlog` until all six are answered, because six of the eight items cannot be split into
+tickets without them. Two have landed — see *Answered*, below.
 
 | ID | Question | Gates |
 | --- | --- | --- |
-| `DEC-115` | What happens when a player's clock runs out, and how does the timebank meet `ADR-0013`'s disconnect grace? | Item 4 |
 | `DEC-116` | Does creating a duel land the host at the table, what stands in the rival's seat until they arrive, and what becomes of `ADR-0073` §3's promise? | Item 5 |
 | `DEC-117` | What does the table say about the act just made, and how long does it stand? | Item 3 |
 | `DEC-118` | What becomes of a typed amount that is not a legal raise? | Item 7 |
@@ -219,6 +219,7 @@ answered, because six of the eight items cannot be split into tickets without th
 | ID | Answered by | What it means here |
 | --- | --- | --- |
 | `DEC-114` | [ADR-0107](../../docs/adr/ADR-0107-pot-names-every-chip-committed-to-the-hand.md) | `Pot` names the **total**: `view.pot` plus both seats' `committedThisStreet` — `Lobby.tsx:154`'s `potIncludingStreet`, the same `P` the sizing row already uses, so item 2's strip prints the number the `pot` chip sizes against. One figure, one word, and the blinds are in it from the first frame (`Pot 150` at 50/100, never `Pot 0`). Item 2's card correction is measured in the ADR's §6: `duel-table.html`'s two `Pot 2,450` nodes read **2,850**; `duel-table-states.html`'s 3,250 already agrees. The never-derives guard admits exactly this one sum (ADR §5), no wire moves, and whether the bet-lines keep standing under item 6's chips is that card's question, not resettled |
+| `DEC-115` | [ADR-0108](../../docs/adr/ADR-0108-expiry-plays-the-seat-and-the-timebank-replaces-the-grace-window.md) | An expiry gives up **one decision** with `ADR-0023`'s conduct — fold facing a bet, check when checking is free — and never ends the duel; the coin moves only on the outcome the engine reaches. 30 s a decision plus one 3 m timebank per duel, and the timebank **replaces** `ADR-0013`'s grace window, so there is one clock and the duel never pauses. The mechanism is `DEC-120`, the architect's |
 
 ### What the answers will hand the architect
 
@@ -226,9 +227,10 @@ Named here rather than registered, following
 [`ADR-0105`](../../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md) §6,
 which stated what must be true and registered the mechanism as a separate `DEC` from the answering
 ADR rather than from the epic. *A `DEC` nobody is working is noise in the open table* (`STORY-1211`)
-— these are certain, but nobody works them until `DEC-115` lands.
+— these are certain, and `DEC-115` has landed.
 
-**The clock's mechanism is an architect's `DEC` and the answering ADR should register it.** It is
+**The clock's mechanism is registered: `DEC-120`, the architect's, by
+[`ADR-0108`](../../docs/adr/ADR-0108-expiry-plays-the-seat-and-the-timebank-replaces-the-grace-window.md) §6.** It is
 the only item here that moves the wire: a deadline the client can count down to must be a fact the
 server sends, which is a `PROTOCOL_VERSION` bump and therefore an `atomic:` ticket sized by
 `ADR-0070`'s probe. It also has to settle what the client does between frames — `ADR-0102` licensed
