@@ -13,6 +13,13 @@ const STREET_NAMES: Record<Street, string> = {
   COMPLETE: "Hand complete",
 };
 
+function potCommittedToTheHand(view: PlayerView): number {
+  return view.seats.reduce(
+    (sum, seat) => sum + seat.committedThisStreet,
+    view.pot,
+  );
+}
+
 /**
  * The `PotAwarded` events of the hand `handNumber` names: those after its
  * `HandStarted` and up to the next one. Keyed to the view's hand number and
@@ -79,11 +86,11 @@ function awardLineFor(
 
 /**
  * The pot and the hand's standing facts, most of them read straight off the
- * view: the pot is `view.pot` and not a sum of what the seats put in, and the
- * street is `view.street` unless `props.street` names a different one — a
- * runout's own step, held in its own prop rather than folded into `view`,
- * because a doctored view would be the client assembling a fact the server
- * never sent as a unit (`ADR-0102` §§2–3).
+ * view: the pot is the sum of `view.pot` and both seats' `committedThisStreet`
+ * (`ADR-0107` §1), and the street is `view.street` unless `props.street` names
+ * a different one — a runout's own step, held in its own prop rather than
+ * folded into `view`, because a doctored view would be the client assembling a
+ * fact the server never sent as a unit (`ADR-0102` §§2–3).
  *
  * When the street in effect is `COMPLETE` and this client saw the hand's
  * award, the amount slot states who took the pot instead (`ADR-0095`); every
@@ -103,7 +110,7 @@ export function PotStrip(props: {
   return (
     <div className="flex items-baseline gap-4 px-2 py-3">
       <span className="font-mono text-large tabular-nums">
-        {awardLine ?? <>Pot&nbsp;{formatChips(view.pot)}</>}
+        {awardLine ?? <>Pot&nbsp;{formatChips(potCommittedToTheHand(view))}</>}
       </span>
       <span className="text-small text-text-muted">
         Blinds {formatChips(view.smallBlind)}/{formatChips(view.bigBlind)} ·

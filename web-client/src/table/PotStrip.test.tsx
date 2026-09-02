@@ -52,7 +52,7 @@ describe("the pot strip", () => {
     expect(screen.queryByText(/· Flop$/)).toBeNull();
   });
 
-  it("takes the pot from the view and not from what the seats put in", () => {
+  it("adds this street and never the whole hand, which would count a swept street twice", () => {
     render(
       <PotStrip
         view={aView({
@@ -65,7 +65,45 @@ describe("the pot strip", () => {
       />,
     );
 
-    // Should show 4,850 from view.pot, not 20 from summing seats' committedThisHand
+    // Should show 4,850 from view.pot, not 20 from summing seats' committedThisHand (which is from swept streets)
     expect(screen.getByText(/Pot 4,850/)).toBeTruthy();
+  });
+
+  it("opens the hand at the blinds, never at nothing", () => {
+    render(
+      <PotStrip
+        view={aView({
+          pot: 0,
+          smallBlind: 50,
+          bigBlind: 100,
+          seats: [
+            aSeat({ index: 0, committedThisStreet: 50 }),
+            aSeat({ index: 1, committedThisStreet: 100 }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Pot 150/)).toBeTruthy();
+    expect(screen.queryByText(/Pot 0/)).toBeNull();
+  });
+
+  it("adds what both seats have out this street to the collected pot", () => {
+    render(
+      <PotStrip
+        view={aView({
+          pot: 2450,
+          seats: [
+            aSeat({ index: 0, committedThisStreet: 125 }),
+            aSeat({ index: 1, committedThisStreet: 825 }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Pot 3,400/)).toBeTruthy();
+    expect(screen.queryByText(/Pot 2,450/)).toBeNull();
+    expect(screen.queryByText(/Pot 2,575/)).toBeNull();
+    expect(screen.queryByText(/Pot 3,275/)).toBeNull();
   });
 });
