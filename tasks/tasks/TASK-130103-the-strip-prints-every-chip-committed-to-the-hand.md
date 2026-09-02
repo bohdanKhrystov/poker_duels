@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130103
 title: The strip prints every chip committed to the hand
 type: task
-status: ready
+status: done
 parent: STORY-1301
 module: web-client
 estimate: S

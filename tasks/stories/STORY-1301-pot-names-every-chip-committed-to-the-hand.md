@@ -2,7 +2,7 @@
 id: STORY-1301
 title: Pot names every chip committed to the hand
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: web-client
 labels: [client, design, table]
