@@ -95,6 +95,26 @@
   animation-iteration-count: infinite;
 }
 
+/* The last-act mark: the plate's own record of the most recent act of the
+ * hand, at the seat that made it — one mark, never one per seat (ADR-0109
+ * §1). It says the actor's own button word, bare for a fold or a check and
+ * with the event's own total for the rest (§2). Nothing here ever times
+ * out, fades or otherwise dismisses it (ADR-0109 §4, ADR-0115) — this class
+ * holds still by design. Kept outside @theme static for the same reason
+ * acting-mark is: theme.test.ts requires every line in that block to be a
+ * reset or a var(--pd-*) reference, and a utility is neither. */
+@utility last-act {
+  font-family: var(--pd-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--pd-fs-micro);
+  color: var(--pd-text-muted);
+  background: var(--pd-accent-subtle);
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius-pill);
+  padding: var(--pd-space-1) var(--pd-space-3);
+  white-space: nowrap;
+}
+
 /* Dark only. STORY-0601 scoped light out epic-wide: no light mode,
  * no theme switch, no second palette. */
 :root {
