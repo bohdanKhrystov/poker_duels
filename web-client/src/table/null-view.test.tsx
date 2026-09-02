@@ -24,6 +24,14 @@ import { aView } from "./view-fixture";
  * screen is `WaitingTable`, which mounts no `SeatPlate` at all, and the mark
  * itself speaks no `aria-label` and no `title` on any screen it does reach —
  * so neither `spoken()` nor the digit sweep below changes shape to admit it.
+ *
+ * The last-act mark shows nothing here either, and belt and braces: `Lobby.tsx` mounts
+ * `WaitingTable` — never `DuelTable`, so no `SeatPlate` at all — while `view` is `null`, and
+ * `state.lastAct` itself stays `null` until an `Events` frame carries an act (`TASK-130403`):
+ * the opening frame of a hand carries only `HandStarted`, `BlindPosted`, `HoleCardsDealt` and
+ * `ActionOn`, and no act of its own. The mark speaks nothing on any screen it does reach either
+ * — `TASK-130406` pins one `aria-label` and zero `title` on the plate — so neither `spoken()`
+ * nor the digit sweep below changes shape to admit it.
  */
 
 afterEach(() => {
@@ -207,5 +215,28 @@ describe("what the table shows when there is no view", () => {
     expect(container.querySelectorAll(".acting-mark").length).toBeGreaterThan(
       0,
     );
+  });
+
+  it("marks no last act before the server has named one", () => {
+    // The positive half is the guard on the guard, exactly as this file's
+    // third test already does it for the four ADR-0110 probes: without it,
+    // ".last-act" is a selector that could match nothing anywhere in this
+    // app and the refusal below would pass forever for the wrong reason. It
+    // is also the only proof that `Lobby.tsx` passes the field: delete that
+    // one attribute and this half goes red.
+    const { container, store } = renderNullView("ABCDEFGH");
+
+    expect(container.querySelectorAll(".last-act")).toHaveLength(0);
+    expect(spoken(container)).toEqual([]);
+
+    act(() => {
+      store.apply({
+        type: "Events",
+        events: [{ type: "PlayerBet", sequence: 4, seat: 1, to: 950 }],
+      });
+      store.apply({ type: "Snapshot", view: aView() });
+    });
+
+    expect(container.querySelectorAll(".last-act").length).toBeGreaterThan(0);
   });
 });
