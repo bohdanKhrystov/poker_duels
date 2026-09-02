@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130101
 title: The duel-table card prints the pot ADR-0107 names
 type: task
-status: ready
+status: done
 parent: STORY-1301
 module: design
 estimate: XS
