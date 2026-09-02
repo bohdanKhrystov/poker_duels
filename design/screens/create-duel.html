@@ -66,39 +66,6 @@
   .btn.fill:hover { background: var(--pd-accent-fill-hover); }
   .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
   .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
-
-  /* The trailing letter-space is counted inside the centered line; the matching
-   * text-indent puts the glyphs themselves back on center. */
-  .code { font-family: var(--pd-font-mono); font-size: 1.875rem;
-    letter-spacing: var(--pd-track-code); text-indent: var(--pd-track-code);
-    text-align: center; padding: var(--pd-space-5) 0;
-    background: var(--pd-surface); border: 1px solid var(--pd-hairline);
-    border-radius: var(--pd-radius-medium); }
-  .linkline { display: flex; gap: var(--pd-space-3); align-items: center; }
-  .linkline .path { flex: 1; font-family: var(--pd-font-mono); font-size: var(--pd-fs-small);
-    color: var(--pd-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    padding: var(--pd-space-3) var(--pd-space-4); background: var(--pd-surface); border: 1px solid var(--pd-hairline);
-    border-radius: var(--pd-radius-medium); }
-
-  /* seat plate — faithful copy of components/seat-and-pot.html */
-  .seat { background: var(--pd-surface); border: 1px solid var(--pd-hairline);
-    border-left: 2px solid transparent; border-radius: var(--pd-radius-medium);
-    padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
-  .seat .name { font-weight: 500; display: block; white-space: nowrap; overflow: hidden;
-    text-overflow: ellipsis; }
-  .seat .status { display: block; font-size: 0.6875rem; line-height: 1.5;
-    min-height: 1.5em; margin-top: 2px; color: var(--pd-text-faint); }
-  .seat .who { flex: 1; min-width: 0; }
-  .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
-    color: var(--pd-text); }
-  /* Screen-only glue: the open seat is the plate's dashed twin — the .seat rules set
-   * its geometry, this override swaps paint only. The dashes stay 1px on every edge
-   * (the turn-marker slot is never painted off-turn), and 1px border + 17px padding
-   * preserves the seat's 2px + 16px left metric, so a rival claiming the seat
-   * changes pixels, never layout: the card component's slot convention. */
-  .seat.seat-empty { background: none; border-style: dashed; border-color: var(--pd-hairline);
-    border-left-width: 1px; padding-left: 17px; }
-  .seat.seat-empty .name { color: var(--pd-text-faint); }
 </style>
 </head>
 <body>
@@ -106,8 +73,7 @@
   <p class="eyebrow">Poker Duels · Screens</p>
   <h1>Create a duel</h1>
   <p class="lede">The whole product in one promise: send a link, they open it, you play.
-  Creating asks nothing — no account, no settings. The code is the invite (ADR-0022), big
-  enough to read across a room.</p>
+  Creating asks nothing — no account, no settings. You land at the table with the rival's seat empty and the invite on it.</p>
 
   <div class="frames">
     <div class="frame">
@@ -120,32 +86,6 @@
       <button class="btn fill">Create a duel</button>
       <button class="btn ghost">I have a code</button>
       <p class="note">nothing else on the door — no lobby noise, no tables list</p>
-    </div>
-
-    <div class="frame">
-      <h2>Created — waiting for your rival</h2>
-      <div class="code">7Q4M9K2T</div>
-      <div class="linkline">
-        <span class="path">…/duel/7Q4M9K2T</span>
-        <button class="btn fill">Copy the link</button>
-      </div>
-      <div class="seat seat-empty">
-        <span class="who"><span class="name">Open seat</span>
-        <span class="status">send the link or read the code aloud</span></span>
-      </div>
-      <div class="seat">
-        <span class="who"><span class="name">You</span>
-        <span class="status">host</span></span>
-        <span class="chips">10,000</span>
-      </div>
-      <button class="btn ghost">Back to the lobby</button>
-      <p class="sub">The room stays open. That link still works for your rival, and it brings you back.</p>
-      <p class="note">the open seat is the seat plate's dashed twin — same geometry,
-      claiming it moves nothing; the room lives 10 minutes unclaimed</p>
-      <p class="note">ADR-0073 settled all three changes in this frame: the way back and
-      its line, verbatim, and "Copy the link" over "Copy link" — the definite article the
-      same ADR chose for this frame's control, refusing the terser alternatives by name.
-      Drawn 2026-08-14, before any of it merged.</p>
     </div>
   </div>
 </div>
