@@ -58,6 +58,7 @@ describe("the duel state", () => {
       presenceCount: 0,
       rivalReturned: false,
       serverAction: null,
+      lastAct: null,
       pendingStreetDealt: [],
       reveal: null,
     });
@@ -1631,5 +1632,115 @@ describe("the duel state", () => {
     });
     expect(state.presenceCount).toBe(1);
     expect(state.rejectionCount).toBe(2);
+  });
+
+  it("records the act exactly as the server sent it", () => {
+    // ADR-0109 §1's six acts. Each applied from a fresh initialState() in its own Events
+    // frame, so a field the reducer dropped or rewrote fails on at least one of the six.
+    const acts = [
+      { type: "PlayerFolded", sequence: 40, seat: 0 } as const,
+      { type: "PlayerChecked", sequence: 41, seat: 1 } as const,
+      { type: "PlayerCalled", sequence: 42, seat: 0, to: 40 } as const,
+      { type: "PlayerBet", sequence: 43, seat: 1, to: 60 } as const,
+      { type: "PlayerRaised", sequence: 44, seat: 0, to: 120 } as const,
+      { type: "PlayerAllIn", sequence: 45, seat: 1, to: 500 } as const,
+    ];
+    for (const act of acts) {
+      const state = duelState.applyServerMessage(duelState.initialState(), {
+        type: "Events",
+        events: [act],
+      });
+      expect(state.lastAct).toEqual(act);
+    }
+  });
+
+  it("a later act replaces an earlier one, at either seat", () => {
+    const bet = { type: "PlayerBet", sequence: 50, seat: 1, to: 60 } as const;
+    const call = {
+      type: "PlayerCalled",
+      sequence: 51,
+      seat: 0,
+      to: 60,
+    } as const;
+    const raise = {
+      type: "PlayerRaised",
+      sequence: 52,
+      seat: 1,
+      to: 180,
+    } as const;
+    const stateAfterBet = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: [bet] },
+    );
+    const stateAfterCall = duelState.applyServerMessage(stateAfterBet, {
+      type: "Events",
+      events: [call],
+    });
+    expect(stateAfterCall.lastAct).toEqual(call);
+    expect(stateAfterCall.lastAct).not.toEqual(bet);
+    const stateAfterRaise = duelState.applyServerMessage(stateAfterCall, {
+      type: "Events",
+      events: [raise],
+    });
+    expect(stateAfterRaise.lastAct).toEqual(raise);
+  });
+
+  it("the deal that opens a hand takes the mark off", () => {
+    const bet = { type: "PlayerBet", sequence: 60, seat: 0, to: 40 } as const;
+    const stateAfterBet = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: [bet] },
+    );
+    expect(stateAfterBet.lastAct).toEqual(bet);
+    const handStarted = {
+      type: "HandStarted",
+      sequence: 61,
+      handNumber: 2,
+      buttonSeat: 1,
+      smallBlind: 10,
+      bigBlind: 20,
+      stacks: [480, 520],
+    } as const;
+    const blindPosted = {
+      type: "BlindPosted",
+      sequence: 62,
+      seat: 1,
+      to: 10,
+      isBigBlind: false,
+    } as const;
+    // A later frame carrying the deal, plus an unrelated event beside it, still takes the
+    // mark off — the walk does not care what else the frame contains.
+    const state = duelState.applyServerMessage(stateAfterBet, {
+      type: "Events",
+      events: [handStarted, blindPosted],
+    });
+    expect(state.lastAct).toBeNull();
+  });
+
+  it("the deal that opens a hand takes the mark off, in the order the frame sent it", () => {
+    const bet = { type: "PlayerBet", sequence: 70, seat: 0, to: 40 } as const;
+    const handStarted = {
+      type: "HandStarted",
+      sequence: 71,
+      handNumber: 2,
+      buttonSeat: 1,
+      smallBlind: 10,
+      bigBlind: 20,
+      stacks: [460, 540],
+    } as const;
+    // Events[act, HandStarted]: the deal came last in the frame, so the mark clears.
+    const dealLast = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Events",
+      events: [bet, handStarted],
+    });
+    expect(dealLast.lastAct).toBeNull();
+    // Events[HandStarted, act]: the act came last in the frame, so it stands. A reducer that
+    // special-cases "the frame contains a HandStarted" instead of walking in order gets this
+    // one wrong while passing the case above.
+    const actLast = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Events",
+      events: [handStarted, bet],
+    });
+    expect(actLast.lastAct).toEqual(bet);
   });
 });

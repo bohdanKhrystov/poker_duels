@@ -3,6 +3,12 @@ import type {
   DuelOutcome,
   GameEvent,
   LegalActions,
+  PlayerAllIn,
+  PlayerBet,
+  PlayerCalled,
+  PlayerChecked,
+  PlayerFolded,
+  PlayerRaised,
   PlayerView,
   ProtocolError,
   Rejection,
@@ -11,6 +17,19 @@ import type {
   Street,
   StreetDealt,
 } from "../protocol";
+
+/**
+ * `ADR-0109` §1's six acts, and no other event: a fold, a check, a call, a bet, a raise or an
+ * all-in. An `ActEvent` is exactly one of these; a blind post, a deal, a presence change and a
+ * rejection are not acts.
+ */
+export type ActEvent =
+  | PlayerFolded
+  | PlayerChecked
+  | PlayerCalled
+  | PlayerBet
+  | PlayerRaised
+  | PlayerAllIn;
 
 export interface DuelState {
   readonly mySeat: number | null;
@@ -82,6 +101,16 @@ export interface DuelState {
    */
   readonly serverAction: ActedForAbsent | null;
   /**
+   * The most recent of the hand's six act events (`ADR-0109` §1) — the whole event kept rather
+   * than picked apart, in `serverAction`'s register, so a screen reads the seat and the `to` off
+   * the server's own event rather than off something a client worked out — or `null` before the
+   * hand on screen has seen one.
+   *
+   * A resume rebuilds nothing here: `PlayerView` carries no last-act field (`ADR-0109`
+   * §Consequences), and repairing it is a `PROTOCOL_VERSION` bump this epic does not spend.
+   */
+  readonly lastAct: ActEvent | null;
+  /**
    * The `StreetDealt` entries the most recent `Events` frame carried, not yet claimed by a
    * `Snapshot`. Scratch space for exactly one thing: `ADR-0102` §2 lays out a hand-completing
    * snapshot's steps from "the `Events` frame that immediately preceded" it, and every
@@ -136,6 +165,7 @@ export function initialState(): DuelState {
     presenceCount: 0,
     rivalReturned: false,
     serverAction: null,
+    lastAct: null,
     pendingStreetDealt: [],
     reveal: null,
   };
@@ -245,12 +275,27 @@ export function applyServerMessage(
         rejection: message.rejection,
         rejectionCount: state.rejectionCount + 1,
       };
-    case "Events":
+    case "Events": {
+      // ADR-0109 §1 & §3: one ordered walk over the frame's own events — a HandStarted clears
+      // the running value, an act sets it — so the frame's result is whichever came last in the
+      // order the server sent them. Not events.at(-1), not a reverse scan: a frame with the act
+      // last keeps it, a frame with the HandStarted last clears it, and this is the one pass that
+      // gets both right.
+      let lastAct = state.lastAct;
+      for (const event of message.events) {
+        if (event.type === "HandStarted") {
+          lastAct = null;
+        } else if (isAct(event)) {
+          lastAct = event;
+        }
+      }
       return {
         ...state,
         narration: [...state.narration, ...message.events],
         pendingStreetDealt: message.events.filter(isStreetDealt),
+        lastAct,
       };
+    }
     case "DuelFinished":
       // ADR-0044 §5: the server restates a standing offer after a returning socket's
       // DuelFinished and never before, precisely because this frame is where the client
@@ -306,6 +351,18 @@ export function applyServerMessage(
 
 function isStreetDealt(event: GameEvent): event is StreetDealt {
   return event.type === "StreetDealt";
+}
+
+/** `ADR-0109` §1's six-event membership test, `isStreetDealt`'s idiom applied to acts. */
+function isAct(event: GameEvent): event is ActEvent {
+  return (
+    event.type === "PlayerFolded" ||
+    event.type === "PlayerChecked" ||
+    event.type === "PlayerCalled" ||
+    event.type === "PlayerBet" ||
+    event.type === "PlayerRaised" ||
+    event.type === "PlayerAllIn"
+  );
 }
 
 /**
