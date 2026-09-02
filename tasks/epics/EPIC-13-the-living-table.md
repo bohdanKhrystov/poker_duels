@@ -81,7 +81,7 @@ eye, six need a merged answer first.
 | # | Item | Touches | Decides it |
 | --- | --- | --- | --- |
 | 1 | The acting seat is marked, and the mark moves | `web-client`, `design` | **A card.** Taste is the human's by `ADR-0024` §3 — *pulsing or running circle* is an option offered, not a decision owed |
-| 2 | `Pot` names the pot the player is playing for | `web-client` | **`DEC-114`** — product owner |
+| 2 | `Pot` names the pot the player is playing for | `web-client` | **`DEC-114`** — answered by [`ADR-0107`](../../docs/adr/ADR-0107-pot-names-every-chip-committed-to-the-hand.md): the total |
 | 3 | The rival's last act stands on screen | `web-client`, `design` | **`DEC-117`** — product owner |
 | 4 | 30 s a move, a 3 m timebank, and a clock that ticks | `poker-server`, `web-client`, `design` | **`DEC-115`** — product owner; the mechanism follows |
 | 5 | Creating a duel lands the host at the table | `web-client`, `design` | **`DEC-116`** — product owner |
@@ -202,18 +202,23 @@ running circle* is a choice between two drawings and the human is the one who lo
 
 ## Open decisions
 
-All six are the **product owner's**, and all six are registered open in
-[`docs/adr/README.md`](../../docs/adr/README.md). The epic is `backlog` until they are answered
-because six of the eight items cannot be split into tickets without them.
+All six are the **product owner's**. `DEC-114` is answered below; the rest are registered open
+in [`docs/adr/README.md`](../../docs/adr/README.md). The epic is `backlog` until all are
+answered, because six of the eight items cannot be split into tickets without them.
 
 | ID | Question | Gates |
 | --- | --- | --- |
-| `DEC-114` | What does `Pot` name on the table — the collected pot, or the total including this street? | Item 2 |
 | `DEC-115` | What happens when a player's clock runs out, and how does the timebank meet `ADR-0013`'s disconnect grace? | Item 4 |
 | `DEC-116` | Does creating a duel land the host at the table, what stands in the rival's seat until they arrive, and what becomes of `ADR-0073` §3's promise? | Item 5 |
 | `DEC-117` | What does the table say about the act just made, and how long does it stand? | Item 3 |
 | `DEC-118` | What becomes of a typed amount that is not a legal raise? | Item 7 |
 | `DEC-119` | While a player holds a room, what does the address name, and may they leave the table by asking for another screen? | Item 8 |
+
+### Answered
+
+| ID | Answered by | What it means here |
+| --- | --- | --- |
+| `DEC-114` | [ADR-0107](../../docs/adr/ADR-0107-pot-names-every-chip-committed-to-the-hand.md) | `Pot` names the **total**: `view.pot` plus both seats' `committedThisStreet` — `Lobby.tsx:154`'s `potIncludingStreet`, the same `P` the sizing row already uses, so item 2's strip prints the number the `pot` chip sizes against. One figure, one word, and the blinds are in it from the first frame (`Pot 150` at 50/100, never `Pot 0`). Item 2's card correction is measured in the ADR's §6: `duel-table.html`'s two `Pot 2,450` nodes read **2,850**; `duel-table-states.html`'s 3,250 already agrees. The never-derives guard admits exactly this one sum (ADR §5), no wire moves, and whether the bet-lines keep standing under item 6's chips is that card's question, not resettled |
 
 ### What the answers will hand the architect
 
