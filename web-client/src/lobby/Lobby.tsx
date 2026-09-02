@@ -34,9 +34,10 @@ import { ForgotPasswordForm } from "../account/ForgotPasswordForm";
 import { FORGOT_PASSWORD_LABEL } from "../account/recovery-text";
 import { VerifyScreen } from "../account/VerifyScreen";
 import { ResetScreen } from "../account/ResetScreen";
-import { normalizeRoomCode, roomLink } from "./room-link";
+import { normalizeRoomCode } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
+import { InvitePanel } from "../table/InvitePanel";
 
 /** The first screen: open a duel room, or join one by the code on the invite. */
 export function Lobby(): ReactElement {
@@ -468,23 +469,10 @@ function WaitingForRival(props: {
   code: string;
   onLeave: () => void;
 }): ReactElement {
-  const link = roomLink(window.location.origin, props.code);
   return (
     <section>
       <h2>Waiting for your rival</h2>
-      <p className="rounded-medium border border-hairline bg-surface px-5 py-4 text-center font-mono text-display tracking-[var(--pd-track-code)] text-text">
-        {props.code}
-      </p>
-      <label htmlFor="invite-link">Invite link</label>
-      <input
-        autoFocus
-        id="invite-link"
-        className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text"
-        readOnly
-        value={link}
-        onFocus={(event) => event.currentTarget.select()}
-      />
-      <CopyLink link={link} />
+      <InvitePanel code={props.code} />
       <a
         className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
         href="/"
@@ -495,31 +483,5 @@ function WaitingForRival(props: {
       {/* prettier-ignore */}
       <p className="text-small text-text-muted">The room stays open. That link still works for your rival, and it brings you back.</p>
     </section>
-  );
-}
-
-/** Absent where the clipboard API is: the box above is always the fallback. */
-function CopyLink(props: { link: string }): ReactElement | null {
-  const [outcome, setOutcome] = useState<"none" | "copied" | "refused">("none");
-  if (!navigator.clipboard) {
-    return null;
-  }
-  return (
-    <>
-      <button
-        type="button"
-        className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
-        onClick={() => {
-          void navigator.clipboard.writeText(props.link).then(
-            () => setOutcome("copied"),
-            () => setOutcome("refused"),
-          );
-        }}
-      >
-        Copy the link
-      </button>
-      {outcome === "copied" && <p>Link copied.</p>}
-      {outcome === "refused" && <p>Copy it from the box above.</p>}
-    </>
   );
 }

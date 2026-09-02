@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130204
 title: The host-alone table is a component, drawn as the card draws it
 type: task
-status: backlog
+status: ready
 parent: STORY-1302
 module: web-client
 estimate: S
