@@ -139,7 +139,7 @@ Two things this epic does add, both of them applications of the rule rather than
    time and running out are two drawings, not one drawing with a note. For item 1 that is *acting*
    and *waiting*; for item 4, at least *regular*, *running out*, *on timebank* and *expired*; for
    item 3, one drawing per act the rival can make. A card showing one state of a control that has
-   four is the arrears `ADR-0091` §5 was written about.
+   four leaves the same debt `ADR-0091` §5 registers, in a smaller shape.
 2. **The card is merged before the ticket that implements it is startable.** `ADR-0091` §2 puts the
    card first in the split; this says the ordinary rule about merged sources applies to it, so a
    coder transcribing a card is never transcribing an unreviewed one.
