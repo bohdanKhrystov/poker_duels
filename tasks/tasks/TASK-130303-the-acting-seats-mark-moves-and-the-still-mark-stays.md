@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130303
 title: The acting seat's mark moves on the table, and the still mark stays beside it
 type: task
-status: backlog
+status: ready
 parent: STORY-1303
 module: web-client
 estimate: S
