@@ -119,19 +119,22 @@
   --pd-motion-turn-ease: ease-in-out;
 }
 
-/* prefers-reduced-motion: reduce (ADR-0115 §2, §4) — snaps every animated
- * surface to its base, unanimated frame. Chosen over zeroing the
- * --pd-motion-* values above: a zeroed duration would leave whichever frame
- * the animation was mid-cycle through frozen where it stood, an artefact
- * nobody drew; `animation: none` on the universal selector resolves every
- * animated rule back to its own non-animated declarations instead — the
- * same surface at rest, exactly ADR-0115 §2's still form. web-client/src
- * declares no CSS transition of any kind today, so this rule costs nothing
- * that exists yet. */
+/* prefers-reduced-motion: reduce (ADR-0115 §2, §4) — snaps every animated or
+ * transitioning surface to its base, settled frame; both CSS motion
+ * mechanisms are stilled here, once, so a later surface written with
+ * `transition:` is covered exactly like one written with `animation:`, with
+ * nothing to re-decide per surface. Chosen over zeroing the --pd-motion-*
+ * values above: a zeroed duration would leave whichever frame an animation
+ * was mid-cycle through, or a transition mid-interpolation through, frozen
+ * where it stood — an artefact nobody drew. `animation: none` and
+ * `transition: none` on the universal selector instead resolve every
+ * animated or transitioning rule straight to its own settled declarations —
+ * the same surface at rest, exactly ADR-0115 §2's still form. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
+    transition: none !important;
   }
 }
