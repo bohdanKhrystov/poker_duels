@@ -83,7 +83,36 @@ inside `ADR-0103`'s fit; taste is the human's (`ADR-0024` §3).
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *not yet split — run `/plan-story STORY-1305`* | — |
+| [TASK-130501](../tasks/TASK-130501-the-action-bar-card-draws-the-typed-total-and-its-three-refusals.md) | The action-bar card draws the typed total, and the three refusals it can express | ready |
+| [TASK-130502](../tasks/TASK-130502-the-two-table-cards-carry-the-typed-total-in-place.md) | The two table cards carry the typed total in place, at the phone as well as the laptop | backlog |
+| [TASK-130503](../tasks/TASK-130503-what-the-bar-makes-of-what-the-player-typed.md) | What the bar makes of what the player typed, in the server's own numbers | backlog |
+| [TASK-130504](../tasks/TASK-130504-the-bar-carries-a-typed-total-and-a-refused-one-sends-nothing.md) | The bar carries a typed total, and a refused one sends nothing and says why | backlog |
+| [TASK-130505](../tasks/TASK-130505-both-ends-of-the-interval-the-repeated-refusal-and-the-button-that-never-lies.md) | Both ends of the interval, the repeated refusal, and the button that never prints a different amount | backlog |
+| [TASK-130506](../tasks/TASK-130506-there-is-no-typed-total-before-the-server-has-named-a-turn.md) | There is no typed total before the server has named a turn | backlog |
+
+**What the split settled, measured on `develop` `be02155b` rather than reasoned about.**
+
+- **Exactly one merged assertion is in the blast radius**, and `TASK-130504` owns it:
+  `ActionBar.test.tsx:141`'s `expect(container.querySelector("input")).toBeNull()`, `ADR-0100`'s
+  *no slider* guard. The field was planted and the whole client suite run — 1 failure, 1033 passes.
+  Nothing in `Lobby.test.tsx` (80), `whole-duel.test.tsx` (8), `duel-secrecy.test.tsx`,
+  `no-derivation.test.tsx` (7) or `null-view.test.tsx` (6) moves.
+- **The field is `type="text"` with no `min` and no `max`.** Planting `max={allInTo}` reddens
+  `bar-no-derivation.test.tsx` — measured, `expected [ 175, 175, 13400, 175 ] to not include 13400`
+  — so that file's count of 3 is a live gate against a bound-carrying control. `min={floor}` does
+  **not** redden it, which is why the field's own test asserts `min`'s absence directly.
+- **The refusal stands on the bar's existing notice line, and the local sentence wins while it
+  stands.** No fourth row is added, so `ADR-0103` §1's `390 × 664` fit is untouched by construction.
+  Moving `<Notice>` inside `Live` was probed on this branch: **1034 of 1034 tests stayed green**.
+- **The typed field does not exist when `view === null`** — three independent reasons, written into
+  `TASK-130504` and asserted in `TASK-130506` rather than left for a coder to discover against the
+  contract: `Lobby.tsx` mounts `WaitingTable` and no bar at all; the field lives in `Live`, which
+  needs a turn; and inside `Live` it needs `amountFloor(actions) !== null`. A `Snapshot` alone is
+  **not** enough, which is the boundary `TASK-130506`'s middle assertion pins.
+- **The card keeps the stepper's ± buttons.** `DEC-102` is open and stays the product owner's, so
+  the field takes the readout's slot and nothing is deleted. The client ships the field **alone**,
+  so the row it must fit is narrower than the row the card draws — the fit judgement is
+  conservative in the right direction.
 
 ## Acceptance criteria
 
