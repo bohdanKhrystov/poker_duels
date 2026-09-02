@@ -61,7 +61,15 @@ One question underneath it is not taste and is registered — see below.
 - **The fit is the card's to prove** (`ADR-0103`). If the mark cannot be placed at 390 × 664 without
   something giving, that reopens `ADR-0103`'s give list rather than being quietly spent.
 
-### The one thing here that is not taste: `DEC-124`
+### The one thing here that is not taste: `DEC-124` — **answered 2026-09-02**
+
+> **Merged before the split ran.**
+> [`ADR-0115`](../../docs/adr/ADR-0115-motion-never-carries-a-fact-and-reduced-motion-stills-every-surface.md)
+> resolves it: **no fact lives only in motion**, and `prefers-reduced-motion: reduce` is honoured
+> wholesale, with no in-product toggle. Its §6 names what this story owes — a card drawing
+> *waiting*, *acting — moving* and *acting — at rest*, an at-rest mark that answers *whose turn* by
+> itself, and `--pd-motion-*` tokens beside the sheet's one reduced-motion block. **No ticket below
+> is `blocked`.** The paragraphs that follow are the record of why the question was raised.
 
 This story and `STORY-1306` introduce **the product's first continuous motion**. Nothing in
 `docs/vision.md`, `docs/adr/` or `design/tokens/tokens.css` says what this product does for a player
@@ -80,9 +88,43 @@ it with the human's eye — a card cannot render a media query.
 
 ## Tasks
 
+Split on 2026-09-02, four tickets, one chain. `DEC-124` was **answered and merged the same day** by
+[`ADR-0115`](../../docs/adr/ADR-0115-motion-never-carries-a-fact-and-reduced-motion-stills-every-surface.md),
+so nothing here is `blocked` — the section below is kept as the record of why it was raised.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *not yet split — run `/plan-story STORY-1303`* | — |
+| [TASK-130301](../tasks/TASK-130301-the-first-motion-tokens-and-the-marks-two-forms.md) | The first motion tokens, the sheet's one still-block, and the seat's mark in both forms | ready |
+| [TASK-130302](../tasks/TASK-130302-the-two-screen-cards-carry-the-moving-mark.md) | The two screen cards carry the moving mark, and nothing else on them moves | backlog |
+| [TASK-130303](../tasks/TASK-130303-the-acting-seats-mark-moves-and-the-still-mark-stays.md) | The acting seat's mark moves on the table, and the still mark stays beside it | backlog |
+| [TASK-130304](../tasks/TASK-130304-the-mark-is-at-the-seat-the-server-named.md) | The mark is at the seat the server named, and nowhere before it names one | backlog |
+
+**What the split settled, having read `develop` rather than the story's own notes.**
+
+- **The still form already ships**, so `ADR-0115` §1 costs nothing to satisfy and everything to
+  keep. `.seat.on-turn { border-left-color: var(--pd-accent) }` and `SeatPlate.tsx`'s
+  `border-l-accent` already mark the acting seat against a 2 px slot that is reserved off-turn.
+  This story adds motion *beside* that mark and never in place of it; `TASK-130303` gates both
+  class names in one assertion so a coder cannot trade the edge for the animation.
+- **Nothing `--pd-motion-*` exists yet**, and neither does any `prefers-reduced-motion` rule. This
+  story mints both (`TASK-130301`), which is why minting and the first card are one ticket: a
+  period chosen before anything was drawn at it could not be corrected by a card ticket that does
+  not hold the sheet.
+- **The mark renders nothing when `view === null`, so `null-view.test.tsx` does not redden.**
+  `Lobby.tsx` renders `WaitingTable` in that state, and `WaitingTable` draws its own seat rows and
+  never mounts `SeatPlate` — the only component the mark lives in. The mark also speaks nothing:
+  no `aria-label`, no `title`, no `role`, no text, so the guard's `spoken()` closure and its digit
+  sweep are both untouched. `TASK-130304` asserts the absence anyway, with a positive control on
+  the live table, because a selector that matches nothing anywhere would pass forever.
+- **No new frame, and `role="img"` does not move.** The two live frames on `duel-table.html`
+  already draw the hero on turn with the rival waiting, and `duel-table-states.html`'s
+  `Waiting — their turn` frame already draws the mirror; the *at rest* state is drawn once, on the
+  component card. So `role="img"` stays at 16 and 24, `class="frame"` at 6 and 3, and every one of
+  those is a refusal gate in `TASK-130302`.
+- **`design/components/seat-and-pot.html` is the mark's home**, not a screen card. It is the
+  canonical the two screens copy, it already draws the seat *"in its states"* including both
+  on-turn seats and an `.away` row, and it is 129 lines — the whole three-state drawing fits one
+  `S` diff there and would not fit in a new table frame.
 
 ## Acceptance criteria
 
@@ -107,6 +149,8 @@ it with the human's eye — a card cannot render a media query.
 - **The last act.** What the rival just did is
   [`ADR-0109`](../../docs/adr/ADR-0109-the-table-marks-the-last-act-and-the-next-deal-clears-it.md)
   and `STORY-1304`. Two marks, two lifetimes, two cards.
-- **`prefers-reduced-motion` behaviour** — `DEC-124`, the product owner's, above.
+- **A second reduced-motion rule.** `ADR-0115` §4 puts the product's *one* block in
+  `design/tokens/tokens.css` (`TASK-130301`). No surface, card or component adds its own beyond the
+  copy each self-contained card carries, and no client code reads the media query.
 - **Any change to `Your turn` / `Their turn`** beyond what the merged card draws.
 - **The engine.** Nothing here opens `poker-engine`.
