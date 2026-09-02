@@ -75,7 +75,20 @@ them in its own `Files` table:
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *not yet split — run `/plan-story STORY-1301`* | — |
+| [TASK-130101](../tasks/TASK-130101-the-duel-table-card-prints-the-pot-adr-0107-names.md) | The duel-table card prints the pot ADR-0107 names | ready |
+| [TASK-130102](../tasks/TASK-130102-the-never-derives-guard-admits-one-named-sum-and-no-other.md) | The never-derives guard admits one named sum and no other | backlog |
+| [TASK-130103](../tasks/TASK-130103-the-strip-prints-every-chip-committed-to-the-hand.md) | The strip prints every chip committed to the hand | backlog |
+
+**Split on 2026-09-02, and one design note in this story was corrected by measurement.** The story
+and `ADR-0107`'s *Consequences* both expect `Pot` pins to move in `DuelTable.test.tsx`,
+`Lobby.test.tsx` and `reconnect.test.tsx`. Probed by applying the sum to `PotStrip.tsx` and running
+the whole client gate set: **not one of them moves** — every `Pot` fixture in those three files
+carries `committedThisStreet: 0` on both seats, and `DuelTable.test.tsx`'s `Pot 5,675` is a
+default-seat fixture, so the `5,675` beside commitments of **125** and **825** that the ADR names is
+`no-derivation.test.tsx`'s. The single failure under the change is that file's *shows no number the
+view does not carry*, `expected [ 6625 ] to deeply equal []`. None of the three is in any ticket's
+`Files` table; `TASK-130103` pins all three by measured per-file count instead, which is what
+discharges this story's last acceptance criterion.
 
 ## Acceptance criteria
 
