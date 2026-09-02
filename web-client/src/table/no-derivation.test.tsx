@@ -26,6 +26,27 @@ function numbersIn(view: PlayerView): Set<number> {
 }
 
 /**
+ * The one sum `ADR-0107` §5 admits into this guard: `view.pot` and both seats'
+ * `committedThisStreet` are three server-stated facts, and the sum is not new
+ * arithmetic — `ADR-0100` §6 has handed this same total to the sizing row from
+ * this same screen since before this guard existed. Nothing else is a carve-out.
+ */
+function potTotal(view: PlayerView): number {
+  return view.seats.reduce(
+    (sum, seat) => sum + seat.committedThisStreet,
+    view.pot,
+  );
+}
+
+/**
+ * `numbersIn(view)` widened by exactly the one named quantity above — a set one
+ * member larger than the view's own numbers, never more.
+ */
+function allowedNumbers(view: PlayerView): Set<number> {
+  return new Set([...numbersIn(view), potTotal(view)]);
+}
+
+/**
  * Every text node under `container`, joined by a space.
  *
  * Not `textContent`: that runs the last word of one element into the first of
@@ -146,7 +167,7 @@ describe("the table renders and never derives", () => {
     // already rotted: the values this replaced held 950 x 2 = 1900 and 75 x 2 =
     // 150 — a client deriving `minRaiseTo` from the bet, or the big blind from
     // the small, would have landed exactly on a legitimate number and passed.
-    const money = [...numbersIn(VIEW)].filter((value) => value > 1);
+    const money = [...allowedNumbers(VIEW)].filter((value) => value > 1);
     for (const a of money) {
       expect(money).not.toContain(a * 2);
       for (const b of money) {
@@ -159,7 +180,7 @@ describe("the table renders and never derives", () => {
     const { container } = render(<DuelTable view={VIEW} />);
 
     const shown = numbersOnScreen(container);
-    const allowed = numbersIn(VIEW);
+    const allowed = allowedNumbers(VIEW);
 
     expect(shown.length).toBeGreaterThan(0);
     const notAllowed = shown.filter((n) => !allowed.has(n));
@@ -333,5 +354,31 @@ describe("the table renders and never derives", () => {
     // Spoken as well as printed: "Two pair" in an aria-label and "You win" in a
     // title each shipped green against the line above.
     expect(spokenOnScreen(container)).not.toMatch(HAND_TALK);
+  });
+
+  it("admits the pot total and still refuses a second derived figure", () => {
+    // ADR-0107 §5: the guard narrows by exactly one named quantity and stays
+    // red for any other one — this fixture proves both halves on one screen.
+    const VIEW: PlayerView = aView({
+      pot: 5675,
+      betToMatch: 1450,
+      seats: [
+        aSeat({ index: 0, committedThisStreet: 125 }),
+        aSeat({ index: 1, committedThisStreet: 825 }),
+      ],
+    });
+
+    const allowed = allowedNumbers(VIEW);
+    expect(allowed.size).toBe(numbersIn(VIEW).size + 1);
+    expect(allowed.has(6625)).toBe(true); // 5,675 + 125 + 825, off the fixture above
+
+    const { container } = render(<DuelTable view={VIEW} />);
+    const probe = document.createElement("span");
+    probe.textContent = String(VIEW.pot + VIEW.betToMatch); // 7,125 — a second sum
+    container.appendChild(probe);
+
+    expect(numbersOnScreen(container).filter((n) => !allowed.has(n))).toEqual([
+      7125,
+    ]);
   });
 });
