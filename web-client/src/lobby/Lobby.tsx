@@ -37,7 +37,7 @@ import { ResetScreen } from "../account/ResetScreen";
 import { normalizeRoomCode } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
-import { InvitePanel } from "../table/InvitePanel";
+import { WaitingTable } from "../table/WaitingTable";
 
 /** The first screen: open a duel room, or join one by the code on the invite. */
 export function Lobby(): ReactElement {
@@ -215,7 +215,7 @@ export function Lobby(): ReactElement {
   }
 
   if (state.roomCode !== null) {
-    return <WaitingForRival code={state.roomCode} onLeave={forgetRoom} />;
+    return <WaitingTable code={state.roomCode} onLeave={forgetRoom} />;
   }
 
   // A player is not in a duel (view is null and roomCode is null).
@@ -458,30 +458,5 @@ function SignInScreenBody(props: {
         {FORGOT_PASSWORD_LABEL}
       </button>
     </>
-  );
-}
-
-/**
- * The invite is selectable text before it is anything else: the one interaction
- * this product depends on cannot need a working clipboard.
- */
-function WaitingForRival(props: {
-  code: string;
-  onLeave: () => void;
-}): ReactElement {
-  return (
-    <section>
-      <h2>Waiting for your rival</h2>
-      <InvitePanel code={props.code} />
-      <a
-        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
-        href="/"
-        onClick={props.onLeave}
-      >
-        Back to the lobby
-      </a>
-      {/* prettier-ignore */}
-      <p className="text-small text-text-muted">The room stays open. That link still works for your rival, and it brings you back.</p>
-    </section>
   );
 }
