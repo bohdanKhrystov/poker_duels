@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130302
 title: The two screen cards carry the moving mark, and nothing else on them moves
 type: task
-status: backlog
+status: ready
 parent: STORY-1303
 module: design
 estimate: S
