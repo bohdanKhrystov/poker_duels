@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130405
 title: The mark's words are the button's words, and its figure is the event's own total
 type: task
-status: ready
+status: done
 parent: STORY-1304
 module: web-client
 estimate: S
