@@ -1,8 +1,14 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { SeatPresence } from "../protocol";
+import type { ActEvent } from "../store/duel-state";
 import { SeatPlate } from "./SeatPlate";
 import { aSeat } from "./view-fixture";
+
+// A non-breaking space, built at runtime rather than typed as a literal
+// character, matching SeatPlate's own separator between a mark's verb and
+// its figure.
+const NBSP = String.fromCharCode(0xa0);
 
 describe("a seat plate", () => {
   function plate(
@@ -12,6 +18,7 @@ describe("a seat plate", () => {
       isToAct?: boolean;
       isViewer?: boolean;
       presence?: SeatPresence | null;
+      lastAct?: ActEvent | null;
     } = {},
   ) {
     return render(
@@ -22,6 +29,7 @@ describe("a seat plate", () => {
         isToAct={props.isToAct ?? false}
         isViewer={props.isViewer ?? true}
         presence={props.presence ?? null}
+        lastAct={props.lastAct}
       />,
     );
   }
@@ -138,5 +146,70 @@ describe("a seat plate", () => {
     const absentPlate = absentContainer.firstElementChild as HTMLElement;
     expect(absentPlate.classList.contains("border-l-accent")).toBe(false);
     getByTextAbsent("Timed out");
+  });
+
+  it("draws no mark when it is handed none", () => {
+    const { container, unmount } = plate();
+    expect(container.querySelectorAll(".last-act")).toHaveLength(0);
+    unmount();
+
+    const { container: nullContainer } = plate({}, { lastAct: null });
+    expect(nullContainer.querySelectorAll(".last-act")).toHaveLength(0);
+  });
+
+  it("prints a fold and a check bare", () => {
+    const folded: ActEvent = { type: "PlayerFolded", sequence: 1, seat: 0 };
+    const { container, unmount } = plate({}, { lastAct: folded });
+    const foldMarks = container.querySelectorAll(".last-act");
+    expect(foldMarks).toHaveLength(1);
+    expect(foldMarks[0].textContent).toBe("Fold");
+    expect(foldMarks[0].textContent).not.toMatch(/\d/);
+    unmount();
+
+    const checked: ActEvent = { type: "PlayerChecked", sequence: 1, seat: 0 };
+    const { container: checkContainer } = plate({}, { lastAct: checked });
+    const checkMarks = checkContainer.querySelectorAll(".last-act");
+    expect(checkMarks).toHaveLength(1);
+    expect(checkMarks[0].textContent).toBe("Check");
+    expect(checkMarks[0].textContent).not.toMatch(/\d/);
+  });
+
+  it("prints the act's own total on a call, a bet, a raise and an all-in", () => {
+    const cases: Array<[ActEvent, string]> = [
+      [
+        { type: "PlayerCalled", sequence: 1, seat: 0, to: 400 },
+        `Call${NBSP}400`,
+      ],
+      [{ type: "PlayerBet", sequence: 1, seat: 0, to: 950 }, `Bet${NBSP}950`],
+      [
+        { type: "PlayerRaised", sequence: 1, seat: 0, to: 2300 },
+        `Raise to${NBSP}2,300`,
+      ],
+      [
+        { type: "PlayerAllIn", sequence: 1, seat: 0, to: 13400 },
+        `All in${NBSP}13,400`,
+      ],
+    ];
+
+    for (const [event, text] of cases) {
+      const { container, unmount } = plate({}, { lastAct: event });
+      const marks = container.querySelectorAll(".last-act");
+      expect(marks).toHaveLength(1);
+      expect(marks[0].textContent).toBe(text);
+      unmount();
+    }
+  });
+
+  it("speaks the mark to nobody", () => {
+    const { container } = plate(
+      {},
+      {
+        hasButton: true,
+        lastAct: { type: "PlayerBet", sequence: 1, seat: 0, to: 950 },
+      },
+    );
+    expect(container.querySelectorAll(".last-act")).toHaveLength(1);
+    expect(container.querySelectorAll("[aria-label]")).toHaveLength(1);
+    expect(container.querySelectorAll("[title]")).toHaveLength(0);
   });
 });

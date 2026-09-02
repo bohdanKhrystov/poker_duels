@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130407
 title: One mark, at the seat the act names, and it moves when the other seat acts
 type: task
-status: backlog
+status: ready
 parent: STORY-1304
 module: web-client
 estimate: S
