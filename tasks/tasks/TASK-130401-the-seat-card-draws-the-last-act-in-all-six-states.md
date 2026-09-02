@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130401
 title: The seat card draws the last act, in all six of its states, at both seats
 type: task
-status: ready
+status: done
 parent: STORY-1304
 module: design
 estimate: S

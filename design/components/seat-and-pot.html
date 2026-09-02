@@ -52,6 +52,16 @@
   .dealer { font-family: var(--pd-font-mono); font-size: 0.6875rem; color: var(--pd-text-muted);
     border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill);
     padding: 2px 8px; }
+  /* the last act: the plate's mark for the most recent act of the hand, at the seat that
+   * made it — one mark, never one per seat (ADR-0109 §1). It says the actor's own button
+   * word, bare for two of the six acts and with the event's own total for the other four
+   * (§2); nothing here ever times out, fades or otherwise dismisses it (§4). It rides as
+   * another child of .seat's own flex row, so .who gives ground by truncating the name
+   * first and the plate never grows a pixel taller. */
+  .last-act { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 0.6875rem; color: var(--pd-text-muted); background: var(--pd-accent-subtle);
+    border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill);
+    padding: 2px 8px; white-space: nowrap; }
   .seat.on-turn { border-left-color: var(--pd-accent);
     animation: pd-acting-seat var(--pd-motion-turn-period) var(--pd-motion-turn-ease) infinite; }
   /* pd-acting-seat pulses at --pd-motion-turn-period, eased by
@@ -87,7 +97,8 @@
   <h1>Seat &amp; pot</h1>
   <p class="lede">A seat is a quiet plate: name, stack, and — when it matters — whose move it
   is. The turn is marked by an accent edge that is always reserved, so nothing on the table
-  ever jumps.</p>
+  ever jumps. A second mark shows the most recent act of the hand, at the seat that made it,
+  worded exactly as that seat's own button would say it — one mark, never one per seat.</p>
 
   <h2>The seat, in its states</h2>
   <div class="stack">
@@ -143,6 +154,63 @@
         <span class="chips">4,550</span>
       </div>
       <span class="l">a long name truncates with an ellipsis — the plate never grows</span>
+    </div>
+    <div>
+      <div class="seat">
+        <span class="who"><span class="name">ImKate</span>
+          <span class="status"></span></span>
+        <span class="last-act">Fold</span>
+        <span class="dealer">D</span>
+        <span class="chips">4,550</span>
+      </div>
+      <span class="l">last act — fold, bare</span>
+    </div>
+    <div>
+      <div class="seat">
+        <span class="who"><span class="name">You</span>
+          <span class="status"></span></span>
+        <span class="last-act">Check</span>
+        <span class="chips">7,450</span>
+      </div>
+      <span class="l">last act — check, bare</span>
+    </div>
+    <div>
+      <div class="seat">
+        <span class="who"><span class="name">ImKate</span>
+          <span class="status"></span></span>
+        <span class="last-act">Call&nbsp;1,700</span>
+        <span class="dealer">D</span>
+        <span class="chips">4,550</span>
+      </div>
+      <span class="l">last act — call, the total the server sent</span>
+    </div>
+    <div>
+      <div class="seat">
+        <span class="who"><span class="name">You</span>
+          <span class="status"></span></span>
+        <span class="last-act">Bet&nbsp;950</span>
+        <span class="chips">7,450</span>
+      </div>
+      <span class="l">last act — bet, the total the server sent</span>
+    </div>
+    <div>
+      <div class="seat">
+        <span class="who"><span class="name">ImKate</span>
+          <span class="status"></span></span>
+        <span class="last-act">Raise to&nbsp;2,300</span>
+        <span class="dealer">D</span>
+        <span class="chips">4,550</span>
+      </div>
+      <span class="l">last act — raise to, the total the server sent</span>
+    </div>
+    <div>
+      <div class="seat">
+        <span class="who"><span class="name">You</span>
+          <span class="status"></span></span>
+        <span class="last-act">All in&nbsp;4,150</span>
+        <span class="chips">7,450</span>
+      </div>
+      <span class="l">last act — all in, the total the server sent</span>
     </div>
   </div>
 
