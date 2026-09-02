@@ -101,10 +101,16 @@ describe("what the table shows when there is no view", () => {
     // digit at all, so it tells an echoed code apart from a hard-coded one.
     const withDigits = renderNullView("7Q4M9K2T");
     expect(digitBearing(withDigits.container)).toEqual(["7Q4M9K2T"]);
+    // Closed on its own, not only through the digit filter above: a fact
+    // gated on the code's own content (a digit-bearing code, say) could
+    // otherwise reach `spoken()` in this render alone and nowhere else this
+    // file renders, and escape undetected.
+    expect(spoken(withDigits.container)).toEqual([]);
     cleanup();
 
     const withoutDigits = renderNullView("ABCDEFGH");
     expect(digitBearing(withoutDigits.container)).toEqual([]);
+    expect(spoken(withoutDigits.container)).toEqual([]);
   });
 
   it("deals no card, draws no button, offers no bar and names no pot", () => {
