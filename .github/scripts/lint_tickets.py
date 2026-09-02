@@ -461,12 +461,37 @@ def startable(tickets: dict[str, dict]) -> list[dict]:
     ]
 
 
+CONFLICT_MARKER_RE = re.compile(r"^(<{7} |={7}$|>{7} )", re.M)
+
+
+def check_conflict_markers() -> None:
+    """A resolved-looking merge that still carries markers reads as prose and lints as fine.
+
+    This has reached `develop` once: a rebase output truncated past a second
+    conflicting file, and the register was staged with its markers intact.
+    """
+    for base in (TASKS, Path("docs")):
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*.md")):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            hits = CONFLICT_MARKER_RE.findall(text)
+            if hits:
+                line = next(
+                    i for i, l in enumerate(text.splitlines(), 1)
+                    if CONFLICT_MARKER_RE.match(l)
+                )
+                fail(str(path), f"unresolved conflict marker at line {line} ({len(hits)} in the file)")
+
+
 def main() -> int:
     if not TASKS.is_dir():
         print("tasks/ not found — run from the repository root", file=sys.stderr)
         return 1
 
     want_startable = "--startable" in sys.argv[1:]
+
+    check_conflict_markers()
 
     tickets = collect()
     check_links(tickets)
