@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130203
 title: The invite is a component of its own, and the DOM does not move
 type: task
-status: backlog
+status: ready
 parent: STORY-1302
 module: web-client
 estimate: S

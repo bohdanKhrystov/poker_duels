@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130202
 title: The card's three remaining host-alone variants, and the arrival
 type: task
-status: ready
+status: done
 parent: STORY-1302
 module: design
 estimate: S
