@@ -202,13 +202,18 @@ running circle* is a choice between two drawings and the human is the one who lo
 
 ## Open decisions
 
-All six are the **product owner's**, registered in
-[`docs/adr/README.md`](../../docs/adr/README.md); the rows below are the ones **still open**. The
-epic is `backlog` until all six are answered, because six of the eight items cannot be split into
-tickets without them. Those already answered are listed under *Answered*, below.
+**None — all six are answered.** They were the **product owner's**, and all six were settled on
+2026-09-02 by the `product-owner` agent; the ADRs are listed under *Answered*, below, and struck in
+[`docs/adr/README.md`](../../docs/adr/README.md). The epic was `backlog` until they landed, because
+six of the eight items could not be split into tickets without them. It is now splittable.
 
-| ID | Question | Gates |
+Two **architect's** decisions were registered by the answering ADRs and gate the wire work rather
+than the split — see *What the answers handed the architect*:
+
+| ID | Question | Registered by |
 | --- | --- | --- |
+| `DEC-120` | By what mechanism is the turn clock carried, enforced and resumed? | `ADR-0108` |
+| `DEC-123` | By what mechanism is a mid-duel navigation refused and the address restored? | `ADR-0112` |
 
 ### Answered
 
@@ -241,7 +246,7 @@ that moves the version.
 
 ## Stories
 
-Written once `DEC-114`–`DEC-119` are merged. Splitting before then would be inventing the answers.
+`DEC-114`–`DEC-119` are merged, so the split is unblocked — run `/plan-story EPIC-13`. The first ticket of each story that puts a new surface in front of a player is its **design card** (`ADR-0091` §2), and the card merges before the ticket that implements it is startable.
 
 | ID | Title | Status |
 | --- | --- | --- |
