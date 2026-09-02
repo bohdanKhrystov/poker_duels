@@ -10,7 +10,10 @@
    * This file IS the screen: one column, the page is the table, no oval — drawn at
    * both shapes the product is judged at (ADR-0103 §4), the same table markup boxed
    * at 720x900 and 390x664. Component rules are faithful copies of the merged
-   * component cards; screen-only glue is commented as such. */
+   * component cards; screen-only glue is commented as such.
+   * ADR-0110 §§1–5: the file now draws the table before the duel too — the host
+   * waits there alone, the rival's seat carrying §2's words and no game fact shown
+   * before the opening Snapshot, with the invite and the way out drawn beside it. */
   :root {
     --pd-bg: #131211; --pd-surface: #1c1a18; --pd-hairline: #363330;
     --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
@@ -25,6 +28,7 @@
     --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
     --pd-fs-large: 1.125rem;
     --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
+    --pd-track-code: 0.14em;
     --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px;
     --pd-space-6: 24px; --pd-space-7: 32px;
     --pd-radius-medium: 8px; --pd-radius-pill: 999px;
@@ -162,6 +166,36 @@
   .btn.fill:hover { background: var(--pd-accent-fill-hover); }
   .btn:focus-visible, .chip:focus-visible, .stepper button:focus-visible {
     outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+
+  /* host-alone frame (ADR-0110 §§1–5): the rival's seat before they arrive, the
+   * invite drawn at the table, and the way out — faithful copies from
+   * create-duel.html's retiring frame (ADR-0110 §6), plus the two rules its own
+   * link box and label need. */
+  /* Screen-only glue: the open seat is the plate's dashed twin — the .seat rules set
+   * its geometry, this override swaps paint only. The dashes stay 1px on every edge
+   * (the turn-marker slot is never painted off-turn), and 1px border + 17px padding
+   * preserves the seat's 2px + 16px left metric, so a rival claiming the seat
+   * changes pixels, never layout: the card component's slot convention. */
+  .seat.seat-empty { background: none; border-style: dashed; border-color: var(--pd-hairline);
+    border-left-width: 1px; padding-left: 17px; }
+  .seat.seat-empty .name { color: var(--pd-text-faint); }
+
+  /* code well — faithful copy of create-duel.html's .code. The trailing letter-space
+   * is counted inside the centered line; the matching text-indent puts the glyphs
+   * themselves back on center. */
+  .code { font-family: var(--pd-font-mono); font-size: 1.875rem;
+    letter-spacing: var(--pd-track-code); text-indent: var(--pd-track-code);
+    text-align: center; padding: var(--pd-space-5) 0;
+    background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); }
+  .ilabel { font-size: var(--pd-fs-micro); font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--pd-text-faint); }
+  .linkbox { font-family: var(--pd-font-mono); font-size: var(--pd-fs-small);
+    color: var(--pd-text-muted); overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; padding: var(--pd-space-3) var(--pd-space-4);
+    background: var(--pd-surface); border: 1px solid var(--pd-hairline);
+    border-radius: var(--pd-radius-medium); }
+  .promise { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
 </style>
 </head>
 <body>
@@ -281,6 +315,33 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="frame">
+    <h2>Host alone — at rest</h2>
+    <div class="viewport phone">
+      <div class="table">
+        <div class="seat seat-empty">
+          <span class="who"><span class="name">Waiting for your rival</span></span>
+        </div>
+
+        <div class="code">7Q4M9K2T</div>
+        <p class="ilabel">Invite link</p>
+        <div class="linkbox">…/?room=7Q4M9K2T</div>
+        <div class="actions">
+          <button class="btn fill">Copy the link</button>
+        </div>
+
+        <div class="seat">
+          <span class="who"><span class="name">You</span></span>
+        </div>
+
+        <div class="actions">
+          <button class="btn ghost">Back to the lobby</button>
+        </div>
+        <p class="promise">The room stays open. That link still works for your rival, and it brings you back.</p>
       </div>
     </div>
   </div>
