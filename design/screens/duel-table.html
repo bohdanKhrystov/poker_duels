@@ -57,8 +57,11 @@
      * declared here, on the column itself, so both card groups can read one name */
     --bw: clamp(48px, calc((100cqi - 64px) / 5), 72px);
     /* ADR-0103 §3.1: outer padding and the gaps between the column's three blocks
-     * are the first give, a continuous function of the column's own width */
-    --wgap: clamp(var(--pd-space-3), calc((100cqi - 220px) / 21.25), var(--pd-space-5));
+     * are the first give, a continuous function of the column's own width.
+     * ADR-0106 §4: the ramp steps down one token at the phone width — measured
+     * across widths, the floor sits below where the ramp ever reaches, so it
+     * is the ramp that moves and not the floor. */
+    --wgap: clamp(var(--pd-space-2), calc((100cqi - 340px) / 12.5), var(--pd-space-5));
     padding: var(--wgap); gap: var(--wgap);
     /* §3.2: the rival's mini hand narrows furthest of anything on the table */
     --miniw: clamp(24px, calc((100cqi - 135px) / 10.625), 40px);

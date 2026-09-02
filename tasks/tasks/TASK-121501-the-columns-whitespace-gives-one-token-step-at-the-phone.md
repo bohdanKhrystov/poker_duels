@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121501
 title: The column's whitespace gives one token step at the phone
 type: task
-status: ready
+status: done
 parent: STORY-1215
 module: web-client
 estimate: XS
