@@ -1,4 +1,5 @@
 import type { ActionType, LegalActions } from "../protocol";
+import type { ActEvent } from "../store/duel-state";
 
 /** What a button says: the verb, and the figure beside it when there is one. */
 export interface ActionText {
@@ -52,5 +53,32 @@ export function actionText(
       return { verb: actionVerb(type), amount: to };
     default:
       return { verb: actionVerb(type), amount: null };
+  }
+}
+
+/**
+ * `lastActText` translates an act event into what the mark should say.
+ *
+ * The mark translates the event's own token and carries the event's own `to`
+ * total — it is the actor's own button's words and the server's own figure,
+ * nothing worked out or invented. The verb is what `actionVerb` names the act;
+ * the figure is the event's own total for a call, bet, raise or all-in, and
+ * null for a fold or check. Per `ADR-0109` §2, the mark says what the actor's
+ * own button said, no more and no less.
+ */
+export function lastActText(event: ActEvent): ActionText {
+  switch (event.type) {
+    case "PlayerFolded":
+      return { verb: actionVerb("FOLD"), amount: null };
+    case "PlayerChecked":
+      return { verb: actionVerb("CHECK"), amount: null };
+    case "PlayerCalled":
+      return { verb: actionVerb("CALL"), amount: event.to };
+    case "PlayerBet":
+      return { verb: actionVerb("BET"), amount: event.to };
+    case "PlayerRaised":
+      return { verb: actionVerb("RAISE"), amount: event.to };
+    case "PlayerAllIn":
+      return { verb: actionVerb("ALL_IN"), amount: event.to };
   }
 }
