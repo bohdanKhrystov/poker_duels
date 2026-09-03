@@ -34,6 +34,10 @@ public data class ServerConfig(
     // This field has a default for the same reason as disconnectGraceMillis, allowing existing
     // construction sites to compile without specifying the sweep period.
     val sweepPeriodMillis: Long = 1_000L,
+    // These two fields have defaults so that existing construction sites can compile without
+    // specifying the turn and timebank allowances, which are read from configuration or environment.
+    val turnMillis: Long = RoomTimeouts.DEFAULT_TURN_MILLIS,
+    val timebankMillis: Long = RoomTimeouts.DEFAULT_TIMEBANK_MILLIS,
     // These four fields have defaults so that existing construction sites can compile without
     // specifying auth budgets, which are only used by TASK-040521 and TASK-040523.
     val signUpMaxAttempts: Int = 5,
@@ -51,8 +55,14 @@ public data class ServerConfig(
     val recoveryEmailMaxAttempts: Int = 5,
     val recoveryEmailWindowMillis: Long = 60_000L,
 ) {
-    /** Bundles the three room timeouts so callers do not reassemble them. */
-    public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(roomWaitingTimeoutMillis, roomFinishedTimeoutMillis, disconnectGraceMillis)
+    /** Bundles the five room timeouts so callers do not reassemble them. */
+    public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(
+        waitingMillis = roomWaitingTimeoutMillis,
+        finishedMillis = roomFinishedTimeoutMillis,
+        disconnectGraceMillis = disconnectGraceMillis,
+        turnMillis = turnMillis,
+        timebankMillis = timebankMillis,
+    )
 
     /** Bundles the sign-up budget's two numbers so callers do not reassemble them. */
     public fun signUpLimits(): AttemptLimits = AttemptLimits(signUpMaxAttempts, signUpWindowMillis)
@@ -117,6 +127,14 @@ public data class ServerConfig(
         public const val DEFAULT_DISCONNECT_GRACE_MILLIS: Long = RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS
         public const val DISCONNECT_GRACE_MILLIS_KEY: String = "duel.disconnectGraceMillis"
         public const val DISCONNECT_GRACE_MILLIS_ENV: String = "DISCONNECT_GRACE_MILLIS"
+
+        public const val DEFAULT_TURN_MILLIS: Long = RoomTimeouts.DEFAULT_TURN_MILLIS
+        public const val TURN_MILLIS_KEY: String = "duel.turnMillis"
+        public const val TURN_MILLIS_ENV: String = "TURN_MILLIS"
+
+        public const val DEFAULT_TIMEBANK_MILLIS: Long = RoomTimeouts.DEFAULT_TIMEBANK_MILLIS
+        public const val TIMEBANK_MILLIS_KEY: String = "duel.timebankMillis"
+        public const val TIMEBANK_MILLIS_ENV: String = "TIMEBANK_MILLIS"
 
         public const val DEFAULT_SWEEP_PERIOD_MILLIS: Long = 1_000L
         public const val SWEEP_PERIOD_MILLIS_KEY: String = "server.sweepPeriodMillis"
@@ -261,6 +279,28 @@ public data class ServerConfig(
                 "sweep period must be an integer, got: $sweepPeriodMillisString"
             }
 
+            val turnMillisString = resolve(
+                config,
+                env,
+                TURN_MILLIS_ENV,
+                TURN_MILLIS_KEY,
+                DEFAULT_TURN_MILLIS.toString(),
+            )
+            val turnMillis = requireNotNull(turnMillisString.toLongOrNull()) {
+                "turn allowance must be an integer, got: $turnMillisString"
+            }
+
+            val timebankMillisString = resolve(
+                config,
+                env,
+                TIMEBANK_MILLIS_ENV,
+                TIMEBANK_MILLIS_KEY,
+                DEFAULT_TIMEBANK_MILLIS.toString(),
+            )
+            val timebankMillis = requireNotNull(timebankMillisString.toLongOrNull()) {
+                "timebank must be an integer, got: $timebankMillisString"
+            }
+
             val signUpMaxAttemptsString = resolve(
                 config,
                 env,
@@ -372,6 +412,8 @@ public data class ServerConfig(
                 roomFinishedTimeoutMillis = roomFinishedTimeoutMillis,
                 disconnectGraceMillis = disconnectGraceMillis,
                 sweepPeriodMillis = sweepPeriodMillis,
+                turnMillis = turnMillis,
+                timebankMillis = timebankMillis,
                 signUpMaxAttempts = signUpMaxAttempts,
                 signUpWindowMillis = signUpWindowMillis,
                 signInMaxAttempts = signInMaxAttempts,
