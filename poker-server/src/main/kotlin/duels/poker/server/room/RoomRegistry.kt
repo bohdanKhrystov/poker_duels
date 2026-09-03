@@ -53,7 +53,7 @@ public class RoomRegistry(
      * Reports a single room's failure inside a sweep so it can be logged without ending the
      * batch. Not a `WebSocketSession` or a `ProtocolError`: this is a plain diagnostic, the one
      * exception this class makes to knowing nothing outside the engine and the room model, and it
-     * exists only because [expireGracePeriods] must not let one room's exception silence every
+     * exists only because [expireTurnClocks] must not let one room's exception silence every
      * other room already committed to in the same pass.
      */
     private val logger = LoggerFactory.getLogger(RoomRegistry::class.java)
@@ -415,16 +415,36 @@ public class RoomRegistry(
      *   [Room.act] closing over the inbound frame.
      * @return The resulting step, or `null` if the room does not exist or has nothing to move.
      */
-    public suspend fun act(code: RoomCode, step: (Room) -> DuelStep?): DuelStep? {
+    public suspend fun act(code: RoomCode, step: (Room) -> DuelStep?): DuelStep? =
+        actOn(code) { room -> step(room)?.let { TurnGiveUp(room, it) } }
+
+    /**
+     * The shared core [act] and [expireTurnClocks] both write through: applies [step] to the room
+     * at [code] and restarts its clock exactly as [act]'s own KDoc describes, except the room the
+     * restart is based on — [TurnGiveUp.room] — may differ from the room [step] was called with.
+     *
+     * [act] always hands the two back equal: an ordinary inbound frame never changes anything about
+     * a room besides the duel it hosts, so [TurnGiveUp.room] is always the very room [step] read.
+     * [expireTurnClocks] is the one caller where that is not true, because giving up a seat's turn
+     * can also latch it into [Room.absentSeats] or abandon the room outright, and the write-back has
+     * to carry that the same way it already carries the duel's own move — never a second, separate
+     * write outside this one (`TASK-130809`).
+     *
+     * @param code The room to act in.
+     * @param step Computes the duel to give up and the room its write-back should restart from.
+     * @return The resulting step, or `null` if the room does not exist or has nothing to move.
+     */
+    private suspend fun actOn(code: RoomCode, step: (Room) -> TurnGiveUp?): DuelStep? {
         var finishedSeats: List<PlayerId>? = null
         var finishedDuelId: UUID? = null
         val result = mutate(
             code,
             absent = { null },
             block = { room ->
-                val duelStep = step(room) ?: return@mutate Pair(null, null)
+                val turnGiveUp = step(room) ?: return@mutate Pair(null, null)
+                val duelStep = turnGiveUp.step
                 val now = clock.nowMillis()
-                val restarted = room.clocked(duelStep.runner, now, timeouts.turnMillis)
+                val restarted = turnGiveUp.room.clocked(duelStep.runner, now, timeouts.turnMillis)
                 val newRoom = if (duelStep.runner.outcome != null) {
                     val duelId = checkNotNull(room.duelId) { "a PLAYING room always carries its duel id" }
                     finishedSeats = listOf(room.host, checkNotNull(room.guest) { "a PLAYING room always has a guest" })
@@ -559,102 +579,76 @@ public class RoomRegistry(
     }
 
     /**
-     * End every disconnect grace window (`ADR-0013`) that has run out, as of one instant read
-     * from [clock].
+     * End every open decision whose turn clock has run out, as of one instant read from [clock].
      *
      * `now` is read once, exactly as [reap] reads its own `now` once, so every room in this pass
-     * is judged against the same instant.
+     * is judged against the same instant: an enforced expiry can only ever trail the deadline it
+     * enforces, never precede it (`ADR-0108` §6).
      *
-     * Two passes, in order:
-     * 1. A room is a candidate only once its unlocked [Room.gracePeriods] is non-empty — the same
-     *    cheap-before-the-lock idiom [reap] uses for [isReapable], re-decided here again once the
-     *    room's own lock is held, since a room touched between the scan and the lock —
-     *    reconnected, resumed, joined — may have nothing left to expire by the time this reaches
-     *    it. A candidate has [Room.expireGrace] applied inside [mutate]; if nothing ran out,
-     *    nothing is written back. If something did, and the room still has a guest with both
-     *    seats now in [Room.absentSeats], the expired room is abandoned instead of written back
-     *    as-is — both players are gone, so there is no duel left to fold, and abandoning is what
-     *    makes the room reapable under [RoomTimeouts.finishedMillis] rather than this method
-     *    growing a second timer for it. This pass also remembers the single seat a room lost,
-     *    when it was not abandoned, for the second pass to describe.
-     * 2. Every room the first pass changed has [Room.giveUpTurn] applied through [act],
-     *    never written back directly: [act] is what claims a duel that finishes this way in
-     *    [recording], hands it to [DuelResultSink] outside the lock, and unclaims it again if
-     *    that throws. A fold that ends a duel must reach the sink exactly as a played one does, so
-     *    it has to go through the one place that already does that correctly rather than a second
-     *    copy of it here.
+     * One pass, through [isTurnClockCandidate] and [actOn]: a room is a candidate only once its
+     * unlocked state shows a seat still counting down a disconnect grace window (`ADR-0013`), or an
+     * open decision whose own deadline needs attention — the same cheap-before-the-lock idiom [reap]
+     * uses for [isReapable], re-decided here again once the room's own lock is held, since a room
+     * touched between the scan and the lock — reconnected, resumed, joined — may have nothing left
+     * to expire by the time this reaches it.
      *
-     * Before the fold's own frames, this second pass prepends `Addressed(otherSeat,
-     * room.presenceOf(expiredSeat, now))` — the same `now` read above — to whatever [act]
-     * returned, so the seat that stayed is told `ABSENT` before the frame explaining why
-     * (`ADR-0028` §5, §10). Ordering here is a courtesy, not the mechanism: `(handNumber,
-     * actionSequence)` is what identifies the decision point either frame describes. Nothing is
-     * prepended for a room the first pass abandoned instead of folding — there is no other seat
-     * left to receive it — and nothing for a `WAITING` room's lone host either, who has no guest
-     * to tell.
+     * A candidate is judged entirely inside [actOn]'s own lock: [Room.expireGrace] latches whatever
+     * seat's window has just run out, and [Room.giveUpTurn] decides what the seat on turn owes for
+     * it — a played decision, or, when both seats are now gone, the room [RoomState.ABANDONED]
+     * instead. [Room.giveUpTurn] is this pass's sole author of what "both gone" means: nothing here
+     * repeats that check on its own, because wiring [TurnGiveUp.room] through [actOn]'s write-back —
+     * rather than discarding it the way a single-pass [act] call used to — is what lets the wider
+     * question [Room.giveUpTurn] asks decide it (`TASK-130809`). A seat can also latch with nothing
+     * to fold — the seat that ran out was not on turn — and that alone still counts as one expiry;
+     * [actOn] is handed a synthetic, unplayed [TurnGiveUp] for exactly that case.
      *
-     * The second pass isolates every room's [act] call: by the time it runs, the first pass has
-     * already cleared [Room.gracePeriods] for every room in this batch, so an exception this
-     * method let propagate would not just fail the room it came from — it would abort the loop
-     * before every later room's [act] call is even attempted, and none of those rooms would ever
-     * be retried, because the *next* sweep's unlocked pre-check finds their [Room.gracePeriods]
-     * already empty and skips them too. `ADR-0025`'s "log and retry next tick" guards between
-     * this method and [reap]; it cannot rescue a room that this method itself never got to. A
-     * room whose [act] call throws is logged and skipped instead: every other room already
-     * committed to by the first pass still gets its own, independent attempt this same call.
+     * Before the fold's own frames, this prepends `Addressed(otherSeat, room.presenceOf(expiredSeat,
+     * now))` — the same `now` read above — for whichever single seat newly latched into
+     * [Room.absentSeats] this pass, so the seat that stayed is told `ABSENT` before the frame
+     * explaining why (`ADR-0028` §5, §10). Nothing is prepended for a room [Room.giveUpTurn]
+     * abandoned instead — there is no other seat left to receive it — nor for a room where no seat
+     * newly latched, such as an already-absent seat's fresh decision coming due again.
      *
-     * No new lock: both passes write exclusively through [mutate] and [act], the same two call
-     * sites every other mutation in this class already uses.
+     * Every candidate's [actOn] call is isolated in its own `try`/`catch`: a room whose call throws
+     * is logged and skipped, so one room's failure — a sink outage while its fold finishes a duel is
+     * the obvious cause — never costs any other candidate this same pass its own, independent
+     * attempt. `ADR-0025`'s "log and retry next tick" picks up a room this call never reached.
      *
-     * @return One [GraceExpiry] per room the first pass changed whose second-pass [act] call
-     *   completed, carrying that room as it stands after both passes, and its outbound frames:
-     *   the presence frame naming the seat that expired, if any, followed by the frames the fold
-     *   produced. Both are empty for a room that was abandoned instead, since abandoning leaves no
-     *   duel to fold and no other seat to describe one to. A room whose [act] call threw is
-     *   omitted, not retried by a later call to this method.
+     * No new lock: this writes exclusively through [actOn], the same call site every other mutation
+     * that moves a duel in this class already uses.
+     *
+     * @return One [TurnClockExpiry] per candidate this pass changed, carrying that room as it stands
+     *   afterward and its outbound frames: the presence frame naming the seat that latched, if any,
+     *   followed by the frames the give-up produced. Both are empty for a room [Room.giveUpTurn]
+     *   abandoned instead. A room whose call threw is omitted, not retried by this same call.
      */
-    public suspend fun expireGracePeriods(): List<GraceExpiry> {
+    public suspend fun expireTurnClocks(): List<TurnClockExpiry> {
         val now = clock.nowMillis()
-        val expiredSeatByCode = mutableMapOf<RoomCode, Int?>()
+        val expiries = mutableListOf<TurnClockExpiry>()
         for ((code, holder) in rooms) {
-            if (holder.room.gracePeriods.isEmpty()) continue
-            var expiredSeat: Int? = null
-            val changed = mutate(
-                code,
-                absent = { false },
-                block = { room ->
-                    if (room.gracePeriods.isEmpty()) return@mutate Pair(null, false)
-                    val expired = room.expireGrace(now)
-                    if (expired === room) return@mutate Pair(null, false)
-                    val bothGone = expired.guest != null && expired.absentSeats == setOf(0, 1)
-                    if (!bothGone) {
-                        expiredSeat = (expired.absentSeats - room.absentSeats).single()
-                    }
-                    Pair(if (bothGone) expired.abandon(now) else expired, true)
-                },
-            )
-            if (changed) expiredSeatByCode[code] = expiredSeat
-        }
-
-        val expiries = mutableListOf<GraceExpiry>()
-        for ((code, expiredSeat) in expiredSeatByCode) {
+            if (!isTurnClockCandidate(holder.room, now)) continue
+            var readRoom: Room? = null
             val step = try {
-                // Only the step is written back here: [act] keeps the room it read, and this pass
-                // has already latched and abandoned through [Room.expireGrace] above, so
-                // [TurnGiveUp.room] would restate what it just wrote. Wiring that room through
-                // instead is `TASK-130809`, which owns this sweep's shape.
-                act(code) { it.giveUpTurn(now, handSeeds)?.step }
+                actOn(code) { room ->
+                    readRoom = room
+                    if (!isTurnClockCandidate(room, now)) return@actOn null
+                    val expired = room.expireGrace(now)
+                    when (val turnGiveUp = expired.giveUpTurn(now, handSeeds)) {
+                        null -> if (expired !== room) TurnGiveUp(expired, DuelStep(expired.runner!!, emptyList())) else null
+                        else -> turnGiveUp
+                    }
+                }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Throwable) {
                 // One room's failure — a sink outage while this fold finished its duel is the
-                // obvious cause — must not cost every later room in `expiredSeatByCode` its own,
-                // unrelated fold: see the KDoc above for why a later sweep cannot pick this room
-                // back up.
-                logger.error("expireGracePeriods: folding absent seats failed for room {}", code, failure)
-                continue
-            }
+                // obvious cause — must not cost every other candidate this pass its own, unrelated
+                // attempt: see the KDoc above for why a later sweep cannot pick this room back up.
+                logger.error("expireTurnClocks: expiring the turn clock failed for room {}", code, failure)
+                null
+            } ?: continue
             val room = checkNotNull(get(code)) { "a room this pass just wrote back must still be registered" }
+            val expiredSeat = (room.absentSeats - readRoom!!.absentSeats).singleOrNull()
             val presence = expiredSeat?.let { seat ->
                 val otherSeat = 1 - seat
                 if (otherSeat == 0 || room.guest != null) {
@@ -663,9 +657,25 @@ public class RoomRegistry(
                     null
                 }
             }
-            expiries.add(GraceExpiry(room, listOfNotNull(presence) + (step?.outbound ?: emptyList())))
+            expiries.add(TurnClockExpiry(room, listOfNotNull(presence) + step.outbound))
         }
         return expiries
+    }
+
+    /**
+     * Whether [room], read without its lock, is worth [expireTurnClocks] taking that lock for: a
+     * seat still counting down a disconnect grace window (`ADR-0013`) this pass might latch, or an
+     * open decision whose own deadline needs [Room.giveUpTurn]'s attention — because [now] has
+     * reached it, or because the seat it names already sits in [Room.absentSeats] and so owns no
+     * deadline worth waiting out again, only a fresh one [Room.clocked] keeps handing it.
+     *
+     * @param room The room to judge; called both before [room]'s lock is taken and again once it is.
+     * @param now The instant every candidate in the same [expireTurnClocks] pass is judged against.
+     */
+    private fun isTurnClockCandidate(room: Room, now: Long): Boolean {
+        if (room.gracePeriods.isNotEmpty()) return true
+        val deadline = room.turnDeadline ?: return false
+        return now >= deadline.expiresAt || deadline.seat in room.absentSeats
     }
 
     /**
@@ -676,7 +686,7 @@ public class RoomRegistry(
      * - [RoomState.WAITING]: `now - lastActivityAt >= timeouts.waitingMillis`;
      * - [RoomState.FINISHED] or [RoomState.ABANDONED]: `now - lastActivityAt >= timeouts.finishedMillis`;
      * - [RoomState.PLAYING]: never, however idle. A silent live duel is `ADR-0013`'s grace period,
-     *   which [expireGracePeriods] ends: a seat whose window runs out has its hand folded as an
+     *   which [expireTurnClocks] ends: a seat whose window runs out has its hand folded as an
      *   ordinary action, and the room only becomes [RoomState.ABANDONED] — which is what makes it
      *   reapable by the rule above — once both seats are gone, rather than this method carrying a
      *   second timer for the same room.
