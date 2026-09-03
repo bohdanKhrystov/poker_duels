@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130804
 title: The room derives the deadline from its decision point and debits the bank by arithmetic
 type: task
-status: ready
+status: done
 parent: STORY-1308
 module: poker-server
 estimate: S
