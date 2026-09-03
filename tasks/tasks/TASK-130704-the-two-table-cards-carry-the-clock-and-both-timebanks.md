@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130704
 title: The two table cards carry the clock and both timebanks, and the host-alone frames carry none
 type: task
-status: backlog
+status: ready
 parent: STORY-1307
 module: design
 estimate: S

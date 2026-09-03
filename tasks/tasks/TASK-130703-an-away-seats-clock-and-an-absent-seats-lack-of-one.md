@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130703
 title: Draw ADR-0108's presence table, and retire the grace window's row
 type: task
-status: ready
+status: done
 parent: STORY-1307
 module: design
 estimate: S
