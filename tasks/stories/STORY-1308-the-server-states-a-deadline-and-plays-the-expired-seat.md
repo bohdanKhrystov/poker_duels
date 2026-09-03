@@ -2,7 +2,7 @@
 id: STORY-1308
 title: The server states a deadline and plays the seat whose clock ran out
 type: story
-status: blocked
+status: ready
 parent: EPIC-13
 module: poker-server
 labels: [server, protocol, clock, atomic]
@@ -26,25 +26,18 @@ stops acting no longer holds their rival's duel open indefinitely."*
 It is the largest item in the epic, it is the **only** one that moves the wire, and nothing exists to
 build on: no clock, deadline or timebank exists in the engine, the server or the client.
 
-## Blocked on `DEC-120` — the architect's
+## `DEC-120` is answered
 
-**This story is not splittable into tickets until `ADR-0113` merges.** `ADR-0108` §6 fixes what must
-be true and writes no repair; `DEC-120` is registered for the mechanism and is being answered now.
-What it owns, verbatim from §6:
+**`ADR-0113` merged 2026-09-02** and resolves `DEC-120` in full: one `ServerMessage.TurnClock`
+frame per decision point sent to both seats carrying **durations, never instants**; a deadline
+**derived** from the live decision point rather than armed; an expiry that is a
+**server-synthesised act** reusing `foldAbsent`'s single-seat body; `expireGracePeriods()` replaced
+by `expireTurnClocks()`; and `isPaused`, `DUEL_PAUSED` and `graceRemainingMillis` **deleted, not
+deprecated**. `ADR-0113` puts the grace window's retirement in the **same** version step, so this
+story is **not** re-cut in two and `EPIC-13`'s table stands as written.
 
-- which frame states the deadline the client counts down to — a field on an existing message or a
-  new one;
-- whether an expiry is a **server-synthesised act** through the ordinary act path (`foldAbsent`'s
-  shape) or a **new room event**;
-- what schedules expiry and at what resolution — the enforced expiry **may trail** the stated
-  deadline by a sweep period (`ADR-0025`) and **may never precede it**;
-- how a **resuming** client learns the live deadline;
-- what becomes of `disconnectGraceMillis`, `GraceExpiry`, the `DUEL_PAUSED` path and
-  `graceRemainingMillis` as `presence-countdown.ts`'s input.
-
-**If `ADR-0113` puts the grace window's retirement in a second version step, this story splits in
-two at split time and `EPIC-13`'s table is re-cut.** That is a re-cut of a story boundary before any
-ticket exists, not a scope change to a written one.
+`STORY-1307`'s card merged the same day, so the design this story transcribes is accepted before
+its first implementing ticket is startable (`ADR-0091` §2).
 
 ## Design notes
 
@@ -98,9 +91,38 @@ Everything below is `ADR-0108`, merged, and the mechanism must satisfy it.
 
 ## Tasks
 
+Split 2026-09-03. One chain, `TASK-130801` startable. Three tickets carry `atomic:`; only
+`TASK-130805`'s count is the output of a **green** `ADR-0070` probe, and the other two say so.
+
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *blocked — split after `ADR-0113` merges, then run `/plan-story STORY-1308`* | — |
+| [TASK-130801](../tasks/TASK-130801-one-seats-given-up-decision-is-one-function.md) | Extract one seat's given-up decision from `foldAbsent`'s loop | ready |
+| [TASK-130802](../tasks/TASK-130802-room-timeouts-carry-the-turn-allowance-and-the-timebank.md) | `RoomTimeouts` carries the turn allowance and the timebank | backlog |
+| [TASK-130803](../tasks/TASK-130803-the-turn-allowance-and-the-timebank-are-configuration.md) | The two numbers are read from configuration at startup | backlog |
+| [TASK-130804](../tasks/TASK-130804-the-room-derives-the-deadline-and-debits-the-bank.md) | The room derives the deadline and debits the bank by arithmetic | backlog |
+| [TASK-130805](../tasks/TASK-130805-the-wire-states-the-turn-clock-and-the-version-takes-its-step.md) | `TurnClock` reaches the wire, the pause leaves it, and `PROTOCOL_VERSION` takes its step — **`atomic:` 33, probe-green** | backlog |
+| [TASK-130806](../tasks/TASK-130806-every-decision-point-restarts-the-clock-and-states-it.md) | Every act write-back restarts the clock and states it to both seats | backlog |
+| [TASK-130807](../tasks/TASK-130807-a-fresh-duel-refills-both-banks-and-a-resume-restates-the-clock.md) | A fresh duel refills both banks, and a resume restates the clock | backlog |
+| [TASK-130808](../tasks/TASK-130808-the-room-gives-up-the-turn-of-a-seat-out-of-time-or-absent.md) | The room gives up the turn of a seat that is out of time or absent | backlog |
+| [TASK-130809](../tasks/TASK-130809-the-sweep-expires-turn-clocks-in-one-pass.md) | The sweep expires turn clocks in one pass through `act` — **`atomic:` 9** | backlog |
+| [TASK-130810](../tasks/TASK-130810-the-grace-window-leaves-the-room-and-the-configuration.md) | The grace window leaves the room and the configuration — **`atomic:` 17** | backlog |
+| [TASK-130811](../tasks/TASK-130811-the-store-anchors-the-clock-when-the-frame-arrives.md) | The store anchors a `TurnClock` when the frame arrives | backlog |
+| [TASK-130812](../tasks/TASK-130812-the-test-plan-retires-the-pause-and-the-grace-window.md) | The test plan retires the pause case and the grace window it measured against | backlog |
+
+**Where the version step sits, and why it is one ticket.** `TASK-130805` is the only ticket that
+moves `PROTOCOL_VERSION`, and it carries no behaviour beyond the refusal it deletes: the frame is
+declared and nothing sends it until `TASK-130806`. Its thirty-three files are the `git status` of a
+probe run to **green** on 2026-09-03 — the stub was `ADR-0113` §9's four declarations, the loop took
+seven Gradle rounds and eleven client rounds, and two paths appeared only after an earlier failure
+was cleared. The bump cannot be split from the wire (`ProtocolVersionLedgerTest` rule 4), and the
+wire cannot be split from the propagation (the Kotlin compiler, `tsc`, and two byte-comparing verify
+tasks), which is what `atomic:` names.
+
+**The other two `atomic:` tickets are renames, and their counts are measured, not probed.**
+`TASK-130809` and `TASK-130810` each declare a reference set read off `grep -rl` on `develop` and
+say so in the ticket; each instructs its coder to run `ADR-0070`'s loop first and to complete the
+table under `ADR-0070` §4. `ADR-0113` §9's probe stub is the **wire's** declarations, so the wire's
+radius is the only one the ADR's own procedure sizes.
 
 ## Acceptance criteria
 
