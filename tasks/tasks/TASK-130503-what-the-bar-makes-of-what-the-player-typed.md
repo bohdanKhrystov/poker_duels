@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130503
 title: What the bar makes of what the player typed, in the server's own numbers
 type: task
-status: backlog
+status: ready
 parent: STORY-1305
 module: web-client
 estimate: S

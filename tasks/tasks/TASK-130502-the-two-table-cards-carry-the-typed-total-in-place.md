@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130502
 title: The two table cards carry the typed total in place, at the phone as well as the laptop
 type: task
-status: ready
+status: done
 parent: STORY-1305
 module: design
 estimate: S
