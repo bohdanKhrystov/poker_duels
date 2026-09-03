@@ -280,4 +280,39 @@ internal class RoomAbsentSeatTest {
         assertNotNull(expired)
         assertEquals(PlayerAction.Fold(onTurn), expired!!.step.runner.log.hands[0].actions.last())
     }
+
+    // The next two share one fixture, and differ in one bit: the seat that runs out of time is
+    // connected in the first and away in the second. Heads-up alternates the button, so the seat
+    // that folds hand one holds hand two's button and is on turn again immediately — which is what
+    // makes "exactly one decision" and "the next decision too" tell each other apart at all.
+
+    @Test
+    fun aTimedOutSeatGivesUpExactlyOneDecision() {
+        val room = playingRoom()
+        val opener = room.runner!!.hand!!.state.seatToAct!!
+        val raised = room.act(opener, raiseFrame(room), seeds)!!
+        val facing = room.copy(runner = raised.runner).withDeadlineAt(deadlineAt)
+        val late = facing.runner!!.hand!!.state.seatToAct!!
+
+        val given = facing.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(PlayerAction.Fold(late), given!!.step.runner.log.hands[0].actions.last())
+        assertEquals(2, given.step.runner.hand!!.state.handNumber)
+        assertEquals(late, given.step.runner.hand!!.state.seatToAct)
+        assertEquals(emptyList<PlayerAction>(), given.step.runner.hand!!.log.actions)
+    }
+
+    @Test
+    fun aTimedOutConnectedSeatIsNeverLatchedAbsent() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+
+        val given = room.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        // The give-up happened — without this the claim below holds for a room nothing touched.
+        assertEquals(PlayerAction.Fold(onTurn), given!!.step.runner.log.hands[0].actions.last())
+        assertEquals(emptySet<Int>(), given.room.absentSeats)
+    }
 }
