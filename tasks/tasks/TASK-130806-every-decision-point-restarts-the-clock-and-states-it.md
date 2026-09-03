@@ -9,7 +9,12 @@ module: poker-server
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 2
+files_touched: 4
+atomic:
+  - RoomRegistryTest.importsNoTransportOrProtocolTypes — asserts RoomRegistry.kt contains no 'import duels.poker.server.protocol', so the frame is built in Room.kt and the two files move together
+  - RoomDuelTest — two exact-outbound assertEquals (lines 84 and 410) fail the moment the act batch gains frames
+  - the Kotlin compiler — a new Room projection and its RoomRegistry call site are one step
+  - './gradlew check -PrequireDocker=true' — holds all four files green together
 labels: [server, clock, protocol]
 depends_on: [TASK-130805]
 verify:
@@ -33,6 +38,33 @@ the batch — so both players are told the deadline and both banks for the decis
 | --- | --- |
 | `poker-server/src/main/kotlin/duels/poker/server/room/RoomRegistry.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/room/TurnClockFramesTest.kt` | create |
+| `poker-server/src/main/kotlin/duels/poker/server/room/Room.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/room/RoomDuelTest.kt` | modify |
+
+## Where the frame is built, and why that is not a `DEC`
+
+`TASK-130806`'s first dispatch stopped here, correctly. `RoomRegistry.act` cannot construct
+`ServerMessage.TurnClock`, because `RoomRegistryTest.importsNoTransportOrProtocolTypes` asserts
+`RoomRegistry.kt` contains no `import duels.poker.server.protocol`, and the class's own KDoc says the
+registry knows no protocol. The ticket as written required exactly that import.
+
+The coder judged this a decision because three resolutions looked plausible. It is not, because the
+repository has already answered it twice, in this very file:
+
+- `Room.kt` imports `ServerMessage` and `Room.presenceOf(seat, now)` returns a
+  `ServerMessage.OpponentPresence` — the room projects its own state into a frame.
+- `RoomRegistry.disconnect` and `RoomRegistry.resume` call `disconnected.presenceOf(seat, now)` and
+  wrap the result in `Addressed(...)`, importing no protocol type to do it.
+
+That is the same problem and the same shape. So `Room` gains a projection for the turn clock,
+mirroring `presenceOf`, and `RoomRegistry` calls it — no new pattern, no relaxed invariant, and
+nothing `ADR-0113` has to decide. Relaxing `importsNoTransportOrProtocolTypes` would be the decision;
+following the merged precedent is not.
+
+What was actually wrong was the **Files table**: it named two files for work that four gates hold
+together. `Room.kt` was missing, and so was `RoomDuelTest.kt`, whose two exact-outbound
+`assertEquals` (lines 84 and 410) fail the moment the batch grows. Both are gate-forced, so both are
+in the blast radius by `ADR-0070`'s definition, and the count is four.
 
 ## Scope
 
