@@ -9,7 +9,7 @@ module: poker-server
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 33
+files_touched: 35
 atomic:
   - ProtocolVersionLedgerTest — a wire shape whose fingerprint no ledger row claims fails it, and a bump with no row fails it too
   - ProtocolDocumentationTest — every ServerMessage owes a row, every ProtocolError owes a bullet, and the document states the version
@@ -59,8 +59,19 @@ Gradle rounds and **eleven** client rounds; each red run named a prefix and noth
 paths (`web-client/src/e2e/scripted-duel.gen.json` and `web-client/src/table/PresenceNotice.tsx`)
 appeared only after an earlier failure had been cleared. `./gradlew check -PrequireDocker=true`
 then exited 0, and `npm ci && npm run check && npm run build` in `web-client/` exited 0. The
-thirty-three rows below are that green run's `git status`. **This number is a fact about this
-ticket and about nothing else** (`ADR-0070` §5).
+thirty-three rows that run produced are the first thirty-three below.
+
+**Two more were added by the driver before dispatch, and the gap is worth naming.** The probe
+loop ran the *build* gates — `./gradlew check` and `npm ci && npm run check && npm run build` —
+until they exited 0. It never ran this ticket's own **refusal gates**, and
+`! grep -rq "graceRemainingMillis" poker-server/src web-client/src docs/protocol.md` exits **1**
+on `develop` because `account/sign-in.ts` and `account/sign-out.ts` cite the field in KDoc. Prose
+compiles, so no build round could ever have named them. By `ADR-0070`'s own definition — a file
+is in the blast radius exactly when some merged gate exits non-zero until it changes — both are
+in it, and the count is **thirty-five**. A probe is only as complete as the gate set it runs:
+green on the build is not green on the block.
+
+**This number is a fact about this ticket and about nothing else** (`ADR-0070` §5).
 
 ## Files
 
@@ -99,6 +110,8 @@ ticket and about nothing else** (`ADR-0070` §5).
 | `web-client/src/table/ActionBar.test.tsx` | modify | `tsc` TS2322, then the paused-copy test fails behaviourally |
 | `web-client/src/table/PresenceNotice.tsx` | modify | `tsc` TS2741 — `Lobby.tsx` can no longer supply the required prop |
 | `web-client/src/table/PresenceNotice.test.tsx` | modify | `tsc` TS2322 ×8, then four countdown tests fail behaviourally, then `prettier --check` |
+| `web-client/src/account/sign-in.ts` | modify | the ticket's own refusal gate — `! grep -rq "graceRemainingMillis" … web-client/src` — exits 1 while this KDoc cites the removed field |
+| `web-client/src/account/sign-out.ts` | modify | the same refusal gate, same cause: a KDoc naming `graceRemainingMillis` |
 
 ## Scope
 
