@@ -17,7 +17,7 @@ labels: [server, clock, sweep, atomic]
 depends_on: [TASK-130808]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.room.TurnClockExpiryTest'
-  - python3 -c "import xml.etree.ElementTree as E,sys;n=int(E.parse('poker-server/build/test-results/test/TEST-duels.poker.server.room.TurnClockExpiryTest.xml').getroot().get('tests'));print(n);sys.exit(0 if n==19 else 1)"
+  - python3 -c "import xml.etree.ElementTree as E,sys;n=int(E.parse('poker-server/build/test-results/test/TEST-duels.poker.server.room.TurnClockExpiryTest.xml').getroot().get('tests'));print(n);sys.exit(0 if n==21 else 1)"
   - sh -c '! grep -rq "expireGracePeriods\|GraceExpiry" poker-server/src'
   - sh -c 'test -f poker-server/src/main/kotlin/duels/poker/server/room/TurnClockExpiry.kt'
   - sh -c 'test ! -e poker-server/src/main/kotlin/duels/poker/server/room/GraceExpiry.kt'
@@ -82,6 +82,41 @@ Wire the room through and both criteria are live at once, on states neither was 
 together. Reconcile them deliberately — say which one decides, delete the other, and give the choice
 a test that fails if both run. A comment at `RoomRegistry.kt:642-645` names this; do not merely
 delete the comment.
+
+## The count is 21, and why it moved
+
+It was **19**, and that exact-count gate actively prevented a test for a real hazard. The first
+implementation guarded the sweep's fallback branch on `expired.runner != null` alone; the coder
+verified that guard with a temporary test and then **deleted the test** to keep the suite at 19,
+saying so plainly in its commit message. Review then reverted the guard to `runner!!` and found
+**all 1787 server tests still green** — the guard was genuinely unpinned.
+
+Worse, review found the guard is also too narrow, and built a repro. A **`FINISHED`** room carries a
+stale, outcome-bearing runner, so it passes a null-check that was written for the `WAITING` case:
+
+1. a duel finishes; the remaining seat closes its tab
+2. `disconnectGraceMillis` (60s) elapses on a later sweep, well inside `finishedMillis` (300s)
+3. `expireTurnClocks()` forwards the stale runner into `actOn`
+4. `restarted.finish(now)` runs on an already-`FINISHED` room and `Room.finish`'s
+   `check(state == RoomState.PLAYING)` throws
+
+The per-room `catch` swallows the throw, but `recording[code] = duelId` is set on the line **before**
+it and the `try/finally` that clears it is never reached. The claim leaks permanently: the room
+becomes un-reapable, refuses every rematch offer, and logs an error on every subsequent sweep tick.
+With the shipped `RoomTimeouts.DEFAULT` this fires whenever a player closes the tab within about four
+minutes of their duel ending — ordinary, not an edge case.
+
+So the fallback branch must require the room to be **`PLAYING`**, not merely to have a runner, and
+two tests are added rather than one:
+
+| Test | Proves |
+| --- | --- |
+| `aFinishedRoomsLateDisconnectDoesNotLeakTheRecordingClaim` | a `FINISHED` room whose seat's grace window elapses on a later sweep is left alone: no throw, and the room still reaps and still accepts a rematch offer |
+| `aWaitingRoomsDisconnectedHostIsLeftForTheIdleTimeout` | the original `WAITING`/no-runner case, restored — the test the count had forced out |
+
+The first is the review's finding and is not optional. The second is the one the gate deleted; it
+costs almost nothing once the first ticket's fixture exists, and leaving it out would repeat exactly
+the mistake that hid the defect.
 
 ## Files
 
