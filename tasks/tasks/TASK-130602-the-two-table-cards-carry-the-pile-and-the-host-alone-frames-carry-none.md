@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130602
 title: The two table cards carry the pile, and the host-alone frames carry none
 type: task
-status: backlog
+status: ready
 parent: STORY-1306
 module: design
 estimate: S

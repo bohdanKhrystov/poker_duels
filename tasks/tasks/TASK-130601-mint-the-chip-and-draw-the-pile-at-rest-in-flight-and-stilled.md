@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130601
 title: Mint the chip, its flight values, and the pile at rest, in flight and stilled
 type: task
-status: ready
+status: done
 parent: STORY-1306
 module: design
 estimate: S
