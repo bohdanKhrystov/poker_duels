@@ -11,8 +11,8 @@ import duels.poker.server.http.profileRoutes
 import duels.poker.server.http.recoveryRoutes
 import duels.poker.server.http.standingsRoutes
 import duels.poker.server.mail.DetachedRecoveryMailer
-import duels.poker.server.room.GraceExpiry
 import duels.poker.server.room.RoomRegistry
+import duels.poker.server.room.TurnClockExpiry
 import duels.poker.server.session.ConnectionDirectory
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -167,7 +167,7 @@ private fun Application.scheduleSweeps(
  * the loop that calls this ever ends.
  *
  * @param rooms The registry the first two sweeps run against.
- * @param connections Where each [GraceExpiry]'s outbound frames are delivered.
+ * @param connections Where each [TurnClockExpiry]'s outbound frames are delivered.
  * @param recoveryEmails The port the third sweep deletes expired verification rows from.
  * @param log Where a failing pass is logged; the caller's own [Application.log].
  */
@@ -178,13 +178,13 @@ private suspend fun sweepPass(
     log: Logger,
 ) {
     try {
-        for (expiry in rooms.expireGracePeriods()) {
+        for (expiry in rooms.expireTurnClocks()) {
             deliver(expiry.outbound, expiry.room, connections)
         }
     } catch (cancellation: CancellationException) {
         throw cancellation
     } catch (failure: Throwable) {
-        log.error("sweep: expiring disconnect grace windows failed", failure)
+        log.error("sweep: expiring turn clocks failed", failure)
     }
 
     try {

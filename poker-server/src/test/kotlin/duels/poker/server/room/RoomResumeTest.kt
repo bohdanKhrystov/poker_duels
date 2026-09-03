@@ -242,7 +242,7 @@ internal class RoomResumeTest {
         registry.join(room.code, guest)
         registry.disconnect(room.code, guest)
         clock.advance(TEST_TIMEOUTS.disconnectGraceMillis)
-        registry.expireGracePeriods()
+        registry.expireTurnClocks()
 
         val resumption = registry.resume(room.code, host)
 

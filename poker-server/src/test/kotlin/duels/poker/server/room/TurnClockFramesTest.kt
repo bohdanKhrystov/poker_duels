@@ -191,7 +191,7 @@ internal class TurnClockFramesTest {
         registry.disconnect(seated.code, absentPlayer)
 
         clock.advance(disconnectGraceMillis + 1)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         val outbound = expiries.single().outbound
