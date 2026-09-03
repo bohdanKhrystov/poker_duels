@@ -712,4 +712,46 @@ describe("the duel table", () => {
     );
     expect(screen.getByText("You win 4,850")).toBeDefined();
   });
+
+  it("stands chips at the rival's bet line beside the server's own figure", () => {
+    const view = aView({
+      seats: [
+        aSeat({ index: 0 }),
+        aSeat({ index: 1, committedThisStreet: 400 }),
+      ],
+    });
+
+    const { container } = render(<DuelTable view={view} />);
+
+    expect(container.querySelectorAll("p .chip-pile")).toHaveLength(1);
+    expect(screen.getByText(/committed/)).toBeDefined();
+    expect(screen.getByText("400")).toBeDefined();
+  });
+
+  it("draws no chips at a bet line with nothing on it", () => {
+    const view = aView({
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    const { container } = render(<DuelTable view={view} />);
+
+    expect(container.querySelectorAll("p .chip-pile")).toHaveLength(0);
+    expect(container.querySelectorAll(".chip-pile").length).toBeGreaterThan(0);
+  });
+
+  it("gives the hero no bet line of their own", () => {
+    const view = aView({
+      viewerSeat: 0,
+      seats: [
+        aSeat({ index: 0, committedThisStreet: 900 }),
+        aSeat({ index: 1, committedThisStreet: 0 }),
+      ],
+    });
+
+    const { container } = render(<DuelTable view={view} />);
+
+    expect(container.querySelectorAll("p")).toHaveLength(1);
+    expect(container.querySelectorAll("p .chip-pile")).toHaveLength(0);
+    expect(screen.getByText(/Pot/)).toBeDefined();
+  });
 });
