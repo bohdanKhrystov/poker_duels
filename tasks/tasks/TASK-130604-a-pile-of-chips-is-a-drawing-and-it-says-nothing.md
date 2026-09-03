@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130604
 title: A pile of chips is a drawing, it arrives, and it says nothing
 type: task
-status: backlog
+status: ready
 parent: STORY-1306
 module: web-client
 estimate: S
