@@ -33,6 +33,20 @@ private fun codeSource(vararg codes: String): RoomCodeSource {
 
 private val TEST_TIMEOUTS = RoomTimeouts(waitingMillis = 10_000, finishedMillis = 4_000, disconnectGraceMillis = 30_000)
 
+/**
+ * A short, known turn clock — [TEST_TIMEOUTS]' own `turnMillis`/`timebankMillis` are whatever
+ * [RoomTimeouts]' constructor defaults to, deliberately large enough that no test above times a
+ * connected seat out by accident. The tests below need the opposite: a clock they can run out on
+ * its own, with nobody disconnecting at all.
+ */
+private val SHORT_CLOCK_TIMEOUTS = RoomTimeouts(
+    waitingMillis = TEST_TIMEOUTS.waitingMillis,
+    finishedMillis = TEST_TIMEOUTS.finishedMillis,
+    disconnectGraceMillis = TEST_TIMEOUTS.disconnectGraceMillis,
+    turnMillis = 1_000L,
+    timebankMillis = 2_000L,
+)
+
 private val fixedSeeds = HandSeedSource { 7L }
 
 private val threeHands = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(3))
@@ -54,6 +68,16 @@ private fun allInFrame(room: Room): Act {
         handNumber = hand.state.handNumber,
         actionSequence = decisionPointOf(hand.log.events)!!.sequence,
         action = PlayerAction.AllIn(hand.state.seatToAct!!),
+    )
+}
+
+/** Builds the [Act] frame for whoever is on turn in [room]'s live hand, calling whatever bet stands. */
+private fun callFrame(room: Room): Act {
+    val hand = room.runner!!.hand!!
+    return Act(
+        handNumber = hand.state.handNumber,
+        actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+        action = PlayerAction.Call(hand.state.seatToAct!!),
     )
 }
 
@@ -430,5 +454,112 @@ internal class TurnClockExpiryTest {
 
         assertEquals(1, expiries.size)
         assertTrue(expiries.single().outbound.none { (_, message) -> message is ServerMessage.OpponentPresence })
+    }
+
+    @Test
+    fun aSeatWhoseClockRanOutIsPlayed() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, SHORT_CLOCK_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        val actionsBeforeSweep = registry.get(room.code)!!.runner!!.hand!!.log.actions
+
+        // Nobody disconnects: the connected seat on turn simply outlasts its own clock.
+        clock.advance(SHORT_CLOCK_TIMEOUTS.turnMillis + SHORT_CLOCK_TIMEOUTS.timebankMillis)
+        val expiries = registry.expireTurnClocks()
+
+        assertEquals(1, expiries.size)
+        val handOneActions = registry.get(room.code)!!.runner!!.log.hands.first().actions
+        assertTrue(handOneActions.size > actionsBeforeSweep.size)
+        // Presence, not the clock, decides the latch: a seat that ran out of time while
+        // connected is late, not gone.
+        assertTrue(registry.get(room.code)!!.absentSeats.isEmpty())
+    }
+
+    @Test
+    fun nowIsReadOnceSoTheExpiryNeverPrecedesTheDeadline() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ", "V215DE1C"), clock, SHORT_CLOCK_TIMEOUTS, seeds = fixedSeeds)
+        val deadlineAllowance = SHORT_CLOCK_TIMEOUTS.turnMillis + SHORT_CLOCK_TIMEOUTS.timebankMillis
+
+        // The early room's opening decision is clocked at t=0, so its deadline sits exactly
+        // deadlineAllowance away. The late room's is clocked one millisecond later, at t=1, so
+        // its own deadline is one millisecond after the early room's — the two straddle
+        // whatever single instant this pass reads `now` as.
+        val earlyRoom = registry.create(newPlayerId())
+        registry.join(earlyRoom.code, newPlayerId())
+
+        clock.advance(1)
+
+        val lateRoom = registry.create(newPlayerId())
+        registry.join(lateRoom.code, newPlayerId())
+
+        val earlyActionsBefore = registry.get(earlyRoom.code)!!.runner!!.hand!!.log.actions
+        val lateActionsBefore = registry.get(lateRoom.code)!!.runner!!.hand!!.log.actions
+
+        // From t=1 to t=deadlineAllowance: the early room's deadline is now reached exactly;
+        // the late room's is still one instant away.
+        clock.advance(deadlineAllowance - 1)
+        val expiries = registry.expireTurnClocks()
+
+        assertEquals(1, expiries.size)
+        assertEquals(earlyRoom.code, expiries.single().room.code)
+        val earlyActionsAfter = registry.get(earlyRoom.code)!!.runner!!.log.hands.first().actions
+        assertTrue(earlyActionsAfter.size > earlyActionsBefore.size)
+        val lateActionsAfter = registry.get(lateRoom.code)!!.runner!!.hand!!.log.actions
+        assertEquals(lateActionsBefore, lateActionsAfter)
+    }
+
+    @Test
+    fun anActAtTheDeadlineMinusOneMovesTheDuelAndTheNextSweepExpiresNothing() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, SHORT_CLOCK_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        val seated = (registry.join(room.code, guest) as JoinResult.Seated).room
+        val deadline = seated.turnDeadline!!.expiresAt
+        val frame = callFrame(seated)
+
+        clock.advance(deadline - 1)
+        val step = registry.act(room.code) { r -> r.act(frame.action.seat, frame, fixedSeeds) }
+
+        assertNotNull(step)
+        // The call does not end the hand, so hand 1 is still live: `log.hands` only ever
+        // carries a *completed* hand, which this one is not.
+        val handOneActionsAfterAct = registry.get(room.code)!!.runner!!.hand!!.log.actions
+        assertEquals(1, handOneActionsAfterAct.size)
+
+        val expiries = registry.expireTurnClocks()
+
+        assertEquals(emptyList<TurnClockExpiry>(), expiries)
+        val handOneActionsAfterSweep = registry.get(room.code)!!.runner!!.hand!!.log.actions
+        assertEquals(handOneActionsAfterAct, handOneActionsAfterSweep)
+    }
+
+    @Test
+    fun aSweepThatWinsMakesTheStaleActComeBackRejected() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, SHORT_CLOCK_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        val seated = (registry.join(room.code, guest) as JoinResult.Seated).room
+        val staleFrame = callFrame(seated)
+
+        clock.advance(SHORT_CLOCK_TIMEOUTS.turnMillis + SHORT_CLOCK_TIMEOUTS.timebankMillis)
+        val expiries = registry.expireTurnClocks()
+
+        assertEquals(1, expiries.size)
+        val handOneActionsAfterSweep = registry.get(room.code)!!.runner!!.log.hands.first().actions
+        assertEquals(1, handOneActionsAfterSweep.size)
+
+        val staleStep = registry.act(room.code) { r -> r.act(staleFrame.action.seat, staleFrame, fixedSeeds) }
+
+        assertNotNull(staleStep)
+        val handOneActionsAfterStaleAct = registry.get(room.code)!!.runner!!.log.hands.first().actions
+        assertEquals(handOneActionsAfterSweep, handOneActionsAfterStaleAct)
     }
 }
