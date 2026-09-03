@@ -11,6 +11,7 @@ import { actionText } from "./action-text";
 import { formatChips } from "./chips";
 import { actFrame } from "./act-frame";
 import { rejectionText } from "./rejection-text";
+import { readTypedAmount } from "./typed-amount";
 
 /**
  * The action bar: the one place a player asserts anything.
@@ -52,7 +53,14 @@ export function ActionBar(props: {
       className="mx-auto flex w-full max-w-[460px] flex-col gap-3 rounded-medium border border-hairline bg-surface p-4"
     >
       {turn === null ? (
-        <Waiting />
+        <>
+          <Waiting />
+          <Notice
+            entryRefusal={null}
+            rejection={props.rejection}
+            refusal={props.refusal}
+          />
+        </>
       ) : (
         // Keyed by the turn's identity and the refusal count, so a new decision
         // point *or* a rejected attempt at the same one mounts a fresh bar: the
@@ -63,30 +71,36 @@ export function ActionBar(props: {
           turn={turn}
           potIncludingStreet={props.potIncludingStreet}
           committedThisStreet={props.committedThisStreet}
+          rejection={props.rejection}
+          refusal={props.refusal}
           send={props.send}
         />
       )}
-      <Notice rejection={props.rejection} refusal={props.refusal} />
     </section>
   );
 }
 
 /**
  * Your turn. One button per action the server allowed, in the order it sent
- * them, and a sizing row of named presets only when a bet or a raise is on
- * offer (`ADR-0101`).
+ * them, and a sizing row of named presets plus a typed total only when a bet
+ * or a raise is on offer (`ADR-0101`, `ADR-0111`).
  */
 function Live(props: {
   turn: PendingTurn;
   potIncludingStreet: number;
   committedThisStreet: number;
+  rejection: Rejection | null;
+  refusal: ProtocolError | null;
   send: (message: ClientMessage) => void;
 }): ReactElement {
   const actions = props.turn.legalActions;
   const floor = amountFloor(actions);
-  // 0 when no amount is on offer: it reaches no frame, because only Bet and
-  // Raise carry a total, and neither is allowed here.
-  const [to, setTo] = useState(floor ?? 0);
+  // The only amount state, and it is a string: what the player has typed, or
+  // the server's own minimum before they have touched anything. `reading` and
+  // `dialled` below derive everything sendable from this one field — nothing
+  // numeric is stored beside it (`ADR-0111` §§1, 4).
+  const [entry, setEntry] = useState(floor === null ? "" : formatChips(floor));
+  const [entryRefusal, setEntryRefusal] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const filled = filledAction(actions.allowed);
   const chips =
@@ -99,6 +113,15 @@ function Live(props: {
           props.committedThisStreet,
         );
 
+  // A reading, never a rule (`typed-amount.ts`): the same entry compared
+  // against this turn's own bounds. `null` only when there is no amount on
+  // offer at all, so nothing here is ever asked to read against a bound the
+  // server did not send.
+  const reading =
+    floor === null ? null : readTypedAmount(entry, floor, actions.allInTo);
+  const dialled =
+    reading !== null && reading.kind === "amount" ? reading.to : null;
+
   return (
     <>
       <div
@@ -108,19 +131,44 @@ function Live(props: {
       >
         {chips.map((chip) => (
           <button
-            className="rounded-medium border border-hairline px-3 py-2 font-mono text-small leading-tight text-text disabled:border-hairline disabled:text-text-faint"
+            className="shrink-0 rounded-medium border border-hairline px-3 py-2 font-mono text-small leading-tight text-text disabled:border-hairline disabled:text-text-faint"
             disabled={sent}
             key={chip.label}
-            onClick={() => setTo(chip.amount)}
+            onClick={() => {
+              setEntry(formatChips(chip.amount));
+              setEntryRefusal(null);
+            }}
             type="button"
           >
             {chip.label}
           </button>
         ))}
+        {floor !== null && (
+          <input
+            aria-label="the total"
+            className="min-w-0 ml-auto w-[7ch] rounded-medium border border-hairline bg-transparent px-3 py-2 text-right font-mono leading-tight text-text tabular-nums disabled:border-hairline disabled:text-text-faint"
+            disabled={sent}
+            inputMode="numeric"
+            onChange={(event) => {
+              setEntry(event.target.value);
+              setEntryRefusal(null);
+            }}
+            type="text"
+            value={entry}
+          />
+        )}
       </div>
       <div aria-label="actions" className="flex gap-3" role="group">
         {actions.allowed.map((type) => {
-          const text = actionText(type, actions, to);
+          const text = actionText(type, actions, dialled ?? 0);
+          // The button prints the proposal a press would send, or nothing —
+          // never a different amount (`ADR-0111` §7, `ADR-0100` §2). Only Bet
+          // and Raise carry a typed total, so only they can be silenced by a
+          // refused one.
+          const printed =
+            (type === "BET" || type === "RAISE") && dialled === null
+              ? null
+              : text.amount;
           return (
             <button
               className={`flex-1 rounded-medium border px-3 py-4 leading-tight font-medium ${
@@ -131,17 +179,26 @@ function Live(props: {
               disabled={sent}
               key={type}
               onClick={() => {
+                if ((type === "BET" || type === "RAISE") && dialled === null) {
+                  // No frame, no sent-lock, no rewrite (`ADR-0111` §1): the
+                  // entry the player typed stands exactly as it is, and the
+                  // refusal is only ever said, never enforced.
+                  if (reading !== null && reading.kind === "refused") {
+                    setEntryRefusal(reading.sentence);
+                  }
+                  return;
+                }
                 setSent(true);
-                props.send(actFrame(props.turn, type, to));
+                props.send(actFrame(props.turn, type, dialled ?? 0));
               }}
               type="button"
             >
               {text.verb}
-              {text.amount !== null && (
+              {printed !== null && (
                 <>
                   {" "}
                   <span className="font-mono tabular-nums">
-                    {formatChips(text.amount)}
+                    {formatChips(printed)}
                   </span>
                 </>
               )}
@@ -149,6 +206,11 @@ function Live(props: {
           );
         })}
       </div>
+      <Notice
+        entryRefusal={entryRefusal}
+        rejection={props.rejection}
+        refusal={props.refusal}
+      />
     </>
   );
 }
@@ -179,7 +241,7 @@ interface SizingChip {
  * ```
  *
  * A preset is offered only when the amount it computes is one the server
- * would accept — `floor` through `allInTo` — never clamped into range and
+ * would accept — `floor` through `allInTo` — never rewritten into range and
  * never rendered dead (`ADR-0101` §3). `min` and `all-in` always satisfy
  * that by construction, because the engine caps both into range itself
  * (`minRaiseTo`/`minBetTo ≤ allInTo`); one rule offers all five.
@@ -232,26 +294,34 @@ function Waiting(): ReactElement {
 }
 
 /**
- * The line the server's last word about this seat's action goes on. It is
- * reserved whether or not there is anything to say, so saying something moves
- * nothing.
+ * The line the server's last word about this seat's action goes on — or, when
+ * the player's own typed entry was refused before it was ever sent, the local
+ * word about that instead. It is reserved whether or not there is anything to
+ * say, so saying something moves nothing.
  */
 function Notice(props: {
+  entryRefusal: string | null;
   rejection: Rejection | null;
   refusal: ProtocolError | null;
 }): ReactElement {
   return (
     <p className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-center text-small text-text-muted">
-      {noticeText(props.rejection, props.refusal)}
+      {noticeText(props.entryRefusal, props.rejection, props.refusal)}
     </p>
   );
 }
 
-/** A rejection is the server's answer to the action itself, so it wins. */
+/**
+ * A refusal of what the player just typed is said before anything is ever
+ * sent, so it wins first. Failing that, a rejection is the server's answer to
+ * the action itself, so it wins next.
+ */
 function noticeText(
+  entryRefusal: string | null,
   rejection: Rejection | null,
   refusal: ProtocolError | null,
 ): string {
+  if (entryRefusal !== null) return entryRefusal;
   if (rejection !== null) return rejectionText(rejection);
   if (refusal !== null) return refusalText(refusal);
   return "";
