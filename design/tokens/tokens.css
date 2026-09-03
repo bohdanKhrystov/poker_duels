@@ -54,6 +54,13 @@
    * because duel-coin.svg lights from cx="0.36" cy="0.30" — the two must match. */
   --pd-coin-face: radial-gradient(circle at 36% 30%, var(--pd-coin-glint), var(--pd-coin) 55%, var(--pd-coin-deep));
 
+  /* Chips — the pile beside a stack or pot figure (ADR-0115 §1, §4): a chip is
+   * vocabulary, never a fact, so its face composes tones the sheet already
+   * declares, as --pd-coin-face composes the coin's; no new hue is minted. */
+  --pd-chip-face: radial-gradient(circle at 36% 30%, var(--pd-text-muted), var(--pd-text-faint) 55%, var(--pd-hairline));
+  --pd-chip-edge: var(--pd-text-faint);
+  --pd-chip-size: 14px;
+
   /* Type — the system stack: instant, quiet, native everywhere. Sizes are rem so
    * the player's browser preference scales every screen; the px the design was
    * drawn at rides alongside. Numbers that move (pot, stacks, clock) are mono
@@ -117,6 +124,15 @@
    * stilled by it automatically, not re-decided per surface. */
   --pd-motion-turn-period: 2400ms;
   --pd-motion-turn-ease: ease-in-out;
+
+  /* the chip flight (ADR-0115 §1, §4, §6): garnish over a change every pile
+   * already states still — the numeral beside it, and the pile's own resting
+   * position — so --pd-motion-chip-travel is an offset the flight starts
+   * from, never a place it ends: a flight always lands at rest, not away
+   * from it. */
+  --pd-motion-chip-flight: 420ms;
+  --pd-motion-chip-ease: ease-out;
+  --pd-motion-chip-travel: 28px;
 }
 
 /* prefers-reduced-motion: reduce (ADR-0115 §2, §4) — snaps every animated or
