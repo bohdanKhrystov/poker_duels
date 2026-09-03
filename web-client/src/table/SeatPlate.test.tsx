@@ -212,4 +212,26 @@ describe("a seat plate", () => {
     expect(container.querySelectorAll("[aria-label]")).toHaveLength(1);
     expect(container.querySelectorAll("[title]")).toHaveLength(0);
   });
+
+  it("draws a pile beside the stack, and the numeral still says how many", () => {
+    const { container, getByText } = plate({ stack: 13400 });
+    expect(container.querySelectorAll(".chip-pile")).toHaveLength(1);
+    getByText("13,400");
+  });
+
+  it("draws the same pile for a small stack and a large one", () => {
+    const { container: smallContainer, unmount } = plate({ stack: 150 });
+    expect(smallContainer.querySelectorAll(".chip-disc")).toHaveLength(3);
+    unmount();
+
+    const { container: largeContainer } = plate({ stack: 13400 });
+    expect(largeContainer.querySelectorAll(".chip-disc")).toHaveLength(3);
+  });
+
+  it("draws no pile for a busted seat, and still says nothing", () => {
+    const { container, getByText } = plate({ stack: 0 });
+    expect(container.querySelectorAll(".chip-pile")).toHaveLength(0);
+    getByText("0");
+    expect(container.querySelectorAll("[aria-label], [title]")).toHaveLength(0);
+  });
 });

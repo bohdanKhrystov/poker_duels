@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130605
 title: A seat's stack is drawn in chips, and the numeral still says how many
 type: task
-status: ready
+status: done
 parent: STORY-1306
 module: web-client
 estimate: S
