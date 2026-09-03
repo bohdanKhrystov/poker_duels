@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130606
 title: The pot is drawn in chips, and the award line takes them away again
 type: task
-status: ready
+status: done
 parent: STORY-1306
 module: web-client
 estimate: S
