@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130802
 title: RoomTimeouts carries the turn allowance and the timebank
 type: task
-status: backlog
+status: ready
 parent: STORY-1308
 module: poker-server
 estimate: XS

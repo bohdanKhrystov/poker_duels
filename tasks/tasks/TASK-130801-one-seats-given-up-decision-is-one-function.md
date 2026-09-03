@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130801
 title: Extract one seat's given-up decision from foldAbsent's loop
 type: task
-status: ready
+status: done
 parent: STORY-1308
 module: poker-server
 estimate: XS
