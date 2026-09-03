@@ -315,4 +315,57 @@ internal class RoomAbsentSeatTest {
         assertEquals(PlayerAction.Fold(onTurn), given!!.step.runner.log.hands[0].actions.last())
         assertEquals(emptySet<Int>(), given.room.absentSeats)
     }
+
+    @Test
+    fun aTimedOutAwaySeatIsLatchedAbsent() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+        // Its grace window is still running at deadlineAt — the turn clock is what runs out here,
+        // so nothing but presence deciding the latch can put this seat in absentSeats.
+        val away = room.copy(gracePeriods = mapOf(onTurn to 30_000L))
+
+        val given = away.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(setOf(onTurn), given!!.room.absentSeats)
+        assertEquals(emptyMap<Int, Long>(), given.room.gracePeriods)
+    }
+
+    @Test
+    fun aLatchedSeatsNextDecisionIsPlayedAtTheSameInstant() {
+        val room = playingRoom()
+        val opener = room.runner!!.hand!!.state.seatToAct!!
+        val raised = room.act(opener, raiseFrame(room), seeds)!!
+        val facing = room.copy(runner = raised.runner).withDeadlineAt(deadlineAt)
+        val late = facing.runner!!.hand!!.state.seatToAct!!
+        val away = facing.copy(gracePeriods = mapOf(late to 30_000L))
+
+        val given = away.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(setOf(late), given!!.room.absentSeats)
+        // Hand three, where the connected twin of this fixture stopped at hand two: hand two's
+        // button is this same latched seat, and its decision falls in this very call, with no
+        // second deadline armed in between.
+        assertEquals(3, given.step.runner.hand!!.state.handNumber)
+        assertEquals(listOf(PlayerAction.Fold(late)), given.step.runner.log.hands[1].actions)
+    }
+
+    @Test
+    fun bothSeatsGoneAbandonsInsteadOfPlayingItOut() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+        val bothGone = room.copy(
+            gracePeriods = mapOf(onTurn to 30_000L),
+            absentSeats = setOf(1 - onTurn),
+        )
+
+        val given = bothGone.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(RoomState.ABANDONED, given!!.room.state)
+        assertTrue(given.step.outbound.isEmpty())
+        // Nothing was played out for nobody: the duel is exactly where it stood.
+        assertSame(bothGone.runner, given.step.runner)
+    }
 }
