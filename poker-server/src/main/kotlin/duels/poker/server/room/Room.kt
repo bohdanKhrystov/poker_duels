@@ -6,6 +6,7 @@ import duels.poker.server.duel.Addressed
 import duels.poker.server.duel.DuelRunner
 import duels.poker.server.duel.DuelStep
 import duels.poker.server.duel.HandSeedSource
+import duels.poker.server.duel.decisionPointOf
 import duels.poker.server.duel.foldAbsent
 import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.ProtocolError
@@ -31,6 +32,29 @@ public enum class RoomState {
     /** The room was abandoned; it carries no further invariant beyond seating. */
     ABANDONED,
 }
+
+/**
+ * The absolute deadline governing the decision currently open, and the seat it belongs to.
+ *
+ * [bankBeginsAt] and [expiresAt] are both fixed points on the caller's clock, never a remaining
+ * duration — the same reasoning [Room.gracePeriods]'s own KDoc gives: a value nobody has to
+ * remember to decrement is a value nobody forgets to.
+ *
+ * @property seat the seat this deadline governs; `0` or `1`.
+ * @property handNumber the hand the governed decision belongs to.
+ * @property actionSequence the sequence number, within [handNumber], of the decision this
+ *   deadline governs.
+ * @property bankBeginsAt the instant [seat]'s bank starts running, once its flat, free
+ *   allowance has passed.
+ * @property expiresAt the instant [seat]'s bank, and so the decision, run out.
+ */
+public data class TurnDeadline(
+    val seat: Int,
+    val handNumber: Int,
+    val actionSequence: Int,
+    val bankBeginsAt: Long,
+    val expiresAt: Long,
+)
 
 /**
  * A heads-up room: exactly two seats, host in seat 0 and an optional guest in seat 1.
@@ -72,6 +96,10 @@ public enum class RoomState {
  *   value that has to be decremented is a value someone has to remember to decrement.
  * @property absentSeats the seats whose grace window has already run out; see [isPaused] for what
  *   distinguishes them from [gracePeriods].
+ * @property turnDeadline the open decision's deadline, or `null` when none is open; derived by
+ *   [clocked] from the live duel, never armed or cancelled directly (`ADR-0113` §3).
+ * @property timebankRemainingMillis each seat's remaining bank, in milliseconds; derived by
+ *   [clocked] and refilled by [withFreshClocks].
  */
 public data class Room(
     val code: RoomCode,
@@ -87,6 +115,8 @@ public data class Room(
     val duelId: UUID? = null,
     val gracePeriods: Map<Int, Long> = emptyMap(),
     val absentSeats: Set<Int> = emptySet(),
+    val turnDeadline: TurnDeadline? = null,
+    val timebankRemainingMillis: Map<Int, Long> = emptyMap(),
 ) {
     init {
         require(guest == null || guest != host) { "the guest must not be the host" }
@@ -119,6 +149,18 @@ public data class Room(
         }
         require(gracePeriods.values.all { it >= 0 }) {
             "every grace deadline must not be negative"
+        }
+        require(turnDeadline == null || turnDeadline.seat in 0..1) {
+            "turnDeadline.seat must be 0 or 1, was ${turnDeadline?.seat}"
+        }
+        require(timebankRemainingMillis.keys.all { it in 0..1 }) {
+            "every seat named in timebankRemainingMillis must be 0 or 1"
+        }
+        require(timebankRemainingMillis.values.all { it >= 0 }) {
+            "every timebankRemainingMillis amount must not be negative"
+        }
+        require(turnDeadline == null || turnDeadline.bankBeginsAt <= turnDeadline.expiresAt) {
+            "turnDeadline.bankBeginsAt must not be after turnDeadline.expiresAt"
         }
     }
 
@@ -497,6 +539,73 @@ public data class Room(
         )
     }
 
+    /**
+     * Derive this room's turn clock from where its duel currently stands.
+     *
+     * [turnDeadline] is never armed or cancelled: every call recomputes it, and
+     * [timebankRemainingMillis], from [runner]'s live decision point — the seat its live hand is
+     * waiting on, that hand's number, and the sequence number of the decision — rather than a
+     * timer someone has to find and cancel (`ADR-0113` §3).
+     *
+     * A call whose decision point has not moved returns this room unchanged, banks included: a
+     * decision still open has spent nothing yet, however much later [now] falls. A call whose
+     * decision point differs, or whose [runner] has none, first debits whatever seat
+     * [turnDeadline] named for however much of its allowance the closing decision spent, clamped
+     * so a bank never goes negative. Only then does it either start a fresh deadline for the seat
+     * now on turn — [turnMillis] free, then that seat's own bank — or, when no seat is left to
+     * act, clear [turnDeadline].
+     *
+     * @param runner the room's live or finished duel, or `null` before one has started.
+     * @param now the current time in milliseconds; `Room` reads no clock of its own.
+     * @param turnMillis the flat allowance granted before a seat's bank starts running.
+     * @return this room with [turnDeadline] and [timebankRemainingMillis] derived from
+     *   [runner]'s live decision point as of [now].
+     */
+    public fun clocked(runner: DuelRunner?, now: Long, turnMillis: Long): Room {
+        val live = liveDecisionPoint(runner)
+        val deadline = turnDeadline
+        val unchanged = if (deadline == null) {
+            live == null
+        } else {
+            live == Triple(deadline.seat, deadline.handNumber, deadline.actionSequence)
+        }
+        if (unchanged) return this
+
+        val debited = if (deadline == null) {
+            timebankRemainingMillis
+        } else {
+            val left = (deadline.expiresAt - maxOf(now, deadline.bankBeginsAt)).coerceAtLeast(0L)
+            timebankRemainingMillis + (deadline.seat to left)
+        }
+        if (live == null) return copy(turnDeadline = null, timebankRemainingMillis = debited)
+
+        val bankBeginsAt = now + turnMillis
+        return copy(
+            turnDeadline = TurnDeadline(
+                seat = live.first,
+                handNumber = live.second,
+                actionSequence = live.third,
+                bankBeginsAt = bankBeginsAt,
+                expiresAt = bankBeginsAt + (debited[live.first] ?: 0L),
+            ),
+            timebankRemainingMillis = debited,
+        )
+    }
+
+    /**
+     * Refill this room's turn clock for a new duel.
+     *
+     * Both seats' [timebankRemainingMillis] are set to [timebankMillis] and [turnDeadline] is
+     * cleared: a rematch is a new duel and a fresh bank (`ADR-0108` §1).
+     *
+     * @param timebankMillis the bank, in milliseconds, to give each seat.
+     * @return this room with both banks refilled and [turnDeadline] cleared.
+     */
+    public fun withFreshClocks(timebankMillis: Long): Room = copy(
+        turnDeadline = null,
+        timebankRemainingMillis = mapOf(0 to timebankMillis, 1 to timebankMillis),
+    )
+
     public companion object {
         /**
          * Open a fresh room: a host waiting for a guest, no match yet, the host holding the
@@ -521,4 +630,16 @@ public data class Room(
                 lastActivityAt = now,
             )
     }
+}
+
+/**
+ * The seat, hand number and action sequence [runner]'s live hand is waiting on, or `null` if it
+ * has none: no live hand, no seat currently to act, or — defensively — a live hand whose events
+ * have not yet caught up with a state that already names one.
+ */
+private fun liveDecisionPoint(runner: DuelRunner?): Triple<Int, Int, Int>? {
+    val liveHand = runner?.hand ?: return null
+    val seat = liveHand.state.seatToAct ?: return null
+    val sequence = decisionPointOf(liveHand.log.events)?.sequence ?: return null
+    return Triple(seat, liveHand.state.handNumber, sequence)
 }
