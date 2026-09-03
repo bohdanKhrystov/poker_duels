@@ -40,6 +40,13 @@ import { aView } from "./view-fixture";
  * lives inside the bar's `Live`, which does not render until the server has named a turn, and
  * even then only when that turn carries a bet or a raise. The test below walks past the live
  * table the earlier tests already open, to prove that middle wait is real and not merely untested.
+ *
+ * The chip pile (`TASK-130605`–`TASK-130607`) shows nothing here either: `Lobby.tsx` mounts
+ * `WaitingTable`, which mounts none of `SeatPlate`, `PotStrip` or `DuelTable` — the three surfaces
+ * that draw one — while `view` is `null`. Unlike the typed total, it has no third state: it
+ * appears the moment a `Snapshot` arrives and never later, exactly like the acting mark. And it
+ * is `aria-hidden` with no text node, so neither `spoken()` nor the digit sweep below changes
+ * shape to admit it.
  */
 
 afterEach(() => {
@@ -246,6 +253,35 @@ describe("what the table shows when there is no view", () => {
     });
 
     expect(container.querySelectorAll(".last-act").length).toBeGreaterThan(0);
+  });
+
+  it("draws no chip before the server has named a stack", () => {
+    // The positive half is the guard on the guard, exactly as this file's
+    // third test already does it for the four ADR-0110 probes: without it,
+    // ".chip-pile" is a selector that could match nothing anywhere in this
+    // app and the refusal below would pass forever for the wrong reason.
+    const { container, store } = renderNullView("ABCDEFGH");
+
+    expect(container.querySelectorAll(".chip-pile")).toHaveLength(0);
+    // Closed, not filtered, the same reason the second test in this file
+    // insists on it: a name spoken through `aria-label` alone would pass
+    // every other assertion here undetected.
+    expect(spoken(container)).toEqual([]);
+
+    act(() => {
+      store.apply({ type: "Snapshot", view: aView() });
+    });
+
+    expect(container.querySelectorAll(".chip-pile").length).toBeGreaterThan(0);
+    // The surface-scoped closure `STORY-1304` recorded as the right shape: a
+    // statement about this surface's own silence, not the file's general
+    // `spoken()`, so it cannot redden the day another surface earns a label
+    // of its own, and it does redden the day a pile starts speaking one.
+    expect(
+      container.querySelectorAll(
+        ".chip-pile [aria-label], .chip-pile[aria-label], .chip-pile [title], .chip-pile[title]",
+      ),
+    ).toHaveLength(0);
   });
 
   it("offers no typed total before the server has named a turn", () => {
