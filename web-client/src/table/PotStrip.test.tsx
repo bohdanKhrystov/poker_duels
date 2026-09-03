@@ -126,18 +126,23 @@ describe("the pot strip", () => {
   });
 
   it("draws the same pile for a small pot and a large one", () => {
-    const pots = [150, 13400];
+    const { container: smallContainer, unmount: unmountSmall } = render(
+      <PotStrip view={aView({ pot: 150 })} />,
+    );
 
-    pots.forEach((pot) => {
-      const { container, unmount } = render(
-        <PotStrip view={aView({ pot })} />,
-      );
+    const smallDiscs = smallContainer.querySelectorAll(".chip-disc");
+    expect(smallDiscs.length).toBe(3);
 
-      const discs = container.querySelectorAll(".chip-disc");
-      expect(discs.length).toBe(3);
+    unmountSmall();
 
-      unmount();
-    });
+    const { container: largeContainer, unmount: unmountLarge } = render(
+      <PotStrip view={aView({ pot: 13400 })} />,
+    );
+
+    const largeDiscs = largeContainer.querySelectorAll(".chip-disc");
+    expect(largeDiscs.length).toBe(3);
+
+    unmountLarge();
   });
 
   it("draws no pile beside the award line", () => {
