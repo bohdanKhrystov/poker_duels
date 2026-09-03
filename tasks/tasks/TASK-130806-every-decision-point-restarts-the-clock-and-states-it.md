@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130806
 title: Every act write-back restarts the clock and states it to both seats
 type: task
-status: backlog
+status: ready
 parent: STORY-1308
 module: poker-server
 estimate: S

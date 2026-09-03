@@ -54,6 +54,27 @@ against that baseline and replaces this table before the ticket is dispatched, e
 `ADR-0070` §5 re-sized `TASK-021301` after it was written. If the loop still names a path this
 table lacks, **stop and say so** — that is a finding about the sizing, not a licence to widen it.
 
+## Two tests in this ticket's files are already vacuous, and compiling them is not enough
+
+`TASK-130805`'s review proved by mutation that two of the tests this ticket must touch assert
+nothing today. They are not broken by this ticket — they were hollowed out when the wire stopped
+carrying a remaining-duration — but this ticket is where they come to hand, and a mechanical
+arity fix would leave two green tests guarding nothing under names that promise otherwise.
+
+- **`RoomPresenceProjectionTest.theOtherSeatsWindowIsTheOneReported`** — mutating `Room.presenceOf`
+  to read `(1 - seat)` reddened four tests in the class and **not this one**: its fixture gives both
+  seats a grace entry, so the swap its name describes is invisible to it. Either give it a fixture
+  where the two seats differ, or retire it and say so.
+- **`RoomDisconnectTest.theRemainingIsTheConfiguredWindow`** — mutating `RoomRegistry.disconnect` to
+  use `now + 1L` instead of the configured window reddened five other tests and **not this one**. It
+  is now byte-identical in effect to `aDropTellsTheOtherSeatItIsAway`. With `disconnectGraceMillis`
+  deleted there is no configured window left for it to be about, so retiring it is the likely answer
+  — but state which, rather than leaving it compiling.
+
+Both were confirmed by the mutation named, not by reading. Note this interacts with the pinned
+count below: if `theOtherSeatsWindowIsTheOneReported` is retired rather than repaired,
+`RoomPresenceProjectionTest` does not stay at **9**, and the pin must move with a measured figure.
+
 ## Files
 
 | File | Action | Why it cannot be fewer |
@@ -136,7 +157,8 @@ away or deleted**. `RoomTimeoutsTest` loses its three disconnect-window assertio
       tests above passes by name
 - [ ] Exactly **5** files under `poker-server/src/test` still use `walkTopDown`, so the
       `Thread.sleep` scan moved with its file and no source-scanning guard was lost
-- [ ] `RoomPresenceProjectionTest` reports exactly **9** tests
+- [ ] `RoomPresenceProjectionTest` reports exactly **9** tests — **or a measured figure, if the vacuous test is retired rather than repaired; say which**
+- [ ] `theOtherSeatsWindowIsTheOneReported` and `theRemainingIsTheConfiguredWindow` are each either repaired so the named mutation reddens them, or deleted with a sentence saying why
 - [ ] `Room.kt` names `awaySeats` at least six times — the property, its `init` rules, `disconnect`,
       `reconnect` and `presenceOf`
 - [ ] `./gradlew check -PrequireDocker=true` is green

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130805
 title: TurnClock reaches the wire, the pause leaves it, and PROTOCOL_VERSION takes its step
 type: task
-status: ready
+status: done
 parent: STORY-1308
 module: poker-server
 estimate: S
