@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130608
 title: No chip before the server has named a stack, and the pile is a drawing after
 type: task
-status: ready
+status: done
 parent: STORY-1306
 module: web-client
 estimate: XS
