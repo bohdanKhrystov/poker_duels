@@ -7,6 +7,7 @@ import duels.poker.server.duel.DuelStep
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.decisionPointOf
 import duels.poker.server.duel.foldAbsent
+import duels.poker.server.duel.giveUpDecision
 import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.SeatPresence
 import duels.poker.server.protocol.ServerMessage
@@ -53,6 +54,18 @@ public data class TurnDeadline(
     val bankBeginsAt: Long,
     val expiresAt: Long,
 )
+
+/**
+ * What [Room.giveUpTurn] answers when the turn of an out-of-time or absent seat moves.
+ *
+ * The room travels with the duel because a give-up can change both at once: presence decides
+ * whether the timed-out seat latches into [Room.absentSeats], and a give-up that would leave both
+ * seats there returns the room [RoomState.ABANDONED] instead, carrying no frames at all.
+ *
+ * @property room the room as it stands after the give-up: latched, abandoned, or untouched.
+ * @property step the duel after every decision given up, and the frames each seat is owed for them.
+ */
+public data class TurnGiveUp(val room: Room, val step: DuelStep)
 
 /**
  * A heads-up room: exactly two seats, host in seat 0 and an optional guest in seat 1.
@@ -372,36 +385,71 @@ public data class Room(
     }
 
     /**
-     * Fold every already-absent seat whose turn has arrived, with no inbound frame to apply
-     * first.
+     * Give up the turn of the seat on turn when it is **out of time or absent**, with no inbound
+     * frame to apply first.
      *
      * This is the expiry path: nobody sent anything, so there is no seat and no [Act] for [act]
-     * to apply before folding. It asks `duels.poker.server.duel.act` directly, once per absent
-     * seat on turn, through the same `duels.poker.server.duel.foldAbsent` that [act] hands its
-     * own result to — a hand folded here is, in the log and on the wire, indistinguishable from
-     * one folded because [act] happened to be called right after it. Because it never goes
-     * through [act], it never consults [isPaused] either: a seat still counting down in
-     * [gracePeriods] is a reason to refuse a *new* frame in case its player is about to return,
-     * but it is not a reason to leave a *different*, already-absent seat's turn unresolved —
+     * to apply before the give-up. It asks `duels.poker.server.duel.act` directly — through
+     * `duels.poker.server.duel.giveUpDecision` for the seat whose [turnDeadline] ran out, and
+     * through the same `duels.poker.server.duel.foldAbsent` that [act] hands its own result to
+     * for a seat nobody is sitting in — so a hand given up here is, in the log and on the wire,
+     * indistinguishable from one given up because [act] happened to be called right after it.
+     * Because it never goes through [act], it never consults [isPaused] either: a seat still
+     * counting down in [gracePeriods] is a reason to refuse a *new* frame in case its player is
+     * about to return, but it is not a reason to leave a *different* seat's turn unresolved —
      * doing so would deadlock the duel on whichever seat happens to still be counting down.
      * Leaving [isPaused] unchecked is what lets a caller polling this method on a clock
      * (`TASK-020812`) always make progress, whatever any other seat is doing.
      *
-     * Pure and total: never throws. `null` when there is nothing to move — this room is not
-     * [RoomState.PLAYING], carries no [runner], holds no [absentSeats] at all, or the seat on
-     * turn belongs to a player who is still there.
+     * An expiry costs the seat **one** decision (`ADR-0113` §5). That is enforced by which
+     * argument the seat is passed as: the timed-out seat is `giveUpDecision`'s `seat`, called
+     * once, never a member of the set handed to `foldAbsent`, which keeps re-asking for as long as
+     * the turn returns to a seat in it. A seat that is already absent is the other way round, and
+     * is played at every decision the turn brings it.
      *
-     * @param seeds the source a hand-ending fold draws its next hand's seed from.
-     * @return the duel after folding every absent seat whose turn arrived, and the frames each
-     *   seat is entitled to see because of it, or `null` if there is nothing to fold right now.
+     * Presence, not the clock, decides the latch: a seat that ran out of time while its socket was
+     * down — a seat in [gracePeriods] — moves into [absentSeats] in [TurnGiveUp.room] and is
+     * thereafter played without waiting on a deadline again, exactly as an expired grace window
+     * leaves it. A seat that ran out of time while connected latches nothing: it is late, not gone.
+     *
+     * The both-gone abandon is checked before the give-up, never after: a room whose give-up would
+     * leave both seats in [absentSeats] comes back [RoomState.ABANDONED] carrying no frames, since
+     * there is no duel left worth playing out and nobody left to send it to.
+     *
+     * Pure and total: never throws. `null` when there is nothing to move — this room is not
+     * [RoomState.PLAYING], carries no [runner], has no seat on turn, or that seat is both inside
+     * its deadline and belongs to a player who is still there.
+     *
+     * @param now the current time in milliseconds, compared against [TurnDeadline.expiresAt];
+     *   `Room` reads no clock of its own.
+     * @param seeds the source a hand-ending give-up draws its next hand's seed from.
+     * @return the room after the give-up and the duel it produced, or `null` if there is nothing
+     *   to give up right now.
      */
-    public fun foldAbsentSeats(seeds: HandSeedSource): DuelStep? {
+    public fun giveUpTurn(now: Long, seeds: HandSeedSource): TurnGiveUp? {
         if (state != RoomState.PLAYING) return null
         val liveRunner = runner ?: return null
-        if (absentSeats.isEmpty()) return null
+        val seatOnTurn = liveRunner.hand?.state?.seatToAct ?: return null
+        val deadline = turnDeadline
+        val outOfTime = deadline != null && deadline.seat == seatOnTurn && now >= deadline.expiresAt
+        if (!outOfTime && seatOnTurn !in absentSeats) return null
+
+        val latched = if (outOfTime && seatOnTurn in gracePeriods) seatOnTurn else null
+        val gone = absentSeats + setOfNotNull(latched)
+        if (guest != null && gone == setOf(0, 1)) {
+            return TurnGiveUp(abandon(now), DuelStep(liveRunner, emptyList()))
+        }
+        val latchedRoom = if (latched == null) {
+            this
+        } else {
+            copy(gracePeriods = gracePeriods - latched, absentSeats = gone)
+        }
+
         val untouched = DuelStep(liveRunner, emptyList())
-        val folded = foldAbsent(untouched, absentSeats, seeds)
-        return if (folded === untouched) null else folded
+        val expired = if (outOfTime) giveUpDecision(untouched, seatOnTurn, seeds) else untouched
+        val played = foldAbsent(expired, latchedRoom.absentSeats, seeds)
+        if (played === untouched && latchedRoom === this) return null
+        return TurnGiveUp(latchedRoom, played)
     }
 
     /**

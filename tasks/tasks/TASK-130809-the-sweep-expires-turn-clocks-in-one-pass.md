@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130809
 title: The sweep expires turn clocks in one pass through act
 type: task
-status: backlog
+status: ready
 parent: STORY-1308
 module: poker-server
 estimate: S
@@ -47,6 +47,26 @@ planned, so no probe could have reached green. The **scheduler** re-runs `ADR-00
 against that baseline and replaces this table before the ticket is dispatched, exactly as
 `ADR-0070` §5 re-sized `TASK-021301` after it was written. If the loop still names a path this
 table lacks, **stop and say so** — that is a finding about the sizing, not a licence to widen it.
+
+## What `TASK-130808` hands you: two both-gone criteria, not one
+
+`TASK-130808` gave `Room.giveUpTurn` its own both-gone branch, returning an abandoned room inside
+`TurnGiveUp.room`. `RoomRegistry.expireGracePeriods` still has one too (`RoomRegistry.kt:629-633`,
+`bothGone` -> `expired.abandon(now)`). **Today they cannot both fire**, and the review established
+why rather than assuming it: the registry reads `it.giveUpTurn(now, handSeeds)?.step` and references
+`.room` nowhere in main source, `giveUpTurn` returns `null` for any room pass 1 already abandoned,
+and `Room.abandon` is idempotent on an already-`ABANDONED` room. So there is no defect on that diff.
+
+**This ticket is where it stops being inert**, because this ticket consumes `TurnGiveUp.room`. The
+hazard is not two calls to `abandon` — it is that the two branches decide *different questions*:
+
+- pass 1 checks `expired.absentSeats == setOf(0, 1)` after a pure `gracePeriods` expiry
+- `giveUpTurn` checks the wider absence-plus-latch state it has just computed
+
+Wire the room through and both criteria are live at once, on states neither was written to see
+together. Reconcile them deliberately — say which one decides, delete the other, and give the choice
+a test that fails if both run. A comment at `RoomRegistry.kt:642-645` names this; do not merely
+delete the comment.
 
 ## Files
 

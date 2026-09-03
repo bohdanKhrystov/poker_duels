@@ -12,6 +12,7 @@ import duels.poker.server.session.PlayerId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -20,6 +21,34 @@ import java.util.UUID
 // absent seat and a duel that correctly kept moving are told apart by which hand they land on.
 private val threeHands = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(3))
 private val seeds = HandSeedSource { 7L }
+
+// Every fixture below that carries no turnDeadline at all is judged against this instant, so the
+// absent-seat tests keep asking exactly what they asked before the clock became an input: no
+// deadline can have expired by it.
+private val beforeAnyDeadline = 3_000L
+
+// The instant every deadline below runs out at, and the one every timed-out call is made at: the
+// comparison is `>=`, so this exact instant is already too late.
+private val deadlineAt = 10_000L
+
+/**
+ * This room with a [TurnDeadline] governing its live decision, running out at [expiresAt].
+ *
+ * The seat, hand and sequence are read off the live hand exactly as [Room.clocked] would derive
+ * them, so no test has to know which seat opens a hand to time it out.
+ */
+private fun Room.withDeadlineAt(expiresAt: Long): Room {
+    val hand = runner!!.hand!!
+    return copy(
+        turnDeadline = TurnDeadline(
+            seat = hand.state.seatToAct!!,
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            bankBeginsAt = expiresAt,
+            expiresAt = expiresAt,
+        ),
+    )
+}
 
 private fun playingRoom(): Room {
     val opened = Room.open(RoomCode("2B7KMNPQ"), PlayerId("host"), threeHands, now = 1_000L)
@@ -162,53 +191,53 @@ internal class RoomAbsentSeatTest {
     }
 
     @Test
-    fun foldAbsentSeatsFoldsTheSeatOnTurn() {
+    fun giveUpTurnFoldsTheSeatOnTurn() {
         val room = playingRoom()
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         val absent = room.copy(absentSeats = setOf(onTurn))
 
-        val step = absent.foldAbsentSeats(seeds)
+        val step = absent.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNotNull(step)
-        assertEquals(PlayerAction.Fold(onTurn), step!!.runner.log.hands[0].actions.last())
+        assertEquals(PlayerAction.Fold(onTurn), step!!.step.runner.log.hands[0].actions.last())
     }
 
     @Test
-    fun foldAbsentSeatsAnswersNullWhenTheTurnIsNotTheirs() {
+    fun giveUpTurnAnswersNullWhenTheTurnIsNotTheirs() {
         val room = playingRoom()
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         val absent = room.copy(absentSeats = setOf(1 - onTurn))
 
-        val step = absent.foldAbsentSeats(seeds)
+        val step = absent.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNull(step)
     }
 
     @Test
-    fun foldAbsentSeatsAnswersNullWithNobodyAbsent() {
+    fun giveUpTurnAnswersNullWithNobodyAbsent() {
         val room = playingRoom()
 
-        val step = room.foldAbsentSeats(seeds)
+        val step = room.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNull(step)
     }
 
     @Test
-    fun foldAbsentSeatsAnswersNullForARoomThatIsNotPlaying() {
+    fun giveUpTurnAnswersNullForARoomThatIsNotPlaying() {
         val waiting = Room.open(RoomCode("2B7KMNPQ"), PlayerId("host"), threeHands, now = 1_000L)
         val finished = playingRoom().copy(state = RoomState.FINISHED, absentSeats = setOf(0))
 
-        assertNull(waiting.foldAbsentSeats(seeds))
-        assertNull(finished.foldAbsentSeats(seeds))
+        assertNull(waiting.giveUpTurn(beforeAnyDeadline, seeds))
+        assertNull(finished.giveUpTurn(beforeAnyDeadline, seeds))
     }
 
     @Test
-    fun foldAbsentSeatsIsNotSwallowedByARoomPausedForAnotherSeat() {
+    fun giveUpTurnIsNotSwallowedByARoomPausedForAnotherSeat() {
         val room = playingRoom()
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         // onTurn has already run out into absentSeats, but the opponent seat is separately still
         // counting down its own, unrelated grace window, so the room as a whole is isPaused. A
-        // foldAbsentSeats that (wrongly) deferred to isPaused would answer null here, and since
+        // giveUpTurn that (wrongly) deferred to isPaused would answer null here, and since
         // nothing but this expiry path ever asks again, the duel would stall forever.
         val pausedAndAbsent = room.copy(
             gracePeriods = mapOf(1 - onTurn to 9_000L),
@@ -216,9 +245,127 @@ internal class RoomAbsentSeatTest {
         )
         assertTrue(pausedAndAbsent.isPaused)
 
-        val step = pausedAndAbsent.foldAbsentSeats(seeds)
+        val step = pausedAndAbsent.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNotNull(step)
-        assertEquals(PlayerAction.Fold(onTurn), step!!.runner.log.hands[0].actions.last())
+        assertEquals(PlayerAction.Fold(onTurn), step!!.step.runner.log.hands[0].actions.last())
+    }
+
+    @Test
+    fun aSeatOutOfTimeIsPlayedThoughItIsPresent() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+        // Nobody is gone: absence cannot be what moves this turn, only the clock.
+        assertTrue(room.absentSeats.isEmpty() && room.gracePeriods.isEmpty())
+
+        val given = room.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(PlayerAction.Fold(onTurn), given!!.step.runner.log.hands[0].actions.last())
+    }
+
+    @Test
+    fun aSeatInsideItsDeadlineIsNotPlayed() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+        val runnerBefore = room.runner
+
+        val inside = room.giveUpTurn(deadlineAt - 1, seeds)
+        val expired = room.giveUpTurn(deadlineAt, seeds)
+
+        assertNull(inside)
+        assertSame(runnerBefore, room.runner)
+        // One millisecond later the very same room does move: the null above is the deadline
+        // talking, not a fixture that could never give up a turn at all.
+        assertNotNull(expired)
+        assertEquals(PlayerAction.Fold(onTurn), expired!!.step.runner.log.hands[0].actions.last())
+    }
+
+    // The next two share one fixture, and differ in one bit: the seat that runs out of time is
+    // connected in the first and away in the second. Heads-up alternates the button, so the seat
+    // that folds hand one holds hand two's button and is on turn again immediately — which is what
+    // makes "exactly one decision" and "the next decision too" tell each other apart at all.
+
+    @Test
+    fun aTimedOutSeatGivesUpExactlyOneDecision() {
+        val room = playingRoom()
+        val opener = room.runner!!.hand!!.state.seatToAct!!
+        val raised = room.act(opener, raiseFrame(room), seeds)!!
+        val facing = room.copy(runner = raised.runner).withDeadlineAt(deadlineAt)
+        val late = facing.runner!!.hand!!.state.seatToAct!!
+
+        val given = facing.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(PlayerAction.Fold(late), given!!.step.runner.log.hands[0].actions.last())
+        assertEquals(2, given.step.runner.hand!!.state.handNumber)
+        assertEquals(late, given.step.runner.hand!!.state.seatToAct)
+        assertEquals(emptyList<PlayerAction>(), given.step.runner.hand!!.log.actions)
+    }
+
+    @Test
+    fun aTimedOutConnectedSeatIsNeverLatchedAbsent() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+
+        val given = room.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        // The give-up happened — without this the claim below holds for a room nothing touched.
+        assertEquals(PlayerAction.Fold(onTurn), given!!.step.runner.log.hands[0].actions.last())
+        assertEquals(emptySet<Int>(), given.room.absentSeats)
+    }
+
+    @Test
+    fun aTimedOutAwaySeatIsLatchedAbsent() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+        // Its grace window is still running at deadlineAt — the turn clock is what runs out here,
+        // so nothing but presence deciding the latch can put this seat in absentSeats.
+        val away = room.copy(gracePeriods = mapOf(onTurn to 30_000L))
+
+        val given = away.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(setOf(onTurn), given!!.room.absentSeats)
+        assertEquals(emptyMap<Int, Long>(), given.room.gracePeriods)
+    }
+
+    @Test
+    fun aLatchedSeatsNextDecisionIsPlayedAtTheSameInstant() {
+        val room = playingRoom()
+        val opener = room.runner!!.hand!!.state.seatToAct!!
+        val raised = room.act(opener, raiseFrame(room), seeds)!!
+        val facing = room.copy(runner = raised.runner).withDeadlineAt(deadlineAt)
+        val late = facing.runner!!.hand!!.state.seatToAct!!
+        val away = facing.copy(gracePeriods = mapOf(late to 30_000L))
+
+        val given = away.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(setOf(late), given!!.room.absentSeats)
+        // Hand three, where the connected twin of this fixture stopped at hand two: hand two's
+        // button is this same latched seat, and its decision falls in this very call, with no
+        // second deadline armed in between.
+        assertEquals(3, given.step.runner.hand!!.state.handNumber)
+        assertEquals(listOf(PlayerAction.Fold(late)), given.step.runner.log.hands[1].actions)
+    }
+
+    @Test
+    fun bothSeatsGoneAbandonsInsteadOfPlayingItOut() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+        val bothGone = room.copy(
+            gracePeriods = mapOf(onTurn to 30_000L),
+            absentSeats = setOf(1 - onTurn),
+        )
+
+        val given = bothGone.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(RoomState.ABANDONED, given!!.room.state)
+        assertTrue(given.step.outbound.isEmpty())
+        // Nothing was played out for nobody: the duel is exactly where it stood.
+        assertSame(bothGone.runner, given.step.runner)
     }
 }
