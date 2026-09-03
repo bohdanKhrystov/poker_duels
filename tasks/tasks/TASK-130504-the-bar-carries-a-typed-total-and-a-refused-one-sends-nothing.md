@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130504
 title: The bar carries a typed total, and a refused one sends nothing and says why
 type: task
-status: ready
+status: done
 parent: STORY-1305
 module: web-client
 estimate: S
