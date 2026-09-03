@@ -6,6 +6,7 @@ import { PotStrip } from "./PotStrip";
 import { SeatPlate } from "./SeatPlate";
 import { Hand } from "./Hand";
 import { formatChips } from "./chips";
+import { ChipPile } from "./ChipPile";
 
 /**
  * The duel table: one column, rival above, board between, you below.
@@ -113,6 +114,7 @@ function BetLine(props: { committed: number }): ReactElement {
     <p className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-center text-small text-text-faint">
       {props.committed > 0 && (
         <>
+          <ChipPile key={props.committed} />
           committed{" "}
           <span className="font-mono text-text tabular-nums">
             {formatChips(props.committed)}
