@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { GameEvent, PlayerView, PotAwarded, Street } from "../protocol";
 import { formatChips } from "./chips";
+import { ChipPile } from "./ChipPile";
 
 // The street the view names, written out. A side table rather than a switch so
 // `tsc` fails the day the wire grows a street this screen has no word for.
@@ -107,10 +108,12 @@ export function PotStrip(props: {
   const street = props.street ?? view.street;
   const awardLine =
     street === "COMPLETE" ? awardLineFor(view, narration) : null;
+  const total = potCommittedToTheHand(view);
   return (
     <div className="flex items-baseline gap-4 px-2 py-3">
+      {awardLine === null && total > 0 && <ChipPile key={total} />}
       <span className="font-mono text-large tabular-nums">
-        {awardLine ?? <>Pot&nbsp;{formatChips(potCommittedToTheHand(view))}</>}
+        {awardLine ?? <>Pot&nbsp;{formatChips(total)}</>}
       </span>
       <span className="text-small text-text-muted">
         Blinds {formatChips(view.smallBlind)}/{formatChips(view.bigBlind)} ·

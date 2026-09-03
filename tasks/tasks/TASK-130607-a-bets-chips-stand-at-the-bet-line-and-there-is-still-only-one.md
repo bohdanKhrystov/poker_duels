@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130607
 title: A bet's chips stand at the rival's bet line, and there is still only one bet line
 type: task
-status: backlog
+status: ready
 parent: STORY-1306
 module: web-client
 estimate: S
