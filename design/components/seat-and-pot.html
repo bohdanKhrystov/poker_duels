@@ -78,6 +78,12 @@
   .clock { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
     font-size: 1rem; color: var(--pd-text); }
   .clock.running-out { color: var(--pd-warn); }
+  /* the bank spending (ADR-0108 §5): distinct from .clock.running-out by hue, not by the
+   * figure's mm:ss format — a player must be able to see the bank begin to spend. */
+  .clock.on-timebank { color: var(--pd-accent); }
+  /* the figure at zero (ADR-0113 §6): quieter than either sibling above — it holds and
+   * asserts nothing until a server frame carries the consequence. */
+  .clock.expired { color: var(--pd-text-faint); }
   /* the seat's remaining bank (ADR-0108 §5): both seats' banks are public facts of the
    * table, so the figure carries the shipped Pot 2,850 label-and-figure idiom, never bare
    * Bank — docs/vision.md's Positioning refuses bankroll. */
@@ -293,6 +299,36 @@
         <span class="chips">7,450</span>
       </div>
       <span class="l">not on turn — no countdown at all, and the timebank is still a public fact of the table</span>
+    </div>
+    <div>
+      <div class="seat on-turn">
+        <span class="who"><span class="name">ImKate</span>
+          <span class="status turn">Their turn</span></span>
+        <span class="clock on-timebank">2:47</span>
+        <span class="timebank">Timebank&nbsp;2:47</span>
+        <span class="chips">4,550</span>
+      </div>
+      <span class="l">on timebank — the fresh allowance is spent and the bank is what falls</span>
+    </div>
+    <div>
+      <div class="seat on-turn">
+        <span class="who"><span class="name">ImKate</span>
+          <span class="status turn">Their turn</span></span>
+        <span class="clock expired">0</span>
+        <span class="timebank">Timebank&nbsp;0:00</span>
+        <span class="chips">4,550</span>
+      </div>
+      <span class="l">expired — the figure holds at zero, and nothing a player reads has changed yet</span>
+    </div>
+    <div>
+      <div class="seat">
+        <span class="who"><span class="name">ImKate</span>
+          <span class="status"></span></span>
+        <span class="last-act">Check</span>
+        <span class="timebank">Timebank&nbsp;0:00</span>
+        <span class="chips">4,550</span>
+      </div>
+      <span class="l">after the server acted — the mark is the consequence, and it arrived in a frame</span>
     </div>
   </div>
 

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130702
 title: Draw the clock on the timebank, holding at zero, and the plate after the server acted
 type: task
-status: ready
+status: done
 parent: STORY-1307
 module: design
 estimate: S
