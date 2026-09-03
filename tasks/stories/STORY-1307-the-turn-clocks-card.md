@@ -76,7 +76,21 @@ of `disconnectGraceMillis`, `GraceExpiry`, the `DUEL_PAUSED` path and `graceRema
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *not yet split — run `/plan-story STORY-1307`* | — |
+| [TASK-130701](../tasks/TASK-130701-the-clocks-vocabulary-and-the-fresh-allowance.md) | Draw the turn clock, its two allowance states, and the timebank at both seats | ready |
+| [TASK-130702](../tasks/TASK-130702-the-bank-spending-zero-and-the-frame-that-follows.md) | Draw the clock on the timebank, holding at zero, and the plate after the server acted | backlog |
+| [TASK-130703](../tasks/TASK-130703-an-away-seats-clock-and-an-absent-seats-lack-of-one.md) | Draw ADR-0108's presence table, and retire the grace window's row | backlog |
+| [TASK-130704](../tasks/TASK-130704-the-two-table-cards-carry-the-clock-and-both-timebanks.md) | The two table cards carry the clock and both timebanks, and the host-alone frames carry none | backlog |
+
+**The still form of a ticking clock, settled here rather than left to a coder.** `ADR-0115` §3
+already names the clock by name: *"each second's numeral is a step. A smooth sub-second depletion
+drawn between them is a how, and is what a reduced form skips."* So **the still form of the clock
+is the clock** — a numeral changing each second is information arriving, not motion, and a player
+with `prefers-reduced-motion: reduce` reads the same figure at the same second as everyone else.
+The split takes that structurally, the way `STORY-1306` took `ADR-0115` structurally: **the clock
+animates nothing at all.** `@keyframes`, `animation:`, `animation-` and `transition:` are pinned at
+their present counts on all three cards, so no keyframe, shorthand or longhand can reach it and the
+reduced-motion form is byte-identical by construction. `TASK-130701` draws the *at rest* row anyway,
+because a reader who does not know this will assume a clock must tick visually.
 
 ## Acceptance criteria
 
