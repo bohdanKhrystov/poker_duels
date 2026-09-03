@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { SeatView, SeatPresence } from "../protocol";
 import type { ActEvent } from "../store/duel-state";
+import { ChipPile } from "./ChipPile";
 import { lastActText } from "./action-text";
 import { formatChips } from "./chips";
 import { seatStatus } from "./seat-status";
@@ -64,6 +65,7 @@ export function SeatPlate(props: {
           D
         </span>
       )}
+      {props.seat.stack > 0 && <ChipPile key={props.seat.stack} />}
       <span className="font-mono tabular-nums">
         {formatChips(props.seat.stack)}
       </span>
