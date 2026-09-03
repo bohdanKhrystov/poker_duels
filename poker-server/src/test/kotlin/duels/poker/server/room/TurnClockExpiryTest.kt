@@ -627,6 +627,20 @@ internal class TurnClockExpiryTest {
         assertEquals(listOf(room.code), reaped)
     }
 
+    /**
+     * A `WAITING` room's lone host may disconnect before a guest ever joins
+     * (`RoomRegistry.disconnect` allows it), and this documents what the sweep does about it:
+     * nothing, on purpose — the room is left exactly as it was, still `WAITING`, and its own
+     * idle timeout in [RoomRegistry.reap] is what eventually removes it.
+     *
+     * What this does **not** prove: it does not distinguish `RoomRegistry.kt`'s `PLAYING` guard
+     * from an unconditional `expired.runner!!`. Without that guard, a `WAITING` room's `null`
+     * runner would throw an NPE instead of returning `null` here — but [RoomRegistry.expireTurnClocks]'s
+     * own per-room `catch` swallows that throw before any write-back happens, so this test's own
+     * assertions read identically either way. Pinning that guard is
+     * `aFinishedRoomsLateDisconnectDoesNotLeakTheRecordingClaim`'s job, not this one's — see the
+     * comment on the guard itself for why only that half is testable.
+     */
     @Test
     fun aWaitingRoomsDisconnectedHostIsLeftForTheIdleTimeout() = runBlocking {
         val clock = MutableClock()

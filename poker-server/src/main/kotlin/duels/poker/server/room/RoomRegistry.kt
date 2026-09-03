@@ -645,10 +645,27 @@ public class RoomRegistry(
                         // throws `Room.finish`'s own `check(state == PLAYING)` — after
                         // `recording[code]` is already claimed and before the `try`/`finally` that
                         // clears it ever runs, leaking that claim forever (`TASK-130809`, review).
+                        // ABANDONED is excluded for the identical reason, not WAITING's: `Room.abandon()`
+                        // never clears `runner`, and `Room.disconnect()` carries no state guard of its
+                        // own, so an already-abandoned room that later picks up a stray grace period
+                        // would hit the same claim-leak shape if forced through here.
+                        //
+                        // Only the FINISHED/ABANDONED half of this exclusion is testable — leaking
+                        // `recording[code]` is an observable defect, proved by
+                        // `aFinishedRoomsLateDisconnectDoesNotLeakTheRecordingClaim`. The WAITING half
+                        // is deliberately unpinned: without the state check, `expired.runner` alone is
+                        // `null` and this branch would throw an NPE instead — but that throw is caught
+                        // by this method's own per-room `catch` below, before any write-back, so the
+                        // room is skipped either way. The throw is observationally inert apart from a
+                        // log line: same `expiries`, same room state, same `reap()` outcome.
+                        // `aWaitingRoomsDisconnectedHostIsLeftForTheIdleTimeout` documents the room
+                        // being left alone for its own idle timeout in reap(); it neither claims nor
+                        // is able to distinguish this guard from an unconditional `expired.runner!!`.
+                        //
                         // Neither excluded room needs the sweep: a WAITING room is left for its own
-                        // idle timeout in reap(), a FINISHED one for its own [RoomTimeouts.finishedMillis]
-                        // — and nothing downstream reads presence for either state, since resume
-                        // refuses both.
+                        // idle timeout in reap(), a FINISHED or ABANDONED one for its own
+                        // [RoomTimeouts.finishedMillis] — and nothing downstream reads presence for any
+                        // of the three states, since resume refuses all of them.
                         null -> if (expired !== room && expired.state == RoomState.PLAYING) {
                             val runner = checkNotNull(expired.runner) { "a PLAYING room always carries a runner" }
                             TurnGiveUp(expired, DuelStep(runner, emptyList()))
