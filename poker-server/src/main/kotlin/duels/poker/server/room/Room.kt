@@ -2,14 +2,12 @@ package duels.poker.server.room
 
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.MatchState
-import duels.poker.server.duel.Addressed
 import duels.poker.server.duel.DuelRunner
 import duels.poker.server.duel.DuelStep
 import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.decisionPointOf
 import duels.poker.server.duel.foldAbsent
 import duels.poker.server.protocol.Act
-import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.SeatPresence
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
@@ -341,17 +339,12 @@ public data class Room(
     /**
      * Apply an inbound duel action to this room's live duel.
      *
-     * Checked strictly in this order, and the order is load-bearing: a room that is not
-     * [RoomState.PLAYING] answers `null` first, exactly as it always has, so a finished or
-     * abandoned room is never mistaken for a paused one. Only once a room is confirmed
-     * [RoomState.PLAYING] and holding a [runner] does [isPaused] get a say: while any seat is
-     * still counting down its disconnect grace window (`ADR-0013`), the frame is refused as
-     * [ProtocolError.DUEL_PAUSED], addressed to the sending seat alone, and [runner] is returned
-     * exactly as it came in — no `copy`, no re-derivation — so the caller can tell nothing moved
-     * by comparing the returned runner against the one it passed in. A seat whose
-     * window has already run out into [absentSeats] does **not** pause the room this way; that
-     * case falls through to the delegation below like any other live frame. Only when neither
-     * check above fires does this delegate to `duels.poker.server.duel.act`: legality, turn
+     * Checked strictly in this order: a room that is not [RoomState.PLAYING] answers `null`
+     * first, so a finished or abandoned room is never mistaken for a live one; a room holding no
+     * [runner] answers `null` the same way. Neither check consults [isPaused] — a seat still
+     * counting down its disconnect grace window (`ADR-0013`) is not a reason to refuse an `Act`
+     * from the seat that is still there; that seat's action is applied exactly like any other.
+     * Once both checks pass, this delegates to `duels.poker.server.duel.act`: legality, turn
      * order and hand advancement are all decided there, never re-decided here — this is a thin,
      * pure adapter from a room to the runner it hosts. The result is then handed to
      * `duels.poker.server.duel.foldAbsent` together with [absentSeats]: that call decides
@@ -369,16 +362,12 @@ public data class Room(
      * @param message the inbound attempt to act.
      * @param seeds the source a hand-ending action draws its next seed from.
      * @return the duel after this frame and any absent seat's fold that followed it, and the
-     *   frames each seat is entitled to see because of it; a paused refusal that leaves the
-     *   runner untouched; or `null` if this room is not [RoomState.PLAYING] or carries no
-     *   [runner].
+     *   frames each seat is entitled to see because of it; or `null` if this room is not
+     *   [RoomState.PLAYING] or carries no [runner].
      */
     public fun act(seat: Int, message: Act, seeds: HandSeedSource): DuelStep? {
         if (state != RoomState.PLAYING) return null
         val liveRunner = runner ?: return null
-        if (isPaused) {
-            return DuelStep(liveRunner, listOf(Addressed(seat, ServerMessage.Failure(ProtocolError.DUEL_PAUSED))))
-        }
         return foldAbsent(advanceDuel(liveRunner, seat, message, seeds), absentSeats, seeds)
     }
 
@@ -428,35 +417,27 @@ public data class Room(
     public fun touch(now: Long): Room = copy(lastActivityAt = now)
 
     /**
-     * Project [seat]'s presence as of [now]: the [ServerMessage.OpponentPresence] frame that
-     * describes it on the wire (`ADR-0028`).
+     * Project [seat]'s presence: the [ServerMessage.OpponentPresence] frame that describes it on
+     * the wire (`ADR-0028`).
      *
      * The three branches are exactly the three states [Room] already distinguishes: [seat]
-     * counting down in [gracePeriods] answers [SeatPresence.AWAY], carrying however much of that
-     * window is left; [seat] already moved into [absentSeats] answers [SeatPresence.ABSENT]; any
-     * other seat answers [SeatPresence.PRESENT]. The remaining grace is clamped at zero rather
-     * than let go negative — a deadline already past still answers [SeatPresence.AWAY] with
-     * nothing left, not a state the frame's own `require` would refuse anyway, and the clamp is
-     * what keeps this function total for any [now].
+     * counting down in [gracePeriods] answers [SeatPresence.AWAY]; [seat] already moved into
+     * [absentSeats] answers [SeatPresence.ABSENT]; any other seat answers [SeatPresence.PRESENT].
      *
      * Nothing is written back here: this call adds no field to [Room]. It only projects
-     * [gracePeriods] and [absentSeats] as they already stand, the same way [act] reads [isPaused]
-     * to build its `DUEL_PAUSED` failure without storing one.
+     * [gracePeriods] and [absentSeats] as they already stand.
      *
      * @param seat the seat to report on; must be 0 or 1.
-     * @param now the current time in milliseconds, on the same scale as [gracePeriods]'s
-     *   deadlines; `Room` reads no clock of its own.
+     * @param now the current time in milliseconds; unused now that [ServerMessage.OpponentPresence]
+     *   carries no remaining duration, kept so this method's signature does not move its callers.
      * @return the frame describing [seat]'s presence.
      * @throws IllegalArgumentException if [seat] is not 0 or 1.
      */
+    @Suppress("UNUSED_PARAMETER")
     public fun presenceOf(seat: Int, now: Long): ServerMessage.OpponentPresence {
         require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
-        val deadline = gracePeriods[seat]
         return when {
-            deadline != null -> ServerMessage.OpponentPresence(
-                presence = SeatPresence.AWAY,
-                graceRemainingMillis = (deadline - now).coerceAtLeast(0L),
-            )
+            seat in gracePeriods -> ServerMessage.OpponentPresence(presence = SeatPresence.AWAY)
             seat in absentSeats -> ServerMessage.OpponentPresence(presence = SeatPresence.ABSENT)
             else -> ServerMessage.OpponentPresence(presence = SeatPresence.PRESENT)
         }

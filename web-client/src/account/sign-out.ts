@@ -35,10 +35,10 @@ export type SignOutOutcome =
  * `reload` is injected, for `sign-in.ts`'s reason: a module that reached for
  * the real navigation API itself would be untestable under jsdom, and a full
  * reload is the only boundary that rebuilds `initialState()`, leaving behind
- * the three presence fields `ADR-0075`'s Consequences name —
- * `rivalPresence`, `graceRemainingMillis` and `rivalReturned` — that no store
- * action clears. It runs once, after the local forgetting is already done,
- * so a browser that reloads mid-way never re-boots holding the old token.
+ * the two presence fields `ADR-0075`'s Consequences name — `rivalPresence`
+ * and `rivalReturned` — that no store action clears. It runs once, after the
+ * local forgetting is already done, so a browser that reloads mid-way never
+ * re-boots holding the old token.
  */
 export async function signOut(request: {
   readonly fetch: ApiFetch;

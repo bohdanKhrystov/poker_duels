@@ -22,19 +22,16 @@ const SNAPSHOT: ServerMessage = {
 const AWAY: ServerMessage = {
   type: "OpponentPresence",
   presence: "AWAY",
-  graceRemainingMillis: 47000,
 };
 
 const ABSENT: ServerMessage = {
   type: "OpponentPresence",
   presence: "ABSENT",
-  graceRemainingMillis: null,
 };
 
 const PRESENT: ServerMessage = {
   type: "OpponentPresence",
   presence: "PRESENT",
-  graceRemainingMillis: null,
 };
 
 // ADR-0046 §2, quoted verbatim. Literals, not an import from `presence-text.ts`:

@@ -7,7 +7,6 @@ import duels.poker.server.protocol.CreateRoom
 import duels.poker.server.protocol.Hello
 import duels.poker.server.protocol.JoinRoom
 import duels.poker.server.protocol.ProtocolCodec
-import duels.poker.server.protocol.ProtocolError
 import duels.poker.server.protocol.SeatPresence
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.protocol.protocolJson
@@ -34,7 +33,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
@@ -67,18 +66,6 @@ private fun testRoomRegistry(clock: MutableClock): RoomRegistry =
 private suspend fun DefaultClientWebSocketSession.nextServerMessage(): ServerMessage {
     val frame = incoming.receive() as Frame.Text
     return protocolJson.decodeFromString(frame.readText())
-}
-
-/**
- * Reads frames off [this] session until one is a [ServerMessage.Failure], discarding any that
- * arrive first — a presence frame (`ADR-0028`) may legitimately precede the response a caller is
- * actually waiting for, so the caller under test never assumes the failure is the next frame.
- */
-private suspend fun DefaultClientWebSocketSession.nextFailure(): ServerMessage.Failure {
-    while (true) {
-        val message = nextServerMessage()
-        if (message is ServerMessage.Failure) return message
-    }
 }
 
 /**
@@ -139,23 +126,26 @@ private suspend fun HttpClient.joinRoom(
     return session to session.nextServerMessage()
 }
 
-/** The two connected sockets of a started duel, and the room code they share. */
+/** The two connected sockets of a started duel, the room code they share, and the host's opening frames. */
 private data class DuelSetup(
     val host: DefaultClientWebSocketSession,
     val guest: DefaultClientWebSocketSession,
     val code: RoomCode,
+    val hostOpening: List<ServerMessage>,
 )
 
 /**
  * Opens a room as `"host"`, joins it as `"guest"`, and drains the opening hand's frames from both
- * sockets, so a later read on either sees only what happens after this call.
+ * sockets, so a later read on either sees only what happens after this call. The host's own
+ * opening frames are kept, not discarded, so a caller that needs to echo the real decision
+ * point back — [anActIsAppliedWhileTheRivalsSocketIsDown], say — never has to guess it.
  */
 private suspend fun HttpClient.startDuel(): DuelSetup {
     val (host, created) = openRoomAsHost("host")
     val (guest, _) = joinRoom("guest", created.code)
-    host.drainServerMessages()
+    val hostOpening = host.drainServerMessages()
     guest.drainServerMessages()
-    return DuelSetup(host, guest, RoomCode(created.code))
+    return DuelSetup(host, guest, RoomCode(created.code), hostOpening)
 }
 
 /** Waits, without a fixed sleep, for the room [code] names in [rooms] to satisfy [until]. */
@@ -217,8 +207,13 @@ class DuelSocketDisconnectTest {
         }
     }
 
+    /**
+     * `TASK-130805`: the duel no longer pauses just because the rival's socket is down
+     * (`ADR-0113`) — an `Act` from the seat still there is applied exactly like any other, and
+     * the failure this same setup used to produce is gone with it.
+     */
     @Test
-    fun theOpponentCannotActWhileTheDuelIsPaused(): Unit = testApplication {
+    fun anActIsAppliedWhileTheRivalsSocketIsDown(): Unit = testApplication {
         val rooms = testRoomRegistry(MutableClock())
         application {
             module()
@@ -229,84 +224,21 @@ class DuelSocketDisconnectTest {
         withTimeout(5.seconds) {
             val setup = client.startDuel()
             val runnerBefore = rooms.get(setup.code)!!.runner
+            val yourTurn = setup.hostOpening.filterIsInstance<ServerMessage.YourTurn>().single()
 
             setup.guest.close()
             awaitRoom(rooms, setup.code) { it.isPaused }
 
-            setup.host.send(Frame.Text(ProtocolCodec.encode(Act(1, 0, PlayerAction.Fold(0)))))
-            val failure = setup.host.nextFailure()
+            setup.host.send(
+                Frame.Text(
+                    ProtocolCodec.encode(Act(yourTurn.handNumber, yourTurn.actionSequence, PlayerAction.Fold(0))),
+                ),
+            )
+            val afterFold = setup.host.drainServerMessages()
 
-            assertEquals(ProtocolError.DUEL_PAUSED, failure.error)
-            assertSame(runnerBefore, rooms.get(setup.code)!!.runner)
-        }
-    }
-
-    /**
-     * `ADR-0028` §10, "the single most important test in the set": the countdown a client
-     * derives from `graceRemainingMillis` is not authority. The clock is advanced past the
-     * window the host was actually sent, `expireGracePeriods` is never called, and the host's
-     * `Act` is still refused — proving the refusal does not depend on the sweep having landed.
-     */
-    @Test
-    fun anActAfterTheCountdownWouldHaveEndedIsStillRefused(): Unit = testApplication {
-        val clock = MutableClock()
-        val rooms = testRoomRegistry(clock)
-        application {
-            module()
-            duelSocket(testDeps(rooms = rooms))
-        }
-        val client = createClient { install(WebSockets) }
-
-        withTimeout(5.seconds) {
-            val setup = client.startDuel()
-            val runnerBefore = rooms.get(setup.code)!!.runner
-
-            setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
-
-            val graceRemaining = setup.host.drainServerMessages()
-                .filterIsInstance<ServerMessage.OpponentPresence>()
-                .single()
-                .graceRemainingMillis!!
-            clock.advance(graceRemaining + 1)
-
-            setup.host.send(Frame.Text(ProtocolCodec.encode(Act(1, 0, PlayerAction.Fold(0)))))
-            val failure = setup.host.nextFailure()
-
-            assertEquals(ProtocolError.DUEL_PAUSED, failure.error)
-            assertSame(runnerBefore, rooms.get(setup.code)!!.runner)
-        }
-    }
-
-    /**
-     * The companion to [anActAfterTheCountdownWouldHaveEndedIsStillRefused]: in the same state,
-     * the room itself is still paused and no seat has moved to `absentSeats` — the window's
-     * *duration* passing is not the window *expiring*; only the sweep moves a seat.
-     */
-    @Test
-    fun theRoomIsStillPausedAfterTheWindowHasElapsed(): Unit = testApplication {
-        val clock = MutableClock()
-        val rooms = testRoomRegistry(clock)
-        application {
-            module()
-            duelSocket(testDeps(rooms = rooms))
-        }
-        val client = createClient { install(WebSockets) }
-
-        withTimeout(5.seconds) {
-            val setup = client.startDuel()
-
-            setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
-
-            val graceRemaining = setup.host.drainServerMessages()
-                .filterIsInstance<ServerMessage.OpponentPresence>()
-                .single()
-                .graceRemainingMillis!!
-            clock.advance(graceRemaining + 1)
-
-            assertTrue(rooms.get(setup.code)!!.isPaused)
-            assertTrue(rooms.get(setup.code)!!.absentSeats.isEmpty())
+            assertTrue(afterFold.any { it is ServerMessage.Snapshot })
+            assertTrue(afterFold.none { it is ServerMessage.Failure })
+            assertNotSame(runnerBefore, rooms.get(setup.code)!!.runner)
         }
     }
 
@@ -398,7 +330,6 @@ class DuelSocketDisconnectTest {
 
             assertEquals(1, presence.size)
             assertEquals(SeatPresence.AWAY, presence.single().presence)
-            assertEquals(TEST_DISCONNECT_GRACE_MILLIS, presence.single().graceRemainingMillis)
         }
     }
 
@@ -426,7 +357,6 @@ class DuelSocketDisconnectTest {
 
             assertEquals(1, presence.size)
             assertEquals(SeatPresence.AWAY, presence.single().presence)
-            assertEquals(TEST_DISCONNECT_GRACE_MILLIS, presence.single().graceRemainingMillis)
 
             val hostPresence =
                 setup.host.drainServerMessagesAfterOwnClose().filterIsInstance<ServerMessage.OpponentPresence>()

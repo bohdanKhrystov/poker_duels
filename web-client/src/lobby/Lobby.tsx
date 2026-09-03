@@ -195,7 +195,6 @@ export function Lobby(): ReactElement {
           key={state.presenceCount}
           presence={state.rivalPresence}
           returned={state.rivalReturned}
-          graceRemainingMillis={state.graceRemainingMillis}
         />
         {state.serverAction !== null && (
           <p className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-center text-small text-text-muted">

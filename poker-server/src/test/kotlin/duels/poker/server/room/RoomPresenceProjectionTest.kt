@@ -30,7 +30,7 @@ class RoomPresenceProjectionTest {
         val room = playingRoom().copy(gracePeriods = mapOf(1 to 30_000L))
 
         assertEquals(
-            ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 25_000L),
+            ServerMessage.OpponentPresence(SeatPresence.AWAY),
             room.presenceOf(1, 5_000L),
         )
         assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 5_000L))
@@ -41,11 +41,11 @@ class RoomPresenceProjectionTest {
         val room = playingRoom().copy(gracePeriods = mapOf(0 to 9_000L, 1 to 30_000L))
 
         assertEquals(
-            ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 8_000L),
+            ServerMessage.OpponentPresence(SeatPresence.AWAY),
             room.presenceOf(0, 1_000L),
         )
         assertEquals(
-            ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 29_000L),
+            ServerMessage.OpponentPresence(SeatPresence.AWAY),
             room.presenceOf(1, 1_000L),
         )
     }
@@ -55,7 +55,7 @@ class RoomPresenceProjectionTest {
         val room = playingRoom().copy(gracePeriods = mapOf(1 to 30_000L))
 
         assertEquals(
-            ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 0L),
+            ServerMessage.OpponentPresence(SeatPresence.AWAY),
             room.presenceOf(1, 45_000L),
         )
         assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 45_000L))
@@ -66,7 +66,7 @@ class RoomPresenceProjectionTest {
         val room = playingRoom().copy(gracePeriods = mapOf(1 to 30_000L))
 
         assertEquals(
-            ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 0L),
+            ServerMessage.OpponentPresence(SeatPresence.AWAY),
             room.presenceOf(1, 30_000L),
         )
         assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 30_000L))
@@ -105,7 +105,7 @@ class RoomPresenceProjectionTest {
 
         assertEquals(room, room)
         assertEquals(
-            ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 10_000L),
+            ServerMessage.OpponentPresence(SeatPresence.AWAY),
             room.presenceOf(1, 20_000L),
         )
         assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 20_000L))

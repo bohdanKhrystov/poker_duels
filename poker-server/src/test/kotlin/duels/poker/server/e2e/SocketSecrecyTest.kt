@@ -87,6 +87,7 @@ internal class SocketSecrecyTest {
                 is ServerMessage.DuelFinished,
                 is ServerMessage.OpponentPresence,
                 is ServerMessage.ActedForAbsent,
+                is ServerMessage.TurnClock,
                 -> Unit
             }
         }

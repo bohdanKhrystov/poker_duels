@@ -14,6 +14,7 @@ const SERVER_MESSAGE_TABLE = {
   RematchOffered: true,
   RoomJoined: true,
   Snapshot: true,
+  TurnClock: true,
   Welcome: true,
   YourTurn: true,
 } satisfies Record<ServerMessage["type"], true>;

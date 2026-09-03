@@ -156,24 +156,10 @@ public sealed interface ServerMessage {
      * at the one place that already decides where a frame goes (`ADR-0028` §1).
      *
      * @property presence How present the opponent is.
-     * @property graceRemainingMillis How much of the grace window remained when the server built
-     *   this frame. Present exactly when [presence] is [SeatPresence.AWAY], and never negative.
      */
     @Serializable
     @SerialName("OpponentPresence")
-    public data class OpponentPresence(
-        val presence: SeatPresence,
-        val graceRemainingMillis: Long? = null,
-    ) : ServerMessage {
-        init {
-            require((presence == SeatPresence.AWAY) == (graceRemainingMillis != null)) {
-                "graceRemainingMillis is present exactly when presence is AWAY"
-            }
-            require(graceRemainingMillis == null || graceRemainingMillis >= 0) {
-                "graceRemainingMillis must not be negative, was $graceRemainingMillis"
-            }
-        }
-    }
+    public data class OpponentPresence(val presence: SeatPresence) : ServerMessage
 
     /**
      * A fact about the log both seats share: the server acted for an absent seat.
@@ -199,6 +185,46 @@ public sealed interface ServerMessage {
             require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
             require(action == ActionType.FOLD || action == ActionType.CHECK) {
                 "the server only ever folds or checks for an absent seat, never $action"
+            }
+        }
+    }
+
+    /**
+     * The open decision's clock: how long is left on the current turn, and how much of each
+     * seat's bank remains behind it (`ADR-0113`).
+     *
+     * Sent to **both** seats identically, so — like [ActedForAbsent] and unlike
+     * [OpponentPresence] — it names the seat it is about (`ADR-0028` §1). [handNumber] and
+     * [actionSequence] repeat the decision point the same way [YourTurn] does, so a recipient can
+     * tell which decision this clock belongs to without a second lookup.
+     *
+     * @property seat The seat (0 or 1) whose decision this clock is timing.
+     * @property handNumber The 1-based hand index this decision pertains to.
+     * @property actionSequence The event sequence number of the decision point.
+     * @property turnRemainingMillis How much of the flat, free turn allowance remains before
+     *   [seat]'s own bank starts running.
+     * @property bankRemainingMillis Each seat's remaining bank, indexed by seat: index `0` for
+     *   seat 0, index `1` for seat 1.
+     */
+    @Serializable
+    @SerialName("TurnClock")
+    public data class TurnClock(
+        val seat: Int,
+        val handNumber: Int,
+        val actionSequence: Int,
+        val turnRemainingMillis: Long,
+        val bankRemainingMillis: List<Long>,
+    ) : ServerMessage {
+        init {
+            require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
+            require(turnRemainingMillis >= 0) {
+                "turnRemainingMillis must not be negative, was $turnRemainingMillis"
+            }
+            require(bankRemainingMillis.size == 2) {
+                "bankRemainingMillis must name exactly two seats, had ${bankRemainingMillis.size}"
+            }
+            require(bankRemainingMillis.all { it >= 0 }) {
+                "every bankRemainingMillis amount must not be negative, was $bankRemainingMillis"
             }
         }
     }

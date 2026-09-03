@@ -69,16 +69,10 @@ export interface DuelState {
    */
   readonly rivalPresence: SeatPresence | null;
   /**
-   * How much of the grace window was left at the instant the server built the frame, or
-   * `null` whenever the presence is not `AWAY`. A duration, never a deadline: the two sides
-   * share no epoch (`ADR-0028` §2). The reducer never reads it back and never counts it down.
-   */
-  readonly graceRemainingMillis: number | null;
-  /**
    * How many `OpponentPresence` frames the server has sent. Client bookkeeping in the class of
-   * `rejectionCount`, and the same job: something that always changes. Two grace windows in one
-   * duel carry the same `graceRemainingMillis`, so the value cannot tell a second window from
-   * a re-render — only a count can.
+   * `rejectionCount`, and the same job: something that always changes. Two separate disconnects
+   * in one duel can carry the same `presence`, so the value alone cannot tell a second window
+   * from a re-render — only a count can.
    */
   readonly presenceCount: number;
   /**
@@ -161,7 +155,6 @@ export function initialState(): DuelState {
     refusal: null,
     rematchOffers: [],
     rivalPresence: null,
-    graceRemainingMillis: null,
     presenceCount: 0,
     rivalReturned: false,
     serverAction: null,
@@ -334,7 +327,6 @@ export function applyServerMessage(
       return {
         ...state,
         rivalPresence: message.presence,
-        graceRemainingMillis: message.graceRemainingMillis,
         presenceCount: state.presenceCount + 1,
         rivalReturned:
           message.presence === "PRESENT" &&

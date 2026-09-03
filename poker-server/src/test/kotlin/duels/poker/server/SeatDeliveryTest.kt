@@ -203,7 +203,7 @@ internal class SeatDeliveryTest {
     fun apresenceFrameCrossesNoRoomEither(): Unit = runBlocking {
         val elsewhere = RoomCode("ZYXWVTSR")
         val seat0 = Addressed(0, messageFor("host-frame"))
-        val presence = Addressed(1, ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 60000L))
+        val presence = Addressed(1, ServerMessage.OpponentPresence(SeatPresence.AWAY))
 
         val sinks = deliverAndDrain(
             frames = listOf(seat0, presence),

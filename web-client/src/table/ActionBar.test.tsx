@@ -931,41 +931,6 @@ describe("the action bar", () => {
     expect(text).toBeDefined();
   });
 
-  it("says a paused duel did not apply the action", () => {
-    const send = vi.fn();
-    const { rerender, getByText, queryByText } = render(
-      <ActionBar
-        turn={aTurn()}
-        potIncludingStreet={2850}
-        committedThisStreet={0}
-        rejection={null}
-        refusal="DUEL_PAUSED"
-        send={send}
-      />,
-    );
-
-    let text = getByText("The duel is paused. That action was not applied.");
-    expect(text).toBeDefined();
-
-    // Different refusal shows different message
-    rerender(
-      <ActionBar
-        turn={aTurn()}
-        potIncludingStreet={2850}
-        committedThisStreet={0}
-        rejection={null}
-        refusal="NOT_IN_DUEL"
-        send={send}
-      />,
-    );
-
-    text = getByText("The server did not apply that action.");
-    expect(text).toBeDefined();
-    expect(
-      queryByText("The duel is paused. That action was not applied."),
-    ).toBeNull();
-  });
-
   it("has nothing to say when nothing was refused", () => {
     const { queryByText, send } = bar();
 

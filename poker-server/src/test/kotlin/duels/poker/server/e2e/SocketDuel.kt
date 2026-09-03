@@ -290,6 +290,7 @@ internal suspend fun SocketDuel.playToFinish(
                 is ServerMessage.Events,
                 is ServerMessage.OpponentPresence,
                 is ServerMessage.ActedForAbsent,
+                is ServerMessage.TurnClock,
                 -> Unit
             }
         }

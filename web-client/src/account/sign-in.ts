@@ -33,10 +33,10 @@ export type SignInOutcome =
  * test can bind. Identity is fixed for the life of a socket, so picking up
  * a freshly-signed-in identity means replacing the socket, and a full
  * reload is the only boundary that rebuilds `initialState()`. `ADR-0075`'s
- * Consequences name `rivalPresence`, `graceRemainingMillis` and
- * `rivalReturned` as three presence fields no store action clears;
- * reconnecting in place after a sign-in would carry them across the
- * identity change instead of leaving them behind.
+ * Consequences name `rivalPresence` and `rivalReturned` as two presence
+ * fields no store action clears; reconnecting in place after a sign-in
+ * would carry them across the identity change instead of leaving them
+ * behind.
  */
 export async function signIn(request: {
   readonly fetch: ApiFetch;
