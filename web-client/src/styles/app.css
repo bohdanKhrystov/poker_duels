@@ -115,6 +115,51 @@
   white-space: nowrap;
 }
 
+/* The chip pile and its flight: three discs, always (ADR-0115 §1, §6), that
+ * arrive once on mount with pd-chip-flight and then stand still. The pile
+ * never grows or shrinks with the amount, so its size states no count and
+ * implies no denomination — the numeral beside it is the whole fact. The
+ * flight runs from an offset to the resting position, with fill-mode: both,
+ * so its final frame is the frame the element would have at rest (ADR-0115
+ * §3). Under prefers-reduced-motion: reduce the sheet's one block sets
+ * animation: none !important on *, and the pile renders at its base
+ * declarations — which are the resting position (ADR-0115 §2). */
+@keyframes pd-chip-flight {
+  from {
+    transform: translateY(calc(var(--pd-motion-chip-travel) * -1));
+  }
+  to {
+    transform: none;
+  }
+}
+
+@utility chip-pile {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@utility chip-disc {
+  display: block;
+  width: var(--pd-chip-size);
+  height: var(--pd-chip-size);
+  border-radius: 50%;
+  background: var(--pd-chip-face);
+  border: 1px solid var(--pd-chip-edge);
+}
+
+.chip-disc + .chip-disc {
+  margin-top: calc(var(--pd-chip-size) * -0.55);
+}
+
+@utility chip-flight {
+  animation-name: pd-chip-flight;
+  animation-duration: var(--pd-motion-chip-flight);
+  animation-timing-function: var(--pd-motion-chip-ease);
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+
 /* Dark only. STORY-0601 scoped light out epic-wide: no light mode,
  * no theme switch, no second palette. */
 :root {
