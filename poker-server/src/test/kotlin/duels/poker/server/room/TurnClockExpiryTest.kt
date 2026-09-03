@@ -71,6 +71,16 @@ private fun allInFrame(room: Room): Act {
     )
 }
 
+/** Builds the finishing [Act] frame — a fold on the seat currently on turn. */
+private fun foldFrame(room: Room): Act {
+    val hand = room.runner!!.hand!!
+    return Act(
+        handNumber = hand.state.handNumber,
+        actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+        action = PlayerAction.Fold(hand.state.seatToAct!!),
+    )
+}
+
 /** Builds the [Act] frame for whoever is on turn in [room]'s live hand, calling whatever bet stands. */
 private fun callFrame(room: Room): Act {
     val hand = room.runner!!.hand!!
@@ -561,5 +571,79 @@ internal class TurnClockExpiryTest {
         assertNotNull(staleStep)
         val handOneActionsAfterStaleAct = registry.get(room.code)!!.runner!!.log.hands.first().actions
         assertEquals(handOneActionsAfterSweep, handOneActionsAfterStaleAct)
+    }
+
+    @Test
+    fun aFinishedRoomsLateDisconnectDoesNotLeakTheRecordingClaim() = runBlocking {
+        val clock = MutableClock()
+        val recorded = CopyOnWriteArrayList<DuelResult>()
+        val registry = RoomRegistry(
+            codeSource("2B7KMNPQ"),
+            clock,
+            TEST_TIMEOUTS,
+            seeds = fixedSeeds,
+            sink = DuelResultSink { recorded.add(it) },
+        )
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host, oneHand)
+        registry.join(room.code, guest)
+
+        // The duel finishes normally, through act: the claim it takes in `recording` is
+        // claimed and cleared correctly here, exactly as aFoldThatEndsTheDuelIsRecordedOnce
+        // proves — this test is about what a *later*, unrelated sweep does to a room already
+        // past that point.
+        val finishFrame = foldFrame(registry.get(room.code)!!)
+        registry.act(room.code) { r -> r.act(finishFrame.action.seat, finishFrame, fixedSeeds) }
+        assertEquals(RoomState.FINISHED, registry.get(room.code)!!.state)
+        assertEquals(1, recorded.size)
+
+        // The remaining seat closes its tab well after the duel is over, and its grace window
+        // elapses on a later sweep — the room's runner is finished, not live, but still not
+        // null, which is exactly what a `expired.runner != null` guard alone would miss.
+        val remainingPlayer = if (finishFrame.action.seat == 0) guest else host
+        registry.disconnect(room.code, remainingPlayer)
+        clock.advance(TEST_TIMEOUTS.disconnectGraceMillis)
+
+        val expiries = registry.expireTurnClocks()
+
+        // No throw reaching this line is necessary but not sufficient: a leaked `recording`
+        // claim throws nowhere on its own, it just sits there. What it silently breaks is
+        // what the two assertions below check directly — neither is satisfied by "it didn't
+        // throw" alone.
+        assertEquals(emptyList<TurnClockExpiry>(), expiries)
+        assertEquals(RoomState.FINISHED, registry.get(room.code)!!.state)
+
+        // RoomRegistry.offerRematch refuses as NOT_FINISHED whenever `recording[code]` still
+        // names this room's current duel id — exactly the state a leaked claim leaves behind.
+        val rematchResult = registry.offerRematch(room.code, host)
+        assertTrue(rematchResult is RematchResult.Offered)
+
+        // isReapable refuses unconditionally, regardless of how idle the room is, for the same
+        // reason: a leaked claim makes `recording[code] == room.duelId` forever, and this room
+        // would never appear in a reap() result again.
+        clock.advance(TEST_TIMEOUTS.finishedMillis)
+        val reaped = registry.reap()
+        assertEquals(listOf(room.code), reaped)
+    }
+
+    @Test
+    fun aWaitingRoomsDisconnectedHostIsLeftForTheIdleTimeout() = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS, seeds = fixedSeeds)
+        val host = newPlayerId()
+        val room = registry.create(host)
+        registry.disconnect(room.code, host)
+
+        clock.advance(30_000)
+        val expiries = registry.expireTurnClocks()
+
+        assertEquals(emptyList<TurnClockExpiry>(), expiries)
+        assertEquals(RoomState.WAITING, registry.get(room.code)!!.state)
+
+        // Left alone by the sweep, but not forgotten: the ordinary WAITING idle timeout —
+        // unrelated to the disconnect grace window this pass never touched — still reaps it.
+        val reaped = registry.reap()
+        assertEquals(listOf(room.code), reaped)
     }
 }
