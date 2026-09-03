@@ -61,8 +61,8 @@ internal class GraceWindowConfigTest {
 
         // At 4999ms, the window has not expired yet
         clock.advance(4_999)
-        val expiryBefore = registry.expireGracePeriods()
-        assertEquals(emptyList<GraceExpiry>(), expiryBefore)
+        val expiryBefore = registry.expireTurnClocks()
+        assertEquals(emptyList<TurnClockExpiry>(), expiryBefore)
         val handLogBefore = registry.get(roomCode)!!.runner!!.hand!!.log.actions
         assertTrue(
             handLogBefore.none { it is duels.poker.engine.game.PlayerAction.Fold },
@@ -71,7 +71,7 @@ internal class GraceWindowConfigTest {
 
         // Advance to exactly 5000ms (total advance from start is 5000)
         clock.advance(1)
-        val expiryAt = registry.expireGracePeriods()
+        val expiryAt = registry.expireTurnClocks()
         assertEquals(1, expiryAt.size)
         val handLogAt = registry.get(roomCode)!!.runner!!.log.hands.first().actions
         assertTrue(
@@ -90,8 +90,8 @@ internal class GraceWindowConfigTest {
 
         // At 5000ms, the window has not expired
         clock.advance(5_000)
-        val expiryBefore = registry.expireGracePeriods()
-        assertEquals(emptyList<GraceExpiry>(), expiryBefore)
+        val expiryBefore = registry.expireTurnClocks()
+        assertEquals(emptyList<TurnClockExpiry>(), expiryBefore)
         val handLogBefore = registry.get(roomCode)!!.runner!!.hand!!.log.actions
         assertTrue(
             handLogBefore.none { it is duels.poker.engine.game.PlayerAction.Fold },
@@ -100,7 +100,7 @@ internal class GraceWindowConfigTest {
 
         // Advance to 45000ms (total advance is 45000)
         clock.advance(40_000)
-        val expiryAt = registry.expireGracePeriods()
+        val expiryAt = registry.expireTurnClocks()
         assertEquals(1, expiryAt.size)
         val handLogAt = registry.get(roomCode)!!.runner!!.log.hands.first().actions
         assertTrue(
@@ -121,12 +121,12 @@ internal class GraceWindowConfigTest {
 
         // At 6999ms, the window has not expired
         clock.advance(6_999)
-        val expiryBefore = registry.expireGracePeriods()
-        assertEquals(emptyList<GraceExpiry>(), expiryBefore)
+        val expiryBefore = registry.expireTurnClocks()
+        assertEquals(emptyList<TurnClockExpiry>(), expiryBefore)
 
         // Advance to 7000ms
         clock.advance(1)
-        val expiryAt = registry.expireGracePeriods()
+        val expiryAt = registry.expireTurnClocks()
         assertEquals(1, expiryAt.size)
     }
 
@@ -141,7 +141,7 @@ internal class GraceWindowConfigTest {
 
         // Advance through the entire 45-second window on MutableClock (instant)
         clock.advance(45_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         // If this used real wall-clock time, it would timeout at 5 seconds
         // On MutableClock it completes instantly

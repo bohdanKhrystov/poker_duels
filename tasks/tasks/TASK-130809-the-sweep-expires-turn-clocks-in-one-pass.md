@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130809
 title: The sweep expires turn clocks in one pass through act
 type: task
-status: ready
+status: done
 parent: STORY-1308
 module: poker-server
 estimate: S

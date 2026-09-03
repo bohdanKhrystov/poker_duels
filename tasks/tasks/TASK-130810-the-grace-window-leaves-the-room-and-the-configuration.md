@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130810
 title: The grace window leaves the room and the configuration, and away becomes a lookup
 type: task
-status: backlog
+status: ready
 parent: STORY-1308
 module: poker-server
 estimate: S
@@ -74,6 +74,36 @@ arity fix would leave two green tests guarding nothing under names that promise 
 Both were confirmed by the mutation named, not by reading. Note this interacts with the pinned
 count below: if `theOtherSeatsWindowIsTheOneReported` is retired rather than repaired,
 `RoomPresenceProjectionTest` does not stay at **9**, and the pin must move with a measured figure.
+
+## A live behaviour change `TASK-130809` left unpinned — and this ticket may dissolve it
+
+`TASK-130809` deleted `RoomRegistry`'s own both-gone check and kept `Room.giveUpTurn`'s. Review
+confirmed by experiment that the two disagree in exactly one direction and in one reachable state:
+
+> one seat's grace window has fully elapsed (latched into `absentSeats`), while the *other*,
+> currently-on-turn seat is still inside its own grace window but its per-decision turn clock has
+> run out.
+
+There `giveUpTurn`'s `gone = absentSeats + setOfNotNull(latched)` is `{0, 1}` and the room is
+**abandoned**; the deleted check read `expired.absentSeats` alone, would have seen one seat, and
+would have folded an ordinary decision instead. The superset direction is guaranteed by `Room`'s own
+`init` (`require(gracePeriods.keys.none { it in absentSeats })`), so `latched` can only add.
+
+**Nothing pins that behaviour.** Review reintroduced the deleted branch and all 21 tests stayed
+green. `TurnClockExpiryTest`'s count gate is fixed at 21, so `TASK-130809` could not have added a
+22nd without failing its own gate.
+
+**Answer this before adding a test for it.** That state requires *a seat still inside its grace
+window* — and this ticket deletes the grace window (`ADR-0113` §7: `gracePeriods` and
+`disconnectGraceMillis` go). If no grace window exists, the state is unreachable and the concern
+dissolves with it. Say which it is, in the PR:
+
+- **unreachable after this ticket** — say so, name the deleted construct that made it reachable, and
+  the concern is closed rather than carried
+- **still reachable** — then it needs a test, and this ticket's own count gate must have room for it
+
+Do not simply drop it. A behaviour change nobody pinned and nobody re-examined is how the epic's two
+vacuous tests got there.
 
 ## Files
 
