@@ -9,7 +9,12 @@ module: poker-server
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 3
+files_touched: 5
+atomic:
+  - TurnClockFramesTest.anOverrunReachesTheNextFramesBank — asserts a bank of 0 because nothing seeded it; withFreshClocks makes the real figure 178000 and the test reddens the moment this ticket lands
+  - RoomDuelTest.theOpeningFramesAreTheOnesTheRunnerProduced — a byte-for-byte assertEquals against startDuel's raw output on the join path, which now carries two TurnClock frames
+  - './gradlew check -PrequireDocker=true' — holds all five files green together
+
 labels: [server, clock, protocol]
 depends_on: [TASK-130806]
 verify:
@@ -34,6 +39,46 @@ already builds its presence frames (`ADR-0113` §§1, 3; `ADR-0108` §§1, 6).
 | `poker-server/src/main/kotlin/duels/poker/server/room/RoomRegistry.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/room/RoomResumeTest.kt` | modify |
 | `poker-server/src/test/kotlin/duels/poker/server/room/RoomRematchTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/room/TurnClockFramesTest.kt` | modify |
+| `poker-server/src/test/kotlin/duels/poker/server/room/RoomDuelTest.kt` | modify |
+
+## Two files this ticket's own change forces, and one of them gets *stronger*
+
+`TASK-130807`'s first dispatch stopped here, correctly: `./gradlew check` reddens two tests in files
+the table did not name. Both are caused by this ticket's mandated change — seeding the timebank, and
+`join`/rematch outbound now carrying `TurnClock` frames — so both are in the blast radius by
+`ADR-0070`'s definition.
+
+**`TurnClockFramesTest.anOverrunReachesTheNextFramesBank` — this is a repair, not damage.**
+`TASK-130806` shipped it asserting `assertEquals(0L, …bankRemainingMillis[openedSeat])` and its coder
+recorded plainly *why* that was weak: nothing seeded `Room.timebankRemainingMillis`, so the value
+clamped to zero rather than scaling with the overrun, and it declined to strengthen the test past
+what its own scope could reach. `withFreshClocks` is what seeds it. The failure is
+`expected: <0> but was: <178000>` — the real, scaled figure. Update the expectation to **178000**.
+The neighbouring assertion already pins the rival's bank at the full `timebankMillis`, so after this
+change the two seats carry genuinely different figures and the test finally discriminates the thing
+its name promises. **Do not weaken it back toward a clamp.**
+
+**`RoomDuelTest.theOpeningFramesAreTheOnesTheRunnerProduced`** is a byte-for-byte `assertEquals`
+against `startDuel`'s raw output on the **join** path, which now carries the two `TurnClock` frames.
+Update the expectation the same way `TASK-130806` updated its sibling: build the expected frame from
+facts independent of the mechanism under test — the hand's own `seatToAct`, `handNumber` and
+`decisionPointOf(...).sequence`, plus the named `RoomTimeouts` constants — never by calling
+`Room.clocked` or `Room.turnClock`. An expectation derived from the call it checks is `x == x`.
+
+The driver flagged this same assertion during `TASK-130806` and was wrong then: `join` emitted no
+clock at that point, and the coder proved it by running the class before and after. It is forced
+now, one ticket later, because this ticket is what makes `join` emit one.
+
+**A third correction, to this ticket's own text.** The *Tests* section says
+`aFinishedRoomResumesAsItsOutcome`'s `assertEquals(2, resumption.outbound.size)` moves to **3**. It
+does not, and the first dispatch was right to leave it at 2: a duel that ends via
+`EndCondition.FixedHands(1)` clears `turnDeadline` to null inside the same `clocked()` call that ends
+it, because no seat is left to act — so a genuinely `FINISHED` room's resume adds no clock frame.
+That matches this ticket's own *Scope* text (*"adds nothing … a `FINISHED` room"*) and contradicts
+its *Tests* row. **Scope wins**; the count stays 2, and the separate new test
+`aFinishedRoomsResumeStatesNoClock` covers the case directly. Do not change the 2 to a 3 to satisfy
+a row that was wrong.
 
 ## Scope
 
