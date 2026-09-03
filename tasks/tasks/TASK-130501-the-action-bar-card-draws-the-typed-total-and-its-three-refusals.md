@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130501
 title: The action-bar card draws the typed total, and the three refusals it can express
 type: task
-status: ready
+status: done
 parent: STORY-1305
 module: design
 estimate: S
