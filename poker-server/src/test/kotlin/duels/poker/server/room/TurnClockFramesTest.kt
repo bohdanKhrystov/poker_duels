@@ -164,7 +164,10 @@ internal class TurnClockFramesTest {
 
         val clockMessage = closed.outbound.last().message as ServerMessage.TurnClock
         val rivalSeat = 1 - openedSeat
-        assertEquals(0L, clockMessage.bankRemainingMillis[openedSeat])
+        // 180_000 - 2_000: the full bank withFreshClocks seeded, minus the 2s spent past the free
+        // allowance. A literal, not a re-derivation through Room.clocked/Room.turnClock — the
+        // mechanism this assertion exists to check.
+        assertEquals(178_000L, clockMessage.bankRemainingMillis[openedSeat])
         assertEquals(timebankMillis, clockMessage.bankRemainingMillis[rivalSeat])
     }
 

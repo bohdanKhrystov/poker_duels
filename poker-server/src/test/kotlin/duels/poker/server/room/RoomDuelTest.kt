@@ -425,7 +425,24 @@ internal class RoomDuelTest {
         val result = registry.join(room.code, guest) as JoinResult.Seated
 
         val expected = startDuel(room.format, room.openingButtonSeat, fixedSeeds.newHandSeed())
-        assertEquals(expected.outbound, result.outbound)
+        // The room's very first clocked decision: nobody has answered one yet, so the seat now on
+        // turn is owed the whole fresh allowance and both banks read as the configured full bank
+        // (`ADR-0113` §§1, 3) — read off the resulting hand and the configured defaults, not off
+        // the clock mechanism this join call is what actually exercises.
+        val expectedHand = expected.runner.hand!!
+        val expectedClock = ServerMessage.TurnClock(
+            seat = expectedHand.state.seatToAct!!,
+            handNumber = expectedHand.state.handNumber,
+            actionSequence = decisionPointOf(expectedHand.log.events)!!.sequence,
+            turnRemainingMillis = RoomTimeouts.DEFAULT_TURN_MILLIS,
+            bankRemainingMillis = listOf(
+                RoomTimeouts.DEFAULT_TIMEBANK_MILLIS,
+                RoomTimeouts.DEFAULT_TIMEBANK_MILLIS,
+            ),
+        )
+        val expectedOutbound = expected.outbound + listOf(Addressed(0, expectedClock), Addressed(1, expectedClock))
+
+        assertEquals(expectedOutbound, result.outbound)
     }
 
     @Test
