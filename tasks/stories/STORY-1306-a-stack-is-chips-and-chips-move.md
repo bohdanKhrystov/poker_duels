@@ -2,7 +2,7 @@
 id: STORY-1306
 title: A stack is chips, and chips move
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: design
 labels: [design, graphics, client, table]
