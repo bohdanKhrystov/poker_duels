@@ -634,7 +634,16 @@ public class RoomRegistry(
                     if (!isTurnClockCandidate(room, now)) return@actOn null
                     val expired = room.expireGrace(now)
                     when (val turnGiveUp = expired.giveUpTurn(now, handSeeds)) {
-                        null -> if (expired !== room) TurnGiveUp(expired, DuelStep(expired.runner!!, emptyList())) else null
+                        // giveUpTurn answers null both for a room with nothing to give up and for
+                        // one not PLAYING at all — a WAITING room's host can disconnect before a
+                        // guest ever joins (RoomRegistry.disconnect allows it) and so latch here
+                        // with no runner to wrap in a step. Nothing downstream reads such a room's
+                        // presence — resume refuses a WAITING room outright — so this room is left
+                        // for the WAITING idle timeout in reap() rather than forced through a step
+                        // shape that assumes a duel exists.
+                        null -> expired.runner?.let { runner ->
+                            if (expired !== room) TurnGiveUp(expired, DuelStep(runner, emptyList())) else null
+                        }
                         else -> turnGiveUp
                     }
                 }
