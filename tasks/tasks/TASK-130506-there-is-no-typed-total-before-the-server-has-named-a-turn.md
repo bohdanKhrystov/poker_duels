@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130506
 title: There is no typed total before the server has named a turn
 type: task
-status: backlog
+status: ready
 parent: STORY-1305
 module: web-client
 estimate: XS
