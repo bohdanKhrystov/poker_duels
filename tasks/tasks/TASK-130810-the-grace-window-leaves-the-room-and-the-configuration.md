@@ -77,8 +77,8 @@ arity fix would leave two green tests guarding nothing under names that promise 
 
 - **`RoomPresenceProjectionTest.theOtherSeatsWindowIsTheOneReported`** — mutating `Room.presenceOf`
   to read `(1 - seat)` reddened four tests in the class and **not this one**: its fixture gives both
-  seats a grace entry, so the swap its name describes is invisible to it. Either give it a fixture
-  where the two seats differ, or retire it and say so.
+  seats a grace entry, so the swap its name describes is invisible to it. Give it a fixture where the two seats
+  differ. Do **not** retire it: gate 7 pins the class at 9.
 - **`RoomDisconnectTest.theRemainingIsTheConfiguredWindow`** — mutating `RoomRegistry.disconnect` to
   use `now + 1L` instead of the configured window reddened five other tests and **not this one**. It
   is now byte-identical in effect to `aDropTellsTheOtherSeatItIsAway`. With `disconnectGraceMillis`
@@ -202,7 +202,7 @@ away or deleted**. `RoomTimeoutsTest` loses its three disconnect-window assertio
       tests above passes by name
 - [ ] Exactly **5** files under `poker-server/src/test` still use `walkTopDown`, so the
       `Thread.sleep` scan moved with its file and no source-scanning guard was lost
-- [ ] `RoomPresenceProjectionTest` reports exactly **9** tests — **or a measured figure, if the vacuous test is retired rather than repaired; say which**
+- [ ] `RoomPresenceProjectionTest` reports exactly **9** tests — **repair the vacuous test, do not retire it.** Gate 7 pins 9, and retiring would make it 8 and fail the block. Repair is reachable: this ticket keeps a per-seat presence notion (`awaySeats`), so give the fixture two seats in *different* states and the swap its name describes becomes visible
 - [ ] `theOtherSeatsWindowIsTheOneReported` and `theRemainingIsTheConfiguredWindow` are each either repaired so the named mutation reddens them, or deleted with a sentence saying why
 - [ ] `Room.kt` names `awaySeats` at least six times — the property, its `init` rules, `disconnect`,
       `reconnect` and `presenceOf`
