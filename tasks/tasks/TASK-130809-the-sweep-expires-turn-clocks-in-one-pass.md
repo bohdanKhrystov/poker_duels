@@ -9,7 +9,7 @@ module: poker-server
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 9
+files_touched: 10
 atomic:
   - the Kotlin compiler — a renamed public suspend method and a renamed public type redden every call site and every import in one step, and there is no intermediate tree in which both names exist
   - ktlint standard:filename — a file holding one top-level class must be named for it, so renaming GraceExpiry and GraceExpiryTest forces both file renames in the same commit
@@ -37,7 +37,22 @@ the coin by the same single path a played one does (`ADR-0113` §5, `ADR-0108` �
 The count is a **measured reference set**, not a green probe: `grep -rl` over `poker-server/src`
 for `expireGracePeriods` and `GraceExpiry` on `develop` at `360bcacf`, minus the one occurrence
 that lives in a `DuelSocketDisconnectTest` KDoc that `TASK-130805` deletes, plus the two file
-renames ktlint's filename rule forces. **Say so in the PR body.** **This count is provisional, and `ADR-0070` §4 is not the way to correct it.** §4 lets a coder add
+renames ktlint's filename rule forces. **Say so in the PR body.** **The re-probe ran, and the count moved 9 → 10.** Re-derived against `develop` at `82d1f750`,
+after `TASK-130801`–`TASK-130808` landed, the reference set for `expireGracePeriods` / `GraceExpiry`
+contains one file the planner's `grep` could not have seen:
+`poker-server/src/test/kotlin/duels/poker/server/room/TurnClockFramesTest.kt`, whose line 194 calls
+`registry.expireGracePeriods()`. **`TASK-130806` created that file two tickets after the split was
+written.** The rename breaks it at compile time, so it is in the blast radius by `ADR-0070`'s
+definition.
+
+The two entries below that are absent from today's tree — `TurnClockExpiry.kt` and
+`TurnClockExpiryTest.kt` — are the files this rename *creates*, and are correctly not in the
+reference set.
+
+This is what the promise below is for: a table written against one baseline and dispatched against
+another is short by whatever landed in between.
+
+**This count is provisional, and `ADR-0070` §4 is not the way to correct it.** §4 lets a coder add
 a path its own green run names, but its closing sentence excludes *"a rename, a refactor"* by name
 — and this ticket is a rename. So do **not** add a row under §4 here.
 
@@ -79,6 +94,7 @@ delete the comment.
 | `poker-server/src/main/kotlin/duels/poker/server/room/Disconnection.kt` | modify | Its KDoc names `[GraceExpiry]`, a type this commit deletes. No gate fails on a KDoc link — this row is here because `ADR-0069` §2 stops a ticket at a file its table does not name, and a doc reference to a deleted type is exactly the staleness `ADR-0113` §9 warns about |
 | `poker-server/src/test/kotlin/duels/poker/server/room/GraceExpiryTest.kt` | delete | ktlint `standard:filename`, and every test in it names the renamed method or type |
 | `poker-server/src/test/kotlin/duels/poker/server/room/TurnClockExpiryTest.kt` | create | The renamed suite, carrying every merged assertion forward plus this ticket's own |
+| `poker-server/src/test/kotlin/duels/poker/server/room/TurnClockFramesTest.kt` | modify | the Kotlin compiler: line 194 calls `registry.expireGracePeriods()` |
 | `poker-server/src/test/kotlin/duels/poker/server/room/GraceWindowConfigTest.kt` | modify | Kotlin compiler: it calls `expireGracePeriods()` seven times and compares against `emptyList<GraceExpiry>()` |
 | `poker-server/src/test/kotlin/duels/poker/server/room/RoomResumeTest.kt` | modify | Kotlin compiler: one `registry.expireGracePeriods()` call |
 
