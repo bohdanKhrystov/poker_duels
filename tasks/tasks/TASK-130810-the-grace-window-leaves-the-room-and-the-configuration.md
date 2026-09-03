@@ -9,7 +9,7 @@ module: poker-server
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 17
+files_touched: 18
 atomic:
   - the Kotlin compiler — removing a data-class property, an enum-free public val, two methods and two parameters reddens every named-argument call site and every reader in one step, and no intermediate tree has both the old and the new name
   - ktlint standard:filename — GraceWindowConfigTest holds one class, so renaming it to the subject that survives forces the file rename in the same commit
@@ -42,7 +42,21 @@ The count is a **measured reference set**, not a green probe: `grep -rl` over `p
 `disconnectGraceMillis|DISCONNECT_GRACE` on `develop` at `360bcacf`, minus `RoomPausedTest.kt`
 (deleted by `TASK-130805`), with `GraceExpiryTest.kt` read as its successor
 `TurnClockExpiryTest.kt` (`TASK-130809`), plus the one file rename ktlint's filename rule forces.
-**Say so in the PR body.** **This count is provisional, and `ADR-0070` §4 is not the way to correct it.** §4 lets a coder add
+**Say so in the PR body.** **The re-probe ran, and the count moved 17 → 18.** Re-derived against `develop` at `6f274055`,
+after `TASK-130801`–`TASK-130809` landed, the reference set gains
+`poker-server/src/test/kotlin/duels/poker/server/room/TurnClockFramesTest.kt`: it uses
+`disconnectGraceMillis` and `RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS` in five places, including
+a default parameter, and this ticket deletes that constant.
+
+**This is the second provisional count that file has broken.** `TASK-130806` created it, and both
+`TASK-130809` (9 → 10) and this ticket were sized before it existed. A count computed against one
+baseline is short by whatever landed after — which is the whole reason the re-probe below was
+promised rather than the count trusted.
+
+The one entry absent from today's tree, `TurnClockConfigTest.kt`, is the file this ticket *creates*
+by renaming `GraceWindowConfigTest.kt`, and is correctly not in the reference set.
+
+**This count is provisional, and `ADR-0070` §4 is not the way to correct it.** §4 lets a coder add
 a path its own green run names, but its closing sentence excludes *"a rename, a refactor"* by name
 — and deleting the grace window across room and configuration is a refactor. So do **not** add a
 row under §4 here.
@@ -126,6 +140,7 @@ vacuous tests got there.
 | `poker-server/src/test/kotlin/duels/poker/server/room/TurnClockExpiryTest.kt` | modify | Kotlin compiler: `isPaused` and the removed timeout field, carried over from `GraceExpiryTest` |
 | `poker-server/src/test/kotlin/duels/poker/server/DuelSocketDisconnectTest.kt` | modify | Kotlin compiler: `awaitRoom(rooms, code) { it.isPaused }` and `TEST_DISCONNECT_GRACE_MILLIS` |
 | `poker-server/src/test/kotlin/duels/poker/server/DuelSocketReconnectTest.kt` | modify | Kotlin compiler: `gracePeriods` and `isPaused` |
+| `poker-server/src/test/kotlin/duels/poker/server/room/TurnClockFramesTest.kt` | modify | the Kotlin compiler: five uses of `disconnectGraceMillis` / `RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS`, including a default parameter at line 30 and a fixture at 177 |
 
 ## Scope
 
