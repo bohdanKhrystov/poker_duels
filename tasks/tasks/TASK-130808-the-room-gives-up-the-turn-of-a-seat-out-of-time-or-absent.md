@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130808
 title: The room gives up the turn of a seat that is out of time or absent
 type: task
-status: backlog
+status: ready
 parent: STORY-1308
 module: poker-server
 estimate: S

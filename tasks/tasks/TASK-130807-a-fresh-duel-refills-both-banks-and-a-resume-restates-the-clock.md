@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130807
 title: A fresh duel refills both banks, and a resuming seat is told the live deadline again
 type: task
-status: ready
+status: done
 parent: STORY-1308
 module: poker-server
 estimate: S
