@@ -9,7 +9,6 @@ import duels.poker.server.duel.HandSeedSource
 import duels.poker.server.duel.SecureHandSeedSource
 import duels.poker.server.duel.resumeFrames
 import duels.poker.server.duel.startDuel
-import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.ServerClock
 import kotlinx.coroutines.CancellationException
@@ -493,34 +492,23 @@ public class RoomRegistry(
     }
 
     /**
-     * The `ServerMessage.TurnClock` frames [room]'s open decision, if any, owes both seats as of
-     * [now] — empty when [Room.turnDeadline] is `null`, since there is then no live decision to
-     * state (`ADR-0113` §§1, 3).
+     * The frames this write-back owes both seats for [room]'s open decision, if any — empty when
+     * [Room.turnDeadline] is `null`, since there is then no live decision to state (`ADR-0113`
+     * §§1, 3).
      *
-     * Both seats are handed the identical frame: the clock is a fact about the decision now open,
-     * not a per-recipient view, so there is nothing here for a projection layer to filter.
-     * [Room.timebankRemainingMillis] is read seat by seat, a missing seat reading as
-     * [RoomTimeouts.timebankMillis] — the full, untouched bank — since a seat [Room.clocked] has
-     * never yet debited has spent nothing of it.
+     * [Room.turnClock] builds the frame itself, the same way [Room.presenceOf] already builds
+     * one for this registry's own [disconnect] and [resume] — this registry names no protocol
+     * type of its own to send one. Both seats are handed the identical value, wrapped once each:
+     * the clock is a fact about the decision now open, not a per-recipient view.
      *
-     * @param room The room as it stands after [Room.clocked] restarted its clock.
-     * @param now The same instant [Room.clocked] was called with, so [ServerMessage.TurnClock.turnRemainingMillis]
-     *   reads consistently with [Room.turnDeadline]'s own [TurnDeadline.bankBeginsAt].
+     * @param room The room as it stands after the write-back restarted its clock.
+     * @param now The same instant the room was restarted with, passed through unchanged so the
+     *   frame and the deadline it describes agree.
      * @return Exactly two frames, [Addressed] to seat `0` and seat `1`, or an empty list.
      */
     private fun turnClockFrames(room: Room, now: Long): List<Addressed> {
-        val deadline = room.turnDeadline ?: return emptyList()
-        val message = ServerMessage.TurnClock(
-            seat = deadline.seat,
-            handNumber = deadline.handNumber,
-            actionSequence = deadline.actionSequence,
-            turnRemainingMillis = (deadline.bankBeginsAt - now).coerceAtLeast(0L),
-            bankRemainingMillis = listOf(
-                room.timebankRemainingMillis[0] ?: timeouts.timebankMillis,
-                room.timebankRemainingMillis[1] ?: timeouts.timebankMillis,
-            ),
-        )
-        return listOf(Addressed(0, message), Addressed(1, message))
+        val clock = room.turnClock(now, timeouts.timebankMillis) ?: return emptyList()
+        return listOf(Addressed(0, clock), Addressed(1, clock))
     }
 
     /**
