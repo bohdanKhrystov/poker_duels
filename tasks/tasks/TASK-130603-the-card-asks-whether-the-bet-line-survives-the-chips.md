@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130603
 title: The card asks whether the bet-line survives the chips, and answers half of it already
 type: task
-status: backlog
+status: ready
 parent: STORY-1306
 module: design
 estimate: S

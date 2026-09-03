@@ -33,6 +33,13 @@
     /* the acting seat's mark: values mirror design/tokens/tokens.css (ADR-0115 §4) */
     --pd-motion-turn-period: 2400ms;
     --pd-motion-turn-ease: ease-in-out;
+    /* the chip pile and its flight: values mirror design/tokens/tokens.css (ADR-0115 §1, §4) */
+    --pd-chip-face: radial-gradient(circle at 36% 30%, var(--pd-text-muted), var(--pd-text-faint) 55%, var(--pd-hairline));
+    --pd-chip-edge: var(--pd-text-faint);
+    --pd-chip-size: 14px;
+    --pd-motion-chip-flight: 420ms;
+    --pd-motion-chip-ease: ease-out;
+    --pd-motion-chip-travel: 28px;
   }
   * { margin: 0; box-sizing: border-box; }
   body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
@@ -111,6 +118,28 @@
   .pot .amount.win { color: var(--pd-win); font-weight: 700; }
   .pot .meta { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
 
+  /* The chip pile — three discs, always three (ADR-0115 §1, §6): the pile
+   * never grows or shrinks with the amount, so its size states no count and
+   * implies no denomination — the numeral beside it is the whole fact. */
+  .pile { display: inline-flex; flex-direction: column; align-items: center; }
+  .disc { display: block; width: var(--pd-chip-size); height: var(--pd-chip-size);
+    border-radius: 50%; background: var(--pd-chip-face); border: 1px solid var(--pd-chip-edge); }
+  .disc + .disc { margin-top: calc(var(--pd-chip-size) * -0.55); }
+  /* pd-chip-flight runs once, from an offset of --pd-motion-chip-travel to
+   * transform: none — the frame the pile already has at rest — so the
+   * flight always ends where a still pile sits and nothing is ever animated
+   * out (ADR-0115 §1, §3, §6). */
+  .pile.flying { animation-name: pd-chip-flight; animation-duration: var(--pd-motion-chip-flight);
+    animation-timing-function: var(--pd-motion-chip-ease); animation-fill-mode: both; }
+  @keyframes pd-chip-flight {
+    from { transform: translateY(calc(var(--pd-motion-chip-travel) * -1)); }
+    to { transform: none; }
+  }
+  /* the same pile, its flight switched off exactly as .seat.on-turn.stilled
+   * switches off above and as the prefers-reduced-motion block below
+   * switches off every animation product-wide (ADR-0115 §2) */
+  .pile.stilled { animation: none; }
+
   /* playing card — faithful copy of components/playing-card.html */
   .board { display: flex; gap: var(--pd-space-3);
     --bw: clamp(48px, calc((100cqi - 64px) / 5), 72px); }
@@ -187,6 +216,7 @@
               <span class="status turn">Their turn</span></span>
             <span class="dealer">D</span>
             <span class="chips">3,750</span>
+            <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="oppcards">
             <span class="back" style="--w:40px" role="img" aria-label="ImKate's hidden hand"></span>
@@ -198,6 +228,7 @@
           <div class="pot">
             <span class="amount">Pot&nbsp;3,250</span>
             <span class="meta">Blinds 75/150 · Hand 14 · Turn</span>
+            <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="board">
             <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
@@ -217,6 +248,7 @@
               <span class="status"></span></span>
             <span class="last-act">Check</span>
             <span class="chips">13,000</span>
+            <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="bar off">
             <div class="sizing">
@@ -243,6 +275,7 @@
             <span class="last-act">Call&nbsp;800</span>
             <span class="dealer">D</span>
             <span class="chips">2,950</span>
+            <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="oppcards">
             <span class="back mucked" style="--w:40px" role="img" aria-label="ImKate's mucked hand, not shown"></span>
@@ -272,6 +305,7 @@
             <span class="who"><span class="name">You</span>
               <span class="status"></span></span>
             <span class="chips">12,200</span>
+            <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="bar off">
             <div class="sizing">
@@ -299,6 +333,7 @@
             <span class="last-act">Fold</span>
             <span class="dealer">D</span>
             <span class="chips">3,750</span>
+            <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="oppcards">
             <span class="back mucked" style="--w:40px" role="img" aria-label="ImKate's folded hand, not shown"></span>
@@ -328,6 +363,7 @@
             <span class="who"><span class="name">You</span>
               <span class="status"></span></span>
             <span class="chips">13,000</span>
+            <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="bar off">
             <div class="sizing">
