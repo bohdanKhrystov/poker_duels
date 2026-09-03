@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130803
 title: The turn allowance and the timebank are read from configuration at startup
 type: task
-status: backlog
+status: ready
 parent: STORY-1308
 module: poker-server
 estimate: S

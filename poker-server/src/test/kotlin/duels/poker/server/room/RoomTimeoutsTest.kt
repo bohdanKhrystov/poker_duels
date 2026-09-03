@@ -36,4 +36,35 @@ class RoomTimeoutsTest {
     fun theGraceWindowDefaultsWhenNotNamed() {
         assertEquals(RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS, RoomTimeouts(1, 1).disconnectGraceMillis)
     }
+
+    @Test
+    fun theShippedTurnAllowanceIsThirtySeconds() {
+        assertEquals(30_000L, RoomTimeouts.DEFAULT_TURN_MILLIS)
+        assertEquals(RoomTimeouts.DEFAULT_TURN_MILLIS, RoomTimeouts.DEFAULT.turnMillis)
+    }
+
+    @Test
+    fun theShippedTimebankIsThreeMinutes() {
+        assertEquals(180_000L, RoomTimeouts.DEFAULT_TIMEBANK_MILLIS)
+        assertEquals(RoomTimeouts.DEFAULT_TIMEBANK_MILLIS, RoomTimeouts.DEFAULT.timebankMillis)
+    }
+
+    @Test
+    fun aNonPositiveTurnAllowanceIsRefused() {
+        assertThrows<IllegalArgumentException> { RoomTimeouts(1, 1, turnMillis = 0) }
+        assertThrows<IllegalArgumentException> { RoomTimeouts(1, 1, turnMillis = -1) }
+    }
+
+    @Test
+    fun aNonPositiveTimebankIsRefused() {
+        assertThrows<IllegalArgumentException> { RoomTimeouts(1, 1, timebankMillis = 0) }
+        assertThrows<IllegalArgumentException> { RoomTimeouts(1, 1, timebankMillis = -1) }
+    }
+
+    @Test
+    fun aReapingTestNeedStateNoClock() {
+        val timeout = RoomTimeouts(waitingMillis = 10_000, finishedMillis = 4_000)
+        assertEquals(RoomTimeouts.DEFAULT_TURN_MILLIS, timeout.turnMillis)
+        assertEquals(RoomTimeouts.DEFAULT_TIMEBANK_MILLIS, timeout.timebankMillis)
+    }
 }
