@@ -9,6 +9,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { Lobby } from "../lobby/Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
+import { aLegalActions } from "./turn-fixture";
 import { aView } from "./view-fixture";
 
 /**
@@ -32,6 +33,13 @@ import { aView } from "./view-fixture";
  * `ActionOn`, and no act of its own. The mark speaks nothing on any screen it does reach either
  * — `TASK-130406` pins one `aria-label` and zero `title` on the plate — so neither `spoken()`
  * nor the digit sweep below changes shape to admit it.
+ *
+ * The typed total (`TASK-130505`, `aria-label="the total"`) renders nothing here for the usual
+ * reason: `Lobby.tsx` mounts `WaitingTable`, never `ActionBar`, while `view` is `null`. But it is
+ * the one surface on this page that does not appear the moment a view arrives either — the field
+ * lives inside the bar's `Live`, which does not render until the server has named a turn, and
+ * even then only when that turn carries a bet or a raise. The test below walks past the live
+ * table the earlier tests already open, to prove that middle wait is real and not merely untested.
  */
 
 afterEach(() => {
@@ -238,5 +246,39 @@ describe("what the table shows when there is no view", () => {
     });
 
     expect(container.querySelectorAll(".last-act").length).toBeGreaterThan(0);
+  });
+
+  it("offers no typed total before the server has named a turn", () => {
+    // Every other surface this file covers appears the moment a view
+    // arrives; this one does not, so the walk needs a third state past the
+    // Snapshot the earlier tests stop at, or the middle assertion below
+    // would be checking the wrong boundary.
+    const { container, store } = renderNullView("ABCDEFGH");
+
+    expect(screen.queryByLabelText("the total")).toBeNull();
+    // Closed, not filtered, the same reason the second test in this file
+    // insists on it: a name spoken through `aria-label` alone would pass
+    // every other assertion here undetected.
+    expect(spoken(container)).toEqual([]);
+
+    act(() => {
+      store.apply({ type: "Snapshot", view: aView() });
+    });
+    // The bar is on screen now (the third test above proves
+    // `queryByLabelText("your move")` non-null here) and the field still is
+    // not: a Snapshot alone is not enough.
+    expect(screen.queryByLabelText("the total")).toBeNull();
+
+    act(() => {
+      store.apply({
+        type: "YourTurn",
+        handNumber: 1,
+        actionSequence: 1,
+        legalActions: aLegalActions(),
+      });
+    });
+    // The guard on the guard: without this, the two refusals above would be
+    // assertions about a probe that never matches anything in this app.
+    expect(screen.queryByLabelText("the total")).not.toBeNull();
   });
 });

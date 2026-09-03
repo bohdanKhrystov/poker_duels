@@ -2,7 +2,7 @@
 id: STORY-1305
 title: A bet amount can be typed, and an illegal one is refused in the server's own numbers
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: web-client
 labels: [client, design, table, action-bar]
