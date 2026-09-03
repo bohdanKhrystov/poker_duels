@@ -57,7 +57,7 @@ private fun allInFrame(room: Room): Act {
     )
 }
 
-internal class GraceExpiryTest {
+internal class TurnClockExpiryTest {
 
     @Test
     fun nothingExpiresWhileTheWindowIsStillRunning() = runBlocking {
@@ -73,9 +73,9 @@ internal class GraceExpiryTest {
         clock.advance(29_999)
         val runnerBefore = registry.get(room.code)!!.runner
 
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
-        assertEquals(emptyList<GraceExpiry>(), expiries)
+        assertEquals(emptyList<TurnClockExpiry>(), expiries)
         assertTrue(registry.get(room.code)!!.isPaused)
         assertSame(runnerBefore, registry.get(room.code)!!.runner)
     }
@@ -92,7 +92,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         val handOneActions = registry.get(room.code)!!.runner!!.log.hands.first().actions
@@ -111,7 +111,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
 
         clock.advance(30_000)
-        registry.expireGracePeriods()
+        registry.expireTurnClocks()
 
         val after = registry.get(room.code)!!
         assertEquals(RoomState.PLAYING, after.state)
@@ -131,7 +131,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
 
         clock.advance(30_000)
-        val firstSweep = registry.expireGracePeriods()
+        val firstSweep = registry.expireTurnClocks()
 
         // "Does not fire twice" is only proved once the first sweep is shown to have actually
         // fired: a non-empty result, and the fold it produced visible in the hand log.
@@ -140,9 +140,9 @@ internal class GraceExpiryTest {
         assertEquals(PlayerAction.Fold(onTurn), handOneActionsAfterFirstSweep.last())
         val roomAfterFirstSweep = registry.get(room.code)!!
 
-        val secondSweep = registry.expireGracePeriods()
+        val secondSweep = registry.expireTurnClocks()
 
-        assertEquals(emptyList<GraceExpiry>(), secondSweep)
+        assertEquals(emptyList<TurnClockExpiry>(), secondSweep)
         assertEquals(roomAfterFirstSweep, registry.get(room.code))
     }
 
@@ -160,7 +160,7 @@ internal class GraceExpiryTest {
         val actionsBeforeSweep = registry.get(room.code)!!.runner!!.hand!!.log.actions
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         val afterSweep = registry.get(room.code)!!
@@ -194,9 +194,9 @@ internal class GraceExpiryTest {
         registry.resume(room.code, onTurnPlayer)
         clock.advance(1_000)
 
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
-        assertEquals(emptyList<GraceExpiry>(), expiries)
+        assertEquals(emptyList<TurnClockExpiry>(), expiries)
         assertEquals(actionsBeforeSweep, registry.get(room.code)!!.runner!!.hand!!.log.actions)
     }
 
@@ -212,7 +212,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, guest)
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         assertEquals(RoomState.ABANDONED, expiries.single().room.state)
@@ -246,7 +246,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         assertEquals(RoomState.FINISHED, registry.get(room.code)!!.state)
@@ -289,9 +289,9 @@ internal class GraceExpiryTest {
         registry.disconnect(okRoom.code, seatedPlayer(okOnTurn, okHost, okGuest))
 
         clock.advance(30_000)
-        // Before the fix this threw the sink's exception straight out of `expireGracePeriods()`,
+        // Before the fix this threw the sink's exception straight out of `expireTurnClocks()`,
         // losing `okRoom`'s already-computed fold along with it.
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         assertEquals(okRoom.code, expiries.single().room.code)
@@ -316,7 +316,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(offTurn, host, guest))
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         val presenceFrame = Addressed(onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT))
@@ -341,7 +341,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(offTurn, host, guest))
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         val outbound = expiries.single().outbound
@@ -361,7 +361,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         val outbound = expiries.single().outbound
@@ -385,7 +385,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         val outbound = expiries.single().outbound
@@ -409,9 +409,9 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, seatedPlayer(onTurn, host, guest))
 
         clock.advance(29_999)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
-        assertEquals(emptyList<GraceExpiry>(), expiries)
+        assertEquals(emptyList<TurnClockExpiry>(), expiries)
     }
 
     @Test
@@ -426,7 +426,7 @@ internal class GraceExpiryTest {
         registry.disconnect(room.code, guest)
 
         clock.advance(30_000)
-        val expiries = registry.expireGracePeriods()
+        val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)
         assertTrue(expiries.single().outbound.none { (_, message) -> message is ServerMessage.OpponentPresence })
