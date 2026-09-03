@@ -639,7 +639,11 @@ public class RoomRegistry(
         val expiries = mutableListOf<GraceExpiry>()
         for ((code, expiredSeat) in expiredSeatByCode) {
             val step = try {
-                act(code) { it.giveUpTurn(handSeeds) }
+                // Only the step is written back here: [act] keeps the room it read, and this pass
+                // has already latched and abandoned through [Room.expireGrace] above, so
+                // [TurnGiveUp.room] would restate what it just wrote. Wiring that room through
+                // instead is `TASK-130809`, which owns this sweep's shape.
+                act(code) { it.giveUpTurn(now, handSeeds)?.step }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Throwable) {

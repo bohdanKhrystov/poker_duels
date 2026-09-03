@@ -21,6 +21,11 @@ import java.util.UUID
 private val threeHands = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(3))
 private val seeds = HandSeedSource { 7L }
 
+// Every fixture below that carries no turnDeadline at all is judged against this instant, so the
+// absent-seat tests keep asking exactly what they asked before the clock became an input: no
+// deadline can have expired by it.
+private val beforeAnyDeadline = 3_000L
+
 private fun playingRoom(): Room {
     val opened = Room.open(RoomCode("2B7KMNPQ"), PlayerId("host"), threeHands, now = 1_000L)
     val seated = (opened.join(PlayerId("guest"), now = 2_000L) as JoinResult.Seated).room
@@ -167,10 +172,10 @@ internal class RoomAbsentSeatTest {
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         val absent = room.copy(absentSeats = setOf(onTurn))
 
-        val step = absent.giveUpTurn(seeds)
+        val step = absent.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNotNull(step)
-        assertEquals(PlayerAction.Fold(onTurn), step!!.runner.log.hands[0].actions.last())
+        assertEquals(PlayerAction.Fold(onTurn), step!!.step.runner.log.hands[0].actions.last())
     }
 
     @Test
@@ -179,7 +184,7 @@ internal class RoomAbsentSeatTest {
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         val absent = room.copy(absentSeats = setOf(1 - onTurn))
 
-        val step = absent.giveUpTurn(seeds)
+        val step = absent.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNull(step)
     }
@@ -188,7 +193,7 @@ internal class RoomAbsentSeatTest {
     fun giveUpTurnAnswersNullWithNobodyAbsent() {
         val room = playingRoom()
 
-        val step = room.giveUpTurn(seeds)
+        val step = room.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNull(step)
     }
@@ -198,8 +203,8 @@ internal class RoomAbsentSeatTest {
         val waiting = Room.open(RoomCode("2B7KMNPQ"), PlayerId("host"), threeHands, now = 1_000L)
         val finished = playingRoom().copy(state = RoomState.FINISHED, absentSeats = setOf(0))
 
-        assertNull(waiting.giveUpTurn(seeds))
-        assertNull(finished.giveUpTurn(seeds))
+        assertNull(waiting.giveUpTurn(beforeAnyDeadline, seeds))
+        assertNull(finished.giveUpTurn(beforeAnyDeadline, seeds))
     }
 
     @Test
@@ -216,9 +221,9 @@ internal class RoomAbsentSeatTest {
         )
         assertTrue(pausedAndAbsent.isPaused)
 
-        val step = pausedAndAbsent.giveUpTurn(seeds)
+        val step = pausedAndAbsent.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNotNull(step)
-        assertEquals(PlayerAction.Fold(onTurn), step!!.runner.log.hands[0].actions.last())
+        assertEquals(PlayerAction.Fold(onTurn), step!!.step.runner.log.hands[0].actions.last())
     }
 }
