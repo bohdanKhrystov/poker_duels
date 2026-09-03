@@ -180,6 +180,7 @@
   .stepper button { width: var(--pd-space-7); height: var(--pd-space-7);
     border-radius: var(--pd-radius-medium); border: 1px solid var(--pd-hairline);
     background: none; color: var(--pd-text); cursor: pointer; font-size: var(--pd-fs-body); }
+  .total { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; font-size: var(--pd-fs-body); color: var(--pd-text); background: none; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium); text-align: center; width: 92px; padding: var(--pd-space-2) var(--pd-space-3); }
   .actions { display: flex; gap: var(--pd-space-3); }
   .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
     line-height: var(--pd-lh-tight); padding: var(--pd-space-4) 0;
@@ -283,7 +284,7 @@
               <button class="chip">min</button><button class="chip">⅓</button>
               <button class="chip">½</button><button class="chip sel">pot</button>
               <button class="chip">all-in</button>
-              <span class="stepper"><button aria-label="decrease the raise">−</button><span aria-label="raise to amount">3,650</span><button aria-label="increase the raise">+</button></span>
+              <span class="stepper"><button aria-label="decrease the raise">−</button><input class="total" aria-label="the total" value="3,650"><button aria-label="increase the raise">+</button></span>
             </div>
             <div class="actions">
               <button class="btn ghost">Fold</button>
@@ -343,7 +344,7 @@
               <button class="chip">min</button><button class="chip">⅓</button>
               <button class="chip">½</button><button class="chip sel">pot</button>
               <button class="chip">all-in</button>
-              <span class="stepper"><button aria-label="decrease the raise">−</button><span aria-label="raise to amount">3,650</span><button aria-label="increase the raise">+</button></span>
+              <span class="stepper"><button aria-label="decrease the raise">−</button><input class="total" aria-label="the total" value="3,650"><button aria-label="increase the raise">+</button></span>
             </div>
             <div class="actions">
               <button class="btn ghost">Fold</button>
