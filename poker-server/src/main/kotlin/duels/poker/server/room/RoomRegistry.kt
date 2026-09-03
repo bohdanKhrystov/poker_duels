@@ -357,6 +357,17 @@ public class RoomRegistry(
      * of the inbound frame's type; the caller supplies the pure computation, this method only
      * supplies the lock and the write-back.
      *
+     * Before the write-back, [step]'s result restarts the duel's turn clock: [Room.clocked]
+     * rederives [Room.turnDeadline] and [Room.timebankRemainingMillis] from wherever [step] left
+     * the runner, reading `now` once and under the same lock as the write-back itself, so no
+     * reader can ever observe a runner without the deadline that governs it (`ADR-0113` §3). When
+     * that leaves a live decision open, a `ServerMessage.TurnClock` addressed to both seats is
+     * appended to the very end of [step]'s own outbound — after every `Events`, `Snapshot` and
+     * `YourTurn` it already carries — naming the seat, hand and decision the clock now times, and
+     * each seat's own remaining bank. A write-back whose runner did not move at all — a stale or
+     * illegal frame [step] itself already refused — states nothing new: nothing here restarted
+     * for it to state.
+     *
      * When [step] returns a step whose runner has finished, the room is moved to
      * [RoomState.FINISHED] inside this call's lock — that write-back is what makes concurrent
      * finishing frames exactly-once: it is the same claim [Room.act] itself already refuses to
@@ -396,6 +407,8 @@ public class RoomRegistry(
             absent = { null },
             block = { room ->
                 val duelStep = step(room) ?: return@mutate Pair(null, null)
+                val now = clock.nowMillis()
+                val restarted = room.clocked(duelStep.runner, now, timeouts.turnMillis)
                 val newRoom = if (duelStep.runner.outcome != null) {
                     val duelId = checkNotNull(room.duelId) { "a PLAYING room always carries its duel id" }
                     finishedSeats = listOf(room.host, checkNotNull(room.guest) { "a PLAYING room always has a guest" })
@@ -404,11 +417,19 @@ public class RoomRegistry(
                     // the write-back to FINISHED below it — so no caller of `offerRematch` can
                     // ever observe a FINISHED room whose recording claim is not yet visible.
                     recording[code] = duelId
-                    room.finish(clock.nowMillis()).copy(runner = duelStep.runner)
+                    restarted.finish(now).copy(runner = duelStep.runner)
                 } else {
-                    room.copy(runner = duelStep.runner, lastActivityAt = clock.nowMillis())
+                    restarted.copy(runner = duelStep.runner, lastActivityAt = now)
                 }
-                Pair(newRoom, duelStep)
+                // A frame that moved nothing — a stale replay, an action step itself refused —
+                // states no new deadline: the recipient already holds whatever was last sent for
+                // this exact decision, and restating it would claim a restart that never happened.
+                val outbound = if (duelStep.runner === room.runner) {
+                    duelStep.outbound
+                } else {
+                    duelStep.outbound + turnClockFrames(newRoom, now)
+                }
+                Pair(newRoom, duelStep.copy(outbound = outbound))
             },
         )
 
@@ -468,6 +489,26 @@ public class RoomRegistry(
     private fun withFreshRunner(room: Room): Pair<Room, List<Addressed>> {
         val started = startDuel(room.format, room.openingButtonSeat, seeds.newHandSeed())
         return Pair(room.copy(runner = started.runner, duelId = UUID.randomUUID()), started.outbound)
+    }
+
+    /**
+     * The frames this write-back owes both seats for [room]'s open decision, if any — empty when
+     * [Room.turnDeadline] is `null`, since there is then no live decision to state (`ADR-0113`
+     * §§1, 3).
+     *
+     * [Room.turnClock] builds the frame itself, the same way [Room.presenceOf] already builds
+     * one for this registry's own [disconnect] and [resume] — this registry names no protocol
+     * type of its own to send one. Both seats are handed the identical value, wrapped once each:
+     * the clock is a fact about the decision now open, not a per-recipient view.
+     *
+     * @param room The room as it stands after the write-back restarted its clock.
+     * @param now The same instant the room was restarted with, passed through unchanged so the
+     *   frame and the deadline it describes agree.
+     * @return Exactly two frames, [Addressed] to seat `0` and seat `1`, or an empty list.
+     */
+    private fun turnClockFrames(room: Room, now: Long): List<Addressed> {
+        val clock = room.turnClock(now, timeouts.timebankMillis) ?: return emptyList()
+        return listOf(Addressed(0, clock), Addressed(1, clock))
     }
 
     /**

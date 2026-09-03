@@ -574,6 +574,38 @@ public data class Room(
     }
 
     /**
+     * Project this room's open decision, if any, as the `ServerMessage.TurnClock` both seats are
+     * owed — the deadline the room already carries, restated as what is left rather than an
+     * instant (`ADR-0113` §§1, 2).
+     *
+     * Both seats read back the identical frame: the clock is a fact about the decision now open,
+     * not a per-recipient view, the same reasoning [presenceOf] applies to a fact about one seat.
+     * A seat [timebankRemainingMillis] has no entry for yet reads as [timebankMillis] — the full,
+     * untouched bank — since it has spent nothing of it. `Room` builds the frame itself, exactly
+     * as it already does for [ServerMessage.OpponentPresence] in [presenceOf]: `RoomRegistry`
+     * names no protocol type of its own to send one.
+     *
+     * @param now the instant to measure `turnRemainingMillis` and every bank from; the same `now`
+     *   the room was last restarted with, so the two stay consistent.
+     * @param timebankMillis the configured full bank, read for a seat [timebankRemainingMillis]
+     *   carries no entry for.
+     * @return the frame both seats are owed, or `null` when [turnDeadline] names no live decision.
+     */
+    public fun turnClock(now: Long, timebankMillis: Long): ServerMessage.TurnClock? {
+        val deadline = turnDeadline ?: return null
+        return ServerMessage.TurnClock(
+            seat = deadline.seat,
+            handNumber = deadline.handNumber,
+            actionSequence = deadline.actionSequence,
+            turnRemainingMillis = (deadline.bankBeginsAt - now).coerceAtLeast(0L),
+            bankRemainingMillis = listOf(
+                timebankRemainingMillis[0] ?: timebankMillis,
+                timebankRemainingMillis[1] ?: timebankMillis,
+            ),
+        )
+    }
+
+    /**
      * Refill this room's turn clock for a new duel.
      *
      * Both seats' [timebankRemainingMillis] are set to [timebankMillis] and [turnDeadline] is

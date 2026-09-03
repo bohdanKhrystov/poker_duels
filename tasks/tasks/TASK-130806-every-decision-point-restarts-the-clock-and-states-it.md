@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130806
 title: Every act write-back restarts the clock and states it to both seats
 type: task
-status: ready
+status: done
 parent: STORY-1308
 module: poker-server
 estimate: S
@@ -12,7 +12,7 @@ review: standard
 files_touched: 4
 atomic:
   - RoomRegistryTest.importsNoTransportOrProtocolTypes — asserts RoomRegistry.kt contains no 'import duels.poker.server.protocol', so the frame is built in Room.kt and the two files move together
-  - RoomDuelTest — two exact-outbound assertEquals (lines 84 and 410) fail the moment the act batch gains frames
+  - RoomDuelTest.anActRoutedThroughTheRoomMovesTheDuelAndReturnsTheRunnersFrames — its exact-outbound assertEquals fails the moment the act batch gains frames (the driver first claimed a second one at line 410; the coder ran the class before and after, 14/14 green both times, and that assertion tests registry.join which this ticket never touches)
   - the Kotlin compiler — a new Room projection and its RoomRegistry call site are one step
   - './gradlew check -PrequireDocker=true' — holds all four files green together
 labels: [server, clock, protocol]
@@ -62,9 +62,16 @@ nothing `ADR-0113` has to decide. Relaxing `importsNoTransportOrProtocolTypes` w
 following the merged precedent is not.
 
 What was actually wrong was the **Files table**: it named two files for work that four gates hold
-together. `Room.kt` was missing, and so was `RoomDuelTest.kt`, whose two exact-outbound
-`assertEquals` (lines 84 and 410) fail the moment the batch grows. Both are gate-forced, so both are
-in the blast radius by `ADR-0070`'s definition, and the count is four.
+together. `Room.kt` was missing, and so was `RoomDuelTest.kt`, whose exact-outbound `assertEquals`
+at line 84 fails the moment the batch grows. Both are gate-forced, so both are in the blast radius
+by `ADR-0070`'s definition, and the count is four.
+
+**One correction, recorded rather than quietly fixed.** The driver's first re-scope claimed a
+*second* gate-forced assertion in `RoomDuelTest` at line 410. That was wrong: it came from a
+`grep` that found an exact-outbound `assertEquals` there and assumed it was affected. The coder
+ran the class before and after its change — 14/14 green both times — and established that line
+410 tests `registry.join`, which this ticket never touches. The file is in the table on one
+gate, not two.
 
 ## Scope
 

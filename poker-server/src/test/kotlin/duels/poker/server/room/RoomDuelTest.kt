@@ -3,6 +3,7 @@ package duels.poker.server.room
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.EndCondition
 import duels.poker.engine.game.PlayerAction
+import duels.poker.server.duel.Addressed
 import duels.poker.server.duel.DuelResult
 import duels.poker.server.duel.DuelResultSink
 import duels.poker.server.duel.HandSeedSource
@@ -77,11 +78,28 @@ internal class RoomDuelTest {
         val seated = (registry.join(room.code, guest) as JoinResult.Seated).room
         val message = callFrame(seated)
         val expected = seated.act(message.action.seat, message, fixedSeeds)!!
+        // The room's very first clocked decision: nobody has answered one yet, so the seat now on
+        // turn is owed the whole fresh allowance and both banks read as the configured full bank
+        // (`ADR-0113` §§1, 3) — read off the resulting hand and the configured defaults, not off
+        // the clock mechanism this registry call is what actually exercises.
+        val expectedHand = expected.runner.hand!!
+        val expectedClock = ServerMessage.TurnClock(
+            seat = expectedHand.state.seatToAct!!,
+            handNumber = expectedHand.state.handNumber,
+            actionSequence = decisionPointOf(expectedHand.log.events)!!.sequence,
+            turnRemainingMillis = RoomTimeouts.DEFAULT_TURN_MILLIS,
+            bankRemainingMillis = listOf(
+                RoomTimeouts.DEFAULT_TIMEBANK_MILLIS,
+                RoomTimeouts.DEFAULT_TIMEBANK_MILLIS,
+            ),
+        )
+        val expectedOutbound = expected.outbound +
+            listOf(Addressed(0, expectedClock), Addressed(1, expectedClock))
 
         val step = registry.act(room.code) { r -> r.act(message.action.seat, message, fixedSeeds) }
 
         assertNotNull(step)
-        assertEquals(expected.outbound, step!!.outbound)
+        assertEquals(expectedOutbound, step!!.outbound)
         assertEquals(expected.runner, step.runner)
         assertEquals(step.runner, registry.get(room.code)!!.runner)
     }
