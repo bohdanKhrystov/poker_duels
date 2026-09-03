@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130505
 title: Both ends of the interval, the repeated refusal, and the button that never prints a different amount
 type: task
-status: ready
+status: done
 parent: STORY-1305
 module: web-client
 estimate: S

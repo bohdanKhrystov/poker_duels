@@ -973,4 +973,167 @@ describe("the action bar", () => {
     expect(refusedText).toBeNull();
     expect(send).not.toHaveBeenCalled();
   });
+
+  it("sends both ends of the interval and one total inside it", () => {
+    // A fresh bar per shape: sending takes the sent-lock, so each of the six
+    // shapes below needs its own render.
+    function sendsTotal(
+      turn: ReturnType<typeof aTurn>,
+      typed: string,
+      buttonName: string,
+      actionType: "Raise" | "Bet",
+      to: number,
+    ) {
+      const { getByRole, send, unmount } = bar({ turn });
+      fireEvent.change(getByRole("textbox", { name: "the total" }), {
+        target: { value: typed },
+      });
+      fireEvent.click(getByRole("button", { name: buttonName }));
+      expect(send).toHaveBeenNthCalledWith(1, {
+        type: "Act",
+        handNumber: 14,
+        actionSequence: 27,
+        action: { type: actionType, seat: 0, to },
+      });
+      unmount();
+    }
+
+    // First turn (the fixture's own defaults): floor is `minRaiseTo` 1,200,
+    // ceiling is `allInTo` 13,400.
+    const firstTurn = aTurn();
+    sendsTotal(firstTurn, "1,200", "Raise to 1,200", "Raise", 1200);
+    sendsTotal(firstTurn, "13,400", "Raise to 13,400", "Raise", 13400);
+    sendsTotal(firstTurn, "7,000", "Raise to 7,000", "Raise", 7000);
+
+    // Second turn: a bet, not a raise, and its own independent bounds —
+    // floor 350, ceiling 8,200.
+    const secondTurn = aTurn({
+      legalActions: aLegalActions({
+        allowed: ["CHECK", "BET"],
+        minBetTo: 350,
+        allInTo: 8200,
+      }),
+    });
+    sendsTotal(secondTurn, "350", "Bet 350", "Bet", 350);
+    sendsTotal(secondTurn, "8,200", "Bet 8,200", "Bet", 8200);
+    sendsTotal(secondTurn, "4,000", "Bet 4,000", "Bet", 4000);
+  });
+
+  it("refuses an entry over the stack, sends nothing, and quotes the maximum", () => {
+    const { getByRole, getByText, send } = bar();
+
+    const field = getByRole("textbox", { name: "the total" });
+    fireEvent.change(field, { target: { value: "20000" } });
+    fireEvent.click(getByRole("button", { name: "Raise to" }));
+
+    expect(send).not.toHaveBeenCalled();
+    // A string equality, not a number: the entry stands byte-identical.
+    expect((field as HTMLInputElement).value).toBe("20000");
+    expect(getByText("20,000 is over the maximum of 13,400.")).toBeDefined();
+  });
+
+  it("takes a plain zero as a number, and an empty field and a negative as neither", () => {
+    const { getByRole, getByText, send, unmount } = bar();
+    fireEvent.change(getByRole("textbox", { name: "the total" }), {
+      target: { value: "0" },
+    });
+    fireEvent.click(getByRole("button", { name: "Raise to" }));
+    expect(getByText("0 is under the minimum of 1,200.")).toBeDefined();
+    expect(send).not.toHaveBeenCalled();
+    unmount();
+
+    const {
+      getByRole: getByRoleEmpty,
+      getByText: getByTextEmpty,
+      send: sendEmpty,
+      unmount: unmountEmpty,
+    } = bar();
+    fireEvent.change(getByRoleEmpty("textbox", { name: "the total" }), {
+      target: { value: "" },
+    });
+    fireEvent.click(getByRoleEmpty("button", { name: "Raise to" }));
+    expect(getByTextEmpty("That is not an amount.")).toBeDefined();
+    expect(sendEmpty).not.toHaveBeenCalled();
+    unmountEmpty();
+
+    const {
+      getByRole: getByRoleNegative,
+      getByText: getByTextNegative,
+      send: sendNegative,
+    } = bar();
+    fireEvent.change(getByRoleNegative("textbox", { name: "the total" }), {
+      target: { value: "-500" },
+    });
+    fireEvent.click(getByRoleNegative("button", { name: "Raise to" }));
+    expect(getByTextNegative("That is not an amount.")).toBeDefined();
+    expect(sendNegative).not.toHaveBeenCalled();
+  });
+
+  it("refuses the same entry the same way twice, and takes no lock", () => {
+    const { getByRole, getByText, send } = bar();
+
+    const field = getByRole("textbox", { name: "the total" });
+    fireEvent.change(field, { target: { value: "500" } });
+
+    fireEvent.click(getByRole("button", { name: "Raise to" }));
+    expect(send).not.toHaveBeenCalled();
+    expect(getByText("500 is under the minimum of 1,200.")).toBeDefined();
+
+    // The same press again: a repeat, not a first attempt.
+    fireEvent.click(getByRole("button", { name: "Raise to" }));
+    expect(send).not.toHaveBeenCalled();
+    expect(getByText("500 is under the minimum of 1,200.")).toBeDefined();
+
+    expect((field as HTMLInputElement).value).toBe("500");
+
+    // No sent-lock was taken by either press: the bar is still the player's.
+    within(getByRole("group", { name: "actions" }))
+      .getAllByRole("button")
+      .forEach((button) => {
+        expect((button as HTMLButtonElement).disabled).toBe(false);
+      });
+  });
+
+  it("prints no amount on the button while the entry is refused, and never a different one", () => {
+    const { getByRole } = bar();
+    const field = getByRole("textbox", { name: "the total" });
+
+    fireEvent.change(field, { target: { value: "500" } });
+    let raiseButton = getByRole("button", { name: "Raise to" });
+    expect(raiseButton.textContent).toBe("Raise to");
+    expect(raiseButton.textContent ?? "").not.toMatch(/\d/);
+
+    fireEvent.change(field, { target: { value: "20000" } });
+    raiseButton = getByRole("button", { name: "Raise to" });
+    expect(raiseButton.textContent).toBe("Raise to");
+    expect(raiseButton.textContent ?? "").not.toMatch(/\d/);
+
+    // A legal entry again: the button prints this proposal, and only this one.
+    fireEvent.change(field, { target: { value: "3,000" } });
+    raiseButton = getByRole("button", { name: "Raise to 3,000" });
+    expect(raiseButton.textContent).toBe("Raise to 3,000");
+  });
+
+  it("keeps the server's own word until the entry is refused, and gives it back", () => {
+    const { getByRole, getByText, queryByText } = bar({
+      rejection: { type: "NotYourTurn", seatToAct: 1 },
+    });
+
+    expect(getByText("The server says it is seat 1's turn.")).toBeDefined();
+
+    const field = getByRole("textbox", { name: "the total" });
+    fireEvent.change(field, { target: { value: "500" } });
+    fireEvent.click(getByRole("button", { name: "Raise to" }));
+
+    expect(getByText("500 is under the minimum of 1,200.")).toBeDefined();
+    expect(queryByText("The server says it is seat 1's turn.")).toBeNull();
+
+    // A legal entry: the local sentence is cleared and the server's own
+    // stands again, because the local reading is only about the entry the
+    // player is holding right now.
+    fireEvent.change(field, { target: { value: "1,200" } });
+
+    expect(getByText("The server says it is seat 1's turn.")).toBeDefined();
+    expect(queryByText("500 is under the minimum of 1,200.")).toBeNull();
+  });
 });
