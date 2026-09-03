@@ -14,6 +14,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 internal class AbsentSeatsTest {
@@ -367,5 +368,57 @@ internal class AbsentSeatsTest {
 
         assertEquals(ActionType.FOLD, foldMark.action)
         assertEquals(ActionType.CHECK, checkMark.action)
+    }
+
+    @Test
+    fun giveUpDecisionFoldsTheSeatFacingABet() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val seatToAct = step.runner.hand!!.state.seatToAct!!
+        assertTrue(legalActions(step.runner.hand!!.state).allows(ActionType.FOLD))
+
+        val result = giveUpDecision(step, seatToAct, seeds)
+
+        val newFrames = result.outbound.drop(step.outbound.size)
+        val mark = newFrames.map { it.message }
+            .filterIsInstance<ServerMessage.ActedForAbsent>()
+            .firstOrNull()
+
+        assertNotNull(mark)
+        assertEquals(ActionType.FOLD, mark.action)
+        val toSeat0 = newFrames.single { it.seat == 0 && it.message is ServerMessage.ActedForAbsent }
+        val toSeat1 = newFrames.single { it.seat == 1 && it.message is ServerMessage.ActedForAbsent }
+        assertEquals(toSeat0.message, toSeat1.message)
+    }
+
+    @Test
+    fun giveUpDecisionChecksTheSeatOwedNothing() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val button = step.runner.hand!!.state.seatToAct!!
+        val bigBlind = 1 - button
+
+        val afterCall = actOn(step, button, PlayerAction.Call(button))
+        assertEquals(bigBlind, afterCall.runner.hand!!.state.seatToAct)
+        assertFalse(legalActions(afterCall.runner.hand!!.state).allows(ActionType.FOLD))
+
+        val result = giveUpDecision(afterCall, bigBlind, seeds)
+
+        val newFrames = result.outbound.drop(afterCall.outbound.size)
+        val mark = newFrames.map { it.message }
+            .filterIsInstance<ServerMessage.ActedForAbsent>()
+            .firstOrNull()
+
+        assertNotNull(mark)
+        assertEquals(ActionType.CHECK, mark.action)
+    }
+
+    @Test
+    fun giveUpDecisionLeavesAStepItCannotActOnIdentical() {
+        val step = startDuel(oneHand, buttonSeat = 0, seed = 7L)
+        val seatToAct = step.runner.hand!!.state.seatToAct!!
+        val otherSeat = 1 - seatToAct
+
+        val result = giveUpDecision(step, otherSeat, seeds)
+
+        assertSame(step, result)
     }
 }
