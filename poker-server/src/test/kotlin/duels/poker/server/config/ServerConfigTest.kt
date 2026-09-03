@@ -398,4 +398,64 @@ class ServerConfigTest {
         assertEquals(AttemptLimits(2, 333_000L), serverConfig.forgotPasswordLimits())
         assertEquals(AttemptLimits(4, 444_000L), serverConfig.recoveryEmailLimits())
     }
+
+    @Test
+    fun theShippedTurnAllowanceIsTheDeclaredOne() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(RoomTimeouts.DEFAULT_TURN_MILLIS, serverConfig.turnMillis)
+    }
+
+    @Test
+    fun theShippedTimebankIsTheDeclaredOne() {
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(RoomTimeouts.DEFAULT_TIMEBANK_MILLIS, serverConfig.timebankMillis)
+    }
+
+    @Test
+    fun theKeyMovesTheTurnAllowance() {
+        val config = MapApplicationConfig(ServerConfig.TURN_MILLIS_KEY to "45000")
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(45_000L, serverConfig.turnMillis)
+    }
+
+    @Test
+    fun theKeyMovesTheTimebank() {
+        val config = MapApplicationConfig(ServerConfig.TIMEBANK_MILLIS_KEY to "90000")
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(90_000L, serverConfig.timebankMillis)
+    }
+
+    @Test
+    fun theEnvironmentOutranksTheKeyForBothNumbers() {
+        // ADR-0113: environment must override both turn and timebank from config file,
+        // asserted with different values to catch crossed wiring
+        val config = MapApplicationConfig(
+            ServerConfig.TURN_MILLIS_KEY to "45000",
+            ServerConfig.TIMEBANK_MILLIS_KEY to "90000",
+        )
+        val serverConfig = ServerConfig.from(config) { name ->
+            when (name) {
+                ServerConfig.TURN_MILLIS_ENV -> "60000"
+                ServerConfig.TIMEBANK_MILLIS_ENV -> "120000"
+                else -> null
+            }
+        }
+        assertEquals(60_000L, serverConfig.turnMillis)
+        assertEquals(120_000L, serverConfig.timebankMillis)
+    }
+
+    @Test
+    fun aNonIntegerRefusesBothNumbers() {
+        assertThrows<IllegalArgumentException> {
+            val config = MapApplicationConfig(ServerConfig.TURN_MILLIS_KEY to "half a minute")
+            ServerConfig.from(config) { null }
+        }
+
+        assertThrows<IllegalArgumentException> {
+            val config = MapApplicationConfig(ServerConfig.TIMEBANK_MILLIS_KEY to "three")
+            ServerConfig.from(config) { null }
+        }
+    }
 }
