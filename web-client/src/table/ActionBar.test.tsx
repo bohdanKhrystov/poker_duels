@@ -138,7 +138,107 @@ describe("the action bar", () => {
       expect(chip.getAttribute("aria-label") ?? "").not.toMatch(/\d/);
     });
 
-    expect(container.querySelector("input")).toBeNull();
+    expect(container.querySelectorAll("input")).toHaveLength(1);
+  });
+
+  it("offers a text field holding the dialled total, with no bound of its own", () => {
+    const { getByRole } = bar();
+
+    const field = getByRole("textbox", { name: "the total" });
+    expect((field as HTMLInputElement).value).toBe("1,200");
+    expect(field.getAttribute("type")).toBe("text");
+    expect(field.getAttribute("inputMode")).toBe("numeric");
+    expect(field.hasAttribute("min")).toBe(false);
+    expect(field.hasAttribute("max")).toBe(false);
+    expect(field.hasAttribute("step")).toBe(false);
+    expect(field.hasAttribute("data-testid")).toBe(false);
+
+    const sizing = within(getByRole("group", { name: "amount" }));
+    fireEvent.click(sizing.getByRole("button", { name: "pot" }));
+    expect((field as HTMLInputElement).value).toBe("3,650");
+
+    fireEvent.click(sizing.getByRole("button", { name: "min" }));
+    expect((field as HTMLInputElement).value).toBe("1,200");
+
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+    expect((field as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it("sends the exact total the player typed", () => {
+    const { getByRole, send, unmount } = bar();
+
+    fireEvent.change(getByRole("textbox", { name: "the total" }), {
+      target: { value: "3000" },
+    });
+    fireEvent.click(getByRole("button", { name: "Raise to 3,000" }));
+
+    expect(send).toHaveBeenNthCalledWith(1, {
+      type: "Act",
+      handNumber: 14,
+      actionSequence: 27,
+      action: { type: "Raise", seat: 0, to: 3000 },
+    });
+    unmount();
+
+    // A fresh bar, typed with the table's own grouping — a second value and a
+    // second spelling, so neither a constant nor a rejected grouping survives.
+    const { getByRole: getByRole2, send: send2 } = bar();
+
+    fireEvent.change(getByRole2("textbox", { name: "the total" }), {
+      target: { value: "5,000" },
+    });
+    fireEvent.click(getByRole2("button", { name: "Raise to 5,000" }));
+
+    expect(send2).toHaveBeenNthCalledWith(1, {
+      type: "Act",
+      handNumber: 14,
+      actionSequence: 27,
+      action: { type: "Raise", seat: 0, to: 5000 },
+    });
+  });
+
+  it("refuses an entry under the server's minimum, sends nothing, and says which bound", () => {
+    const { getByRole, getByText, send } = bar();
+
+    const field = getByRole("textbox", { name: "the total" });
+    fireEvent.change(field, { target: { value: "500" } });
+    fireEvent.click(getByRole("button", { name: "Raise to" }));
+
+    expect(send).not.toHaveBeenCalled();
+    // A string equality, not a number: the entry stands byte-identical.
+    expect((field as HTMLInputElement).value).toBe("500");
+    expect(getByText("500 is under the minimum of 1,200.")).toBeDefined();
+
+    // No sent-lock was taken: the bar is still the player's.
+    within(getByRole("group", { name: "actions" }))
+      .getAllByRole("button")
+      .forEach((button) => {
+        expect((button as HTMLButtonElement).disabled).toBe(false);
+      });
+  });
+
+  it("refuses an entry that is not an amount, and a fold still folds", () => {
+    const { getByRole, getByText, send } = bar();
+
+    fireEvent.change(getByRole("textbox", { name: "the total" }), {
+      target: { value: "1o0" },
+    });
+    fireEvent.click(getByRole("button", { name: "Raise to" }));
+
+    expect(send).not.toHaveBeenCalled();
+    expect(getByText("That is not an amount.")).toBeDefined();
+
+    // The guard on the guard: Fold carries no total, so the refusal above may
+    // not reach it.
+    fireEvent.click(getByRole("button", { name: "Fold" }));
+
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenNthCalledWith(1, {
+      type: "Act",
+      handNumber: 14,
+      actionSequence: 27,
+      action: { type: "Fold", seat: 0 },
+    });
   });
 
   it("each preset sets the amount its own name states", () => {
