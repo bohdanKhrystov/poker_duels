@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130701
 title: Draw the turn clock, its two allowance states, and the timebank at both seats
 type: task
-status: ready
+status: done
 parent: STORY-1307
 module: design
 estimate: S
