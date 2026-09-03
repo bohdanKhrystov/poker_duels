@@ -12,6 +12,7 @@ import duels.poker.server.session.PlayerId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -25,6 +26,29 @@ private val seeds = HandSeedSource { 7L }
 // absent-seat tests keep asking exactly what they asked before the clock became an input: no
 // deadline can have expired by it.
 private val beforeAnyDeadline = 3_000L
+
+// The instant every deadline below runs out at, and the one every timed-out call is made at: the
+// comparison is `>=`, so this exact instant is already too late.
+private val deadlineAt = 10_000L
+
+/**
+ * This room with a [TurnDeadline] governing its live decision, running out at [expiresAt].
+ *
+ * The seat, hand and sequence are read off the live hand exactly as [Room.clocked] would derive
+ * them, so no test has to know which seat opens a hand to time it out.
+ */
+private fun Room.withDeadlineAt(expiresAt: Long): Room {
+    val hand = runner!!.hand!!
+    return copy(
+        turnDeadline = TurnDeadline(
+            seat = hand.state.seatToAct!!,
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            bankBeginsAt = expiresAt,
+            expiresAt = expiresAt,
+        ),
+    )
+}
 
 private fun playingRoom(): Room {
     val opened = Room.open(RoomCode("2B7KMNPQ"), PlayerId("host"), threeHands, now = 1_000L)
@@ -225,5 +249,35 @@ internal class RoomAbsentSeatTest {
 
         assertNotNull(step)
         assertEquals(PlayerAction.Fold(onTurn), step!!.step.runner.log.hands[0].actions.last())
+    }
+
+    @Test
+    fun aSeatOutOfTimeIsPlayedThoughItIsPresent() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+        // Nobody is gone: absence cannot be what moves this turn, only the clock.
+        assertTrue(room.absentSeats.isEmpty() && room.gracePeriods.isEmpty())
+
+        val given = room.giveUpTurn(deadlineAt, seeds)
+
+        assertNotNull(given)
+        assertEquals(PlayerAction.Fold(onTurn), given!!.step.runner.log.hands[0].actions.last())
+    }
+
+    @Test
+    fun aSeatInsideItsDeadlineIsNotPlayed() {
+        val room = playingRoom().withDeadlineAt(deadlineAt)
+        val onTurn = room.runner!!.hand!!.state.seatToAct!!
+        val runnerBefore = room.runner
+
+        val inside = room.giveUpTurn(deadlineAt - 1, seeds)
+        val expired = room.giveUpTurn(deadlineAt, seeds)
+
+        assertNull(inside)
+        assertSame(runnerBefore, room.runner)
+        // One millisecond later the very same room does move: the null above is the deadline
+        // talking, not a fixture that could never give up a turn at all.
+        assertNotNull(expired)
+        assertEquals(PlayerAction.Fold(onTurn), expired!!.step.runner.log.hands[0].actions.last())
     }
 }
