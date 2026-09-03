@@ -1,8 +1,12 @@
 package duels.poker.server.room
 
 import duels.poker.engine.duel.DuelFormat
+import duels.poker.engine.duel.EndCondition
+import duels.poker.engine.game.PlayerAction
 import duels.poker.server.duel.HandSeedSource
+import duels.poker.server.duel.decisionPointOf
 import duels.poker.server.duel.startDuel
+import duels.poker.server.protocol.Act
 import duels.poker.server.protocol.ServerMessage
 import duels.poker.server.session.PlayerId
 import duels.poker.server.time.MutableClock
@@ -16,6 +20,7 @@ class RoomRematchTest {
     private val guest = PlayerId("guest")
     private val code = RoomCode("ABCDEFGH")
     private val fixedSeeds = HandSeedSource { 7L }
+    private val oneHand = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
 
     private fun finishedRoom(): Room {
         val waitingRoom = Room.open(code, host, DuelFormat.DEFAULT, now = 1_000L)
@@ -40,6 +45,30 @@ class RoomRematchTest {
         registry.create(host)
         registry.join(code, guest)
         registry.finish(code)
+    }
+
+    /**
+     * Builds the [Act] frame shoving all-in on the seat currently on turn — a non-terminal action
+     * that leaves a real bet on the table, so the decision moves to the other seat, facing a
+     * shove, instead of ending the hand.
+     */
+    private fun allInFrame(room: Room): Act {
+        val hand = room.runner!!.hand!!
+        return Act(
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            action = PlayerAction.AllIn(hand.state.seatToAct!!),
+        )
+    }
+
+    /** Builds the [Act] frame folding the seat currently on turn, ending [oneHand]'s one hand. */
+    private fun foldFrame(room: Room): Act {
+        val hand = room.runner!!.hand!!
+        return Act(
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            action = PlayerAction.Fold(hand.state.seatToAct!!),
+        )
     }
 
     @Test
@@ -169,8 +198,74 @@ class RoomRematchTest {
         // the agreed room's format and its now-flipped button seat, plus the fixed seed every hand
         // in this registry draws — must equal `agreed.outbound` exactly, byte for byte, or the
         // registry reordered, rebuilt or invented frames instead of just handing back the runner's.
+        // The two `TurnClock` frames the fresh deadline owes both seats are not part of
+        // `startDuel`'s own output, so they are checked separately below rather than folded in.
         val expected = startDuel(agreed.room.format, agreed.room.openingButtonSeat, seed = 7L)
 
-        assertEquals(expected.outbound, agreed.outbound)
+        assertEquals(expected.outbound, agreed.outbound.dropLast(2))
+
+        val clocks = agreed.outbound.takeLast(2)
+        assertEquals(2, clocks.size)
+        assertTrue(clocks.all { it.message is ServerMessage.TurnClock })
+        assertEquals(setOf(0, 1), clocks.map { it.seat }.toSet())
+    }
+
+    @Test
+    fun anAgreedRematchRefillsBothBanks() = runBlocking {
+        val clock = MutableClock()
+        val codes = object : RoomCodeSource {
+            override fun newRoomCode(): RoomCode = code
+        }
+        val registry = RoomRegistry(codes, clock, seeds = fixedSeeds)
+        registry.create(host, oneHand)
+        registry.join(code, guest)
+
+        // Two real decisions, each spending a different amount of bank for a different seat, so
+        // that "both seats read the configured full bank after the rematch" cannot be explained
+        // by a seat the rematch never touched having simply stayed full the whole time.
+        val opener = registry.get(code)!!.runner!!.hand!!.state.seatToAct!!
+        assertEquals(0, opener)
+        clock.advance(RoomTimeouts.DEFAULT.turnMillis + 20_000L)
+        registry.act(code) { it.act(opener, allInFrame(it), registry.handSeeds) }
+
+        val responder = registry.get(code)!!.runner!!.hand!!.state.seatToAct!!
+        assertEquals(1, responder)
+        clock.advance(RoomTimeouts.DEFAULT.turnMillis + 15_000L)
+        registry.act(code) { it.act(responder, foldFrame(it), registry.handSeeds) }
+
+        assertEquals(RoomState.FINISHED, registry.get(code)!!.state)
+        assertEquals(
+            mapOf(
+                0 to RoomTimeouts.DEFAULT.timebankMillis - 20_000L,
+                1 to RoomTimeouts.DEFAULT.timebankMillis - 15_000L,
+            ),
+            registry.get(code)!!.timebankRemainingMillis,
+        )
+
+        registry.offerRematch(code, host)
+        val agreed = registry.offerRematch(code, guest) as RematchResult.Agreed
+
+        assertEquals(
+            mapOf(0 to RoomTimeouts.DEFAULT.timebankMillis, 1 to RoomTimeouts.DEFAULT.timebankMillis),
+            agreed.room.timebankRemainingMillis,
+        )
+    }
+
+    @Test
+    fun anAgreedRematchClocksItsOpeningDecision() = runBlocking {
+        val registry = scriptedRegistry()
+        finishedRoomIn(registry)
+
+        registry.offerRematch(code, host)
+        val agreed = registry.offerRematch(code, guest) as RematchResult.Agreed
+
+        val clocks = agreed.outbound.takeLast(2)
+        assertEquals(2, clocks.size)
+        assertEquals(setOf(0, 1), clocks.map { it.seat }.toSet())
+        for (frame in clocks) {
+            val message = frame.message
+            assertTrue(message is ServerMessage.TurnClock)
+            assertEquals(RoomTimeouts.DEFAULT.turnMillis, (message as ServerMessage.TurnClock).turnRemainingMillis)
+        }
     }
 }

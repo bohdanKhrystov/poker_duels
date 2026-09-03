@@ -120,12 +120,14 @@ public class RoomRegistry(
      * lookup and the lock refuses with [RoomRefusal.UNKNOWN_ROOM] instead of seating a player into
      * a room nobody can find.
      *
-     * A seated room also starts the duel: [startDuel] draws its opening hand's seed from [seeds]
-     * and the resulting runner is attached before the room is written back, so a room a caller can
-     * observe as [RoomState.PLAYING] always already carries its runner — inside the same critical
-     * section as the seating itself, for the same reason seating is. The frames that opening hand
-     * produced are read off the same [startDuel] call, inside that same critical section, and
-     * travel out on the [JoinResult.Seated] this method returns, in [JoinResult.Seated.outbound].
+     * A seated room also starts the duel: [withFreshRunner] draws its opening hand's seed from
+     * [seeds], refills both banks and clocks the opening decision, and the resulting runner is
+     * attached before the room is written back, so a room a caller can observe as
+     * [RoomState.PLAYING] always already carries its runner and a live deadline — inside the same
+     * critical section as the seating itself, for the same reason seating is. The frames that
+     * opening hand produced, followed by the `TurnClock` frames its fresh deadline owes both
+     * seats, travel out on the [JoinResult.Seated] this method returns, in
+     * [JoinResult.Seated.outbound].
      *
      * @param code The room to join.
      * @param player The player attempting to join.
@@ -136,9 +138,10 @@ public class RoomRegistry(
             code,
             absent = { JoinResult.Refused(RoomRefusal.UNKNOWN_ROOM) },
             block = { room ->
-                when (val result = room.join(player, clock.nowMillis())) {
+                val now = clock.nowMillis()
+                when (val result = room.join(player, now)) {
                     is JoinResult.Seated -> {
-                        val (seated, outbound) = withFreshRunner(result.room)
+                        val (seated, outbound) = withFreshRunner(result.room, now)
                         Pair(seated, JoinResult.Seated(seated, outbound))
                     }
                     is JoinResult.Refused -> Pair(null, result)
@@ -271,6 +274,15 @@ public class RoomRegistry(
      * later. The frames owed to [seat] are read off [resumeFrames], which asks the projection
      * layer what that seat is entitled to see right now rather than rebuilding that view here.
      *
+     * The same instant also restates [seat]'s live deadline: [turnClockFrame] reads
+     * [Room.turnDeadline] off the room as it stands after the write-back above and, when it
+     * names a live decision, appends one `TurnClock` addressed to [seat] after [resumeFrames]
+     * and the presence frames — nothing when it does not, since a [RoomState.FINISHED] room, or
+     * a duel paused between hands, has no deadline left to restate (`ADR-0113` §§1, 3). [seat]
+     * is told this even when [player] was never away: a reload has no memory of a clock it never
+     * rendered, and every state a client can be in should be reachable from one frame
+     * (`ADR-0113` §1).
+     *
      * @param code The room to resume in.
      * @param player The player asking for their seat back.
      * @return A [Resumption] naming [player]'s seat and the frames it is owed, or `null` if the
@@ -293,7 +305,8 @@ public class RoomRegistry(
                             add(Addressed(seat, returned.presenceOf(otherSeat, now)))
                             if (wasAway) add(Addressed(otherSeat, returned.presenceOf(seat, now)))
                         }
-                        Pair(returned, Resumption(returned, seat, resumeFrames(runner, seat) + presence))
+                        val outbound = resumeFrames(runner, seat) + presence + turnClockFrame(returned, seat, now)
+                        Pair(returned, Resumption(returned, seat, outbound))
                     }
                     RoomState.WAITING, RoomState.ABANDONED -> Pair(null, null)
                 }
@@ -309,10 +322,12 @@ public class RoomRegistry(
      * serialized and both see a consistent view of what has been offered.
      *
      * An agreed rematch starts a fresh duel exactly as [join] does: a new runner, seeded from
-     * [seeds], replaces whatever runner the just-finished duel left behind, attached before the
-     * room is written back. The frames that opening hand produced are read off the same
-     * [startDuel] call, inside that same critical section, and travel out on the
-     * [RematchResult.Agreed] this method returns, in [RematchResult.Agreed.outbound].
+     * [seeds], replaces whatever runner the just-finished duel left behind, its bank refilled and
+     * its opening decision clocked the same way [withFreshRunner] always does — *a rematch is a
+     * new duel and a fresh bank* (`ADR-0108` §1) — attached before the room is written back. The
+     * frames that opening hand produced, followed by the `TurnClock` frames its fresh deadline
+     * owes both seats, travel out on the [RematchResult.Agreed] this method returns, in
+     * [RematchResult.Agreed.outbound].
      *
      * Before any of that, this checks [recording]: if the room's current [Room.duelId] is the one
      * [act] is still trying to hand to [sink], the room is treated exactly as [Room.offerRematch]
@@ -336,10 +351,11 @@ public class RoomRegistry(
                 if (outstanding != null && outstanding == room.duelId) {
                     return@mutate Pair(null, RematchResult.Refused(RematchRefusal.NOT_FINISHED))
                 }
-                when (val result = room.offerRematch(player, clock.nowMillis())) {
+                val now = clock.nowMillis()
+                when (val result = room.offerRematch(player, now)) {
                     is RematchResult.Offered -> Pair(result.room, result)
                     is RematchResult.Agreed -> {
-                        val (agreed, outbound) = withFreshRunner(result.room)
+                        val (agreed, outbound) = withFreshRunner(result.room, now)
                         Pair(agreed, RematchResult.Agreed(agreed, outbound))
                     }
                     is RematchResult.Refused -> Pair(null, result)
@@ -469,8 +485,8 @@ public class RoomRegistry(
     }
 
     /**
-     * Start a fresh duel for [room] and attach it, drawing the opening hand's seed from [seeds]
-     * and minting the duel's stable id.
+     * Start a fresh duel for [room] and attach it, drawing the opening hand's seed from [seeds],
+     * minting the duel's stable id, refilling both banks and clocking the opening decision.
      *
      * Shared by [join] and [offerRematch]: both seat a room into [RoomState.PLAYING] with a fresh
      * [duels.poker.server.duel.MatchState] and both need the runner that plays it, drawn under
@@ -479,16 +495,29 @@ public class RoomRegistry(
      * a retried finishing frame — reads it back off the room rather than inventing a fresh one, so a
      * retry and its original attempt agree on the id a persistence layer keys idempotency on.
      *
+     * The room's bank is refilled before its opening decision is clocked, never after: the bank
+     * an opening deadline's `expiresAt` is carved from must already read as full for both seats,
+     * or the deadline would be computed against whatever the room's *previous* duel — if any —
+     * left behind. [turnClockFrames] then reads the result exactly as `act`'s own write-back
+     * does for every later decision (`TASK-130806`), so the `TurnClock` frames appended to
+     * [started]'s own outbound are built the one way this registry ever builds one.
+     *
      * @param room The room whose match was just (re)started; its [Room.format] and
      *   [Room.openingButtonSeat] configure the new duel.
-     * @return [room] with a freshly started [Room.runner] and a freshly minted [Room.duelId]
-     *   attached, paired with the same opening hand frames [startDuel] produced. Both [join] and
-     *   [offerRematch] hand them back to their own callers, on [JoinResult.Seated.outbound] and
-     *   [RematchResult.Agreed.outbound] respectively.
+     * @param now The instant to clock the opening decision from — the same `now` the caller
+     *   already used to decide the seating or the rematch this fresh duel follows.
+     * @return [room] with a freshly started [Room.runner], a freshly minted [Room.duelId], both
+     *   banks refilled and the opening decision's deadline attached, paired with [startDuel]'s
+     *   opening hand frames followed by the `TurnClock` frames that deadline owes both seats.
+     *   Both [join] and [offerRematch] hand them back to their own callers, on
+     *   [JoinResult.Seated.outbound] and [RematchResult.Agreed.outbound] respectively.
      */
-    private fun withFreshRunner(room: Room): Pair<Room, List<Addressed>> {
+    private fun withFreshRunner(room: Room, now: Long): Pair<Room, List<Addressed>> {
         val started = startDuel(room.format, room.openingButtonSeat, seeds.newHandSeed())
-        return Pair(room.copy(runner = started.runner, duelId = UUID.randomUUID()), started.outbound)
+        val fresh = room.withFreshClocks(timeouts.timebankMillis)
+            .clocked(started.runner, now, timeouts.turnMillis)
+            .copy(runner = started.runner, duelId = UUID.randomUUID())
+        return Pair(fresh, started.outbound + turnClockFrames(fresh, now))
     }
 
     /**
@@ -509,6 +538,24 @@ public class RoomRegistry(
     private fun turnClockFrames(room: Room, now: Long): List<Addressed> {
         val clock = room.turnClock(now, timeouts.timebankMillis) ?: return emptyList()
         return listOf(Addressed(0, clock), Addressed(1, clock))
+    }
+
+    /**
+     * The single frame [seat] is owed for [room]'s open decision, if any — the mirror of
+     * [turnClockFrames] for the one seat [resume] restates a live deadline to, rather than both.
+     *
+     * Empty when [Room.turnDeadline] names no live decision — a [RoomState.FINISHED] room, or a
+     * duel paused between hands — since there is then nothing to restate (`ADR-0113` §§1, 3).
+     *
+     * @param room The room as it stands after [resume]'s write-back.
+     * @param seat The resuming seat, and so the frame's address.
+     * @param now The same instant the presence frames beside it already read, passed through
+     *   unchanged so the frame and the deadline it describes agree.
+     * @return Exactly one frame, [Addressed] to [seat], or an empty list.
+     */
+    private fun turnClockFrame(room: Room, seat: Int, now: Long): List<Addressed> {
+        val liveClock = room.turnClock(now, timeouts.timebankMillis) ?: return emptyList()
+        return listOf(Addressed(seat, liveClock))
     }
 
     /**

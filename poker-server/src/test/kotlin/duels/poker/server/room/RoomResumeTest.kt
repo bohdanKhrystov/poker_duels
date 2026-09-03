@@ -343,4 +343,61 @@ internal class RoomResumeTest {
         assertEquals(mapOf(0 to 30_000L), registry.get(room.code)!!.gracePeriods)
         assertTrue(registry.get(room.code)!!.isPaused)
     }
+
+    @Test
+    fun aResumingSeatIsToldTheLiveDeadline(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+        registry.disconnect(room.code, guest)
+
+        val resumption = registry.resume(room.code, guest)
+
+        // The live decision point, read independently off the runner, the same way `foldFrame`
+        // above does — not assumed to belong to the resuming seat, since the frame's own `seat`
+        // names whoever is actually on turn, and `Addressed.seat` alone names the recipient.
+        val hand = registry.get(room.code)!!.runner!!.hand!!
+        val clocks = resumption!!.outbound.filter { it.message is ServerMessage.TurnClock }
+        assertEquals(1, clocks.size)
+        val frame = clocks.single()
+        assertEquals(1, frame.seat)
+        val turnClock = frame.message as ServerMessage.TurnClock
+        assertEquals(hand.state.seatToAct!!, turnClock.seat)
+        assertEquals(hand.state.handNumber, turnClock.handNumber)
+        assertEquals(decisionPointOf(hand.log.events)!!.sequence, turnClock.actionSequence)
+    }
+
+    @Test
+    fun aResumingSeatIsToldTheClockEvenWhenItNeverLeft(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host)
+        registry.join(room.code, guest)
+
+        val resumption = registry.resume(room.code, guest)
+
+        assertEquals(1, resumption!!.outbound.count { it.message is ServerMessage.TurnClock })
+    }
+
+    @Test
+    fun aFinishedRoomsResumeStatesNoClock(): Unit = runBlocking {
+        val clock = MutableClock()
+        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
+        val host = newPlayerId()
+        val guest = newPlayerId()
+        val room = registry.create(host, oneHand)
+        registry.join(room.code, guest)
+        val seat = foldFrame(registry.get(room.code)!!).action.seat
+        registry.act(room.code) { it.act(seat, foldFrame(it), registry.handSeeds) }
+        assertEquals(RoomState.FINISHED, registry.get(room.code)!!.state)
+
+        val resumption = registry.resume(room.code, host)
+
+        assertTrue(resumption!!.outbound.none { it.message is ServerMessage.TurnClock })
+    }
 }
