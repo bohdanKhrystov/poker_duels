@@ -635,14 +635,25 @@ public class RoomRegistry(
                     val expired = room.expireGrace(now)
                     when (val turnGiveUp = expired.giveUpTurn(now, handSeeds)) {
                         // giveUpTurn answers null both for a room with nothing to give up and for
-                        // one not PLAYING at all — a WAITING room's host can disconnect before a
-                        // guest ever joins (RoomRegistry.disconnect allows it) and so latch here
-                        // with no runner to wrap in a step. Nothing downstream reads such a room's
-                        // presence — resume refuses a WAITING room outright — so this room is left
-                        // for the WAITING idle timeout in reap() rather than forced through a step
-                        // shape that assumes a duel exists.
-                        null -> expired.runner?.let { runner ->
-                            if (expired !== room) TurnGiveUp(expired, DuelStep(runner, emptyList())) else null
+                        // one not PLAYING at all. Only a PLAYING room may be forced through a
+                        // synthetic step — checking `expired.state`, not merely `expired.runner`,
+                        // is what this depends on: a WAITING room's host can disconnect before a
+                        // guest ever joins (RoomRegistry.disconnect allows it) and carries no
+                        // runner at all, but a FINISHED room carries a *stale, outcome-bearing*
+                        // one that would pass a null-check alone. Feeding that runner into actOn
+                        // reaches `restarted.finish(now)` on an already-FINISHED room, which
+                        // throws `Room.finish`'s own `check(state == PLAYING)` — after
+                        // `recording[code]` is already claimed and before the `try`/`finally` that
+                        // clears it ever runs, leaking that claim forever (`TASK-130809`, review).
+                        // Neither excluded room needs the sweep: a WAITING room is left for its own
+                        // idle timeout in reap(), a FINISHED one for its own [RoomTimeouts.finishedMillis]
+                        // — and nothing downstream reads presence for either state, since resume
+                        // refuses both.
+                        null -> if (expired !== room && expired.state == RoomState.PLAYING) {
+                            val runner = checkNotNull(expired.runner) { "a PLAYING room always carries a runner" }
+                            TurnGiveUp(expired, DuelStep(runner, emptyList()))
+                        } else {
+                            null
                         }
                         else -> turnGiveUp
                     }
