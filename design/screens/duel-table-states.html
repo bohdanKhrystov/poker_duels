@@ -30,6 +30,9 @@
     --pd-space-6: 24px; --pd-space-7: 32px;
     --pd-radius-medium: 8px; --pd-radius-pill: 999px;
     --pd-accent-subtle: rgba(77, 139, 201, 0.14);
+    /* the clock's colour: mirrors design/tokens/tokens.css, whose comment reserves it —
+     * "Amber exists only for the turn clock running down" — for exactly this (ADR-0108 §5). */
+    --pd-warn: #c99a4a;
     /* the acting seat's mark: values mirror design/tokens/tokens.css (ADR-0115 §4) */
     --pd-motion-turn-period: 2400ms;
     --pd-motion-turn-ease: ease-in-out;
@@ -85,6 +88,23 @@
     font-size: 0.6875rem; color: var(--pd-text-muted); background: var(--pd-accent-subtle);
     border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill);
     padding: 2px 8px; white-space: nowrap; }
+  /* the clock carries no animation of any kind — a numeral changing each second is a step, not motion, so the clock at rest is the clock (ADR-0115 §1, §3). It and .timebank ride as
+   * children of .seat's own flex row, the .last-act idiom above: .who gives ground by
+   * truncating the name first and the plate never grows a pixel taller. */
+  .clock { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 1rem; color: var(--pd-text); }
+  .clock.running-out { color: var(--pd-warn); }
+  /* the bank spending (ADR-0108 §5): distinct from the running-out clock by hue, not by the
+   * figure's mm:ss format — a player must be able to see the bank begin to spend. */
+  .clock.on-timebank { color: var(--pd-accent); }
+  /* the figure at zero (ADR-0113 §6): quieter than either sibling above — it holds and
+   * asserts nothing until a server frame carries the consequence. */
+  .clock.expired { color: var(--pd-text-faint); }
+  /* the seat's remaining bank (ADR-0108 §5): both seats' banks are public facts of the
+   * table, so the figure carries the shipped Pot 2,850 label-and-figure idiom, never bare
+   * Bank — docs/vision.md's Positioning refuses bankroll. */
+  .timebank { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 0.6875rem; color: var(--pd-text-muted); }
   .seat.on-turn { border-left-color: var(--pd-accent);
     animation: pd-acting-seat var(--pd-motion-turn-period) var(--pd-motion-turn-ease) infinite; }
   /* pd-acting-seat pulses at --pd-motion-turn-period, eased by
@@ -214,7 +234,9 @@
           <div class="seat on-turn">
             <span class="who"><span class="name">ImKate</span>
               <span class="status turn">Their turn</span></span>
+            <span class="clock running-out">6</span>
             <span class="dealer">D</span>
+            <span class="timebank">Timebank&nbsp;3:00</span>
             <span class="chips">3,750</span>
             <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
@@ -247,6 +269,7 @@
             <span class="who"><span class="name">You</span>
               <span class="status"></span></span>
             <span class="last-act">Check</span>
+            <span class="timebank">Timebank&nbsp;1:12</span>
             <span class="chips">13,000</span>
             <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
@@ -274,6 +297,7 @@
               <span class="status"></span></span>
             <span class="last-act">Call&nbsp;800</span>
             <span class="dealer">D</span>
+            <span class="timebank">Timebank&nbsp;3:00</span>
             <span class="chips">2,950</span>
             <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
@@ -304,6 +328,7 @@
           <div class="seat">
             <span class="who"><span class="name">You</span>
               <span class="status"></span></span>
+            <span class="timebank">Timebank&nbsp;1:12</span>
             <span class="chips">12,200</span>
             <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
@@ -332,6 +357,7 @@
               <span class="status"></span></span>
             <span class="last-act">Fold</span>
             <span class="dealer">D</span>
+            <span class="timebank">Timebank&nbsp;3:00</span>
             <span class="chips">3,750</span>
             <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
@@ -362,6 +388,7 @@
           <div class="seat">
             <span class="who"><span class="name">You</span>
               <span class="status"></span></span>
+            <span class="timebank">Timebank&nbsp;1:12</span>
             <span class="chips">13,000</span>
             <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
