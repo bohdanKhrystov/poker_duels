@@ -2,7 +2,7 @@
 id: STORY-1307
 title: The turn clock's card — regular, running out, on timebank, expired
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: design
 labels: [design, table, clock]
