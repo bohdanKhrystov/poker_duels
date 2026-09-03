@@ -106,4 +106,81 @@ describe("the pot strip", () => {
     expect(screen.queryByText(/Pot 2,575/)).toBeNull();
     expect(screen.queryByText(/Pot 3,275/)).toBeNull();
   });
+
+  it("draws a pile beside the pot, and the figure still names the total", () => {
+    const { container } = render(
+      <PotStrip
+        view={aView({
+          pot: 2450,
+          seats: [
+            aSeat({ index: 0, committedThisStreet: 125 }),
+            aSeat({ index: 1, committedThisStreet: 825 }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Pot 3,400/)).toBeTruthy();
+    const piles = container.querySelectorAll(".chip-pile");
+    expect(piles.length).toBe(1);
+  });
+
+  it("draws the same pile for a small pot and a large one", () => {
+    const pots = [150, 13400];
+
+    pots.forEach((pot) => {
+      const { container, unmount } = render(
+        <PotStrip view={aView({ pot })} />,
+      );
+
+      const discs = container.querySelectorAll(".chip-disc");
+      expect(discs.length).toBe(3);
+
+      unmount();
+    });
+  });
+
+  it("draws no pile beside the award line", () => {
+    const { container, rerender } = render(
+      <PotStrip
+        view={aView({
+          street: "COMPLETE",
+          pot: 4850,
+          handNumber: 14,
+          viewerSeat: 0,
+        })}
+        narration={[
+          {
+            type: "HandStarted",
+            sequence: 1,
+            handNumber: 14,
+            buttonSeat: 0,
+            smallBlind: 75,
+            bigBlind: 150,
+            stacks: [13400, 4550],
+          },
+          { type: "PotAwarded", sequence: 2, seat: 0, amount: 4850 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("You win 4,850")).toBeTruthy();
+    let piles = container.querySelectorAll(".chip-pile");
+    expect(piles.length).toBe(0);
+
+    rerender(
+      <PotStrip
+        view={aView({
+          street: "COMPLETE",
+          pot: 4850,
+          handNumber: 14,
+          viewerSeat: 0,
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Pot 4,850/)).toBeTruthy();
+    piles = container.querySelectorAll(".chip-pile");
+    expect(piles.length).toBe(1);
+  });
 });
