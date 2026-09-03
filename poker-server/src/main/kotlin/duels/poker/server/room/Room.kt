@@ -395,7 +395,7 @@ public data class Room(
      * @return the duel after folding every absent seat whose turn arrived, and the frames each
      *   seat is entitled to see because of it, or `null` if there is nothing to fold right now.
      */
-    public fun foldAbsentSeats(seeds: HandSeedSource): DuelStep? {
+    public fun giveUpTurn(seeds: HandSeedSource): DuelStep? {
         if (state != RoomState.PLAYING) return null
         val liveRunner = runner ?: return null
         if (absentSeats.isEmpty()) return null

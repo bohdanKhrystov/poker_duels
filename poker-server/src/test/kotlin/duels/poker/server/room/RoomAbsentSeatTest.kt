@@ -162,53 +162,53 @@ internal class RoomAbsentSeatTest {
     }
 
     @Test
-    fun foldAbsentSeatsFoldsTheSeatOnTurn() {
+    fun giveUpTurnFoldsTheSeatOnTurn() {
         val room = playingRoom()
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         val absent = room.copy(absentSeats = setOf(onTurn))
 
-        val step = absent.foldAbsentSeats(seeds)
+        val step = absent.giveUpTurn(seeds)
 
         assertNotNull(step)
         assertEquals(PlayerAction.Fold(onTurn), step!!.runner.log.hands[0].actions.last())
     }
 
     @Test
-    fun foldAbsentSeatsAnswersNullWhenTheTurnIsNotTheirs() {
+    fun giveUpTurnAnswersNullWhenTheTurnIsNotTheirs() {
         val room = playingRoom()
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         val absent = room.copy(absentSeats = setOf(1 - onTurn))
 
-        val step = absent.foldAbsentSeats(seeds)
+        val step = absent.giveUpTurn(seeds)
 
         assertNull(step)
     }
 
     @Test
-    fun foldAbsentSeatsAnswersNullWithNobodyAbsent() {
+    fun giveUpTurnAnswersNullWithNobodyAbsent() {
         val room = playingRoom()
 
-        val step = room.foldAbsentSeats(seeds)
+        val step = room.giveUpTurn(seeds)
 
         assertNull(step)
     }
 
     @Test
-    fun foldAbsentSeatsAnswersNullForARoomThatIsNotPlaying() {
+    fun giveUpTurnAnswersNullForARoomThatIsNotPlaying() {
         val waiting = Room.open(RoomCode("2B7KMNPQ"), PlayerId("host"), threeHands, now = 1_000L)
         val finished = playingRoom().copy(state = RoomState.FINISHED, absentSeats = setOf(0))
 
-        assertNull(waiting.foldAbsentSeats(seeds))
-        assertNull(finished.foldAbsentSeats(seeds))
+        assertNull(waiting.giveUpTurn(seeds))
+        assertNull(finished.giveUpTurn(seeds))
     }
 
     @Test
-    fun foldAbsentSeatsIsNotSwallowedByARoomPausedForAnotherSeat() {
+    fun giveUpTurnIsNotSwallowedByARoomPausedForAnotherSeat() {
         val room = playingRoom()
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         // onTurn has already run out into absentSeats, but the opponent seat is separately still
         // counting down its own, unrelated grace window, so the room as a whole is isPaused. A
-        // foldAbsentSeats that (wrongly) deferred to isPaused would answer null here, and since
+        // giveUpTurn that (wrongly) deferred to isPaused would answer null here, and since
         // nothing but this expiry path ever asks again, the duel would stall forever.
         val pausedAndAbsent = room.copy(
             gracePeriods = mapOf(1 - onTurn to 9_000L),
@@ -216,7 +216,7 @@ internal class RoomAbsentSeatTest {
         )
         assertTrue(pausedAndAbsent.isPaused)
 
-        val step = pausedAndAbsent.foldAbsentSeats(seeds)
+        val step = pausedAndAbsent.giveUpTurn(seeds)
 
         assertNotNull(step)
         assertEquals(PlayerAction.Fold(onTurn), step!!.runner.log.hands[0].actions.last())

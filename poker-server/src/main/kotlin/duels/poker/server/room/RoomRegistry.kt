@@ -577,7 +577,7 @@ public class RoomRegistry(
      *    makes the room reapable under [RoomTimeouts.finishedMillis] rather than this method
      *    growing a second timer for it. This pass also remembers the single seat a room lost,
      *    when it was not abandoned, for the second pass to describe.
-     * 2. Every room the first pass changed has [Room.foldAbsentSeats] applied through [act],
+     * 2. Every room the first pass changed has [Room.giveUpTurn] applied through [act],
      *    never written back directly: [act] is what claims a duel that finishes this way in
      *    [recording], hands it to [DuelResultSink] outside the lock, and unclaims it again if
      *    that throws. A fold that ends a duel must reach the sink exactly as a played one does, so
@@ -639,7 +639,7 @@ public class RoomRegistry(
         val expiries = mutableListOf<GraceExpiry>()
         for ((code, expiredSeat) in expiredSeatByCode) {
             val step = try {
-                act(code) { it.foldAbsentSeats(handSeeds) }
+                act(code) { it.giveUpTurn(handSeeds) }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Throwable) {
