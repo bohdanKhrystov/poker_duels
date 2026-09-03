@@ -10,7 +10,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
-import { bootDuelClient } from "../store/boot";
 import { ProfileProvider } from "../profile/profile-provider";
 import { SetNameProvider } from "../profile/set-name-provider";
 import {
@@ -21,9 +20,6 @@ import type { ProfileStripState } from "../profile/profile-strip";
 import type { SeatView, ServerMessage } from "../protocol";
 import type { SetNameOutcome } from "../profile/set-name";
 import { aProfile, aDuelLine } from "../profile/profile-fixture";
-import { PROTOCOL_VERSION } from "../protocol";
-import { FakeSocket } from "../protocol/fake-socket";
-import { openReconnectingConnection } from "../protocol/reconnecting";
 import { aView } from "../table/view-fixture";
 import {
   ATTACH_LABEL,
@@ -264,27 +260,6 @@ function withLocalStorage(): Storage {
     configurable: true,
   });
   return storage;
-}
-
-function reconnectingClient(joinRoomCode: string | null = null) {
-  const sockets: FakeSocket[] = [];
-  const storage = inMemoryStorage();
-  const client = bootDuelClient({
-    connect: (onMessage) =>
-      openReconnectingConnection({
-        openSocket: () => {
-          const socket = new FakeSocket();
-          sockets.push(socket);
-          return socket.asWebSocket();
-        },
-        storage,
-        onMessage,
-        jitter: () => 0,
-      }),
-    joinRoomCode,
-    storage,
-  });
-  return { sockets, client, storage };
 }
 
 describe("the lobby", () => {
@@ -672,7 +647,6 @@ describe("the lobby", () => {
       {
         type: "OpponentPresence",
         presence: "AWAY",
-        graceRemainingMillis: 47000,
       },
       {
         type: "ActedForAbsent",
@@ -689,182 +663,6 @@ describe("the lobby", () => {
       });
       expect(screen.getByText("Waiting for your rival")).toBeDefined();
     }
-  });
-
-  it("shows the presence beside the table it is about", () => {
-    const store = createDuelStore();
-    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
-    renderLobby(store);
-
-    act(() => {
-      store.apply(SNAPSHOT);
-      store.apply({
-        type: "OpponentPresence",
-        presence: "AWAY",
-        graceRemainingMillis: 47000,
-      });
-    });
-
-    expect(
-      screen.getByText("Your rival is away. The duel is paused."),
-    ).toBeDefined();
-    expect(screen.getByText("47s")).toBeDefined();
-    expect(screen.getByText("Away")).toBeDefined();
-  });
-
-  it("explains a paused action with the presence it already holds", () => {
-    const store = createDuelStore();
-    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
-    renderLobby(store);
-
-    act(() => {
-      store.apply(SNAPSHOT);
-      store.apply({
-        type: "OpponentPresence",
-        presence: "AWAY",
-        graceRemainingMillis: 47000,
-      });
-      store.apply({ type: "Failure", error: "DUEL_PAUSED" });
-    });
-
-    expect(
-      screen.getByText("Your rival is away. The duel is paused."),
-    ).toBeDefined();
-    expect(
-      screen.getByText("The duel is paused. That action was not applied."),
-    ).toBeDefined();
-  });
-
-  it("starts a second window fresh, though it carries the same remaining", () => {
-    vi.useFakeTimers();
-    const store = createDuelStore();
-    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
-    renderLobby(store);
-
-    act(() => {
-      store.apply(SNAPSHOT);
-      store.apply({
-        type: "OpponentPresence",
-        presence: "AWAY",
-        graceRemainingMillis: 47000,
-      });
-    });
-
-    expect(screen.getByText("47s")).toBeDefined();
-
-    // Advance time by 20 seconds
-    act(() => {
-      vi.advanceTimersByTime(20000);
-    });
-
-    expect(screen.getByText("27s")).toBeDefined();
-
-    // Apply the same OpponentPresence frame again
-    act(() => {
-      store.apply({
-        type: "OpponentPresence",
-        presence: "AWAY",
-        graceRemainingMillis: 47000,
-      });
-    });
-
-    expect(screen.getByText("47s")).toBeDefined();
-  });
-
-  it("the countdown reaching zero sends nothing and changes nothing", () => {
-    vi.useFakeTimers();
-    const store = createDuelStore();
-    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
-    const { send } = renderLobby(store);
-
-    act(() => {
-      store.apply(SNAPSHOT);
-      store.apply({
-        type: "YourTurn",
-        handNumber: 4,
-        actionSequence: 9,
-        legalActions: {
-          seat: 1,
-          allowed: ["CHECK", "BET"],
-          callTo: 0,
-          minBetTo: 20,
-          minRaiseTo: 0,
-          allInTo: 500,
-        },
-      });
-      store.apply({
-        type: "OpponentPresence",
-        presence: "AWAY",
-        graceRemainingMillis: 47000,
-      });
-    });
-
-    // Positive control: the countdown is live at 47 before anything is recorded. A
-    // screen that never rendered a real number would pass every clause below for
-    // the wrong reason.
-    expect(screen.getByText("47s")).toBeDefined();
-
-    const barButtons = () =>
-      within(screen.getByRole("region", { name: "your move" }))
-        .getAllByRole<HTMLButtonElement>("button")
-        .map((button) => ({
-          name: button.textContent?.trim() ?? "",
-          disabled: button.disabled,
-        }));
-    const before = barButtons();
-    expect(before.length).toBeGreaterThan(0);
-
-    act(() => {
-      vi.advanceTimersByTime(20_000);
-    });
-
-    // Second positive control: still ticking partway through the window, so the
-    // final zero below is a crossing, not a value that was never moving.
-    expect(screen.getByText("27s")).toBeDefined();
-
-    // The remaining 100 000 ms brings the total advance to 120 000 — more than
-    // twice the 47 000 ms window — well past the point the deadline was crossed.
-    act(() => {
-      vi.advanceTimersByTime(100_000);
-    });
-
-    // ADR-0028 §3, one assertion per clause.
-    // Sends nothing.
-    expect(send).toHaveBeenCalledTimes(0);
-    // Enables nothing: identical buttons, identical order, identical disabled flags.
-    expect(barButtons()).toEqual(before);
-    // Enters no state: the pause is still the pause.
-    expect(
-      screen.getByText("Your rival is away. The duel is paused."),
-    ).toBeDefined();
-    // Assumes no resumption: the plate still reads Away, never Timed out.
-    expect(screen.getByText("Away")).toBeDefined();
-    expect(screen.queryByText("Timed out")).toBeNull();
-    // The number stops: clamped at zero, scoped to the notice that carries it.
-    const notice = screen.getByText("Your rival is away. The duel is paused.");
-    expect(within(notice).getByText("0s")).toBeDefined();
-  });
-
-  it("a window with nothing left of it renders as waiting", () => {
-    vi.useFakeTimers();
-    const store = createDuelStore();
-    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
-    const { send } = renderLobby(store);
-
-    act(() => {
-      store.apply(SNAPSHOT);
-      store.apply({
-        type: "OpponentPresence",
-        presence: "AWAY",
-        graceRemainingMillis: 0,
-      });
-    });
-
-    const notice = screen.getByText("Your rival is away. The duel is paused.");
-    expect(within(notice).getByText("0s")).toBeDefined();
-    expect(screen.queryByText("Timed out")).toBeNull();
-    expect(screen.queryByText("Your rival did not come back.")).toBeNull();
-    expect(send).toHaveBeenCalledTimes(0);
   });
 
   it("shows the result when the duel finishes", () => {
@@ -1408,65 +1206,6 @@ describe("the lobby", () => {
     expect(text).not.toMatch(/\d{1,2}:\d{2}/);
   });
 
-  it("renders the pause a resume came back to", () => {
-    vi.useFakeTimers();
-    const { sockets, client } = reconnectingClient("ABCDEFGH");
-    render(
-      <DuelProvider
-        store={client.store}
-        send={client.send}
-        forgetRoom={client.forgetRoom}
-      >
-        <Lobby />
-      </DuelProvider>,
-    );
-
-    const WELCOME = JSON.stringify({
-      type: "Welcome",
-      deviceId: "d-1",
-      protocolVersion: PROTOCOL_VERSION,
-    });
-
-    act(() => {
-      sockets[0].open();
-      sockets[0].receive(WELCOME);
-      sockets[0].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
-      sockets[0].receive(
-        JSON.stringify({
-          type: "Snapshot",
-          view: aView({ viewerSeat: 1 }),
-        }),
-      );
-      sockets[0].close();
-    });
-
-    act(() => {
-      vi.advanceTimersByTime(250);
-      sockets[1].open();
-      sockets[1].receive(WELCOME);
-      sockets[1].receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
-      sockets[1].receive(
-        JSON.stringify({
-          type: "Snapshot",
-          view: aView({ viewerSeat: 1 }),
-        }),
-      );
-      sockets[1].receive(
-        JSON.stringify({
-          type: "OpponentPresence",
-          presence: "AWAY",
-          graceRemainingMillis: 47000,
-        }),
-      );
-    });
-
-    expect(
-      screen.getByText("Your rival is away. The duel is paused."),
-    ).toBeDefined();
-    expect(screen.getByText("47s")).toBeDefined();
-    expect(screen.getByText("Away")).toBeDefined();
-  });
-
   it("says nothing to a resumed client whose rival never left", () => {
     const store = createDuelStore();
     store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
@@ -1477,7 +1216,6 @@ describe("the lobby", () => {
       store.apply({
         type: "OpponentPresence",
         presence: "PRESENT",
-        graceRemainingMillis: null,
       });
     });
 
@@ -1626,7 +1364,6 @@ describe("the lobby", () => {
       store.apply({
         type: "OpponentPresence",
         presence: "ABSENT",
-        graceRemainingMillis: 60000,
       });
       store.apply({
         type: "ActedForAbsent",
@@ -1643,7 +1380,6 @@ describe("the lobby", () => {
       store.apply({
         type: "OpponentPresence",
         presence: "PRESENT",
-        graceRemainingMillis: null,
       });
     });
 

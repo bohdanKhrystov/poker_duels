@@ -11,3 +11,4 @@ introduced after version 1's shape had already been replaced, and that shape is 
 | 3 | `5e6bcd90d8a2d391` | STORY-0213 | 2026-08-23 |
 | 4 | `0d6b8530325af82e` | STORY-0214 | 2026-08-23 |
 | 5 | `8456a1ec9cab47f7` | STORY-0405 | 2026-08-24 |
+| 6 | `dc6608a0a1520b6f` | STORY-1308 | 2026-09-03 |

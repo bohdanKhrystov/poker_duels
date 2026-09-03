@@ -54,7 +54,6 @@ describe("the duel state", () => {
       refusal: null,
       rematchOffers: [],
       rivalPresence: null,
-      graceRemainingMillis: null,
       presenceCount: 0,
       rivalReturned: false,
       serverAction: null,
@@ -680,7 +679,7 @@ describe("the duel state", () => {
       duelState.initialState(),
       {
         type: "Failure",
-        error: "DUEL_PAUSED",
+        error: "NOT_IN_DUEL",
       },
     );
     // Events is narration; it must not clear the refusal a Failure set
@@ -694,7 +693,7 @@ describe("the duel state", () => {
         } as const,
       ],
     });
-    expect(stateAfterEvents.refusal).toBe("DUEL_PAUSED");
+    expect(stateAfterEvents.refusal).toBe("NOT_IN_DUEL");
     const legalActions: LegalActions = {
       seat: 0,
       allowed: ["CHECK", "BET"],
@@ -717,7 +716,7 @@ describe("the duel state", () => {
       duelState.initialState(),
       {
         type: "Failure",
-        error: "DUEL_PAUSED",
+        error: "NOT_IN_DUEL",
       },
     );
     const stateWithRejection = duelState.applyServerMessage(stateWithRefusal, {
@@ -725,7 +724,7 @@ describe("the duel state", () => {
       rejection: { type: "AmountTooSmall", attempted: 5, minimum: 10 },
     });
     // Rejected is about an action attempt; it must not clear the refusal a Failure set
-    expect(stateWithRejection.refusal).toBe("DUEL_PAUSED");
+    expect(stateWithRejection.refusal).toBe("NOT_IN_DUEL");
     const state = duelState.applyServerMessage(stateWithRejection, {
       type: "Snapshot",
       view: samplePlayerView(),
@@ -740,7 +739,7 @@ describe("the duel state", () => {
       duelState.initialState(),
       {
         type: "Failure",
-        error: "DUEL_PAUSED",
+        error: "NOT_IN_DUEL",
       },
     );
     const outcome = {
@@ -776,9 +775,9 @@ describe("the duel state", () => {
     );
     const state = duelState.applyServerMessage(stateWithPendingTurn, {
       type: "Failure",
-      error: "DUEL_PAUSED",
+      error: "NOT_IN_DUEL",
     });
-    expect(state.refusal).toBe("DUEL_PAUSED");
+    expect(state.refusal).toBe("NOT_IN_DUEL");
     expect(state.pendingTurn).toEqual({
       handNumber: 1,
       actionSequence: 1,
@@ -978,10 +977,8 @@ describe("the duel state", () => {
     const state = duelState.applyServerMessage(duelState.initialState(), {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 47000,
     });
     expect(state.rivalPresence).toBe("AWAY");
-    expect(state.graceRemainingMillis).toBe(47000);
     expect(state.presenceCount).toBe(1);
   });
 
@@ -991,17 +988,13 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "AWAY",
-        graceRemainingMillis: 47000,
       },
     );
-    expect(stateAfterAway.graceRemainingMillis).toBe(47000);
     const stateAfterAbsent = duelState.applyServerMessage(stateAfterAway, {
       type: "OpponentPresence",
       presence: "ABSENT",
-      graceRemainingMillis: null,
     });
     expect(stateAfterAbsent.rivalPresence).toBe("ABSENT");
-    expect(stateAfterAbsent.graceRemainingMillis).toBeNull();
     expect(stateAfterAbsent.presenceCount).toBe(2);
   });
 
@@ -1011,18 +1004,15 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "AWAY",
-        graceRemainingMillis: 47000,
       },
     );
     expect(stateAfterFirst.presenceCount).toBe(1);
     const stateAfterSecond = duelState.applyServerMessage(stateAfterFirst, {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 47000,
     });
     expect(stateAfterSecond.presenceCount).toBe(2);
     expect(stateAfterSecond.rivalPresence).toBe("AWAY");
-    expect(stateAfterSecond.graceRemainingMillis).toBe(47000);
   });
 
   it("a presence changes nothing a snapshot or a turn established", () => {
@@ -1051,7 +1041,6 @@ describe("the duel state", () => {
     const state = duelState.applyServerMessage(stateWithPending, {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 47000,
     });
     expect(state.view).toEqual(view);
     expect(state.pendingTurn).toEqual({
@@ -1070,17 +1059,15 @@ describe("the duel state", () => {
   });
 
   it("presence persists through snapshot and turn", () => {
-    // Step 1: Set presence with a non-null graceRemainingMillis
+    // Step 1: Set presence to AWAY
     const stateWithPresence = duelState.applyServerMessage(
       duelState.initialState(),
       {
         type: "OpponentPresence",
         presence: "AWAY",
-        graceRemainingMillis: 47000,
       },
     );
     expect(stateWithPresence.rivalPresence).toBe("AWAY");
-    expect(stateWithPresence.graceRemainingMillis).toBe(47000);
 
     // Step 2: Apply Snapshot and assert presence remains
     const stateAfterSnapshot = duelState.applyServerMessage(stateWithPresence, {
@@ -1088,7 +1075,6 @@ describe("the duel state", () => {
       view: samplePlayerView(),
     });
     expect(stateAfterSnapshot.rivalPresence).toBe("AWAY");
-    expect(stateAfterSnapshot.graceRemainingMillis).toBe(47000);
 
     // Step 3: Apply YourTurn and assert presence remains
     const legalActions = {
@@ -1106,7 +1092,6 @@ describe("the duel state", () => {
       legalActions,
     });
     expect(stateAfterTurn.rivalPresence).toBe("AWAY");
-    expect(stateAfterTurn.graceRemainingMillis).toBe(47000);
   });
 
   it("a rival who was away and is present again has come back", () => {
@@ -1115,13 +1100,11 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "AWAY",
-        graceRemainingMillis: 47000,
       },
     );
     const state = duelState.applyServerMessage(stateAfterAway, {
       type: "OpponentPresence",
       presence: "PRESENT",
-      graceRemainingMillis: null,
     });
     expect(state.rivalReturned).toBe(true);
     expect(state.rivalPresence).toBe("PRESENT");
@@ -1133,13 +1116,11 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "ABSENT",
-        graceRemainingMillis: null,
       },
     );
     const state = duelState.applyServerMessage(stateAfterAbsent, {
       type: "OpponentPresence",
       presence: "PRESENT",
-      graceRemainingMillis: null,
     });
     expect(state.rivalReturned).toBe(true);
   });
@@ -1152,14 +1133,12 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "PRESENT",
-        graceRemainingMillis: null,
       },
     );
     expect(stateAfterFirstPresent.rivalReturned).toBe(false);
     const state = duelState.applyServerMessage(stateAfterFirstPresent, {
       type: "OpponentPresence",
       presence: "PRESENT",
-      graceRemainingMillis: null,
     });
     expect(state.rivalReturned).toBe(false);
   });
@@ -1170,13 +1149,11 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "AWAY",
-        graceRemainingMillis: 47000,
       },
     );
     const stateAfterReturn = duelState.applyServerMessage(stateAfterAway, {
       type: "OpponentPresence",
       presence: "PRESENT",
-      graceRemainingMillis: null,
     });
     expect(stateAfterReturn.rivalReturned).toBe(true);
     const stateAfterSnapshot = duelState.applyServerMessage(stateAfterReturn, {
@@ -1186,14 +1163,13 @@ describe("the duel state", () => {
     expect(stateAfterSnapshot.rivalReturned).toBe(false);
     expect(stateAfterSnapshot.rivalPresence).toBe("PRESENT");
 
-    // A snapshot applied after AWAY alone changes nothing else: rivalPresence and
-    // graceRemainingMillis stay exactly what the last OpponentPresence stated.
+    // A snapshot applied after AWAY alone changes nothing else: rivalPresence
+    // stays exactly what the last OpponentPresence stated.
     const stateAfterAwayAlone = duelState.applyServerMessage(stateAfterAway, {
       type: "Snapshot",
       view: samplePlayerView(),
     });
     expect(stateAfterAwayAlone.rivalPresence).toBe("AWAY");
-    expect(stateAfterAwayAlone.graceRemainingMillis).toBe(47000);
   });
 
   it("a resume states the presence after its own snapshot", () => {
@@ -1204,7 +1180,6 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "AWAY",
-        graceRemainingMillis: 47000,
       },
     );
     const stateAfterSnapshot = duelState.applyServerMessage(stateAfterAway, {
@@ -1214,7 +1189,6 @@ describe("the duel state", () => {
     const state = duelState.applyServerMessage(stateAfterSnapshot, {
       type: "OpponentPresence",
       presence: "PRESENT",
-      graceRemainingMillis: null,
     });
     expect(state.rivalReturned).toBe(true);
   });
@@ -1225,19 +1199,16 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "AWAY",
-        graceRemainingMillis: 47000,
       },
     );
     const stateAfterReturn = duelState.applyServerMessage(stateAfterAway, {
       type: "OpponentPresence",
       presence: "PRESENT",
-      graceRemainingMillis: null,
     });
     expect(stateAfterReturn.rivalReturned).toBe(true);
     const state = duelState.applyServerMessage(stateAfterReturn, {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 47000,
     });
     expect(state.rivalReturned).toBe(false);
     expect(state.rivalPresence).toBe("AWAY");
@@ -1356,7 +1327,6 @@ describe("the duel state", () => {
     expect(state.refusal).toBeNull();
     expect(state.rematchOffers).toEqual([]);
     expect(state.rivalPresence).toBeNull();
-    expect(state.graceRemainingMillis).toBeNull();
     expect(state.presenceCount).toBe(0);
     expect(state.rivalReturned).toBe(false);
   });
@@ -1414,14 +1384,12 @@ describe("the duel state", () => {
     const stateAfterAway = duelState.applyServerMessage(stateWithMark, {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 60000,
     });
     expect(stateAfterAway.serverAction).toEqual(mark);
 
     const stateAfterAbsent = duelState.applyServerMessage(stateWithMark, {
       type: "OpponentPresence",
       presence: "ABSENT",
-      graceRemainingMillis: null,
     });
     expect(stateAfterAbsent.serverAction).toEqual(mark);
   });
@@ -1432,7 +1400,6 @@ describe("the duel state", () => {
       {
         type: "OpponentPresence",
         presence: "ABSENT",
-        graceRemainingMillis: null,
       },
     );
     const mark: ActedForAbsent = {
@@ -1446,7 +1413,6 @@ describe("the duel state", () => {
     const state = duelState.applyServerMessage(stateWithMark, {
       type: "OpponentPresence",
       presence: "PRESENT",
-      graceRemainingMillis: null,
     });
     expect(state.serverAction).toBeNull();
     expect(state.rivalReturned).toBe(true);
@@ -1556,7 +1522,6 @@ describe("the duel state", () => {
     const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 60000,
     });
     const state = duelState.applyServerMessage(stateWithPresence, {
       type: "RoomJoined",
@@ -1566,7 +1531,6 @@ describe("the duel state", () => {
     expect(state.roomCode).toBe("EFGH");
     expect(state.mySeat).toBe(1);
     expect(state.rivalPresence).toBeNull();
-    expect(state.graceRemainingMillis).toBeNull();
   });
 
   it("a RoomJoined naming the room the store already holds clears nothing", () => {
@@ -1581,7 +1545,6 @@ describe("the duel state", () => {
     const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 60000,
     });
     const state = duelState.applyServerMessage(stateWithPresence, {
       type: "RoomJoined",
@@ -1589,7 +1552,6 @@ describe("the duel state", () => {
       seat: 0,
     });
     expect(state.rivalPresence).toBe("AWAY");
-    expect(state.graceRemainingMillis).toBe(60000);
   });
 
   it("the monotone counters carry across a room change", () => {
@@ -1604,7 +1566,6 @@ describe("the duel state", () => {
     const stateWithPresence = duelState.applyServerMessage(stateInRoomA, {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 60000,
     });
     // rejectionCount is driven to a value distinct from presenceCount's: two different counters
     // that both happen to read 1 could not catch an implementation that carries one over as the
@@ -1843,7 +1804,6 @@ describe("the duel state", () => {
     state = duelState.applyServerMessage(state, {
       type: "OpponentPresence",
       presence: "AWAY",
-      graceRemainingMillis: 47000,
     });
     expect(state.lastAct, "a presence frame leaves the mark standing").toEqual(
       bet,

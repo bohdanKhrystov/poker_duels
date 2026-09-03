@@ -51,7 +51,6 @@ class ServerMessageHandshakeTest {
             "UNKNOWN_ROOM",
             "ROOM_FULL",
             "NOT_IN_DUEL",
-            "DUEL_PAUSED",
             "FRAME_LIMIT_EXCEEDED",
             "INVALID_SESSION",
             "REMATCH_UNAVAILABLE",

@@ -6,53 +6,53 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * Constructs [ServerMessage.OpponentPresence] and [ServerMessage.ActedForAbsent] directly and
- * proves the `require` blocks each carries. It emits nothing — no `Room`, `RoomRegistry` or
- * `DuelSocket` behaviour is exercised here (`TASK-021403`–`TASK-021409`).
+ * Constructs [ServerMessage.OpponentPresence], [ServerMessage.TurnClock] and
+ * [ServerMessage.ActedForAbsent] directly and proves the `require` blocks each carries. It emits
+ * nothing — no `Room`, `RoomRegistry` or `DuelSocket` behaviour is exercised here
+ * (`TASK-021403`–`TASK-021409`).
  */
 class PresenceFramesTest {
     @Test
-    fun awayCarriesARemainingDuration() {
-        val presence: ServerMessage = ServerMessage.OpponentPresence(SeatPresence.AWAY, 45_000L)
+    fun awayEncodesAndDecodes() {
+        val presence: ServerMessage = ServerMessage.OpponentPresence(SeatPresence.AWAY)
         val encoded = protocolJson.encodeToString(ServerMessage.serializer(), presence)
         val decoded = protocolJson.decodeFromString(ServerMessage.serializer(), encoded)
         assertEquals(presence, decoded)
     }
 
     @Test
-    fun awayWithZeroRemainingIsLegal() {
-        val presence = ServerMessage.OpponentPresence(SeatPresence.AWAY, 0L)
-        assertEquals(0L, presence.graceRemainingMillis)
-    }
-
-    @Test
-    fun awayWithoutARemainingIsRefused() {
+    fun aTurnClockNamesASeatAtTheTable() {
         assertFailsWith<IllegalArgumentException> {
-            ServerMessage.OpponentPresence(SeatPresence.AWAY, null)
+            ServerMessage.TurnClock(2, 1, 0, 10_000L, listOf(60_000L, 60_000L))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ServerMessage.TurnClock(-1, 1, 0, 10_000L, listOf(60_000L, 60_000L))
         }
     }
 
     @Test
-    fun presentWithARemainingIsRefused() {
+    fun aTurnClockRefusesANegativeDuration() {
         assertFailsWith<IllegalArgumentException> {
-            ServerMessage.OpponentPresence(SeatPresence.PRESENT, 1L)
+            ServerMessage.TurnClock(0, 1, 0, -1L, listOf(60_000L, 60_000L))
         }
         assertFailsWith<IllegalArgumentException> {
-            ServerMessage.OpponentPresence(SeatPresence.ABSENT, 1L)
-        }
-    }
-
-    @Test
-    fun aNegativeRemainingIsRefused() {
-        assertFailsWith<IllegalArgumentException> {
-            ServerMessage.OpponentPresence(SeatPresence.AWAY, -1L)
+            ServerMessage.TurnClock(0, 1, 0, 10_000L, listOf(-1L, 60_000L))
         }
     }
 
     @Test
-    fun presentAndAbsentCarryNothing() {
-        assertEquals(null, ServerMessage.OpponentPresence(SeatPresence.PRESENT).graceRemainingMillis)
-        assertEquals(null, ServerMessage.OpponentPresence(SeatPresence.ABSENT).graceRemainingMillis)
+    fun aTurnClockNamesBothBanks() {
+        assertFailsWith<IllegalArgumentException> {
+            ServerMessage.TurnClock(0, 1, 0, 10_000L, listOf(60_000L))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ServerMessage.TurnClock(0, 1, 0, 10_000L, listOf(60_000L, 60_000L, 60_000L))
+        }
+
+        val clock: ServerMessage = ServerMessage.TurnClock(0, 1, 0, 10_000L, listOf(60_000L, 45_000L))
+        val encoded = protocolJson.encodeToString(ServerMessage.serializer(), clock)
+        val decoded = protocolJson.decodeFromString(ServerMessage.serializer(), encoded)
+        assertEquals(clock, decoded)
     }
 
     @Test

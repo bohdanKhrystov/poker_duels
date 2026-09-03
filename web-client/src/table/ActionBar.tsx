@@ -323,17 +323,15 @@ function noticeText(
 ): string {
   if (entryRefusal !== null) return entryRefusal;
   if (rejection !== null) return rejectionText(rejection);
-  if (refusal !== null) return refusalText(refusal);
+  if (refusal !== null) return refusalText();
   return "";
 }
 
 /**
- * A refused frame, said plainly and once. `DUEL_PAUSED` means the action was
- * not applied, so the client says so and sends nothing again — retrying is how
- * a client turns one refusal into two.
+ * A refused frame, said plainly and once. No `ProtocolError` gets its own copy here — the one
+ * that used to, the paused-duel refusal, no longer exists (`TASK-130805`); a future error that
+ * wants its own line reopens this function rather than reusing an unused parameter for it.
  */
-function refusalText(error: ProtocolError): string {
-  return error === "DUEL_PAUSED"
-    ? "The duel is paused. That action was not applied."
-    : "The server did not apply that action.";
+function refusalText(): string {
+  return "The server did not apply that action.";
 }

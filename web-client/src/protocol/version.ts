@@ -8,4 +8,4 @@ import type { ProtocolVersion } from "./protocol.gen";
  * compiling. That is the whole reason `ADR-0020` emits the alias — a stale
  * version must fail the build, not the handshake.
  */
-export const PROTOCOL_VERSION: ProtocolVersion = 5;
+export const PROTOCOL_VERSION: ProtocolVersion = 6;

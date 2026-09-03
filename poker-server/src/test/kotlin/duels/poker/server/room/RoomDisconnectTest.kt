@@ -150,7 +150,7 @@ internal class RoomDisconnectTest {
         val disconnected = registry.disconnect(room.code, guest)
 
         assertEquals(
-            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY, 30_000L))),
+            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY))),
             disconnected!!.outbound,
         )
     }
@@ -168,7 +168,7 @@ internal class RoomDisconnectTest {
         val disconnected = registry.disconnect(room.code, guest)
 
         assertEquals(
-            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY, 12_345L))),
+            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY))),
             disconnected!!.outbound,
         )
     }
@@ -184,14 +184,14 @@ internal class RoomDisconnectTest {
 
         val afterHost = registry.disconnect(room.code, host)
         assertEquals(
-            listOf(Addressed(1, ServerMessage.OpponentPresence(SeatPresence.AWAY, 30_000L))),
+            listOf(Addressed(1, ServerMessage.OpponentPresence(SeatPresence.AWAY))),
             afterHost!!.outbound,
         )
 
         clock.advance(5_000)
         val afterGuest = registry.disconnect(room.code, guest)
         assertEquals(
-            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY, 30_000L))),
+            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY))),
             afterGuest!!.outbound,
         )
     }

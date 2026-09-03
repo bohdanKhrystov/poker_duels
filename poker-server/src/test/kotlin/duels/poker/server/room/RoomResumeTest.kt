@@ -227,7 +227,7 @@ internal class RoomResumeTest {
 
         assertTrue(
             resumption!!.outbound.contains(
-                Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY, graceRemainingMillis = 25_000)),
+                Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY)),
             ),
         )
     }

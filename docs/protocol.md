@@ -2,7 +2,7 @@
 
 This document is the contract for EPIC-03 (the game server's protocol). The Kotlin definitions in `duels.poker.server.protocol` are the source of truth for the wire protocol; the TypeScript client is generated from this schema (see `ADR-0003` and `STORY-0203`).
 
-Protocol version: **5**
+Protocol version: **6**
 
 ## Messages
 
@@ -22,8 +22,9 @@ Protocol version: **5**
 | `YourTurn` | server → client | `handNumber`, `actionSequence`, `legalActions` | Server requests an action from client |
 | `Rejected` | server → client | `rejection` | Server rejects an illegal action |
 | `DuelFinished` | server → client | `outcome` (DuelOutcome) | The duel has ended |
-| `OpponentPresence` | server → client | `presence`, `graceRemainingMillis` | The server informs a client how present its opponent is |
+| `OpponentPresence` | server → client | `presence` | The server informs a client how present its opponent is |
 | `ActedForAbsent` | server → client | `seat`, `handNumber`, `actionSequence`, `action` | The server folded or checked on behalf of an absent seat |
+| `TurnClock` | server → client | `seat`, `handNumber`, `actionSequence`, `turnRemainingMillis`, `bankRemainingMillis` | The server reports the open decision's clock: how long is left on the turn, and how much of each seat's bank remains |
 
 ### What a `Rejected` does not change
 
@@ -421,7 +422,6 @@ continued into the new season; the reader restarts with no cursor (`ADR-0066` §
 - `UNKNOWN_ROOM`: The client requested a room that does not exist.
 - `ROOM_FULL`: The client requested to join a room that is at capacity.
 - `NOT_IN_DUEL`: The client sent an action but is not participating in an active duel.
-- `DUEL_PAUSED`: The duel is paused; your action was not applied. The duel resumes when the opponent returns or when their grace period expires. Do not re-send your action.
 - `FRAME_LIMIT_EXCEEDED`: The frame was longer, or nested more deeply, than the server accepts, and was refused before parsing.
 - `INVALID_SESSION`: The client presented a session token that is invalid, expired or unknown.
 - `REMATCH_UNAVAILABLE`: The room cannot accept a rematch offer yet. Transient: nothing was recorded, and the same offer may be sent again.

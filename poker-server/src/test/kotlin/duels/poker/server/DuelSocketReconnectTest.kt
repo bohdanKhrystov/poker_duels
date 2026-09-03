@@ -249,7 +249,7 @@ class DuelSocketReconnectTest {
             )
             val afterFold = setup.host.drainServerMessages()
 
-            assertFalse(afterFold.any { it is ServerMessage.Failure && it.error == ProtocolError.DUEL_PAUSED })
+            assertTrue(afterFold.none { it is ServerMessage.Failure })
             assertTrue(afterFold.any { it is ServerMessage.Snapshot })
         }
     }

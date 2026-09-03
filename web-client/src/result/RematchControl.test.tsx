@@ -211,7 +211,7 @@ describe("the rematch control", () => {
         mySeat={1}
         onOffer={onOffer}
         offers={[0]}
-        refusal="DUEL_PAUSED"
+        refusal="NOT_IN_DUEL"
       />,
     );
 

@@ -319,7 +319,7 @@ internal class GraceExpiryTest {
         val expiries = registry.expireGracePeriods()
 
         assertEquals(1, expiries.size)
-        val presenceFrame = Addressed(onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT, null))
+        val presenceFrame = Addressed(onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT))
         assertEquals(presenceFrame, expiries.single().outbound.first())
     }
 
@@ -345,7 +345,7 @@ internal class GraceExpiryTest {
 
         assertEquals(1, expiries.size)
         val outbound = expiries.single().outbound
-        assertTrue(outbound.contains(Addressed(onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT, null))))
+        assertTrue(outbound.contains(Addressed(onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT))))
         assertTrue(outbound.none { (seat, message) -> seat == offTurn && message is ServerMessage.OpponentPresence })
     }
 
@@ -365,7 +365,7 @@ internal class GraceExpiryTest {
 
         assertEquals(1, expiries.size)
         val outbound = expiries.single().outbound
-        val presenceFrame = Addressed(1 - onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT, null))
+        val presenceFrame = Addressed(1 - onTurn, ServerMessage.OpponentPresence(SeatPresence.ABSENT))
         // "Both arrived" is true of the wrong order too: a duel-ending fold produces frames of
         // its own (`Events`, `Snapshot`), so only the position of the presence frame among them —
         // not merely its presence in the list — says whether it came first.
