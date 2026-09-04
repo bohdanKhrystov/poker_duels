@@ -785,6 +785,29 @@ parallel with `EPIC-02`; no shared file.
 | DEC-110 | **The architect's** — by what mechanism is a player who asks for a second room while holding a seat in a `PLAYING` room refused, and returned to the duel they are in? Registered open 2026-09-01 by [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md) §6, which fixes what must be true and deliberately writes no repair. The product half is answered: the request takes no seat, nothing moves, the player lands back on their own table, and the words are `ADR-0105` §4's. What is open is the carrier — a new `ProtocolError` value and the `PROTOCOL_VERSION` step `ADR-0047` prices, or an answer assembled from frames that already exist (`replyToJoinRoom`'s `ALREADY_SEATED` branch already answers a seated player with `RoomJoined(code, seat)` *"exactly as a fresh seating would"*, derived fresh from the registry). Three constraints are `ADR-0105` §6's, not this decision's: nothing is vacated or forfeited; the client must be able to **name** the room it puts the player back in, including a tab that has never heard of it; and the refusal must not meter as a guess when `ADR-0022` §2's failed-join budget is built — nothing implements it at `develop` (`JoinLimits` and `TOO_MANY_ATTEMPTS` do not exist). **Blocks the ticket that implements `ADR-0105` §1**, and nothing else | [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md) §6 | before `ADR-0105` §1 is cut into a ticket |
 | DEC-111 | **The product owner's** — may one player hold more than one `WAITING` room at once? Registered open 2026-09-01 by [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md), which answered `DEC-109` for the **running** case and names this hole in its own Consequences rather than quietly covering it. Reachable in three presses of shipped controls: *Create a duel room*, `Back to the lobby` (`ADR-0073` §1, which forgets the room and keeps the seat), *Create a duel room* again. Each waiting room a player holds can be joined by a rival and become a duel that player is not at — `ADR-0013`'s window, `ADR-0023`'s absent seat, `ADR-0014`'s coin — so `ADR-0105` §1 refuses a **second seat taken while a duel runs** but does not stop two duels **starting** in rooms whose seats were taken earlier. `ADR-0073` already accepted that cost for **one** waiting room, in as many words; whether it survives being multiplied is the question, and it is `docs/vision.md`'s *"Not a multi-table poker room"* against `ADR-0073` §3's shipped promise that *"The room stays open"*. `ADR-0105`'s Alternatives records the shape this will have to weigh — refusing the **rival's** join, which lands a refusal on a blameless stranger. **Blocks nothing** | [`ADR-0105`](../docs/adr/ADR-0105-one-duel-at-a-time-and-the-refusal-hands-back-the-duel.md) §Consequences | before the first public link |
 
+`DEC-125` → [`ADR-0116`](../docs/adr/ADR-0116-the-accept-is-a-door-and-a-door-that-does-not-open-spends-nothing.md)
+on 2026-09-04 — **the accept is a door, and a door that does not open spends nothing.** Raised the
+same day by the driver from `STORY-1310`'s `P5` drive, not from planning: pressing *"Keep them with
+a password"* on the result screen took the offer and navigated nowhere, so a player who accepted
+lost the offer and was told nothing. The press means one thing — *put me on the account screen
+where a password can be set* — and **the offer is spent where the player is delivered, never by a
+press that delivers nothing**: where the product does not put them there, the offer stands and is
+made again after their next win, exactly as an offer nobody answered. That narrows `ADR-0085` §2 on
+one clause — *taking* the offer is reaching the screen, not pressing toward it — leaving *"Not
+now"* spending at the press, since a dismissal has nowhere to arrive, and leaving the storage, the
+key, the table of cases and every refusal untouched; a second tab still counts as reaching it, so
+`ADR-0086`'s modified-click case stands. An answered offer is not shown again on the screen behind
+it. **Nothing is given back and nothing is built to give it back** — no un-dismiss, no migration,
+no key rename, because a rename cannot tell a player this defect answered for from one who honestly
+pressed *Not now*, and the affected population is empty while nothing is hosted. The word is chosen:
+today's press is neither a *spend* (a spend hands something over) nor a *forfeit* (`ADR-0046` §5) —
+the offer is **taken, and nothing is handed over**. It is satisfied by construction, because the
+offer only ever shows where the ask is honoured, and that becomes a standing condition on any future
+surface that renders it. Hands `ADR-0114` §6 the question it left to a drive: the repair writes a
+**regression test**, non-browser, red at `1a09fb46`. Registers no new `DEC` — the mechanism is
+`DEC-123`'s answer, merged as `ADR-0114` — and unblocks nothing, because `DEC-125` blocked nothing:
+the behaviour lands with `STORY-1311`, and until it does, this ADR only makes the absence legible.
+
 `DEC-124` → [`ADR-0115`](../docs/adr/ADR-0115-motion-never-carries-a-fact-and-reduced-motion-stills-every-surface.md)
 on 2026-09-02 — **motion never carries a fact, and reduced motion stills every surface.** Raised the
 same day by the planner while splitting `EPIC-13`: the acting seat's mark and the moving chips are
