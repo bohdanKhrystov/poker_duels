@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131102
 title: rulingOn answers every ask, and the two mailed screens wait
 type: task
-status: backlog
+status: ready
 parent: STORY-1311
 module: web-client
 estimate: S
