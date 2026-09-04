@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131109
 title: A look-away takes nothing with it, and a frame that seats a duel overrules it
 type: task
-status: backlog
+status: ready
 parent: STORY-1311
 module: web-client
 estimate: S
