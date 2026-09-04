@@ -22,40 +22,38 @@ class RoomPresenceTest {
         val waiting = waitingRoom()
         val playing = playingRoom()
 
-        assertTrue(waiting.gracePeriods.isEmpty())
+        assertTrue(waiting.awaySeats.isEmpty())
         assertTrue(waiting.absentSeats.isEmpty())
-        assertFalse(waiting.isPaused)
 
-        assertTrue(playing.gracePeriods.isEmpty())
+        assertTrue(playing.awaySeats.isEmpty())
         assertTrue(playing.absentSeats.isEmpty())
-        assertFalse(playing.isPaused)
     }
 
     @Test
-    fun aSeatInsideItsWindowPausesTheRoom() {
-        val room = playingRoom().copy(gracePeriods = mapOf(1 to 5_000L))
+    fun aSeatMarkedAwayShowsUpInAwaySeats() {
+        val room = playingRoom().copy(awaySeats = setOf(1))
 
-        assertTrue(room.isPaused)
+        assertTrue(room.awaySeats.isNotEmpty())
     }
 
     @Test
-    fun aSeatWhoseWindowRanOutDoesNotPauseTheRoom() {
+    fun anAbsentSeatDoesNotShowUpInAwaySeats() {
         val room = playingRoom().copy(absentSeats = setOf(1))
 
-        assertFalse(room.isPaused)
+        assertTrue(room.awaySeats.isEmpty())
     }
 
     @Test
-    fun aSeatCannotBeBothCountingDownAndAbsent() {
+    fun aSeatCannotBeBothAwayAndAbsent() {
         assertThrows(IllegalArgumentException::class.java) {
-            playingRoom().copy(gracePeriods = mapOf(1 to 5_000L), absentSeats = setOf(1))
+            playingRoom().copy(awaySeats = setOf(1), absentSeats = setOf(1))
         }
     }
 
     @Test
     fun anUnseatedSeatCannotBeGone() {
         assertThrows(IllegalArgumentException::class.java) {
-            waitingRoom().copy(gracePeriods = mapOf(1 to 5_000L))
+            waitingRoom().copy(awaySeats = setOf(1))
         }
         assertThrows(IllegalArgumentException::class.java) {
             waitingRoom().copy(absentSeats = setOf(1))
@@ -68,125 +66,77 @@ class RoomPresenceTest {
             playingRoom().copy(absentSeats = setOf(2))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            playingRoom().copy(gracePeriods = mapOf(-1 to 5_000L))
+            playingRoom().copy(awaySeats = setOf(-1))
         }
     }
 
     @Test
-    fun aNegativeDeadlineIsRefused() {
-        assertThrows(IllegalArgumentException::class.java) {
-            playingRoom().copy(gracePeriods = mapOf(0 to -1L))
-        }
-    }
-
-    @Test
-    fun aDisconnectStartsTheWindowAndPausesTheRoom() {
+    fun aDisconnectMarksTheSeatAway() {
         val before = playingRoom()
-        assertTrue(before.gracePeriods.isEmpty())
-        assertFalse(before.isPaused)
+        assertTrue(before.awaySeats.isEmpty())
 
-        val after = before.disconnect(1, 9_000L)
+        val after = before.disconnect(1)
 
-        assertEquals(mapOf(1 to 9_000L), after.gracePeriods)
-        assertTrue(after.isPaused)
+        assertEquals(setOf(1), after.awaySeats)
     }
 
     @Test
-    fun aSecondDisconnectRestartsTheWindow() {
-        val firstWindow = playingRoom().disconnect(1, 9_000L)
-        assertEquals(mapOf(1 to 9_000L), firstWindow.gracePeriods)
+    fun aSecondDisconnectLeavesAnAlreadyAwaySeatAway() {
+        val firstDrop = playingRoom().disconnect(1)
+        assertEquals(setOf(1), firstDrop.awaySeats)
 
-        val secondWindow = firstWindow.disconnect(1, 20_000L)
+        val secondDrop = firstDrop.disconnect(1)
 
-        assertEquals(mapOf(1 to 20_000L), secondWindow.gracePeriods)
+        assertEquals(setOf(1), secondDrop.awaySeats)
     }
 
     @Test
-    fun aDisconnectAfterExpiryPutsTheSeatBackInAWindow() {
+    fun aDisconnectAfterAbsenceMarksTheSeatAwayAgain() {
         val absent = playingRoom().copy(absentSeats = setOf(1))
         assertEquals(setOf(1), absent.absentSeats)
-        assertTrue(absent.gracePeriods.isEmpty())
+        assertTrue(absent.awaySeats.isEmpty())
 
-        val countingAgain = absent.disconnect(1, 9_000L)
+        val awayAgain = absent.disconnect(1)
 
-        assertTrue(countingAgain.absentSeats.isEmpty())
-        assertEquals(mapOf(1 to 9_000L), countingAgain.gracePeriods)
+        assertTrue(awayAgain.absentSeats.isEmpty())
+        assertEquals(setOf(1), awayAgain.awaySeats)
     }
 
     @Test
     fun disconnectingASeatTheRoomDoesNotHoldThrows() {
         assertThrows(IllegalArgumentException::class.java) {
-            waitingRoom().disconnect(1, 9_000L)
+            waitingRoom().disconnect(1)
         }
         assertThrows(IllegalArgumentException::class.java) {
-            playingRoom().disconnect(2, 9_000L)
+            playingRoom().disconnect(2)
         }
     }
 
     @Test
-    fun aReconnectClearsBothTheWindowAndTheAbsence() {
-        val counting = playingRoom().disconnect(1, 9_000L)
-        assertEquals(mapOf(1 to 9_000L), counting.gracePeriods)
+    fun aReconnectClearsBothAwayAndAbsence() {
+        val away = playingRoom().disconnect(1)
+        assertEquals(setOf(1), away.awaySeats)
 
-        val reconnectedFromWindow = counting.reconnect(1)
+        val reconnectedFromAway = away.reconnect(1)
 
-        assertTrue(reconnectedFromWindow.gracePeriods.isEmpty())
-        assertTrue(reconnectedFromWindow.absentSeats.isEmpty())
-        assertFalse(reconnectedFromWindow.isPaused)
+        assertTrue(reconnectedFromAway.awaySeats.isEmpty())
+        assertTrue(reconnectedFromAway.absentSeats.isEmpty())
 
         val absent = playingRoom().copy(absentSeats = setOf(1))
         assertEquals(setOf(1), absent.absentSeats)
 
         val reconnectedFromAbsence = absent.reconnect(1)
 
-        assertTrue(reconnectedFromAbsence.gracePeriods.isEmpty())
+        assertTrue(reconnectedFromAbsence.awaySeats.isEmpty())
         assertTrue(reconnectedFromAbsence.absentSeats.isEmpty())
-        assertFalse(reconnectedFromAbsence.isPaused)
     }
 
     @Test
     fun reconnectingASeatNobodyWasWaitingForChangesNothing() {
         val room = playingRoom()
-        assertTrue(room.gracePeriods.isEmpty())
+        assertTrue(room.awaySeats.isEmpty())
         assertTrue(room.absentSeats.isEmpty())
 
         assertEquals(playingRoom(), room.reconnect(1))
-    }
-
-    @Test
-    fun expireGraceMovesOnlyTheWindowsThatRanOut() {
-        val bothCounting = playingRoom().disconnect(0, 5_000L).disconnect(1, 20_000L)
-        assertEquals(mapOf(0 to 5_000L, 1 to 20_000L), bothCounting.gracePeriods)
-        assertTrue(bothCounting.absentSeats.isEmpty())
-
-        val afterExpiry = bothCounting.expireGrace(5_000L)
-
-        assertEquals(setOf(0), afterExpiry.absentSeats)
-        assertEquals(mapOf(1 to 20_000L), afterExpiry.gracePeriods)
-    }
-
-    @Test
-    fun expireGraceLeavesARoomWithTimeLeftAlone() {
-        val counting = playingRoom().disconnect(1, 20_000L)
-        assertEquals(mapOf(1 to 20_000L), counting.gracePeriods)
-        assertTrue(counting.isPaused)
-
-        val afterExpiry = counting.expireGrace(19_999L)
-
-        assertEquals(counting, afterExpiry)
-        assertTrue(afterExpiry.isPaused)
-    }
-
-    @Test
-    fun expireGraceIsIdempotent() {
-        val counting = playingRoom().disconnect(1, 5_000L)
-        assertEquals(mapOf(1 to 5_000L), counting.gracePeriods)
-
-        val once = counting.expireGrace(5_000L)
-        assertEquals(setOf(1), once.absentSeats)
-
-        val twice = once.expireGrace(5_000L)
-
-        assertEquals(once, twice)
     }
 }

@@ -58,7 +58,6 @@ internal fun e2eConfig(): ServerConfig =
         databasePoolSize = ServerConfig.DEFAULT_DATABASE_POOL_SIZE,
         roomWaitingTimeoutMillis = ServerConfig.DEFAULT_ROOM_WAITING_TIMEOUT_MILLIS,
         roomFinishedTimeoutMillis = ServerConfig.DEFAULT_ROOM_FINISHED_TIMEOUT_MILLIS,
-        disconnectGraceMillis = ServerConfig.DEFAULT_DISCONNECT_GRACE_MILLIS,
     )
 
 /**
