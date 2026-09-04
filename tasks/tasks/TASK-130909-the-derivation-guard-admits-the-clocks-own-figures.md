@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130909
 title: The derivation guard admits the clock's own figures and no other new number
 type: task
-status: ready
+status: done
 parent: STORY-1309
 module: web-client
 estimate: S
