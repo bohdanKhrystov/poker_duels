@@ -36,6 +36,29 @@ filled rows are the attempt. What the DoD asks for on top is the **reading** —
 found, and what happens to each thing it found. Left unwritten, the story merges as seven sentences
 nobody joins up, and the epic closes on a table rather than on a conclusion.
 
+## A reconciliation this ticket owes: why `P1`'s two drives disagreed
+
+`P1` carries two honest readings that contradict each other — one found a reload on the result screen
+landing on the lobby and staying, the other found the result screen surviving. `TASK-131004`'s
+`delayed` leg then observed what neither `P1` drive did:
+
+**On `delayed 300ms`, reloading the held result screen paints the lobby first and recovers to the
+result within seconds** — reproduced on two separate reloads. On `bare` the same reload went straight
+to the result, with no such flash.
+
+That reframes the disagreement. The lobby may not be a *different outcome*; it may be the **first
+paint of the same one**, visible when the network is slow and gone before a sampler catches it when
+the network is fast. `P1`'s first drive armed `record`, read one frame — the lobby — and never waited
+for a recovery, which is precisely what this would look like.
+
+It also weakens the winner/account-offer hypothesis on `TASK-131003`: the variable may be **when the
+observation happened relative to a recovery**, not what was on screen.
+
+**Do not close this by asserting it.** Settle it by driving `P1`'s bare reload again and *waiting*
+for the result screen, then say whether it recovers or genuinely stays on the lobby. If the record
+cannot be reconciled, say so plainly — an unexplained disagreement honestly recorded is worth more
+than a tidy story.
+
 ## Files
 
 | File | Action |
