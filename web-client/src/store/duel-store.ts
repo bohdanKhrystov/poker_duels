@@ -74,7 +74,10 @@ export function createDuelStore(options: DuelStoreOptions = {}): DuelStore {
       // opinion about. Notifying then would re-render every screen for nothing,
       // and would hand useSyncExternalStore a snapshot that never settles.
       const hadReveal = state.reveal !== null;
-      const next = applyServerMessage(state, message);
+      // ADR-0113 §6: read here, at the socket seam, rather than left to the reducer's own
+      // default — a monotonic clock, because a correction to the host's own clock must never
+      // stretch or collapse a countdown already anchored against it.
+      const next = applyServerMessage(state, message, performance.now());
       if (next === state) return;
       state = next;
       notify();
