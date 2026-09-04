@@ -50,6 +50,21 @@ zero-delay run is the closest this instrument gets to a bare stack, and the row 
 
 Otherwise as `TASK-131003` sets it out, with fresh Chrome profiles from `mktemp -d` (`ADR-0089` §3).
 
+## What the relay's self-test does *not* prove, and this drive depends on
+
+`TASK-131002`'s review found one substantive gap: **`--selftest-cut` never demonstrates that the
+relay still accepts new connections after a cut.** It closes its servers immediately after asserting,
+so a relay that severed its pairs *and stopped listening* would pass every gate.
+
+That is precisely what this path needs. `P3` cuts a live socket and then expects the client to
+**reconnect through the relay** — if the relay were deaf afterwards, the reconnect would fail and the
+reading would look like a product defect in `reconnecting.ts` rather than an instrument fault.
+
+The code never calls `server.close()` on the normal path, so it should hold. **Establish that it
+does before trusting a negative reading**: cut, then confirm a fresh connection is accepted, and say
+in the PR body which you observed. A `P3` row reporting "did not reconnect" is only about the product
+if the relay was still listening.
+
 ## Files
 
 | File | Action |
