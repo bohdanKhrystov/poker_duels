@@ -202,7 +202,15 @@ running circle* is a choice between two drawings and the human is the one who lo
 
 ## Open decisions
 
-**None. All nine are answered and merged**, every one on 2026-09-02.
+**`DEC-125` is open. The nine that shaped this epic are answered and merged**, every one on
+2026-09-02.
+
+The tenth was raised differently from all of them: not by planning, but by **driving**.
+`STORY-1310`'s `P5` pressed the account offer's accept and found it spends the offer and
+navigates nowhere — neither outcome `ADR-0112` names — on both layouts, with three independent
+signals showing no navigation at all. A player who accepts loses the offer and is told nothing.
+It blocks nothing here: the row records what was observed, and the story's remaining paths do
+not depend on the answer.
 
 The **six** this epic opened with — `DEC-114`–`DEC-119`, all the product owner's — were the reason it
 opened `backlog`, because six of the eight items could not be split into tickets without them. Their
