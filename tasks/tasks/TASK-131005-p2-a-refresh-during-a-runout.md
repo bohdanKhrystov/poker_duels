@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131005
 title: P2 — a refresh during a runout
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: XS
