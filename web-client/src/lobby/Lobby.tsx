@@ -122,6 +122,34 @@ export function Lobby(): ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ruling]);
 
+  // The ladder screen a player reaches from the first screen's own door
+  // (ADR-0060 §2), and the record screen the same way. The way back is
+  // rendered here, by the swap, and neither screen knows anything about
+  // navigation (ADR-0060 §4). The fallback for either read (ADR-0114 §2):
+  // a player whose read is unavailable lands on the room they hold rather
+  // than on a lobby that pretends they hold nothing.
+  if (shown === "leaderboard" && readLadder !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
+        <LadderScreen read={readLadder} />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
+  if (shown === "duels" && read !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
+        <HistoryScreen read={read} />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
   // These two branches sit immediately above `if (state.outcome !== null)`
   // because `ADR-0114` §2's order is what makes the rule mechanical — the
   // only value a chosen-screen branch can test is the one `rulingOn`
@@ -295,34 +323,6 @@ export function Lobby(): ReactElement {
 
   if (state.roomCode !== null) {
     return <WaitingTable code={state.roomCode} onLeave={forgetRoom} />;
-  }
-
-  // A player is not in a duel (view is null and roomCode is null).
-  // They can reach the history screen from here.
-  if (screen === "duels" && read !== null) {
-    return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
-        <HistoryScreen read={read} />
-        <button type="button" onClick={leave}>
-          Back
-        </button>
-      </section>
-    );
-  }
-
-  // They can reach the ladder screen from here too. The way back is rendered
-  // here, by the swap, and not by LadderScreen itself (ADR-0060): LadderScreen
-  // knows nothing about navigation, so its own affordance is assertable with
-  // no transport at all.
-  if (screen === "leaderboard" && readLadder !== null) {
-    return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
-        <LadderScreen read={readLadder} />
-        <button type="button" onClick={leave}>
-          Back
-        </button>
-      </section>
-    );
   }
 
   // They can reach the account screen from here too, the same shape as the
