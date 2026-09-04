@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import type { PlayerView } from "../protocol";
+import type { TurnClockState } from "../store/duel-state";
 import { DuelTable } from "./DuelTable";
 import { aView, aSeat } from "./view-fixture";
 
@@ -380,5 +381,83 @@ describe("the table renders and never derives", () => {
     expect(numbersOnScreen(container).filter((n) => !allowed.has(n))).toEqual([
       7125,
     ]);
+  });
+
+  /**
+   * The clock is the one place this guard's closed set moves — and the reason it has to move at
+   * all. A countdown puts numbers on screen the server never individually stated: it counts down
+   * *between* frames, so the numeral shown at any one instant is not itself a number `view`
+   * carries. `ADR-0113` §6 licenses exactly this and nothing wider — "two numbers the server sent
+   * minus locally-measured elapsed time, which is what every countdown on a network already is" —
+   * recomputed from `turnEndsAt` and `expiresAt` at every render, never decremented, never
+   * invented. With a clock stated, `DuelTable` draws exactly three such figures — the seat to
+   * act's countdown and each seat's timebank — and this test names them as literals rather than
+   * deriving them from `clockFigure`/`bankFigure`, because a set computed from the code under test
+   * would assert nothing. The seven tests above still render no clock at all; the widening lives
+   * only here.
+   */
+  it("admits the clock's own figures and refuses every other new number", () => {
+    const VIEW: PlayerView = aView({
+      viewerSeat: 0,
+      handNumber: 14,
+      buttonSeat: 1,
+      street: "TURN",
+      board: { cards: ["As", "7d", "2c"] },
+      pot: 5675,
+      betToMatch: 1450,
+      minRaiseTo: 2025,
+      seatToAct: 0,
+      smallBlind: 100,
+      bigBlind: 175,
+      seats: [
+        aSeat({
+          index: 0,
+          stack: 10200,
+          committedThisStreet: 125,
+          committedThisHand: 775,
+          holeCards: ["Ah", "Ks"],
+        }),
+        aSeat({
+          index: 1,
+          stack: 14750,
+          committedThisStreet: 825,
+          committedThisHand: 1725,
+          holeCards: [],
+        }),
+      ],
+    });
+
+    // The seat to act's own clock: turnEndsAt and expiresAt are the two server-stated instants
+    // ADR-0113 §6 recomputes from, and bankRemainingMillis is both seats' bank, stated plainly —
+    // nothing here is a figure the client works out for itself.
+    const TURN_CLOCK: TurnClockState = {
+      seat: 0,
+      handNumber: 14,
+      actionSequence: 9,
+      turnEndsAt: 24_000,
+      expiresAt: 204_000,
+      bankRemainingMillis: [180_000, 72_000],
+    };
+
+    const allowed = allowedNumbers(VIEW);
+
+    function extraNumbers(container: HTMLElement): number[] {
+      return [
+        ...new Set(numbersOnScreen(container).filter((n) => !allowed.has(n))),
+      ].sort((a, b) => a - b);
+    }
+
+    // At the instant the frame arrived: 24 seconds left, both banks exactly as stated.
+    const { container, rerender } = render(
+      <DuelTable view={VIEW} clock={{ clock: TURN_CLOCK, nowMillis: 0 }} />,
+    );
+    expect(extraNumbers(container)).toEqual([3, 12, 24]);
+
+    // Five seconds later, the same clock, re-read: only the countdown moved, 24 to 19 — which is
+    // what tells a live countdown from a constant the client happened to print once.
+    rerender(
+      <DuelTable view={VIEW} clock={{ clock: TURN_CLOCK, nowMillis: 5_000 }} />,
+    );
+    expect(extraNumbers(container)).toEqual([3, 12, 19]);
   });
 });
