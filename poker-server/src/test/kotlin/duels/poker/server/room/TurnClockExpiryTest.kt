@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -233,7 +234,7 @@ internal class TurnClockExpiryTest {
         val onTurnPlayer = seatedPlayer(onTurn, host, guest)
         registry.disconnect(room.code, onTurnPlayer)
         val deadline = liveDeadline(registry, room.code)
-        val actionsBeforeSweep = registry.get(room.code)!!.runner!!.hand!!.log.actions
+        val runnerBefore = registry.get(room.code)!!.runner
 
         clock.advance(deadline - clock.nowMillis() - 1_000)
         registry.resume(room.code, onTurnPlayer)
@@ -244,9 +245,11 @@ internal class TurnClockExpiryTest {
         // Reconnecting cannot undo the ordinary per-decision allowance once it runs out — that
         // clock runs whether or not the seat is connected, exactly as for a seat that was never
         // away at all (aSeatOutOfTimeIsPlayedThoughItIsPresent) — it only prevents the latch a
-        // still-away seat's own expiry would add.
+        // still-away seat's own expiry would add. The give-up may end hand 1 outright (an
+        // opening fold wins it uncontested), so the runner's own identity — not the live hand's
+        // action count, which a fresh hand 2 would reset to zero — is what proves it happened.
         assertEquals(1, expiries.size)
-        assertTrue(registry.get(room.code)!!.runner!!.hand!!.log.actions.size > actionsBeforeSweep.size)
+        assertNotSame(runnerBefore, registry.get(room.code)!!.runner)
         assertTrue(registry.get(room.code)!!.absentSeats.isEmpty())
     }
 
