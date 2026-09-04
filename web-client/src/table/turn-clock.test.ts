@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { clockFigure, bankFigure, seatClock, RUNNING_OUT_SECONDS } from "./turn-clock";
+import {
+  clockFigure,
+  bankFigure,
+  seatClock,
+  RUNNING_OUT_SECONDS,
+} from "./turn-clock";
 import type { ClockReading } from "./turn-clock";
 import type { TurnClockState } from "../store/duel-state";
 
@@ -60,13 +65,19 @@ describe("turn-clock", () => {
 
     it("draws the countdown only at the seat the clock names", () => {
       const clockAtSeat0 = aClock({ seat: 0 });
-      const readingAtSeat0: ClockReading = { clock: clockAtSeat0, nowMillis: 0 };
+      const readingAtSeat0: ClockReading = {
+        clock: clockAtSeat0,
+        nowMillis: 0,
+      };
       expect(seatClock(readingAtSeat0, 0, 0, 1).figure).not.toBeNull();
       expect(seatClock(readingAtSeat0, 1, 0, 1).figure).toBeNull();
 
       // The mirror: a hard-coded seat 0 in the implementation would still pass the block above.
       const clockAtSeat1 = aClock({ seat: 1 });
-      const readingAtSeat1: ClockReading = { clock: clockAtSeat1, nowMillis: 0 };
+      const readingAtSeat1: ClockReading = {
+        clock: clockAtSeat1,
+        nowMillis: 0,
+      };
       expect(seatClock(readingAtSeat1, 1, 1, 1).figure).not.toBeNull();
       expect(seatClock(readingAtSeat1, 0, 1, 1).figure).toBeNull();
     });
@@ -88,7 +99,10 @@ describe("turn-clock", () => {
       const clock = aClock({ turnEndsAt: 30_000 });
 
       const justOutside = seatClock(
-        { clock, nowMillis: clock.turnEndsAt - (RUNNING_OUT_SECONDS + 1) * 1000 },
+        {
+          clock,
+          nowMillis: clock.turnEndsAt - (RUNNING_OUT_SECONDS + 1) * 1000,
+        },
         0,
         0,
         1,
@@ -109,11 +123,21 @@ describe("turn-clock", () => {
     it("is on timebank once the allowance is spent, and expired once the bank is", () => {
       const clock = aClock({ turnEndsAt: 30_000, expiresAt: 30_000 + 180_000 });
 
-      const onTimebank = seatClock({ clock, nowMillis: clock.turnEndsAt + 13_000 }, 0, 0, 1);
+      const onTimebank = seatClock(
+        { clock, nowMillis: clock.turnEndsAt + 13_000 },
+        0,
+        0,
+        1,
+      );
       expect(onTimebank.treatment).toBe("on-timebank");
       expect(onTimebank.figure).toBe("2:47");
 
-      const expired = seatClock({ clock, nowMillis: clock.expiresAt + 5_000 }, 0, 0, 1);
+      const expired = seatClock(
+        { clock, nowMillis: clock.expiresAt + 5_000 },
+        0,
+        0,
+        1,
+      );
       expect(expired.treatment).toBe("expired");
       expect(expired.figure).toBe("0");
     });
@@ -124,11 +148,21 @@ describe("turn-clock", () => {
       const insideAllowance = seatClock({ clock, nowMillis: 0 }, 0, 0, 1);
       expect(insideAllowance.bank).toBe("3:00");
 
-      const onTimebank = seatClock({ clock, nowMillis: clock.turnEndsAt + 13_000 }, 0, 0, 1);
+      const onTimebank = seatClock(
+        { clock, nowMillis: clock.turnEndsAt + 13_000 },
+        0,
+        0,
+        1,
+      );
       expect(onTimebank.bank).toBe(onTimebank.figure);
       expect(onTimebank.bank).toBe("2:47");
 
-      const pastExpiry = seatClock({ clock, nowMillis: clock.expiresAt + 5_000 }, 0, 0, 1);
+      const pastExpiry = seatClock(
+        { clock, nowMillis: clock.expiresAt + 5_000 },
+        0,
+        0,
+        1,
+      );
       expect(pastExpiry.bank).toBe("0:00");
     });
 
@@ -151,7 +185,12 @@ describe("turn-clock", () => {
       // Eight seconds left on the bank is inside RUNNING_OUT_SECONDS, but "running-out" names
       // only the fresh allowance (ADR-0113 §6) — the bank falling is its own treatment, so an
       // implementation that reused the same threshold on the bank would fail this.
-      const result = seatClock({ clock, nowMillis: clock.expiresAt - 8_000 }, 0, 0, 1);
+      const result = seatClock(
+        { clock, nowMillis: clock.expiresAt - 8_000 },
+        0,
+        0,
+        1,
+      );
       expect(result.treatment).toBe("on-timebank");
       expect(result.figure).toBe("8");
     });

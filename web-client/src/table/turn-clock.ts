@@ -40,7 +40,8 @@ export function bankFigure(seconds: number): string {
 }
 
 /** The four ways a countdown can be drawn — the treatments `design/components/seat-and-pot.html` names. */
-export type ClockTreatment = "regular" | "running-out" | "on-timebank" | "expired";
+export type ClockTreatment =
+  "regular" | "running-out" | "on-timebank" | "expired";
 
 /** The store's clock and the reading to draw it against — both, or neither. */
 export interface ClockReading {
