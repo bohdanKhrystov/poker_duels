@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131008
 title: P6a and P6b — a mailed link opened while a room is held
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: S
