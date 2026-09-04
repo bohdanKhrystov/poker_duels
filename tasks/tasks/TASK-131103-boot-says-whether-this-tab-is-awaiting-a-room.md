@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131103
 title: Boot says whether this tab is awaiting a room
 type: task
-status: ready
+status: done
 parent: STORY-1311
 module: web-client
 estimate: XS
