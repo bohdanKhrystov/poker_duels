@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131002
 title: The relay learns to cut, so a socket drops without the page dying
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: S
