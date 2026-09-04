@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131003
 title: P1 — a refresh on the result screen
 type: task
-status: backlog
+status: ready
 parent: STORY-1310
 module: web-client
 estimate: XS

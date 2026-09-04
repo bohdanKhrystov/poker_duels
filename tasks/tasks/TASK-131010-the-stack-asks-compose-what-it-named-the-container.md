@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131010
 title: The stack asks compose what it named the container
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: S
