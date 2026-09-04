@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { SeatPresence } from "../protocol";
 import type { ActEvent } from "../store/duel-state";
+import type { SeatClock } from "./turn-clock";
 import { SeatPlate } from "./SeatPlate";
 import { aSeat } from "./view-fixture";
 
@@ -19,6 +20,7 @@ describe("a seat plate", () => {
       isViewer?: boolean;
       presence?: SeatPresence | null;
       lastAct?: ActEvent | null;
+      clock?: SeatClock | null;
     } = {},
   ) {
     return render(
@@ -30,6 +32,7 @@ describe("a seat plate", () => {
         isViewer={props.isViewer ?? true}
         presence={props.presence ?? null}
         lastAct={props.lastAct}
+        clock={props.clock}
       />,
     );
   }
@@ -233,5 +236,84 @@ describe("a seat plate", () => {
     expect(container.querySelectorAll(".chip-pile")).toHaveLength(0);
     getByText("0");
     expect(container.querySelectorAll("[aria-label], [title]")).toHaveLength(0);
+  });
+
+  it("draws the countdown the table handed it, in the treatment it named", () => {
+    const {
+      container: regularContainer,
+      getByText: getByText1,
+      unmount: unmount1,
+    } = plate(
+      { stack: 500 },
+      { clock: { figure: "24", treatment: "regular", bank: "3:00" } },
+    );
+    getByText1("24");
+    const regularClock = regularContainer.querySelector(
+      ".font-mono.tabular-nums.text-large.text-text",
+    );
+    expect(regularClock).toBeTruthy();
+    expect(regularClock?.textContent).toBe("24");
+    unmount1();
+
+    const { container: warningContainer, getByText: getByText2 } = plate(
+      { stack: 500 },
+      { clock: { figure: "6", treatment: "running-out", bank: "3:00" } },
+    );
+    getByText2("6");
+    const warningClock = warningContainer.querySelector(
+      ".font-mono.tabular-nums.text-large.text-warn",
+    );
+    expect(warningClock).toBeTruthy();
+    expect(warningClock?.textContent).toBe("6");
+  });
+
+  it("draws the other two treatments too", () => {
+    const {
+      container: accentContainer,
+      getByText: getByText1,
+      unmount: unmount1,
+    } = plate(
+      { stack: 500 },
+      { clock: { figure: "2:47", treatment: "on-timebank", bank: "2:47" } },
+    );
+    getByText1("2:47");
+    const accentClock = accentContainer.querySelector(
+      ".font-mono.tabular-nums.text-large.text-accent",
+    );
+    expect(accentClock).toBeTruthy();
+    unmount1();
+
+    const { container: faintContainer, getByText: getByText2 } = plate(
+      { stack: 500 },
+      { clock: { figure: "0", treatment: "expired", bank: "0:00" } },
+    );
+    getByText2("0");
+    const faintClock = faintContainer.querySelector(
+      ".font-mono.tabular-nums.text-large.text-text-faint",
+    );
+    expect(faintClock).toBeTruthy();
+  });
+
+  it("draws the bank behind the word Timebank, with a non-breaking space", () => {
+    const { container } = plate(
+      { stack: 500 },
+      { clock: { figure: "24", treatment: "regular", bank: "3:00" } },
+    );
+    const timebankElements = Array.from(
+      container.querySelectorAll("span"),
+    ).filter((span) => span.textContent === `Timebank${NBSP}3:00`);
+    expect(timebankElements).toHaveLength(1);
+  });
+
+  it("draws neither span when the table handed it no clock", () => {
+    const { container, getByText, queryByText } = plate(
+      { stack: 500 },
+      { hasButton: true },
+    );
+    expect(container.querySelectorAll(".text-warn")).toHaveLength(0);
+    expect(queryByText(/Timebank/)).toBeNull();
+    getByText("500");
+    expect(container.querySelectorAll("[aria-label]")).toHaveLength(1);
+    expect(container.querySelectorAll("[title]")).toHaveLength(0);
   });
 });
