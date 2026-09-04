@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131101
 title: roomStanding reads the room off the frames the server sent
 type: task
-status: ready
+status: done
 parent: STORY-1311
 module: web-client
 estimate: S
