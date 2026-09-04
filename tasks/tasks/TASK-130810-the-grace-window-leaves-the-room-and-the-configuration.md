@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130810
 title: The grace window leaves the room and the configuration, and away becomes a lookup
 type: task
-status: ready
+status: done
 parent: STORY-1308
 module: poker-server
 estimate: S
@@ -118,6 +118,16 @@ dissolves with it. Say which it is, in the PR:
 
 Do not simply drop it. A behaviour change nobody pinned and nobody re-examined is how the epic's two
 vacuous tests got there.
+
+## One correction to this ticket's own prose
+
+The *Tests* section says `RoomPresenceTest` "keeps every test". It does not — it loses **four**: the
+three `expireGrace` tests and `aNegativeDeadlineIsRefused`. That is not a coder shortcut. This
+ticket's *Scope* deletes `Room.expireGrace` outright ("not deprecated"), which makes its three tests
+impossible to keep, and removes the numeric deadline that `aNegativeDeadlineIsRefused` was about.
+**Scope wins over the Tests prose**, as it did in `TASK-130807`. Review confirmed no coverage was
+lost: seat-range validation is still held by `aSeatOutsideTheTableIsRefused`, and a repeated
+disconnect's idempotence by `aSecondDisconnectLeavesAnAlreadyAwaySeatAway`.
 
 ## Files
 
