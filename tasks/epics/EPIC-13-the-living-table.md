@@ -264,7 +264,7 @@ that moves the version.
 | [STORY-1306](../stories/STORY-1306-a-stack-is-chips-and-chips-move.md) | A stack is chips, and chips move — *item 6; the chip is **minted** interactively (`ADR-0091` §3); `DEC-124`* | ready — minting and card startable, client tickets blocked on `DEC-124` |
 | [STORY-1307](../stories/STORY-1307-the-turn-clocks-card.md) | The turn clock's card — regular, running out, on timebank, expired — *item 4a; the half no decision blocks* | ready — waits on `STORY-1306` |
 | [STORY-1308](../stories/STORY-1308-the-server-states-a-deadline-and-plays-the-expired-seat.md) | The server states a deadline and plays the seat whose clock ran out — *item 4b; the **only** wire move in this epic; `atomic:` by `ADR-0070`'s probe, `ADR-0047`'s lock* | **blocked on `DEC-120`** — the architect's |
-| [STORY-1309](../stories/STORY-1309-the-table-counts-down-and-the-pause-leaves-the-screen.md) | The table counts down, and the pause leaves the screen — *item 4c* | **blocked on `DEC-120`** — the architect's |
+| [STORY-1309](../stories/STORY-1309-the-table-counts-down-and-the-pause-leaves-the-screen.md) | The table counts down, and the pause leaves the screen — *item 4c* | ready — **split into twelve tickets on 2026-09-04**, `TASK-130901` startable |
 | [STORY-1310](../stories/STORY-1310-the-refresh-paths-nobody-drove.md) | The refresh paths nobody drove, driven and written down — *item 8a; `ADR-0112` §6's six paths* | ready — decision-free, waits on `STORY-1301` |
 | [STORY-1311](../stories/STORY-1311-only-a-running-duel-refuses-another-screen.md) | Only a running duel refuses another screen, and the refusal restores the address — *item 8b* | **blocked on `DEC-123`** — the architect's |
 
