@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130908
 title: The four states are each reachable on the table, and reaching zero changes nothing else
 type: task
-status: ready
+status: done
 parent: STORY-1309
 module: web-client
 estimate: S
