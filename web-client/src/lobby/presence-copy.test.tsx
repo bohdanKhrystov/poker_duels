@@ -37,7 +37,7 @@ const PRESENT: ServerMessage = {
 // ADR-0046 §2, quoted verbatim. Literals, not an import from `presence-text.ts`:
 // a constant shared by the encoder and its test would let one typo pass both
 // sides at once.
-const AWAY_LINE = "Your rival is away. The duel is paused.";
+const AWAY_LINE = "Your rival is away.";
 const ABSENT_LINE =
   "Your rival did not come back. The duel continues, and the server acts for them.";
 const BACK_LINE = "Your rival is back.";

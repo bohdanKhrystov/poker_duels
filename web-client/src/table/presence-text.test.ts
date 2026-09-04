@@ -2,10 +2,8 @@ import { describe, it, expect } from "vitest";
 import { presenceLine } from "./presence-text";
 
 describe("the presence line", () => {
-  it("says the duel is paused while the rival is away", () => {
-    expect(presenceLine("AWAY", false)).toBe(
-      "Your rival is away. The duel is paused.",
-    );
+  it("says the rival is away, and says nothing about a pause", () => {
+    expect(presenceLine("AWAY", false)).toBe("Your rival is away.");
   });
 
   it("says the duel continues once the rival did not come back", () => {
@@ -25,9 +23,7 @@ describe("the presence line", () => {
   });
 
   it("lets the state the server sent outrank the return", () => {
-    expect(presenceLine("AWAY", true)).toBe(
-      "Your rival is away. The duel is paused.",
-    );
+    expect(presenceLine("AWAY", true)).toBe("Your rival is away.");
     expect(presenceLine("ABSENT", true)).toBe(
       "Your rival did not come back. The duel continues, and the server acts for them.",
     );
