@@ -59,6 +59,35 @@ for the result screen, then say whether it recovers or genuinely stays on the lo
 cannot be reconciled, say so plainly — an unexplained disagreement honestly recorded is worth more
 than a tidy story.
 
+## A second finding this ticket owes an owner: the resume paints a stale room state
+
+`P2`'s `delayed 300ms` leg found that `ADR-0112` §6's *"no lobby on the way"* **fails under latency**.
+Reloading mid-runout, `open`'s own first paint is the **lobby**; then a lobby with the profile loaded;
+then a **stale `Waiting for your rival` screen naming the room that has already finished**; and only
+then the true `Victory`. On `bare` none of that is visible — the reload settles immediately.
+
+Two things to separate when you give this an owner:
+
+- **`ADR-0102` §5 arguably still holds.** Each screen is a state the server did state, arriving late
+  rather than a fact the client invented. The driver made that distinction rather than collapsing it,
+  and it is the right one to argue from.
+- **`ADR-0112` §6 does not hold.** It says no lobby appears on the way. One does, twice, plus a
+  waiting-room screen for a room that is over.
+
+Whether a player briefly seeing their finished duel described as *waiting for your rival* is
+acceptable-because-late or wrong-because-false is a **product** question, not a mechanism one. If the
+record concludes it is wrong, that is a `DEC` for the product owner and this ticket should raise it
+rather than describe it.
+
+**And it bears on `P1`.** A client that visibly paints lobby-shaped screens before self-correcting is
+a mechanism that produces either of `P1`'s contradictory readings depending on when a drive looked.
+That strengthens the reconciliation already recorded above — but the driver was careful not to claim
+it settles `P1`, and neither should this ticket without driving it.
+
+**One measurement explicitly not claimed:** how long the recovery takes. The interval between arming
+`record` and reading `frames` was dominated by agent-loop latency between shell invocations, not by
+the app. The sequence and the endpoint are observed; the duration is not.
+
 ## Files
 
 | File | Action |
