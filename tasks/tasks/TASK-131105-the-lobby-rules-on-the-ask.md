@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131105
 title: The lobby rules on the ask, and the refusal restores the address in one act
 type: task
-status: ready
+status: done
 parent: STORY-1311
 module: web-client
 estimate: S

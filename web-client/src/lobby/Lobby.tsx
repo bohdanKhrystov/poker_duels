@@ -1,8 +1,14 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol";
-import { useDuelState, useForgetRoom, useSend } from "../store/duel-provider";
+import {
+  useDuelState,
+  useForgetRoom,
+  useRoomAwaited,
+  useSend,
+} from "../store/duel-provider";
 import { useScreen } from "../routing/use-screen";
 import { tokenFromHash } from "../routing/screen";
+import { roomStanding, rulingOn } from "../routing/room-standing";
 import { useProfileStrip } from "../profile/profile-provider";
 import {
   useHistory,
@@ -50,6 +56,7 @@ export function Lobby(): ReactElement {
   const readLadder = useLadder();
   const signedIn = useSignedIn();
   const account = useAccount();
+  const roomAwaited = useRoomAwaited();
   // The initialiser, not a call: this runs once per mount, so a dismissal
   // (below) takes the offer off screen without waiting for a reload.
   const [offerSettled, setOfferSettled] = useState(offerSettledHere);
@@ -65,42 +72,55 @@ export function Lobby(): ReactElement {
   const [mailedToken] = useState(() => tokenFromHash(window.location.hash));
   const code = normalizeRoomCode(typedCode);
 
+  // ADR-0114 §§1-2: one predicate answers every ask, computed once above
+  // every branch. `standing` is what the frames the server has sent say
+  // about the room this tab holds; `ruling` is what that standing says
+  // about the screen the address is naming; `shown` is "first" for every
+  // ruling but "honour" — a refusal or a hold therefore needs no branch of
+  // its own, since the room's own screen is already what the store branches
+  // below fall through to.
+  const standing = roomStanding(state, roomAwaited);
+  const ruling = rulingOn(screen, standing);
+  const shown = ruling === "honour" ? screen : "first";
+
   // ADR-0081 §5: the mailed secret leaves the address once the verify or
   // reset branch below is live, in an effect and not during render —
   // writing to history during render is a side effect in a render path, and
   // React may run it twice. Guarded on a token still being held, so a bare
   // "#/verify" or "#/reset" — already the correct address — never calls
   // replaceState for nothing.
-  // Declared, and so run, before the effect below: ADR-0076 §3 makes the
-  // store outrank the address, and a frame that seats this tab while a
-  // mailed link is still open must have the last word on the two, not this
-  // one. The call below is a fresh closure every render (`useScreen()`
-  // memoises none of its returned functions), but its behaviour is already a
-  // pure function of `screen`, which is a dependency here, so the array
-  // deliberately omits it rather than re-running this effect on every render
-  // for no semantic reason.
+  // Keyed on `shown`, never `screen` (ADR-0114 §3): the restore below is a
+  // layout effect and this one stays passive, so keyed on `screen` it would
+  // fire on the very commit that refuses a mailed ask and write "#/verify"
+  // back over the "/" the restore had just written — two writers of one
+  // address, with the wrong one last. `shown` can only name a mailed screen
+  // once the ask has been honoured, so the two effects are disjoint by
+  // construction and neither depends on the other's declaration order.
   useEffect(() => {
-    if ((screen === "verify" || screen === "reset") && mailedToken !== null) {
+    if ((shown === "verify" || shown === "reset") && mailedToken !== null) {
       clearToken();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, mailedToken]);
+  }, [shown, mailedToken]);
 
-  // ADR-0076 §3: when the two disagree there is one authority, and it is the
-  // store. A frame that seats a store-owned screen (outcome, view or
-  // roomCode) overrules whatever the address named, so the fragment is
-  // replaced back to "/" — never pushed, since the player did not navigate.
-  // This runs in an effect, not during render: writing to history during
-  // render is a side effect in a render path, and React may run it twice.
-  // Guarded to screens other than "first" so a player already at "/" never
-  // has replaceState called on every frame that arrives.
-  const seatedByAFrame =
-    state.outcome !== null || state.view !== null || state.roomCode !== null;
-  useEffect(() => {
-    if (seatedByAFrame && screen !== "first") {
-      leave();
-    }
-  }, [seatedByAFrame, screen, leave]);
+  // ADR-0114 §3: a refused ask restores the address in the same commit that
+  // refused it. `useLayoutEffect`, not `useEffect`, is what makes that
+  // true — it runs synchronously after the commit that refused the ask and
+  // before the browser paints it, which is the only thing in a React tree
+  // that guarantees no paint separates the refusal from the restore
+  // (`ADR-0112` §2's "these are one act, not two"). Swapping it for
+  // `useEffect` breaks nothing any test can name, so the reason lives here.
+  // The dependency array is `[ruling]`, and `leave` is deliberately
+  // omitted: `useScreen()` memoises none of its returned functions, so
+  // including it would run this effect on every render, the same reason the
+  // token effect above omits it. `ruling` is a string and compares by
+  // value, so this runs when the ruling changes and not otherwise, and it
+  // settles in one pass — `leave()` moves `screen` to "first", and
+  // `rulingOn` answers "honour" for "first".
+  useLayoutEffect(() => {
+    if (ruling === "refuse") leave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ruling]);
 
   // The duel is over. This comes first because the reducer clears nothing a
   // frame established: `view` and `roomCode` both outlive the duel, so a result

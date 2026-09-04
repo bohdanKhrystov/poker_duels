@@ -137,15 +137,16 @@ afterEach(() => {
 function renderLobby(store: DuelStore = createDuelStore()): {
   send: ReturnType<typeof vi.fn>;
   forgetRoom: ReturnType<typeof vi.fn>;
+  container: HTMLElement;
 } {
   const send = vi.fn();
   const forgetRoom = vi.fn();
-  render(
+  const { container } = render(
     <DuelProvider store={store} send={send} forgetRoom={forgetRoom}>
       <Lobby />
     </DuelProvider>,
   );
-  return { send, forgetRoom };
+  return { send, forgetRoom, container };
 }
 
 function renderLobbyWithProfile(
@@ -221,6 +222,20 @@ function renderFinishedDuel(winner: number | null): void {
 
 function typeCode(value: string): void {
   fireEvent.change(screen.getByLabelText("Room code"), { target: { value } });
+}
+
+// Assigning location.hash changes the value at once but, in this jsdom,
+// fires hashchange itself only on a later task (see the comment beside the
+// mailed-link test below) — use-screen.test.tsx dispatches the event by
+// hand for the same reason. Doing so here still drives the ask the way a
+// player typing an address does (ADR-0114 §7): both the value and the event
+// a real browser produces happen, just without waiting on jsdom's own
+// scheduling of the second.
+function askForAnAddress(hash: string): void {
+  act(() => {
+    window.location.hash = hash;
+    window.dispatchEvent(new Event("hashchange"));
+  });
 }
 
 function inMemoryStorage(): Storage {
@@ -1440,6 +1455,50 @@ describe("the lobby", () => {
     expect(
       screen.queryByRole("button", { name: "Create a duel room" }),
     ).toBeNull();
+  });
+
+  it("refuses an ask made while the duel is running and restores the address", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+    renderLobby(store);
+
+    // ADR-0114 §7's Refused, driven the way a player typing an address
+    // drives it — not a click on a button this file already covers.
+    askForAnAddress("#/leaderboard");
+
+    expect(screen.getByText("Pot 30")).toBeDefined();
+    expect(window.location.hash).toBe("");
+  });
+
+  it("keeps the address a player chose over a room whose duel is not running", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    askForAnAddress("#/leaderboard");
+
+    // The screen is deliberately not asserted: the six chosen-screen
+    // branches have not moved above the room's own screen yet (that is
+    // TASK-131106 and its siblings), so a held room still wins the render
+    // even though this ruling is "honour", not "refuse".
+    expect(window.location.hash).toBe("#/leaderboard");
+    expect(store.getState().roomCode).toBe("ABCDEFGH");
+  });
+
+  it("moves nothing on screen when it refuses", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+    const { container } = renderLobby(store);
+    const before = container.textContent;
+
+    askForAnAddress("#/leaderboard");
+
+    // One assertion for "silently, with nothing added" (ADR-0112 §2): a
+    // notice, a dialog or any new string would change this captured string
+    // and fail it.
+    expect(container.textContent).toBe(before);
   });
 
   it("offers an account after a win, and after nothing else", () => {
