@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130911
 title: The duel is paused. leaves the line that named it, and the sentence before it stays
 type: task
-status: ready
+status: done
 parent: STORY-1309
 module: web-client
 estimate: S
