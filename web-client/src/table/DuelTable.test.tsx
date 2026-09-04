@@ -7,6 +7,7 @@ import {
   applyServerMessage,
   initialState,
 } from "../store/duel-state";
+import type { ClockReading } from "./turn-clock";
 import { DuelTable } from "./DuelTable";
 import { aView, aSeat } from "./view-fixture";
 
@@ -15,6 +16,62 @@ function plateFor(name: string): HTMLElement {
   const plate = screen.getByText(name).closest("div");
   if (plate === null) throw new Error(`no seat plate named ${name}`);
   return plate;
+}
+
+/**
+ * The countdown span `SeatPlate` draws — its own class list. `PotStrip`'s pot figure shares
+ * `text-large` too, so this is counted per plate, never across the whole container.
+ */
+const COUNTDOWN_SELECTOR = "span.font-mono.text-large.tabular-nums";
+
+/** How many countdown spans are on screen, summed across both plates and nowhere else. */
+function countdowns(): number {
+  return (
+    plateFor("You").querySelectorAll(COUNTDOWN_SELECTOR).length +
+    plateFor("Your rival").querySelectorAll(COUNTDOWN_SELECTOR).length
+  );
+}
+
+/** A moment fixed once, so every clock test reasons about the same instant. */
+const NOW = 1_700_000_000_000;
+
+/**
+ * A `ClockReading` at hand 1, seat 0 acting, 24 seconds left on the regular allowance and a
+ * minute of bank behind it — every field overridable, so a test states only what it means.
+ * No test below relies on these defaults alone; every seat-sensitive case states both the
+ * clock's own seat and the view it is read against.
+ */
+function aReading(
+  overrides: Partial<{
+    handNumber: number;
+    seat: number;
+    actionSequence: number;
+    turnEndsAt: number;
+    expiresAt: number;
+    bankRemainingMillis: readonly [number, number];
+    nowMillis: number;
+  }> = {},
+): ClockReading {
+  const {
+    handNumber = 1,
+    seat = 0,
+    actionSequence = 1,
+    turnEndsAt = NOW + 24_000,
+    expiresAt = NOW + 24_000 + 60_000,
+    bankRemainingMillis = [60_000, 60_000],
+    nowMillis = NOW,
+  } = overrides;
+  return {
+    clock: {
+      handNumber,
+      seat,
+      actionSequence,
+      turnEndsAt,
+      expiresAt,
+      bankRemainingMillis,
+    },
+    nowMillis,
+  };
 }
 
 /** A `HandStarted` opening `handNumber`, with a seed unrelated to any award. */
@@ -753,5 +810,171 @@ describe("the duel table", () => {
     expect(container.querySelectorAll("p")).toHaveLength(1);
     expect(container.querySelectorAll("p .chip-pile")).toHaveLength(0);
     expect(screen.getByText(/Pot/)).toBeDefined();
+  });
+
+  it("draws the countdown at whichever seat the clock names", () => {
+    const seats = [aSeat({ index: 0 }), aSeat({ index: 1 })];
+    const clockAt0 = aReading({
+      seat: 0,
+      handNumber: 1,
+      turnEndsAt: NOW + 24_000,
+    });
+
+    // Seat 0 acting, viewed from seat 0: the countdown is on the viewer's own plate.
+    const { rerender } = render(
+      <DuelTable
+        view={aView({ viewerSeat: 0, seatToAct: 0, handNumber: 1, seats })}
+        clock={clockAt0}
+      />,
+    );
+    expect(within(plateFor("You")).getByText("24")).toBeDefined();
+    expect(within(plateFor("Your rival")).queryByText("24")).toBeNull();
+
+    // Same clock, same acting seat, but viewed from the other side: the countdown follows the
+    // seat the clock names, not the viewer.
+    rerender(
+      <DuelTable
+        view={aView({ viewerSeat: 1, seatToAct: 0, handNumber: 1, seats })}
+        clock={clockAt0}
+      />,
+    );
+    expect(within(plateFor("Your rival")).getByText("24")).toBeDefined();
+    expect(within(plateFor("You")).queryByText("24")).toBeNull();
+
+    // The mirror: seat 1 acting, with a figure that shares no constant with the run above.
+    const clockAt1 = aReading({
+      seat: 1,
+      handNumber: 1,
+      turnEndsAt: NOW + 19_000,
+    });
+
+    rerender(
+      <DuelTable
+        view={aView({ viewerSeat: 1, seatToAct: 1, handNumber: 1, seats })}
+        clock={clockAt1}
+      />,
+    );
+    expect(within(plateFor("You")).getByText("19")).toBeDefined();
+    expect(within(plateFor("Your rival")).queryByText("19")).toBeNull();
+
+    rerender(
+      <DuelTable
+        view={aView({ viewerSeat: 0, seatToAct: 1, handNumber: 1, seats })}
+        clock={clockAt1}
+      />,
+    );
+    expect(within(plateFor("Your rival")).getByText("19")).toBeDefined();
+    expect(within(plateFor("You")).queryByText("19")).toBeNull();
+  });
+
+  it("draws exactly one countdown", () => {
+    const seats = [aSeat({ index: 0 }), aSeat({ index: 1 })];
+    const clockAt0 = aReading({
+      seat: 0,
+      handNumber: 1,
+      turnEndsAt: NOW + 24_000,
+    });
+    const clockAt1 = aReading({
+      seat: 1,
+      handNumber: 1,
+      turnEndsAt: NOW + 19_000,
+    });
+
+    // Counted across both plates, never just the one the clock names — two clocks racing to
+    // zero on one screen for one fact is exactly what `ADR-0108` §Consequences forecloses.
+    const { rerender } = render(
+      <DuelTable
+        view={aView({ viewerSeat: 0, seatToAct: 0, handNumber: 1, seats })}
+        clock={clockAt0}
+      />,
+    );
+    expect(countdowns()).toBe(1);
+
+    rerender(
+      <DuelTable
+        view={aView({ viewerSeat: 1, seatToAct: 0, handNumber: 1, seats })}
+        clock={clockAt0}
+      />,
+    );
+    expect(countdowns()).toBe(1);
+
+    rerender(
+      <DuelTable
+        view={aView({ viewerSeat: 1, seatToAct: 1, handNumber: 1, seats })}
+        clock={clockAt1}
+      />,
+    );
+    expect(countdowns()).toBe(1);
+
+    rerender(
+      <DuelTable
+        view={aView({ viewerSeat: 0, seatToAct: 1, handNumber: 1, seats })}
+        clock={clockAt1}
+      />,
+    );
+    expect(countdowns()).toBe(1);
+  });
+
+  it("draws both seats' banks", () => {
+    const seats = [aSeat({ index: 0 }), aSeat({ index: 1 })];
+    const view = aView({ viewerSeat: 0, seatToAct: 0, handNumber: 1, seats });
+    // Seat 0 is acting: its bank comes back from the live reading, not the frame's array
+    // (`ADR-0113` §3), so `expiresAt` is built from the same figure to keep the two agreeing.
+    // Seat 1 is not acting, so its bank is read straight off `bankRemainingMillis[1]`.
+    const reading = aReading({
+      seat: 0,
+      handNumber: 1,
+      turnEndsAt: NOW + 24_000,
+      expiresAt: NOW + 24_000 + 180_000,
+      bankRemainingMillis: [180_000, 72_000],
+    });
+
+    render(<DuelTable view={view} clock={reading} />);
+
+    // `\s` rather than the literal `NBSP` mark: the text matcher's own normalizer collapses
+    // the non-breaking space `SeatPlate` joins the label and figure with down to an ordinary
+    // one before comparing.
+    expect(within(plateFor("You")).getByText(/Timebank\s3:00/)).toBeDefined();
+    expect(
+      within(plateFor("Your rival")).getByText(/Timebank\s1:12/),
+    ).toBeDefined();
+  });
+
+  it("draws no countdown and no bank before a TurnClock has arrived", () => {
+    const view = aView({
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    render(<DuelTable view={view} />);
+
+    expect(countdowns()).toBe(0);
+    expect(screen.queryByText(/Timebank/)).toBeNull();
+  });
+
+  it("draws nothing for a clock the view has moved past", () => {
+    const seats = [aSeat({ index: 0 }), aSeat({ index: 1 })];
+    const reading = aReading({
+      seat: 0,
+      handNumber: 1,
+      turnEndsAt: NOW + 24_000,
+    });
+
+    const staleHand = aView({
+      viewerSeat: 0,
+      seatToAct: 0,
+      handNumber: 2,
+      seats,
+    });
+    const { rerender } = render(<DuelTable view={staleHand} clock={reading} />);
+    expect(countdowns()).toBe(0);
+
+    const staleSeat = aView({
+      viewerSeat: 0,
+      seatToAct: 1,
+      handNumber: 1,
+      seats,
+    });
+    rerender(<DuelTable view={staleSeat} clock={reading} />);
+    expect(countdowns()).toBe(0);
   });
 });

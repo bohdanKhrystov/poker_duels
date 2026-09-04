@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130907
 title: The table draws one countdown, at the acting seat, and both seats' banks
 type: task
-status: ready
+status: done
 parent: STORY-1309
 module: web-client
 estimate: S
