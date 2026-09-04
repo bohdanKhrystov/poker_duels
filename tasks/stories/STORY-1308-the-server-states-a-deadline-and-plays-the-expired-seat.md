@@ -2,7 +2,7 @@
 id: STORY-1308
 title: The server states a deadline and plays the seat whose clock ran out
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: poker-server
 labels: [server, protocol, clock, atomic]
