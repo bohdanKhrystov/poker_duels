@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131006
 title: P3 — a genuinely dropped socket
 type: task
-status: ready
+status: blocked
 parent: STORY-1310
 module: web-client
 estimate: XS
