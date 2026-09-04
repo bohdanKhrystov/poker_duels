@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131107
 title: A mailed token is not spent before the server has answered
 type: task
-status: ready
+status: done
 parent: STORY-1311
 module: web-client
 estimate: S

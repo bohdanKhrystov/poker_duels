@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Lobby } from "./Lobby";
+import { bootDuelClient, type DuelClient } from "../store/boot";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
 import { ProfileProvider } from "../profile/profile-provider";
@@ -17,7 +18,7 @@ import {
   type AccountCalls,
 } from "../account/account-provider";
 import type { ProfileStripState } from "../profile/profile-strip";
-import type { SeatView, ServerMessage } from "../protocol";
+import { writeRoomCode, type SeatView, type ServerMessage } from "../protocol";
 import type { SetNameOutcome } from "../profile/set-name";
 import { aProfile, aDuelLine } from "../profile/profile-fixture";
 import { aView } from "../table/view-fixture";
@@ -275,6 +276,47 @@ function withLocalStorage(): Storage {
     configurable: true,
   });
   return storage;
+}
+
+/**
+ * Reaches `roomAwaited` through the tab's memory rather than a provider
+ * prop: `writeRoomCode` before `bootDuelClient`, then `DuelProvider` carries
+ * whatever that boot computed. `ADR-0114` §7 requires exactly this, because
+ * it is the only thing a test can fail that a prop-driven fixture cannot —
+ * memory, `boot.ts`, the provider and `Lobby` have to actually agree, not
+ * merely be told to. The stub connection answers nothing, so the room this
+ * boot asked about stays "unknown" (ADR-0114 §1) until the caller applies a
+ * frame to `client.store` itself.
+ */
+function renderMailedLinkOverARememberedRoom(
+  verifyEmail: AccountCalls["verifyEmail"],
+): DuelClient {
+  const storage = inMemoryStorage();
+  writeRoomCode(storage, "ABCDEFGH");
+
+  const client = bootDuelClient({
+    connect: () => ({
+      status: { kind: "connecting" },
+      send: vi.fn(),
+      close: vi.fn(),
+    }),
+    joinRoomCode: null,
+    storage,
+  });
+
+  render(
+    <AccountProvider calls={accountCallsFixture({ verifyEmail })}>
+      <DuelProvider
+        store={client.store}
+        send={client.send}
+        roomAwaited={client.roomAwaited}
+      >
+        <Lobby />
+      </DuelProvider>
+    </AccountProvider>,
+  );
+
+  return client;
 }
 
 describe("the lobby", () => {
@@ -1741,6 +1783,67 @@ describe("the lobby", () => {
     expect(verifyEmail).toHaveBeenCalledOnce();
     expect(verifyEmail).toHaveBeenCalledWith("zqx-verify-token-zqx");
     expect(window.location.hash).toBe("#/verify");
+  });
+
+  it("sends nothing from a mailed link while the room this tab remembers is unknown", () => {
+    window.location.hash = "#/verify/zqx-verify-token-zqx";
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+
+    renderMailedLinkOverARememberedRoom(verifyEmail);
+
+    // No frame has arrived, so the standing this tab reads is "unknown"
+    // (ADR-0114 §1) and the ruling is "hold" (§5): the token is neither
+    // read nor dropped, it is still sitting in the address exactly where
+    // the mail put it.
+    expect(verifyEmail).not.toHaveBeenCalled();
+    expect(window.location.hash).toBe("#/verify/zqx-verify-token-zqx");
+  });
+
+  it("still sends nothing once the frames say the duel is running", () => {
+    window.location.hash = "#/verify/zqx-verify-token-zqx";
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+
+    const client = renderMailedLinkOverARememberedRoom(verifyEmail);
+
+    // Both frames in one act(): the pair is one answer — "this room is
+    // running" — and applying them apart would cross the single render
+    // ADR-0114 §6 names as its own, separately owned, residual window
+    // (roomCode set, view not yet), which this ticket is explicit is
+    // neither closed nor tested here, in either direction.
+    act(() => {
+      client.store.apply(ROOM_JOINED);
+      client.store.apply(SNAPSHOT);
+    });
+
+    // A frame that starts a duel moves the standing to "running", which
+    // moves the hold to a refusal (ADR-0114 §§2, 5): the token is still
+    // never read, and the address goes whole, the token with it, the way a
+    // player's own mid-duel ask is restored.
+    expect(verifyEmail).not.toHaveBeenCalled();
+    expect(window.location.hash).toBe("");
+  });
+
+  it("sends the token once the frames say the duel is over", () => {
+    window.location.hash = "#/verify/zqx-verify-token-zqx";
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+
+    const client = renderMailedLinkOverARememberedRoom(verifyEmail);
+
+    // Both frames in one act(), for the same reason as the test above: the
+    // pair is one answer, and this ticket asserts nothing about the render
+    // in between them.
+    act(() => {
+      client.store.apply(ROOM_JOINED);
+      client.store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+      });
+    });
+
+    // A FINISHED room is entitled to open a mailed link like every other
+    // ask (ADR-0112 §§3, 5): the hold ends in honour, not refusal, once the
+    // standing is "finished".
+    expect(verifyEmail).toHaveBeenCalledOnce();
   });
 
   it("opens a mailed reset link and sends the token behind the slug", () => {
