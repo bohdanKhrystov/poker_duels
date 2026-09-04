@@ -190,6 +190,15 @@ export function Lobby(): ReactElement {
           narration={state.narration}
           revealStep={state.reveal?.steps[0] ?? null}
           lastAct={state.lastAct}
+          // The store anchors and ticks this clock (ADR-0102 §4's `schedule` seam,
+          // ADR-0113 §6's anchor-on-arrival); reading a clock of our own here would
+          // undo that anchor, so this is a pure pack-and-pass of the store's own
+          // two fields, never a re-derivation.
+          clock={
+            state.turnClock === null
+              ? null
+              : { clock: state.turnClock, nowMillis: state.nowMillis }
+          }
         />
         <PresenceNotice
           key={state.presenceCount}

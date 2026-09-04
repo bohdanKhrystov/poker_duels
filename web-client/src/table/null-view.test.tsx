@@ -47,6 +47,16 @@ import { aView } from "./view-fixture";
  * appears the moment a `Snapshot` arrives and never later, exactly like the acting mark. And it
  * is `aria-hidden` with no text node, so neither `spoken()` nor the digit sweep below changes
  * shape to admit it.
+ *
+ * The turn clock — the acting seat's countdown and both seats' timebanks (`TASK-130910`) — renders
+ * nothing here either, for the same structural reason as the acting mark and the last-act mark
+ * above: `Lobby.tsx` mounts `WaitingTable` — never `DuelTable`, so no `SeatPlate` at all — while
+ * `view` is `null`, and `state.turnClock` itself stays `null` until a `TurnClock` frame arrives,
+ * which the server sends no sooner than the first `Snapshot`. Unlike those two marks, the figure
+ * this surface would draw carries a digit and speaks no `aria-label` and no `title` of its own —
+ * so it is the digit sweep below, not `spoken()`, that would redden were it ever drawn here, and
+ * the test below closes both anyway: on the bank's own text, and on the class that colours the
+ * figure.
  */
 
 afterEach(() => {
@@ -316,5 +326,34 @@ describe("what the table shows when there is no view", () => {
     // The guard on the guard: without this, the two refusals above would be
     // assertions about a probe that never matches anything in this app.
     expect(screen.queryByLabelText("the total")).not.toBeNull();
+  });
+
+  it("draws no countdown and no bank before the server has named a turn", () => {
+    const { container, store } = renderNullView("ABCDEFGH");
+
+    expect(screen.queryByText(/Timebank/)).toBeNull();
+    // `text-warn` is `SeatPlate`'s own colour for a countdown running out
+    // (`turn-clock.ts`'s `CLOCK_COLOUR`), and nothing else in this app wears
+    // it — the guard on the guard below is what proves that.
+    expect(container.querySelectorAll(".text-warn")).toHaveLength(0);
+    expect(spoken(container)).toEqual([]);
+
+    act(() => {
+      store.apply({ type: "Snapshot", view: aView() });
+      store.apply({
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 5_000,
+        bankRemainingMillis: [60_000, 60_000],
+      });
+    });
+
+    // `queryAllByText`, not `queryByText`: both plates show a bank once the
+    // table is live, and a single-element query throws on the second match
+    // rather than confirming it.
+    expect(screen.queryAllByText(/Timebank/).length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".text-warn").length).toBeGreaterThan(0);
   });
 });
