@@ -6,6 +6,7 @@ import {
   useDuelState,
   useSend,
   useForgetRoom,
+  useRoomAwaited,
 } from "./duel-provider";
 import { createDuelStore, type DuelStore } from "./duel-store";
 import type { ClientMessage } from "../protocol";
@@ -42,14 +43,25 @@ function LeaveButton(): ReactElement {
   );
 }
 
+function RoomAwaitedDisplay(): ReactElement {
+  const roomAwaited = useRoomAwaited();
+  return <p>{roomAwaited ? "awaiting" : "not awaiting"}</p>;
+}
+
 function renderUnder(
   store: DuelStore,
   send: (message: ClientMessage) => void,
   child: ReactElement,
   forgetRoom?: () => void,
+  roomAwaited?: boolean,
 ): void {
   render(
-    <DuelProvider store={store} send={send} forgetRoom={forgetRoom}>
+    <DuelProvider
+      store={store}
+      send={send}
+      forgetRoom={forgetRoom}
+      roomAwaited={roomAwaited}
+    >
       {child}
     </DuelProvider>,
   );
@@ -142,5 +154,44 @@ describe("the duel provider", () => {
     const button = screen.getByText("Leave");
     expect(() => fireEvent.click(button)).not.toThrow();
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("hands the tree the flag the boot computed", () => {
+    const store = createDuelStore();
+    const send: (message: ClientMessage) => void = vi.fn();
+
+    renderUnder(store, send, <RoomAwaitedDisplay />, undefined, true);
+
+    expect(screen.getByText("awaiting")).toBeDefined();
+  });
+
+  it("answers false where the boot passed nothing", () => {
+    const store = createDuelStore();
+    const send: (message: ClientMessage) => void = vi.fn();
+
+    renderUnder(store, send, <RoomAwaitedDisplay />);
+
+    expect(screen.getByText("not awaiting")).toBeDefined();
+  });
+
+  it("keeps the value it was last given when it changes", () => {
+    const store = createDuelStore();
+    const send: (message: ClientMessage) => void = vi.fn();
+
+    const { rerender } = render(
+      <DuelProvider store={store} send={send} roomAwaited={false}>
+        <RoomAwaitedDisplay />
+      </DuelProvider>,
+    );
+
+    expect(screen.getByText("not awaiting")).toBeDefined();
+
+    rerender(
+      <DuelProvider store={store} send={send} roomAwaited={true}>
+        <RoomAwaitedDisplay />
+      </DuelProvider>,
+    );
+
+    expect(screen.getByText("awaiting")).toBeDefined();
   });
 });

@@ -14,6 +14,7 @@ interface DuelClientContext {
   readonly store: DuelStore;
   readonly send: (message: ClientMessage) => void;
   readonly forgetRoom: () => void;
+  readonly roomAwaited: boolean;
 }
 
 const DuelContext = createContext<DuelClientContext | null>(null);
@@ -25,6 +26,7 @@ export function DuelProvider(props: {
   store: DuelStore;
   send: (message: ClientMessage) => void;
   forgetRoom?: () => void;
+  roomAwaited?: boolean;
   children: ReactNode;
 }): ReactElement {
   const value = useMemo(
@@ -32,8 +34,9 @@ export function DuelProvider(props: {
       store: props.store,
       send: props.send,
       forgetRoom: props.forgetRoom ?? NO_FORGET,
+      roomAwaited: props.roomAwaited ?? false,
     }),
-    [props.store, props.send, props.forgetRoom],
+    [props.store, props.send, props.forgetRoom, props.roomAwaited],
   );
   return (
     <DuelContext.Provider value={value}>{props.children}</DuelContext.Provider>
@@ -62,4 +65,11 @@ export function useSend(): (message: ClientMessage) => void {
 /** The boot-created forget. Screens call it from event handlers, never effects. */
 export function useForgetRoom(): () => void {
   return useDuelClient().forgetRoom;
+}
+
+/**
+ * `useRoomAwaited` — whether this tab is awaiting a room from the server (`ADR-0114` §5).
+ */
+export function useRoomAwaited(): boolean {
+  return useDuelClient().roomAwaited;
 }
