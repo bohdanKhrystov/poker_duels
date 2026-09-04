@@ -1,12 +1,14 @@
 import type { ReactElement } from "react";
 import type { GameEvent, PlayerView, SeatPresence, Street } from "../protocol";
 import type { ActEvent } from "../store/duel-state";
+import type { ClockReading } from "./turn-clock";
 import { BoardCards } from "./BoardCards";
 import { PotStrip } from "./PotStrip";
 import { SeatPlate } from "./SeatPlate";
 import { Hand } from "./Hand";
 import { formatChips } from "./chips";
 import { ChipPile } from "./ChipPile";
+import { seatClock } from "./turn-clock";
 
 /**
  * The duel table: one column, rival above, board between, you below.
@@ -37,6 +39,12 @@ export function DuelTable(props: {
    * plates: exactly one `SeatPlate` below receives it, chosen by `lastAct.seat` alone.
    */
   lastAct?: ActEvent | null;
+  /**
+   * The clock the store anchored and the reading to draw it against — never re-derived here
+   * (`ADR-0113` §6). Absent before a `TurnClock` has arrived, which is the merged behaviour
+   * every existing caller and every existing test still gets.
+   */
+  clock?: ClockReading | null;
 }): ReactElement {
   const { view } = props;
   const board = props.revealStep?.board ?? view.board.cards;
@@ -54,6 +62,12 @@ export function DuelTable(props: {
             isViewer={false}
             presence={props.rivalPresence ?? null}
             lastAct={props.lastAct?.seat === rival.index ? props.lastAct : null}
+            clock={seatClock(
+              props.clock ?? null,
+              rival.index,
+              view.seatToAct,
+              view.handNumber,
+            )}
           />
           {/* ADR-0103 §3.2: the rival's face-down hand narrows furthest of
               anything on the table — her name, her stack, her button and
@@ -96,6 +110,12 @@ export function DuelTable(props: {
             isToAct={view.seatToAct === you.index}
             isViewer
             lastAct={props.lastAct?.seat === you.index ? props.lastAct : null}
+            clock={seatClock(
+              props.clock ?? null,
+              you.index,
+              view.seatToAct,
+              view.handNumber,
+            )}
           />
         </div>
       )}
