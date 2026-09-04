@@ -2,8 +2,9 @@ import { describe, it, expect } from "vitest";
 import type { DuelOutcome } from "../protocol";
 import type { DuelState } from "../store/duel-state";
 import { initialState } from "../store/duel-state";
+import type { Screen } from "./screen";
 import { aView } from "../table/view-fixture";
-import { roomStanding } from "./room-standing";
+import { roomStanding, rulingOn, spendsOnArrival } from "./room-standing";
 
 describe("the room's standing", () => {
   it("answers unknown before any frame while this tab is awaiting a room", () => {
@@ -73,3 +74,82 @@ describe("the room's standing", () => {
     expect(roomStanding(state, true)).toBe("running");
   });
 });
+
+describe("the ruling on an ask", () => {
+  it("honours the first screen whatever the room is doing", () => {
+    const standings: RoomStanding[] = [
+      "unknown",
+      "none",
+      "waiting",
+      "running",
+      "finished",
+    ];
+    for (const standing of standings) {
+      expect(rulingOn("first", standing)).toBe("honour");
+    }
+  });
+
+  it("refuses every chosen screen while the duel is running", () => {
+    const screens: Screen[] = [
+      "duels",
+      "leaderboard",
+      "account",
+      "sign-in",
+      "verify",
+      "reset",
+    ];
+    for (const screen of screens) {
+      expect(rulingOn(screen, "running")).toBe("refuse");
+    }
+  });
+
+  it("holds only the two mailed screens while the room is unknown", () => {
+    expect(rulingOn("verify", "unknown")).toBe("hold");
+    expect(rulingOn("reset", "unknown")).toBe("hold");
+  });
+
+  it("honours the other four chosen screens while the room is unknown", () => {
+    const screens: Screen[] = ["duels", "leaderboard", "account", "sign-in"];
+    for (const screen of screens) {
+      expect(rulingOn(screen, "unknown")).toBe("honour");
+    }
+  });
+
+  it("honours every chosen screen over a waiting or a finished room", () => {
+    const screens: Screen[] = [
+      "duels",
+      "leaderboard",
+      "account",
+      "sign-in",
+      "verify",
+      "reset",
+    ];
+    const standings: RoomStanding[] = ["waiting", "finished"];
+    for (const standing of standings) {
+      for (const screen of screens) {
+        expect(rulingOn(screen, standing)).toBe("honour");
+      }
+    }
+  });
+
+  it("names the two screens that spend a secret on arrival, and no others", () => {
+    const spendingScreens: Screen[] = ["verify", "reset"];
+    const nonSpendingScreens: Screen[] = [
+      "first",
+      "duels",
+      "leaderboard",
+      "account",
+      "sign-in",
+    ];
+
+    for (const screen of spendingScreens) {
+      expect(spendsOnArrival(screen)).toBe(true);
+    }
+
+    for (const screen of nonSpendingScreens) {
+      expect(spendsOnArrival(screen)).toBe(false);
+    }
+  });
+});
+
+type RoomStanding = ReturnType<typeof roomStanding>;
