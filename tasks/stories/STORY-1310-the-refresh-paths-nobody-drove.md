@@ -71,11 +71,66 @@ point; `STORY-1311` covers whatever `STORY-1302` changes.
   token is still usable after the duel, because that is the one path whose failure is silent and
   permanent.
 
+## The record
+
+**This is the deliverable.** One row per path, filled in by the ticket that drives it, and nothing
+here is a gate: `ADR-0089` §2b forbids a browser standing between a pull request and `develop`, so
+what a `verify:` block can check is that the row exists, that it is no longer a placeholder, and
+that the ordinary suites are still green. Whether the sentence in it is *true* is a human's verdict
+on the readings pasted into the PR body — the shape `STORY-1215` used and `ADR-0106` §4 licensed.
+
+The placeholder is the word standing in the `result` cells below. It appears in this file only
+inside this table, so a count of it is a count of paths still owed.
+
+| id | path | result | commit | stack |
+| --- | --- | --- | --- | --- |
+| `P1` | a refresh **on the result screen** — a held `FINISHED` room, `outcome` standing | NOT-YET-DRIVEN | — | — |
+| `P2` | a refresh **during a runout** — `ADR-0102` §5 says the reload jumps to the end; no lobby on the way | NOT-YET-DRIVEN | — | — |
+| `P3` | a **genuinely dropped socket** — a reconnect through `reconnecting.ts`, not a reload | NOT-YET-DRIVEN | — | — |
+| `P4` | **real latency** — the rejoin round trip made wide enough to see | NOT-YET-DRIVEN | — | — |
+| `P5` | the **`AccountOffer` accept path** of `ADR-0112` §5, so far derived rather than observed | NOT-YET-DRIVEN | — | — |
+| `P6a` | a **mailed link opened while a room is held** — the room **waiting** | NOT-YET-DRIVEN | — | — |
+| `P6b` | a **mailed link opened while a room is held** — the room **playing** | NOT-YET-DRIVEN | — | — |
+
+**The `stack` cell names which of two the reading came from**, because on one of them a green
+reading means nothing:
+
+- `bare` — Vite on `5173`, the server on `8080`, no relay. The product as it ships, and the reading
+  that counts when something **is** seen.
+- `delayed <n>ms` — Vite moved to `5273` and `scripts/qa/delay.mjs` listening on **`5173`** in front
+  of it, so the browser's origin, the invite link and every hard-coded `5173` inside `drive.mjs`
+  are unchanged. The reading that counts when **nothing** is seen.
+
+**Why the second reading is not optional.** `drive.mjs`'s `wait` and `absent` sample `#root` every
+250 ms, and `record` cannot be armed across a page load — its `MutationObserver` dies with the
+document. On localhost the whole rejoin round trip is shorter than one sample, so *"no lobby
+appeared"* on a bare stack is a statement about the instrument and not about the product. `EPIC-13`
+already recorded exactly that: *"No lobby flash was observable at the sampling resolution
+`drive.mjs` allows."* So a path whose finding is a **negative** is driven twice, and its row says
+which reading it is.
+
+**What a reload can be observed with, given that.** `open` prints `#root`'s text the moment it first
+has content — the first paint, and the only pre-frame observation available across a navigation;
+`record` armed immediately after `open`, then `frames`, catches every transition from there on.
+Both belong in the PR body verbatim.
+
 ## Tasks
+
+Split on 2026-09-04 into **nine** tickets, one chain. The first two build the instrument, because
+five of the seven readings are races a bare localhost stack cannot resolve, and one of them — a
+socket that drops without the page dying — has no driver verb at all today.
 
 | ID | Title | Status |
 | --- | --- | --- |
-| — | *not yet split — run `/plan-story STORY-1310`* | — |
+| [TASK-131001](../tasks/TASK-131001-a-loopback-relay-puts-milliseconds-in-front-of-the-stack.md) | A loopback relay puts milliseconds in front of the stack | ready |
+| [TASK-131002](../tasks/TASK-131002-the-relay-learns-to-cut.md) | The relay learns to cut, so a socket drops without the page dying | backlog |
+| [TASK-131003](../tasks/TASK-131003-p1-a-refresh-on-the-result-screen.md) | `P1` — a refresh on the result screen | backlog |
+| [TASK-131004](../tasks/TASK-131004-p5-the-account-offers-accept-is-observed.md) | `P5` — the account offer's accept, observed rather than derived | backlog |
+| [TASK-131005](../tasks/TASK-131005-p2-a-refresh-during-a-runout.md) | `P2` — a refresh during a runout | backlog |
+| [TASK-131006](../tasks/TASK-131006-p3-a-genuinely-dropped-socket.md) | `P3` — a genuinely dropped socket | backlog |
+| [TASK-131007](../tasks/TASK-131007-p4-the-rejoin-round-trip-made-visible.md) | `P4` — the rejoin round trip made visible | backlog |
+| [TASK-131008](../tasks/TASK-131008-p6-a-mailed-link-over-a-held-room.md) | `P6a`/`P6b` — a mailed link over a held room | backlog |
+| [TASK-131009](../tasks/TASK-131009-the-record-read-whole.md) | The record read whole, and every finding given an owner | backlog |
 
 ## Acceptance criteria
 
