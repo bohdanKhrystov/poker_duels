@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130902
 title: The clock's figure and the bank's figure are the two shapes the card drew
 type: task
-status: backlog
+status: ready
 parent: STORY-1309
 module: web-client
 estimate: S
