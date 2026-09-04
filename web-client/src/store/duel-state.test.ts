@@ -1958,4 +1958,94 @@ describe("the duel state", () => {
     );
     expect(state.turnClock?.bankRemainingMillis).toEqual([15_000, 9_000]);
   });
+
+  it("a clock queued behind a runout keeps its arrival anchor", () => {
+    const turnClock: TurnClock = {
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 2,
+      actionSequence: 3,
+      turnRemainingMillis: 30_000,
+      bankRemainingMillis: [10_000, 12_000],
+    };
+    const view = samplePlayerView({
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+    });
+
+    // Dwell 1: a one-step reveal, drained by a single advanceReveal.
+    const stateWithOneStepReveal = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Snapshot", view },
+    );
+    expect(stateWithOneStepReveal.reveal?.steps).toHaveLength(1);
+    const oneStepQueued = duelState.applyServerMessage(
+      stateWithOneStepReveal,
+      turnClock,
+      2_000,
+    );
+    // Queued behind the standing reveal, not applied yet.
+    expect(oneStepQueued.turnClock).toBeNull();
+    const oneStepDrained = duelState.advanceReveal(oneStepQueued);
+    expect(oneStepDrained.reveal).toBeNull();
+    expect(oneStepDrained.turnClock?.turnEndsAt).toBe(32_000);
+
+    // Dwell 2: the same clock, at the same arrival instant, now spends three
+    // extra steps queued before it lands — the anchor must not move with it.
+    const streetDealt: readonly StreetDealt[] = [
+      {
+        type: "StreetDealt",
+        sequence: 220,
+        street: "FLOP",
+        cards: ["As", "7d", "2c"],
+      },
+      { type: "StreetDealt", sequence: 221, street: "TURN", cards: ["Kh"] },
+      { type: "StreetDealt", sequence: 222, street: "RIVER", cards: ["3s"] },
+    ];
+    const stateWithFourStepEvents = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: streetDealt },
+    );
+    const stateWithFourStepReveal = duelState.applyServerMessage(
+      stateWithFourStepEvents,
+      { type: "Snapshot", view },
+    );
+    expect(stateWithFourStepReveal.reveal?.steps).toHaveLength(4);
+    const fourStepQueued = duelState.applyServerMessage(
+      stateWithFourStepReveal,
+      turnClock,
+      2_000,
+    );
+    let fourStepDrained = fourStepQueued;
+    while (fourStepDrained.reveal !== null) {
+      fourStepDrained = duelState.advanceReveal(fourStepDrained);
+    }
+    expect(fourStepDrained.turnClock?.turnEndsAt).toBe(32_000);
+  });
+
+  it("a RoomJoined naming a different room clears the clock", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "RoomJoined", code: "ABCD", seat: 0 },
+    );
+    const stateWithClock = duelState.applyServerMessage(
+      stateInRoomA,
+      {
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis: [10_000, 10_000],
+      },
+      1_000,
+    );
+    expect(stateWithClock.turnClock).not.toBeNull();
+    const state = duelState.applyServerMessage(stateWithClock, {
+      type: "RoomJoined",
+      code: "EFGH",
+      seat: 1,
+    });
+    expect(state.turnClock).toBeNull();
+  });
 });
