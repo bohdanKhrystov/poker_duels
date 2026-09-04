@@ -43,6 +43,8 @@ import {
   SIGN_IN_REFUSED,
 } from "../account/account-text";
 import { readSessionToken, writeSessionToken } from "../protocol/session-token";
+import { HISTORY_HEADING } from "../history/history-text";
+import { LADDER_HEADING } from "../ladder/ladder-text";
 
 // `read` (`useHistory()`) is wired by the real app boot in "../main", which
 // this suite never runs — every other test here leaves it `null` and never
@@ -60,6 +62,7 @@ import { readSessionToken, writeSessionToken } from "../protocol/session-token";
 // DOM either way — the flash never survives to be queried. Whether the
 // record's own fetch fired is the one signal that still tells the two apart.
 const historyRead = vi.hoisted(() => vi.fn(() => new Promise<never>(() => {})));
+const ladderRead = vi.hoisted(() => vi.fn(() => new Promise<never>(() => {})));
 
 // A boolean and a spy, deliberately, and not a real `Storage`: what storage
 // does with the answer is `account-offer-settled.test.ts`'s, and what a whole
@@ -76,6 +79,7 @@ vi.mock("../main", async (importOriginal) => {
   return {
     ...actual,
     useHistory: () => historyRead,
+    useLadder: () => ladderRead,
     useSignedIn: () => offerWiring.signedIn,
     offerSettledHere: () => offerWiring.settled,
     settleOfferHere: offerWiring.settle,
@@ -124,6 +128,7 @@ function withClipboard(writeText: () => Promise<void>): void {
 beforeEach(() => {
   window.location.hash = "";
   historyRead.mockClear();
+  ladderRead.mockClear();
   offerWiring.signedIn = false;
   offerWiring.settled = false;
   offerWiring.settle.mockClear();
@@ -1497,6 +1502,47 @@ describe("the lobby", () => {
     expect(
       screen.queryByRole("button", { name: "Create a duel room" }),
     ).toBeNull();
+  });
+
+  it("shows the ladder over a room that is still waiting, and the address keeps naming it", () => {
+    window.location.hash = "#/leaderboard";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    // The room is waiting (no Snapshot), so the leaderboard is not refused.
+    // The ladder screen is shown.
+    expect(screen.getByRole("heading", { name: LADDER_HEADING })).toBeDefined();
+    // The back button is the ladder screen's own affordance.
+    expect(screen.getByRole("button", { name: "Back" })).toBeDefined();
+    // The address is kept as the player set it.
+    expect(window.location.hash).toBe("#/leaderboard");
+  });
+
+  it("shows the record over a room whose duel has finished", () => {
+    window.location.hash = "#/duels";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+    store.apply({
+      type: "DuelFinished",
+      outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+    });
+    renderLobby(store);
+
+    // The duel is finished, so the record fetch should have fired. This is
+    // the one witness that still tells a correct branch order from a wrong
+    // one that self-corrects after rendering the history screen on the first
+    // pass — the settled DOM cannot tell them apart.
+    expect(historyRead).toHaveBeenCalledOnce();
+    // The record screen is shown.
+    expect(
+      screen.getByRole("heading", { name: HISTORY_HEADING }),
+    ).toBeDefined();
+    // The back button is the record screen's own affordance.
+    expect(screen.getByRole("button", { name: "Back" })).toBeDefined();
+    // The result screen's verdict is not on screen.
+    expect(screen.queryByText(/Victory|Defeat|Draw/)).toBeNull();
   });
 
   it("refuses an ask made while the duel is running and restores the address", () => {

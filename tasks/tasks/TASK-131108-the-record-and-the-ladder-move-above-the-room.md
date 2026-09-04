@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131108
 title: The record and the ladder move above the room
 type: task
-status: ready
+status: done
 parent: STORY-1311
 module: web-client
 estimate: S
