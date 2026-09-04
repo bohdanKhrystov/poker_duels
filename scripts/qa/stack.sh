@@ -20,7 +20,12 @@ cd "$ROOT"
 # standalone binary is. ADR-0088 §2 step 1 is written with the space and fails as written.
 compose() { if docker compose version >/dev/null 2>&1; then docker compose "$@"; else docker-compose "$@"; fi; }
 
-DB_CONTAINER="poker_duels-postgres-1"
+# Asked of compose, never written down: compose names a container after the project, which
+# defaults to the checkout directory's basename, so a literal here is right only in the checkout it
+# was written in. `|| true`: `compose ps` failing for any reason but "nothing is up" would
+# otherwise kill this script under `set -e` mid-`status`, whose job is to report `down`, not die.
+db_container() { compose ps -q postgres 2>/dev/null || true; }
+
 HEALTH="http://localhost:8080/health"
 WEB="http://localhost:5173/"
 
@@ -30,8 +35,13 @@ case "${1:-}" in
 
 db-up)
     compose up -d >/dev/null 2>&1 || die "compose up failed"
+    # `up -d` has already created the container by the time it returns, so one resolution is
+    # enough; empty means compose named nothing, and looping against that name would just be a
+    # sixty-second way of finding out what `die` can say immediately.
+    id="$(db_container)"
+    [ -n "$id" ] || die "compose named no postgres container"
     for _ in $(seq 1 60); do
-        if docker exec "$DB_CONTAINER" pg_isready -U poker -d poker_duels >/dev/null 2>&1; then
+        if docker exec "$id" pg_isready -U poker -d poker_duels >/dev/null 2>&1; then
             echo "db: accepting connections"; exit 0
         fi
         sleep 1
@@ -42,6 +52,15 @@ db-up)
 db-down)
     compose down >/dev/null 2>&1 || true
     echo "db: down"
+    ;;
+
+# The seam docs/test-plan.md interpolates and the self-test asserts on: prints the resolved id and
+# nothing else, or dies — a caller composing a shell command around empty stdout deserves a clear
+# failure, not `docker exec "" psql ...`.
+db-container)
+    id="$(db_container)"
+    [ -n "$id" ] || die "compose named no postgres container"
+    echo "$id"
     ;;
 
 # Prints the duel server's runtime classpath. poker-server carries no `application` plugin, so
@@ -120,7 +139,7 @@ chrome-down)
     ;;
 
 status)
-    printf 'db:     %s\n' "$(docker exec "$DB_CONTAINER" pg_isready -U poker -d poker_duels >/dev/null 2>&1 && echo up || echo down)"
+    printf 'db:     %s\n' "$(docker exec "$(db_container)" pg_isready -U poker -d poker_duels >/dev/null 2>&1 && echo up || echo down)"
     printf 'server: %s\n' "$([ "$(curl -s -m 2 "$HEALTH" 2>/dev/null)" = "OK" ] && echo up || echo down)"
     printf 'web:    %s\n' "$([ "$(curl -s -m 2 -o /dev/null -w '%{http_code}' "$WEB" 2>/dev/null)" = "200" ] && echo up || echo down)"
     ;;
@@ -130,6 +149,7 @@ status)
 usage: scripts/qa/stack.sh <command>
 
   db-up | db-down          the database, via docker-compose
+  db-container             print postgres's resolved container id
   cp                       print the duel server's runtime classpath
   wait-server | wait-web   block until the server / dev server answers
   chrome-up <port> <dir>   headless Chrome on its own profile

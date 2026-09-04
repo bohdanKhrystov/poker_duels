@@ -225,7 +225,7 @@ the coverage claim `ADR-0089` §2c forbids. It writes nothing.
 A season is a calendar month in UTC and a duel belongs to the season its **finish** falls in
 (`ADR-0061` §§1, 2), so the read is bounded the same way:
 
-    docker exec poker_duels-postgres-1 psql -U poker -d poker_duels -At -c \
+    docker exec "$(scripts/qa/stack.sh db-container)" psql -U poker -d poker_duels -At -c \
       "SELECT b.device_id, SUM(dr.coin_delta)
          FROM device_binding b
          JOIN duel_result dr ON dr.player_id = b.player_id
