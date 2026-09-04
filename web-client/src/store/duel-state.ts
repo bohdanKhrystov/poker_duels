@@ -118,6 +118,16 @@ export interface DuelState {
    * `reveal.queued` — rather than applied, and released once `reveal.steps` runs out.
    */
   readonly reveal: Reveal | null;
+  /**
+   * The turn clock the server most recently stated, anchored with this client's own monotonic
+   * reading of the instant the frame *arrived* — never the instant it is painted, and never a
+   * host wall clock that a correction could stretch or collapse (`ADR-0113` §6). A frame that
+   * arrives while a `Reveal` stands is queued with that same reading (`Reveal.queued`), so a
+   * clock released only once the runout finishes still anchors to when it showed up, not to
+   * when the queue let it through. `null` before the server has sent one, and again whenever a
+   * `RoomJoined` names a different room (`ADR-0104`).
+   */
+  readonly turnClock: TurnClockState | null;
 }
 
 export interface PendingTurn {
@@ -133,13 +143,41 @@ export interface PendingTurn {
  */
 export interface Reveal {
   readonly steps: readonly RevealStep[];
-  readonly queued: readonly ServerMessage[];
+  readonly queued: readonly QueuedMessage[];
 }
 
 /** One paint of a hand's ending: the board `ADR-0102` §2 says to show, and the street to name it. */
 export interface RevealStep {
   readonly board: readonly string[];
   readonly street: Street;
+}
+
+/**
+ * A frame `ADR-0102` §1 queued behind a standing `Reveal`, paired with the arrival reading
+ * `applyServerMessage` took for it — so folding it back through the reducer once the reveal
+ * drains (`advanceReveal`) anchors any `TurnClock` inside it to when it showed up, not to when
+ * the queue let it through (`ADR-0113` §6).
+ */
+interface QueuedMessage {
+  readonly message: ServerMessage;
+  readonly arrivedAt: number;
+}
+
+/**
+ * The turn clock the store is holding: two absolute instants on the same monotonic clock the
+ * frame's arrival was read from (`ADR-0113` §6), derived once and never recomputed, so nothing
+ * here needs a tick to stay correct.
+ */
+export interface TurnClockState {
+  readonly seat: number;
+  readonly handNumber: number;
+  readonly actionSequence: number;
+  /** The instant the turn's own allowance runs out. */
+  readonly turnEndsAt: number;
+  /** The instant the seat's bank would also be spent, were the turn allowance exhausted. */
+  readonly expiresAt: number;
+  /** Both seats' bank balances, in seat order, exactly as the frame stated them. */
+  readonly bankRemainingMillis: readonly number[];
 }
 
 export function initialState(): DuelState {
@@ -161,6 +199,7 @@ export function initialState(): DuelState {
     lastAct: null,
     pendingStreetDealt: [],
     reveal: null,
+    turnClock: null,
   };
 }
 
@@ -180,8 +219,8 @@ export function advanceReveal(state: DuelState): DuelState {
     };
   }
   let next: DuelState = { ...state, reveal: null };
-  for (const message of state.reveal.queued) {
-    next = applyServerMessage(next, message);
+  for (const queued of state.reveal.queued) {
+    next = applyServerMessage(next, queued.message, queued.arrivedAt);
   }
   return next;
 }
@@ -189,14 +228,23 @@ export function advanceReveal(state: DuelState): DuelState {
 export function applyServerMessage(
   state: DuelState,
   message: ServerMessage,
+  // ADR-0113 §6: read here, as a default, so every call site that does not name its own
+  // instant — every one of them but the socket seam in duel-store.ts and a queue's own
+  // replay above — still anchors to when this call happened rather than to nothing at all.
+  arrivedAt: number = performance.now(),
 ): DuelState {
   if (state.reveal !== null) {
     // ADR-0102 §1: every frame that arrives while a step stands is queued, in arrival order,
     // and applied only once the last step has stood — FIFO, OpponentPresence included, so a
-    // screen mid-reveal never jumps ahead of the server or drops what it sent.
+    // screen mid-reveal never jumps ahead of the server or drops what it sent. The reading
+    // taken above travels with it, so a TurnClock inside still anchors to this instant and not
+    // to whenever the queue is drained (ADR-0113 §6).
     return {
       ...state,
-      reveal: { ...state.reveal, queued: [...state.reveal.queued, message] },
+      reveal: {
+        ...state.reveal,
+        queued: [...state.reveal.queued, { message, arrivedAt }],
+      },
     };
   }
   switch (message.type) {
@@ -340,6 +388,23 @@ export function applyServerMessage(
       };
     case "ActedForAbsent":
       return { ...state, serverAction: message };
+    case "TurnClock": {
+      // ADR-0113 §6: turnEndsAt and expiresAt are absolute instants derived once, right here,
+      // from the reading taken on arrival — never recomputed later, so nothing downstream needs
+      // its own clock to read them correctly.
+      const turnEndsAt = arrivedAt + message.turnRemainingMillis;
+      return {
+        ...state,
+        turnClock: {
+          seat: message.seat,
+          handNumber: message.handNumber,
+          actionSequence: message.actionSequence,
+          turnEndsAt,
+          expiresAt: turnEndsAt + message.bankRemainingMillis[message.seat],
+          bankRemainingMillis: message.bankRemainingMillis,
+        },
+      };
+    }
     default:
       return state;
   }

@@ -5,6 +5,7 @@ import type {
   PlayerView,
   SeatView,
   StreetDealt,
+  TurnClock,
 } from "../protocol";
 import * as duelState from "./duel-state";
 
@@ -60,6 +61,7 @@ describe("the duel state", () => {
       lastAct: null,
       pendingStreetDealt: [],
       reveal: null,
+      turnClock: null,
     });
   });
 
@@ -1867,5 +1869,183 @@ describe("the duel state", () => {
     // ADR-0109 §Consequences: PlayerView carries no last-act field, so a refresh loses the mark
     // until the next act — this is the accepted cost, not a bug to work around.
     expect(state.lastAct).toBeNull();
+  });
+
+  it("starts with no turn clock", () => {
+    expect(duelState.initialState().turnClock).toBeNull();
+  });
+
+  it("anchors the clock at the instant the frame arrived", () => {
+    const turnClock: TurnClock = {
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 30_000,
+      bankRemainingMillis: [10_000, 10_000],
+    };
+    const state = duelState.applyServerMessage(
+      duelState.initialState(),
+      turnClock,
+      1_000,
+    );
+    expect(state.turnClock?.turnEndsAt).toBe(31_000);
+  });
+
+  it("a second arrival anchors at its own instant", () => {
+    // Two inputs, because one cannot tell an anchor from a constant.
+    const turnClock: TurnClock = {
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 30_000,
+      bankRemainingMillis: [10_000, 10_000],
+    };
+    const state = duelState.applyServerMessage(
+      duelState.initialState(),
+      turnClock,
+      5_500,
+    );
+    expect(state.turnClock?.turnEndsAt).toBe(35_500);
+  });
+
+  it("the expiry is the allowance plus that seat's bank", () => {
+    const bankRemainingMillis = [12_000, 18_000];
+    const seatZeroState = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis,
+      },
+      1_000,
+    );
+    // turnEndsAt (31_000) plus seat 0's own bank (12_000).
+    expect(seatZeroState.turnClock?.expiresAt).toBe(43_000);
+
+    const seatOneState = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 1,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis,
+      },
+      1_000,
+    );
+    // turnEndsAt (31_000) plus seat 1's own, different, bank (18_000).
+    expect(seatOneState.turnClock?.expiresAt).toBe(49_000);
+  });
+
+  it("holds both banks the server stated", () => {
+    const state = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 1,
+        handNumber: 4,
+        actionSequence: 2,
+        turnRemainingMillis: 20_000,
+        bankRemainingMillis: [15_000, 9_000],
+      },
+      1_000,
+    );
+    expect(state.turnClock?.bankRemainingMillis).toEqual([15_000, 9_000]);
+  });
+
+  it("a clock queued behind a runout keeps its arrival anchor", () => {
+    const turnClock: TurnClock = {
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 2,
+      actionSequence: 3,
+      turnRemainingMillis: 30_000,
+      bankRemainingMillis: [10_000, 12_000],
+    };
+    const view = samplePlayerView({
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+    });
+
+    // Dwell 1: a one-step reveal, drained by a single advanceReveal.
+    const stateWithOneStepReveal = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Snapshot", view },
+    );
+    expect(stateWithOneStepReveal.reveal?.steps).toHaveLength(1);
+    const oneStepQueued = duelState.applyServerMessage(
+      stateWithOneStepReveal,
+      turnClock,
+      2_000,
+    );
+    // Queued behind the standing reveal, not applied yet.
+    expect(oneStepQueued.turnClock).toBeNull();
+    const oneStepDrained = duelState.advanceReveal(oneStepQueued);
+    expect(oneStepDrained.reveal).toBeNull();
+    expect(oneStepDrained.turnClock?.turnEndsAt).toBe(32_000);
+
+    // Dwell 2: the same clock, at the same arrival instant, now spends three
+    // extra steps queued before it lands — the anchor must not move with it.
+    const streetDealt: readonly StreetDealt[] = [
+      {
+        type: "StreetDealt",
+        sequence: 220,
+        street: "FLOP",
+        cards: ["As", "7d", "2c"],
+      },
+      { type: "StreetDealt", sequence: 221, street: "TURN", cards: ["Kh"] },
+      { type: "StreetDealt", sequence: 222, street: "RIVER", cards: ["3s"] },
+    ];
+    const stateWithFourStepEvents = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: streetDealt },
+    );
+    const stateWithFourStepReveal = duelState.applyServerMessage(
+      stateWithFourStepEvents,
+      { type: "Snapshot", view },
+    );
+    expect(stateWithFourStepReveal.reveal?.steps).toHaveLength(4);
+    const fourStepQueued = duelState.applyServerMessage(
+      stateWithFourStepReveal,
+      turnClock,
+      2_000,
+    );
+    let fourStepDrained = fourStepQueued;
+    while (fourStepDrained.reveal !== null) {
+      fourStepDrained = duelState.advanceReveal(fourStepDrained);
+    }
+    expect(fourStepDrained.turnClock?.turnEndsAt).toBe(32_000);
+  });
+
+  it("a RoomJoined naming a different room clears the clock", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "RoomJoined", code: "ABCD", seat: 0 },
+    );
+    const stateWithClock = duelState.applyServerMessage(
+      stateInRoomA,
+      {
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis: [10_000, 10_000],
+      },
+      1_000,
+    );
+    expect(stateWithClock.turnClock).not.toBeNull();
+    const state = duelState.applyServerMessage(stateWithClock, {
+      type: "RoomJoined",
+      code: "EFGH",
+      seat: 1,
+    });
+    expect(state.turnClock).toBeNull();
   });
 });

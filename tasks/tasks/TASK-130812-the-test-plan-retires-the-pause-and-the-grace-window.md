@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130812
 title: The test plan retires the pause case and the grace window it measured against
 type: task
-status: backlog
+status: ready
 parent: STORY-1308
 module: docs
 estimate: XS

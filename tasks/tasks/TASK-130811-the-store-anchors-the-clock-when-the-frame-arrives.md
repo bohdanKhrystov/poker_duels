@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130811
 title: The store anchors a TurnClock when the frame arrives and holds it as two deadlines
 type: task
-status: ready
+status: done
 parent: STORY-1308
 module: web-client
 estimate: S
