@@ -283,6 +283,7 @@ if (container) {
                     store={client.store}
                     send={client.send}
                     forgetRoom={client.forgetRoom}
+                    roomAwaited={client.roomAwaited}
                   >
                     <App />
                   </DuelProvider>
