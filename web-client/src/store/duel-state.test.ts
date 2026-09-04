@@ -5,6 +5,7 @@ import type {
   PlayerView,
   SeatView,
   StreetDealt,
+  TurnClock,
 } from "../protocol";
 import * as duelState from "./duel-state";
 
@@ -60,6 +61,7 @@ describe("the duel state", () => {
       lastAct: null,
       pendingStreetDealt: [],
       reveal: null,
+      turnClock: null,
     });
   });
 
