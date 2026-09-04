@@ -120,10 +120,21 @@ Split on 2026-09-04 into **nine** tickets, one chain. The first two build the in
 five of the seven readings are races a bare localhost stack cannot resolve, and one of them — a
 socket that drops without the page dying — has no driver verb at all today.
 
+**A tenth was inserted on 2026-09-04**, after `TASK-131003`'s coder failed at the drive's *first*
+command and changed no files. `scripts/qa/stack.sh:23` writes the postgres container's name down as
+`poker_duels-postgres-1`, but compose names containers after the project, which defaults to the
+checkout directory's basename — so in a worktree the container is `agent-<id>-postgres-1` and
+`db-up`'s readiness check polls a name that does not exist, sixty times, before dying with a message
+naming the wrong cause. **`db-up` cannot succeed in any worktree**, which is where every drive in
+this story runs; `TASK-131003`'s own acceptance says the measurement is the implementer's, so the
+script has to work where the implementer is. `TASK-131010` fixes it and everything from `TASK-131003`
+down now hangs off it.
+
 | ID | Title | Status |
 | --- | --- | --- |
 | [TASK-131001](../tasks/TASK-131001-a-loopback-relay-puts-milliseconds-in-front-of-the-stack.md) | A loopback relay puts milliseconds in front of the stack | ready |
 | [TASK-131002](../tasks/TASK-131002-the-relay-learns-to-cut.md) | The relay learns to cut, so a socket drops without the page dying | backlog |
+| [TASK-131010](../tasks/TASK-131010-the-stack-asks-compose-what-it-named-the-container.md) | The stack asks compose what it named the container | ready |
 | [TASK-131003](../tasks/TASK-131003-p1-a-refresh-on-the-result-screen.md) | `P1` — a refresh on the result screen | backlog |
 | [TASK-131004](../tasks/TASK-131004-p5-the-account-offers-accept-is-observed.md) | `P5` — the account offer's accept, observed rather than derived | backlog |
 | [TASK-131005](../tasks/TASK-131005-p2-a-refresh-during-a-runout.md) | `P2` — a refresh during a runout | backlog |

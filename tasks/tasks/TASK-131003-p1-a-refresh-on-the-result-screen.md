@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131003
 title: P1 — a refresh on the result screen
 type: task
-status: ready
+status: backlog
 parent: STORY-1310
 module: web-client
 estimate: XS
@@ -11,7 +11,7 @@ tier: sonnet
 review: standard
 files_touched: 1
 labels: [qa, refresh, manual-verify]
-depends_on: [TASK-131002]
+depends_on: [TASK-131010]
 verify:
   - awk '/^\| `P1`/ { if (index($0, "NOT-YET-DRIVEN")) bad = 1; else ok = 1 } END { exit (bad || !ok) }' tasks/stories/STORY-1310-the-refresh-paths-nobody-drove.md
   - awk '{ n += gsub(/NOT-YET-DRIVEN/, "&") } END { exit (n > 6) }' tasks/stories/STORY-1310-the-refresh-paths-nobody-drove.md
