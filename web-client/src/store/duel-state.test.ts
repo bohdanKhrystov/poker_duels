@@ -1870,4 +1870,43 @@ describe("the duel state", () => {
     // until the next act — this is the accepted cost, not a bug to work around.
     expect(state.lastAct).toBeNull();
   });
+
+  it("starts with no turn clock", () => {
+    expect(duelState.initialState().turnClock).toBeNull();
+  });
+
+  it("anchors the clock at the instant the frame arrived", () => {
+    const turnClock: TurnClock = {
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 30_000,
+      bankRemainingMillis: [10_000, 10_000],
+    };
+    const state = duelState.applyServerMessage(
+      duelState.initialState(),
+      turnClock,
+      1_000,
+    );
+    expect(state.turnClock?.turnEndsAt).toBe(31_000);
+  });
+
+  it("a second arrival anchors at its own instant", () => {
+    // Two inputs, because one cannot tell an anchor from a constant.
+    const turnClock: TurnClock = {
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 30_000,
+      bankRemainingMillis: [10_000, 10_000],
+    };
+    const state = duelState.applyServerMessage(
+      duelState.initialState(),
+      turnClock,
+      5_500,
+    );
+    expect(state.turnClock?.turnEndsAt).toBe(35_500);
+  });
 });
