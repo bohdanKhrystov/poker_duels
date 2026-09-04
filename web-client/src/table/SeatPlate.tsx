@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { SeatView, SeatPresence } from "../protocol";
 import type { ActEvent } from "../store/duel-state";
+import type { SeatClock, ClockTreatment } from "./turn-clock";
 import { ChipPile } from "./ChipPile";
 import { lastActText } from "./action-text";
 import { formatChips } from "./chips";
@@ -10,6 +11,13 @@ import { seatStatus } from "./seat-status";
 // character — the mark's verb and figure sit on one pill exactly as the
 // design card's own Call&nbsp;1,700 does.
 const NBSP = String.fromCharCode(0xa0);
+
+const CLOCK_COLOUR: Record<ClockTreatment, string> = {
+  regular: "text-text",
+  "running-out": "text-warn",
+  "on-timebank": "text-accent",
+  expired: "text-text-faint",
+};
 
 /**
  * A seat plate: who it is, what it is doing, its last act, the button, and
@@ -23,6 +31,7 @@ export function SeatPlate(props: {
   isViewer: boolean;
   presence?: SeatPresence | null;
   lastAct?: ActEvent | null;
+  clock?: SeatClock | null;
 }): ReactElement {
   const status = seatStatus(
     props.seat,
@@ -57,12 +66,26 @@ export function SeatPlate(props: {
             : `${act.verb}${NBSP}${formatChips(act.amount)}`}
         </span>
       )}
+      {props.clock && props.clock.figure !== null && (
+        <span
+          className={`font-mono text-large tabular-nums ${
+            CLOCK_COLOUR[props.clock.treatment]
+          }`}
+        >
+          {props.clock.figure}
+        </span>
+      )}
       {props.hasButton && (
         <span
           aria-label="the button"
           className="rounded-pill border border-hairline px-3 py-1 font-mono text-micro text-text-muted"
         >
           D
+        </span>
+      )}
+      {props.clock && props.clock.bank !== null && (
+        <span className="font-mono text-micro text-text-muted tabular-nums">
+          {`Timebank${NBSP}${props.clock.bank}`}
         </span>
       )}
       {props.seat.stack > 0 && <ChipPile key={props.seat.stack} />}
