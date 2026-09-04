@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131009
 title: The record read whole, and every finding given an owner
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: S
