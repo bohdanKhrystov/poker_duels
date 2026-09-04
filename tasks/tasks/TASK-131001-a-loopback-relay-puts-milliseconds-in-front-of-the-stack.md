@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131001
 title: A loopback relay puts milliseconds in front of the stack
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: S
