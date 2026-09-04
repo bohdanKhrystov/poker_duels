@@ -2039,4 +2039,115 @@ describe("the lobby", () => {
     expect(screen.getByText(/Pot 75/)).toBeDefined();
     expect(screen.queryByText(/You win/)).toBeNull();
   });
+
+  it("counts the acting seat down once a second", () => {
+    // ADR-0102 §4's `schedule` seam, driven directly rather than through a
+    // real timer (ADR-0013): the test states the reading advancing by a
+    // second and fires the callback the store itself captured. Nothing here
+    // sleeps, and vi.useFakeTimers is never installed.
+    const pending: Array<() => void> = [];
+    let stated = 0;
+    const store = createDuelStore({
+      tickMillis: 1000,
+      schedule: (run) => {
+        pending.push(run);
+      },
+      now: () => stated,
+    });
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis: [60_000, 60_000],
+      });
+    });
+
+    // The anchor: painted the instant the frame arrived, before any tick.
+    expect(screen.getByText("30")).toBeDefined();
+
+    stated += 1_000;
+    act(() => {
+      pending.pop()?.();
+    });
+    expect(screen.getByText("29")).toBeDefined();
+
+    stated += 1_000;
+    act(() => {
+      pending.pop()?.();
+    });
+    expect(screen.getByText("28")).toBeDefined();
+  });
+
+  it("shows both seats' banks under the table", () => {
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    act(() => {
+      store.apply(SNAPSHOT);
+      store.apply({
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis: [180_000, 72_000],
+      });
+    });
+
+    // Both banks are public facts of the table (ADR-0108 §5): the acting
+    // seat's own bank and the seat waiting on it, both under one Snapshot.
+    expect(screen.getByText("Timebank 3:00")).toBeDefined();
+    expect(screen.getByText("Timebank 1:12")).toBeDefined();
+  });
+
+  it("states no act when the countdown reaches zero", () => {
+    const pending: Array<() => void> = [];
+    let stated = 0;
+    const store = createDuelStore({
+      tickMillis: 1000,
+      schedule: (run) => {
+        pending.push(run);
+      },
+      now: () => stated,
+    });
+    store.apply({ type: "RoomJoined", code: "ABCDEFGH", seat: 1 });
+    renderLobby(store);
+
+    act(() => {
+      store.apply({
+        type: "Snapshot",
+        view: aView({ viewerSeat: 1, seatToAct: 0 }),
+      });
+      store.apply({
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 2_000,
+        bankRemainingMillis: [0, 0],
+      });
+    });
+
+    expect(screen.getByText("Their turn")).toBeDefined();
+
+    // Past expiresAt (the turn allowance plus an already-spent bank), with
+    // no further frame: the server alone can say what happened next, and it
+    // has said nothing.
+    stated = 5_000;
+    act(() => {
+      pending.pop()?.();
+    });
+
+    expect(screen.getByText("Their turn")).toBeDefined();
+    expect(screen.getByText("0")).toBeDefined();
+    expect(screen.queryByText(/The server (folded|checked)/)).toBeNull();
+  });
 });
