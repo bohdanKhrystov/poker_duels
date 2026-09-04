@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130904
 title: The reducer keeps a second hand, and stops it once the clock can no longer move
 type: task
-status: ready
+status: done
 parent: STORY-1309
 module: web-client
 estimate: S
