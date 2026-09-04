@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131106
 title: The two mailed screens move above the room and read shown
 type: task
-status: backlog
+status: ready
 parent: STORY-1311
 module: web-client
 estimate: S

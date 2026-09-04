@@ -126,6 +126,33 @@ seven rows. One row here for each: the ticket that repairs it, or why no repair 
 | `P6a` | NOT-YET-READ |
 | `P6b` | NOT-YET-READ |
 
+## A measured gap: the token-effect coupling is unprotected
+
+`TASK-131105` re-keys `Lobby`'s token effect to `shown` in the same diff as the `useLayoutEffect`
+swap. Both the split's ticket text and this PR's reviewer predicted that breaking that coupling —
+re-keying back to `screen` — would redden the merged test `lets a frame that seats this tab outrank
+a mailed link`, because the token effect would fire after the restore and write `#/verify` back over
+the `/`.
+
+**It was measured on 2026-09-05 and the prediction is false.** Re-keying to `screen` leaves **all 80
+tests in `Lobby.test.tsx` green.** No assertion in the file distinguishes the two keys, because no
+test exercises a case where `shown` differs from `screen` *while a mailed token is pending* — which
+is the only shape in which the dependency array matters.
+
+So the coupling is correct, required by `ADR-0114`, implemented, and **held by nothing but a
+comment**. A later ticket touching `Lobby.tsx` can undo it silently with every gate green.
+
+This is the second thing in `TASK-131105` that is real in production and invisible to this suite;
+the first is the `useLayoutEffect` ordering itself, which the coder measured the same way — swapping
+it back to `useEffect` leaves the new tests green too, because RTL's `act()` flushes passive effects
+synchronously. That one at least has a count gate on `useLayoutEffect`. The token-effect key has no
+gate at all.
+
+**Owner:** `TASK-131114`, which reads this record against the repair, must either carry the missing
+assertion — a render where the ruling moves `shown` off `screen` with a token pending — or say in as
+many words that it is being left unguarded and why. Every ticket from `TASK-131106` on is briefed
+that `Lobby.test.tsx` will not catch an accidental re-key.
+
 ## Tasks
 
 | ID | Title | Status |
