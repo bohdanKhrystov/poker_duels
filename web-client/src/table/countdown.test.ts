@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { secondsRemaining } from "./presence-countdown";
+import { secondsRemaining } from "./countdown";
 
 const NOW = 1_700_000_000_000;
 
