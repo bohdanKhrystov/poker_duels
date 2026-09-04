@@ -20,12 +20,12 @@ private fun codeSource(vararg codes: String): RoomCodeSource {
     return RoomCodeSource { RoomCode(iterator.next()) }
 }
 
-private val TEST_TIMEOUTS = RoomTimeouts(waitingMillis = 10_000, finishedMillis = 4_000, disconnectGraceMillis = 30_000)
+private val TEST_TIMEOUTS = RoomTimeouts(waitingMillis = 10_000, finishedMillis = 4_000)
 
 internal class RoomDisconnectTest {
 
     @Test
-    fun aDisconnectStartsTheWindowAtNowPlusTheConfiguredLimit(): Unit = runBlocking {
+    fun aDisconnectMarksTheSeatAway(): Unit = runBlocking {
         val clock = MutableClock()
         val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
         val host = newPlayerId()
@@ -33,15 +33,15 @@ internal class RoomDisconnectTest {
         val room = registry.create(host)
         registry.join(room.code, guest)
 
-        assertEquals(emptyMap<Int, Long>(), registry.get(room.code)!!.gracePeriods)
+        assertEquals(emptySet<Int>(), registry.get(room.code)!!.awaySeats)
 
         val disconnected = registry.disconnect(room.code, guest)
 
-        assertEquals(mapOf(1 to 30_000L), disconnected!!.room.gracePeriods)
+        assertEquals(setOf(1), disconnected!!.room.awaySeats)
     }
 
     @Test
-    fun theWindowRunsFromWhenTheDropHappened(): Unit = runBlocking {
+    fun theStoredRoomHasAnAwaySeat(): Unit = runBlocking {
         val clock = MutableClock()
         val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
         val host = newPlayerId()
@@ -49,48 +49,15 @@ internal class RoomDisconnectTest {
         val room = registry.create(host)
         registry.join(room.code, guest)
 
-        clock.advance(5_000)
-        val disconnected = registry.disconnect(room.code, guest)
-
-        assertEquals(mapOf(1 to 35_000L), disconnected!!.room.gracePeriods)
-    }
-
-    @Test
-    fun theStoredRoomIsThePausedOne(): Unit = runBlocking {
-        val clock = MutableClock()
-        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
-        val host = newPlayerId()
-        val guest = newPlayerId()
-        val room = registry.create(host)
-        registry.join(room.code, guest)
-
-        assertFalse(registry.get(room.code)!!.isPaused)
+        assertFalse(registry.get(room.code)!!.awaySeats.isNotEmpty())
 
         registry.disconnect(room.code, guest)
 
-        assertTrue(registry.get(room.code)!!.isPaused)
+        assertTrue(registry.get(room.code)!!.awaySeats.isNotEmpty())
     }
 
     @Test
-    fun aSecondDropRestartsTheWindow(): Unit = runBlocking {
-        val clock = MutableClock()
-        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
-        val host = newPlayerId()
-        val guest = newPlayerId()
-        val room = registry.create(host)
-        registry.join(room.code, guest)
-
-        val first = registry.disconnect(room.code, guest)
-        assertEquals(mapOf(1 to 30_000L), first!!.room.gracePeriods)
-
-        clock.advance(5_000)
-        val second = registry.disconnect(room.code, guest)
-
-        assertEquals(mapOf(1 to 35_000L), second!!.room.gracePeriods)
-    }
-
-    @Test
-    fun theHostAndTheGuestCountDownSeparately(): Unit = runBlocking {
+    fun theHostAndTheGuestAreTrackedSeparately(): Unit = runBlocking {
         val clock = MutableClock()
         val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
         val host = newPlayerId()
@@ -99,13 +66,11 @@ internal class RoomDisconnectTest {
         registry.join(room.code, guest)
 
         val afterHost = registry.disconnect(room.code, host)
-        assertEquals(setOf(0), afterHost!!.room.gracePeriods.keys)
+        assertEquals(setOf(0), afterHost!!.room.awaySeats)
 
-        clock.advance(5_000)
         val afterGuest = registry.disconnect(room.code, guest)
 
-        assertEquals(setOf(0, 1), afterGuest!!.room.gracePeriods.keys)
-        assertEquals(mapOf(0 to 30_000L, 1 to 35_000L), afterGuest.room.gracePeriods)
+        assertEquals(setOf(0, 1), afterGuest!!.room.awaySeats)
     }
 
     @Test
@@ -156,24 +121,6 @@ internal class RoomDisconnectTest {
     }
 
     @Test
-    fun theRemainingIsTheConfiguredWindow(): Unit = runBlocking {
-        val clock = MutableClock()
-        val timeouts = RoomTimeouts(waitingMillis = 10_000, finishedMillis = 4_000, disconnectGraceMillis = 12_345)
-        val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, timeouts)
-        val host = newPlayerId()
-        val guest = newPlayerId()
-        val room = registry.create(host)
-        registry.join(room.code, guest)
-
-        val disconnected = registry.disconnect(room.code, guest)
-
-        assertEquals(
-            listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY))),
-            disconnected!!.outbound,
-        )
-    }
-
-    @Test
     fun theDropNamesTheSeatThatStayed(): Unit = runBlocking {
         val clock = MutableClock()
         val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, TEST_TIMEOUTS)
@@ -188,7 +135,6 @@ internal class RoomDisconnectTest {
             afterHost!!.outbound,
         )
 
-        clock.advance(5_000)
         val afterGuest = registry.disconnect(room.code, guest)
         assertEquals(
             listOf(Addressed(0, ServerMessage.OpponentPresence(SeatPresence.AWAY))),
@@ -205,7 +151,7 @@ internal class RoomDisconnectTest {
 
         val disconnected = registry.disconnect(room.code, host)
 
-        assertEquals(mapOf(0 to 30_000L), disconnected!!.room.gracePeriods)
+        assertEquals(setOf(0), disconnected!!.room.awaySeats)
         assertEquals(emptyList<Any>(), disconnected.outbound)
     }
 
@@ -221,6 +167,6 @@ internal class RoomDisconnectTest {
         val result = registry.disconnect(room.code, PlayerId("stranger"))
 
         assertNull(result)
-        assertEquals(emptyMap<Int, Long>(), registry.get(room.code)!!.gracePeriods)
+        assertEquals(emptySet<Int>(), registry.get(room.code)!!.awaySeats)
     }
 }
