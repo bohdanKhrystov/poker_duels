@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131007
 title: P4 — the rejoin round trip made visible
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: XS
