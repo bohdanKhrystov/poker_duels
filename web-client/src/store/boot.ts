@@ -9,6 +9,12 @@ import { createDuelStore, type DuelStore } from "./duel-store";
  */
 export const REVEAL_STEP_MS = 600;
 
+/**
+ * How often a live turn clock re-arms (`ADR-0113` §6), named once so nowhere else in the client
+ * spells out the number — `ADR-0108` §5's "ticking once per second".
+ */
+export const CLOCK_TICK_MS = 1000;
+
 /** The tab's store, and the one way out to the server. */
 export interface DuelClient {
   readonly store: DuelStore;
@@ -40,6 +46,11 @@ export interface BootOptions {
    * clock in the way.
    */
   readonly stepMillis?: number;
+  /**
+   * How often a live turn clock re-arms, in milliseconds, or absent for `CLOCK_TICK_MS` — the
+   * production seam `ADR-0113` §6 fixes this at, not a test-only door.
+   */
+  readonly tickMillis?: number;
 }
 
 /**
@@ -50,6 +61,8 @@ export interface BootOptions {
 export function bootDuelClient(options: BootOptions): DuelClient {
   const store = createDuelStore({
     stepMillis: options.stepMillis ?? REVEAL_STEP_MS,
+    tickMillis: options.tickMillis ?? CLOCK_TICK_MS,
+    now: () => performance.now(),
     schedule: (run, delayMillis) => {
       setTimeout(run, delayMillis);
     },
