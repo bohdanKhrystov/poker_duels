@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131007
 title: P4 — the rejoin round trip made visible
 type: task
-status: backlog
+status: ready
 parent: STORY-1310
 module: web-client
 estimate: XS
@@ -11,7 +11,7 @@ tier: sonnet
 review: standard
 files_touched: 1
 labels: [qa, refresh, manual-verify]
-depends_on: [TASK-131006]
+depends_on: [TASK-131005]
 verify:
   - awk '/^\| `P4`/ { if (index($0, "NOT-YET-DRIVEN")) bad = 1; else ok = 1 } END { exit (bad || !ok) }' tasks/stories/STORY-1310-the-refresh-paths-nobody-drove.md
   - awk '{ n += gsub(/NOT-YET-DRIVEN/, "&") } END { exit (n > 2) }' tasks/stories/STORY-1310-the-refresh-paths-nobody-drove.md
