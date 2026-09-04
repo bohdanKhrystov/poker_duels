@@ -1909,4 +1909,53 @@ describe("the duel state", () => {
     );
     expect(state.turnClock?.turnEndsAt).toBe(35_500);
   });
+
+  it("the expiry is the allowance plus that seat's bank", () => {
+    const bankRemainingMillis = [12_000, 18_000];
+    const seatZeroState = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis,
+      },
+      1_000,
+    );
+    // turnEndsAt (31_000) plus seat 0's own bank (12_000).
+    expect(seatZeroState.turnClock?.expiresAt).toBe(43_000);
+
+    const seatOneState = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 1,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis,
+      },
+      1_000,
+    );
+    // turnEndsAt (31_000) plus seat 1's own, different, bank (18_000).
+    expect(seatOneState.turnClock?.expiresAt).toBe(49_000);
+  });
+
+  it("holds both banks the server stated", () => {
+    const state = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 1,
+        handNumber: 4,
+        actionSequence: 2,
+        turnRemainingMillis: 20_000,
+        bankRemainingMillis: [15_000, 9_000],
+      },
+      1_000,
+    );
+    expect(state.turnClock?.bankRemainingMillis).toEqual([15_000, 9_000]);
+  });
 });
