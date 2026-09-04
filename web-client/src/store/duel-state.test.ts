@@ -62,6 +62,7 @@ describe("the duel state", () => {
       pendingStreetDealt: [],
       reveal: null,
       turnClock: null,
+      nowMillis: 0,
     });
   });
 
@@ -91,11 +92,12 @@ describe("the duel state", () => {
     expect(welcomed).toBe(stateWithSeat);
   });
 
-  it("exports only the reducer, the initial state and the per-tick advance", () => {
+  it("exports only the reducer, the initial state, the per-tick advance and the clock's own tick", () => {
     expect(Object.keys(duelState).sort()).toEqual([
       "advanceReveal",
       "applyServerMessage",
       "initialState",
+      "tickClock",
     ]);
   });
 
@@ -2047,5 +2049,129 @@ describe("the duel state", () => {
       seat: 1,
     });
     expect(state.turnClock).toBeNull();
+  });
+
+  it("starts with no reading of its own", () => {
+    expect(duelState.initialState().nowMillis).toBe(0);
+  });
+
+  it("stamps the reading a TurnClock arrived at", () => {
+    // Two inputs, because one cannot tell a reading from a constant.
+    const turnClock: TurnClock = {
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 30_000,
+      bankRemainingMillis: [10_000, 10_000],
+    };
+    const firstState = duelState.applyServerMessage(
+      duelState.initialState(),
+      turnClock,
+      1_000,
+    );
+    expect(firstState.nowMillis).toBe(1_000);
+    const secondState = duelState.applyServerMessage(
+      duelState.initialState(),
+      turnClock,
+      5_500,
+    );
+    expect(secondState.nowMillis).toBe(5_500);
+  });
+
+  it("moves the reading forward while a clock is live", () => {
+    const stateWithClock = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis: [10_000, 10_000],
+      },
+      1_000,
+    );
+    const firstTick = duelState.tickClock(stateWithClock, 7_000);
+    expect(firstTick.nowMillis).toBe(7_000);
+    const secondTick = duelState.tickClock(firstTick, 9_000);
+    expect(secondTick.nowMillis).toBe(9_000);
+  });
+
+  it("hands back the same state when no clock is live", () => {
+    const state = duelState.initialState();
+    expect(duelState.tickClock(state, 7_000)).toBe(state);
+  });
+
+  it("hands back the same state once the reading is already past the expiry", () => {
+    const stateWithClock = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis: [10_000, 10_000],
+      },
+      1_000,
+    );
+    // turnEndsAt (1_000 + 30_000) plus seat 0's own bank (10_000) = 41_000. The reading held is
+    // still 1_000 here, so this first tick crosses expiresAt and must still land.
+    const pastExpiry = duelState.tickClock(stateWithClock, 42_000);
+    expect(pastExpiry.nowMillis).toBe(42_000);
+    const state = duelState.tickClock(pastExpiry, 50_000);
+    expect(state).toBe(pastExpiry);
+  });
+
+  it("lets one tick land at zero before it stops", () => {
+    const stateWithClock = duelState.applyServerMessage(
+      duelState.initialState(),
+      {
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis: [10_000, 10_000],
+      },
+      1_000,
+    );
+    // turnEndsAt (1_000 + 30_000) plus seat 0's own bank (10_000) = 41_000. The reading held is
+    // still 1_000, inside the allowance: this tick crosses expiresAt and must still land — the
+    // comparison is against the held reading, not the one arriving here — because that is the
+    // tick that puts 0 on screen.
+    const crossing = duelState.tickClock(stateWithClock, 43_000);
+    expect(crossing).not.toBe(stateWithClock);
+    expect(crossing.nowMillis).toBe(43_000);
+    // The reading now held (43_000) is already past expiresAt, so this next tick does not land.
+    const afterCrossing = duelState.tickClock(crossing, 44_000);
+    expect(afterCrossing).toBe(crossing);
+  });
+
+  it("a RoomJoined naming a different room resets the reading along with the clock", () => {
+    const stateInRoomA = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "RoomJoined", code: "ABCD", seat: 0 },
+    );
+    const stateWithClock = duelState.applyServerMessage(
+      stateInRoomA,
+      {
+        type: "TurnClock",
+        seat: 0,
+        handNumber: 1,
+        actionSequence: 1,
+        turnRemainingMillis: 30_000,
+        bankRemainingMillis: [10_000, 10_000],
+      },
+      1_000,
+    );
+    expect(stateWithClock.nowMillis).toBe(1_000);
+    const state = duelState.applyServerMessage(stateWithClock, {
+      type: "RoomJoined",
+      code: "EFGH",
+      seat: 1,
+    });
+    expect(state.nowMillis).toBe(0);
   });
 });

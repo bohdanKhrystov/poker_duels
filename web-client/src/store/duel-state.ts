@@ -128,6 +128,13 @@ export interface DuelState {
    * `RoomJoined` names a different room (`ADR-0104`).
    */
   readonly turnClock: TurnClockState | null;
+  /**
+   * The reading the countdown is drawn against — on the same monotonic clock `turnClock`'s two
+   * instants (`turnEndsAt`, `expiresAt`) were anchored from, and meaningless beside any other
+   * clock. `0` before any `TurnClock` frame has arrived; `tickClock` is the only way it moves
+   * once one has.
+   */
+  readonly nowMillis: number;
 }
 
 export interface PendingTurn {
@@ -200,6 +207,7 @@ export function initialState(): DuelState {
     pendingStreetDealt: [],
     reveal: null,
     turnClock: null,
+    nowMillis: 0,
   };
 }
 
@@ -395,6 +403,7 @@ export function applyServerMessage(
       const turnEndsAt = arrivedAt + message.turnRemainingMillis;
       return {
         ...state,
+        nowMillis: arrivedAt,
         turnClock: {
           seat: message.seat,
           handNumber: message.handNumber,
@@ -408,6 +417,26 @@ export function applyServerMessage(
     default:
       return state;
   }
+}
+
+/**
+ * One tick of the turn clock (`ADR-0113` §6): the store calls this while `turnClock` stands,
+ * handing it the reading taken now — `tickClock` reads no clock of its own, in the same register
+ * as `arrivedAt` above (`ADR-0113` §6, inheriting `ADR-0013`'s rule that a timer test states
+ * time instead of sleeping for it).
+ *
+ * Returns `state` itself — the identical reference — when there is no clock to move, or when the
+ * reading `state` already holds has passed `turnClock.expiresAt`. That comparison is against the
+ * *held* reading, not the `nowMillis` argument just arrived: comparing the incoming reading would
+ * mean the tick that first reaches `expiresAt` never lands, so a player would never see `0` on
+ * screen. Comparing the held one instead lets exactly that tick through, then stops on the very
+ * next one — which is also what keeps a finished duel's result screen from re-rendering once a
+ * second forever, since nothing here clears `turnClock` on `DuelFinished`.
+ */
+export function tickClock(state: DuelState, nowMillis: number): DuelState {
+  if (state.turnClock === null) return state;
+  if (state.nowMillis >= state.turnClock.expiresAt) return state;
+  return { ...state, nowMillis };
 }
 
 function isStreetDealt(event: GameEvent): event is StreetDealt {
