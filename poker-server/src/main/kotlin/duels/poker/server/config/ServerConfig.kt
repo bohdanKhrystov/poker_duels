@@ -9,9 +9,8 @@ import io.ktor.server.config.ConfigLoader
  * The server's configuration, built from a Ktor [ApplicationConfig] with each value overridable
  * by an environment variable.
  *
- * This is the *only* place the server reads its environment. Fields from `ADR-0013`'s grace
- * period and `ADR-0011`'s database URL now land here as `val`s with their own key, env name
- * and default.
+ * This is the *only* place the server reads its environment. Fields from `ADR-0011`'s database
+ * URL now land here as `val`s with their own key, env name and default.
  *
  * The database credentials are development defaults for a container listening on localhost;
  * production secrets arrive by environment variable.
@@ -26,13 +25,8 @@ public data class ServerConfig(
     val databasePoolSize: Int,
     val roomWaitingTimeoutMillis: Long,
     val roomFinishedTimeoutMillis: Long,
-    // This field has a default so that three test files — DatabasePoolTest, DatabaseStartupTest,
-    // PersistenceSurvivesRestartTest — can construct ServerConfig(...) field by field to point
-    // Testcontainers at a database without opining on a duel's grace window. If this field
-    // required explicit construction, this ticket would touch four files instead of two.
-    val disconnectGraceMillis: Long = RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS,
-    // This field has a default for the same reason as disconnectGraceMillis, allowing existing
-    // construction sites to compile without specifying the sweep period.
+    // This field has a default so that existing construction sites can compile without
+    // specifying the sweep period.
     val sweepPeriodMillis: Long = 1_000L,
     // These two fields have defaults so that existing construction sites can compile without
     // specifying the turn and timebank allowances, which are read from configuration or environment.
@@ -55,11 +49,10 @@ public data class ServerConfig(
     val recoveryEmailMaxAttempts: Int = 5,
     val recoveryEmailWindowMillis: Long = 60_000L,
 ) {
-    /** Bundles the five room timeouts so callers do not reassemble them. */
+    /** Bundles the four room timeouts so callers do not reassemble them. */
     public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(
         waitingMillis = roomWaitingTimeoutMillis,
         finishedMillis = roomFinishedTimeoutMillis,
-        disconnectGraceMillis = disconnectGraceMillis,
         turnMillis = turnMillis,
         timebankMillis = timebankMillis,
     )
@@ -123,10 +116,6 @@ public data class ServerConfig(
         public const val DEFAULT_ROOM_FINISHED_TIMEOUT_MILLIS: Long = RoomTimeouts.DEFAULT_FINISHED_MILLIS
         public const val ROOM_FINISHED_TIMEOUT_MILLIS_KEY: String = "room.finishedTimeoutMillis"
         public const val ROOM_FINISHED_TIMEOUT_MILLIS_ENV: String = "ROOM_FINISHED_TIMEOUT_MILLIS"
-
-        public const val DEFAULT_DISCONNECT_GRACE_MILLIS: Long = RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS
-        public const val DISCONNECT_GRACE_MILLIS_KEY: String = "duel.disconnectGraceMillis"
-        public const val DISCONNECT_GRACE_MILLIS_ENV: String = "DISCONNECT_GRACE_MILLIS"
 
         public const val DEFAULT_TURN_MILLIS: Long = RoomTimeouts.DEFAULT_TURN_MILLIS
         public const val TURN_MILLIS_KEY: String = "duel.turnMillis"
@@ -255,17 +244,6 @@ public data class ServerConfig(
             )
             val roomFinishedTimeoutMillis = requireNotNull(roomFinishedTimeoutMillisString.toLongOrNull()) {
                 "room finished timeout must be an integer, got: $roomFinishedTimeoutMillisString"
-            }
-
-            val disconnectGraceMillisString = resolve(
-                config,
-                env,
-                DISCONNECT_GRACE_MILLIS_ENV,
-                DISCONNECT_GRACE_MILLIS_KEY,
-                DEFAULT_DISCONNECT_GRACE_MILLIS.toString(),
-            )
-            val disconnectGraceMillis = requireNotNull(disconnectGraceMillisString.toLongOrNull()) {
-                "disconnect grace window must be an integer, got: $disconnectGraceMillisString"
             }
 
             val sweepPeriodMillisString = resolve(
@@ -410,7 +388,6 @@ public data class ServerConfig(
                 databasePoolSize = databasePoolSize,
                 roomWaitingTimeoutMillis = roomWaitingTimeoutMillis,
                 roomFinishedTimeoutMillis = roomFinishedTimeoutMillis,
-                disconnectGraceMillis = disconnectGraceMillis,
                 sweepPeriodMillis = sweepPeriodMillis,
                 turnMillis = turnMillis,
                 timebankMillis = timebankMillis,
