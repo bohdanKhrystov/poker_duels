@@ -32,6 +32,44 @@ function countdowns(): number {
   );
 }
 
+/**
+ * The countdown span in `plate` — fails loudly if it is missing. Scoped to one plate for the
+ * same reason `countdowns()` above is: `PotStrip`'s figure shares every one of
+ * `COUNTDOWN_SELECTOR`'s classes too, and a query over the whole document would rather find
+ * whichever of the two sits first in the tree than the one this test means.
+ */
+function countdownIn(plate: HTMLElement): Element {
+  const span = plate.querySelector(COUNTDOWN_SELECTOR);
+  if (span === null) throw new Error("no countdown span on this plate");
+  return span;
+}
+
+/**
+ * Whether `element` is a clock's own countdown and not `PotStrip`'s figure sharing its
+ * selector: the clock always carries one class beyond the three `COUNTDOWN_SELECTOR` requires
+ * — the treatment's own colour, present in every one of the four states — where the pot's
+ * figure carries only the three.
+ */
+function isClockFigure(element: Element): boolean {
+  return element.classList.length > 3;
+}
+
+/**
+ * `container`'s rendered tree with every countdown span removed — the one thing a live
+ * clock legitimately redraws on its own, every second, with no server frame behind it
+ * (`ADR-0108` §5, `ADR-0113` §6). What is left is what a player reads, and it is this that
+ * must not move when the countdown crosses zero. `PotStrip`'s figure matches
+ * `COUNTDOWN_SELECTOR` too and is deliberately left standing — the pot is exactly one of the
+ * things this comparison must still catch moving.
+ */
+function withoutCountdowns(container: HTMLElement): string {
+  const clone = container.cloneNode(true) as HTMLElement;
+  clone.querySelectorAll(COUNTDOWN_SELECTOR).forEach((span) => {
+    if (isClockFigure(span)) span.remove();
+  });
+  return clone.innerHTML;
+}
+
 /** A moment fixed once, so every clock test reasons about the same instant. */
 const NOW = 1_700_000_000_000;
 
@@ -976,5 +1014,122 @@ describe("the duel table", () => {
     });
     rerender(<DuelTable view={staleSeat} clock={reading} />);
     expect(countdowns()).toBe(0);
+  });
+
+  it("draws the fresh allowance regular, and its last seconds running out", () => {
+    // The card's rows A and B (`design/components/seat-and-pot.html`): 24 seconds left
+    // reads bare, 6 reads under the running-out treatment — the same figures the card draws.
+    const seats = [aSeat({ index: 0 }), aSeat({ index: 1 })];
+    const view = aView({ viewerSeat: 0, seatToAct: 1, handNumber: 1, seats });
+
+    const fresh = aReading({
+      seat: 1,
+      handNumber: 1,
+      turnEndsAt: NOW + 24_000,
+    });
+    const { rerender } = render(<DuelTable view={view} clock={fresh} />);
+
+    const regular = countdownIn(plateFor("Your rival"));
+    expect(regular.textContent).toBe("24");
+    expect(regular.className).toBe(
+      "font-mono text-large tabular-nums text-text",
+    );
+
+    const runningLow = aReading({
+      seat: 1,
+      handNumber: 1,
+      turnEndsAt: NOW + 6_000,
+    });
+    rerender(<DuelTable view={view} clock={runningLow} />);
+
+    const runningOut = countdownIn(plateFor("Your rival"));
+    expect(runningOut.textContent).toBe("6");
+    expect(runningOut.className).toContain("text-warn");
+  });
+
+  it("draws the bank's own time on timebank", () => {
+    // Past turnEndsAt, spending the bank: the card's row for on-timebank draws the same
+    // figure twice, once as the countdown and once as that seat's own bank.
+    const seats = [aSeat({ index: 0 }), aSeat({ index: 1 })];
+    const view = aView({ viewerSeat: 0, seatToAct: 1, handNumber: 1, seats });
+    const reading = aReading({
+      seat: 1,
+      handNumber: 1,
+      turnEndsAt: NOW - 5_000,
+      expiresAt: NOW + 167_000,
+    });
+
+    render(<DuelTable view={view} clock={reading} />);
+
+    const span = countdownIn(plateFor("Your rival"));
+    expect(span.textContent).toBe("2:47");
+    expect(span.className).toContain("text-accent");
+    expect(
+      within(plateFor("Your rival")).getByText(/Timebank\s2:47/),
+    ).toBeDefined();
+  });
+
+  it("draws a spent clock expired, holding at zero", () => {
+    // Past expiresAt: the figure holds at zero under the quietest treatment, and the bank
+    // it just finished spending reads as fully spent too.
+    const seats = [aSeat({ index: 0 }), aSeat({ index: 1 })];
+    const view = aView({ viewerSeat: 0, seatToAct: 1, handNumber: 1, seats });
+    const reading = aReading({
+      seat: 1,
+      handNumber: 1,
+      turnEndsAt: NOW - 10_000,
+      expiresAt: NOW - 1_000,
+    });
+
+    render(<DuelTable view={view} clock={reading} />);
+
+    const span = countdownIn(plateFor("Your rival"));
+    expect(span.textContent).toBe("0");
+    expect(span.className).toContain("text-text-faint");
+    expect(
+      within(plateFor("Your rival")).getByText(/Timebank\s0:00/),
+    ).toBeDefined();
+  });
+
+  it("changes nothing a player reads when the countdown reaches zero", () => {
+    // One clock — turnEndsAt and expiresAt coincide, so there is no bank behind this
+    // decision and the acting seat's own bank reads 0:00 on both sides of the crossing,
+    // the one construction under which nothing the clock itself draws can differ except
+    // the countdown span this test strips before comparing. Two stated readings against
+    // it, three seconds before and nine after: no timer, real or fake, is installed.
+    const seats = [aSeat({ index: 0 }), aSeat({ index: 1 })];
+    const view = aView({ viewerSeat: 0, seatToAct: 1, handNumber: 1, seats });
+    const atZero = {
+      seat: 1,
+      handNumber: 1,
+      turnEndsAt: NOW + 3_000,
+      expiresAt: NOW + 3_000,
+      bankRemainingMillis: [45_000, 0] as const,
+    };
+
+    const { container, rerender } = render(
+      <DuelTable view={view} clock={aReading({ ...atZero, nowMillis: NOW })} />,
+    );
+    // Their turn still — the server, not the crossing, is what would ever move this.
+    expect(
+      within(plateFor("Your rival")).getByText("Their turn"),
+    ).toBeDefined();
+    const before = withoutCountdowns(container);
+
+    rerender(
+      <DuelTable
+        view={view}
+        clock={aReading({ ...atZero, nowMillis: NOW + 12_000 })}
+      />,
+    );
+
+    expect(
+      within(plateFor("Your rival")).getByText("Their turn"),
+    ).toBeDefined();
+    const after = withoutCountdowns(container);
+    expect(after).toBe(before);
+
+    // The screen never invents the act: no mark that only a server frame may produce.
+    expect(container.innerHTML).not.toMatch(/The server (folded|checked)/);
   });
 });
