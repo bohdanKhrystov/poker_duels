@@ -116,7 +116,7 @@ A navigation **is** a disconnect on this browser: `open` closes the socket. It d
 | id | do | expect | fails if |
 | --- | --- | --- | --- |
 | `CORE-21` | both seated, nobody closes and nobody navigates; `absent "is away"` and `absent "Timed out"` on **both** screens for 75s | neither screen ever marks the other away or timed out | either screen marks a rival who never left |
-| `CORE-22` | neither seat acts for 75s — longer than `RoomTimeouts.DEFAULT_TURN_MILLIS` plus `DEFAULT_TIMEBANK_MILLIS` — then the seat to act acts | the action is accepted and the hand advances | the action is refused, or a seat was folded while its player stayed connected |
+| `CORE-22` | neither seat acts for 75s — more than `RoomTimeouts.DEFAULT_TURN_MILLIS` (30s) but less than `RoomTimeouts.DEFAULT_TIMEBANK_MILLIS` (180s) — then the seat to act acts | the action is accepted and the hand advances | the action is refused, or the seat was folded while budget remained |
 | `CORE-23` | A and B are playing; B closes and does not reconnect; A (the seat to act) clicks its action | the action is accepted and the hand advances — a connected seat can act when its rival is disconnected | the action is refused, or the screen says the duel is paused |
 
 ### Lobby
