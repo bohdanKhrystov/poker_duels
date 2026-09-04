@@ -27,12 +27,10 @@ private fun registryWith(
     clock: MutableClock,
     turnMillis: Long = 30_000L,
     timebankMillis: Long = 180_000L,
-    disconnectGraceMillis: Long = RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS,
 ): RoomRegistry {
     val timeouts = RoomTimeouts(
         waitingMillis = RoomTimeouts.DEFAULT_WAITING_MILLIS,
         finishedMillis = RoomTimeouts.DEFAULT_FINISHED_MILLIS,
-        disconnectGraceMillis = disconnectGraceMillis,
         turnMillis = turnMillis,
         timebankMillis = timebankMillis,
     )
@@ -174,8 +172,9 @@ internal class TurnClockFramesTest {
     @Test
     fun aBatchThatPlaysSeveralDecisionsCarriesOneClock() = runBlocking {
         val clock = MutableClock(0L)
-        val disconnectGraceMillis = 1_000L
-        val registry = registryWith(clock, disconnectGraceMillis = disconnectGraceMillis)
+        val turnMillis = 500L
+        val timebankMillis = 500L
+        val registry = registryWith(clock, turnMillis = turnMillis, timebankMillis = timebankMillis)
         val host = newPlayerId()
         val guest = newPlayerId()
         val room = registry.create(host)
@@ -190,7 +189,9 @@ internal class TurnClockFramesTest {
         actOn(registry, seated.code, callFrame(seated))
         registry.disconnect(seated.code, absentPlayer)
 
-        clock.advance(disconnectGraceMillis + 1)
+        // Past the away seat's own allowance for the decision the call above just armed — the
+        // seat that never answers, not a separate disconnect timer, is what latches it now.
+        clock.advance(turnMillis + timebankMillis)
         val expiries = registry.expireTurnClocks()
 
         assertEquals(1, expiries.size)

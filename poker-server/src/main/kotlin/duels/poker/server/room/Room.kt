@@ -36,8 +36,7 @@ public enum class RoomState {
  * The absolute deadline governing the decision currently open, and the seat it belongs to.
  *
  * [bankBeginsAt] and [expiresAt] are both fixed points on the caller's clock, never a remaining
- * duration — the same reasoning [Room.gracePeriods]'s own KDoc gives: a value nobody has to
- * remember to decrement is a value nobody forgets to.
+ * duration: a value nobody has to remember to decrement is a value nobody forgets to.
  *
  * @property seat the seat this deadline governs; `0` or `1`.
  * @property handNumber the hand the governed decision belongs to.
@@ -101,12 +100,10 @@ public data class TurnGiveUp(val room: Room, val step: DuelStep)
  *   tells one duel apart from the next when guarding against the rematch race described on
  *   `RoomRegistry.offerRematch`: a rematch changes this field, so a check keyed to "the duel id
  *   that was current when recording started" stops applying the moment a rematch actually begins.
- * @property gracePeriods each seat currently inside its disconnect grace window (`ADR-0013`),
- *   mapped to the instant, in elapsed milliseconds on the same scale as [lastActivityAt], at
- *   which that window runs out — an absolute deadline, never a remaining duration, because a
- *   value that has to be decremented is a value someone has to remember to decrement.
- * @property absentSeats the seats whose grace window has already run out; see [isPaused] for what
- *   distinguishes them from [gracePeriods].
+ * @property awaySeats each seat whose socket is currently down — a lookup, not a timer: nothing
+ *   here is measured against a clock (`ADR-0113` §7).
+ * @property absentSeats the seats a stalled decision has latched into permanent absence; see
+ *   [presenceOf] for what distinguishes them from [awaySeats].
  * @property turnDeadline the open decision's deadline, or `null` when none is open; derived by
  *   [clocked] from the live duel, never armed or cancelled directly (`ADR-0113` §3).
  * @property timebankRemainingMillis each seat's remaining bank, in milliseconds; derived by
@@ -124,7 +121,7 @@ public data class Room(
     val lastActivityAt: Long,
     val runner: DuelRunner? = null,
     val duelId: UUID? = null,
-    val gracePeriods: Map<Int, Long> = emptyMap(),
+    val awaySeats: Set<Int> = emptySet(),
     val absentSeats: Set<Int> = emptySet(),
     val turnDeadline: TurnDeadline? = null,
     val timebankRemainingMillis: Map<Int, Long> = emptyMap(),
@@ -149,17 +146,14 @@ public data class Room(
         require((runner == null) == (duelId == null)) {
             "duelId must be present exactly when runner is present"
         }
-        require((gracePeriods.keys + absentSeats).all { it in 0..1 }) {
-            "a seat named in gracePeriods or absentSeats must be 0 or 1"
+        require((awaySeats + absentSeats).all { it in 0..1 }) {
+            "a seat named in awaySeats or absentSeats must be 0 or 1"
         }
-        require(guest != null || (1 !in gracePeriods && 1 !in absentSeats)) {
+        require(guest != null || (1 !in awaySeats && 1 !in absentSeats)) {
             "seat 1 cannot be gone from a room with no guest seated"
         }
-        require(gracePeriods.keys.none { it in absentSeats }) {
-            "a seat cannot be both inside its grace window and already absent"
-        }
-        require(gracePeriods.values.all { it >= 0 }) {
-            "every grace deadline must not be negative"
+        require(awaySeats.none { it in absentSeats }) {
+            "a seat cannot be both away and already absent"
         }
         require(turnDeadline == null || turnDeadline.seat in 0..1) {
             "turnDeadline.seat must be 0 or 1, was ${turnDeadline?.seat}"
@@ -178,18 +172,6 @@ public data class Room(
     /** The host, plus the guest if seated. */
     public val players: Set<PlayerId>
         get() = if (guest != null) setOf(host, guest) else setOf(host)
-
-    /**
-     * Whether this room's duel is paused waiting for a seat to reconnect.
-     *
-     * This is the asymmetry the whole design rests on: a seat still counting down in
-     * [gracePeriods] pauses the duel, because it might still return before its window runs out.
-     * A seat whose window has already run out, recorded in [absentSeats] instead, does **not**
-     * pause the duel — it has become an ordinary absent player whose hand gets folded rather than
-     * a reason to keep waiting. Pausing on it forever is the "hold indefinitely" alternative
-     * `ADR-0013` rejected.
-     */
-    public val isPaused: Boolean get() = gracePeriods.isNotEmpty()
 
     /**
      * The heads-up seat number of [player]: `0` for the host, `1` for the guest, `null` for
@@ -354,9 +336,9 @@ public data class Room(
      *
      * Checked strictly in this order: a room that is not [RoomState.PLAYING] answers `null`
      * first, so a finished or abandoned room is never mistaken for a live one; a room holding no
-     * [runner] answers `null` the same way. Neither check consults [isPaused] — a seat still
-     * counting down its disconnect grace window (`ADR-0013`) is not a reason to refuse an `Act`
-     * from the seat that is still there; that seat's action is applied exactly like any other.
+     * [runner] answers `null` the same way. Neither check consults [awaySeats] — a seat whose
+     * socket is down is not a reason to refuse an `Act` from the seat that is still there; that
+     * seat's action is applied exactly like any other.
      * Once both checks pass, this delegates to `duels.poker.server.duel.act`: legality, turn
      * order and hand advancement are all decided there, never re-decided here — this is a thin,
      * pure adapter from a room to the runner it hosts. The result is then handed to
@@ -394,12 +376,11 @@ public data class Room(
      * through the same `duels.poker.server.duel.foldAbsent` that [act] hands its own result to
      * for a seat nobody is sitting in — so a hand given up here is, in the log and on the wire,
      * indistinguishable from one given up because [act] happened to be called right after it.
-     * Because it never goes through [act], it never consults [isPaused] either: a seat still
-     * counting down in [gracePeriods] is a reason to refuse a *new* frame in case its player is
-     * about to return, but it is not a reason to leave a *different* seat's turn unresolved —
-     * doing so would deadlock the duel on whichever seat happens to still be counting down.
-     * Leaving [isPaused] unchecked is what lets a caller polling this method on a clock
-     * (`TASK-020812`) always make progress, whatever any other seat is doing.
+     * Because it never goes through [act], it never gates on any *other* seat's presence either:
+     * a seat away on a socket that is down is not a reason to leave a *different* seat's turn
+     * unresolved — doing so would deadlock the duel on whichever seat happens to be away.
+     * Ignoring every seat but the one on turn is what lets a caller polling this method on a
+     * clock (`TASK-020812`) always make progress, whatever any other seat is doing.
      *
      * An expiry costs the seat **one** decision (`ADR-0113` §5). That is enforced by which
      * argument the seat is passed as: the timed-out seat is `giveUpDecision`'s `seat`, called
@@ -408,9 +389,9 @@ public data class Room(
      * is played at every decision the turn brings it.
      *
      * Presence, not the clock, decides the latch: a seat that ran out of time while its socket was
-     * down — a seat in [gracePeriods] — moves into [absentSeats] in [TurnGiveUp.room] and is
-     * thereafter played without waiting on a deadline again, exactly as an expired grace window
-     * leaves it. A seat that ran out of time while connected latches nothing: it is late, not gone.
+     * down — a seat in [awaySeats] — moves into [absentSeats] in [TurnGiveUp.room] and is
+     * thereafter played without waiting on a deadline again. A seat that ran out of time while
+     * connected latches nothing: it is late, not gone.
      *
      * The both-gone abandon is checked before the give-up, never after: a room whose give-up would
      * leave both seats in [absentSeats] comes back [RoomState.ABANDONED] carrying no frames, since
@@ -434,7 +415,7 @@ public data class Room(
         val outOfTime = deadline != null && deadline.seat == seatOnTurn && now >= deadline.expiresAt
         if (!outOfTime && seatOnTurn !in absentSeats) return null
 
-        val latched = if (outOfTime && seatOnTurn in gracePeriods) seatOnTurn else null
+        val latched = if (outOfTime && seatOnTurn in awaySeats) seatOnTurn else null
         val gone = absentSeats + setOfNotNull(latched)
         if (guest != null && gone == setOf(0, 1)) {
             return TurnGiveUp(abandon(now), DuelStep(liveRunner, emptyList()))
@@ -442,7 +423,7 @@ public data class Room(
         val latchedRoom = if (latched == null) {
             this
         } else {
-            copy(gracePeriods = gracePeriods - latched, absentSeats = gone)
+            copy(awaySeats = awaySeats - latched, absentSeats = gone)
         }
 
         val untouched = DuelStep(liveRunner, emptyList())
@@ -469,102 +450,69 @@ public data class Room(
      * the wire (`ADR-0028`).
      *
      * The three branches are exactly the three states [Room] already distinguishes: [seat]
-     * counting down in [gracePeriods] answers [SeatPresence.AWAY]; [seat] already moved into
-     * [absentSeats] answers [SeatPresence.ABSENT]; any other seat answers [SeatPresence.PRESENT].
+     * already moved into [absentSeats] answers [SeatPresence.ABSENT]; [seat] with its socket down
+     * in [awaySeats] answers [SeatPresence.AWAY]; any other seat answers [SeatPresence.PRESENT].
+     * One lookup, no arithmetic, no clock (`ADR-0113` §7).
      *
      * Nothing is written back here: this call adds no field to [Room]. It only projects
-     * [gracePeriods] and [absentSeats] as they already stand.
+     * [awaySeats] and [absentSeats] as they already stand.
      *
      * @param seat the seat to report on; must be 0 or 1.
-     * @param now the current time in milliseconds; unused now that [ServerMessage.OpponentPresence]
-     *   carries no remaining duration, kept so this method's signature does not move its callers.
      * @return the frame describing [seat]'s presence.
      * @throws IllegalArgumentException if [seat] is not 0 or 1.
      */
-    @Suppress("UNUSED_PARAMETER")
-    public fun presenceOf(seat: Int, now: Long): ServerMessage.OpponentPresence {
+    public fun presenceOf(seat: Int): ServerMessage.OpponentPresence {
         require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
         return when {
-            seat in gracePeriods -> ServerMessage.OpponentPresence(presence = SeatPresence.AWAY)
             seat in absentSeats -> ServerMessage.OpponentPresence(presence = SeatPresence.ABSENT)
+            seat in awaySeats -> ServerMessage.OpponentPresence(presence = SeatPresence.AWAY)
             else -> ServerMessage.OpponentPresence(presence = SeatPresence.PRESENT)
         }
     }
 
     /**
-     * Start [seat]'s disconnect grace window (`ADR-0013`), or restart it if one was already
-     * running.
+     * Mark [seat]'s socket as down.
      *
-     * The timer restarts on every disconnect: a second call for the same seat overwrites the
-     * earlier deadline in [gracePeriods] rather than keeping it — the most recent drop is the
-     * one that matters. Also clears [seat] from [absentSeats], so a seat whose window had
-     * already run out gets a fresh window rather than staying absent.
+     * Starts nothing: this only adds [seat] to [awaySeats], a lookup with no deadline attached
+     * (`ADR-0113` §7). Also clears [seat] from [absentSeats], so a seat that had already latched
+     * into permanent absence goes back to merely away rather than staying latched forever once
+     * its player is heard from again.
      *
      * Pure and total for a seat this room holds. Calling it for a seat this room has not
      * seated is a server bug, not a network event — [init] would reject the resulting room
      * anyway, so this throws directly to name the mistake.
      *
      * @param seat the seat that disconnected; must be seated in this room.
-     * @param deadline the instant, on the caller's clock, at which [seat]'s grace window runs
-     *   out.
-     * @return this room with [seat] counting down in [gracePeriods] from [deadline] and absent
-     *   from [absentSeats].
+     * @return this room with [seat] in [awaySeats] and absent from [absentSeats].
      * @throws IllegalArgumentException if [seat] is not seated in this room.
      */
-    public fun disconnect(seat: Int, deadline: Long): Room {
+    public fun disconnect(seat: Int): Room {
         require(seat == 0 || (seat == 1 && guest != null)) {
             "seat $seat is not seated in this room"
         }
         return copy(
-            gracePeriods = gracePeriods + (seat to deadline),
+            awaySeats = awaySeats + seat,
             absentSeats = absentSeats - seat,
         )
     }
 
     /**
-     * Clear [seat]'s disconnect grace window (`ADR-0013`), whether it is still counting down or
-     * has already run out.
+     * Mark [seat]'s socket as back up, whether it was merely away or had already latched absent.
      *
-     * Removes [seat] from both [gracePeriods] and [absentSeats]. Pure and total: a reconnect
+     * Removes [seat] from both [awaySeats] and [absentSeats]. Pure and total: a reconnect
      * from a seat nobody was waiting for — the room never noticed it was gone, or had already
      * forgotten — is an ordinary event, not an error, so this returns the room unchanged rather
      * than throwing.
      *
      * @param seat the seat that reconnected.
-     * @return this room with [seat] present in neither [gracePeriods] nor [absentSeats]; this
+     * @return this room with [seat] present in neither [awaySeats] nor [absentSeats]; this
      *   room unchanged if [seat] was in neither already.
      */
     public fun reconnect(seat: Int): Room {
-        if (seat !in gracePeriods && seat !in absentSeats) return this
+        if (seat !in awaySeats && seat !in absentSeats) return this
         return copy(
-            gracePeriods = gracePeriods - seat,
+            awaySeats = awaySeats - seat,
             absentSeats = absentSeats - seat,
-        )
-    }
-
-    /**
-     * Move every seat whose disconnect grace window (`ADR-0013`) has run out by [now] from
-     * [gracePeriods] into [absentSeats], leaving every seat still counting down alone.
-     *
-     * The comparison is `<=`, not `<`: a window whose deadline is exactly [now] has already run
-     * out, not one instant left to go. `TASK-020815` asserts this exact boundary instant, so the
-     * two must agree.
-     *
-     * Pure and total, and idempotent for a fixed [now]: once every seat that has run out has
-     * moved, a further call finds nothing left to move. Returns this room unchanged (`this`, so
-     * a caller can compare by identity or equality) when no seat has run out.
-     *
-     * @param now the instant, on the caller's clock, to compare every deadline in
-     *   [gracePeriods] against.
-     * @return this room with every seat whose deadline is `<= now` moved from [gracePeriods]
-     *   into [absentSeats].
-     */
-    public fun expireGrace(now: Long): Room {
-        val expiredSeats = gracePeriods.filterValues { it <= now }.keys
-        if (expiredSeats.isEmpty()) return this
-        return copy(
-            gracePeriods = gracePeriods - expiredSeats,
-            absentSeats = absentSeats + expiredSeats,
         )
     }
 

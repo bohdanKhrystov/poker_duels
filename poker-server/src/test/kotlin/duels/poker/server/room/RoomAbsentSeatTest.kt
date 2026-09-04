@@ -232,20 +232,20 @@ internal class RoomAbsentSeatTest {
     }
 
     @Test
-    fun giveUpTurnIsNotSwallowedByARoomPausedForAnotherSeat() {
+    fun giveUpTurnIsNotSwallowedByARoomAwayOnAnotherSeat() {
         val room = playingRoom()
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
-        // onTurn has already run out into absentSeats, but the opponent seat is separately still
-        // counting down its own, unrelated grace window, so the room as a whole is isPaused. A
-        // giveUpTurn that (wrongly) deferred to isPaused would answer null here, and since
-        // nothing but this expiry path ever asks again, the duel would stall forever.
-        val pausedAndAbsent = room.copy(
-            gracePeriods = mapOf(1 - onTurn to 9_000L),
+        // onTurn has already run out into absentSeats, but the opponent seat is separately away
+        // on its own, unrelated socket. A giveUpTurn that (wrongly) deferred to any seat being
+        // away would answer null here, and since nothing but this expiry path ever asks again,
+        // the duel would stall forever.
+        val awayAndAbsent = room.copy(
+            awaySeats = setOf(1 - onTurn),
             absentSeats = setOf(onTurn),
         )
-        assertTrue(pausedAndAbsent.isPaused)
+        assertTrue(awayAndAbsent.awaySeats.isNotEmpty())
 
-        val step = pausedAndAbsent.giveUpTurn(beforeAnyDeadline, seeds)
+        val step = awayAndAbsent.giveUpTurn(beforeAnyDeadline, seeds)
 
         assertNotNull(step)
         assertEquals(PlayerAction.Fold(onTurn), step!!.step.runner.log.hands[0].actions.last())
@@ -256,7 +256,7 @@ internal class RoomAbsentSeatTest {
         val room = playingRoom().withDeadlineAt(deadlineAt)
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         // Nobody is gone: absence cannot be what moves this turn, only the clock.
-        assertTrue(room.absentSeats.isEmpty() && room.gracePeriods.isEmpty())
+        assertTrue(room.absentSeats.isEmpty() && room.awaySeats.isEmpty())
 
         val given = room.giveUpTurn(deadlineAt, seeds)
 
@@ -320,15 +320,15 @@ internal class RoomAbsentSeatTest {
     fun aTimedOutAwaySeatIsLatchedAbsent() {
         val room = playingRoom().withDeadlineAt(deadlineAt)
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
-        // Its grace window is still running at deadlineAt — the turn clock is what runs out here,
-        // so nothing but presence deciding the latch can put this seat in absentSeats.
-        val away = room.copy(gracePeriods = mapOf(onTurn to 30_000L))
+        // Its socket is still down at deadlineAt — the turn clock is what runs out here, so
+        // nothing but presence deciding the latch can put this seat in absentSeats.
+        val away = room.copy(awaySeats = setOf(onTurn))
 
         val given = away.giveUpTurn(deadlineAt, seeds)
 
         assertNotNull(given)
         assertEquals(setOf(onTurn), given!!.room.absentSeats)
-        assertEquals(emptyMap<Int, Long>(), given.room.gracePeriods)
+        assertEquals(emptySet<Int>(), given.room.awaySeats)
     }
 
     @Test
@@ -338,7 +338,7 @@ internal class RoomAbsentSeatTest {
         val raised = room.act(opener, raiseFrame(room), seeds)!!
         val facing = room.copy(runner = raised.runner).withDeadlineAt(deadlineAt)
         val late = facing.runner!!.hand!!.state.seatToAct!!
-        val away = facing.copy(gracePeriods = mapOf(late to 30_000L))
+        val away = facing.copy(awaySeats = setOf(late))
 
         val given = away.giveUpTurn(deadlineAt, seeds)
 
@@ -356,7 +356,7 @@ internal class RoomAbsentSeatTest {
         val room = playingRoom().withDeadlineAt(deadlineAt)
         val onTurn = room.runner!!.hand!!.state.seatToAct!!
         val bothGone = room.copy(
-            gracePeriods = mapOf(onTurn to 30_000L),
+            awaySeats = setOf(onTurn),
             absentSeats = setOf(1 - onTurn),
         )
 

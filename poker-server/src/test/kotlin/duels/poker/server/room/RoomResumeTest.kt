@@ -25,7 +25,7 @@ private fun codeSource(vararg codes: String): RoomCodeSource {
     return RoomCodeSource { RoomCode(iterator.next()) }
 }
 
-private val TEST_TIMEOUTS = RoomTimeouts(waitingMillis = 10_000, finishedMillis = 4_000, disconnectGraceMillis = 30_000)
+private val TEST_TIMEOUTS = RoomTimeouts(waitingMillis = 10_000, finishedMillis = 4_000)
 
 private val oneHand = DuelFormat.DEFAULT.copy(endCondition = EndCondition.FixedHands(1))
 
@@ -71,8 +71,8 @@ internal class RoomResumeTest {
 
         registry.resume(room.code, guest)
 
-        assertEquals(emptyMap<Int, Long>(), registry.get(room.code)!!.gracePeriods)
-        assertFalse(registry.get(room.code)!!.isPaused)
+        assertEquals(emptySet<Int>(), registry.get(room.code)!!.awaySeats)
+        assertFalse(registry.get(room.code)!!.awaySeats.isNotEmpty())
     }
 
     @Test
@@ -88,7 +88,7 @@ internal class RoomResumeTest {
         val result = registry.resume(room.code, PlayerId("stranger"))
 
         assertNull(result)
-        assertEquals(mapOf(1 to 30_000L), registry.get(room.code)!!.gracePeriods)
+        assertEquals(setOf(1), registry.get(room.code)!!.awaySeats)
     }
 
     @Test
@@ -241,7 +241,21 @@ internal class RoomResumeTest {
         val room = registry.create(host)
         registry.join(room.code, guest)
         registry.disconnect(room.code, guest)
-        clock.advance(TEST_TIMEOUTS.disconnectGraceMillis)
+
+        // The guest is away but not yet on turn — the host always opens a fresh room on turn
+        // (Room.open) — so the guest's own deadline only arms once the host's call passes the
+        // turn to it.
+        val opening = registry.get(room.code)!!
+        val hand = opening.runner!!.hand!!
+        val openingFrame = Act(
+            handNumber = hand.state.handNumber,
+            actionSequence = decisionPointOf(hand.log.events)!!.sequence,
+            action = PlayerAction.Call(hand.state.seatToAct!!),
+        )
+        registry.act(room.code) { r -> r.act(openingFrame.action.seat, openingFrame, registry.handSeeds) }
+        val deadline = registry.get(room.code)!!.turnDeadline!!.expiresAt
+
+        clock.advance(deadline - clock.nowMillis())
         registry.expireTurnClocks()
 
         val resumption = registry.resume(room.code, host)
@@ -340,8 +354,8 @@ internal class RoomResumeTest {
         val resumption = registry.resume(room.code, guest)
 
         assertEquals(1, resumption!!.seat)
-        assertEquals(mapOf(0 to 30_000L), registry.get(room.code)!!.gracePeriods)
-        assertTrue(registry.get(room.code)!!.isPaused)
+        assertEquals(setOf(0), registry.get(room.code)!!.awaySeats)
+        assertTrue(registry.get(room.code)!!.awaySeats.isNotEmpty())
     }
 
     @Test

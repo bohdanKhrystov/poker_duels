@@ -24,107 +24,114 @@ private val fixedSeeds = HandSeedSource { 7L }
 
 /**
  * Given a [ServerConfig], build a [RoomRegistry] over a [MutableClock] with [config.roomTimeouts]
- * and [HandSeedSource { 7L }], seat a host and a guest, and disconnect the player whose seat is
- * on turn — so that expiry has a hand to fold at the instant it fires.
+ * and [HandSeedSource { 7L }], and seat a host and a guest — so that a live decision is open and
+ * expiry has a hand to fold at the instant it fires. Nobody needs to disconnect: a connected seat
+ * that simply outlasts its own allowance is folded exactly the same way (`ADR-0113` §5).
  */
-private suspend fun setupRoomWithDisconnectedTurnPlayer(config: ServerConfig): Triple<RoomRegistry, MutableClock, RoomCode> {
+private suspend fun setupRoomWithTurnPlayer(config: ServerConfig): Triple<RoomRegistry, MutableClock, RoomCode> {
     val clock = MutableClock()
     val registry = RoomRegistry(codeSource("2B7KMNPQ"), clock, config.roomTimeouts(), seeds = fixedSeeds)
     val host = newPlayerId()
     val guest = newPlayerId()
     val room = registry.create(host)
     registry.join(room.code, guest)
-    val onTurn = registry.get(room.code)!!.runner!!.hand!!.state.seatToAct!!
-    val onTurnPlayer = if (onTurn == 0) host else guest
-    registry.disconnect(room.code, onTurnPlayer)
     return Triple(registry, clock, room.code)
 }
 
-internal class GraceWindowConfigTest {
+internal class TurnClockConfigTest {
 
     @Test
-    fun theShippedDefaultIsTheDeclaredOne() {
+    fun theShippedDefaultsAreTheDeclaredOnes() {
         val config = ServerConfig.from(MapApplicationConfig()) { null }
-        assertEquals(
-            RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS,
-            config.roomTimeouts().disconnectGraceMillis,
-        )
+        assertEquals(RoomTimeouts.DEFAULT_TURN_MILLIS, config.roomTimeouts().turnMillis)
+        assertEquals(RoomTimeouts.DEFAULT_TIMEBANK_MILLIS, config.roomTimeouts().timebankMillis)
     }
 
     @Test
-    fun aFiveSecondWindowFoldsAtFiveSeconds() = runBlocking {
+    fun aFiveSecondAllowanceExpiresAtFiveSeconds() = runBlocking {
         val config = ServerConfig.from(
-            MapApplicationConfig("duel.disconnectGraceMillis" to "5000"),
+            MapApplicationConfig(
+                ServerConfig.TURN_MILLIS_KEY to "5000",
+                ServerConfig.TIMEBANK_MILLIS_KEY to "1",
+            ),
         ) { null }
 
-        val (registry, clock, roomCode) = setupRoomWithDisconnectedTurnPlayer(config)
+        val (registry, clock, roomCode) = setupRoomWithTurnPlayer(config)
 
-        // At 4999ms, the window has not expired yet
-        clock.advance(4_999)
-        val expiryBefore = registry.expireTurnClocks()
-        assertEquals(emptyList<TurnClockExpiry>(), expiryBefore)
-        val handLogBefore = registry.get(roomCode)!!.runner!!.hand!!.log.actions
-        assertTrue(
-            handLogBefore.none { it is duels.poker.engine.game.PlayerAction.Fold },
-            "expected no fold at 4999ms",
-        )
-
-        // Advance to exactly 5000ms (total advance from start is 5000)
-        clock.advance(1)
-        val expiryAt = registry.expireTurnClocks()
-        assertEquals(1, expiryAt.size)
-        val handLogAt = registry.get(roomCode)!!.runner!!.log.hands.first().actions
-        assertTrue(
-            handLogAt.last() is duels.poker.engine.game.PlayerAction.Fold,
-            "expected fold at 5000ms",
-        )
-    }
-
-    @Test
-    fun aFortyFiveSecondWindowFoldsAtFortyFiveSeconds() = runBlocking {
-        val config = ServerConfig.from(
-            MapApplicationConfig("duel.disconnectGraceMillis" to "45000"),
-        ) { null }
-
-        val (registry, clock, roomCode) = setupRoomWithDisconnectedTurnPlayer(config)
-
-        // At 5000ms, the window has not expired
+        // At 5000ms, the allowance has not run out yet
         clock.advance(5_000)
         val expiryBefore = registry.expireTurnClocks()
         assertEquals(emptyList<TurnClockExpiry>(), expiryBefore)
         val handLogBefore = registry.get(roomCode)!!.runner!!.hand!!.log.actions
         assertTrue(
             handLogBefore.none { it is duels.poker.engine.game.PlayerAction.Fold },
-            "expected no fold at 5000ms with 45s window",
+            "expected no fold at 5000ms",
         )
 
-        // Advance to 45000ms (total advance is 45000)
-        clock.advance(40_000)
+        // Advance to 5001ms — turnMillis(5000) + timebankMillis(1)
+        clock.advance(1)
         val expiryAt = registry.expireTurnClocks()
         assertEquals(1, expiryAt.size)
         val handLogAt = registry.get(roomCode)!!.runner!!.log.hands.first().actions
         assertTrue(
             handLogAt.last() is duels.poker.engine.game.PlayerAction.Fold,
-            "expected fold at 45000ms",
+            "expected fold at 5001ms",
         )
     }
 
     @Test
-    fun theEnvironmentAloneMovesTheWindow() = runBlocking {
+    fun aFortyFiveSecondAllowanceExpiresAtFortyFiveSeconds() = runBlocking {
+        val config = ServerConfig.from(
+            MapApplicationConfig(
+                // The split is reversed from aFiveSecondAllowanceExpiresAtFiveSeconds — most of
+                // the allowance in the bank rather than the flat turn — so a fix that reads only
+                // one of the two keys fails at least one of the pair.
+                ServerConfig.TURN_MILLIS_KEY to "1",
+                ServerConfig.TIMEBANK_MILLIS_KEY to "45000",
+            ),
+        ) { null }
+
+        val (registry, clock, roomCode) = setupRoomWithTurnPlayer(config)
+
+        // At 45000ms, the allowance has not run out yet
+        clock.advance(45_000)
+        val expiryBefore = registry.expireTurnClocks()
+        assertEquals(emptyList<TurnClockExpiry>(), expiryBefore)
+        val handLogBefore = registry.get(roomCode)!!.runner!!.hand!!.log.actions
+        assertTrue(
+            handLogBefore.none { it is duels.poker.engine.game.PlayerAction.Fold },
+            "expected no fold at 45000ms",
+        )
+
+        // Advance to 45001ms — turnMillis(1) + timebankMillis(45000)
+        clock.advance(1)
+        val expiryAt = registry.expireTurnClocks()
+        assertEquals(1, expiryAt.size)
+        val handLogAt = registry.get(roomCode)!!.runner!!.log.hands.first().actions
+        assertTrue(
+            handLogAt.last() is duels.poker.engine.game.PlayerAction.Fold,
+            "expected fold at 45001ms",
+        )
+    }
+
+    @Test
+    fun theEnvironmentAloneMovesTheAllowance() = runBlocking {
         val config = ServerConfig.from(
             MapApplicationConfig(),
         ) { name ->
-            if (name == ServerConfig.DISCONNECT_GRACE_MILLIS_ENV) "7000" else null
+            if (name == ServerConfig.TURN_MILLIS_ENV) "7000" else null
         }
 
-        val (registry, clock, _) = setupRoomWithDisconnectedTurnPlayer(config)
+        val (registry, clock, _) = setupRoomWithTurnPlayer(config)
+        val deadline = 7_000L + RoomTimeouts.DEFAULT_TIMEBANK_MILLIS
 
-        // At 6999ms, the window has not expired
-        clock.advance(6_999)
+        // One millisecond before turnMillis(7000, from the environment) + the default timebank,
+        // the allowance has not run out
+        clock.advance(deadline - 1)
         val expiryBefore = registry.expireTurnClocks()
         assertEquals(emptyList<TurnClockExpiry>(), expiryBefore)
 
-        // Advance to 7000ms
+        // Advance to the deadline
         clock.advance(1)
         val expiryAt = registry.expireTurnClocks()
         assertEquals(1, expiryAt.size)
@@ -132,14 +139,17 @@ internal class GraceWindowConfigTest {
 
     @Test
     @Timeout(5)
-    fun aLongWindowCostsNoRealTime() = runBlocking {
+    fun aLongAllowanceCostsNoRealTime() = runBlocking {
         val config = ServerConfig.from(
-            MapApplicationConfig("duel.disconnectGraceMillis" to "45000"),
+            MapApplicationConfig(
+                ServerConfig.TURN_MILLIS_KEY to "1000",
+                ServerConfig.TIMEBANK_MILLIS_KEY to "44000",
+            ),
         ) { null }
 
-        val (registry, clock, roomCode) = setupRoomWithDisconnectedTurnPlayer(config)
+        val (registry, clock, roomCode) = setupRoomWithTurnPlayer(config)
 
-        // Advance through the entire 45-second window on MutableClock (instant)
+        // Advance through the entire 45-second allowance on MutableClock (instant)
         clock.advance(45_000)
         val expiries = registry.expireTurnClocks()
 

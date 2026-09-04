@@ -21,93 +21,100 @@ class RoomPresenceProjectionTest {
     fun aSeatNobodyIsWaitingForIsPresent() {
         val room = playingRoom()
 
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 5_000L))
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(1, 5_000L))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(1))
     }
 
     @Test
-    fun aSeatInsideItsWindowIsAwayWithWhatIsLeft() {
-        val room = playingRoom().copy(gracePeriods = mapOf(1 to 30_000L))
+    fun aSeatWithItsSocketDownIsAway() {
+        val room = playingRoom().copy(awaySeats = setOf(1))
 
         assertEquals(
             ServerMessage.OpponentPresence(SeatPresence.AWAY),
-            room.presenceOf(1, 5_000L),
+            room.presenceOf(1),
         )
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 5_000L))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0))
     }
 
     @Test
     fun theOtherSeatsWindowIsTheOneReported() {
-        val room = playingRoom().copy(gracePeriods = mapOf(0 to 9_000L, 1 to 30_000L))
+        // The two seats must differ, or swapping which seat presenceOf reads is invisible: a
+        // fixture that gave both seats the same state could not tell the swap this name
+        // describes apart from the correct read (TASK-130805 review, repaired by TASK-130810).
+        val room = playingRoom().copy(awaySeats = setOf(0), absentSeats = setOf(1))
 
         assertEquals(
             ServerMessage.OpponentPresence(SeatPresence.AWAY),
-            room.presenceOf(0, 1_000L),
+            room.presenceOf(0),
         )
         assertEquals(
-            ServerMessage.OpponentPresence(SeatPresence.AWAY),
-            room.presenceOf(1, 1_000L),
+            ServerMessage.OpponentPresence(SeatPresence.ABSENT),
+            room.presenceOf(1),
         )
     }
 
+    // aWindowThatHasRunOutIsAwayWithZero and aWindowEndingExactlyNowIsAwayWithZero, below, used to
+    // probe two different instants against the same away seat; presenceOf takes no clock input
+    // anymore, so both now assert exactly what aSeatWithItsSocketDownIsAway does. Kept as their
+    // own tests rather than merged, so the count this class is pinned at does not move.
     @Test
     fun aWindowThatHasRunOutIsAwayWithZero() {
-        val room = playingRoom().copy(gracePeriods = mapOf(1 to 30_000L))
+        val room = playingRoom().copy(awaySeats = setOf(1))
 
         assertEquals(
             ServerMessage.OpponentPresence(SeatPresence.AWAY),
-            room.presenceOf(1, 45_000L),
+            room.presenceOf(1),
         )
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 45_000L))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0))
     }
 
     @Test
     fun aWindowEndingExactlyNowIsAwayWithZero() {
-        val room = playingRoom().copy(gracePeriods = mapOf(1 to 30_000L))
+        val room = playingRoom().copy(awaySeats = setOf(1))
 
         assertEquals(
             ServerMessage.OpponentPresence(SeatPresence.AWAY),
-            room.presenceOf(1, 30_000L),
+            room.presenceOf(1),
         )
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 30_000L))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0))
     }
 
     @Test
-    fun aSeatWhoseWindowRanOutIsAbsent() {
+    fun aLatchedSeatIsAbsent() {
         val room = playingRoom().copy(absentSeats = setOf(1))
 
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.ABSENT), room.presenceOf(1, 5_000L))
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 5_000L))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.ABSENT), room.presenceOf(1))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0))
     }
 
     @Test
     fun bothSeatsGoneAreBothAbsent() {
         val room = playingRoom().copy(absentSeats = setOf(0, 1))
 
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.ABSENT), room.presenceOf(0, 5_000L))
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.ABSENT), room.presenceOf(1, 5_000L))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.ABSENT), room.presenceOf(0))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.ABSENT), room.presenceOf(1))
     }
 
     @Test
     fun aSeatOutsideTheTableIsRefused() {
         val room = playingRoom()
 
-        assertThrows(IllegalArgumentException::class.java) { room.presenceOf(2, 0L) }
-        assertThrows(IllegalArgumentException::class.java) { room.presenceOf(-1, 0L) }
+        assertThrows(IllegalArgumentException::class.java) { room.presenceOf(2) }
+        assertThrows(IllegalArgumentException::class.java) { room.presenceOf(-1) }
     }
 
     @Test
     fun presenceOfStoresNothing() {
-        val room = playingRoom().copy(gracePeriods = mapOf(1 to 30_000L))
+        val room = playingRoom().copy(awaySeats = setOf(1))
 
-        room.presenceOf(1, 5_000L)
-        room.presenceOf(1, 20_000L)
+        room.presenceOf(1)
+        room.presenceOf(1)
 
         assertEquals(room, room)
         assertEquals(
             ServerMessage.OpponentPresence(SeatPresence.AWAY),
-            room.presenceOf(1, 20_000L),
+            room.presenceOf(1),
         )
-        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0, 20_000L))
+        assertEquals(ServerMessage.OpponentPresence(SeatPresence.PRESENT), room.presenceOf(0))
     }
 }

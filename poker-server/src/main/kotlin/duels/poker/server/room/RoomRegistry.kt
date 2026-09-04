@@ -201,20 +201,14 @@ public class RoomRegistry(
     }
 
     /**
-     * Record that [player]'s connection to this room is gone, starting their seat's disconnect
-     * grace window (`ADR-0013`).
+     * Record that [player]'s connection to this room is gone, marking their seat away.
      *
      * Applies [Room.disconnect] under that room's mutex, storing and returning the resulting
-     * room. The deadline is computed here, and nowhere else: `clock.nowMillis() +
-     * timeouts.disconnectGraceMillis` is the one call site that turns the configured window into
-     * an absolute instant — `Room` reads no clock of its own (`TASK-020805`), and the caller
-     * reporting the drop knows nothing of the configured window, so neither of them could compute
-     * it instead.
+     * room: it starts no deadline — `Room` reads no clock of its own (`TASK-020805`), and
+     * presence is a lookup, not a timer (`ADR-0113` §7).
      *
-     * The same `now` also builds the frame the seat that stayed is owed: `disconnected.presenceOf(
-     * seat, now)`, addressed to `1 - seat`, reads `AWAY` with however much of the window remains —
-     * which, read from the very instant the deadline above was computed from, is always the
-     * configured window exactly (`ADR-0028` §2, §5). Nothing is built when the other seat holds no
+     * This also builds the frame the seat that stayed is owed: `disconnected.presenceOf(seat)`,
+     * addressed to `1 - seat`, reads `AWAY`. Nothing is built when the other seat holds no
      * player: a [RoomState.WAITING] room has no guest, so a host's drop there always answers an
      * empty [Disconnection.outbound] — `ADR-0028` §5's rule, not an optimisation.
      *
@@ -227,7 +221,7 @@ public class RoomRegistry(
      * @param code The room [player] disconnected from.
      * @param player The player whose connection is gone.
      * @return A [Disconnection] naming the room after the transition (with [player]'s seat
-     *   counting down in [Room.gracePeriods]) and the frames the call produced; or `null` for a
+     *   marked away in [Room.awaySeats]) and the frames the call produced; or `null` for a
      *   code with no live room, or for a player this room has not seated.
      */
     public suspend fun disconnect(code: RoomCode, player: PlayerId): Disconnection? {
@@ -236,11 +230,10 @@ public class RoomRegistry(
             absent = { null },
             block = { room ->
                 val seat = room.seatOf(player) ?: return@mutate Pair(null, null)
-                val now = clock.nowMillis()
-                val disconnected = room.disconnect(seat, now + timeouts.disconnectGraceMillis)
+                val disconnected = room.disconnect(seat)
                 val otherSeat = 1 - seat
                 val outbound = if (otherSeat == 0 || disconnected.guest != null) {
-                    listOf(Addressed(otherSeat, disconnected.presenceOf(seat, now)))
+                    listOf(Addressed(otherSeat, disconnected.presenceOf(seat)))
                 } else {
                     emptyList()
                 }
@@ -261,14 +254,13 @@ public class RoomRegistry(
      *
      * [Room.seatOf] is the only credential checked, and it is checked before anything else: a
      * caller this room has not seated changes nothing at all, not even the other seat's
-     * disconnect grace window (`ADR-0013`) — the write-back below only ever names the seat
-     * [player] holds, so a stranger's call, or a call for the wrong room's player, leaves both
-     * seats exactly as it found them. The lookup, the seat decision, the write-back and the
-     * frames handed back all happen inside the one [mutate] critical section, for the reason
-     * `TASK-020725` gives: a room state decided outside that lock could describe a room that, by
-     * the time this method returns, never existed.
+     * presence — the write-back below only ever names the seat [player] holds, so a stranger's
+     * call, or a call for the wrong room's player, leaves both seats exactly as it found them.
+     * The lookup, the seat decision, the write-back and the frames handed back all happen inside
+     * the one [mutate] critical section, for the reason `TASK-020725` gives: a room state decided
+     * outside that lock could describe a room that, by the time this method returns, never existed.
      *
-     * A returning seat's window is cleared with [Room.reconnect] and the room is
+     * A returning seat's away and absent marks are cleared with [Room.reconnect] and the room is
      * [touched][Room.touch] at [clock]'s current instant: a [RoomState.FINISHED] room whose
      * player just came back is not idle, and must not be reaped out from under them a moment
      * later. The frames owed to [seat] are read off [resumeFrames], which asks the projection
@@ -298,12 +290,12 @@ public class RoomRegistry(
                         val seat = room.seatOf(player) ?: return@mutate Pair(null, null)
                         val runner = room.runner ?: return@mutate Pair(null, null)
                         val otherSeat = 1 - seat
-                        val wasAway = seat in room.gracePeriods || seat in room.absentSeats
+                        val wasAway = seat in room.awaySeats || seat in room.absentSeats
                         val now = clock.nowMillis()
                         val returned = room.reconnect(seat).touch(now)
                         val presence = buildList {
-                            add(Addressed(seat, returned.presenceOf(otherSeat, now)))
-                            if (wasAway) add(Addressed(otherSeat, returned.presenceOf(seat, now)))
+                            add(Addressed(seat, returned.presenceOf(otherSeat)))
+                            if (wasAway) add(Addressed(otherSeat, returned.presenceOf(seat)))
                         }
                         val outbound = resumeFrames(runner, seat) + presence + turnClockFrame(returned, seat, now)
                         Pair(returned, Resumption(returned, seat, outbound))
@@ -586,28 +578,26 @@ public class RoomRegistry(
      * enforces, never precede it (`ADR-0108` §6).
      *
      * One pass, through [isTurnClockCandidate] and [actOn]: a room is a candidate only once its
-     * unlocked state shows a seat still counting down a disconnect grace window (`ADR-0013`), or an
-     * open decision whose own deadline needs attention — the same cheap-before-the-lock idiom [reap]
-     * uses for [isReapable], re-decided here again once the room's own lock is held, since a room
-     * touched between the scan and the lock — reconnected, resumed, joined — may have nothing left
-     * to expire by the time this reaches it.
+     * unlocked state shows a seat away, or an open decision whose own deadline needs attention —
+     * the same cheap-before-the-lock idiom [reap] uses for [isReapable], re-decided here again
+     * once the room's own lock is held, since a room touched between the scan and the lock —
+     * reconnected, resumed, joined — may have nothing left to expire by the time this reaches it.
      *
-     * A candidate is judged entirely inside [actOn]'s own lock: [Room.expireGrace] latches whatever
-     * seat's window has just run out, and [Room.giveUpTurn] decides what the seat on turn owes for
-     * it — a played decision, or, when both seats are now gone, the room [RoomState.ABANDONED]
-     * instead. [Room.giveUpTurn] is this pass's sole author of what "both gone" means: nothing here
-     * repeats that check on its own, because wiring [TurnGiveUp.room] through [actOn]'s write-back —
-     * rather than discarding it the way a single-pass [act] call used to — is what lets the wider
-     * question [Room.giveUpTurn] asks decide it (`TASK-130809`). A seat can also latch with nothing
-     * to fold — the seat that ran out was not on turn — and that alone still counts as one expiry;
-     * [actOn] is handed a synthetic, unplayed [TurnGiveUp] for exactly that case.
+     * A candidate is judged entirely inside [actOn]'s own lock: [Room.giveUpTurn] decides what,
+     * if anything, the seat on turn owes — a played decision, latching it into [Room.absentSeats]
+     * when it is also away, or, when both seats are now gone, the room [RoomState.ABANDONED]
+     * instead, carrying no frames at all. [Room.giveUpTurn] is this pass's sole author of what
+     * "both gone" means: nothing here repeats that check on its own, because wiring
+     * [TurnGiveUp.room] through [actOn]'s write-back — rather than discarding it the way a
+     * single-pass [act] call used to — is what lets the wider question [Room.giveUpTurn] asks
+     * decide it (`TASK-130809`).
      *
-     * Before the fold's own frames, this prepends `Addressed(otherSeat, room.presenceOf(expiredSeat,
-     * now))` — the same `now` read above — for whichever single seat newly latched into
-     * [Room.absentSeats] this pass, so the seat that stayed is told `ABSENT` before the frame
-     * explaining why (`ADR-0028` §5, §10). Nothing is prepended for a room [Room.giveUpTurn]
-     * abandoned instead — there is no other seat left to receive it — nor for a room where no seat
-     * newly latched, such as an already-absent seat's fresh decision coming due again.
+     * Before the fold's own frames, this prepends `Addressed(otherSeat, room.presenceOf(seat))`
+     * for whichever single seat newly latched into [Room.absentSeats] this pass, so the seat that
+     * stayed is told `ABSENT` before the frame explaining why (`ADR-0028` §5, §10). Nothing is
+     * prepended for a room [Room.giveUpTurn] abandoned instead — there is no other seat left to
+     * receive it — nor for a room where no seat newly latched, such as an already-absent seat's
+     * fresh decision coming due again.
      *
      * Every candidate's [actOn] call is isolated in its own `try`/`catch`: a room whose call throws
      * is logged and skipped, so one room's failure — a sink outage while its fold finishes a duel is
@@ -632,48 +622,10 @@ public class RoomRegistry(
                 actOn(code) { room ->
                     readRoom = room
                     if (!isTurnClockCandidate(room, now)) return@actOn null
-                    val expired = room.expireGrace(now)
-                    when (val turnGiveUp = expired.giveUpTurn(now, handSeeds)) {
-                        // giveUpTurn answers null both for a room with nothing to give up and for
-                        // one not PLAYING at all. Only a PLAYING room may be forced through a
-                        // synthetic step — checking `expired.state`, not merely `expired.runner`,
-                        // is what this depends on: a WAITING room's host can disconnect before a
-                        // guest ever joins (RoomRegistry.disconnect allows it) and carries no
-                        // runner at all, but a FINISHED room carries a *stale, outcome-bearing*
-                        // one that would pass a null-check alone. Feeding that runner into actOn
-                        // reaches `restarted.finish(now)` on an already-FINISHED room, which
-                        // throws `Room.finish`'s own `check(state == PLAYING)` — after
-                        // `recording[code]` is already claimed and before the `try`/`finally` that
-                        // clears it ever runs, leaking that claim forever (`TASK-130809`, review).
-                        // ABANDONED is excluded for the identical reason, not WAITING's: `Room.abandon()`
-                        // never clears `runner`, and `Room.disconnect()` carries no state guard of its
-                        // own, so an already-abandoned room that later picks up a stray grace period
-                        // would hit the same claim-leak shape if forced through here.
-                        //
-                        // Only the FINISHED/ABANDONED half of this exclusion is testable — leaking
-                        // `recording[code]` is an observable defect, proved by
-                        // `aFinishedRoomsLateDisconnectDoesNotLeakTheRecordingClaim`. The WAITING half
-                        // is deliberately unpinned: without the state check, `expired.runner` alone is
-                        // `null` and this branch would throw an NPE instead — but that throw is caught
-                        // by this method's own per-room `catch` below, before any write-back, so the
-                        // room is skipped either way. The throw is observationally inert apart from a
-                        // log line: same `expiries`, same room state, same `reap()` outcome.
-                        // `aWaitingRoomsDisconnectedHostIsLeftForTheIdleTimeout` documents the room
-                        // being left alone for its own idle timeout in reap(); it neither claims nor
-                        // is able to distinguish this guard from an unconditional `expired.runner!!`.
-                        //
-                        // Neither excluded room needs the sweep: a WAITING room is left for its own
-                        // idle timeout in reap(), a FINISHED or ABANDONED one for its own
-                        // [RoomTimeouts.finishedMillis] — and nothing downstream reads presence for any
-                        // of the three states, since resume refuses all of them.
-                        null -> if (expired !== room && expired.state == RoomState.PLAYING) {
-                            val runner = checkNotNull(expired.runner) { "a PLAYING room always carries a runner" }
-                            TurnGiveUp(expired, DuelStep(runner, emptyList()))
-                        } else {
-                            null
-                        }
-                        else -> turnGiveUp
-                    }
+                    // giveUpTurn answers null both for a room with nothing to give up and for one
+                    // not PLAYING at all — the latter needs no separate guard here, since it is
+                    // giveUpTurn's own first check, before it ever touches the room.
+                    room.giveUpTurn(now, handSeeds)
                 }
             } catch (cancellation: CancellationException) {
                 throw cancellation
@@ -689,7 +641,7 @@ public class RoomRegistry(
             val presence = expiredSeat?.let { seat ->
                 val otherSeat = 1 - seat
                 if (otherSeat == 0 || room.guest != null) {
-                    Addressed(otherSeat, room.presenceOf(seat, now))
+                    Addressed(otherSeat, room.presenceOf(seat))
                 } else {
                     null
                 }
@@ -701,16 +653,17 @@ public class RoomRegistry(
 
     /**
      * Whether [room], read without its lock, is worth [expireTurnClocks] taking that lock for: a
-     * seat still counting down a disconnect grace window (`ADR-0013`) this pass might latch, or an
-     * open decision whose own deadline needs [Room.giveUpTurn]'s attention — because [now] has
-     * reached it, or because the seat it names already sits in [Room.absentSeats] and so owns no
-     * deadline worth waiting out again, only a fresh one [Room.clocked] keeps handing it.
+     * seat away on a socket that is down, which [Room.giveUpTurn] might latch once its turn comes
+     * and goes, or an open decision whose own deadline needs [Room.giveUpTurn]'s attention —
+     * because [now] has reached it, or because the seat it names already sits in
+     * [Room.absentSeats] and so owns no deadline worth waiting out again, only a fresh one
+     * [Room.clocked] keeps handing it.
      *
      * @param room The room to judge; called both before [room]'s lock is taken and again once it is.
      * @param now The instant every candidate in the same [expireTurnClocks] pass is judged against.
      */
     private fun isTurnClockCandidate(room: Room, now: Long): Boolean {
-        if (room.gracePeriods.isNotEmpty()) return true
+        if (room.awaySeats.isNotEmpty()) return true
         val deadline = room.turnDeadline ?: return false
         return now >= deadline.expiresAt || deadline.seat in room.absentSeats
     }
