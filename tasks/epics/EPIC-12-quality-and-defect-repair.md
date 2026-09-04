@@ -147,8 +147,18 @@ arithmetic. (`DEC-086`, raised by `ADR-0092` and blocking nothing here, was answ
 the bar is two facts — the proofs of record load the built bundle, and recovery is completable
 in the offered deployment — and readiness stays the human's judgment made by reading, so no
 round this epic runs may be cited as either fact or as readiness. It raised `DEC-087` — the
-architect's, the mechanism that serves the bundle to the proofs — which also blocks nothing
-here; until it is answered, every round record honestly describes `npm run dev`.)
+architect's, the mechanism that serves the bundle to the proofs — **answered on 2026-09-04 by
+[`ADR-0117`](../../docs/adr/ADR-0117-the-proofs-of-record-load-the-built-bundle.md)**, which is
+where this epic's rounds change: `vite preview` serves `dist/` on `http://localhost:4173`,
+`scripts/qa/stack.sh wait-web` defaults to `built` and proves the mode off the artifact rather than
+the port, and **every round record names its artifact beside its network layout**. A round may still
+run `dev` and say so; such a record may not be offered toward `ADR-0093` §1a. Two things touch this
+epic's own arithmetic and neither is a gate — `ADR-0089` §2b stands unamended: `ADR-0117` §6 extends
+`ADR-0089` §4 by one clause, so a `dev` finding whose conclusion turns on load latency is re-read on
+`built` before it is filed; and the production build drops `StrictMode`'s double-invoke, so a round
+may disagree with its own history for neither a defect nor a repair, which `ADR-0089` §4's
+harness/product classifier has no term for. It registered `DEC-126` — what serves the bundle in the
+**offered deployment** — which blocks nothing here either.)
 
 (`DEC-092`, raised by `TASK-120907` and gating only that ticket, was answered on 2026-08-30 by
 [`ADR-0094`](../../docs/adr/ADR-0094-opening-the-invite-is-taking-the-seat.md): the join path
