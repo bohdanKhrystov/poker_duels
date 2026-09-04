@@ -366,4 +366,44 @@ describe("booting the duel client", () => {
     const state = client.store.getState();
     expect(state.roomCode).toBe("ABCDEFGH");
   });
+
+  it("awaits a room when the address carried a code", () => {
+    const { client } = bootOverFakeSocket("ABCDEFGH");
+    expect(client.roomAwaited).toBe(true);
+  });
+
+  it("awaits a room when the tab remembers one", () => {
+    const socket = new FakeSocket();
+    const storage = inMemoryStorage();
+    writeRoomCode(storage, "ZYXWVUTS");
+
+    const client = bootDuelClient({
+      connect: (onMessage) =>
+        openConnection({
+          socket: socket.asWebSocket(),
+          storage,
+          onMessage,
+        }),
+      joinRoomCode: null,
+      storage,
+    });
+
+    expect(client.roomAwaited).toBe(true);
+  });
+
+  it("awaits no room when the address carried none and the tab remembers none", () => {
+    const { client } = bootOverFakeSocket(null);
+    expect(client.roomAwaited).toBe(false);
+  });
+
+  it("is decided at construction and not by a later RoomJoined", () => {
+    const { socket, client } = bootOverFakeSocket(null);
+    expect(client.roomAwaited).toBe(false);
+
+    socket.open();
+    socket.receive(WELCOME);
+    socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
+
+    expect(client.roomAwaited).toBe(false);
+  });
 });

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131104
 title: The provider carries roomAwaited, and main.tsx hands it over
 type: task
-status: backlog
+status: ready
 parent: STORY-1311
 module: web-client
 estimate: XS

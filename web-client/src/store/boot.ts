@@ -26,6 +26,14 @@ export interface DuelClient {
    * socket, never the current one.
    */
   readonly forgetRoom: () => void;
+  /**
+   * This tab is asking the server about a room and has not been answered.
+   * It is used only to withhold, never to assert. A remembered room code is
+   * a code the server minted; the client does not claim to be seated on the
+   * strength of it. It says only: do not act yet, the server has not answered
+   * (ADR-0114 §5).
+   */
+  readonly roomAwaited: boolean;
 }
 
 export interface BootOptions {
@@ -72,6 +80,9 @@ export function bootDuelClient(options: BootOptions): DuelClient {
   // reaches a player who mistyped a code in the lobby, and that must not throw
   // away a room this tab is seated in.
   let rejoining = false;
+  const roomAwaited =
+    (options.joinRoomCode ??
+      (options.storage ? readRoomCode(options.storage) : null)) !== null;
   const connection = options.connect((message) => {
     store.apply(message);
     // A message-triggered send is a boot reaction, never a screen effect: one
@@ -81,7 +92,9 @@ export function bootDuelClient(options: BootOptions): DuelClient {
       // The invite wins over the memory: a player who has just followed a link to
       // a new room means that room, whatever this browser was in last. The memory
       // is what answers for the host, whose URL never carried a code, and for any
-      // tab whose socket has been reopened under it.
+      // tab whose socket has been reopened under it. This read is independent of
+      // the roomAwaited computation at construction — it re-reads the memory for
+      // the socket's own reason (a socket reopened under a tab that was seated later).
       const remembered = options.storage ? readRoomCode(options.storage) : null;
       const code = options.joinRoomCode ?? remembered;
       if (code !== null) {
@@ -121,5 +134,6 @@ export function bootDuelClient(options: BootOptions): DuelClient {
         forgetRoomCode(options.storage);
       }
     },
+    roomAwaited,
   };
 }
