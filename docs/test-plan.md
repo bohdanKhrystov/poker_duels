@@ -101,7 +101,7 @@ loop to ignore it. Read the pair from the DOM first, then assert on that exact p
 
 ### Reconnect
 
-A navigation **is** a disconnect on this browser: `open` closes the socket and the server starts the other seat's grace window within milliseconds, measured 2026-09-01. It differs from `close` only in that the client resumes immediately and the window clears again.
+A navigation **is** a disconnect on this browser: `open` closes the socket. It differs from `close` only in that the client resumes immediately.
 
 | id | do | expect | fails if |
 | --- | --- | --- | --- |
@@ -111,13 +111,13 @@ A navigation **is** a disconnect on this browser: `open` closes the socket and t
 
 ### Presence
 
-`CORE-18` and `CORE-19` check the away marking appears when a player closes and clears when they return. Nothing checked that it stays away when nobody has left. A case which only asserts a thing appears is passed by a product that shows it always, so the following cases test that the mark does not appear absent a departure, that a duel remains playable after an idle grace window, and that the server enforces the paused state a client displays.
+`CORE-18` and `CORE-19` check the away marking appears when a player closes and clears when they return. Nothing checked that it stays away when nobody has left. A case which only asserts a thing appears is passed by a product that shows it always, so the following cases test that the mark does not appear absent a departure and that a duel remains playable and actions are applied after extended idle periods, measured against the turn clock and timebank.
 
 | id | do | expect | fails if |
 | --- | --- | --- | --- |
 | `CORE-21` | both seated, nobody closes and nobody navigates; `absent "is away"` and `absent "Timed out"` on **both** screens for 75s | neither screen ever marks the other away or timed out | either screen marks a rival who never left |
-| `CORE-22` | neither seat acts for 75s — longer than `RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS` — then the seat to act acts | the action is accepted and the hand advances; the duel is still playable after an idle grace window | the action is refused, or a seat was folded while its player stayed connected |
-| `CORE-23` | while a screen carries `The duel is paused.`, that seat clicks its own action | the action is **refused** — `ADR-0028` §6's `DUEL_PAUSED` — because a duel the table calls paused is paused on the server | the action is accepted, proving the screen said paused while the server was not |
+| `CORE-22` | neither seat acts for 75s — longer than `RoomTimeouts.DEFAULT_TURN_MILLIS` plus `DEFAULT_TIMEBANK_MILLIS` — then the seat to act acts | the action is accepted and the hand advances | the action is refused, or a seat was folded while its player stayed connected |
+| `CORE-23` | A and B are playing; B closes and does not reconnect; A (the seat to act) clicks its action | the action is accepted and the hand advances — a connected seat can act when its rival is disconnected | the action is refused, or the screen says the duel is paused |
 
 ### Lobby
 
