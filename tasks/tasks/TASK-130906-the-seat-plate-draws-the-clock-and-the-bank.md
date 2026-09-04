@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130906
 title: The seat plate draws the countdown and the seat's timebank, and speaks neither
 type: task
-status: backlog
+status: ready
 parent: STORY-1309
 module: web-client
 estimate: S

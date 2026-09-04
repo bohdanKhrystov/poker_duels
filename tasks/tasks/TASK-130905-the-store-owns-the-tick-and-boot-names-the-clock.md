@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130905
 title: The store arms the second hand, and boot names both the clock and the period
 type: task
-status: ready
+status: done
 parent: STORY-1309
 module: web-client
 estimate: S

@@ -67,6 +67,34 @@ function manualSchedule(): {
   };
 }
 
+/**
+ * `manualSchedule`'s own idiom, with the delay it was last armed at also exposed — what
+ * `ticks once every tickMillis while a clock is live` checks the clock's own period against.
+ */
+function manualClockSchedule(): {
+  readonly schedule: Schedule;
+  readonly lastDelay: () => number;
+  readonly fireNext: () => void;
+} {
+  let due: (() => void) | null = null;
+  let delay = -1;
+  return {
+    schedule: (run, delayMillis) => {
+      due = run;
+      delay = delayMillis;
+    },
+    lastDelay: () => delay,
+    fireNext: () => {
+      const run = due;
+      due = null;
+      if (run === null) {
+        throw new Error("manualClockSchedule: nothing was scheduled");
+      }
+      run();
+    },
+  };
+}
+
 describe("the duel store", () => {
   it("starts at the reducer's initial state", () => {
     const store = createDuelStore();
@@ -253,5 +281,128 @@ describe("the duel store", () => {
         allInTo: 1500,
       },
     });
+  });
+
+  it("reads the clock it was given, never the host's own", () => {
+    let reading = 1000;
+    const now = () => reading;
+    const store = createDuelStore({ now });
+
+    store.apply({
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 30000,
+      bankRemainingMillis: [60000, 60000],
+    });
+    expect(store.getState().turnClock?.turnEndsAt).toBe(31000);
+
+    reading = 5500;
+    store.apply({
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 2,
+      turnRemainingMillis: 30000,
+      bankRemainingMillis: [60000, 60000],
+    });
+    expect(store.getState().turnClock?.turnEndsAt).toBe(35500);
+  });
+
+  it("arms no clock tick before a TurnClock has arrived", () => {
+    const schedule = vi.fn();
+    const store = createDuelStore({ tickMillis: 1000, schedule });
+
+    store.apply(ROOM_JOINED);
+    store.apply({ type: "Snapshot", view: samplePlayerView() });
+
+    expect(schedule).not.toHaveBeenCalled();
+  });
+
+  it("ticks once every tickMillis while a clock is live", () => {
+    const { schedule, lastDelay, fireNext } = manualClockSchedule();
+    let reading = 1000;
+    const now = () => reading;
+    const store = createDuelStore({ tickMillis: 1000, schedule, now });
+
+    store.apply({
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 30000,
+      bankRemainingMillis: [60000, 60000],
+    });
+    expect(lastDelay()).toBe(1000);
+
+    reading = 2000;
+    fireNext();
+    expect(store.getState().nowMillis).toBe(2000);
+
+    reading = 3000;
+    fireNext();
+    expect(store.getState().nowMillis).toBe(3000);
+  });
+
+  it("keeps exactly one clock tick pending", () => {
+    const schedule = vi.fn();
+    const store = createDuelStore({
+      tickMillis: 1000,
+      schedule,
+      now: () => 1000,
+    });
+
+    store.apply({
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 30000,
+      bankRemainingMillis: [60000, 60000],
+    });
+    store.apply({
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 2,
+      turnRemainingMillis: 30000,
+      bankRemainingMillis: [60000, 60000],
+    });
+
+    // Counted, not inspected: a second timer stacked here would still paint a correct
+    // countdown, so only the call count catches it.
+    expect(schedule).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops arming once the countdown has reached zero", () => {
+    const manual = manualSchedule();
+    const schedule = vi.fn(manual.schedule);
+    let reading = 1000;
+    const now = () => reading;
+    const store = createDuelStore({ tickMillis: 1000, schedule, now });
+
+    store.apply({
+      type: "TurnClock",
+      seat: 0,
+      handNumber: 1,
+      actionSequence: 1,
+      turnRemainingMillis: 1000,
+      bankRemainingMillis: [0, 0],
+    });
+    expect(schedule).toHaveBeenCalledTimes(1);
+
+    // expiresAt is 2000: this reading is already past it, but tickClock compares against the
+    // reading state is still holding (1000), so exactly this tick lands and re-arms once more.
+    reading = 3000;
+    manual.fireNext();
+    expect(store.getState().nowMillis).toBe(3000);
+    expect(schedule).toHaveBeenCalledTimes(2);
+
+    // State now holds 3000, already past expiresAt: this tick lands nothing, and no further
+    // schedule call follows — a finished duel does not re-render the tab once a second forever.
+    manual.fireNext();
+    expect(store.getState().nowMillis).toBe(3000);
+    expect(schedule).toHaveBeenCalledTimes(2);
   });
 });
