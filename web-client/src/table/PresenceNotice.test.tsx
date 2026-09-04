@@ -1,12 +1,8 @@
 import { render } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { PresenceNotice } from "./PresenceNotice";
 
 describe("the presence notice", () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it("counts nothing once the window has run out", () => {
     const { container, getByText } = render(
       <PresenceNotice presence="ABSENT" returned={false} />,
@@ -36,15 +32,12 @@ describe("the presence notice", () => {
     expect(container.textContent).not.toMatch(/\d/);
   });
 
-  it("the countdown is separated from the line it counts under", () => {
-    vi.useFakeTimers();
-
-    const { container } = render(
+  it("says the away line, and counts nothing", () => {
+    const { container, getByText } = render(
       <PresenceNotice presence="AWAY" returned={false} />,
     );
 
-    // The rendered text should not contain "paused." immediately followed by a digit
-    // (the bug was "paused.47" with no space)
-    expect(container.textContent).not.toMatch(/paused\.\d/);
+    getByText("Your rival is away.");
+    expect(container.textContent).not.toMatch(/\d/);
   });
 });
