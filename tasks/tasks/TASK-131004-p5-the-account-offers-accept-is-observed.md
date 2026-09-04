@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131004
 title: P5 — the account offer's accept, observed rather than derived
 type: task
-status: backlog
+status: ready
 parent: STORY-1310
 module: web-client
 estimate: XS

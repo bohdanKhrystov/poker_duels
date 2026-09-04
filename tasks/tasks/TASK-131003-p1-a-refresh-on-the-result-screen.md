@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131003
 title: P1 — a refresh on the result screen
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: XS
@@ -89,6 +89,31 @@ reading.
 **`TASK-131010` is confirmed against a real daemon**: `db-up` succeeded in 1.7 s and the container
 came up as `agent-<id>-postgres-1`, the compose-derived name. That was the one doubt the merged fix
 still carried.
+
+## The two drives disagree, and one difference separates them
+
+`P1` now carries two honest readings that contradict each other. Both used `record`/`frames`, both
+saw a **single non-mutating frame**, so neither is a sampling miss of a fast flash — they are two
+settled outcomes for the same reload.
+
+| drive | A's screen before the reload | after the reload |
+| --- | --- | --- |
+| first (worktree) | **Victory**, `+1 duel coin`, **plus the account offer** — *"Your duel coins are only in this browser … Keep them with a password / Not now"* | lobby, *"No duel room has that code."* |
+| second (primary) | **Defeat**, `−1 duel coin`, **no account offer** | the result screen, unchanged |
+
+Every driven action was identical — A created the room, B joined by link, both went all-in preflop,
+one hand ended it. The only difference is **who won the coin flip**, and therefore **whether the
+account offer was on screen when the reload happened**. The offer appears only to a winner, because
+only a winner has coins to lose.
+
+**This is a hypothesis, not a finding.** Nobody has driven the winner's screen twice, and a single
+pair of runs cannot separate *the offer was showing* from *A held the winning seat* from plain
+non-determinism. But it is the one observable difference, and it is testable: drive this path again
+and record **which seat won** alongside the reading.
+
+It also means `P5` — the account offer's accept, `TASK-131004` — is no longer only about `P5`. If
+the offer's presence changes what a reload does, that drive is the one most likely to expose it.
+Whoever drives either path should note the winner explicitly.
 
 ## Files
 
