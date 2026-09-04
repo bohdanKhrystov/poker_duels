@@ -2,7 +2,7 @@
 id: STORY-1309
 title: The table counts down, and the pause leaves the screen
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: web-client
 labels: [client, table, clock]
