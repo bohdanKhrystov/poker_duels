@@ -42,14 +42,7 @@ import kotlin.time.Duration.Companion.seconds
 /** A fixed seed, so a test that reaches the opening hand sees the same cards every run. */
 private val fixedSeeds = HandSeedSource { 7L }
 
-/**
- * Deliberately not [RoomTimeouts.DEFAULT_DISCONNECT_GRACE_MILLIS]: a test that checks a grace
- * deadline against this constant, rather than a hard-coded literal, is proving the value travelled
- * from the registry's configured timeouts.
- */
-private const val TEST_DISCONNECT_GRACE_MILLIS = 45_000L
-
-/** A [RoomRegistry] over [clock], with a distinctive, test-only disconnect grace window. */
+/** A [RoomRegistry] over [clock], with the shipped waiting and finished timeouts. */
 private fun testRoomRegistry(clock: MutableClock): RoomRegistry =
     RoomRegistry(
         RandomRoomCodeSource(),
@@ -57,7 +50,6 @@ private fun testRoomRegistry(clock: MutableClock): RoomRegistry =
         RoomTimeouts(
             waitingMillis = RoomTimeouts.DEFAULT_WAITING_MILLIS,
             finishedMillis = RoomTimeouts.DEFAULT_FINISHED_MILLIS,
-            disconnectGraceMillis = TEST_DISCONNECT_GRACE_MILLIS,
         ),
         seeds = fixedSeeds,
     )
@@ -161,13 +153,13 @@ private suspend fun awaitSize(sessions: SessionRegistry, expected: Int) =
     }
 
 /**
- * `TASK-020813`: a socket whose connection closes starts its seat's disconnect grace window
- * (`ADR-0013`) in the room it occupied — unless the close was `ADR-0018` adoption by that same
- * player's newer socket, or the socket never occupied a room at all.
+ * `TASK-020813`: a socket whose connection closes marks its seat away in the room it occupied —
+ * unless the close was `ADR-0018` adoption by that same player's newer socket, or the socket
+ * never occupied a room at all.
  */
 class DuelSocketDisconnectTest {
     @Test
-    fun closingASocketStartsThatSeatsWindow(): Unit = testApplication {
+    fun closingASocketMarksThatSeatAway(): Unit = testApplication {
         val rooms = testRoomRegistry(MutableClock())
         application {
             module()
@@ -179,31 +171,9 @@ class DuelSocketDisconnectTest {
             val setup = client.startDuel()
 
             setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isNotEmpty() }
 
-            assertEquals(setOf(1), rooms.get(setup.code)!!.gracePeriods.keys)
-            assertTrue(rooms.get(setup.code)!!.isPaused)
-        }
-    }
-
-    @Test
-    fun theWindowIsTheConfiguredOne(): Unit = testApplication {
-        val clock = MutableClock(2_000L)
-        val rooms = testRoomRegistry(clock)
-        application {
-            module()
-            duelSocket(testDeps(rooms = rooms))
-        }
-        val client = createClient { install(WebSockets) }
-
-        withTimeout(5.seconds) {
-            val setup = client.startDuel()
-
-            setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
-
-            val deadline = rooms.get(setup.code)!!.gracePeriods.getValue(1)
-            assertEquals(clock.nowMillis() + TEST_DISCONNECT_GRACE_MILLIS, deadline)
+            assertEquals(setOf(1), rooms.get(setup.code)!!.awaySeats)
         }
     }
 
@@ -227,7 +197,7 @@ class DuelSocketDisconnectTest {
             val yourTurn = setup.hostOpening.filterIsInstance<ServerMessage.YourTurn>().single()
 
             setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isNotEmpty() }
 
             setup.host.send(
                 Frame.Text(
@@ -277,16 +247,16 @@ class DuelSocketDisconnectTest {
             // answer rather than a read that simply beat the suspending call to the punch; a room
             // that really did get wrongly paused shows it well within this window.
             withTimeoutOrNull(500.milliseconds) {
-                while (rooms.get(setup.code)?.isPaused != true) delay(10)
+                while (rooms.get(setup.code)?.awaySeats?.isNotEmpty() != true) delay(10)
             }
 
-            assertFalse(rooms.get(setup.code)!!.isPaused)
-            assertTrue(rooms.get(setup.code)!!.gracePeriods.isEmpty())
+            assertFalse(rooms.get(setup.code)!!.awaySeats.isNotEmpty())
+            assertTrue(rooms.get(setup.code)!!.awaySeats.isEmpty())
         }
     }
 
     @Test
-    fun aSocketThatEnteredNoRoomPausesNothing(): Unit = testApplication {
+    fun aSocketThatEnteredNoRoomMarksNobodyAway(): Unit = testApplication {
         val rooms = testRoomRegistry(MutableClock())
         val sessions = SessionRegistry()
         application {
@@ -307,7 +277,7 @@ class DuelSocketDisconnectTest {
             third.close()
             awaitSize(sessions, 2)
 
-            assertFalse(rooms.get(setup.code)!!.isPaused)
+            assertFalse(rooms.get(setup.code)!!.awaySeats.isNotEmpty())
         }
     }
 
@@ -324,7 +294,7 @@ class DuelSocketDisconnectTest {
             val setup = client.startDuel()
 
             setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isNotEmpty() }
 
             val presence = setup.host.drainServerMessages().filterIsInstance<ServerMessage.OpponentPresence>()
 
@@ -351,7 +321,7 @@ class DuelSocketDisconnectTest {
             val setup = client.startDuel()
 
             setup.host.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isNotEmpty() }
 
             val presence = setup.guest.drainServerMessages().filterIsInstance<ServerMessage.OpponentPresence>()
 
@@ -377,7 +347,7 @@ class DuelSocketDisconnectTest {
             val setup = client.startDuel()
 
             setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isNotEmpty() }
 
             val presence =
                 setup.guest.drainServerMessagesAfterOwnClose().filterIsInstance<ServerMessage.OpponentPresence>()
@@ -403,7 +373,7 @@ class DuelSocketDisconnectTest {
             third.nextServerMessage()
 
             setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isNotEmpty() }
 
             val presence = third.drainServerMessages().filterIsInstance<ServerMessage.OpponentPresence>()
             assertTrue(presence.isEmpty())
@@ -436,7 +406,7 @@ class DuelSocketDisconnectTest {
             lobby.completeHandshake("host")
 
             setup.guest.close()
-            awaitRoom(rooms, setup.code) { it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isNotEmpty() }
 
             assertTrue(lobby.drainServerMessages().isEmpty())
         }
@@ -458,7 +428,7 @@ class DuelSocketDisconnectTest {
             // handshake, the abrupt drop DuelSocket's own finally-block comment distinguishes
             // from the clean path every other test in this file takes.
             setup.guest.cancel()
-            awaitRoom(rooms, setup.code) { it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isNotEmpty() }
 
             val presence = setup.host.drainServerMessages().filterIsInstance<ServerMessage.OpponentPresence>()
 

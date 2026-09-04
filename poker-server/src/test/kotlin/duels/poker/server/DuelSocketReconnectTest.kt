@@ -133,7 +133,7 @@ private suspend fun awaitRoom(rooms: RoomRegistry, code: RoomCode, until: (Room)
  */
 private suspend fun dropGuest(rooms: RoomRegistry, guest: DefaultClientWebSocketSession, code: RoomCode) {
     guest.close()
-    awaitRoom(rooms, code) { it.isPaused }
+    awaitRoom(rooms, code) { it.awaySeats.isNotEmpty() }
 }
 
 /**
@@ -238,9 +238,9 @@ class DuelSocketReconnectTest {
             dropGuest(rooms, setup.guest, setup.code)
 
             client.reconnectGuest(setup.code)
-            awaitRoom(rooms, setup.code) { !it.isPaused }
+            awaitRoom(rooms, setup.code) { it.awaySeats.isEmpty() }
 
-            assertFalse(rooms.get(setup.code)!!.isPaused)
+            assertFalse(rooms.get(setup.code)!!.awaySeats.isNotEmpty())
 
             setup.host.send(
                 Frame.Text(
@@ -266,14 +266,14 @@ class DuelSocketReconnectTest {
         withTimeout(5.seconds) {
             val setup = client.startDuel()
             dropGuest(rooms, setup.guest, setup.code)
-            val originalDeadline = rooms.get(setup.code)!!.gracePeriods.getValue(1)
+            assertTrue(rooms.get(setup.code)!!.awaySeats.contains(1))
 
             val (_, response) = client.joinRoom("third", setup.code.value)
             val failure = response as ServerMessage.Failure
 
             assertEquals(ProtocolError.ROOM_FULL, failure.error)
-            // The point: a refusal that quietly cleared the window would still pass the line above.
-            assertEquals(originalDeadline, rooms.get(setup.code)!!.gracePeriods.getValue(1))
+            // The point: a refusal that quietly cleared the away mark would still pass the line above.
+            assertTrue(rooms.get(setup.code)!!.awaySeats.contains(1))
         }
     }
 
@@ -324,11 +324,11 @@ class DuelSocketReconnectTest {
     }
 
     /**
-     * `TASK-021307`, `ADR-0044` §5: an offer made while the opponent was inside its disconnect
-     * grace window is not lost — it is restated to the returning socket, but only after that
-     * socket's own [ServerMessage.DuelFinished], never before it. The order is what this test
-     * proves, via the two frames' *indices* rather than their mere presence: "both arrived" is
-     * true of the order this ticket exists to prevent.
+     * `TASK-021307`, `ADR-0044` §5: an offer made while the opponent's socket was down is not
+     * lost — it is restated to the returning socket, but only after that socket's own
+     * [ServerMessage.DuelFinished], never before it. The order is what this test proves, via the
+     * two frames' *indices* rather than their mere presence: "both arrived" is true of the order
+     * this ticket exists to prevent.
      */
     @Test
     fun aStandingOfferIsRestatedAfterTheReturningSocketsDuelFinished(): Unit = testApplication {
