@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130912
 title: The presence notice stops testing a sentence that left, and tests the one that stayed
 type: task
-status: ready
+status: done
 parent: STORY-1309
 module: web-client
 estimate: XS
