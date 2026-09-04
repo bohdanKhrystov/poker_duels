@@ -2,8 +2,8 @@
  * The clock's figure — seconds under a minute as bare numerals, minutes and up as `m:ss`.
  *
  * Copied from the merged card `design/components/seat-and-pot.html` (ADR-0024 §3).
- * The bank's figure differs only at zero: a spent clock reads `0`, an empty bank reads `0:00`
- * (ADR-0108 §5).
+ * The two shapes diverge below a minute — the clock drops the `0:` prefix — and coincide
+ * at a minute and above where both use `m:ss` (ADR-0108 §5).
  *
  * @param seconds Whole seconds remaining, clamped to zero if negative.
  * @returns The figure to show — `24`, `6`, `2:47`, `0`.
@@ -22,9 +22,9 @@ export function clockFigure(seconds: number): string {
  * The bank's figure — always `m:ss`, even at zero.
  *
  * Copied from the merged card `design/components/seat-and-pot.html` (ADR-0024 §3).
- * Both seats' banks are public facts of the table (ADR-0108 §5), so the figure carries
- * the `m:ss` format to maintain consistency and allow the player to distinguish a spent
- * clock (which reads as `0`) from an exhausted bank (which reads as `0:00`).
+ * Both seats' banks are public facts of the table (ADR-0108 §5), drawn in `m:ss` format
+ * to allow the player to distinguish a spent clock (which reads as `0`) from an exhausted
+ * bank (which reads as `0:00`).
  *
  * @param seconds Whole seconds remaining, clamped to zero if negative.
  * @returns The figure to show — `3:00`, `1:12`, `0:00`.
