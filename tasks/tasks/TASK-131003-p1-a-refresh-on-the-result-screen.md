@@ -58,6 +58,38 @@ what it was.
 returning device by `pd.deviceId`, so a reused profile rejoins its old room with storage cleared.
 Tear down with `chrome-down 9232 9233`, `db-down`, and stopping the background tasks.
 
+## A partial reading already taken, to corroborate rather than rediscover
+
+A worktree-isolated dispatch drove the **bare** layout to completion and then stopped, correctly,
+because two of the six prescribed readings were unobtainable in its sandbox. It wrote **nothing** to
+`P1`. What it observed, and what the next attempt should confirm or contradict:
+
+**A reload on the result screen loses the result.** The `open` first paint after reload showed the
+lobby carrying *"No duel room has that code."* — and `record` then `frames` captured **one frame
+only**, so this is the settled state rather than a flash corrected a moment later. That is the first
+of `ADR-0112` §6's three predicted failure modes, **not** the *survives* expectation in §1.
+
+Before the reload, the result screen read `Victory / +1 duel coin / 1 hand · You 20,000 · Your rival
+0`, so a genuine `FINISHED` room with `outcome` standing was reached.
+
+**Treat this as a prior, not as the answer.** It is one layout, from one run, missing both
+`location.hash` reads. If your drive contradicts it, say so plainly — a disagreement between two
+honest drives is a finding in itself, and far more useful than a row that quietly matches what came
+before.
+
+**Two blockers that were the sandbox, not the product**, both now removed: the `eval` verb is refused
+to worktree-isolated agents (so `location.hash` and `localStorage` reads were impossible), and `kill`
+was refused (so port 5173 could not be freed to move Vite aside for the delayed layout). It also
+found a trap worth avoiding: an old Vite holding `[::1]:5173` and a relay on `127.0.0.1:5173`
+coexist without an address-in-use error, and `localhost` resolves to the **IPv6** one — so a
+*delayed* reading taken that way is indistinguishable from *bare* for reasons having nothing to do
+with the product. Check what `localhost:5173` actually resolves to before trusting a delayed
+reading.
+
+**`TASK-131010` is confirmed against a real daemon**: `db-up` succeeded in 1.7 s and the container
+came up as `agent-<id>-postgres-1`, the compose-derived name. That was the one doubt the merged fix
+still carried.
+
 ## Files
 
 | File | Action |
