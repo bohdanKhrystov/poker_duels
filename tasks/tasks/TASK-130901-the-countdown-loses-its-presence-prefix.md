@@ -3,7 +3,7 @@ schema: 2
 id: TASK-130901
 title: presence-countdown.ts becomes countdown.ts, and its citation re-points
 type: task
-status: ready
+status: done
 parent: STORY-1309
 module: web-client
 estimate: XS
