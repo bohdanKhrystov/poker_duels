@@ -114,6 +114,78 @@ has content — the first paint, and the only pre-frame observation available ac
 `record` armed immediately after `open`, then `frames`, catches every transition from there on.
 Both belong in the PR body verbatim.
 
+## What this found
+
+Read together, the seven rows say the human's reported symptom — a refresh bounces to the lobby
+and stays there — did not reproduce on any of the six named paths, on any layout: `P1`'s redrive
+below settles its own disagreement in `bare`'s favour, `P2` shows no lobby on `bare`, and `P5`,
+`P6a` and `P6b` all restore the address correctly on `bare`. Two defects nobody named going in did
+reproduce, and one is now well-corroborated. First, by three independent routes — `P2` mid-runout,
+`P4` a plain reload, `P6b` a mailed link — a resumed client under real latency paints a stale
+`Waiting for your rival` screen naming a room that is not actually waiting: finished, in `P2`'s
+case, still `PLAYING` in `P4`'s and `P6b`'s. Three routes agreeing is materially stronger evidence
+than any one of them alone, and it is `ADR-0112` §6's own "no lobby on the way" failing, not
+`ADR-0102` §5 — every one of the three still lands on the true state in the end. Second, `P5` found
+the `AccountOffer` accept press matches neither of `ADR-0112` §5's named outcomes — not the account
+screen, not the derived bounce — but a third: the offer is visibly spent and nothing happens for at
+least 15s, identically on both layouts.
+
+This ticket drove `P1`'s `bare` reload again rather than arguing about it, at `c655859b`, against
+the running stack's own bare layout (`http://localhost:5273/` — `5173` is this session's standing
+`300ms` relay, not bare Vite): two fresh profiles through a held room, an all-in/call preflop
+finish, `record` armed on the shoving host's own tab before the call, then, once the host's held
+result screen read `Defeat / −1 duel coin / 1 hand · You 0 · Your rival 20,000 / Rematch / Back to
+the lobby`, two separate genuine `Page.navigate` reloads of that same address — each confirmed
+genuine by a changed `performance.timeOrigin` and a fresh `navigate` entry, not a same-document hash
+write. Both times `open`'s own first paint already showed the result screen intact; `record`/
+`frames` afterward held one unchanging frame each time; `location.hash` read empty both times; and
+an explicit `absent` check held `No duel room has that code.` off screen for 4s after each reload.
+That reproduces this row's `SURVIVES` reading cleanly, twice. It does **not** reproduce the row's
+other reading, and it does not explain it either: the stale-room mechanism `P2`/`P4`/`P6b` found
+produces a `Waiting for your rival` screen, not the `No duel room has that code.` sentence the other
+`P1` drive reported — which reads like an unknown-room answer, not a slow first frame, so the two
+are not obviously the same mechanism. **The disagreement is narrowed, not settled**: `bare`
+demonstrably and repeatably survives; why the other drive saw that specific sentence remains open,
+recorded honestly rather than resolved by a tidy story.
+
+`P3` could not be driven at all, and could not have been on this stack: cutting the relay also
+severs Vite dev server's own HMR socket sharing the port, reloading the page before
+`reconnecting.ts`'s in-place recovery can ever be observed. That is the instrument fault its own row
+named, and the decision it was waiting on is now answered: `ADR-0117` (merged) moves the proof of
+record to a built bundle on `vite preview`'s `:4173`, off the dev server whose HMR client caused the
+fault — so `P3`'s owner is a re-drive once that ships, not a further decision. The mailed-link
+token's survival past a refusal (`P6a`, `P6b`) is undrivable for a structural reason instead — no
+mail transport binds on this stack, the token is stored only as a hash, and seeding one is a
+forbidden write (`ADR-0089` §3) — so what is driven, at `delayed 300ms`, is that the **client
+submits**: the `VERIFY_LINK_DEAD` mount effect completes over a room that is genuinely running.
+Whether a **live** token would be spent by the server is inferred from that submission, not tested,
+and cannot be tested here. `P4`'s own durations (~11.8s/~13.5s at `300ms`; the `1000ms` readings)
+are read the same way: `ADR-0117` computes the dev server's own module-waterfall cost at roughly 10s
+for `web-client/src`'s 102 modules, so those numbers do not survive the move to a built bundle even
+though the sequence they describe — lobby, then stale wait, then true state — does, being driven by
+frame arrival rather than module count.
+
+`ADR-0114` §6's one-render `waiting` residual — a mailed link landing in the single gap between a
+resumed `RoomJoined` and its `Snapshot` — was not observed by any of the seven readings, and could
+not have been: the `roomStanding`/`hold` mechanism that gap belongs to is `STORY-1311`'s and is not
+built yet; `P6a`'s and `P6b`'s own stale-screen findings are today's shipped `Lobby.tsx` blanket
+effect, a different mechanism, and both rows say so themselves. No `DEC` is registered here on that
+account. **What this story does not claim:** these are seven statements about one run, on one
+machine, at the commit named in each row — `c655859b` for this ticket's own `P1` redrive — and
+`ADR-0089` §2c holds: no coverage, and none of it may be cited in a Definition of done as a check
+that passed.
+
+### Every finding, given an owner
+
+| finding | owner | the gate it would need |
+| --- | --- | --- |
+| The wait screen renders for a room that is not actually waiting under real latency — `P2` (finished, mid-runout reload), `P4` (still `PLAYING`, a plain reload) and `P6b` (still `PLAYING`, a mailed link) — three independent routes to the same defect. | A `DEC` for the product owner — is a self-correcting false *waiting* screen over a live or finished duel acceptable, or does it need a neutral interstitial? `ADR-0114` §2 leaves the wait/table/result branch order untouched, so `STORY-1311` does not fix this on its own; name the next free `DEC` in `docs/adr/README.md`'s `## Open decisions`. | Depends on the `DEC`'s answer — until then, `ADR-0089` §4's by-hand reproduction is what stands, this ticket's own redrive plus `P2`/`P4`/`P6b` being the reproduction on record. |
+| Pressing the result screen's `AccountOffer` accept (`P5`) spends the offer and lands nowhere — neither `ADR-0112` §5's account screen nor the derived bounce — for at least 15s on both layouts. | `STORY-1311`, not a new `DEC` as `P5`'s own row concludes: `ADR-0114` §6 already names this exact path ("what makes `ADR-0086` §6's accept land"), and `STORY-1311`'s own seventh acceptance criterion is this path by name. | A component test feeding `DuelFinished` then the same ask `ADR-0114` §7's "Honoured" case uses — `location.hash` becomes `#/account` and the account screen renders, where today it would not. |
+| At `delayed 300ms` (`P6a`, `P6b`) the mailed screen's mount effect completes over a duel that is running or was refused, which `ADR-0112` §5 forbids — today's shipped guard does not gate `verify`/`reset` on room state at all. | `STORY-1311` — `ADR-0114` §5's `hold`/`roomStanding` is built to close exactly this. | `ADR-0114` §7's "Not spent" test: a counting `verifyEmail` in `accountCalls`, booted at `#/verify/<token>` with a room remembered — zero calls fed `RoomJoined` + `Snapshot` (running, refused), exactly one fed `RoomJoined` + `DuelFinished` (honoured). |
+| Every cut reloads the page via Vite dev server's own HMR socket sharing the relayed port (`P3`), so `reconnecting.ts`'s in-place recovery was never observed — an instrument fault, not a product reading. | A ticket to file, the planner's — re-drive `P3` once `ADR-0117` ships (`vite preview` on `:4173`, off the HMR-bearing dev server); the decision itself, `DEC-087`, is already answered. | Until re-driven, `ADR-0089` §4's by-hand reproduction; `reconnecting.ts`'s own retry logic (`scheduleRetry` → a fresh `WebSocket`, no navigation call anywhere in the file, read in full by `P3`) looks unit-testable without a browser at all, worth naming when that ticket is filed. |
+| `drive.mjs`'s `record` arms a `MutationObserver` in a process invocation separate from, and after, the `open`/reload that starts a transition, so any transition faster than that gap is structurally invisible to every row leaning on `record`/`frames` — named as a limit on what every row above could have seen, not as a failure of any one of them. | A ticket to file, `drive.mjs`'s own — a verb arming the observer via CDP's `Page.addScriptToEvaluateOnNewDocument`, which runs before a page's own scripts on every future document and survives a reload; an instrument ticket, not a product one. | N/A — an instrument fix, not a product behaviour; `delay.mjs`'s own `--selftest`/`--selftest-cut` convention is the shape the new verb should prove itself against before a future row trusts it. |
+| One earlier `bare` drive of `P1` saw the lobby's `No duel room has that code.` settle after a reload of the held result screen; this ticket's two fresh redrives (above) did not reproduce it. | None filed — a single unreproduced reading is not a confirmed defect, and this ticket's own discipline is against re-driving further without new evidence; recorded, not actioned. | N/A — nothing to reproduce against today; a third occurrence, on any path, would be the evidence a ticket needs. |
+
 ## Tasks
 
 Split on 2026-09-04 into **nine** tickets, one chain. The first two build the instrument, because
@@ -145,15 +217,36 @@ down now hangs off it.
 
 ## Acceptance criteria
 
-- [ ] All six of `ADR-0112` §6's paths are driven, or a path is recorded as undrivable with the
-      reason — a table in this story with one row per path, the observed result, and the commit
-- [ ] The `AccountOffer` accept path's behaviour is **observed**, not derived, and the observation is
-      compared against `ADR-0112` §5's resolution in `ADR-0086`'s favour
-- [ ] The mailed-link path records whether the token is still usable afterwards
-- [ ] No `verify:` block in any ticket of this story runs a browser (`ADR-0089` §2)
-- [ ] Every defect the drive finds is filed as its own ticket naming a non-browser gate, or recorded
-      as browser-only with `ADR-0089` §4's by-hand reproduction requirement written into it
-- [ ] `python3 .github/scripts/lint_tickets.py` exits 0
+- [x] All six of `ADR-0112` §6's paths are driven, or a path is recorded as undrivable with the
+      reason — a table in this story with one row per path, the observed result, and the commit.
+      **Answered:** yes — `P1` through `P6b` each carry a row with an observed result and a commit;
+      only `P3` is recorded undrivable, with the reason (Vite dev server's own HMR socket sharing the
+      cut port) written into its row, and that reason is now resolved by `ADR-0117`, owed a re-drive
+      rather than a further decision ("What this found", above).
+- [x] The `AccountOffer` accept path's behaviour is **observed**, not derived, and the observation is
+      compared against `ADR-0112` §5's resolution in `ADR-0086`'s favour.
+      **Answered:** observed on both layouts (`P5`) — and it matches **neither** `ADR-0112` §5's
+      resolution nor the derived bounce it was compared against; the press spends the offer and the
+      account screen never shows, a third outcome `STORY-1311` now owns ("What this found", above).
+- [x] The mailed-link path records whether the token is still usable afterwards.
+      **Answered**, with its undrivable half inline: on `bare` the token survives, because the mailed
+      screen never renders over a held room (`P6a`, `P6b`). At `delayed 300ms` the client's own mount
+      effect completes over a running or refused duel — `ADR-0112` §5 forbids that — but **whether
+      the server would spend a live token is inferred from the client's submission, not tested**: no
+      mail transport binds on this stack, the token is stored only as a hash, and seeding one is
+      `ADR-0089` §3's forbidden write, so that half stays undrivable here by construction, not by
+      omission.
+- [x] No `verify:` block in any ticket of this story runs a browser (`ADR-0089` §2).
+      **Answered:** checked mechanically, not asserted — this ticket's own sixth `verify:` command
+      greps every `verify:` block under `tasks/tasks/TASK-1310*.md` for `drive.mjs` or `stack.sh` and
+      finds none, exit 0.
+- [x] Every defect the drive finds is filed as its own ticket naming a non-browser gate, or recorded
+      as browser-only with `ADR-0089` §4's by-hand reproduction requirement written into it.
+      **Answered:** every finding below has a named owner and either a non-browser gate or, where
+      only a browser can see it today, `ADR-0089` §4's by-hand line — see "Every finding, given an
+      owner". None is filed as a ticket by this ticket itself, by design (Scope).
+- [x] `python3 .github/scripts/lint_tickets.py` exits 0.
+      **Answered:** green — `backlog ok`, this ticket's own seventh `verify:` command.
 
 ## Out of scope
 
