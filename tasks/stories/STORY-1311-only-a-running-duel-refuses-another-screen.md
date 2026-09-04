@@ -148,6 +148,13 @@ it back to `useEffect` leaves the new tests green too, because RTL's `act()` flu
 synchronously. That one at least has a count gate on `useLayoutEffect`. The token-effect key has no
 gate at all.
 
+**Confirmed still open after `TASK-131106`.** That ticket's coder reported the move had closed it —
+that re-keying to `screen` now reddened the merged test. Two further runs, the reviewer's and the
+driver's in the primary checkout, both found all 81 tests still green under that mutation, so the
+claim was withdrawn before merge. The likely reason it cannot be tested: line 100's *condition* and
+line 104's *dep array* both read `shown`, so re-keying only the array changes **when** the effect
+runs and not what it does. Three predictions have now been wrong about this one coupling.
+
 **Owner:** `TASK-131114`, which reads this record against the repair, must either carry the missing
 assertion — a render where the ruling moves `shown` off `screen` with a token pending — or say in as
 many words that it is being left unguarded and why. Every ticket from `TASK-131106` on is briefed

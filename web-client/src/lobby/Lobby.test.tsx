@@ -1724,6 +1724,25 @@ describe("the lobby", () => {
     expect(verifyEmail).not.toHaveBeenCalled();
   });
 
+  it("opens a mailed link over a room whose duel is not running", () => {
+    window.location.hash = "#/verify/zqx-verify-token-zqx";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    const verifyEmail = vi.fn(async () => ({ kind: "verified" }) as const);
+
+    renderLobbyWithAccount(accountCallsFixture({ verifyEmail }), store);
+
+    // A room this tab holds but that has not started a duel does not
+    // outrank a mailed link — only a frame that starts one does (`ADR-0112`
+    // §§3, 5). The shipped tree got this backwards: `STORY-1310`'s `P6a`
+    // measured `WaitingTable` winning here instead, with the token never
+    // read.
+    expect(screen.getByRole("heading", { name: VERIFY_HEADING })).toBeDefined();
+    expect(verifyEmail).toHaveBeenCalledOnce();
+    expect(verifyEmail).toHaveBeenCalledWith("zqx-verify-token-zqx");
+    expect(window.location.hash).toBe("#/verify");
+  });
+
   it("opens a mailed reset link and sends the token behind the slug", () => {
     window.location.hash = "#/reset/zqx-reset-token-zqx";
     // A promise that never settles: this test's subject is the call the

@@ -122,6 +122,56 @@ export function Lobby(): ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ruling]);
 
+  // These two branches sit immediately above `if (state.outcome !== null)`
+  // because `ADR-0114` §2's order is what makes the rule mechanical — the
+  // only value a chosen-screen branch can test is the one `rulingOn`
+  // produced, so a chosen screen cannot render without consulting it.
+  // The verification screen a mailed link opens onto, reached only by its
+  // own fragment — never from a button anywhere in this file (`ADR-0081`
+  // §3). The way back is rendered here, by the swap, and VerifyScreen itself
+  // knows nothing about navigation (`ADR-0060` §4). `account` is null only
+  // where no AccountProvider sits above this tree; the branch falls through
+  // to the first screen in that case, the same fallback `sign-in` already
+  // takes above.
+  if (shown === "verify" && account !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
+        <VerifyScreen token={mailedToken} verify={account.verifyEmail} />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
+  // The reset screen a mailed link opens onto, this branch's mirror and
+  // reached the same way: only by its own fragment, never from a button
+  // anywhere in this file (`ADR-0081` §3), and sharing the one token read
+  // above rather than deriving a second. The way back is rendered here, by
+  // the swap, and ResetScreen itself knows nothing about navigation
+  // (`ADR-0060` §4). `account` is null only where no AccountProvider sits
+  // above this tree; the branch falls through to the first screen in that
+  // case, the same fallback the verify branch above already takes.
+  // `onDone` sends the player on to sign-in with an in-page navigation, not
+  // the reload `signIn` uses (`ADR-0083` §5's reload carries a new identity;
+  // a reset carries none — no session was issued, the store is untouched,
+  // and this browser's session was deleted server-side along with every
+  // other one, not replaced here).
+  if (shown === "reset" && account !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
+        <ResetScreen
+          token={mailedToken}
+          reset={account.resetPassword}
+          onDone={() => open("sign-in")}
+        />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
   // The duel is over. This comes first because the reducer clears nothing a
   // frame established: `view` and `roomCode` both outlive the duel, so a result
   // branch placed after either is a branch that never runs.
@@ -314,52 +364,6 @@ export function Lobby(): ReactElement {
         <SignInScreenBody
           signIn={account.signIn}
           forgotPassword={account.forgotPassword}
-        />
-        <button type="button" onClick={leave}>
-          Back
-        </button>
-      </section>
-    );
-  }
-
-  // The verification screen a mailed link opens onto, reached only by its
-  // own fragment — never from a button anywhere in this file (`ADR-0081`
-  // §3). The way back is rendered here, by the swap, and VerifyScreen itself
-  // knows nothing about navigation (`ADR-0060` §4). `account` is null only
-  // where no AccountProvider sits above this tree; the branch falls through
-  // to the first screen in that case, the same fallback `sign-in` already
-  // takes above.
-  if (screen === "verify" && account !== null) {
-    return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
-        <VerifyScreen token={mailedToken} verify={account.verifyEmail} />
-        <button type="button" onClick={leave}>
-          Back
-        </button>
-      </section>
-    );
-  }
-
-  // The reset screen a mailed link opens onto, this branch's mirror and
-  // reached the same way: only by its own fragment, never from a button
-  // anywhere in this file (`ADR-0081` §3), and sharing the one token read
-  // above rather than deriving a second. The way back is rendered here, by
-  // the swap, and ResetScreen itself knows nothing about navigation
-  // (`ADR-0060` §4). `account` is null only where no AccountProvider sits
-  // above this tree; the branch falls through to the first screen in that
-  // case, the same fallback the verify branch above already takes.
-  // `onDone` sends the player on to sign-in with an in-page navigation, not
-  // the reload `signIn` uses (`ADR-0083` §5's reload carries a new identity;
-  // a reset carries none — no session was issued, the store is untouched,
-  // and this browser's session was deleted server-side along with every
-  // other one, not replaced here).
-  if (screen === "reset" && account !== null) {
-    return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
-        <ResetScreen
-          token={mailedToken}
-          reset={account.resetPassword}
-          onDone={() => open("sign-in")}
         />
         <button type="button" onClick={leave}>
           Back
