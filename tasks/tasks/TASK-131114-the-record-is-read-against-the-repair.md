@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131114
 title: The record is read against the repair, one row per driven path
 type: task
-status: ready
+status: done
 parent: STORY-1311
 module: web-client
 estimate: XS
