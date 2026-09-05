@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131112
 title: The address / renders nothing until the server has spoken
 type: task
-status: backlog
+status: ready
 parent: STORY-1311
 module: web-client
 estimate: S
