@@ -1589,6 +1589,73 @@ describe("the lobby", () => {
     expect(container.textContent).toBe(before);
   });
 
+  it("leaves the seat and the tab's room memory alone while the player looks at the ladder", () => {
+    window.location.hash = "#/leaderboard";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    const { forgetRoom } = renderLobby(store);
+
+    // ADR-0112 §3: a held room with no running duel honours the ask.
+    expect(screen.getByRole("heading", { name: LADDER_HEADING })).toBeDefined();
+
+    // "The seat is kept": the store's own read of who is seated, and in
+    // which room, does not move just because the screen did.
+    expect(store.getState().roomCode).toBe("ABCDEFGH");
+    expect(store.getState().mySeat).toBe(0);
+
+    // "The tab's memory is kept": `forgetRoom` is the act of forgetting
+    // the room this tab remembers (ADR-0072), and a look-away must not
+    // call it. It doubles as the only witness a component test has for
+    // "the socket stays open" — `boot.ts` ties `forgetRoom` to the next
+    // socket, never the one already open — so its silence here stands for
+    // both.
+    expect(forgetRoom).not.toHaveBeenCalled();
+  });
+
+  // The control for the three assertions above: each would also pass if
+  // `mySeat` were hard-coded to 0, `roomCode` hard-coded to "ABCDEFGH", or
+  // `forgetRoom` wired to nothing at all — because those are exactly the
+  // values the fixture above already holds. A different seat and a
+  // different room code prove `getState()` reads back whatever a frame
+  // actually assigned rather than a coincidence; the earlier test where
+  // the explicit "Back to the lobby" control does call `forgetRoom`
+  // ("forgets the room and sends nothing when the host leaves the waiting
+  // screen") is the same proof for that spy.
+  it("reads a different seat and room code when a different RoomJoined assigns them", () => {
+    const store = createDuelStore();
+    store.apply({ type: "RoomJoined", code: "ZYXWVUTS", seat: 1 });
+    renderLobby(store);
+
+    expect(store.getState().roomCode).toBe("ZYXWVUTS");
+    expect(store.getState().mySeat).toBe(1);
+  });
+
+  it("pulls the player to the table when a frame seats a duel under a chosen screen", () => {
+    window.location.hash = "#/leaderboard";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    // The screen was genuinely chosen before any frame arrives: the
+    // ladder is up and its own Back is the affordance on screen.
+    expect(screen.getByRole("heading", { name: LADDER_HEADING })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Back" })).toBeDefined();
+
+    // ADR-0112 §4 through ADR-0114's one predicate: the frame alone moves
+    // `standing` to "running", which moves `ruling` to "refuse" — no
+    // click, no address assignment, just a Snapshot inside act().
+    act(() => {
+      store.apply(SNAPSHOT);
+    });
+
+    // Three assertions, deliberately not one: a mechanism that swapped
+    // the screen but left #/leaderboard standing would pass the first two
+    // and is exactly the disagreement ADR-0112 §2 exists to prevent.
+    expect(screen.getByText("Pot 30")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
+    expect(window.location.hash).toBe("");
+  });
+
   it("offers an account after a win, and after nothing else", () => {
     // Three renders over the same seat, not one: a single case cannot tell a
     // decision from a constant (STORY-0415). The result panel is asserted
