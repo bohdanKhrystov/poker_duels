@@ -1545,6 +1545,50 @@ describe("the lobby", () => {
     expect(screen.queryByText(/Victory|Defeat|Draw/)).toBeNull();
   });
 
+  it("shows the account screen over a room whose duel has finished", () => {
+    window.location.hash = "#/account";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    store.apply(SNAPSHOT);
+    store.apply({
+      type: "DuelFinished",
+      outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+    });
+    renderLobby(store);
+
+    // ADR-0116 §6's first owed fact and a regression test: red on the tree
+    // at 1a09fb46, where STORY-1310's P5 pressed "Keep them with a
+    // password" and reached nothing — the account branch sat below the
+    // room's own screen and never ran for a held FINISHED room. The second
+    // owed fact — that an offer rendered and not pressed is still offered
+    // afterwards — is already gated by "offers an account after a win, and
+    // after nothing else"'s closing
+    // `expect(offerWiring.settle).not.toHaveBeenCalled()`, so it is not
+    // repeated here.
+    expect(
+      screen.getByRole("heading", { name: ACCOUNT_HEADING }),
+    ).toBeDefined();
+    // The result screen's own verdict is not on screen.
+    expect(screen.queryByText(/Victory|Defeat|Draw/)).toBeNull();
+    // The address is kept as the player set it.
+    expect(window.location.hash).toBe("#/account");
+  });
+
+  it("shows the account screen over a room that is still waiting", () => {
+    window.location.hash = "#/account";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    renderLobby(store);
+
+    // ADR-0112 §5's other half, and the input that stops the test above
+    // being satisfied by a rule keyed on `outcome` alone.
+    expect(
+      screen.getByRole("heading", { name: ACCOUNT_HEADING }),
+    ).toBeDefined();
+    expect(screen.queryByText("Waiting for your rival")).toBeNull();
+    expect(window.location.hash).toBe("#/account");
+  });
+
   it("refuses an ask made while the duel is running and restores the address", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);

@@ -200,6 +200,29 @@ export function Lobby(): ReactElement {
     );
   }
 
+  // They can reach the account screen from here too, the same shape as the
+  // record's and the ladder's: the way back is rendered here, by the swap,
+  // and AccountScreen itself knows nothing about navigation (ADR-0060 §4).
+  if (shown === "account") {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
+        <AccountScreen
+          profile={profile}
+          signedIn={signedIn}
+          signUp={account !== null ? account.signUp : undefined}
+          signOut={account !== null ? account.signOut : undefined}
+          attachRecoveryEmail={
+            account !== null ? account.attachRecoveryEmail : undefined
+          }
+          onSignIn={() => open("sign-in")}
+        />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
   // The duel is over. This comes first because the reducer clears nothing a
   // frame established: `view` and `roomCode` both outlive the duel, so a result
   // branch placed after either is a branch that never runs.
@@ -323,29 +346,6 @@ export function Lobby(): ReactElement {
 
   if (state.roomCode !== null) {
     return <WaitingTable code={state.roomCode} onLeave={forgetRoom} />;
-  }
-
-  // They can reach the account screen from here too, the same shape as the
-  // record's and the ladder's: the way back is rendered here, by the swap,
-  // and AccountScreen itself knows nothing about navigation (ADR-0060 §4).
-  if (screen === "account") {
-    return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
-        <AccountScreen
-          profile={profile}
-          signedIn={signedIn}
-          signUp={account !== null ? account.signUp : undefined}
-          signOut={account !== null ? account.signOut : undefined}
-          attachRecoveryEmail={
-            account !== null ? account.attachRecoveryEmail : undefined
-          }
-          onSignIn={() => open("sign-in")}
-        />
-        <button type="button" onClick={leave}>
-          Back
-        </button>
-      </section>
-    );
   }
 
   // The sign-in screen, reached only from the account screen's one door
