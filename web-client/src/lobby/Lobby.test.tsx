@@ -390,6 +390,89 @@ describe("the lobby", () => {
     ).toBeDefined();
   });
 
+  // ADR-0118 §3: once RoomJoined has landed, the waiting screen may stand
+  // until the next frame arrives — invite panel, promise sentence and all —
+  // including when the room the server is naming is really PLAYING or
+  // already finished. That is accepted product behaviour, not an unrepaired
+  // defect, and no ticket repairs it: RoomJoined is the client's whole
+  // knowledge at that instant and the waiting screen is the only room
+  // screen it supports, and the client cannot do better, because
+  // `replyToJoinRoom` answers a host rejoining a still-WAITING room with
+  // RoomJoined and nothing after it, ever — a rule that waited for a
+  // second frame would hang that host for the whole of their wait.
+  //
+  // This is not a duplicate of "states the six strings the host-alone
+  // table renders with no clipboard, and no seventh" below: that test
+  // renders a browser holding no room and awaiting none, with RoomJoined
+  // applied before render. This one renders a *recovering* browser
+  // (`roomAwaited: true`) and applies RoomJoined afterwards, inside its own
+  // act() — the only tree in which a future "repair" that withheld the
+  // waiting screen until a second frame would have anything to withhold.
+  // Such a change would leave the merged test green and this one red,
+  // which is the whole point of pinning it here.
+  it("still shows the whole waiting screen to a recovering browser told only that it holds a room", () => {
+    const store = createDuelStore();
+    renderLobby(store, true);
+
+    act(() => {
+      store.apply(ROOM_JOINED);
+    });
+
+    expect(screen.getByText("Waiting for your rival")).toBeDefined();
+    expect(screen.getByText("ABCDEFGH")).toBeDefined();
+    expect(screen.getByText("Invite link")).toBeDefined();
+    expect(screen.getByText("You")).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: "Back to the lobby" }),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "The room stays open. That link still works for your rival, and it brings you back.",
+      ),
+    ).toBeDefined();
+  });
+
+  // STORY-1310's P4 shape: a recovering browser told it holds a room
+  // (RoomJoined) and only afterwards, as a later and separate socket write,
+  // told the duel is actually running (Snapshot). The two frames land in
+  // two separate act() calls because that is what was actually delivered —
+  // one act() would test a delivery that never happens.
+  it("lands on the table when the Snapshot follows the RoomJoined", () => {
+    const store = createDuelStore();
+    renderLobby(store, true);
+
+    act(() => {
+      store.apply(ROOM_JOINED);
+    });
+    act(() => {
+      store.apply(SNAPSHOT);
+    });
+
+    expect(screen.getByText("Pot 30")).toBeDefined();
+    expect(screen.queryByText("Waiting for your rival")).toBeNull();
+  });
+
+  // STORY-1310's P2 shape: the same recovering browser, but the room it
+  // held had already finished by the time the two frames arrived — again
+  // as two separate socket writes, not one.
+  it("lands on the result screen when a DuelFinished follows the RoomJoined", () => {
+    const store = createDuelStore();
+    renderLobby(store, true);
+
+    act(() => {
+      store.apply(ROOM_JOINED);
+    });
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: 0, handsPlayed: 3, finalStacks: [1000, 0] },
+      });
+    });
+
+    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
+    expect(screen.queryByText("Waiting for your rival")).toBeNull();
+  });
+
   it("asks the server for a room when the host clicks create", () => {
     const { send } = renderLobby();
 
