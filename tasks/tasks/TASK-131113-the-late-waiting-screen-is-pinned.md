@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131113
 title: The late waiting screen is pinned, and the recovery lands where the frames say
 type: task
-status: backlog
+status: ready
 parent: STORY-1311
 module: web-client
 estimate: S
