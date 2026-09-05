@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131111
 title: The sign-in screen moves above the room, and the six branches are one block
 type: task
-status: ready
+status: done
 parent: STORY-1311
 module: web-client
 estimate: S
