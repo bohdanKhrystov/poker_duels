@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131110
 title: The account moves above the room, and the offer's accept has somewhere to land
 type: task
-status: ready
+status: done
 parent: STORY-1311
 module: web-client
 estimate: S
