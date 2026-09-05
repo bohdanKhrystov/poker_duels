@@ -150,10 +150,12 @@ export function Lobby(): ReactElement {
     );
   }
 
-  // These two branches sit immediately above `if (state.outcome !== null)`
-  // because `ADR-0114` §2's order is what makes the rule mechanical — the
-  // only value a chosen-screen branch can test is the one `rulingOn`
-  // produced, so a chosen screen cannot render without consulting it.
+  // The six chosen-screen branches sit above the store branches — the only
+  // value a chosen-screen branch may test is the one `rulingOn` produced
+  // (ADR-0114 §2), which is the enforcement `ADR-0076`'s own Consequences
+  // said did not exist. A chosen screen literally cannot render without
+  // consulting it, because the alternative is to sit below the three store
+  // branches and never render over the duel, the waiting room or the result.
   // The verification screen a mailed link opens onto, reached only by its
   // own fragment — never from a button anywhere in this file (`ADR-0081`
   // §3). The way back is rendered here, by the swap, and VerifyScreen itself
@@ -215,6 +217,30 @@ export function Lobby(): ReactElement {
             account !== null ? account.attachRecoveryEmail : undefined
           }
           onSignIn={() => open("sign-in")}
+        />
+        <button type="button" onClick={leave}>
+          Back
+        </button>
+      </section>
+    );
+  }
+
+  // The sign-in screen, reached only from the account screen's one door
+  // (ADR-0060 §2's crowding argument keeps it off the first screen). The way
+  // back is rendered here, by the swap, and SignInForm itself knows nothing
+  // about navigation (ADR-0060 §4). ADR-0083 §4: the address is refused to
+  // nobody, so this branch reads only the address — never signedIn, and
+  // never main.tsx's own module-scope token read. `account` is null only
+  // where no AccountProvider sits above this tree; the branch falls through
+  // to the first screen in that case, the same fallback `duels` and
+  // `leaderboard` already take when their own read is unavailable.
+  if (shown === "sign-in" && account !== null) {
+    return (
+      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
+        <h2 className="text-small">{SIGN_IN_HEADING}</h2>
+        <SignInScreenBody
+          signIn={account.signIn}
+          forgotPassword={account.forgotPassword}
         />
         <button type="button" onClick={leave}>
           Back
@@ -346,30 +372,6 @@ export function Lobby(): ReactElement {
 
   if (state.roomCode !== null) {
     return <WaitingTable code={state.roomCode} onLeave={forgetRoom} />;
-  }
-
-  // The sign-in screen, reached only from the account screen's one door
-  // (ADR-0060 §2's crowding argument keeps it off the first screen). The way
-  // back is rendered here, by the swap, and SignInForm itself knows nothing
-  // about navigation (ADR-0060 §4). ADR-0083 §4: the address is refused to
-  // nobody, so this branch reads only the address — never signedIn, and
-  // never main.tsx's own module-scope token read. `account` is null only
-  // where no AccountProvider sits above this tree; the branch falls through
-  // to the first screen in that case, the same fallback `duels` and
-  // `leaderboard` already take when their own read is unavailable.
-  if (screen === "sign-in" && account !== null) {
-    return (
-      <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
-        <h2 className="text-small">{SIGN_IN_HEADING}</h2>
-        <SignInScreenBody
-          signIn={account.signIn}
-          forgotPassword={account.forgotPassword}
-        />
-        <button type="button" onClick={leave}>
-          Back
-        </button>
-      </section>
-    );
   }
 
   return (

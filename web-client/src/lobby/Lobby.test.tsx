@@ -1589,6 +1589,24 @@ describe("the lobby", () => {
     expect(window.location.hash).toBe("#/account");
   });
 
+  it("shows the sign-in screen over a room whose duel is not running", () => {
+    window.location.hash = "#/sign-in";
+    const store = createDuelStore();
+    store.apply(ROOM_JOINED);
+    const signIn = vi.fn();
+
+    renderLobbyWithAccount(accountCallsFixture({ signIn }), store);
+
+    // ADR-0114 §5: a non-mailed chosen screen renders immediately over a
+    // waiting room, keeping the address and the screen in agreement at every
+    // instant. The store does not refuse it because the ruling is "honour".
+    expect(
+      screen.getByRole("heading", { name: SIGN_IN_HEADING }),
+    ).toBeDefined();
+    expect(screen.queryByText("Waiting for your rival")).toBeNull();
+    expect(window.location.hash).toBe("#/sign-in");
+  });
+
   it("refuses an ask made while the duel is running and restores the address", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
