@@ -155,6 +155,12 @@ claim was withdrawn before merge. The likely reason it cannot be tested: line 10
 line 104's *dep array* both read `shown`, so re-keying only the array changes **when** the effect
 runs and not what it does. Three predictions have now been wrong about this one coupling.
 
+**A second gap, found at `TASK-131109`'s review.** `ADR-0112` §3 also promises that **frames keep
+applying** while a player looks away. `TASK-131109` gated the section's other two promises — nothing
+about the room moves, and a frame that seats a running duel overrules the chosen screen — but nothing
+asserts that a frame which does *not* seat a duel still lands while the ladder or the record is on
+screen. The ticket's Goal named only the two, so this is out of its scope rather than missed by it.
+
 **Owner:** `TASK-131114`, which reads this record against the repair, must either carry the missing
 assertion — a render where the ruling moves `shown` off `screen` with a token pending — or say in as
 many words that it is being left unguarded and why. Every ticket from `TASK-131106` on is briefed
