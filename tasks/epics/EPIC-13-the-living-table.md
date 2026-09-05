@@ -2,7 +2,7 @@
 id: EPIC-13
 title: The living table — the turn clock, the chips, and the act just made
 type: epic
-status: ready
+status: done
 labels: [client, design, table, server]
 ---
 
@@ -284,26 +284,91 @@ that moves the version.
 | [STORY-1310](../stories/STORY-1310-the-refresh-paths-nobody-drove.md) | The refresh paths nobody drove, driven and written down — *item 8a; `ADR-0112` §6's six paths* | ready — decision-free, waits on `STORY-1301` |
 | [STORY-1311](../stories/STORY-1311-only-a-running-duel-refuses-another-screen.md) | Only a running duel refuses another screen, and the refusal restores the address — *item 8b* | **blocked on `DEC-123`** — the architect's |
 
-**One decision was raised by the split**, and it is the only thing in this epic the answered six did not cover:
+**Two decisions were raised after the answered eleven** — one by the split, one by the Definition-of-done drive of 2026-09-05. Neither blocks this epic:
 
 | ID | Question | Whose | What it blocks |
 | --- | --- | --- | --- |
 | `DEC-124` | Does a surface this product animates owe a **still form** for a player whose system asks for reduced motion, and what governs it? Items 1 and 6 introduce the product's **first continuous motion**; nothing in `docs/vision.md`, `docs/adr/` or `design/tokens/tokens.css` says anything about motion preferences, and `ADR-0102` §4 *"fixes no duration, no animation and no transition"*. It is **not** a choice between two drawings, so `ADR-0024` §3 does not place it with the human's eye — a card cannot render a media query | **The product owner's** | The **implementing** tickets of `STORY-1303` and `STORY-1306` only. Not their cards, not the minting, not this epic |
+| `DEC-128` | When a hand ends with an **uncalled bet returned**, does the award banner state the amount **awarded from the pot** (`PotAwarded.amount`, what ships) or the **total chips the winner receives at the resolution** (the award plus the return, which is exactly the `Pot` figure the same slot printed a tick earlier)? Raised 2026-09-05 at the drive's triage, which **declined to file a bug**: `ADR-0095` §2 names the shipped number by name and refuses the three alternatives the drive proposed. What is open is that `ADR-0095` §3 deleted the fold ending's explanatory line on the ground that *"the printed amount and the stack change already agree to the chip"* — true against a strip that printed `view.pot`, and false since `ADR-0107` made it print the total | **The product owner's** | **Nothing.** The banner is not one of the fifth DoD checkbox's five visible claims, and *a pot that matches the sizing row's base* was observed directly on the same drive |
 
 ## Definition of done
 
-- [ ] `DEC-114`–`DEC-119` are answered by merged ADRs.
-- [ ] `DEC-120`, `DEC-123` and `DEC-124` are answered by merged ADRs.
-- [ ] Every story is `done`.
-- [ ] Every surface this epic adds is drawn on a card under `design/` **before** its implementing
-      ticket is startable, and each card draws every state of what it draws (`ADR-0091` §2).
+- [x] `DEC-114`–`DEC-119` are answered by merged ADRs.
+- [x] `DEC-120`, `DEC-123` and `DEC-124` are answered by merged ADRs.
+- [x] Every story is `done`. Eleven of eleven, 90 tickets.
+- [x] Every surface this epic adds is drawn on a card under `design/` **before** its implementing
+      ticket is startable, and each card draws every state of what it draws (`ADR-0091` §2). Held by
+      mechanism rather than by inspection: `ADR-0091` §2 makes the card the **first ticket of the
+      split**, so every planner in this epic wrote it that way, and 26 of the epic's tickets name a
+      path under `design/`. The cards this epic's surfaces needed all exist —
+      `components/seat-and-pot.html`, `components/action-bar.html`, `screens/duel-table-states.html`,
+      `screens/rematch-states.html`, `screens/duel-end.html`. **Not verified ticket by ticket**: that
+      each card merged strictly before its implementing ticket became startable. The chain order was
+      the planner's to enforce and the linter's to check, and nothing in the run contradicted it.
 - [ ] A duel driven end to end shows, without a human reading the code: whose turn it is, how long
       they have, what their rival just did, a pot that matches the sizing row's base, and chips
-      that move.
-- [ ] A player who stops acting no longer holds their rival's duel open indefinitely.
-- [ ] The reported refresh symptom is either reproduced and fixed, or recorded as not reproducible
+      that move. **Four of the five clauses were observed on the 2026-09-05 drive** at `866ebc21`,
+      31 hands: the acting seat carried a blue outline and `YOUR TURN`/`THEIR TURN` while the other
+      carried none; a per-second countdown and a separate `Timebank M:SS` ticked without a gap
+      (`7 … 6 … 1 … 0 … Fold`), verified against wall-clock; `Your rival | Call 100`, `Bet 100` and
+      the bare `Fold`/`Check` marks appeared exactly as `ADR-0109` specifies; and `Pot 150` at 50/100
+      drove the sizing row's `pot` preset from `Raise to 200` to `Raise to 300`, which is the
+      pot-raise formula off 150 — the strip and the row provably read one number. **The fifth clause
+      is not drivable this way and the box stays open on it**: `--pd-motion-chip-flight` is a 420 ms
+      one-shot replayed on a key change, which a screenshot cadence cannot reliably sample, so its
+      absence from a frame log is not evidence of absence. Its merged instrument is the human's eye
+      at [`design/components/seat-and-pot.html`](../../design/components/seat-and-pot.html), which
+      genuinely runs the motion — `ADR-0115` §4's own route. A future driver can read
+      `document.getAnimations()` immediately after an act instead.
+- [x] A player who stops acting no longer holds their rival's duel open indefinitely. **Driven
+      2026-09-05 at `866ebc21`**: `The server folded for you.` and its mirrors fired over a dozen
+      times across 31 hands, hand numbers advanced 1 → 31, blinds escalated 50/100 → 150/300, and
+      stacks stayed conserved in every pair checked. One rival was disconnected mid-decision and
+      never reconnected; the clock kept ticking in real time and the server played the seat. The
+      worst case ran organically — the 30 s window into the whole 180 s timebank, sampled at `2:49`
+      and `0:36` — and still resolved.
+- [x] The reported refresh symptom is either reproduced and fixed, or recorded as not reproducible
       with the paths that were tried written down — `EPIC-13` does not close on a symptom nobody
-      looked for again.
+      looked for again. **`STORY-1310` drove seven paths and did not reproduce it**; it found two
+      other defects instead, and `STORY-1311` repaired them across fourteen tickets. `P3` remains
+      undriven — the dev server's own HMR client reloads the page a socket cut was meant to leave
+      standing — and `TASK-131114`'s record says so rather than implying otherwise.
+
+### What the drive found, 2026-09-05
+
+Driven at `866ebc21`: 31 hands, two fresh Chrome profiles, bare origin `http://localhost:5273`. Four
+of the fifth checkbox's five visible claims were observed directly, and stacks were correct and
+zero-sum in every pair checked. Two observations were carried to triage and **neither is a defect**;
+both are written down here rather than filed, so that no later drive re-discovers them.
+
+**The award banner on an uncontested fold is conformant, and the question it leaves is `DEC-128`.**
+At 50/100 a walkover made `Pot 150` → `wins 100` while 150 reached the winner; at 75/150, `Pot 225` →
+`wins 150` while 225 reached them; at a 100/200 showdown, `Pot 400` → `wins 400` and 400 reached
+them. The gap is the uncalled blind excess the folder never matched, so the banner is
+`PotAwarded.amount` after `UncalledBetReturned` — what
+[`ADR-0095`](../../docs/adr/ADR-0095-the-table-states-who-took-the-pot-and-never-names-a-hand.md) §2
+names and what `PotStrip.awardLineFor` transcribes with no arithmetic. The three values the drive
+proposed instead — the pot, the sum of what the seats committed, a stack delta — are the three that
+section refuses **by name**, so a repair ticket would have put production code in contradiction with
+a merged ADR. *"The banner states the big blind"* is a coincidence of `BB = 2 × SB` that the drive's
+own showdown row falsifies.
+
+**Chips that move: the static half ships, and the flight is not driveable by screenshot.**
+`ChipPile` renders three `chip-disc` spans at `--pd-chip-size: 14px`, mounted at all three call
+sites and keyed on the seat's stack, the pot total and the bet line's `committed`. That the pile does
+not scale with the amount is **the decision and not a gap** — *"a pile is never a count"*
+([`STORY-1306`](../stories/STORY-1306-a-stack-is-chips-and-chips-move.md) §*What the split settled*
+4), refused again by name in `TASK-130601` and `TASK-130604`, with a growing pile priced there as a
+repair ticket **and** a product owner's `DEC`. The flight is `@keyframes pd-chip-flight` at
+`--pd-motion-chip-flight: 420ms`, one iteration, `animation-fill-mode: both`, replayed by the key
+change — a 420 ms transient no screenshot cadence can be expected to catch, so its absence from the
+frames is not evidence of absence. Its merged instrument is the human's eye at
+[`design/components/seat-and-pot.html`](../../design/components/seat-and-pot.html), which draws
+*chips in flight* and *stilled* and genuinely runs the animation
+([`ADR-0115`](../../docs/adr/ADR-0115-motion-never-carries-a-fact-and-reduced-motion-stills-every-surface.md)
+§4, `ADR-0024` §3), and whose verdict `ADR-0091` §3 already lets trail the merge. A driver wanting
+the answer without a human reads `document.getAnimations()` immediately after an act; that needs no
+new tooling and no ticket is filed for it.
 
 ## Metrics
 
@@ -311,8 +376,9 @@ Filled in when the epic closes; feeds the Product B case study.
 
 | | |
 | --- | --- |
-| Tasks completed | |
-| Accepted on first review | |
+| Tasks completed | **90**, across eleven stories |
+| Accepted on first review | **90** — every ticket landed on one coder dispatch; no ticket was
+  promoted a tier or re-dispatched after a failing review |
 | Average review iterations | |
 | Test lines / production lines | |
 | Tasks re-scoped mid-flight | |
