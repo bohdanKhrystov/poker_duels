@@ -140,7 +140,10 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function renderLobby(store: DuelStore = createDuelStore()): {
+function renderLobby(
+  store: DuelStore = createDuelStore(),
+  roomAwaited = false,
+): {
   send: ReturnType<typeof vi.fn>;
   forgetRoom: ReturnType<typeof vi.fn>;
   container: HTMLElement;
@@ -148,7 +151,12 @@ function renderLobby(store: DuelStore = createDuelStore()): {
   const send = vi.fn();
   const forgetRoom = vi.fn();
   const { container } = render(
-    <DuelProvider store={store} send={send} forgetRoom={forgetRoom}>
+    <DuelProvider
+      store={store}
+      send={send}
+      forgetRoom={forgetRoom}
+      roomAwaited={roomAwaited}
+    >
       <Lobby />
     </DuelProvider>,
   );
@@ -325,6 +333,63 @@ function renderMailedLinkOverARememberedRoom(
 }
 
 describe("the lobby", () => {
+  // ADR-0118 §2: while a held room is unknown, `/` renders nothing at all.
+  // `roomAwaited` true with no frame applied is exactly that window
+  // (ADR-0114 §5) — this tab is asking about a room it remembers and the
+  // server has not yet answered.
+  it("renders no element at all while the room this tab holds is unknown", () => {
+    const store = createDuelStore();
+    const { container } = renderLobby(store, true);
+
+    expect(container.firstChild).toBeNull();
+    expect(container.textContent).toBe("");
+  });
+
+  // The pair above and this one are one delta: same store, same address, the
+  // same providers `renderLobby` always wires — only `roomAwaited` differs.
+  // Without this half, a `Lobby` that always rendered nothing would also
+  // pass the test above; this is the input ADR-0118 §6 asks for, the one
+  // that tells a rule from a deletion.
+  it("renders the front door at once for a browser holding no room", () => {
+    const store = createDuelStore();
+    const { container } = renderLobby(store, false);
+
+    expect(
+      screen.getByRole("button", { name: "Create a duel room" }),
+    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Join the duel" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1 })).toBeDefined();
+    expect(screen.getByRole("button", { name: HISTORY_HEADING })).toBeDefined();
+    expect(screen.getByRole("button", { name: LADDER_HEADING })).toBeDefined();
+    expect(screen.getByRole("button", { name: ACCOUNT_HEADING })).toBeDefined();
+    expect(container.firstChild).not.toBeNull();
+  });
+
+  it("ends the silence on the frame that names the room", () => {
+    const store = createDuelStore();
+    renderLobby(store, true);
+
+    act(() => {
+      store.apply(ROOM_JOINED);
+    });
+
+    expect(screen.getByText("Waiting for your rival")).toBeDefined();
+  });
+
+  it("ends the silence on a refusal, carrying the refusal", () => {
+    const store = createDuelStore();
+    renderLobby(store, true);
+
+    act(() => {
+      store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    });
+
+    expect(screen.getByText("No duel room has that code.")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Create a duel room" }),
+    ).toBeDefined();
+  });
+
   it("asks the server for a room when the host clicks create", () => {
     const { send } = renderLobby();
 

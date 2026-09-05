@@ -374,6 +374,16 @@ export function Lobby(): ReactElement {
     return <WaitingTable code={state.roomCode} onLeave={forgetRoom} />;
   }
 
+  // ADR-0118 §1: the client shows what it was told, and before it is told it
+  // shows nothing. `standing` is "unknown" exactly while this tab is asking
+  // the server about a room it remembers and has not been answered
+  // (ADR-0114 §5) — the front door below is a screen the server never
+  // stated, so nothing is drawn to fill the wait. What ends the silence is
+  // the first frame that answers the ask: `RoomJoined` seats `state.roomCode`
+  // above, `Failure` carries `state.refusal` below — never a timeout,
+  // because a clock is not a fact the server sent.
+  if (standing === "unknown") return <></>;
+
   return (
     <section className="p-6">
       {/* ADR-0098 §1: the coin-and-two-tone lockup, card-drawn only on the
