@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141403
 title: The bar is pinned at a frame where the seat has already committed
 type: task
-status: backlog
+status: done
 parent: STORY-1414
 module: web-client
 estimate: S
