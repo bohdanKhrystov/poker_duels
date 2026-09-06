@@ -4577,7 +4577,13 @@ already lives **ten**; what does not survive is the tab's memory of it.
 | `STORY-1415` | The rematch offer finds the rival wherever they are — *item 5* | `DEC-138` |
 | `STORY-1416` | Play again returns the host to the room they still hold — *item 6* | `DEC-139` |
 
-**None of these stories exist yet.** The planner writes them once the decisions they wait on are
-merged, and the first ticket of every story that puts a new surface in front of a player is its
-**design card** (`ADR-0091` §2). Four seams — `STORY-1401`–`STORY-1404` — wait on no decision and
-are what this epic can start with the moment it leaves `backlog`.
+**`STORY-1401` is written and split; the other fifteen seams are not.** The planner writes each one
+once the decisions it waits on are merged, and the first ticket of every story that puts a new
+surface in front of a player is its **design card** (`ADR-0091` §2) — which `STORY-1401` owes none
+of, because the merged card already draws `Timebank 3:00` and the client is what fails to transcribe
+it. Four seams — `STORY-1401`–`STORY-1404` — wait on no decision and are what this epic starts with.
+
+| Story | Task | Est | Status |
+| --- | --- | --- | --- |
+| **[STORY-1401](stories/STORY-1401-the-timebank-figure-is-whole-seconds-at-every-seat.md)** The timebank figure is whole seconds at every seat — *item 3c's defect, split into one ticket on 2026-09-06. The fix is one expression; the test is the part that had to be got right, because every merged fixture carrying `bankRemainingMillis` holds whole seconds and so no assertion in the repository could ever have failed on this* | | | ready |
+| | [TASK-140101](tasks/TASK-140101-the-bank-of-the-seat-the-clock-does-not-name-is-whole-seconds.md) The bank of the seat the clock does not name is read in whole seconds — *the call site is repaired, not the shared formatter: `bankFigure`'s KDoc already asks for whole seconds and its other caller already passes them. `Math.ceil` for the same reason `secondsRemaining` ceils — flooring would print `0:00`, the shipped reading of an **exhausted** bank, for one still holding 999 ms. A `verify:` gate deletes the `Math.ceil` again and requires the two new tests to go red printing the photographed `1:58.623999999999995`, so a fixture of whole seconds cannot pass as a proof* | XS | ready |
