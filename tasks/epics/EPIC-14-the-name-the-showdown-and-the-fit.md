@@ -133,9 +133,13 @@ rival 0`).
 
 Six items, sixteen seams. The **Decides it** column is why this epic opens `backlog`: eleven
 questions had no merged answer when it opened — `DEC-129`–`DEC-139`, and **all eleven now have
-one**, as do the `DEC-140` and `DEC-141` the planner raised while splitting item 3b — five of them **contradict a merged ADR**, a heavier thing than an open question and
-marked as such, and one of them **opens a decision that was already open**. A second already-open
-row, `DEC-108`, has since been **closed** by this epic's own answer to `DEC-135`.
+one**, as do the `DEC-140` and `DEC-141` the planner raised while splitting item 3b, so **all
+thirteen are answered** — five of them **contradict a merged ADR**, a heavier thing than an open
+question and marked as such, and one of them **opens a decision that was already open**. A second
+already-open row, `DEC-108`, has since been **closed** by this epic's own answer to `DEC-135`.
+What is left open is the follow-ups those answers registered — `DEC-142`, `DEC-144`, `DEC-146`,
+`DEC-147`, `DEC-150`, `DEC-151` and `DEC-152` for the architect and `DEC-145` for the product
+owner — plus the pre-existing `DEC-110`.
 
 | # | Item | Touches | Decides it |
 | --- | --- | --- | --- |
@@ -571,9 +575,15 @@ byte-unchanged and writes no client code. Each waits only on its own decision.
 ## Definition of done
 
 - [ ] `DEC-129`–`DEC-139` and `DEC-146` are answered by merged ADRs, and every ADR that supersedes
-      a merged one says which clause of which ADR it replaces. **`DEC-132` is answered** by
+      a merged one says which clause of which ADR it replaces. **All eleven of `DEC-129`–`DEC-139`
+      are answered** — `DEC-131` by
+      [`ADR-0130`](../../docs/adr/ADR-0130-a-name-can-be-changed-and-the-name-it-leaves-is-spent.md),
+      which names `ADR-0029` §4, its title's *permanent* and §5's `403`, `ADR-0051` §3 and
+      `ADR-0119` §3's obligation 2, and `DEC-132` by
       [`ADR-0131`](../../docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md),
-      which names `ADR-0030` §3 and §8; `DEC-131` is the last of the eleven still open.
+      which names `ADR-0030` §3 and §8. **`DEC-146` is the one this line still waits on.**
+- [ ] `DEC-151` — registered by `ADR-0130` — is answered by a merged ADR before `STORY-1409` ships;
+      the namespace has no brake until it lands.
 - [ ] `DEC-152` — registered by `ADR-0131` §7 — is answered by a merged ADR before `STORY-1410`'s
       implementing ticket is startable. Its design card and its copy wait on nothing.
 - [ ] `DEC-144` — registered by `ADR-0123` §9 — is answered by a merged ADR before `STORY-1415`'s
