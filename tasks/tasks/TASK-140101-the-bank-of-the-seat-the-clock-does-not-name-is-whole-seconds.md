@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140101
 title: The bank of the seat the clock does not name is read in whole seconds
 type: task
-status: ready
+status: done
 parent: STORY-1401
 module: web-client
 estimate: XS

@@ -4645,7 +4645,7 @@ wants alive for *"3-5 min"* already lives **ten**; what does not survive is the 
 
 | Seam | Title | Waits on |
 | --- | --- | --- |
-| `STORY-1401` | The timebank figure is whole seconds at every seat — *item 3c's defect* | nothing |
+| `STORY-1401` | The timebank figure is whole seconds at every seat — *item 3c's defect* | **done** — one ticket |
 | `STORY-1402` | The front door stops covering its own wordmark, and `Play duel` says what it does — *item 3a* | nothing |
 | `STORY-1403` | The room code field takes the link as well as the code — *item 3a* | nothing |
 | `STORY-1404` | The waiting table gains a copy button and the auto-start sentence — *item 3b* | nothing |
@@ -4671,4 +4671,4 @@ it. Four seams — `STORY-1401`–`STORY-1404` — wait on no decision and are w
 | Story | Task | Est | Status |
 | --- | --- | --- | --- |
 | **[STORY-1401](stories/STORY-1401-the-timebank-figure-is-whole-seconds-at-every-seat.md)** The timebank figure is whole seconds at every seat — *item 3c's defect, split into one ticket on 2026-09-06. The fix is one expression; the test is the part that had to be got right, because every merged fixture carrying `bankRemainingMillis` holds whole seconds and so no assertion in the repository could ever have failed on this* | | | ready |
-| | [TASK-140101](tasks/TASK-140101-the-bank-of-the-seat-the-clock-does-not-name-is-whole-seconds.md) The bank of the seat the clock does not name is read in whole seconds — *the call site is repaired, not the shared formatter: `bankFigure`'s KDoc already asks for whole seconds and its other caller already passes them. `Math.ceil` for the same reason `secondsRemaining` ceils — flooring would print `0:00`, the shipped reading of an **exhausted** bank, for one still holding 999 ms. A `verify:` gate deletes the `Math.ceil` again and requires the two new tests to go red printing the photographed `1:58.623999999999995`, so a fixture of whole seconds cannot pass as a proof* | XS | ready |
+| | [TASK-140101](tasks/TASK-140101-the-bank-of-the-seat-the-clock-does-not-name-is-whole-seconds.md) The bank of the seat the clock does not name is read in whole seconds — *the call site is repaired, not the shared formatter: `bankFigure`'s KDoc already asks for whole seconds and its other caller already passes them. `Math.ceil` for the same reason `secondsRemaining` ceils — flooring would print `0:00`, the shipped reading of an **exhausted** bank, for one still holding 999 ms. A `verify:` gate deletes the `Math.ceil` again and requires the two new tests to go red printing the photographed `1:58.623999999999995`, so a fixture of whole seconds cannot pass as a proof* | XS | done |
