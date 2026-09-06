@@ -80,10 +80,12 @@
   .seat .chips { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums; }
   /* the last act: the plate's mark for the most recent act of the hand, at the seat that
    * made it — one mark, never one per seat (ADR-0109 §1). It says the actor's own button
-   * word, bare for two of the six acts and with the event's own total for the other four
-   * (§2); nothing here ever times out, fades or otherwise dismisses it (§4). It rides as
-   * another child of .seat's own flex row, so .who gives ground by truncating the name
-   * first and the plate never grows a pixel taller. */
+   * word, bare for three of the six acts and with the event's own total for the other
+   * three (§2 as ADR-0122 §4 amends it: the call joined the bare three when its button
+   * began naming a price PlayerCalled cannot carry); nothing here ever times out, fades
+   * or otherwise dismisses it (§4). It rides as another child of .seat's own flex row, so
+   * .who gives ground by truncating the name first and the plate never grows a pixel
+   * taller. */
   .last-act { font-family: var(--pd-font-mono); font-variant-numeric: tabular-nums;
     font-size: 0.6875rem; color: var(--pd-text-muted); background: var(--pd-accent-subtle);
     border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-pill);
@@ -295,7 +297,7 @@
           <div class="seat">
             <span class="who"><span class="name">ImKate</span>
               <span class="status"></span></span>
-            <span class="last-act">Call&nbsp;800</span>
+            <span class="last-act">Call</span>
             <span class="dealer">D</span>
             <span class="timebank">Timebank&nbsp;3:00</span>
             <span class="chips">2,950</span>
