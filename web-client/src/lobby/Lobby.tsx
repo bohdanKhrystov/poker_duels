@@ -405,7 +405,7 @@ export function Lobby(): ReactElement {
         className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         onClick={() => send({ type: "CreateRoom" })}
       >
-        Create a duel room
+        Play duel
       </button>
       <form
         onSubmit={(event) => {

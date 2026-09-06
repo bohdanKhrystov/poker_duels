@@ -154,9 +154,7 @@ describe("App", () => {
 
   it("renders the lobby beneath the heading", () => {
     renderApp();
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
   it("adds no heading of its own above the screens it composes", async () => {
@@ -182,7 +180,7 @@ describe("App", () => {
     fireEvent.click(backButton);
 
     // Wait for the lobby to come back
-    await screen.findByRole("button", { name: "Create a duel room" });
+    await screen.findByRole("button", { name: "Play duel" });
 
     // Click the account door
     const accountButton = screen.getByRole("button", {
@@ -354,14 +352,12 @@ describe("App", () => {
   });
 
   it("leaves the lobby exactly as it was for a player who never opens the record", () => {
-    // The *Create a duel room* button is still there, and nothing from the
+    // The *Play duel* button is still there, and nothing from the
     // history screen is on the first screen a player sees.
     renderApp();
 
     // The create button is still there
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
 
     // The history screen (aria-label="your duels") is not rendered
     const historyScreen = screen.queryByLabelText("your duels");
@@ -390,7 +386,7 @@ describe("App", () => {
 
     // The way back names the first screen, and the first screen is back
     expect(
-      await screen.findByRole("button", { name: "Create a duel room" }),
+      await screen.findByRole("button", { name: "Play duel" }),
     ).toBeDefined();
     expect(window.location.hash).toBe("");
   });
@@ -417,9 +413,7 @@ describe("App", () => {
     renderApp();
 
     // The lobby is showing
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
 
     // Click "Your duels" button
     const yourDuelsButton = screen.getByRole("button", { name: "Your duels" });
@@ -433,9 +427,7 @@ describe("App", () => {
     // can satisfy it.
     const historyScreen = await waitFor(() => {
       const found = screen.getByLabelText("your duels");
-      expect(
-        screen.queryByRole("button", { name: "Create a duel room" }),
-      ).toBeNull();
+      expect(screen.queryByRole("button", { name: "Play duel" })).toBeNull();
       return found;
     });
     expect(historyScreen).toBeDefined();
@@ -451,7 +443,7 @@ describe("App", () => {
     // the same settled render, for the same reason as above
     const createButtonAgain = await waitFor(() => {
       const found = screen.getByRole("button", {
-        name: "Create a duel room",
+        name: "Play duel",
       });
       expect(screen.queryByLabelText("your duels")).toBeNull();
       return found;
@@ -465,14 +457,12 @@ describe("App", () => {
   it("leaves the first screen for the ladder, and comes back to it", async () => {
     // The same round trip as the record's test above, for the fifth control
     // ADR-0060 predicted the first screen would carry: the lobby is showing,
-    // *Leaderboard* is clicked, *Create a duel room* is gone and the ladder
+    // *Leaderboard* is clicked, *Play duel* is gone and the ladder
     // is on screen; *Back* is clicked, and the lobby is back.
     renderApp();
 
     // The lobby is showing
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
 
     // Click "Leaderboard" button
     const leaderboardButton = screen.getByRole("button", {
@@ -488,9 +478,7 @@ describe("App", () => {
     // can satisfy it.
     const ladderScreen = await waitFor(() => {
       const found = screen.getByLabelText("leaderboard");
-      expect(
-        screen.queryByRole("button", { name: "Create a duel room" }),
-      ).toBeNull();
+      expect(screen.queryByRole("button", { name: "Play duel" })).toBeNull();
       return found;
     });
     expect(ladderScreen).toBeDefined();
@@ -506,7 +494,7 @@ describe("App", () => {
     // the same settled render, for the same reason as above
     const createButtonAgain = await waitFor(() => {
       const found = screen.getByRole("button", {
-        name: "Create a duel room",
+        name: "Play duel",
       });
       expect(screen.queryByLabelText("leaderboard")).toBeNull();
       return found;
@@ -718,7 +706,7 @@ describe("App", () => {
 
   it("does not offer the ladder door while a duel is in progress", () => {
     // ADR-0060 again: the door is offered only on the lobby branch that
-    // offers "Create a duel room", because a player who opened another
+    // offers "Play duel", because a player who opened another
     // screen mid-hand would leave their rival at a table nothing ends.
     // This test applies RoomJoined and a Snapshot to the store, then
     // asserts the door is gone.
@@ -805,9 +793,7 @@ describe("App", () => {
     renderApp();
 
     // The lobby is showing
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
 
     // Click the account door
     const accountButton = screen.getByRole("button", {
@@ -820,9 +806,7 @@ describe("App", () => {
     // ladder's round trips above.
     const accountHeading = await waitFor(() => {
       const found = screen.getByRole("heading", { name: ACCOUNT_HEADING });
-      expect(
-        screen.queryByRole("button", { name: "Create a duel room" }),
-      ).toBeNull();
+      expect(screen.queryByRole("button", { name: "Play duel" })).toBeNull();
       return found;
     });
     expect(accountHeading).toBeDefined();
@@ -838,7 +822,7 @@ describe("App", () => {
     // the same settled render, for the same reason as above
     const createButtonAgain = await waitFor(() => {
       const found = screen.getByRole("button", {
-        name: "Create a duel room",
+        name: "Play duel",
       });
       expect(
         screen.queryByRole("heading", { name: ACCOUNT_HEADING }),
@@ -1100,7 +1084,7 @@ describe("App", () => {
     // the same settled render, and the address is empty
     const createButtonAgain = await waitFor(() => {
       const found = screen.getByRole("button", {
-        name: "Create a duel room",
+        name: "Play duel",
       });
       expect(
         screen.queryByRole("heading", { name: SIGN_IN_HEADING }),
@@ -1235,9 +1219,7 @@ describe("App", () => {
     const doors = screen
       .getAllByRole("button")
       .map((button) => button.textContent)
-      .filter(
-        (text) => text !== "Create a duel room" && text !== "Join the duel",
-      );
+      .filter((text) => text !== "Play duel" && text !== "Join the duel");
     expect(doors).toHaveLength(3);
 
     // Named, not only counted: the sign-in door specifically — refused a
