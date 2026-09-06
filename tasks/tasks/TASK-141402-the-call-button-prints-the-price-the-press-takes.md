@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141402
 title: The Call button prints the price the press takes from the stack
 type: task
-status: backlog
+status: done
 parent: STORY-1414
 module: web-client
 estimate: S

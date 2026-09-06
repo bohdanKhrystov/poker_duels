@@ -15,24 +15,32 @@ describe("the action text", () => {
     ]);
   });
 
-  it("prices a call from the server's callTo", () => {
-    expect(actionText("CALL", aLegalActions(), 9999)).toEqual({
+  it("prices a call at what the press takes from the stack", () => {
+    expect(
+      actionText("CALL", aLegalActions({ callTo: 600 }), 9999, 200),
+    ).toEqual({
       verb: "Call",
       amount: 400,
     });
-    expect(actionText("CALL", aLegalActions({ callTo: 925 }), 9999)).toEqual({
+    expect(
+      actionText("CALL", aLegalActions({ callTo: 925 }), 9999, 75),
+    ).toEqual({
       verb: "Call",
-      amount: 925,
+      amount: 850,
+    });
+    expect(actionText("CALL", aLegalActions(), 9999, 0)).toEqual({
+      verb: "Call",
+      amount: 400,
     });
   });
 
   it("prices an all-in from the server's allInTo", () => {
-    expect(actionText("ALL_IN", aLegalActions(), 9999)).toEqual({
+    expect(actionText("ALL_IN", aLegalActions(), 9999, 200)).toEqual({
       verb: "All in",
       amount: 13400,
     });
     expect(
-      actionText("ALL_IN", aLegalActions({ allInTo: 8500 }), 9999),
+      actionText("ALL_IN", aLegalActions({ allInTo: 8500 }), 9999, 75),
     ).toEqual({
       verb: "All in",
       amount: 8500,
@@ -40,30 +48,30 @@ describe("the action text", () => {
   });
 
   it("prices a bet and a raise from the total the player dialled in", () => {
-    expect(actionText("BET", aLegalActions(), 3250)).toEqual({
+    expect(actionText("BET", aLegalActions(), 3250, 200)).toEqual({
       verb: "Bet",
       amount: 3250,
     });
-    expect(actionText("RAISE", aLegalActions(), 3250)).toEqual({
+    expect(actionText("RAISE", aLegalActions(), 3250, 200)).toEqual({
       verb: "Raise to",
       amount: 3250,
     });
-    expect(actionText("BET", aLegalActions(), 5000)).toEqual({
+    expect(actionText("BET", aLegalActions(), 5000, 75)).toEqual({
       verb: "Bet",
       amount: 5000,
     });
-    expect(actionText("RAISE", aLegalActions(), 5000)).toEqual({
+    expect(actionText("RAISE", aLegalActions(), 5000, 75)).toEqual({
       verb: "Raise to",
       amount: 5000,
     });
   });
 
   it("puts no figure on a fold or a check", () => {
-    expect(actionText("FOLD", aLegalActions(), 9999)).toEqual({
+    expect(actionText("FOLD", aLegalActions(), 9999, 200)).toEqual({
       verb: "Fold",
       amount: null,
     });
-    expect(actionText("CHECK", aLegalActions(), 9999)).toEqual({
+    expect(actionText("CHECK", aLegalActions(), 9999, 200)).toEqual({
       verb: "Check",
       amount: null,
     });

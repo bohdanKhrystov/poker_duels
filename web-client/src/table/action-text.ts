@@ -34,18 +34,24 @@ export function actionVerb(type: ActionType): string {
  * What one button says, given the turn the server opened and the total the
  * player has dialled in.
  *
- * Every figure here is the server's or the player's own: `callTo` and `allInTo`
- * came off the wire, and `to` is what the player set on the amount control.
- * Nothing is priced, netted or worked out.
+ * `allInTo` and `to` are the server's and the player's own. The call's figure
+ * is `ADR-0101` §1's `toCall`, recovered from the server's `callTo` and the
+ * seat's own `committedThisStreet` — it is the one further quantity the
+ * never-derives guards admit (`ADR-0122` §5, `ADR-0107` §5's shape). Nothing
+ * else here is priced, netted or worked out.
  */
 export function actionText(
   type: ActionType,
   actions: LegalActions,
   to: number,
+  committedThisStreet: number,
 ): ActionText {
   switch (type) {
     case "CALL":
-      return { verb: actionVerb(type), amount: actions.callTo };
+      return {
+        verb: actionVerb(type),
+        amount: actions.callTo - committedThisStreet,
+      };
     case "ALL_IN":
       return { verb: actionVerb(type), amount: actions.allInTo };
     case "BET":
