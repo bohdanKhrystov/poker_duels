@@ -1,6 +1,9 @@
 # ADR-0086 — The offer's answer is `pd.accountOfferSettled`, owned beside the predicate it feeds
 
-- **Status:** Accepted
+- **Status:** Superseded by
+  [ADR-0125](ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md) — the
+  key, its module, the sentinel and the gate row go with the surface. §*What this does not settle*'s
+  first bullet outlives it: `pd.roomCode` still has no row in that gate
 - **Date:** 2026-08-28
 - **Resolves:** `DEC-080` — which storage key holds
   [`ADR-0085`](ADR-0085-not-again-is-this-browser-and-an-answer-spends-the-offer.md)'s browser-local

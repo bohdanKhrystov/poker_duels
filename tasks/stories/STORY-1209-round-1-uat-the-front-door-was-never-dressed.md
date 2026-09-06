@@ -390,6 +390,13 @@ what they may do. All three are the **product owner's**, registered in `docs/adr
 | `DEC-090` | `account` | Should *Attach a recovery address* — which asks for a *Current password* — appear on a device that has no password yet, or only once one exists? | Concrete and one-sentence-answerable. An option offered that cannot succeed is *what they may do* stated falsely |
 | `DEC-091` | `sign-in` | Should *Back* on the sign-in screen return to the account screen it was opened from, or to the lobby? | Concrete and one-sentence-answerable. It is where the player ends up, which is *what is going on* at its plainest |
 
+**`DEC-089` was answered on 2026-09-06, and answered by deletion.**
+[`ADR-0125`](../../docs/adr/ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md)
+retires the whole post-win account offer on the human's own instruction, so the nudge whose type
+weight this round asked about no longer exists: the verdict is the single largest thing on the
+`result` screen because it is the only thing on it. The row above stands as the record of what was
+asked. `DEC-090` and `DEC-091` are still open.
+
 **Nothing else was promoted, and nothing was invented to fill a slot.** Two observations that could
 have been dressed as questions were not: the Ukrainian dates (closed by a merged source, §*Repeat
 2*) and the *Copy the link* / *Copy link* wording, which names a concrete choice but does **not**

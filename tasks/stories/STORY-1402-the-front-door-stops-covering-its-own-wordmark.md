@@ -134,7 +134,10 @@ tickets: the card, the client, and the test-and-plan churn. The split is the nex
   which is the one thing a planner may not do. **No new `DEC` is registered: the question is already
   open and correctly asked**, and the human's annotation is a third demand on it. It lands in
   whatever story that answer yields.
-- **The profile strip's removal** (*remove*, crossed out on `edits1.png`) — `DEC-130`, `STORY-1408`.
+- **The profile strip's removal** (*remove*, crossed out on `edits1.png`) — answered by
+  [`ADR-0125`](../../docs/adr/ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md)
+  §5: the strip's `no-profile` branch renders nothing, so `No profile yet.` goes and the `profile`
+  branch stays. It lands in `STORY-1408`, not here.
 - **The room-code field's behaviour** — `STORY-1403`. This story does not touch the form.
 - **The card's other arrears.** The front-door frame also draws a hero heading, a sub-line and an
   `I have a code` ghost button that the client has never shipped, and `design/screens/enter-code.html`

@@ -1,6 +1,12 @@
 # ADR-0036 — An account is offered after a first win, and never required
 
-- **Status:** Accepted
+- **Status:** Accepted — §Decision's *"After a player's first win, the client offers one"* block and
+  its four bullets, its *"`EPIC-04` gains one story"* paragraph, and §Consequences' second, third
+  and fifth bullets are **superseded by
+  [ADR-0125](ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md)**, which
+  retires the offer. **§Decision's first paragraph stands** — *an account is never required to
+  play, anonymous play stays fully ranked, no screen gates on having a credential* — and so do
+  §Consequences' first and fourth bullets
 - **Date:** 2026-08-15
 - **Resolves:** `DEC-025` — **the human's product call**, made as *"prompted, never required"*.
   This ADR does not choose it; it records it and works out what it costs `EPIC-04`.

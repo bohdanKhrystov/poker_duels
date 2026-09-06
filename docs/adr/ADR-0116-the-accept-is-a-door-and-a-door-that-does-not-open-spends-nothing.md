@@ -1,6 +1,8 @@
 # ADR-0116 — The accept is a door, and a door that does not open spends nothing
 
-- **Status:** Accepted
+- **Status:** Superseded by
+  [ADR-0125](ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md) two days
+  later — the control this ADR rules on is deleted with the offer, on the human's instruction
 - **Date:** 2026-09-04
 - **Resolves:** `DEC-125` — **the product owner's** — pressing the account offer's accept
   (*"Keep them with a password"*) on the result screen **spends the offer and navigates
