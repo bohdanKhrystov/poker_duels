@@ -2,7 +2,7 @@
 id: STORY-1401
 title: The timebank figure is whole seconds at every seat
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, table, bug]
