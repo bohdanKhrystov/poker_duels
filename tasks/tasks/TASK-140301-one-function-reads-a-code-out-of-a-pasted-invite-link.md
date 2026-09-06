@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140301
 title: One function reads a room code out of whatever was pasted into the field
 type: task
-status: ready
+status: done
 parent: STORY-1403
 module: web-client
 estimate: S
