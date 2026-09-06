@@ -160,7 +160,12 @@ function Live(props: {
       </div>
       <div aria-label="actions" className="flex gap-3" role="group">
         {actions.allowed.map((type) => {
-          const text = actionText(type, actions, dialled ?? 0);
+          const text = actionText(
+            type,
+            actions,
+            dialled ?? 0,
+            props.committedThisStreet,
+          );
           // The button prints the proposal a press would send, or nothing —
           // never a different amount (`ADR-0111` §7, `ADR-0100` §2). Only Bet
           // and Raise carry a typed total, so only they can be silenced by a
