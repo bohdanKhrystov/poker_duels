@@ -60,6 +60,52 @@ describe("the action bar", () => {
     ]);
   });
 
+  it("prices the call button from the acting seat's own commitment", () => {
+    // Frame A: callTo 600, committed 200 — the call costs 400
+    const { getByRole, container, unmount } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({
+          allowed: ["FOLD", "CALL", "RAISE", "ALL_IN"],
+          callTo: 600,
+        }),
+      }),
+      potIncludingStreet: 1400,
+      committedThisStreet: 200,
+    });
+
+    const actionsA = within(getByRole("group", { name: "actions" }));
+    const buttonsA = actionsA.getAllByRole("button");
+    const textsA = buttonsA.map((b) => b.textContent);
+    expect(textsA).toEqual([
+      "Fold",
+      "Call 400",
+      "Raise to 1,200",
+      "All in 13,400",
+    ]);
+    expect(container.textContent).not.toMatch(/600/);
+
+    unmount();
+
+    // Frame B: callTo 925, committed 75 — the call costs 850
+    const { getByRole: getByRoleB, container: containerB } = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({ callTo: 925 }),
+      }),
+      committedThisStreet: 75,
+    });
+
+    const actionsB = within(getByRoleB("group", { name: "actions" }));
+    const buttonsB = actionsB.getAllByRole("button");
+    const textsB = buttonsB.map((b) => b.textContent);
+    expect(textsB).toEqual([
+      "Fold",
+      "Call 850",
+      "Raise to 1,200",
+      "All in 13,400",
+    ]);
+    expect(containerB.textContent).not.toMatch(/925/);
+  });
+
   it("renders no button for an action the server withheld", () => {
     const { getByRole } = bar({
       turn: aTurn({
