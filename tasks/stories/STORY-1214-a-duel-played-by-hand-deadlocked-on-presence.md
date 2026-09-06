@@ -142,7 +142,7 @@ answered here.
 | | |
 | --- | --- |
 | [`DEC-107`](../../docs/adr/README.md) | **The architect's** — where is a presence frame scoped to the room it is about? Blocked `TASK-121403`. **Answered and merged 2026-09-01** as [`ADR-0104`](../../docs/adr/ADR-0104-a-frame-reaches-the-connection-in-the-room-it-is-about.md); it also split off `DEC-109`, the product owner's, which blocks nothing here. |
-| [`DEC-108`](../../docs/adr/README.md) | **The product owner's** — may the action bar stay enabled while the table says the duel is paused? Blocks no ticket here. |
+| [`DEC-108`](../../docs/adr/README.md) | **The product owner's** — may the action bar stay enabled while the table says the duel is paused? Blocks no ticket here. **Answered and struck 2026-09-06** as [`ADR-0127`](../../docs/adr/ADR-0127-a-control-stands-only-for-a-decision-the-server-has-opened.md) §4, alongside `DEC-135`: *wait* and *you may act* may never be sayable at one moment, and when they conflict **the notice gives way, not the bar** — the route the product had already taken, since `ADR-0113` §7 deleted the pause and `TASK-130911` removed the line that named it. No ticket falls out of it. |
 
 `DEC-108` exists because `ADR-0046` §6 **already declined this question by name** —
 *"Whether the action bar's controls look disabled while the duel is paused"* — leaving `YourTurn`

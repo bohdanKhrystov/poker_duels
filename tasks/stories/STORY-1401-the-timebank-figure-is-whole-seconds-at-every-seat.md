@@ -100,7 +100,11 @@ repair, and inventing one to look thorough costs a dispatch for nothing.
 ## Out of scope
 
 - **The action bar's `off` state** — the second annotation on `edits3.png` (*show disabled
-  controllers*) is `DEC-135`'s and lands in `STORY-1406`.
+  controllers*) was `DEC-135`'s, and it is **answered *no*** by
+  [`ADR-0127`](../../docs/adr/ADR-0127-a-control-stands-only-for-a-decision-the-server-has-opened.md):
+  a control stands only for a decision the server has opened, so the `off` state keeps its box, its
+  reserved rows and its one sentence. `STORY-1406` is retired rather than split, and nothing about
+  the bar is owed by this story or any other.
 - **The pot's chip pile and the arrow drawn from it** — item 2c, `STORY-1413`, and `ADR-0115` and
   `ADR-0102` govern it.
 - **The countdown figure.** Both of `clockFigure`'s call sites already pass `secondsRemaining(...)`;

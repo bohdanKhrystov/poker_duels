@@ -1,6 +1,9 @@
 # ADR-0085 — *"Not again"* is this browser, and an answer is what spends the offer
 
-- **Status:** Accepted
+- **Status:** Superseded by
+  [ADR-0125](ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md) —
+  the surface every section of this ADR is about is retired. `ADR-0119` §5 restates this rule in
+  its own words for the name ask and stands
 - **Date:** 2026-08-27
 - **Resolves:** `DEC-079` — is [`ADR-0036`](ADR-0036-an-account-is-offered-never-required.md)'s
   *"not again"* a fact about the **player** or about **this browser**, and what **spends** the
