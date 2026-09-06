@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140202
 title: The front door's primary control says Play duel
 type: task
-status: backlog
+status: done
 parent: STORY-1402
 module: web-client
 estimate: S
