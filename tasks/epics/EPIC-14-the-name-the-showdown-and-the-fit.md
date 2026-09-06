@@ -135,7 +135,7 @@ open question, and marked as such — and one of them **opens a decision that wa
 
 | # | Item | Touches | Decides it |
 | --- | --- | --- | --- |
-| 1a | A player names themselves before their first duel, from a suggestion | `web-client`, `poker-server`, `design` | **`DEC-129`** — the product owner's |
+| 1a | A player names themselves before their first duel, from a suggestion | `web-client`, `poker-server`, `design` | **Answered** — [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md): the ask stands at the player's **own** first press, never on the invite path, and **skipping plays**. Registers **`DEC-142`**, the architect's, for the suggestion's generator |
 | 1b | The account screen names the anonymous profile and owns the promotion; the post-win offer goes | `web-client`, `design` | **`DEC-130`** — the product owner's. **Contradicts `ADR-0036`, `ADR-0085`, `ADR-0086`, `ADR-0116`**; would moot the open `DEC-089` |
 | 1c | A name can be changed, at any time, in account settings | `poker-server`, `web-client`, `design` | **`DEC-131`** — the product owner's. **Contradicts `ADR-0029`**, whose title is *unique and **permanent*** |
 | 1d | Signing out returns the browser to a **new** anonymous profile | `poker-server`, `web-client` | **`DEC-132`** — the product owner's. **Contradicts `ADR-0012`, `ADR-0027`, `ADR-0037`** |
@@ -297,7 +297,8 @@ every item here, and this epic adds the product's **first dialog** and its **fir
 motion**, so the card is not a formality on either:
 
 - **The name dialog** (item 1a) — a surface no card draws, with at least: the suggestion offered,
-  a name typed, a name refused as taken, and whatever `DEC-129` says about skipping it.
+  a name typed, a name refused as taken, and the skip `ADR-0119` §2 requires — one of two equally
+  reachable ways out, both of which end in the duel the player pressed for.
 - **The account screen's anonymous state** (item 1b) and **the rename control** (item 1c).
 - **The showdown** (items 2a–2c) — the states `duel-table-states.html` does not have: hands shown,
   the winning five marked, the pot in flight, and the same three under
@@ -333,14 +334,18 @@ motion**, so the card is not a formality on either:
 
 ## Open decisions
 
-**Eleven, all the product owner's, none answered.** Five of them ask to change something a merged
-ADR decided, and one re-opens a question that has been open since 2026-09-01 — which is why this
-epic opens `backlog` and why no story below is startable: an ADR is an answer only once it is
-**merged**, and an ADR that supersedes another must say so in the PR that merges it.
+**The epic opened with eleven, all the product owner's, none answered.** Five of them ask to change
+something a merged ADR decided, and one re-opens a question that has been open since 2026-09-01 —
+which is why this epic opens `backlog` and why no story below is startable: an ADR is an answer only
+once it is **merged**, and an ADR that supersedes another must say so in the PR that merges it.
+
+**`DEC-129` is answered** — [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md),
+2026-09-06, superseding and amending nothing — and its row has left the table below. In its place
+the table now carries **`DEC-142`**, the architect's, which that ADR registered for the suggestion's
+generator.
 
 | ID | Question | Whose | What it blocks |
 | --- | --- | --- | --- |
-| `DEC-129` | Is a player **asked for a name before their first duel**, where does the **suggestion** come from, and may the dialog be dismissed without naming? `ADR-0036` says *"no screen gates on having a credential"* and a name is not a credential, but this is still a surface between a player and a duel. A suggestion must be a name that is **free**, and `ADR-0029` §1 makes freedom a database fact, so the suggestion cannot be a pure client string | The product owner's | Items 1a and 3a's strip, and every card in item 1 |
 | `DEC-130` | Does the **account screen name the anonymous state** — the human's *"Anonymous Account"* — and become the **only** door to promotion, retiring the post-win offer entirely? This asks to reverse `ADR-0036`'s central mechanism and to delete the surface `ADR-0085`, `ADR-0086` and `ADR-0116` were written about. The **open `DEC-089`** asks how that surface should look and would be mooted; the answering ADR strikes it in the same PR | The product owner's | Items 1b, 3a's profile strip and 3d's result screen |
 | `DEC-131` | May a display name be **changed after it is set**, and what happens to the one given up — is it released for anyone to take, held, or retired? `ADR-0029` is titled *unique and **permanent***, `ADR-0038` can take a name away, `ADR-0051` registers one before it is held, and the leaderboard, the duel record and every finished duel print names that would now be able to move | The product owner's | Item 1c |
 | `DEC-132` | Does **signing out abandon the anonymous profile and issue a new one**? `ADR-0012` binds a profile to a device id, `ADR-0027` puts the session above it, and `ADR-0037` calls the device a credential *until revoked*. A browser that gets a fresh profile at every sign-out is a **new** way to lose coins — the one thing the offer this epic may delete exists to prevent — so this decision and `DEC-130` must be answered against each other | The product owner's | Item 1d, and the shape of item 1e's proof |
@@ -351,6 +356,7 @@ epic opens `backlog` and why no story below is startable: an ADR is an answer on
 | `DEC-137` | **Does the `Call` button name the total (`callTo`) or what the player must add** — the *"diff i need to add"*? A price is what a player decides against, and every poker client the human has used prints one; the total is what the server sent and what `ADR-0109`'s mark prints for the same act. Neither number is computed today, and an increment would be: `action-text.ts` states *"Nothing is priced, netted or worked out"*, so a yes either sends a second figure or licenses one subtraction against gates that currently forbid all of them. It must also rule on the mark, and on whether `Raise to` keeps saying *to* | The product owner's | Item 4 |
 | `DEC-138` | **Does a rematch offer follow the rival off the result screen, and as what?** The human asks for a popup *"on any screen"*. `ADR-0044` already makes the intent and the room fact; what is unowned is the surface — this product has no modal of any kind, and `ADR-0112` §, which lets a `FINISHED` room honour an ask for the lobby, is what created the situation of an offer whose recipient is somewhere else. It decides where the offer may appear, what happens to it when it is ignored, and whether declining it is a thing a player can do | The product owner's | Item 5 |
 | `DEC-139` | **Does pressing play again return the host to the room they already hold?** And with it, the question that has been open since 2026-09-01: **`DEC-111`**, *may one player hold more than one `WAITING` room at once?* Today the answer is *yes, silently* — `Back to the lobby` forgets the code (`ADR-0072` §3) while `ADR-0105` §2 refuses only a `PLAYING` room, so pressing play again opens a second room and orphans the code the player may already have sent. The server keeps the first for ten minutes, so *returning* to it needs no new lifetime — only a decision about what the browser remembers, and what a second press means | The product owner's | Item 6. **Answering it strikes `DEC-111` in the same PR**, or says why that row stays |
+| `DEC-142` | By what mechanism is a display-name **suggestion** produced — what generates the string, does the generator consult `name_registry` before offering it, and does the suggestion cross the wire at all? Registered 2026-09-06 by [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md) §4, which fixes the product rules it must satisfy and chooses no generator. `ADR-0029` §5's refusal of an availability-check endpoint is applied, not reopened | The architect's | Item 1a's suggestion, and `STORY-1407`'s split |
 
 ### What the answers will hand the architect
 
@@ -370,8 +376,9 @@ answers one way, and each is registered by the ADR that answers it:
   post-hand disclosure reaches the client. Any answer that adds a field moves
   `PROTOCOL_VERSION`, which makes it an `atomic:` ticket sized by `ADR-0070`'s probe under
   `ADR-0047`'s one-bumping-branch-at-a-time lock — the only wire move this epic can contain.
-- **The suggestion's source** (`DEC-129`) — a suggested name must be free at the moment it is
-  suggested and may not be free at the moment it is taken.
+- **The suggestion's source** — now registered as **`DEC-142`** by `ADR-0119` §4. A suggested name must be free at the moment it is
+  suggested and may not be free at the moment it is taken, which is why `ADR-0119` §4 promises nothing about
+  one and forbids writing one the player has not taken.
 - **The price's source** (`DEC-137`) — if the button names an increment, is it a field the server
   sends beside `callTo`, or the one subtraction the never-derives gates are told to admit? The same
   choice `ADR-0107` faced for the pot and answered by admitting exactly one sum.
@@ -406,7 +413,7 @@ decision.
 | `STORY-1404` | The waiting table gains a copy button and the sentence that says the duel starts itself — *item 3b* | nothing |
 | `STORY-1405` | The table fits the phone it is played on — *item 3d; `ADR-0103` re-measured on the device* | `DEC-136` |
 | `STORY-1406` | The bar stands disabled where it printed a sentence — *item 3c* | `DEC-135` |
-| `STORY-1407` | A player names themselves before their first duel — *item 1a; the product's first dialog* | `DEC-129` |
+| `STORY-1407` | A player names themselves before their first duel — *item 1a; the product's first dialog, and by [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md) §1 a screen rather than a modal* | `DEC-142`, and nothing else — `DEC-129` is answered |
 | `STORY-1408` | The account screen says what an anonymous account is, and offers the promotion — *item 1b; the post-win offer and the profile strip's line go with it* | `DEC-130` |
 | `STORY-1409` | A name can be changed in account settings — *item 1c* | `DEC-131` |
 | `STORY-1410` | Signing out hands the browser a new anonymous profile — *item 1d, and the proof that a promotion moves no coin* | `DEC-132` |
