@@ -147,7 +147,7 @@ decision that was already open**.
 | 3a | The front door: the button is renamed, the wordmark is uncovered, the code field takes a link, the strip goes, `Account` grows | `web-client`, `design` | **A card**, plus `DEC-130` for the strip. The rename is answered above; the overlap is a defect |
 | 3b | The waiting table: a copy button, the auto-start sentence, no `You` plate | `web-client`, `design` | **A card.** `ADR-0110` moved these surfaces and `ADR-0073`'s two promises stay verbatim |
 | 3c | The table: the timebank figure, the disabled bar, the pot's chip pile | `web-client`, `design` | **`DEC-135`** for the bar — the product owner's, adjacent to the open `DEC-108`. The figure is a **defect** with a known cause and decides nothing |
-| 3d | The table fits the phone — measured on the device, not on a headless viewport | `web-client`, `design`, `docs` | **`DEC-136`** — the product owner's. **Contradicts `ADR-0103`** §1 in fact and §2 in mechanism |
+| 3d | The table fits the phone — measured on the device, not on a headless viewport | `web-client`, `design`, `docs` | **Answered.** `DEC-136` → [`ADR-0121`](../../docs/adr/ADR-0121-the-table-reflows-never-scales-and-the-shape-is-measured-on-the-device.md): a **defect against `ADR-0103` §1's instrument**, not its mechanism — the reflow stays, the scale is refused, the width axis joins the contract, and the shape is device-measured |
 | 4 | `Call` names what the player must add, not the total they will have in | `web-client`, possibly `poker-server` | **`DEC-137`** — the product owner's. `action-text.ts` refuses the arithmetic **by name**, and `ADR-0109`'s mark prints the same total |
 | 5 | A rematch offer reaches the rival wherever they are, as a surface they cannot miss | `web-client`, `poker-server`, `design` | **`DEC-138`** — the product owner's. Touches `ADR-0044`, and `ADR-0112`/`ADR-0114` are what let the rival be elsewhere at all |
 | 6 | Pressing play again returns the host to the room they still hold | `web-client`, `poker-server` | **`DEC-139`** — the product owner's, and it **opens the already-open `DEC-111`**: the second room is not hypothetical, it is what the product does today |
@@ -236,7 +236,9 @@ changing continuously with the column's own width, with nothing removed, collaps
 photograph contradicts §1 directly, and its clipped plates contradict §2's *"nothing is removed"*
 in the worst way — by removing it off the edge rather than by design. The human's own proposal —
 *scale the table area, scroll only below a reasonable minimum* — is a **different mechanism** from
-§2's continuous reflow, which is why `DEC-136` asks both halves at once.
+§2's continuous reflow, which is why `DEC-136` asked both halves at once. **Answered by `ADR-0121`**:
+the reflow stays, the scale is refused on `R3` and on §3's give order, the contract gains
+`scrollWidth ≤ clientWidth`, and 390 × 664 becomes a stand-in a device reading corrects downward.
 
 **The action bar already has an `off` state, and prints a sentence in it.** `ADR-0103` quotes the
 merged card: *"the bar reserves both rows in its `off` state"*, so the height item 3c asks about is
@@ -325,8 +327,9 @@ motion**, so the card is not a formality on either:
 - **The disabled bar** (item 3c) — the `off` state drawn as controls rather than as a sentence.
 - **The corrected front door and waiting table** (items 3a–3b), including the copy button, whose
   two feedback lines already exist and move whole.
-- **The phone frame** (item 3d), which under `DEC-136` may be a card that changes the mechanism
-  `ADR-0103` §2 fixed, and therefore cannot be drawn before that decision merges.
+- **The phone frame** (item 3d), which `ADR-0121` keeps on `ADR-0103` §2's mechanism — so it is the
+  existing frame re-drawn, never a scaled one, and its `.viewport.phone` box is 390 × 664 until a
+  device reading under `ADR-0121` §2 moves it down.
 
 ## Out of scope
 
@@ -358,14 +361,32 @@ something a merged ADR decided, and one re-opens a question that has been open s
 which is why this epic opens `backlog` and why no story below is startable: an ADR is an answer only
 once it is **merged**, and an ADR that supersedes another must say so in the PR that merges it.
 
-**Two are answered.** [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md)
+**Three are answered, all on 2026-09-06.** Two of them settle a door and an ending. [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md)
 answers `DEC-129` — the name is asked at the player's own first press, the suggestion promises
 nothing, and skipping plays — and
 [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md)
 answers `DEC-133` — a showdown shows the hands the rules showed, and the beat that shows them
 stands. Neither supersedes anything. Both rows have left the table below and stand under
 *Answered*; in their place the table carries two of **the architect's**, registered by those
-answers: `DEC-142` for the suggestion's generator, and `DEC-146` for the beat's length.
+answers: `DEC-142` for the suggestion's generator, and `DEC-146` for the beat's length. The
+third is the phone, and it is set out in full because it changes what a later ticket is measured
+against:
+
+**`DEC-136` → [`ADR-0121`](../../docs/adr/ADR-0121-the-table-reflows-never-scales-and-the-shape-is-measured-on-the-device.md)
+on 2026-09-06 — the table reflows, never scales, and the judged shape is measured on the device.**
+It is a **defect against `ADR-0103` §1's instrument**, not a reason to change its mechanism, so
+`ADR-0103` §§2–5 stand byte-unchanged and no clause is superseded. A uniform scale is still *one*
+table and was the product owner's to pick, but it is refused on **`R3`** and on §3's give order —
+the numbers give last, a transform shrinks them first, and `ADR-0106` §1 already rules that the
+property governs the instrument. The contract gains its width twin (`scrollWidth ≤ clientWidth`)
+and adds **no criterion**, so the photographed plates are `R3` `not met` today and three of the
+human's four annotations were never blocked at all. The fit is measured at the **smallest viewport
+the browser presents** (iOS Safari, bars fully expanded), which needs no listener; **390 × 664
+stays** as `ADR-0096` §4's stand-in for a device, correctable **downward** by a hand-checked device
+reading and raisable by nobody. `STORY-1405` is startable, and the **device reading comes before any
+repair is measured** — nothing else establishes the shape the repair is aimed at. Named as the
+human's: relaxing `R3` for the scale, raising the judged shape, and any list of devices the product
+commits to.
 
 | ID | Question | Whose | What it blocks |
 | --- | --- | --- | --- |
@@ -374,7 +395,6 @@ answers: `DEC-142` for the suggestion's generator, and `DEC-146` for the beat's 
 | `DEC-132` | Does **signing out abandon the anonymous profile and issue a new one**? `ADR-0012` binds a profile to a device id, `ADR-0027` puts the session above it, and `ADR-0037` calls the device a credential *until revoked*. A browser that gets a fresh profile at every sign-out is a **new** way to lose coins — the one thing the offer this epic may delete exists to prevent — so this decision and `DEC-130` must be answered against each other | The product owner's | Item 1d, and the shape of item 1e's proof |
 | `DEC-134` | May the table **mark the five cards that won** — the winner's hole cards and the board cards that complete the hand? `ADR-0095` says the table *never names a hand*; a highlight names one without words. `BestHand.cards` exists in the engine for exactly this consumer and reaches nothing today, and the client may not compute it (`ADR-0002`) | The product owner's | Item 2b |
 | `DEC-135` | When it is not the player's turn, does the bar stand as **disabled controls** rather than the sentence `Waiting for your rival…`? The `off` state already reserves the height. The open **`DEC-108`** asks whether the bar may stay *enabled* while a duel is paused, and the two answers must agree about what a bar means when it cannot be pressed | The product owner's | Item 3c's bar only |
-| `DEC-136` | **Does the table scale, or does it keep reflowing — and against which viewport is the fit measured?** `ADR-0103` §1 fixes 390 × 664 and §2 forbids a different table at a different width; the human proposes scaling the table area with a floor below which scrolling is allowed. iOS Safari's chrome makes the real viewport smaller and *variable*, so the number in §1 may be the reason the promise held in a headless browser and failed on the device | The product owner's | Item 3d, and item 3d's card |
 | `DEC-137` | **Does the `Call` button name the total (`callTo`) or what the player must add** — the *"diff i need to add"*? A price is what a player decides against, and every poker client the human has used prints one; the total is what the server sent and what `ADR-0109`'s mark prints for the same act. Neither number is computed today, and an increment would be: `action-text.ts` states *"Nothing is priced, netted or worked out"*, so a yes either sends a second figure or licenses one subtraction against gates that currently forbid all of them. It must also rule on the mark, and on whether `Raise to` keeps saying *to* | The product owner's | Item 4 |
 | `DEC-138` | **Does a rematch offer follow the rival off the result screen, and as what?** The human asks for a popup *"on any screen"*. `ADR-0044` already makes the intent and the room fact; what is unowned is the surface — this product has no modal of any kind, and `ADR-0112` §, which lets a `FINISHED` room honour an ask for the lobby, is what created the situation of an offer whose recipient is somewhere else. It decides where the offer may appear, what happens to it when it is ignored, and whether declining it is a thing a player can do | The product owner's | Item 5 |
 | `DEC-139` | **Does pressing play again return the host to the room they already hold?** And with it, the question that has been open since 2026-09-01: **`DEC-111`**, *may one player hold more than one `WAITING` room at once?* Today the answer is *yes, silently* — `Back to the lobby` forgets the code (`ADR-0072` §3) while `ADR-0105` §2 refuses only a `PLAYING` room, so pressing play again opens a second room and orphans the code the player may already have sent. The server keeps the first for ten minutes, so *returning* to it needs no new lifetime — only a decision about what the browser remembers, and what a second press means | The product owner's | Item 6. **Answering it strikes `DEC-111` in the same PR**, or says why that row stays |
@@ -452,7 +472,7 @@ decision.
 | `STORY-1402` | The front door stops covering its own wordmark, and `Play duel` says what it does — *item 3a's overlap, spacing and rename* | nothing |
 | `STORY-1403` | The room code field takes the link as well as the code — *item 3a; `roomCodeFromSearch` reused at a field* | nothing |
 | `STORY-1404` | The waiting table gains a copy button and the sentence that says the duel starts itself — *item 3b* | nothing |
-| `STORY-1405` | The table fits the phone it is played on — *item 3d; `ADR-0103` re-measured on the device* | `DEC-136` |
+| `STORY-1405` | The table fits the phone it is played on — *item 3d; `ADR-0103` re-measured on the device, under `ADR-0121`* | nothing — `DEC-136` → `ADR-0121` |
 | `STORY-1406` | The bar stands disabled where it printed a sentence — *item 3c* | `DEC-135` |
 | `STORY-1407` | A player names themselves before their first duel — *item 1a; the product's first dialog, and by [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md) §1 a screen rather than a modal* | `DEC-142`, and nothing else — `DEC-129` is answered |
 | `STORY-1408` | The account screen says what an anonymous account is, and offers the promotion — *item 1b; the post-win offer and the profile strip's line go with it* | `DEC-130` |
