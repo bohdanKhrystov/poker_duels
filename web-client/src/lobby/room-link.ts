@@ -21,3 +21,23 @@ export function roomCodeFromSearch(search: string): string | null {
 export function roomLink(origin: string, code: string): string {
   return `${origin}/?room=${code}`;
 }
+
+/**
+ * The code the front door's field yields for what was typed or pasted into it:
+ * the `room` a pasted invite link carries, and otherwise the text normalised
+ * exactly as before. `""` for an empty field, which the caller refuses.
+ *
+ * One parse, not two: the code a paste yields and the code the same link yields
+ * when a tab navigates to it both come from `roomCodeFromSearch`. Text that is
+ * neither is passed on untouched but for case — `ADR-0022` leaves the server the
+ * only judge of whether a code names a room.
+ */
+export function roomCodeFromField(text: string): string {
+  try {
+    const carried = roomCodeFromSearch(new URL(text.trim()).search);
+    if (carried !== null) return carried;
+  } catch {
+    // Not a URL: the ordinary paste, a bare code.
+  }
+  return normalizeRoomCode(text);
+}
