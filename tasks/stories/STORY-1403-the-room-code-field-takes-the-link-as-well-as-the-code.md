@@ -2,7 +2,7 @@
 id: STORY-1403
 title: The room code field takes the link as well as the code
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, lobby]
