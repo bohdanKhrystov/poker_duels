@@ -132,17 +132,21 @@ rival 0`).
 ## Scope
 
 Six items, sixteen seams. The **Decides it** column is why this epic opens `backlog`: eleven
-questions had no merged answer when it opened — `DEC-129`, `DEC-130` and `DEC-133`–`DEC-139` now
-have one — five of them **contradict a merged ADR**, a heavier thing than an open question and
-marked as such, and one of them **opens a decision that was already open**. A second already-open
-row, `DEC-108`, has since been **closed** by this epic's own answer to `DEC-135`.
+questions had no merged answer when it opened — `DEC-129`–`DEC-139`, and **all eleven now have
+one**, as do the `DEC-140` and `DEC-141` the planner raised while splitting item 3b, so **all
+thirteen are answered** — five of them **contradict a merged ADR**, a heavier thing than an open
+question and marked as such, and one of them **opens a decision that was already open**. A second
+already-open row, `DEC-108`, has since been **closed** by this epic's own answer to `DEC-135`.
+What is left open is the follow-ups those answers registered — `DEC-142`, `DEC-144`, `DEC-146`,
+`DEC-147`, `DEC-150`, `DEC-151` and `DEC-152` for the architect and `DEC-145` for the product
+owner — plus the pre-existing `DEC-110`.
 
 | # | Item | Touches | Decides it |
 | --- | --- | --- | --- |
 | 1a | A player names themselves before their first duel, from a suggestion | `web-client`, `poker-server`, `design` | **Answered** — [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md): the ask stands at the player's **own** first press, never on the invite path, and **skipping plays**. Registers **`DEC-142`**, the architect's, for the suggestion's generator |
 | 1b | The account screen names the anonymous profile and owns the promotion; the post-win offer goes | `web-client`, `design` | **Answered** — [`ADR-0125`](../../docs/adr/ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md): the offer is **retired whole**, nothing replaces it, the screen names the profile *anonymous* and it may say so only once it has been told. **Supersedes `ADR-0085`, `ADR-0086` and `ADR-0116` in full and `ADR-0036`'s offer block**; strikes `DEC-089` by deletion; registers **`DEC-147`**, the architect's |
-| 1c | A name can be changed, at any time, in account settings | `poker-server`, `web-client`, `design` | **`DEC-131`** — the product owner's. **Contradicts `ADR-0029`**, whose title is *unique and **permanent*** |
-| 1d | Signing out returns the browser to a **new** anonymous profile | `poker-server`, `web-client` | **`DEC-132`** — the product owner's. **Contradicts `ADR-0012`, `ADR-0027`, `ADR-0037`** |
+| 1c | A name can be changed, at any time, in account settings | `poker-server`, `web-client`, `design` | **Answered** — [`ADR-0130`](../../docs/adr/ADR-0130-a-name-can-be-changed-and-the-name-it-leaves-is-spent.md): **yes, and the name it leaves behind is spent.** *That* it can change is the human's, recorded verbatim; **what becomes of the string is derived** — **retired**, not released and not held. History prints the name as it **is**; one form, on the **account screen**; `PERMANENCE_LINE` leaves the product. **Supersedes `ADR-0029` §4, its title's *permanent* and §5's `403`, `ADR-0051` §3's rename clause and `ADR-0119` §3's obligation 2.** Registers **`DEC-151`**, the architect's, for the mechanism |
+| 1d | Signing out returns the browser to a **new** anonymous profile | `web-client`; `poker-server` only if `DEC-152` says so | **Answered** — [`ADR-0131`](../../docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md): **yes when the account being left is the profile this browser owns, no when it is somebody else's.** The three ADRs this item was filed against are **not** contradicted after all — a browser handed a new profile is still a profile bound to a device (`ADR-0012`), precedence is untouched (`ADR-0027`), and the device stays a route until revoked (`ADR-0037`). What is superseded is **`ADR-0030`** §3's outcome clause and §8's *not on sign-out*, for that one case. Registers **`DEC-152`**, the architect's |
 | 1e | Duel coins carry across the promotion | — | **Nothing.** `ADR-0030` §1 already makes this true by construction — see *What is already true*. A story here **proves** it; no code is owed |
 | 2a | A showdown shows the hands it reached, and stands long enough to read | `web-client`, `design` | **Answered** — [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md): what is shown is what the rules showed (`ADR-0008` whole), and the **last beat stands 2 s**. `poker-server` is no longer touched. The hold's mechanism is **`DEC-146`**, the architect's |
 | 2b | The winning five is marked, in hand and on the board | `web-client`, `design` | **Answered — no.** [`ADR-0126`](../../docs/adr/ADR-0126-the-table-shows-the-cards-and-marks-none-of-them.md): **the table shows the cards and marks none of them.** `ADR-0095` §3 is applied to a statement made without words, not reopened; the five stay inside `poker-engine`, so **`poker-server` leaves this item** and no wire moves. What is left is one gate and one line on `STORY-1411`'s card |
@@ -168,8 +172,13 @@ is one `INSERT` of a credential row against the `player` row the request already
 untouched."* The ADR says outright that *"the correct implementation of the human's 'migrate
 balance and history' is that no row migrates at all"*. The promotion the human describes is the
 shipped `POST /api/auth/sign-up`. **What this epic owes item 1e is a test and a sentence on a
-screen, not a transfer** — and `DEC-132` is the one thing that could make it false, because a
+screen, not a transfer** — and `DEC-132` was the one thing that could have made it false, because a
 sign-out that abandons a profile is the first mechanism in this product that would strand coins.
+**It does not.**
+[`ADR-0131`](../../docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md)
+§2 abandons a profile only where the profile holds a credential — to be in that case you signed in
+to it — so **nothing in this product abandons a profile a player cannot get back to**, and the
+coins are as unmoved after a sign-out as they are across the promotion.
 
 **The engine already reveals at a showdown, and no client file draws it.**
 `StreetProgression.kt:124-133` emits `ShowdownReached` and then one `HandRevealed` per seat in
@@ -341,7 +350,11 @@ case-insensitive unique index under a pinned ICU collation, *"the index is the r
 many unnamed profiles coexist because `NULL` folds to `NULL`. §2 canonicalises what is stored.
 `ADR-0038` screens a name when set and can take it away; `ADR-0051` registers it before it is held.
 Item 1c does not soften a convention — it asks to change a thing whose permanence is in a title,
-which is why `DEC-131` is registered rather than assumed.
+which is why `DEC-131` was registered rather than assumed. **It is answered** by
+[`ADR-0130`](../../docs/adr/ADR-0130-a-name-can-be-changed-and-the-name-it-leaves-is-spent.md):
+permanence goes, **`ADR-0051` §1's registry stays** — the name a player walks away from is
+**retired**, spent for everyone including its former owner — and history keeps printing the name as
+it **is**, because `ADR-0039` never let a name be copied onto a row.
 
 ## Design first
 
@@ -451,17 +464,19 @@ commits to.
 
 | ID | Question | Whose | What it blocks |
 | --- | --- | --- | --- |
-| `DEC-131` | May a display name be **changed after it is set**, and what happens to the one given up — is it released for anyone to take, held, or retired? `ADR-0029` is titled *unique and **permanent***, `ADR-0038` can take a name away, `ADR-0051` registers one before it is held, and the leaderboard, the duel record and every finished duel print names that would now be able to move | The product owner's | Item 1c |
-| `DEC-132` | Does **signing out abandon the anonymous profile and issue a new one**? `ADR-0012` binds a profile to a device id, `ADR-0027` puts the session above it, and `ADR-0037` calls the device a credential *until revoked*. A browser that gets a fresh profile at every sign-out is a **new** way to lose coins — the one thing the offer this epic **has** deleted existed to prevent — `ADR-0125` answered `DEC-130` first, so this decision is now written against a product that volunteers no warning about a browser-bound coin at all | The product owner's | Item 1d, and the shape of item 1e's proof |
 | `DEC-142` | By what mechanism is a display-name **suggestion** produced — what generates the string, does the generator consult `name_registry` before offering it, and does the suggestion cross the wire at all? Registered 2026-09-06 by [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md) §4, which fixes the product rules it must satisfy and chooses no generator. `ADR-0029` §5's refusal of an availability-check endpoint is applied, not reopened | The architect's | Item 1a's suggestion, and `STORY-1407`'s split |
 | `DEC-144` | **By what mechanism does a surface render above every chosen screen, and where does its dismissal live?** Registered open 2026-09-06 by [`ADR-0123`](../../docs/adr/ADR-0123-a-standing-rematch-offer-follows-the-rival.md) §9, which fixes what a player sees and writes no repair. `Lobby.tsx` returns early per screen, so nothing in the shipped tree renders **across** screens at all: open are where the panel is mounted, how it meets `ADR-0114`'s `shown`/`ruling` and the layout-effect restore, where a dismissal lives so it survives a screen change but **not** a reload, whether the panel and `RematchControl` are one component or two, and how it is announced without **taking focus**. It may not move the wire, add a stored key, or change what `ADR-0123` §§1–7 say a player sees | The architect's | `STORY-1415`'s implementing ticket, not its card |
 | `DEC-146` | By what mechanism does the client's **step queue give one beat a length different from a step**? [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md) §3 fixes the product half — a showdown's last beat stands **2,000 ms**, every other ending keeps **600 ms** — while `ADR-0102` §4 pins *a step is 600 ms, named once, at the boot seam*, reaching the store as a single parameter, and `drive-duel.tsx` boots it at `0` so `ADR-0100` §3's recorded-frame suites are neither edited nor re-recorded | The architect's | `STORY-1411`'s hold, and nothing else |
 | `DEC-147` | By what means does the client learn that the profile it holds carries **no credential**? Registered by [`ADR-0125`](../../docs/adr/ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md) §4, which rules that the account screen may call a profile *anonymous* only when it has been told and never from the absence of a session token. `GET /api/me` carries no such field, and `signedIn` is a false positive for anonymity in two reachable states — a `201` sign-up whose follow-up sign-in failed, and a player who signed out in this browser. `ADR-0125` chooses no mechanism and moves no wire | The architect's | Item 1b's anonymous block only — the offer's deletion and the strip's empty state wait on nothing |
+| `DEC-151` | By what mechanism does a display name **change**? Registered 2026-09-07 by [`ADR-0130`](../../docs/adr/ADR-0130-a-name-can-be-changed-and-the-name-it-leaves-is-spent.md), which fixes what a player sees and designs nothing: what `player_display_name_is_permanent()` becomes now that `ADR-0029` §4's rename clause is superseded; what statements a change runs, in what transaction, and what rolls back; whether the vacated `name_registry` row moves `TAKEN → RETIRED` and whether `retired_from` is populated — under `ADR-0130` §4's constraint that `ADR-0052` §6's derived bit reads **false** for a player who renamed themselves; what `PUT /api/me/name` answers now that `403 AlreadyNamed` has no cause, and what `docs/protocol.md` says instead; and **whether the write needs a budget** (`ADR-0029` §5 already named it additive and `ADR-0022`-shaped, keyed by `PlayerId`). It may not change what `ADR-0130` §§1–7 say a player sees | The architect's | `STORY-1409`'s implementing tickets — due before it ships, since the namespace has no brake until it lands |
+| `DEC-152` | By what mechanism does a browser **stop owning the profile it owned**, at a sign-out and only there, and how does the confirmation learn **before** it acts which of the two sign-outs this is? Registered by [`ADR-0131`](../../docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md) §7, which fixes the product half and writes no repair. Six constraints are §7's and not the architect's: it **revokes nothing** (`ADR-0049` §2's `UPDATE` and trigger stay out of the path, §3 is not entered, the binding left behind stays live); it writes nothing to `player`, `credential`, `duel` or `duel_result` and moves no coin; §2's invariant holds for every path it creates; the case is knowable to the confirmation **before** the press, which is a server fact of `DEC-147`'s class and answerable by neither `signedIn` nor a token's presence; `ADR-0030` §8's write-once rule stands everywhere else; and `ADR-0002` holds. Three shapes named without choosing | The architect's | `STORY-1410`'s implementing ticket, not its card |
 
 ### Answered
 
 | ID | Answered by | What it means here |
 | --- | --- | --- |
+| `DEC-131` | [`ADR-0130`](../../docs/adr/ADR-0130-a-name-can-be-changed-and-the-name-it-leaves-is-spent.md) | **A name can be changed, and the name it leaves behind is spent.** Two halves from two places: ***that* a name may be changed is the human's, recorded verbatim** (*"player name can be changes at any time in accounts settings"*), reversing their own `DEC-017` answer, and the ADR does not choose it; ***what becomes of the string* is derived** from the vision's *"**A leaderboard.** Ranked results over a season."* read as `ADR-0067` §1 read it — a row is **text and leads nowhere**, so the name is a row's only identity, and `ADR-0039` makes history a **live join**, so a reissued string would print a second player onto the first's finished duels. **§1**: a change is a `set` under every existing rule — canonicalisation, characters, the fold, `ADR-0038`'s screening — **no quota, no cooling-off, no confirmation**, and it never leaves the player nameless. **§2**: **retired, not released and not held** — spent for everyone including its former owner, so `ADR-0038`'s *retired forever, including the player it was taken from* becomes one rule for both ways a name leaves a player, and `ADR-0051` §1 is leaned on rather than amended. **§3**: **history shows the name as it *is***; no row is rewritten because no row holds a name, the old name appears nowhere, nothing marks a changed row, and — measured — the blast radius is **three surfaces** while the table is untouched (no `ServerMessage` carries a name; the opponent is *Your rival*). **§4**: nobody is told, and `ADR-0052` §1's removal notice never fires for a rename. **§5**: `PERMANENCE_LINE` and the `permanent` refusal sentence **leave the product**, replaced by two obligations said before the send. **§6**: **one form on the account screen**, doing both acts — the seam `ADR-0125` left open — with `NameSurface` off the front door, `ADR-0052`'s notice travelling with it, `ADR-0119` §1's ask untouched, and **no suggestion on a change**. **Supersedes** `ADR-0029` §4's rename clause, its title's *permanent* and §5's `403`; `ADR-0051` §3's *no exception at all*; `ADR-0119` §3's obligation 2. Costs named: **a rename is one-way**, the namespace burns per `PUT`, a rival can never find you again, other players' records change under them, and two merged migrations encode the clause §1 makes wrong. For item 1c: **`STORY-1409` is unblocked on the product side** and waits only on **`DEC-151`**, the architect's |
+| `DEC-132` | [`ADR-0131`](../../docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md) | **Yes when the account being left is the profile this browser owns; no when it is somebody else's.** Three rows: an own profile (a promotion, `ADR-0030` §1) → a **new, empty** anonymous profile; somebody else's account → the profile the browser owns, unchanged; no profile at all → a first-time visitor, which already ships. **Both halves are the human's and neither is chosen** — the abandoning half verbatim 2026-09-06 (*"if logout you comeback to new annonumus profile"*, the fourth clause of an item whose every other clause is about this browser's own profile and its promotion, and which never mentions signing into an account the browser does not own), the keeping half verbatim 2026-08-14 (*"i would like to keep anonimous accout if user log out"*, `ADR-0030` §2). What the ADR chooses is **which sentence governs which case**, and it says so as a **reading**, leaving the human one sentence that would correct it. A browser is handed a fresh profile **at most once per promotion**. **§2 answers this epic's own framing of the risk**: to be in the abandoning case you signed in to that profile, so it holds a password — **nothing is ever abandoned that cannot be signed back into**, and `DEC-152` may not build a route that is, which is also why **item 1e stays true**. **§3: nothing is revoked, deleted, moved or destroyed** — `ADR-0049`'s finality means *nothing here, because a sign-out is not a revocation*, on `ADR-0050`'s own *"Revocation is final forever; signing out is the cheapest act in the product."* **§4** licenses one abandonment at one confirmed press; `ADR-0027` §5's stale-client harm stays forbidden. **§5: the player is told before it happens**, on the confirmation `SignOutControl` already renders — **no new surface**, two obligations, `ADR-0125` §3's three refusals re-applied, licensed by `ADR-0037`'s *the account screens must state which routes are live* — so `SIGN_OUT_WARNING`'s *"This browser goes back to the profile it had before."* is **false the day the behaviour lands** and moves in the same diff. **§6** weighs `ADR-0119` §5 and leaves it **unamended**: a new profile is not an answer, so a player who skipped is not asked again and plays as `No name`. **Supersedes `ADR-0030` §3's outcome clause and its *keeps its device id* bullet, and §8's *not on sign-out* and *clears the token and only the token*, for one case only**, and **nothing** in `ADR-0012`, `ADR-0027`, `ADR-0037`, `ADR-0049` or `ADR-0050` — so item 1d's *contradicts three merged ADRs* turns out to be false, and the one it does contradict was not on the list. Costs named: a coin count seen falling to **zero** with one sentence of explanation; **a forgotten password now loses the account in one press that doing nothing used to undo**, the strongest argument against the decision and stated as such; empty profiles accumulating under `ADR-0039`; two sign-outs behaving differently under one label. Registers **`DEC-152`** |
 | `DEC-138` | [`ADR-0123`](../../docs/adr/ADR-0123-a-standing-rematch-offer-follows-the-rival.md) | **A standing rematch offer follows the rival, and it never takes the screen.** An offer **from the rival** follows a player onto every screen they can be on while they still hold the room — every `Screen` but `first`, **no carve-out**, mailed screens included — while a player who **left** the room (`forgetRoom()`, the page load behind *Back to the lobby*) is followed nowhere. The surface is a **panel above the screen and never a modal**: nothing beneath it is scrimmed or disabled, it takes no focus, **no keypress the player was already making can answer it**, it makes no sound, and it never retires itself on a timer — *cannot miss* is bought by standing there, not by blocking. Only an **incoming** offer follows, and only where the room's own screen is not showing, so one fact never has two live surfaces. **No string is minted**, and **dismissal hides the surface, never the offer** — nothing is sent, nothing is stored, and a reload brings the panel back on the offer the server restates (`ADR-0044` §5). Amends nothing: no wire, no `PROTOCOL_VERSION`, no server file, no stored key, and `ADR-0112` §2's *no notice, no dialog* stands untouched. For item 5: **`poker-server` leaves it**, the card is **minting** work with the human (`ADR-0091` §3, `ADR-0123` §8), and the mechanism is registered as **`DEC-144`**, the architect's |
 | `DEC-139` | [ADR-0124](../../docs/adr/ADR-0124-one-waiting-room-and-play-again-hands-it-back.md) | **Yes — and the server is what returns them.** While a player holds a `WAITING` seat, a `CreateRoom` from them **opens no second room**: they are handed back the one they hold, same code, same seat, room left exactly as found, and **nothing is refused** — which is what keeps `ADR-0073` §3's promise true instead of breaking it, *"…and it brings you back"* now twice over. **The browser goes on forgetting** (`ADR-0072` §3 byte-unchanged, **no client change at all**): a remembered code is what boot rejoins on, so keeping it across `Back to the lobby` would put the waiting table straight back up and restore `ADR-0073`'s room with no door; the seat is the server's fact; and the server can answer a device that has never heard of the room. **Nothing is said and no string is added** — `ADR-0110` §6's enumeration untouched, on *"Dark, quiet, fast, minimal."* — with the observation that would reopen it stated. The ten minutes still runs from `Room.open` and a return does **not** restart it. Item 6's story is now unblocked on the product side and waits on the architect's `DEC-110` |
 | `DEC-111` | [ADR-0124](../../docs/adr/ADR-0124-one-waiting-room-and-play-again-hands-it-back.md) | **No — one waiting room per player**, derived from `docs/vision.md`'s *"Two people, **one link**, one heads-up poker match, one winner"* with *"Not a multi-table poker room"* and *"A counter of duels won."* Answered **by construction**: a `WAITING` seat has exactly one source (`Room.open` is its only constructor, `RoomRegistry.create` has one production call site, no transition returns a room to `WAITING`), so what a second `CreateRoom` does *is* how many waiting rooms a player may hold — and it hands back the first. Amends `ADR-0105` §2's `WAITING` row only. **The harm is narrowed, not closed**: `DEC-145` registers the one route left into two duels at once — a holder of a waiting room taking a seat in **another** room by invite |
@@ -480,18 +495,26 @@ Named here rather than registered, following
 *a `DEC` nobody is working is noise in the open table*. These are certain if their product question
 answers one way, and each is registered by the ADR that answers it:
 
-- **The rename's mechanism** (`DEC-131`) — the unique index is the reservation, so a rename is a
-  reservation released and taken under one constraint, against rows the leaderboard and the duel
-  record already print. Includes whether a freed name is takeable and what `ADR-0038`'s screening
-  does on the second name.
-- **The new profile's mechanism** (`DEC-132`) — what a sign-out does to `player.device_id` when
-  `ADR-0049` says a device binding is a row and revoking is **final**, and what `ADR-0050`'s
-  *signs out everywhere but here* means for a browser that is about to be somebody else.
+- **The rename's mechanism** — now registered as **`DEC-151`** by
+  [`ADR-0130`](../../docs/adr/ADR-0130-a-name-can-be-changed-and-the-name-it-leaves-is-spent.md).
+  Two of the three things named here are **answered rather than handed over**: a freed name is
+  **not** takeable (§2 retires it) and `ADR-0038`'s screening applies to the second name exactly as
+  to the first (§1). What is left is the trigger, the statements and their transaction, the vacated
+  registry row, `PUT /api/me/name`'s answers now that `403` has no cause, and whether the write
+  needs a budget.
+- **The new profile's mechanism** — now registered as **`DEC-152`** by
+  [`ADR-0131`](../../docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md)
+  §7, and no longer a forecast. Two of the three things this epic expected it to weigh are
+  **answered rather than handed over**: `ADR-0049`'s finality means *nothing* here, because a
+  sign-out is not a revocation and §3 keeps `ADR-0049` §2's statement out of the path entirely; and
+  `ADR-0050`'s *signs out everywhere but here* is about the revoke button, which this path does not
+  press. What is handed over is narrower — how a browser stops owning its profile at one confirmed
+  press and nowhere else, and how the **confirmation** learns which of the two sign-outs it is
+  before it acts, which the client cannot compute (`DuelSocket.kt:168` answers a session handshake
+  with `deviceId = null`).
 - **The suggestion's source** — now registered as **`DEC-142`** by `ADR-0119` §4. A suggested name must be free at the moment it is
   suggested and may not be free at the moment it is taken, which is why `ADR-0119` §4 promises nothing about
   one and forbids writing one the player has not taken.
-  `ADR-0049` says a device binding is a row and revoking is **final**, and what `ADR-0050`'s *signs
-  out everywhere but here* means for a browser that is about to be somebody else.
 - **~~The winning five's path~~ — struck. Item 2 hands the architect nothing, and this epic
   contains no wire move at all.** `DEC-133` is answered by
   [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md),
@@ -519,7 +542,8 @@ before the ticket that implements it is startable.
 **The order is one chain.** Item 3's defects go first — they are decision-free, they are what the
 human sees on every subsequent screenshot, and the timebank figure is a one-line correction with a
 test. The account items follow their decisions in the order `DEC-129` → `DEC-130` → `DEC-131` →
-`DEC-132`, because each later one is written against the screen the earlier one leaves behind. The
+`DEC-132`, because each later one is written against the screen the earlier one leaves behind. All
+four are now answered; the chain's remaining order is a matter of the screens, not the decisions. The
 showdown was ordered last because it was the only item that could move the wire — but `ADR-0120` and
 `ADR-0126` answered both of its decisions without moving it, so **item 2 serialises against nothing**.
 Item 4 was expected to share `ADR-0047`'s lock and does not: `ADR-0122` moves no wire either, so the
@@ -539,8 +563,8 @@ byte-unchanged and writes no client code. Each waits only on its own decision.
 | `STORY-1406` | The bar stands disabled where it printed a sentence — *item 3c* | `DEC-135` |
 | `STORY-1407` | A player names themselves before their first duel — *item 1a; the product's first dialog, and by [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md) §1 a screen rather than a modal* | `DEC-142`, and nothing else — `DEC-129` is answered |
 | `STORY-1408` | The account screen says what an anonymous account is, and offers the promotion — *item 1b; the post-win offer and the profile strip's line go with it* | `DEC-130` |
-| `STORY-1409` | A name can be changed in account settings — *item 1c* | `DEC-131` |
-| `STORY-1410` | Signing out hands the browser a new anonymous profile — *item 1d, and the proof that a promotion moves no coin* | `DEC-132` |
+| `STORY-1409` | A name can be changed in account settings — *item 1c; [`ADR-0130`](../../docs/adr/ADR-0130-a-name-can-be-changed-and-the-name-it-leaves-is-spent.md) is the answer* | `DEC-151` (the mechanism; the product half is settled — the name given up is **retired**, history prints the name as it **is**, the form is **one** form on the **account screen**, and `PERMANENCE_LINE` leaves the product) |
+| `STORY-1410` | Signing out hands the browser a new anonymous profile, and the confirmation says so — *item 1d, and the proof that a promotion moves no coin; [`ADR-0131`](../../docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md) is the answer, and `SIGN_OUT_WARNING`'s second sentence moves in the same diff as the behaviour* | `DEC-152` for the implementing ticket — the card and the copy wait on nothing |
 | `STORY-1411` | The showdown shows the hands it reached, and stands long enough to read — *item 2a; a card, a hold, and tests that pin a drawing which already exists* | `DEC-146` |
 | `STORY-1412` | The winning five is marked, in hand and on board — *item 2b; the wire move, `atomic:` under `ADR-0047`'s lock if a field is added* | `DEC-134` |
 | `STORY-1413` | The pot travels to the winner — *item 2c; a card and a client story, `ADR-0115` and `ADR-0102` govern it* | `STORY-1412` |
@@ -551,7 +575,17 @@ byte-unchanged and writes no client code. Each waits only on its own decision.
 ## Definition of done
 
 - [ ] `DEC-129`–`DEC-139` and `DEC-146` are answered by merged ADRs, and every ADR that supersedes
-      a merged one says which clause of which ADR it replaces.
+      a merged one says which clause of which ADR it replaces. **All eleven of `DEC-129`–`DEC-139`
+      are answered** — `DEC-131` by
+      [`ADR-0130`](../../docs/adr/ADR-0130-a-name-can-be-changed-and-the-name-it-leaves-is-spent.md),
+      which names `ADR-0029` §4, its title's *permanent* and §5's `403`, `ADR-0051` §3 and
+      `ADR-0119` §3's obligation 2, and `DEC-132` by
+      [`ADR-0131`](../../docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md),
+      which names `ADR-0030` §3 and §8. **`DEC-146` is the one this line still waits on.**
+- [ ] `DEC-151` — registered by `ADR-0130` — is answered by a merged ADR before `STORY-1409` ships;
+      the namespace has no brake until it lands.
+- [ ] `DEC-152` — registered by `ADR-0131` §7 — is answered by a merged ADR before `STORY-1410`'s
+      implementing ticket is startable. Its design card and its copy wait on nothing.
 - [ ] `DEC-144` — registered by `ADR-0123` §9 — is answered by a merged ADR before `STORY-1415`'s
       implementing ticket is startable.
 - [x] `DEC-111` is struck by the PR that answers `DEC-139`, or is deliberately kept open with a
