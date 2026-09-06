@@ -70,8 +70,16 @@ Everything below is measured on `develop` at `7c39fd3d` or is merged, and no tic
 
 ## Tasks
 
-**Not yet split.** One ticket is the expected shape — one expression in `turn-clock.ts` and its
-tests in `turn-clock.test.ts`, both files, `XS`.
+Split on **2026-09-06** into the one ticket the shape called for.
+
+| Ticket | Est | What it is |
+| --- | --- | --- |
+| [`TASK-140101`](../tasks/TASK-140101-the-bank-of-the-seat-the-clock-does-not-name-is-whole-seconds.md) | XS | `Math.ceil` at `turn-clock.ts:105`, and two tests at `seatClock` on a **fractional** fixture. A third `verify:` command deletes the `Math.ceil` again, requires the two tests to go red printing `1:58.623999999999995`, and restores the file — so the test is *proved* to have detected the defect rather than asserted to |
+
+**A second ticket was considered and refused.** The three other places that format a countdown —
+`bankFigure`'s second call site and both of `clockFigure`'s — were measured before splitting: all
+three pass `secondsRemaining(...)`, which is already whole. There is nothing for a second ticket to
+repair, and inventing one to look thorough costs a dispatch for nothing.
 
 ## Acceptance criteria
 
