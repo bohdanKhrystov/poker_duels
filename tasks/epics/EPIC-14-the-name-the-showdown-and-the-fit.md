@@ -130,8 +130,9 @@ rival 0`).
 ## Scope
 
 Six items, sixteen seams. The **Decides it** column is why this epic opens `backlog`: eleven
-questions have no merged answer, five of them **contradict a merged ADR** — a heavier thing than an
-open question, and marked as such — and one of them **opens a decision that was already open**.
+questions had no merged answer when it opened — `DEC-133` now has one — five of them **contradict a
+merged ADR**, a heavier thing than an open question and marked as such, and one of them **opens a
+decision that was already open**.
 
 | # | Item | Touches | Decides it |
 | --- | --- | --- | --- |
@@ -140,7 +141,7 @@ open question, and marked as such — and one of them **opens a decision that wa
 | 1c | A name can be changed, at any time, in account settings | `poker-server`, `web-client`, `design` | **`DEC-131`** — the product owner's. **Contradicts `ADR-0029`**, whose title is *unique and **permanent*** |
 | 1d | Signing out returns the browser to a **new** anonymous profile | `poker-server`, `web-client` | **`DEC-132`** — the product owner's. **Contradicts `ADR-0012`, `ADR-0027`, `ADR-0037`** |
 | 1e | Duel coins carry across the promotion | — | **Nothing.** `ADR-0030` §1 already makes this true by construction — see *What is already true*. A story here **proves** it; no code is owed |
-| 2a | A showdown shows the hands it reached | `poker-server`, `web-client`, `design` | **`DEC-133`** — the product owner's. **Bounded by `ADR-0008`**, which forbids loosening what the engine publishes mid-hand and names the one way out |
+| 2a | A showdown shows the hands it reached, and stands long enough to read | `web-client`, `design` | **Answered** — [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md): what is shown is what the rules showed (`ADR-0008` whole), and the **last beat stands 2 s**. `poker-server` is no longer touched. The hold's mechanism is **`DEC-146`**, the architect's |
 | 2b | The winning five is marked, in hand and on the board | `poker-server`, `web-client`, `design` | **`DEC-134`** — the product owner's. **Sits against `ADR-0095`**, *the table … never names a hand* |
 | 2c | The pot travels to the winner | `web-client`, `design` | **A card.** `ADR-0115` already governs it — motion carries no fact, reduced motion stills it — and `ADR-0102` owns the pacing |
 | 3a | The front door: the button is renamed, the wordmark is uncovered, the code field takes a link, the strip goes, `Account` grows | `web-client`, `design` | **A card**, plus `DEC-130` for the strip. The rename is answered above; the overlap is a defect |
@@ -176,6 +177,19 @@ mentions `HandRevealed` at all**. The hand that is shown is sent, arrives, and i
 Item 2a therefore begins as a **client** gap, and `DEC-133` decides only whether more must be sent
 than is sent today.
 
+**Corrected by
+[`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md),
+which answers `DEC-133`: the shown hand is drawn — through the snapshot, not the event, and it
+stands for 600 ms.** The paragraph above is exact about `HandRevealed` and wrong about the screen.
+`broadcast` computes `revealedSeats(handEvents)` into `PlayerView.of` (`Addressed.kt:52,62`), which
+populates a revealed seat's `holeCards`; `DuelTable.tsx:76-78` draws the rival with
+`cards={rival.holeCards}`; `Hand.tsx` turns face up every place the view carries; and
+`web-client/src/e2e/duel-secrecy.test.tsx`'s *"do reach it once the reveal has arrived"* has pinned
+it over recorded frames since it was written. What item 2a is missing is **time**: a hand called
+down to the river carries no `StreetDealt`, so `ADR-0102` gives its ending **one 600 ms step**
+before `advanceReveal` releases the queued next hand, on a rival hand `ADR-0103` §3.2 draws at 24–40
+px. **No story here builds a second drawing path.**
+
 **The engine already computes the winning five, and says in its own KDoc that this is why.**
 `BestHand.kt:8` — *"[cards] exists because the client highlights the winning five at showdown, and
 recomputing …"* — and `BestHand.kt:11` is `public data class BestHand(val rank: HandRank, val
@@ -189,8 +203,12 @@ client may not build it locally — deciding which five cards won is a game fact
 the losing hand is never revealed, a mucked hand appears in **no event** exactly as a folded hand
 does, and `CardSecrecyTest` guards both with one rule. It also names the only sanctioned way to
 widen this: *"a **post-hand** disclosure written by the server after the hand is settled — never a
-loosening of what the engine publishes mid-hand."* `DEC-133` has a shape before it has an answer,
-and the engine non-negotiable in `CLAUDE.md` is not in play either way.
+loosening of what the engine publishes mid-hand."* **`DEC-133` is answered without widening it**
+([`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md)
+§1): only the **winner** shows — `Showdown.kt:61-76`'s `revealOrder` returns the winners, one seat
+or both on a split — so *you always see the hand that beat you, and you never see what you beat*.
+The engine non-negotiable in `CLAUDE.md` was not in play either way, and no post-hand disclosure is
+written.
 
 **Chips do not travel.** `ChipPile` is three discs, always, that arrive *"on mount with the
 `chip-flight` animation and then stand still"* (`ChipPile.tsx:7-16`). It is mounted in three
@@ -300,7 +318,8 @@ motion**, so the card is not a formality on either:
   a name typed, a name refused as taken, and the skip `ADR-0119` §2 requires — one of two equally
   reachable ways out, both of which end in the duel the player pressed for.
 - **The account screen's anonymous state** (item 1b) and **the rename control** (item 1c).
-- **The showdown** (items 2a–2c) — the states `duel-table-states.html` does not have: hands shown,
+- **The showdown** (items 2a–2c), now drawable against [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md) §§1–3 — the states
+  `duel-table-states.html` does not have: hands shown,
   the winning five marked, the pot in flight, and the same three under
   `prefers-reduced-motion` per [`ADR-0115`](../../docs/adr/ADR-0115-motion-never-carries-a-fact-and-reduced-motion-stills-every-surface.md).
 - **The disabled bar** (item 3c) — the `off` state drawn as controls rather than as a sentence.
@@ -339,17 +358,20 @@ something a merged ADR decided, and one re-opens a question that has been open s
 which is why this epic opens `backlog` and why no story below is startable: an ADR is an answer only
 once it is **merged**, and an ADR that supersedes another must say so in the PR that merges it.
 
-**`DEC-129` is answered** — [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md),
-2026-09-06, superseding and amending nothing — and its row has left the table below. In its place
-the table now carries **`DEC-142`**, the architect's, which that ADR registered for the suggestion's
-generator.
+**Two are answered.** [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md)
+answers `DEC-129` — the name is asked at the player's own first press, the suggestion promises
+nothing, and skipping plays — and
+[`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md)
+answers `DEC-133` — a showdown shows the hands the rules showed, and the beat that shows them
+stands. Neither supersedes anything. Both rows have left the table below and stand under
+*Answered*; in their place the table carries two of **the architect's**, registered by those
+answers: `DEC-142` for the suggestion's generator, and `DEC-146` for the beat's length.
 
 | ID | Question | Whose | What it blocks |
 | --- | --- | --- | --- |
 | `DEC-130` | Does the **account screen name the anonymous state** — the human's *"Anonymous Account"* — and become the **only** door to promotion, retiring the post-win offer entirely? This asks to reverse `ADR-0036`'s central mechanism and to delete the surface `ADR-0085`, `ADR-0086` and `ADR-0116` were written about. The **open `DEC-089`** asks how that surface should look and would be mooted; the answering ADR strikes it in the same PR | The product owner's | Items 1b, 3a's profile strip and 3d's result screen |
 | `DEC-131` | May a display name be **changed after it is set**, and what happens to the one given up — is it released for anyone to take, held, or retired? `ADR-0029` is titled *unique and **permanent***, `ADR-0038` can take a name away, `ADR-0051` registers one before it is held, and the leaderboard, the duel record and every finished duel print names that would now be able to move | The product owner's | Item 1c |
 | `DEC-132` | Does **signing out abandon the anonymous profile and issue a new one**? `ADR-0012` binds a profile to a device id, `ADR-0027` puts the session above it, and `ADR-0037` calls the device a credential *until revoked*. A browser that gets a fresh profile at every sign-out is a **new** way to lose coins — the one thing the offer this epic may delete exists to prevent — so this decision and `DEC-130` must be answered against each other | The product owner's | Item 1d, and the shape of item 1e's proof |
-| `DEC-133` | **How much of a showdown does the table show?** `ADR-0008` sends the shown hand and never the mucked one. The human asks for *"villan card"*, and the drawing says *"shown if required"*. Options run from *draw what is already sent* (no wire move at all) to a **post-hand disclosure** — which `ADR-0008` names as the only sanctioned widening, server-side, after the hand settles, never in the engine | The product owner's | Item 2a |
 | `DEC-134` | May the table **mark the five cards that won** — the winner's hole cards and the board cards that complete the hand? `ADR-0095` says the table *never names a hand*; a highlight names one without words. `BestHand.cards` exists in the engine for exactly this consumer and reaches nothing today, and the client may not compute it (`ADR-0002`) | The product owner's | Item 2b |
 | `DEC-135` | When it is not the player's turn, does the bar stand as **disabled controls** rather than the sentence `Waiting for your rival…`? The `off` state already reserves the height. The open **`DEC-108`** asks whether the bar may stay *enabled* while a duel is paused, and the two answers must agree about what a bar means when it cannot be pressed | The product owner's | Item 3c's bar only |
 | `DEC-136` | **Does the table scale, or does it keep reflowing — and against which viewport is the fit measured?** `ADR-0103` §1 fixes 390 × 664 and §2 forbids a different table at a different width; the human proposes scaling the table area with a floor below which scrolling is allowed. iOS Safari's chrome makes the real viewport smaller and *variable*, so the number in §1 may be the reason the promise held in a headless browser and failed on the device | The product owner's | Item 3d, and item 3d's card |
@@ -357,6 +379,14 @@ generator.
 | `DEC-138` | **Does a rematch offer follow the rival off the result screen, and as what?** The human asks for a popup *"on any screen"*. `ADR-0044` already makes the intent and the room fact; what is unowned is the surface — this product has no modal of any kind, and `ADR-0112` §, which lets a `FINISHED` room honour an ask for the lobby, is what created the situation of an offer whose recipient is somewhere else. It decides where the offer may appear, what happens to it when it is ignored, and whether declining it is a thing a player can do | The product owner's | Item 5 |
 | `DEC-139` | **Does pressing play again return the host to the room they already hold?** And with it, the question that has been open since 2026-09-01: **`DEC-111`**, *may one player hold more than one `WAITING` room at once?* Today the answer is *yes, silently* — `Back to the lobby` forgets the code (`ADR-0072` §3) while `ADR-0105` §2 refuses only a `PLAYING` room, so pressing play again opens a second room and orphans the code the player may already have sent. The server keeps the first for ten minutes, so *returning* to it needs no new lifetime — only a decision about what the browser remembers, and what a second press means | The product owner's | Item 6. **Answering it strikes `DEC-111` in the same PR**, or says why that row stays |
 | `DEC-142` | By what mechanism is a display-name **suggestion** produced — what generates the string, does the generator consult `name_registry` before offering it, and does the suggestion cross the wire at all? Registered 2026-09-06 by [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md) §4, which fixes the product rules it must satisfy and chooses no generator. `ADR-0029` §5's refusal of an availability-check endpoint is applied, not reopened | The architect's | Item 1a's suggestion, and `STORY-1407`'s split |
+| `DEC-146` | By what mechanism does the client's **step queue give one beat a length different from a step**? [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md) §3 fixes the product half — a showdown's last beat stands **2,000 ms**, every other ending keeps **600 ms** — while `ADR-0102` §4 pins *a step is 600 ms, named once, at the boot seam*, reaching the store as a single parameter, and `drive-duel.tsx` boots it at `0` so `ADR-0100` §3's recorded-frame suites are neither edited nor re-recorded | The architect's | `STORY-1411`'s hold, and nothing else |
+
+### Answered
+
+| ID | Answered by | What it means here |
+| --- | --- | --- |
+| `DEC-129` | [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md) | **The name is asked at the player's own first press**, and skipping plays. A player holding no name meets the ask at their own press of *Create a duel room* or *Join the duel* — never on the invite path, never before a rematch, never on a resume — because the vision's own success condition is about the **invited** player, and she presses nothing: `main.tsx` reads the code from the URL and `boot.ts` sends `JoinRoom` on `Welcome`, outside React. The suggestion is the field's initial value and **promises nothing about availability** (`ADR-0029` §1 makes freedom a database fact and §5 refuses the endpoint that would answer it), and **nothing is written unless the player takes it** — `ADR-0051` §1 lets no string leave `name_registry`, so an auto-accepted suggestion would burn one name per browser that reached the screen. Deliberately **not a modal**: `DEC-138` owns whether this product gets one. Two costs named rather than hidden — the invited rival is not asked before her first duel, and the host meets one interstitial in a product whose positioning sentence is *fast*. For item 1a: the ask is a screen in place of the front door, and `STORY-1407` waits now only on `DEC-142`, the generator |
+| `DEC-133` | [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md) | **A showdown shows the hands the rules showed, and the beat that shows them stands.** What is shown is unchanged — the winner's hand, both on a split, no hole card on a fold — with **no post-hand disclosure**, `ADR-0008` whole, **no wire move**, and `poker-server` out of item 2a altogether. What changes is the **pacing**: the last beat of a hand that turned a hand face up the viewer had not seen stands **2,000 ms**, every other ending keeping `ADR-0102` §4's 600 ms, the hold ending when the next hand's frames are applied and never on a fade. No panel, no overlay, **no new string**, no *mucked* line; faces come from the snapshot, never from `HandRevealed`. It registers **`DEC-146`** for the architect, corrects this epic's *"drawn by nothing"* measurement, and decides nothing about `DEC-134`, item 2c or `DEC-136` |
 
 ### What the answers will hand the architect
 
@@ -379,6 +409,17 @@ answers one way, and each is registered by the ADR that answers it:
 - **The suggestion's source** — now registered as **`DEC-142`** by `ADR-0119` §4. A suggested name must be free at the moment it is
   suggested and may not be free at the moment it is taken, which is why `ADR-0119` §4 promises nothing about
   one and forbids writing one the player has not taken.
+  `ADR-0049` says a device binding is a row and revoking is **final**, and what `ADR-0050`'s *signs
+  out everywhere but here* means for a browser that is about to be somebody else.
+- **The winning five's path** (`DEC-134`) — how `BestHand` reaches the client. Any answer that adds
+  a field moves `PROTOCOL_VERSION`, which makes it an `atomic:` ticket sized by `ADR-0070`'s probe
+  under `ADR-0047`'s one-bumping-branch-at-a-time lock — the only wire move this epic can contain.
+  **The reveal's path is settled and adds none of it**: `DEC-133` is answered by
+  [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md),
+  which moves no wire at all and hands the architect `DEC-146` instead — one beat, a different
+  length.
+- **The suggestion's source** (`DEC-129`) — a suggested name must be free at the moment it is
+  suggested and may not be free at the moment it is taken.
 - **The price's source** (`DEC-137`) — if the button names an increment, is it a field the server
   sends beside `callTo`, or the one subtraction the never-derives gates are told to admit? The same
   choice `ADR-0107` faced for the pot and answered by admitting exactly one sum.
@@ -417,7 +458,7 @@ decision.
 | `STORY-1408` | The account screen says what an anonymous account is, and offers the promotion — *item 1b; the post-win offer and the profile strip's line go with it* | `DEC-130` |
 | `STORY-1409` | A name can be changed in account settings — *item 1c* | `DEC-131` |
 | `STORY-1410` | Signing out hands the browser a new anonymous profile — *item 1d, and the proof that a promotion moves no coin* | `DEC-132` |
-| `STORY-1411` | The showdown shows the hands it reached — *item 2a; a drawing of frames already sent, plus whatever `DEC-133` adds* | `DEC-133` |
+| `STORY-1411` | The showdown shows the hands it reached, and stands long enough to read — *item 2a; a card, a hold, and tests that pin a drawing which already exists* | `DEC-146` |
 | `STORY-1412` | The winning five is marked, in hand and on board — *item 2b; the wire move, `atomic:` under `ADR-0047`'s lock if a field is added* | `DEC-134` |
 | `STORY-1413` | The pot travels to the winner — *item 2c; a card and a client story, `ADR-0115` and `ADR-0102` govern it* | `STORY-1412` |
 | `STORY-1414` | `Call` says what it costs — *item 4; one label, and whatever `DEC-137` says the mark does* | `DEC-137` |
@@ -426,8 +467,8 @@ decision.
 
 ## Definition of done
 
-- [ ] `DEC-129`–`DEC-139` are answered by merged ADRs, and every ADR that supersedes a merged one
-      says which clause of which ADR it replaces.
+- [ ] `DEC-129`–`DEC-139` and `DEC-146` are answered by merged ADRs, and every ADR that supersedes
+      a merged one says which clause of which ADR it replaces.
 - [ ] `DEC-111` is struck by the PR that answers `DEC-139`, or is deliberately kept open with a
       reason stated in that ADR.
 - [ ] `DEC-089` is struck by the PR that answers `DEC-130`, or is deliberately kept open with a
