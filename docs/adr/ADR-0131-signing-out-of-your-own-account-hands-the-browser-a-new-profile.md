@@ -53,10 +53,12 @@
   or [`ADR-0050`](ADR-0050-revoking-the-device-signs-out-everywhere-but-here.md). **§3 is the whole
   answer to what `ADR-0049`'s finality means for a browser about to be somebody else: nothing,
   because a sign-out is not a revocation.**
-- **Registers [`DEC-152`](README.md#open-decisions) — the architect's:** by what mechanism a
+- **Registers [`DEC-152`](README.md#answered-decisions) — the architect's:** by what mechanism a
   browser stops owning the profile it owned, at a sign-out and only there, and how the
   confirmation learns **before** it acts which of the two sign-outs this is. §7 fixes what the
-  mechanism may not do and chooses nothing.
+  mechanism may not do and chooses nothing. **Answered on 2026-09-07 by
+  [`ADR-0135`](ADR-0135-the-server-says-which-sign-out-this-is-and-the-browser-forgets-one-key.md)**,
+  inside that fence.
 - **Constrains:** `STORY-1410` (item 1d, and item 1e's proof), and the account card that carries
   §6's words.
 - **Moves no wire, no schema and no `PROTOCOL_VERSION`** by itself. Whether the mechanism does is
