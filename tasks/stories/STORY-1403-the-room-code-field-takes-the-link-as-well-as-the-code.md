@@ -2,7 +2,7 @@
 id: STORY-1403
 title: The room code field takes the link as well as the code
 type: story
-status: backlog
+status: ready
 parent: EPIC-14
 module: web-client
 labels: [client, lobby]
@@ -69,9 +69,18 @@ Measured on `develop` at `7c39fd3d`, or merged.
 
 ## Tasks
 
-**Not yet split.** The expected shape is two tickets — the derivation with its unit tests in
-`room-link.ts`/`room-link.test.ts`, then the field's call site with its assertion on the message the
-socket is sent — and the split is the next planner run's.
+Split into two on 2026-09-07, the shape this story predicted.
+
+| Task | What it settles |
+| --- | --- |
+| [TASK-140301](../tasks/TASK-140301-one-function-reads-a-code-out-of-a-pasted-invite-link.md) | The derivation and its five unit tests. `room-link.ts` grows **one** sibling, `roomCodeFromField(text)`, which hands `new URL(text.trim()).search` to `roomCodeFromSearch` inside a `try` and falls through to `normalizeRoomCode(text)`. `roomCodeFromSearch` is **not** generalised: its `null` is load-bearing at `store/boot.ts:84,99`, where `options.joinRoomCode ?? remembered` prefers the URL's code over the remembered one, and a version answering `"HTTPS://DUELS.EXAMPLE/LOBBY"` instead of `null` would win that `??` and send a returning player to nowhere |
+| [TASK-140302](../tasks/TASK-140302-the-front-doors-field-joins-the-room-a-pasted-link-names.md) | The call site: two lines in `Lobby.tsx` and three tests through the rendered front door, on the `JoinRoom` the socket is sent |
+
+**What a paste that is neither a code nor a link does**, decided here so no ticket invents it: it is
+sent, trimmed and upper-cased, exactly as today, and the server answers it — including a URL that
+carries no `room` and one whose `room` is blank. The field refuses only the empty and
+whitespace-only cases, which it already refuses, and it reports nothing about what it made of the
+text either way (`ADR-0022`).
 
 ## Acceptance criteria
 
