@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141401
 title: The cards draw the call mark bare
 type: task
-status: ready
+status: done
 parent: STORY-1414
 module: web-client
 estimate: XS
