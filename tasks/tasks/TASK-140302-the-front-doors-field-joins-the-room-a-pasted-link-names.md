@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140302
 title: The front door's field joins the room a pasted link names
 type: task
-status: backlog
+status: done
 parent: STORY-1403
 module: web-client
 estimate: S
