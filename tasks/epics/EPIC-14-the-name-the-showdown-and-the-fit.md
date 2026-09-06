@@ -138,8 +138,11 @@ thirteen are answered** — five of them **contradict a merged ADR**, a heavier 
 question and marked as such, and one of them **opens a decision that was already open**. A second
 already-open row, `DEC-108`, has since been **closed** by this epic's own answer to `DEC-135`.
 What is left open is the follow-ups those answers registered — `DEC-142`, `DEC-144`, `DEC-146`,
-`DEC-147`, `DEC-150`, `DEC-151` and `DEC-152` for the architect and `DEC-145` for the product
-owner — plus the pre-existing `DEC-110`.
+`DEC-150`, `DEC-151` and `DEC-152` for the architect and `DEC-145` for the product owner. Two more
+were answered on 2026-09-07 and stand under *Answered* below: `DEC-147`, by
+[`ADR-0132`](../../docs/adr/ADR-0132-the-profile-says-whether-it-holds-a-password.md), and the
+pre-existing `DEC-110` that `ADR-0124` §6 widened, by
+[`ADR-0133`](../../docs/adr/ADR-0133-the-room-a-player-holds-is-scanned-for.md).
 
 | # | Item | Touches | Decides it |
 | --- | --- | --- | --- |
@@ -443,13 +446,19 @@ answers `DEC-139` — a player holds one waiting room, and pressing play again h
 [`ADR-0133`](../../docs/adr/ADR-0133-the-room-a-player-holds-is-scanned-for.md) — the room is found
 by a **lock-free scan** of the registry rather than by an index or by the connection's membership,
 opening becomes find-or-create under a per-player stripe, and the `WAITING` half moves **no wire**,
-so `STORY-1416` is startable and is not `atomic:`. It is the only decision in this epic answered by
+so `STORY-1416` is startable and is not `atomic:`. The `PLAYING` half stays where it is —
+`ADR-0105` §1's own ticket, outside this epic and **`atomic:`**, because its refusal spends a new
+`ProtocolError` value, `ALREADY_IN_DUEL`, which moves `ADR-0047` §2's fingerprint and forces a
+`PROTOCOL_VERSION` step. That is the one place `ADR-0133` **disagrees** with `ADR-0124` §6's
+prediction, on the half `ADR-0124` left open; the `WAITING` hand-back moves no wire exactly as
+predicted. It is the only decision in this epic answered by
 the **architect** rather than the product owner, and the only one that reaches a question opened
 before the epic existed. `DEC-137` is [`ADR-0122`](../../docs/adr/ADR-0122-call-names-the-price-and-raise-to-names-the-total.md)'s.
 Every answered row has left the table below and stands under *Answered*; in their place the table
-carries three of **the architect's**, registered by those answers — `DEC-142` for the suggestion's
-generator, `DEC-146` for the beat's length and `DEC-144` for the cross-screen surface. The fourth,
-`DEC-147`, is **answered on 2026-09-07** by
+carries five of **the architect's**, registered by those answers — `DEC-142` for the suggestion's
+generator, `DEC-146` for the beat's length, `DEC-144` for the cross-screen surface, and `DEC-151`
+and `DEC-152` for the rename's and the sign-out's mechanisms. A sixth, `DEC-147`, is
+**answered on 2026-09-07** by
 [`ADR-0132`](../../docs/adr/ADR-0132-the-profile-says-whether-it-holds-a-password.md): `GET /api/me`
 gains `hasPassword: Boolean`, computed wherever a `ProfileResponse` is shaped and told only to the
 player it is about, a body missing it reads `unavailable` rather than `false`, and the provider
@@ -584,7 +593,7 @@ byte-unchanged and writes no client code. Each waits only on its own decision.
 | `STORY-1413` | The pot travels to the winner — *item 2c; a card and a client story, `ADR-0115` and `ADR-0102` govern it* | `STORY-1412` |
 | `STORY-1414` | `Call` says what it costs — *item 4; one label, and the mark goes bare on `Call`* | nothing — [`ADR-0122`](../../docs/adr/ADR-0122-call-names-the-price-and-raise-to-names-the-total.md) |
 | `STORY-1415` | The rematch offer finds the rival wherever they are — *item 5; the product's first modal, so the card is the story's first ticket* | `DEC-138` |
-| `STORY-1416` | Play again returns the host to the room they still hold — *item 6; strikes `DEC-111` with `DEC-139`* | nothing — `DEC-139`/`DEC-111` by [`ADR-0124`](../../docs/adr/ADR-0124-one-waiting-room-and-play-again-hands-it-back.md), `DEC-110` by [`ADR-0133`](../../docs/adr/ADR-0133-the-room-a-player-holds-is-scanned-for.md) §9: build `heldRoom`, the stripes, `heldOrOpen` and the `WAITING` branch; **no wire, not `atomic:`**, and the `PLAYING` case still falls through to `create` |
+| `STORY-1416` | Play again returns the host to the room they still hold — *item 6; strikes `DEC-111` with `DEC-139`* | nothing — `DEC-139`/`DEC-111` by [`ADR-0124`](../../docs/adr/ADR-0124-one-waiting-room-and-play-again-hands-it-back.md), `DEC-110` by [`ADR-0133`](../../docs/adr/ADR-0133-the-room-a-player-holds-is-scanned-for.md) §9: build `heldRoom`, the stripes, `heldOrOpen` and the `WAITING` branch; **no wire, not `atomic:`**, and the `PLAYING` case still falls through to `create` — that half is `ADR-0105` §1's own ticket, outside this epic, and it **is** `atomic:`, because `ALREADY_IN_DUEL` moves `ADR-0047` §2's fingerprint and forces a `PROTOCOL_VERSION` step |
 
 ## Definition of done
 
