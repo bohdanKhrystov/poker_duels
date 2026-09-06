@@ -112,6 +112,33 @@ describe("the bar offers and derives nothing", () => {
     }
   });
 
+  it("admits the acting seat's call price and no other figure the turn does not carry", () => {
+    const turn = aTurn({ legalActions: aLegalActions({ callTo: 600 }) });
+    const { container } = render(
+      <ActionBar
+        turn={turn}
+        potIncludingStreet={1400}
+        committedThisStreet={200}
+        rejection={null}
+        refusal={null}
+        send={vi.fn()}
+      />,
+    );
+
+    const price = turn.legalActions.callTo - 200; // 400
+    const shown = numbersOnScreen(container);
+    const allowed = new Set([
+      price,
+      turn.legalActions.minBetTo,
+      turn.legalActions.minRaiseTo,
+      turn.legalActions.allInTo,
+    ]);
+
+    expect(shown).toContain(price);
+    expect(shown).not.toContain(turn.legalActions.callTo);
+    expect(shown.filter((n) => !allowed.has(n))).toEqual([]);
+  });
+
   it("offers no control the turn did not allow", () => {
     const { container } = render(
       <ActionBar
