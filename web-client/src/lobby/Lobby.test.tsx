@@ -492,6 +492,42 @@ describe("the lobby", () => {
     expect(send).toHaveBeenCalledWith({ type: "JoinRoom", code: "ABCDEFGH" });
   });
 
+  it("sends the code a pasted invite link carries", () => {
+    const { send } = renderLobby();
+
+    typeCode("http://192.168.0.142:5173/?room=918RHERX");
+    fireEvent.click(screen.getByRole("button", { name: "Join the duel" }));
+
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "JoinRoom", code: "918RHERX" });
+    const input = screen.getByLabelText("Room code") as HTMLInputElement;
+    expect(input.value).toBe("http://192.168.0.142:5173/?room=918RHERX");
+  });
+
+  it("sends the code a pasted link carries among other parameters", () => {
+    const { send } = renderLobby();
+
+    typeCode("  https://duels.example/?utm=mail&room=abcdefgh#seat ");
+    fireEvent.click(screen.getByRole("button", { name: "Join the duel" }));
+
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "JoinRoom", code: "ABCDEFGH" });
+  });
+
+  it("sends text carrying no room code as it always did, and says nothing about it", () => {
+    const { send } = renderLobby();
+
+    typeCode("https://duels.example/lobby");
+    fireEvent.click(screen.getByRole("button", { name: "Join the duel" }));
+
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({
+      type: "JoinRoom",
+      code: "HTTPS://DUELS.EXAMPLE/LOBBY",
+    });
+    expect(screen.queryByText(/link/i)).toBeNull();
+  });
+
   it("sends nothing when the code box holds only whitespace", () => {
     const { send } = renderLobby();
 

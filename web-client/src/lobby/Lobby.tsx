@@ -40,7 +40,7 @@ import { ForgotPasswordForm } from "../account/ForgotPasswordForm";
 import { FORGOT_PASSWORD_LABEL } from "../account/recovery-text";
 import { VerifyScreen } from "../account/VerifyScreen";
 import { ResetScreen } from "../account/ResetScreen";
-import { normalizeRoomCode } from "./room-link";
+import { roomCodeFromField } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
 import { WaitingTable } from "../table/WaitingTable";
@@ -70,7 +70,7 @@ export function Lobby(): ReactElement {
   // one of the two mailed screens can ever be showing, and one read serves
   // both (TASK-041719).
   const [mailedToken] = useState(() => tokenFromHash(window.location.hash));
-  const code = normalizeRoomCode(typedCode);
+  const code = roomCodeFromField(typedCode);
 
   // ADR-0114 §§1-2: one predicate answers every ask, computed once above
   // every branch. `standing` is what the frames the server has sent say
