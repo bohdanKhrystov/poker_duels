@@ -102,7 +102,7 @@ export function seatClock(
     return {
       figure: null,
       treatment: "regular",
-      bank: bankFigure(clock.bankRemainingMillis[seat] / 1000),
+      bank: bankFigure(Math.ceil(clock.bankRemainingMillis[seat] / 1000)),
     };
   }
 

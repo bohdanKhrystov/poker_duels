@@ -194,5 +194,46 @@ describe("turn-clock", () => {
       expect(result.treatment).toBe("on-timebank");
       expect(result.figure).toBe("8");
     });
+
+    it("writes a fractional bank as whole seconds at both seats", () => {
+      const clock = aClock({
+        seat: 0,
+        turnEndsAt: 30_000,
+        expiresAt: 30_000 + 45_678,
+        bankRemainingMillis: [45_678, 118_624],
+      });
+      const reading: ClockReading = { clock, nowMillis: 0 };
+
+      expect(seatClock(reading, 1, 0, 1).bank).toBe("1:59");
+      expect(seatClock(reading, 0, 0, 1).bank).toBe("0:46");
+    });
+
+    it("writes a bank of one millisecond as 0:01, not as an exhausted 0:00", () => {
+      const clockWithOneMs = aClock({
+        seat: 0,
+        turnEndsAt: 30_000,
+        expiresAt: 30_000 + 45_678,
+        bankRemainingMillis: [45_678, 1],
+      });
+      const readingWithOneMs: ClockReading = {
+        clock: clockWithOneMs,
+        nowMillis: 0,
+      };
+
+      expect(seatClock(readingWithOneMs, 1, 0, 1).bank).toBe("0:01");
+
+      const clockWithZeroMs = aClock({
+        seat: 0,
+        turnEndsAt: 30_000,
+        expiresAt: 30_000 + 45_678,
+        bankRemainingMillis: [45_678, 0],
+      });
+      const readingWithZeroMs: ClockReading = {
+        clock: clockWithZeroMs,
+        nowMillis: 0,
+      };
+
+      expect(seatClock(readingWithZeroMs, 1, 0, 1).bank).toBe("0:00");
+    });
   });
 });
