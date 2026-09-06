@@ -2,7 +2,7 @@
 id: STORY-1402
 title: The front door stops covering its own wordmark, and the door says Play duel
 type: story
-status: backlog
+status: ready
 parent: EPIC-14
 module: web-client
 labels: [client, design, lobby, bug]
@@ -104,8 +104,36 @@ merges before the client ticket is startable.
 
 ## Tasks
 
-**Not yet split.** Six files carry the string and one carries the layout, so this is at least three
-tickets: the card, the client, and the test-and-plan churn. The split is the next planner run's.
+Split into four on 2026-09-07. The counts below were **re-measured on `develop` at `77a09060`**,
+after `TASK-140302` landed in `Lobby.test.tsx`, rather than inherited from the table above: the
+client files still carry 1 / 18 / 10 / 1, `docs/test-plan.md` carries three rows but **four**
+occurrences (`05-01` names the control twice on one line), and `design/` carries the string in
+**three** files, not one — `create-duel.html`'s button, the same button on the component card
+`flow-actions.html`, and one phrase in `enter-code.html`'s lede.
+
+| Task | What it settles |
+| --- | --- |
+| [TASK-140201](../tasks/TASK-140201-the-cards-primary-control-says-play-duel.md) | The card, first (`ADR-0091` §2). Three design files, and **`create-duel.html`'s `.frame` is not touched** — it already draws the column, so the card was never wrong about the layout and the client is what failed to transcribe it. The card's own `<title>` and `<h1>` keep reading `Create a duel`: `design/README.md` says a `<title>` names the *card*, and the flow is still creating a duel |
+| [TASK-140202](../tasks/TASK-140202-the-front-doors-primary-control-says-play-duel.md) | The rename where a merged gate holds it. Renaming `Lobby.tsx` alone was **run**: `1159 passed` became `17 failed \| 1142 passed`, all 17 inside `App.test.tsx` (9) and `Lobby.test.tsx` (8). `npm run check` therefore refuses every proper subset of those three files, and three is the ordinary cap — so this ticket declares **no `atomic:`** |
+| [TASK-140203](../tasks/TASK-140203-the-two-names-no-gate-holds-say-play-duel.md) | The two references the same probe left **green**: `e2e/whole-duel.test.tsx`, whose reference is a *negative* observation that turns into a tautology if left stale, and `docs/test-plan.md`, which no gate reads at all. A second ticket because no gate binds them to the first, not because they felt separate |
+| [TASK-140204](../tasks/TASK-140204-the-front-door-stands-in-the-cards-column.md) | The layout defect. One attribute on `Lobby.tsx:388` and two new tests, with a browser reading as the criterion |
+
+**The overlap was reproduced before the split, so no ticket has to guess its mechanism.** The
+front-door markup was rendered against the client's own built stylesheet in headless Chrome at both
+shapes, with the section's element children joined without whitespace (JSX elides it —
+`Lobby.tsx:437`). Reading `clearance = max(gapX, gapY)` between the wordmark's rect and the primary
+control's:
+
+| shape | today | with the column |
+| --- | --- | --- |
+| 390 × 664 | **0.000** — the button's top border sits on the wordmark's bottom edge | **12.000** |
+| 720 × 900 | **0.000** — the button's left border sits on the wordmark's right edge, inside 37.5 px of its 45 px band | **12.000** |
+
+**It is not occlusion.** `document.elementFromPoint`, sampled across both glyph boxes at both shapes,
+returns a node inside the `<h1>` in every reading, before and after — so an "is anything drawn over
+the mark" assertion is a gate that cannot fail, and `TASK-140204` says so rather than letting a coder
+re-derive it. The gate that *can* fail is structural and runs in jsdom; the number is the
+implementer's browser reading, `ADR-0089` forbidding a browser in any `verify:` block.
 
 ## Acceptance criteria
 
