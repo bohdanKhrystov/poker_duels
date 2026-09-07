@@ -68,9 +68,11 @@ export function actionText(
  * The mark translates the event's own token and carries the event's own `to`
  * total — it is the actor's own button's words and the server's own figure,
  * nothing worked out or invented. The verb is what `actionVerb` names the act;
- * the figure is the event's own total for a call, bet, raise or all-in, and
- * null for a fold or check. Per `ADR-0109` §2, the mark says what the actor's
- * own button said, no more and no less.
+ * the figure is the event's own total for a bet, raise or all-in, and null for
+ * a fold, a check and a call. Per `ADR-0109` §2, the mark says what the actor's
+ * own button said, no more and no less. `ADR-0122` §4 explains why the call's
+ * `to` is not printed: after the act, the caller's `committedThisStreet` is `to`,
+ * so the term the subtraction needs is unrecoverable by the time the mark exists.
  */
 export function lastActText(event: ActEvent): ActionText {
   switch (event.type) {
@@ -79,7 +81,7 @@ export function lastActText(event: ActEvent): ActionText {
     case "PlayerChecked":
       return { verb: actionVerb("CHECK"), amount: null };
     case "PlayerCalled":
-      return { verb: actionVerb("CALL"), amount: event.to };
+      return { verb: actionVerb("CALL"), amount: null };
     case "PlayerBet":
       return { verb: actionVerb("BET"), amount: event.to };
     case "PlayerRaised":

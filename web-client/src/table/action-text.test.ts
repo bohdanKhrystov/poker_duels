@@ -95,18 +95,18 @@ describe("the action text", () => {
     });
   });
 
-  it("says Call with the call's own total", () => {
+  it("says Call for a call, bare", () => {
     expect(
       lastActText({ type: "PlayerCalled", sequence: 5, seat: 0, to: 400 }),
     ).toEqual({
       verb: "Call",
-      amount: 400,
+      amount: null,
     });
     expect(
       lastActText({ type: "PlayerCalled", sequence: 6, seat: 1, to: 925 }),
     ).toEqual({
       verb: "Call",
-      amount: 925,
+      amount: null,
     });
   });
 
