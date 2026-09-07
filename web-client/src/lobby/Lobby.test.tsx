@@ -354,9 +354,7 @@ describe("the lobby", () => {
     const store = createDuelStore();
     const { container } = renderLobby(store, false);
 
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Join the duel" })).toBeDefined();
     expect(screen.getByRole("heading", { level: 1 })).toBeDefined();
     expect(screen.getByRole("button", { name: HISTORY_HEADING })).toBeDefined();
@@ -385,9 +383,7 @@ describe("the lobby", () => {
     });
 
     expect(screen.getByText("No duel room has that code.")).toBeDefined();
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
   // ADR-0118 §3: once RoomJoined has landed, the waiting screen may stand
@@ -476,7 +472,7 @@ describe("the lobby", () => {
   it("asks the server for a room when the host clicks create", () => {
     const { send } = renderLobby();
 
-    fireEvent.click(screen.getByRole("button", { name: "Create a duel room" }));
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
 
     expect(send).toHaveBeenCalledOnce();
     expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
@@ -544,7 +540,7 @@ describe("the lobby", () => {
     // of the three would still pass a single combined check, and the ticket
     // this test guards (TASK-120901) was exactly one control's classes
     // standing in for the other two's.
-    const create = screen.getByRole("button", { name: "Create a duel room" });
+    const create = screen.getByRole("button", { name: "Play duel" });
     const roomCode = screen.getByLabelText("Room code");
     const join = screen.getByRole("button", { name: "Join the duel" });
 
@@ -612,9 +608,7 @@ describe("the lobby", () => {
     renderLobby(store);
 
     expect(screen.getByText("ABCDEFGH")).toBeDefined();
-    expect(
-      screen.queryByRole("button", { name: "Create a duel room" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Play duel" })).toBeNull();
   });
 
   it("shows an invite link carrying that code", () => {
@@ -648,7 +642,7 @@ describe("the lobby", () => {
 
     // Named tokens, not merely non-empty: a non-empty check is what let the
     // ghost treatment ship in the first place (see "dressed, not bare" above).
-    const create = screen.getByRole("button", { name: "Create a duel room" });
+    const create = screen.getByRole("button", { name: "Play duel" });
     const createClasses = create.className.split(" ");
     expect(createClasses).toContain("bg-accent-fill");
     expect(createClasses).toContain("text-on-accent");
@@ -995,9 +989,7 @@ describe("the lobby", () => {
 
     await screen.findByLabelText("your profile");
     expect(screen.getByText("3 Duel coins")).toBeDefined();
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
   it("keeps the strip off the screen once a table is on it", () => {
@@ -1324,9 +1316,7 @@ describe("the lobby", () => {
     renderLobby();
 
     expect(screen.queryByText(text)).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Create a duel room" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
   it("states the six strings the host-alone table renders with no clipboard, and no seventh", () => {
@@ -1683,9 +1673,7 @@ describe("the lobby", () => {
     // record right now.
     expect(window.location.hash).toBe("#/duels");
     expect(screen.getByRole("button", { name: "Back" })).toBeDefined();
-    expect(
-      screen.queryByRole("button", { name: "Create a duel room" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Play duel" })).toBeNull();
   });
 
   it("shows the ladder over a room that is still waiting, and the address keeps naming it", () => {
@@ -2466,7 +2454,7 @@ describe("the lobby", () => {
     // — every leg of this trip is awaited through findBy* so a navigating
     // control never leaves the previous screen's DOM behind to be queried.
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    await screen.findByRole("button", { name: "Create a duel room" });
+    await screen.findByRole("button", { name: "Play duel" });
 
     fireEvent.click(screen.getByRole("button", { name: ACCOUNT_HEADING }));
     await screen.findByRole("heading", { name: ACCOUNT_HEADING });
