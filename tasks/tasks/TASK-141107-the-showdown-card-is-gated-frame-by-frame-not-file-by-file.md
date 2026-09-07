@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141107
 title: The showdown card is gated frame by frame, not file by file
 type: task
-status: backlog
+status: done
 parent: STORY-1411
 module: design
 estimate: S
