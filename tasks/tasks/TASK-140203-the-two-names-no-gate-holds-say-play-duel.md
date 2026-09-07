@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140203
 title: The two names no gate holds say Play duel
 type: task
-status: backlog
+status: done
 parent: STORY-1402
 module: web-client
 estimate: XS

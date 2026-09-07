@@ -59,8 +59,7 @@ describe("a whole duel through the client", () => {
 
           if (firstSnapshotIndex !== null && index === firstSnapshotIndex + 1) {
             midDuel = {
-              createRoom:
-                within(container).queryByText("Create a duel room") !== null,
+              createRoom: within(container).queryByText("Play duel") !== null,
               potStrip: within(container).queryByText(/^Pot \d+/) !== null,
             };
           }
