@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useRef, useState, type ReactElement, type RefObject } from "react";
 import { roomLink } from "../lobby/room-link";
 
 /**
@@ -7,6 +7,7 @@ import { roomLink } from "../lobby/room-link";
  */
 export function InvitePanel(props: { readonly code: string }): ReactElement {
   const link = roomLink(window.location.origin, props.code);
+  const box = useRef<HTMLInputElement>(null);
   return (
     <>
       <p className="rounded-medium border border-hairline bg-surface px-5 py-4 text-center font-mono text-display tracking-[var(--pd-track-code)] text-text">
@@ -15,33 +16,42 @@ export function InvitePanel(props: { readonly code: string }): ReactElement {
       <label htmlFor="invite-link">Invite link</label>
       <input
         autoFocus
+        ref={box}
         id="invite-link"
         className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text"
         readOnly
         value={link}
         onFocus={(event) => event.currentTarget.select()}
       />
-      <CopyLink link={link} />
+      <CopyLink link={link} box={box} />
     </>
   );
 }
 
-/** Absent where the clipboard API is: the box above is always the fallback. */
-function CopyLink(props: { readonly link: string }): ReactElement | null {
+/** ADR-0128 §1: never absent. §3: a press that cannot copy hands over the selection. */
+function CopyLink(props: {
+  readonly link: string;
+  readonly box: RefObject<HTMLInputElement>;
+}): ReactElement {
   const [outcome, setOutcome] = useState<"none" | "copied" | "refused">("none");
-  if (!navigator.clipboard) {
-    return null;
-  }
+  const handOver = (): void => {
+    props.box.current?.focus();
+    props.box.current?.select();
+    setOutcome("refused");
+  };
   return (
     <>
       <button
         type="button"
         className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         onClick={() => {
-          void navigator.clipboard.writeText(props.link).then(
-            () => setOutcome("copied"),
-            () => setOutcome("refused"),
-          );
+          if (!navigator.clipboard) {
+            handOver();
+            return;
+          }
+          void navigator.clipboard
+            .writeText(props.link)
+            .then(() => setOutcome("copied"), handOver);
         }}
       >
         Copy the link

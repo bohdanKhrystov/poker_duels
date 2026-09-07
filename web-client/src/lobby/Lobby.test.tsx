@@ -623,9 +623,6 @@ describe("the lobby", () => {
   it("the waiting frame's controls are dressed, not bare", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
-    // The copy button only renders with a clipboard to call (see CopyLink),
-    // and it is one of the three controls this test names.
-    withClipboard(() => Promise.resolve());
     renderLobby(store);
 
     const roomCode = screen.getByText("ABCDEFGH");
@@ -701,14 +698,32 @@ describe("the lobby", () => {
     await screen.findByText("Link copied.");
   });
 
-  it("offers no copy button when the browser has no clipboard", () => {
+  it("offers the copy button and hands over the selection with no clipboard", () => {
+    expect(navigator.clipboard).toBeUndefined();
+
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
     renderLobby(store);
 
-    expect(screen.queryByRole("button", { name: "Copy the link" })).toBeNull();
-    const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
-    expect(inviteLink.value).toBe("http://localhost:3000/?room=ABCDEFGH");
+    const box = screen.getByLabelText<HTMLInputElement>("Invite link");
+    const button = screen.getByRole("button", { name: "Copy the link" });
+
+    expect(button).toBeDefined();
+    expect(box.value).toBe("http://localhost:3000/?room=ABCDEFGH");
+
+    // Break the box's own precondition before the press.
+    box.setSelectionRange(0, 0);
+    // Focus the button first to verify the hand-over actually moved focus.
+    button.focus();
+    expect(document.activeElement).toBe(button);
+
+    fireEvent.click(button);
+
+    expect(screen.getByText("Copy it from the box above.")).toBeDefined();
+    expect(screen.queryByText("Link copied.")).toBeNull();
+    expect(document.activeElement).toBe(box);
+    expect(box.selectionStart).toBe(0);
+    expect(box.selectionEnd).toBe(box.value.length);
   });
 
   it("keeps the link in reach when the clipboard refuses", async () => {
@@ -1319,7 +1334,7 @@ describe("the lobby", () => {
     expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
-  it("states the six strings the host-alone table renders with no clipboard, and no seventh", () => {
+  it("states the seven strings the host-alone table renders with no clipboard, and no eighth", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
     renderLobby(store);
@@ -1349,6 +1364,7 @@ describe("the lobby", () => {
         "Waiting for your rival",
         "ABCDEFGH",
         "Invite link",
+        "Copy the link",
         "You",
         "Back to the lobby",
         "The room stays open. That link still works for your rival, and it brings you back.",
