@@ -22,6 +22,13 @@ describe("the action bar", () => {
     return { ...rendered, send };
   }
 
+  it("lets the typed total give ground rather than push the row wide", () => {
+    const { getByRole } = bar();
+
+    const field = getByRole("textbox", { name: "the total" });
+    expect(field.className).toContain("min-w-[0px]");
+  });
+
   it("names itself and waits when there is no turn", () => {
     const { getByRole, getByText } = bar({ turn: null });
 

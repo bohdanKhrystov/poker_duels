@@ -146,7 +146,7 @@ function Live(props: {
         {floor !== null && (
           <input
             aria-label="the total"
-            className="min-w-0 ml-auto w-[7ch] rounded-medium border border-hairline bg-transparent px-3 py-2 text-right font-mono leading-tight text-text tabular-nums disabled:border-hairline disabled:text-text-faint"
+            className="ml-auto w-[7ch] min-w-[0px] rounded-medium border border-hairline bg-transparent px-3 py-2 text-right font-mono leading-tight text-text tabular-nums disabled:border-hairline disabled:text-text-faint"
             disabled={sent}
             inputMode="numeric"
             onChange={(event) => {
