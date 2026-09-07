@@ -157,6 +157,8 @@ export interface Reveal {
 export interface RevealStep {
   readonly board: readonly string[];
   readonly street: Street;
+  /** How long this beat stands, named as a kind — the milliseconds are the boot seam's. */
+  readonly hold: "step" | "read";
 }
 
 /**
@@ -475,9 +477,23 @@ function layOutReveal(
     steps[i] = {
       board: view.board.cards.slice(0, boardLength - cardsAfter),
       street: event.street,
+      hold: "step",
     };
     cardsAfter += event.cards.length;
   }
-  steps[streetDealt.length] = { board: view.board.cards, street: view.street };
+  // ADR-0120 §3's predicate, evaluated over this frame alone: it reads view.viewerSeat rather
+  // than any state carried across frames, so a hand-ending Snapshot queued behind another still
+  // classifies itself correctly when advanceReveal folds it back through this same reducer. The
+  // client reads a hole card here only to choose a schedule, never a face — the faces are
+  // DuelTable.tsx's, off the same snapshot, and PlayerView.of's showCards remains the only place
+  // a hole card is ever filtered (ADR-0136 §5).
+  const rivalShown = view.seats.some(
+    (seat) => seat.index !== view.viewerSeat && seat.holeCards.length > 0,
+  );
+  steps[streetDealt.length] = {
+    board: view.board.cards,
+    street: view.street,
+    hold: rivalShown ? "read" : "step",
+  };
   return { steps, queued: [] };
 }

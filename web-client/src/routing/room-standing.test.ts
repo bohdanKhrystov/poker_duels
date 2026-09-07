@@ -55,7 +55,7 @@ describe("the room's standing", () => {
       view: aView(),
       outcome: null,
       reveal: {
-        steps: [{ board: [], street: "PREFLOP" }],
+        steps: [{ board: [], street: "PREFLOP", hold: "step" }],
         queued: [
           {
             message: {
