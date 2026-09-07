@@ -43,6 +43,25 @@ describe("a seat plate", () => {
     getByText("13,400");
   });
 
+  it("lets the name block give ground, so the row can fit", () => {
+    const { container } = plate();
+    const row = container.querySelector(".border-l-2") as HTMLElement;
+    const nameBlock = row.firstElementChild as HTMLElement;
+    for (const expected of ["min-w-[0px]", "flex-1"]) {
+      expect(nameBlock.classList.contains(expected)).toBe(true);
+    }
+    const elasticChildren = Array.from(row.children).filter((child) =>
+      child.classList.contains("flex-1"),
+    );
+    expect(elasticChildren).toHaveLength(1);
+  });
+
+  it("truncates the name rather than wrapping it", () => {
+    const { getByText } = plate();
+    const nameSpan = getByText("You");
+    expect(nameSpan.classList.contains("truncate")).toBe(true);
+  });
+
   it("shows the button only on the seat that has it", () => {
     const { getByLabelText, unmount } = plate({}, { hasButton: true });
     getByLabelText("the button");
