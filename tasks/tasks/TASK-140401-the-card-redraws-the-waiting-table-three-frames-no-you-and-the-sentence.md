@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140401
 title: The card redraws the waiting table — three frames, no You, and the sentence
 type: task
-status: ready
+status: done
 parent: STORY-1404
 module: design
 estimate: S
