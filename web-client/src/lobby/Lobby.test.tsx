@@ -417,7 +417,11 @@ describe("the lobby", () => {
     expect(screen.getByText("Waiting for your rival")).toBeDefined();
     expect(screen.getByText("ABCDEFGH")).toBeDefined();
     expect(screen.getByText("Invite link")).toBeDefined();
-    expect(screen.getByText("You")).toBeDefined();
+    expect(
+      screen.getByText(
+        "The duel starts by itself the moment your rival arrives, with nothing more needed from you.",
+      ),
+    ).toBeDefined();
     expect(
       screen.getByRole("link", { name: "Back to the lobby" }),
     ).toBeDefined();
@@ -1365,7 +1369,7 @@ describe("the lobby", () => {
         "ABCDEFGH",
         "Invite link",
         "Copy the link",
-        "You",
+        "The duel starts by itself the moment your rival arrives, with nothing more needed from you.",
         "Back to the lobby",
         "The room stays open. That link still works for your rival, and it brings you back.",
       ].sort(),
