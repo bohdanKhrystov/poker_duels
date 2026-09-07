@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141405
 title: ADR-0109 records the clause ADR-0122 amended
 type: task
-status: backlog
+status: done
 parent: STORY-1414
 module: docs
 estimate: XS
