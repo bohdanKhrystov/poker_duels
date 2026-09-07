@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141102
 title: The card draws the showdown the viewer lost
 type: task
-status: backlog
+status: done
 parent: STORY-1411
 module: design
 estimate: S
