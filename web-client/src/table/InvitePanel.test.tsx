@@ -15,9 +15,6 @@ afterEach(() => {
 
 describe("the invite panel", () => {
   it("shows the bare code, the labelled box and the copy control", () => {
-    const writeText = vi.fn(() => Promise.resolve());
-    withClipboard(writeText);
-
     render(<InvitePanel code="7Q4M9K2T" />);
 
     expect(screen.getByText("7Q4M9K2T")).toBeDefined();
@@ -54,30 +51,52 @@ describe("the invite panel", () => {
     await screen.findByText("Link copied.");
   });
 
-  it("keeps the box as the whole invite when the clipboard refuses, and when there is none", async () => {
-    // First test with a refusing clipboard
+  it("hands over the selection when the write is refused", async () => {
     const rejectingWriteText = vi.fn(() => Promise.reject(new Error("denied")));
     withClipboard(rejectingWriteText);
 
-    const { unmount } = render(<InvitePanel code="7Q4M9K2T" />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Copy the link" }));
-    await screen.findByText("Copy it from the box above.");
-
-    const inviteLink = screen.getByLabelText<HTMLInputElement>("Invite link");
-    expect(inviteLink.value).toBe("http://localhost:3000/?room=7Q4M9K2T");
-
-    unmount();
-
-    // Now test with no clipboard
-    Reflect.deleteProperty(navigator, "clipboard");
     render(<InvitePanel code="7Q4M9K2T" />);
 
-    expect(screen.queryByRole("button", { name: "Copy the link" })).toBeNull();
-    const inviteLinkNoClipboard =
-      screen.getByLabelText<HTMLInputElement>("Invite link");
-    expect(inviteLinkNoClipboard.value).toBe(
-      "http://localhost:3000/?room=7Q4M9K2T",
-    );
+    const box = screen.getByLabelText<HTMLInputElement>("Invite link");
+    const button = screen.getByRole("button", { name: "Copy the link" });
+
+    // Break the box's own precondition before the press.
+    box.setSelectionRange(0, 0);
+    // Focus the button first to verify the hand-over actually moved focus.
+    button.focus();
+    expect(document.activeElement).toBe(button);
+
+    fireEvent.click(button);
+
+    await screen.findByText("Copy it from the box above.");
+    expect(screen.queryByText("Link copied.")).toBeNull();
+    expect(document.activeElement).toBe(box);
+    expect(box.selectionStart).toBe(0);
+    expect(box.selectionEnd).toBe(box.value.length);
+  });
+
+  it("offers the control and hands over the selection with no Clipboard API", async () => {
+    expect(navigator.clipboard).toBeUndefined();
+
+    render(<InvitePanel code="7Q4M9K2T" />);
+
+    const box = screen.getByLabelText<HTMLInputElement>("Invite link");
+    const button = screen.getByRole("button", { name: "Copy the link" });
+
+    expect(button).toBeDefined();
+
+    // Break the box's own precondition before the press.
+    box.setSelectionRange(0, 0);
+    // Focus the button first to verify the hand-over actually moved focus.
+    button.focus();
+    expect(document.activeElement).toBe(button);
+
+    fireEvent.click(button);
+
+    expect(screen.getByText("Copy it from the box above.")).toBeDefined();
+    expect(screen.queryByText("Link copied.")).toBeNull();
+    expect(document.activeElement).toBe(box);
+    expect(box.selectionStart).toBe(0);
+    expect(box.selectionEnd).toBe(box.value.length);
   });
 });
