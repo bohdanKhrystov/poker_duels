@@ -14,9 +14,9 @@ labels: [client, table, bug]
 depends_on: [TASK-141304]
 verify:
   - cd web-client && npm ci && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/table/SeatPlate.test.tsx > "${TMPDIR:-/tmp}/sp-after.txt" 2>&1; grep -qF 'Tests  20 passed (20)' "${TMPDIR:-/tmp}/sp-after.txt"
-  - cd web-client && cp src/table/SeatPlate.tsx "${TMPDIR:-/tmp}/sp.m1.tsx" && perl -0pi -e 's/from=\{props\.isViewer \? "above" : "below"\}/from="below"/' src/table/SeatPlate.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/table/SeatPlate.test.tsx > "${TMPDIR:-/tmp}/sp-m1.txt" 2>&1; cp "${TMPDIR:-/tmp}/sp.m1.tsx" src/table/SeatPlate.tsx; cmp -s "${TMPDIR:-/tmp}/sp.m1.tsx" src/table/SeatPlate.tsx && grep -qF 'Tests  1 failed | 19 passed (20)' "${TMPDIR:-/tmp}/sp-m1.txt" && grep -qF 'takes the chips from the side of the table the middle is on' "${TMPDIR:-/tmp}/sp-m1.txt"
-  - cd web-client && cp src/table/SeatPlate.tsx "${TMPDIR:-/tmp}/sp.m2.tsx" && perl -0pi -e 's/from=\{props\.isViewer \? "above" : "below"\}/from="above"/' src/table/SeatPlate.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/table/SeatPlate.test.tsx > "${TMPDIR:-/tmp}/sp-m2.txt" 2>&1; cp "${TMPDIR:-/tmp}/sp.m2.tsx" src/table/SeatPlate.tsx; cmp -s "${TMPDIR:-/tmp}/sp.m2.tsx" src/table/SeatPlate.tsx && grep -qF 'Tests  1 failed | 19 passed (20)' "${TMPDIR:-/tmp}/sp-m2.txt" && grep -qF 'takes the chips from the side of the table the middle is on' "${TMPDIR:-/tmp}/sp-m2.txt"
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/table/SeatPlate.test.tsx > "${TMPDIR:-/tmp}/sp-after.txt" 2>&1; grep -qF 'Tests  22 passed (22)' "${TMPDIR:-/tmp}/sp-after.txt"
+  - cd web-client && cp src/table/SeatPlate.tsx "${TMPDIR:-/tmp}/sp.m1.tsx" && perl -0pi -e 's/from=\{props\.isViewer \? "above" : "below"\}/from="below"/' src/table/SeatPlate.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/table/SeatPlate.test.tsx > "${TMPDIR:-/tmp}/sp-m1.txt" 2>&1; cp "${TMPDIR:-/tmp}/sp.m1.tsx" src/table/SeatPlate.tsx; cmp -s "${TMPDIR:-/tmp}/sp.m1.tsx" src/table/SeatPlate.tsx && grep -qF 'Tests  1 failed | 21 passed (22)' "${TMPDIR:-/tmp}/sp-m1.txt" && grep -qF 'takes the chips from the side of the table the middle is on' "${TMPDIR:-/tmp}/sp-m1.txt"
+  - cd web-client && cp src/table/SeatPlate.tsx "${TMPDIR:-/tmp}/sp.m2.tsx" && perl -0pi -e 's/from=\{props\.isViewer \? "above" : "below"\}/from="above"/' src/table/SeatPlate.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/table/SeatPlate.test.tsx > "${TMPDIR:-/tmp}/sp-m2.txt" 2>&1; cp "${TMPDIR:-/tmp}/sp.m2.tsx" src/table/SeatPlate.tsx; cmp -s "${TMPDIR:-/tmp}/sp.m2.tsx" src/table/SeatPlate.tsx && grep -qF 'Tests  1 failed | 21 passed (22)' "${TMPDIR:-/tmp}/sp-m2.txt" && grep -qF 'takes the chips from the side of the table the middle is on' "${TMPDIR:-/tmp}/sp-m2.txt"
   - awk 'index($0, "from={props.isViewer ? \"above\" : \"below\"}") { n++ } END { exit (n != 1) }' web-client/src/table/SeatPlate.tsx
   - sh -c '! grep -q "from=" web-client/src/table/PotStrip.tsx'
   - sh -c '! grep -q "ChipPile from" web-client/src/table/DuelTable.tsx'
@@ -114,9 +114,9 @@ and `.chip-disc`, which this ticket does not move.
 
 | Gate | Proves | Reading |
 | --- | --- | --- |
-| `npx vitest run src/table/SeatPlate.test.tsx` | the file is whole and the test is new | `Tests  20 passed (20)` |
-| **Mutation 1** — the ternary hard-coded to `from="below"` | the rival's half is not what carries the test | `Tests  1 failed \| 19 passed (20)`, naming the new test |
-| **Mutation 2** — hard-coded to `from="above"` | neither is; the expression is read | `Tests  1 failed \| 19 passed (20)`, naming the new test |
+| `npx vitest run src/table/SeatPlate.test.tsx` | the file is whole and the test is new | `Tests  22 passed (22)` |
+| **Mutation 1** — the ternary hard-coded to `from="below"` | the rival's half is not what carries the test | `Tests  1 failed \| 21 passed (22)`, naming the new test |
+| **Mutation 2** — hard-coded to `from="above"` | neither is; the expression is read | `Tests  1 failed \| 21 passed (22)`, naming the new test |
 | the ternary appears exactly **1** time in `SeatPlate.tsx` | one statement, at one seat | measured |
 | `PotStrip.tsx` has no `from=`, `DuelTable.tsx` no `ChipPile from` | the two sites that must keep the default did | measured |
 | `npx vitest run src/e2e` | the recorded-frame suites cannot see a CSS class | `7 passed (7)`, `55 passed (55)` |
@@ -126,8 +126,8 @@ Both mutations restore the file and `cmp` it before the gate reports.
 
 ## Acceptance criteria
 
-- [ ] `SeatPlate.test.tsx` reports `Tests  20 passed (20)`
-- [ ] Hard-coding `from="below"` gives `Tests  1 failed | 19 passed (20)` naming
+- [ ] `SeatPlate.test.tsx` reports `Tests  22 passed (22)`
+- [ ] Hard-coding `from="below"` gives `Tests  1 failed | 21 passed (22)` naming
       `takes the chips from the side of the table the middle is on`, and the file is restored
 - [ ] Hard-coding `from="above"` gives the same reading, naming the same test, and the file is
       restored

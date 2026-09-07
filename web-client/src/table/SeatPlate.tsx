@@ -88,7 +88,12 @@ export function SeatPlate(props: {
           {`Timebank${NBSP}${props.clock.bank}`}
         </span>
       )}
-      {props.seat.stack > 0 && <ChipPile key={props.seat.stack} />}
+      {props.seat.stack > 0 && (
+        <ChipPile
+          key={props.seat.stack}
+          from={props.isViewer ? "above" : "below"}
+        />
+      )}
       <span className="font-mono tabular-nums">
         {formatChips(props.seat.stack)}
       </span>
