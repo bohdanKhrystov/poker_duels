@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141305
 title: The rival's seat takes its chips from below
 type: task
-status: backlog
+status: done
 parent: STORY-1413
 module: web-client
 estimate: XS

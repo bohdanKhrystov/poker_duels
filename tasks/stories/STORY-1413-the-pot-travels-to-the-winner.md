@@ -2,7 +2,7 @@
 id: STORY-1413
 title: The pot travels to the winner
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, table, design, bug]
