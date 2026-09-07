@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141101
 title: The card strikes the muck line and both banners' second lines
 type: task
-status: ready
+status: done
 parent: STORY-1411
 module: design
 estimate: XS
