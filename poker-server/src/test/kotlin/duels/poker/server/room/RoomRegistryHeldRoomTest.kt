@@ -18,6 +18,13 @@ private fun scriptedRegistry(code: String = "2B7KMNPQ"): RoomRegistry {
     return RoomRegistry(codes, MutableClock())
 }
 
+/** A [RoomCodeSource] that hands out [codes] in order, once each. */
+private class HeldRoomCodes(vararg codes: String) : RoomCodeSource {
+    private val queue = ArrayDeque(codes.map { RoomCode(it) })
+
+    override fun newRoomCode(): RoomCode = queue.removeFirst()
+}
+
 internal class RoomRegistryHeldRoomTest {
 
     @Test
@@ -107,6 +114,87 @@ internal class RoomRegistryHeldRoomTest {
         assertNotNull(room)
         assertEquals(RoomState.ABANDONED, room!!.state)
         assertEquals(0, room.seatOf(host))
+    }
+
+    @Test
+    fun aPlayingRoomOutranksAWaitingOneWhicheverOpenedFirst() = runBlocking {
+        // WAITING opened at 1_000, PLAYING opened and joined at 2_000: the stamp key would pick
+        // the WAITING room, but the state key outranks it.
+        val clockA = MutableClock(1_000)
+        val registryA = RoomRegistry(HeldRoomCodes("AAAAAAAA", "BBBBBBBB"), clockA)
+        val hostA = newPlayerId()
+        registryA.create(hostA)
+        clockA.set(2_000)
+        val playingCodeA = registryA.create(hostA).code
+        registryA.join(playingCodeA, newPlayerId())
+
+        val resultA = registryA.heldRoom(hostA)
+        assertEquals(playingCodeA, resultA?.code)
+        assertEquals(RoomState.PLAYING, resultA?.state)
+
+        // Swapped: PLAYING opened and joined at 1_000, WAITING opened at 2_000. Still the PLAYING
+        // room, so the answer is not simply "the older room" either.
+        val clockB = MutableClock(1_000)
+        val registryB = RoomRegistry(HeldRoomCodes("AAAAAAAA", "BBBBBBBB"), clockB)
+        val hostB = newPlayerId()
+        val playingCodeB = registryB.create(hostB).code
+        registryB.join(playingCodeB, newPlayerId())
+        clockB.set(2_000)
+        registryB.create(hostB)
+
+        val resultB = registryB.heldRoom(hostB)
+        assertEquals(playingCodeB, resultB?.code)
+        assertEquals(RoomState.PLAYING, resultB?.state)
+    }
+
+    @Test
+    fun theOlderWaitingRoomWinsEvenWhenItCarriesTheHigherCode() {
+        // "ZZZZZZZZ" minted at 1_000, "AAAAAAAA" minted at 2_000: the code key would pick
+        // "AAAAAAAA", but the older stamp outranks it.
+        val clockA = MutableClock(1_000)
+        val registryA = RoomRegistry(HeldRoomCodes("ZZZZZZZZ", "AAAAAAAA"), clockA)
+        val hostA = newPlayerId()
+        registryA.create(hostA)
+        clockA.set(2_000)
+        registryA.create(hostA)
+
+        val resultA = registryA.heldRoom(hostA)
+        assertEquals(RoomCode("ZZZZZZZZ"), resultA?.code)
+
+        // "AAAAAAAA" minted at 1_000, "ZZZZZZZZ" minted at 2_000: the older room still wins, and
+        // this time it also carries the lower code, so the first half is not passing by accident.
+        val clockB = MutableClock(1_000)
+        val registryB = RoomRegistry(HeldRoomCodes("AAAAAAAA", "ZZZZZZZZ"), clockB)
+        val hostB = newPlayerId()
+        registryB.create(hostB)
+        clockB.set(2_000)
+        registryB.create(hostB)
+
+        val resultB = registryB.heldRoom(hostB)
+        assertEquals(RoomCode("AAAAAAAA"), resultB?.code)
+    }
+
+    @Test
+    fun theLowerCodeBreaksATieOnTheStamp() {
+        // A clock that never advances: both rooms carry the identical stamp, so the first two
+        // keys tie and the code alone decides.
+        val registryA = RoomRegistry(HeldRoomCodes("ZZZZZZZZ", "AAAAAAAA"), MutableClock(1_000))
+        val hostA = newPlayerId()
+        registryA.create(hostA)
+        registryA.create(hostA)
+
+        val resultA = registryA.heldRoom(hostA)
+        assertEquals(RoomCode("AAAAAAAA"), resultA?.code)
+
+        // Minted in the opposite order: the answer is still "AAAAAAAA", so it is not the order
+        // the rooms were inserted in.
+        val registryB = RoomRegistry(HeldRoomCodes("AAAAAAAA", "ZZZZZZZZ"), MutableClock(1_000))
+        val hostB = newPlayerId()
+        registryB.create(hostB)
+        registryB.create(hostB)
+
+        val resultB = registryB.heldRoom(hostB)
+        assertEquals(RoomCode("AAAAAAAA"), resultB?.code)
     }
 
     @Test

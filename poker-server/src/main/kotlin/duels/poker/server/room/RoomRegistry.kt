@@ -128,22 +128,23 @@ public class RoomRegistry(
      * existing `@Volatile` field, exactly as [get] does. It acquires no mutex — it stays declared
      * `fun`, not `suspend fun`, which is what makes taking one impossible (`ADR-0133` §§2, 4).
      *
-     * When more than one room qualifies, the choice is arbitrary **today** and becomes total in a
-     * later ticket. Every test in the ticket that introduces this method arranges exactly one
-     * qualifying room for the player it asks about.
+     * When more than one room qualifies, the answer is total, not whatever `rooms` iterates first
+     * (`ADR-0133` §1) — a server answer that depends on a hash map's iteration order is neither
+     * testable nor explicable. The qualifying rooms are ordered by:
+     * 1. [RoomState.PLAYING] before [RoomState.WAITING] — a running duel outranks a waiting room;
+     * 2. then ascending [Room.lastActivityAt] — the oldest room is the one whose code has been out
+     *    longest and the one that dies first;
+     * 3. then ascending [RoomCode.value] — so the order is total even when two stamps collide.
      *
      * @param player The player to find.
-     * @return The room [player] holds in [RoomState.WAITING] or [RoomState.PLAYING] state, or
-     *   `null` if no live room holds this player.
+     * @return The room [player] holds in [RoomState.WAITING] or [RoomState.PLAYING] state, first
+     *   under the order above, or `null` if no live room holds this player.
      */
     public fun heldRoom(player: PlayerId): Room? {
-        for ((_, holder) in rooms) {
-            val room = holder.room
-            if (room.seatOf(player) != null && (room.state == RoomState.WAITING || room.state == RoomState.PLAYING)) {
-                return room
-            }
-        }
-        return null
+        return rooms.values.asSequence()
+            .map { it.room }
+            .filter { room -> room.seatOf(player) != null && (room.state == RoomState.WAITING || room.state == RoomState.PLAYING) }
+            .minWithOrNull(HELD_ROOM_ORDER)
     }
 
     /**
@@ -842,5 +843,11 @@ public class RoomRegistry(
     public companion object {
         /** The number of times [create] retries a colliding code before giving up. */
         public const val MAX_CODE_ATTEMPTS: Int = 10
+
+        /** The total order [heldRoom] picks its answer under; see that method's KDoc. */
+        private val HELD_ROOM_ORDER: Comparator<Room> =
+            compareBy<Room> { it.state != RoomState.PLAYING }
+                .thenBy { it.lastActivityAt }
+                .thenBy { it.code.value }
     }
 }
