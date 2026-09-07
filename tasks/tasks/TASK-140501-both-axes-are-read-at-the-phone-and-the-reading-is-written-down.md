@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140501
 title: Both axes are read at the phone, and the reading is written down
 type: task
-status: ready
+status: done
 parent: STORY-1405
 module: docs
 estimate: XS
