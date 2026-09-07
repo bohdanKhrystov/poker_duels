@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141302
 title: The duel table card's copy of the flight follows the component card
 type: task
-status: backlog
+status: done
 parent: STORY-1413
 module: design
 estimate: XS
