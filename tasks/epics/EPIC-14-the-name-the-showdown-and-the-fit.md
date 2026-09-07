@@ -507,6 +507,21 @@ decisions registered *by* those answers stay open in `docs/adr/README.md` and **
 owner's) and `DEC-150` (whether a copy is achievable at all where `navigator.clipboard` is undefined,
 the architect's). Neither gates a story, and neither is this epic's to close.
 
+**One more was registered on 2026-09-07, by the planner rather than by an answer**: `DEC-153`, the
+architect's — how the client tells a **first** showing of the rival's hand from a repeat of the same
+hand, and whether it is worth remembering anything to do it. `ADR-0120` §3's rule is *"a hand face up
+the viewer **has not been shown before**"*, but the sentence restating it *"as the client can
+evaluate it"* drops the word **before**, and `TASK-141104` merged the restatement. Measured on
+`develop` at `5cce33c4` with a throwaway `poker-server` probe over 60 duels, since reverted: **0**
+hand-completing `Snapshot`s in **2,220** resume frames and **0** repeated deliveries across **604**
+hand endings — `act` calls `advance` in the same call, so a live hand is never over — against **602**
+when the same probe is asked what a runner would hand back without that call. So the guard would
+contradict `ADR-0136` §1's *"no previous view is remembered"* to correct an answer no path reaches,
+and *write the invariant down instead* is the live alternative. It blocks
+[`TASK-141108`](../tasks/TASK-141108-the-read-beat-is-spent-once-and-a-repeat-is-a-step.md) and
+**nothing else**: `STORY-1411`'s remaining tickets are unaffected, and this epic's *Out of scope*
+forbidding `poker-engine` and `poker-server` is what keeps a server-side answer outside it.
+
 ### Answered
 
 | ID | Answered by | What it means here |

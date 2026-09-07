@@ -195,6 +195,32 @@ card that specified the mini would be specifying a client change nobody has aske
 prefers the mini at the pane, that is a repair ticket against the card *and* against `CardFace`, and
 `ADR-0091` §3 lets that verdict trail the merge.
 
+### The predicate answers for a *delivery*, and `DEC-153` is why that is not repaired here
+
+`ADR-0120` §3's rule is *"a hand face up the viewer **has not been shown before**"*. The sentence
+that restates it *"as the client can evaluate it"* — *"the hand-completing view carries hole cards
+for the rival's seat"* — **drops the word `before`**, and `TASK-141104` merged the restatement, so
+today **every** delivery carrying rival hole cards answers `"read"`. Nothing in the frame can tell a
+first showing from a repeat: `PlayerView.of` fills a revealed seat's `holeCards` from every
+`HandRevealed` in the hand's log on **every** projection of it, `duel-state.ts` re-lays a reveal on
+every `COMPLETE`, and `duel-store.ts` builds its state once and keeps it across sockets.
+
+**It is latent rather than live, and that was measured rather than argued.** A throwaway
+`poker-server` probe on `develop` at `5cce33c4` — 60 duels, since reverted — took `resumeFrames` at
+every step: **0** hand-completing `Snapshot`s in **2,220** resume frames, and **0** seats ever sent
+one hand's completing view twice across **604** hand endings and **115** showdowns. `act` calls
+`advance` in the same call (`DuelAction.kt:59`), `advance` loops until a hand is not over, and
+`GameState.isHandOver` *is* `street == COMPLETE`, so a live `DuelRunner.hand` is never over and a
+resume cannot re-project one. The probe was **falsified rather than trusted**: asked what a runner
+would hand back if `advance` were not called, the same run found **602**.
+
+So the honest guard would contradict `ADR-0136` §1 in three places — *"`layOutReveal`'s signature
+does not change"*, *"from the view it is already given and from nothing else"*, *"no previous view
+is remembered"* — in order to fix an answer no path reaches. Only an ADR amends an ADR, and *leave
+the predicate and write the invariant down instead* is a defensible second answer, so this is
+**`DEC-153`, the architect's**, and [`TASK-141108`](../tasks/TASK-141108-the-read-beat-is-spent-once-and-a-repeat-is-a-step.md)
+is `blocked` on it, prototyped and measured so the answer costs one run either way.
+
 ### The per-file test counts are measured, never computed
 
 Baselines on `develop` at `c54b4a1f`, this worktree, `npm ci` fresh: `duel-state.test.ts` **89**,
@@ -216,6 +242,14 @@ ticket reads a declaration the one before it adds — so exactly one is startabl
 | [`TASK-141104`](../tasks/TASK-141104-a-beat-carries-its-kind-and-one-frame-decides-it.md) | S | `RevealStep.hold: "step" \| "read"`, set once in `layOutReveal` from `ADR-0120` §3's predicate. Three tests, two mutations, and the two merged `toEqual` assertions that gain `hold: "step"` |
 | [`TASK-141105`](../tasks/TASK-141105-the-store-holds-the-read-beat-and-zero-silences-every-beat.md) | S | `readMillis` on `DuelStoreOptions`, absent meaning `stepMillis`; `armTick` maps the kind after a `stepMillis === 0` gate. Proved by `[600, 600, 600, 2000]` versus `[600]`, and by an e2e run that must go red when the gate is removed |
 | [`TASK-141106`](../tasks/TASK-141106-boot-names-the-read-beats-length-beside-the-steps.md) | XS | `REVEAL_READ_MS = 2000` beside `REVEAL_STEP_MS`, `BootOptions.readMillis`, and two tests that read the `delayMillis` boot's own `schedule` reaches `setTimeout` with |
+| [`TASK-141108`](../tasks/TASK-141108-the-read-beat-is-spent-once-and-a-repeat-is-a-step.md) | S | **`blocked` on `DEC-153`.** The read beat is spent once per hand: `layOutReveal` takes the view the store already holds and answers `"step"` for a repeat of the same `handNumber`. Two files, **92 → 95**, two mutations
+
+**`TASK-141108` comes last, not before `TASK-141105`**, and the ordering was measured rather than
+assumed. It was raised as due *before* the store starts scheduling from `hold`, on the reading that
+a reconnecting player would otherwise sit through the 2,000 ms again — but there is no reachable
+second delivery to sit through (see *Design notes*), so making the store's ticket wait on an
+architect's decision would stall a startable chain for a symptom no path produces. It therefore
+depends on `TASK-141106`, is `blocked` on `DEC-153`, and gates nothing.
 
 **A seventh ticket was considered and refused.** `docs/test-plan.md` gains nothing here: `EPIC-14`'s
 per-epic suite is the `qa-cases` skill's to write from the epic's *Definition of done* — *"one case
@@ -249,6 +283,10 @@ the epic's showdown promise is already written there.
       `design/tokens/tokens.css` is not edited
 - [ ] `ImKate mucks`, `Two pair, aces and sevens` and `Nobody shows` appear nowhere in the card;
       `ImKate folds` still appears exactly once
+- [ ] A hand-completing view **delivered a second time** — drained and re-applied, or queued behind
+      the beat it repeats — lays out `hold: "step"`, while the **next** hand's showdown is still a
+      `"read"`; or `DEC-153` is answered the other way and `TASK-141108` is `dropped` for the
+      reason that ADR gives
 - [ ] Every changed behaviour is proved red by a `verify:` command that reintroduces the old
       behaviour, captures the failure, restores the file and checks the restore with `cmp -s`
 - [ ] `cd web-client && npm run check` exits 0, `./design/check-drift.sh` exits 0, and
