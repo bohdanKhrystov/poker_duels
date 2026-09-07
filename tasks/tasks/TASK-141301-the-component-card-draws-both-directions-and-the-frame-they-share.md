@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141301
 title: The component card draws both directions and the still frame they share
 type: task
-status: ready
+status: done
 parent: STORY-1413
 module: design
 estimate: S
