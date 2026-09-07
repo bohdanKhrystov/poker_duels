@@ -2,7 +2,7 @@
 id: STORY-1404
 title: The waiting table copies its link, says the duel starts itself, and stops labelling the host
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, design, table, lobby]

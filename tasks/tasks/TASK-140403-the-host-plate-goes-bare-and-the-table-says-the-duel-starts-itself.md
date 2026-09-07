@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140403
 title: The host's plate goes bare and the table says the duel starts by itself
 type: task
-status: backlog
+status: done
 parent: STORY-1404
 module: web-client
 estimate: S
