@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141108
 title: The read beat is spent once, and a repeat of the same hand is a step
 type: task
-status: blocked
+status: ready
 parent: STORY-1411
 module: web-client
 estimate: S
@@ -29,20 +29,29 @@ face up, and `"step"` on every later delivery of the same hand — so the two-se
 `TASK-141105` schedules is spent once per hand, not once per frame carrying cards the viewer has
 already seen.
 
-## Blocked on `DEC-153`, and it must not be started before that merges
+## `DEC-153` is answered, and this ticket stands exactly as written
 
 `ADR-0136` §1 says, of the predicate this ticket changes, that **`layOutReveal`'s signature does not
 change** and that *"nothing is computed, no event is consulted, and **no previous view is
-remembered**"*. This ticket contradicts all three. In this repository an ADR is amended by another
-ADR — `docs/adr/README.md`: *"An ADR is never edited to change its decision"* — and no ticket may
-carry that amendment, so `DEC-153` is registered for **the architect** and this ticket waits for the
-answering ADR.
+remembered**"*. This ticket contradicts all three. In this repository an ADR is amended only by
+another ADR — `docs/adr/README.md`: *"An ADR is never edited to change its decision"* — and no
+ticket may carry that amendment, so `DEC-153` was registered for **the architect**.
 
-The question is real rather than ceremonial, because **the wrong answer is not reachable today**
-(measured below), which leaves a second honest answer available: leave the predicate alone and
-*write the invariant down* instead. If the ADR takes that route, this ticket is `dropped` and
-whatever the ADR asks for replaces it. If it takes the guard below, everything in this ticket —
-including every measured number in `verify:` — stands as written.
+It is answered by
+[`ADR-0139`](../../docs/adr/ADR-0139-the-read-beat-is-spent-once-and-the-store-already-remembers.md),
+merged 2026-09-07, which **takes the guard** and amends `ADR-0136` §1 **in those three sentences and
+in no others** — the deciding point being that `DuelState` gains no field, because `state.view` was
+already there, so the store's memory does not grow and all three of §1's stated reasons survive.
+`ADR-0139` §10 names this ticket's three test names and both mutation gates as what it asks for, and
+says it stands **exactly as written** — every literal in *Scope*, every measured number in `verify:`,
+and the two-file diff. Read the ADR before starting: §§2–5 are the shape, §10 is the proof, and §5's
+second bullet is why `held.handNumber === view.handNumber` is not optional.
+
+The second answer — *leave the predicate and write the invariant down* — was real, and `ADR-0139`'s
+*Alternatives considered* says why it lost: its only honest pin is a `poker-server` test, `EPIC-14`
+forbids `poker-server`, and a test deferred to a story outside the epic is a test nobody writes.
+`ADR-0139` §9 writes the invariant down anyway, as a **fact with no test**, and registers nothing —
+so **no server ticket follows this one**.
 
 ## Why the predicate is wrong as merged
 
@@ -94,7 +103,8 @@ four* is a test of exactly that frame.
 | `web-client/src/store/duel-state.ts` | modify |
 | `web-client/src/store/duel-state.test.ts` | modify |
 
-Read the ADR that answers `DEC-153` first, then
+Read [`ADR-0139`](../../docs/adr/ADR-0139-the-read-beat-is-spent-once-and-the-store-already-remembers.md)
+§§2–5 and 10 first, then
 [`ADR-0120`](../../docs/adr/ADR-0120-a-showdown-shows-the-hands-the-rules-showed-and-the-beat-that-shows-them-stands.md)
 §3 and [`ADR-0136`](../../docs/adr/ADR-0136-a-beat-declares-its-own-length-and-zero-silences-every-beat.md)
 §§1 and 5. **No other file is opened.** Two files is the whole diff and it was measured: with the
@@ -195,8 +205,8 @@ at **13**, both untouched, and `npm run check` is green across **124** files.
 - **The engine and the server.** `EPIC-14`'s *Out of scope* forbids opening `poker-engine`, and
   `ADR-0120` took `poker-server` out of item 2a. The probe that measured the reachability above was
   reverted in full and this ticket adds no Kotlin file — **including** the server test that would
-  pin *"a resume never re-projects a hand-completing view"*. If the ADR answering `DEC-153` wants
-  that test, it belongs to a server story, not here.
+  pin *"a resume never re-projects a hand-completing view"*. `ADR-0139` §9 decided **against** that
+  test — after the guard nothing depends on the invariant — so no server story follows this ticket.
 - **A wire field marking a first send.** That is the engine change `ADR-0008` and this epic both
   refuse; `PlayerView` carries no such field and `ADR-0120` moved no wire. Named, deliberately not
   registered.
@@ -229,7 +239,8 @@ and **both** mutation gates fail independently (`1`, `2`, `2`).
 
 ## Acceptance criteria
 
-- [ ] The ADR answering `DEC-153` is **merged**, and this ticket's shape is what it asks for
+- [ ] [`ADR-0139`](../../docs/adr/ADR-0139-the-read-beat-is-spent-once-and-the-store-already-remembers.md)
+      is **merged**, and this ticket's shape is what its §10 asks for
 - [ ] `layOutReveal` takes a third parameter `held: PlayerView | null`, and `state.view` is what the
       `Snapshot` case passes it
 - [ ] `duel-state.test.ts` reports `Tests  95 passed (95)`

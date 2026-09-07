@@ -195,15 +195,16 @@ card that specified the mini would be specifying a client change nobody has aske
 prefers the mini at the pane, that is a repair ticket against the card *and* against `CardFace`, and
 `ADR-0091` §3 lets that verdict trail the merge.
 
-### The predicate answers for a *delivery*, and `DEC-153` is why that is not repaired here
+### The predicate answered for a *delivery*, and `ADR-0139` is what repaired it
 
 `ADR-0120` §3's rule is *"a hand face up the viewer **has not been shown before**"*. The sentence
 that restates it *"as the client can evaluate it"* — *"the hand-completing view carries hole cards
 for the rival's seat"* — **drops the word `before`**, and `TASK-141104` merged the restatement, so
-today **every** delivery carrying rival hole cards answers `"read"`. Nothing in the frame can tell a
-first showing from a repeat: `PlayerView.of` fills a revealed seat's `holeCards` from every
-`HandRevealed` in the hand's log on **every** projection of it, `duel-state.ts` re-lays a reveal on
-every `COMPLETE`, and `duel-store.ts` builds its state once and keeps it across sockets.
+until `TASK-141108` lands **every** delivery carrying rival hole cards answers `"read"`. Nothing in
+the frame can tell a first showing from a repeat: `PlayerView.of` fills a revealed seat's
+`holeCards` from every `HandRevealed` in the hand's log on **every** projection of it,
+`duel-state.ts` re-lays a reveal on every `COMPLETE`, and `duel-store.ts` builds its state once and
+keeps it across sockets.
 
 **It is latent rather than live, and that was measured rather than argued.** A throwaway
 `poker-server` probe on `develop` at `5cce33c4` — 60 duels, since reverted — took `resumeFrames` at
@@ -214,12 +215,20 @@ one hand's completing view twice across **604** hand endings and **115** showdow
 resume cannot re-project one. The probe was **falsified rather than trusted**: asked what a runner
 would hand back if `advance` were not called, the same run found **602**.
 
-So the honest guard would contradict `ADR-0136` §1 in three places — *"`layOutReveal`'s signature
-does not change"*, *"from the view it is already given and from nothing else"*, *"no previous view
-is remembered"* — in order to fix an answer no path reaches. Only an ADR amends an ADR, and *leave
-the predicate and write the invariant down instead* is a defensible second answer, so this is
-**`DEC-153`, the architect's**, and [`TASK-141108`](../tasks/TASK-141108-the-read-beat-is-spent-once-and-a-repeat-is-a-step.md)
-is `blocked` on it, prototyped and measured so the answer costs one run either way.
+So the honest guard contradicts `ADR-0136` §1 in three places — *"`layOutReveal`'s signature does
+not change"*, *"from the view it is already given and from nothing else"*, *"no previous view is
+remembered"* — in order to fix an answer no path reaches, and only an ADR amends an ADR. That was
+**`DEC-153`, the architect's**, and it is answered by
+[`ADR-0139`](../../docs/adr/ADR-0139-the-read-beat-is-spent-once-and-the-store-already-remembers.md),
+merged 2026-09-07: **take the guard, and amend those three sentences and no others.**
+`layOutReveal` gains `held: PlayerView | null`, the `Snapshot` case passes `state.view`, and
+**`DuelState` gains no field** — the memory was already there, which is what keeps the amendment
+narrow and leaves all three of `ADR-0136` §1's stated reasons standing. The second answer, *write
+the invariant down instead*, lost on where its pin would live: `EPIC-14` forbids `poker-server`, and
+a test deferred outside the epic is a test nobody writes. `ADR-0139` §9 writes the invariant down
+anyway, as a fact with no test, and registers nothing.
+[`TASK-141108`](../tasks/TASK-141108-the-read-beat-is-spent-once-and-a-repeat-is-a-step.md) is
+therefore **unblocked and stands exactly as written**, every measured number included.
 
 ### The per-file test counts are measured, never computed
 
@@ -243,14 +252,15 @@ ticket reads a declaration the one before it adds — so exactly one is startabl
 | [`TASK-141105`](../tasks/TASK-141105-the-store-holds-the-read-beat-and-zero-silences-every-beat.md) | S | `readMillis` on `DuelStoreOptions`, absent meaning `stepMillis`; `armTick` maps the kind after a `stepMillis === 0` gate. Proved by `[600, 600, 600, 2000]` versus `[600]`, and by an e2e run that must go red when the gate is removed |
 | [`TASK-141106`](../tasks/TASK-141106-boot-names-the-read-beats-length-beside-the-steps.md) | XS | `REVEAL_READ_MS = 2000` beside `REVEAL_STEP_MS`, `BootOptions.readMillis`, and two tests that read the `delayMillis` boot's own `schedule` reaches `setTimeout` with |
 | [`TASK-141107`](../tasks/TASK-141107-the-showdown-card-is-gated-frame-by-frame-not-file-by-file.md) | S | `design/check-frame-cards.sh` — a frame-scoped gate, added after `TASK-141102` merged because all 48 of its gates were whole-file aggregate counts and a reviewer proved a swap of the fold and showdown-lost `oppcards` slots left every one green while the fold frame showed a folded hand face-up. Anchors on each frame's own `<h2>` and refuses when an anchor matches nothing. **done** |
-| [`TASK-141108`](../tasks/TASK-141108-the-read-beat-is-spent-once-and-a-repeat-is-a-step.md) | S | **`blocked` on `DEC-153`.** The read beat is spent once per hand: `layOutReveal` takes the view the store already holds and answers `"step"` for a repeat of the same `handNumber`. Two files, **92 → 95**, two mutations
+| [`TASK-141108`](../tasks/TASK-141108-the-read-beat-is-spent-once-and-a-repeat-is-a-step.md) | S | **Unblocked by [`ADR-0139`](../../docs/adr/ADR-0139-the-read-beat-is-spent-once-and-the-store-already-remembers.md)**, which answers `DEC-153` for the guard and says this ticket stands exactly as written. The read beat is spent once per hand: `layOutReveal` takes the view the store already holds and answers `"step"` for a repeat of the same `handNumber`. Two files, **92 → 95**, two mutations |
 
 **`TASK-141108` comes last, not before `TASK-141105`**, and the ordering was measured rather than
 assumed. It was raised as due *before* the store starts scheduling from `hold`, on the reading that
 a reconnecting player would otherwise sit through the 2,000 ms again — but there is no reachable
 second delivery to sit through (see *Design notes*), so making the store's ticket wait on an
 architect's decision would stall a startable chain for a symptom no path produces. It therefore
-depends on `TASK-141106`, is `blocked` on `DEC-153`, and gates nothing.
+depends on `TASK-141106`, was `blocked` on `DEC-153` until `ADR-0139` merged on 2026-09-07, and
+gates nothing.
 
 **A seventh ticket was considered and refused.** `docs/test-plan.md` gains nothing here: `EPIC-14`'s
 per-epic suite is the `qa-cases` skill's to write from the epic's *Definition of done* — *"one case
@@ -286,8 +296,8 @@ the epic's showdown promise is already written there.
       `ImKate folds` still appears exactly once
 - [ ] A hand-completing view **delivered a second time** — drained and re-applied, or queued behind
       the beat it repeats — lays out `hold: "step"`, while the **next** hand's showdown is still a
-      `"read"`; or `DEC-153` is answered the other way and `TASK-141108` is `dropped` for the
-      reason that ADR gives
+      `"read"` (`ADR-0139` §§2 and 10, which answered `DEC-153` for the guard rather than for the
+      invariant)
 - [ ] Every changed behaviour is proved red by a `verify:` command that reintroduces the old
       behaviour, captures the failure, restores the file and checks the restore with `cmp -s`
 - [ ] `cd web-client && npm run check` exits 0, `./design/check-drift.sh` exits 0, and
