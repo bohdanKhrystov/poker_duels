@@ -18,6 +18,7 @@ import duels.poker.server.room.RematchRefusal
 import duels.poker.server.room.RematchResult
 import duels.poker.server.room.RoomCode
 import duels.poker.server.room.RoomRefusal
+import duels.poker.server.room.RoomState
 import duels.poker.server.session.ConnectionWriter
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
@@ -490,19 +491,45 @@ private suspend fun ConnectionWriter.notInDuel() {
 }
 
 /**
- * Opens a fresh room for [session]'s player and answers with the seat the host always holds.
+ * Finds the room [session]'s player already holds, or opens a fresh one, and answers with the
+ * seat that room seats them in.
  *
- * [Room.open] always seats the host in seat 0 — see [duels.poker.server.room.Room] — so this
- * never needs to ask the freshly created room what seat it assigned.
+ * The press is find-or-create over the player, not the unconditional open it used to be:
+ * [SocketDependencies.rooms]' `heldOrOpen` is asked first, and its answer is taken as-is only when
+ * it names a [RoomState.WAITING] room — that room **is** the answer, `ADR-0124` §§1, 3, whether it
+ * is one the player already held or one `heldOrOpen` just opened because they held nothing. Any
+ * other state — today that can only be [RoomState.PLAYING] — is deliberately **not** handed back:
+ * this branch ignores what `heldOrOpen` found and falls through to
+ * [duels.poker.server.room.RoomRegistry.create], `develop`'s own behaviour, unchanged, opening a
+ * second room. That fall-through is transitional: it belongs to `ADR-0105` §1's own ticket, outside
+ * this epic, which is where a `PLAYING` holder stops getting a second room and starts being resumed
+ * and refused instead (`ADR-0133` §9).
+ *
+ * The seat is derived, never assumed: [duels.poker.server.room.Room.seatOf] is read off the very
+ * room this answer names, wrapped in [checkNotNull] because that room came off a snapshot the
+ * registry has already committed to, so the seat cannot be missing. [Room.open] happens to always
+ * seat a fresh host at `0`, and `ADR-0124` §4 confirms a returned `WAITING` room's host sits there
+ * too — which is why the old constant read as correct while being right for the wrong reason; a
+ * `PLAYING` room's holder need not be the host, and `heldOrOpen` alone cannot tell the two apart.
+ *
+ * [RoomMembership.code] is repointed at the room this answer names, in either branch, before the
+ * frame goes out: `ADR-0104` requires a frame to reach the connection in the room it is about, and
+ * a later [Act] is routed by that record. This is also what disarms `ADR-0118`'s window at the
+ * source it named — a press inside the recovery gap now repoints the membership at the room the
+ * player already holds instead of at a fresh one, so it can no longer orphan a live seat.
  */
 private suspend fun ConnectionWriter.replyToCreateRoom(
     deps: SocketDependencies,
     session: Session,
     room: RoomMembership,
 ) {
-    val created = deps.rooms.create(session.player.id)
-    room.code = created.code
-    send(ProtocolCodec.encode(ServerMessage.RoomJoined(created.code.value, 0)))
+    val held = deps.rooms.heldOrOpen(session.player.id)
+    val target = if (held.state == RoomState.WAITING) held else deps.rooms.create(session.player.id)
+    room.code = target.code
+    val seat = checkNotNull(target.seatOf(session.player.id)) {
+        "the room this answer names came off a snapshot the registry has already committed to"
+    }
+    send(ProtocolCodec.encode(ServerMessage.RoomJoined(target.code.value, seat)))
 }
 
 /**
