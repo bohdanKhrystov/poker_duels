@@ -120,19 +120,28 @@
   .disc { display: block; width: var(--pd-chip-size); height: var(--pd-chip-size);
     border-radius: 50%; background: var(--pd-chip-face); border: 1px solid var(--pd-chip-edge); }
   .disc + .disc { margin-top: calc(var(--pd-chip-size) * -0.55); }
-  /* pd-chip-flight runs once, from an offset of --pd-motion-chip-travel to
-   * transform: none — the frame the pile already has at rest — so the
-   * flight always ends where a still pile sits and nothing is ever animated
-   * out (ADR-0115 §1, §3, §6). */
-  .pile.flying { animation-name: pd-chip-flight; animation-duration: var(--pd-motion-chip-flight);
+  /* pd-chip-flight-down and pd-chip-flight-up each run once, from an offset of
+   * --pd-motion-chip-travel to transform: none — the frame the pile already
+   * has at rest — so a flight always ends where a still pile sits and nothing
+   * is ever animated out (ADR-0115 §1, §3, §6). They differ only in the side
+   * the chips come from: a pile below the middle of the table takes the pot's
+   * chips from above, a pile above it takes them from below. Neither states an
+   * amount — the numeral beside the pile does. */
+  .pile.flying-down { animation-name: pd-chip-flight-down; animation-duration: var(--pd-motion-chip-flight);
     animation-timing-function: var(--pd-motion-chip-ease); animation-fill-mode: both; }
-  @keyframes pd-chip-flight {
+  .pile.flying-up { animation-name: pd-chip-flight-up; animation-duration: var(--pd-motion-chip-flight);
+    animation-timing-function: var(--pd-motion-chip-ease); animation-fill-mode: both; }
+  @keyframes pd-chip-flight-down {
     from { transform: translateY(calc(var(--pd-motion-chip-travel) * -1)); }
+    to { transform: none; }
+  }
+  @keyframes pd-chip-flight-up {
+    from { transform: translateY(var(--pd-motion-chip-travel)); }
     to { transform: none; }
   }
   /* the same pile, its flight switched off exactly as .seat.on-turn.stilled
    * switches off above and as the prefers-reduced-motion block below
-   * switches off every animation product-wide (ADR-0115 §2) */
+   * switches off every animation product-wide (ADR-0115 §2) — in either direction */
   .pile.stilled { animation: none; }
 
   /* this card's own answer to the signal, so the pane verdict covers real
@@ -378,12 +387,21 @@
     </div>
     <div>
       <div class="seat">
+        <span class="who"><span class="name">You</span>
+          <span class="status"></span></span>
+        <span class="chips">14,625</span>
+        <span class="pile flying-down"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+      </div>
+      <span class="l">chips in flight to the seat below the middle — the pot is above it, so they arrive from above; the numeral has already moved</span>
+    </div>
+    <div>
+      <div class="seat">
         <span class="who"><span class="name">ImKate</span>
           <span class="status"></span></span>
         <span class="chips">4,550</span>
-        <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+        <span class="pile flying-up"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
       </div>
-      <span class="l">chips in flight — the numeral has already moved</span>
+      <span class="l">the same flight to the seat above the middle — the pot is below it, so they arrive from below; nothing else about the pile differs</span>
     </div>
     <div>
       <div class="seat">
@@ -392,7 +410,7 @@
         <span class="chips">4,550</span>
         <span class="pile stilled"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
       </div>
-      <span class="l">stilled — the flight is skipped and the chips are where they land</span>
+      <span class="l">stilled — either flight is skipped and the chips are where they land, which is the same frame both of them end on</span>
     </div>
     <div>
       <div class="seat">
@@ -418,9 +436,9 @@
       <div class="pot">
         <span class="amount">Pot&nbsp;3,200</span>
         <span class="meta">Blinds 75/150 · Hand 14</span>
-        <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+        <span class="pile flying-down"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
       </div>
-      <span class="l">the pot receiving</span>
+      <span class="l">the pot receiving — chips reach it from either seat, so it keeps the one flight it has always had</span>
     </div>
   </div>
   <p class="l">Sits between the seats, over the board. The amount is mono tabular; the meta
