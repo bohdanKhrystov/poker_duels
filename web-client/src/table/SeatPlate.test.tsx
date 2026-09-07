@@ -262,6 +262,27 @@ describe("a seat plate", () => {
     expect(largeContainer.querySelectorAll(".chip-disc")).toHaveLength(3);
   });
 
+  it("takes the chips from the side of the table the middle is on", () => {
+    const { container: viewerContainer, unmount } = plate(
+      { stack: 13400 },
+      { isViewer: true },
+    );
+    expect(viewerContainer.querySelectorAll(".chip-flight-down")).toHaveLength(
+      1,
+    );
+    expect(viewerContainer.querySelectorAll(".chip-flight-up")).toHaveLength(0);
+    unmount();
+
+    const { container: rivalContainer } = plate(
+      { stack: 13400 },
+      { isViewer: false },
+    );
+    expect(rivalContainer.querySelectorAll(".chip-flight-up")).toHaveLength(1);
+    expect(rivalContainer.querySelectorAll(".chip-flight-down")).toHaveLength(
+      0,
+    );
+  });
+
   it("draws no pile for a busted seat, and still says nothing", () => {
     const { container, getByText } = plate({ stack: 0 });
     expect(container.querySelectorAll(".chip-pile")).toHaveLength(0);
