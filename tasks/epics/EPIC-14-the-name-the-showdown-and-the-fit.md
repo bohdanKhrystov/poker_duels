@@ -721,6 +721,14 @@ every `verify:` block, so it is recorded rather than gated.
 | B1 the front door | 664 / 664 | 390 / 390 | — (no plate on this screen) |
 | B2 hand 1, first decision, no mark on either plate | 664 / 664 | 390 / 390 | −21 (both tabs, every plate) |
 | B3 the same hand after the first raise | 664 / 664 | 414 / 390 | +24.3 (B's tab, the `Your rival` plate — A's seat, carrying `Raise to 200`, `D`, `Timebank 3:00` and the stack together) |
+| B3 after `TASK-140502` — **predicted, not taken** | *664 / 664* | *390 / 390* | *−14.69* — see the note below |
+
+**The fourth row is a prediction, not a reading.** Every other row in this table was *taken* on the
+date above; that one is what `TASK-140502`'s change is expected to produce, carried from the ticket.
+It was **not measured**: the `eval` verb `scripts/qa/drive.mjs` needs to read `scrollWidth` and
+`clientWidth` is refused by the dispatched agent's own command classifier, so an eight-hour attempt
+reached no number at all. The after-reading is therefore **owed**, and `EPIC-14`'s Definition of done
+still carries it unticked. Nobody should cite −14.69 as observed.
 
 B3 reproduces the defect: `scrollWidth` (414) exceeds `clientWidth` (390) and the worst plate's
 `overhang` is positive. It reproduced on the **non-raiser's** tab (B, watching A's plate as `Your

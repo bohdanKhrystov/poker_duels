@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140502
 title: The seat plate's name block gives ground again
 type: task
-status: backlog
+status: done
 parent: STORY-1405
 module: web-client
 estimate: S
