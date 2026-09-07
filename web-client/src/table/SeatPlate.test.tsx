@@ -160,7 +160,7 @@ describe("a seat plate", () => {
     expect(nullContainer.querySelectorAll(".last-act")).toHaveLength(0);
   });
 
-  it("prints a fold and a check bare", () => {
+  it("prints a fold, a check and a call bare", () => {
     const folded: ActEvent = { type: "PlayerFolded", sequence: 1, seat: 0 };
     const { container, unmount } = plate({}, { lastAct: folded });
     const foldMarks = container.querySelectorAll(".last-act");
@@ -170,19 +170,31 @@ describe("a seat plate", () => {
     unmount();
 
     const checked: ActEvent = { type: "PlayerChecked", sequence: 1, seat: 0 };
-    const { container: checkContainer } = plate({}, { lastAct: checked });
+    const { container: checkContainer, unmount: unmountCheck } = plate(
+      {},
+      { lastAct: checked },
+    );
     const checkMarks = checkContainer.querySelectorAll(".last-act");
     expect(checkMarks).toHaveLength(1);
     expect(checkMarks[0].textContent).toBe("Check");
     expect(checkMarks[0].textContent).not.toMatch(/\d/);
+    unmountCheck();
+
+    for (const to of [400, 925]) {
+      const { container: callContainer, unmount: unmountCall } = plate(
+        {},
+        { lastAct: { type: "PlayerCalled", sequence: 1, seat: 0, to } },
+      );
+      const callMarks = callContainer.querySelectorAll(".last-act");
+      expect(callMarks).toHaveLength(1);
+      expect(callMarks[0].textContent).toBe("Call");
+      expect(callMarks[0].textContent).not.toMatch(/\d/);
+      unmountCall();
+    }
   });
 
-  it("prints the act's own total on a call, a bet, a raise and an all-in", () => {
+  it("prints the act's own total on a bet, a raise and an all-in", () => {
     const cases: Array<[ActEvent, string]> = [
-      [
-        { type: "PlayerCalled", sequence: 1, seat: 0, to: 400 },
-        `Call${NBSP}400`,
-      ],
       [{ type: "PlayerBet", sequence: 1, seat: 0, to: 950 }, `Bet${NBSP}950`],
       [
         { type: "PlayerRaised", sequence: 1, seat: 0, to: 2300 },

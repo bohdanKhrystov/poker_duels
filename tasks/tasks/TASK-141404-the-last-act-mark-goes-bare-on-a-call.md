@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141404
 title: The last-act mark goes bare on a call
 type: task
-status: backlog
+status: done
 parent: STORY-1414
 module: web-client
 estimate: S
