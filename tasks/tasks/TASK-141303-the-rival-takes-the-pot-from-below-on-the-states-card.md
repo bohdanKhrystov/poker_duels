@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141303
 title: The rival takes the pot from below on the states card
 type: task
-status: backlog
+status: done
 parent: STORY-1413
 module: design
 estimate: XS
