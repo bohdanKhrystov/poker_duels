@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140204
 title: The front door stands in the card's column
 type: task
-status: backlog
+status: done
 parent: STORY-1402
 module: web-client
 estimate: XS
