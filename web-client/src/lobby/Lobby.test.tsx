@@ -537,6 +537,44 @@ describe("the lobby", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it("the front door stands in the card's column", () => {
+    renderLobby();
+
+    const heading = screen.getByRole("heading", { level: 1 });
+    const section = heading.closest("section");
+    const classes = section?.className.split(" ") ?? [];
+
+    // Seven separate assertions, deliberately: a section dressed with three
+    // of the seven column utilities would still pass a single combined
+    // string compare, and would leave the wordmark and the primary control
+    // exactly as uncleared as they were on `develop`.
+    for (const utility of [
+      "mx-auto",
+      "flex",
+      "w-full",
+      "max-w-[380px]",
+      "flex-col",
+      "items-center",
+      "gap-4",
+    ]) {
+      expect(classes).toContain(utility);
+    }
+  });
+
+  it("the wordmark and the way into a duel are that column's own children", () => {
+    renderLobby();
+
+    const heading = screen.getByRole("heading", { level: 1 });
+    const create = screen.getByRole("button", { name: "Play duel" });
+    const section = heading.closest("section");
+
+    // A column governs only its own children — this is what would catch a
+    // later refactor that wraps the button in a `<div>` and silently takes
+    // it out of the gap, without touching a single class on the section.
+    expect(heading.parentElement).toBe(section);
+    expect(create.parentElement).toBe(section);
+  });
+
   it("the front door's controls are dressed, not bare", () => {
     renderLobby();
 
