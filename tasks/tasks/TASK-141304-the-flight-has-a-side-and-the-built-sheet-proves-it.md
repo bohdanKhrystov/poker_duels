@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141304
 title: The flight has a side, and the built stylesheet proves it
 type: task
-status: backlog
+status: done
 parent: STORY-1413
 module: web-client
 estimate: S
