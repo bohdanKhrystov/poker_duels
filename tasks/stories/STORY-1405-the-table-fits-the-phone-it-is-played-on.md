@@ -254,6 +254,15 @@ refused** as this story's — it is a card-authoring artifact with no product co
 
 ## Out of scope
 
+- **A returning profile's front door overflows the height axis — `scrollHeight` 696 against
+  `clientHeight` 664 at 390 × 664**, observed on 2026-09-07 while taking `TASK-140501`'s reading and
+  recorded here so it does not die in a transcript. It is **not** one of the three beats that ticket
+  measures, and the canonical B1 recipe — a first-time device — never reaches the state: the overflow
+  needs the name-prompt block, `No name`, `0 Duel coins` and `Set my name` on screen together. It is
+  a **height**-axis finding on the front door, where this story's repair is a **width**-axis fix on
+  the seat plate, so neither repair ticket addresses it and neither should be assumed to. Worth its
+  own ticket against `EPIC-14` item 3d or the front door, measured before it is repaired.
+
 - **A uniform scale of the table.** `ADR-0121` §1 refuses it on `R3` and on `ADR-0103` §3's give
   order, and §1 names the one sentence from the human that would reverse it. No ticket here adds a
   `transform`, a `zoom` or a whole-column font multiplier, and none removes one.

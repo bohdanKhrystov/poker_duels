@@ -689,6 +689,39 @@ byte-unchanged and writes no client code. Each waits only on its own decision.
 - [ ] `docs/test-plan.md` and the QA catalogue carry the cases for every item above, and
       `docs/adr/README.md`'s open table lists none of `DEC-129`–`DEC-139`.
 
+### The 390 × 664 reading
+
+`ADR-0121` §3's two numbers, taken under §2 at the shape §4 fixes. `ADR-0089` §2 keeps this out of
+every `verify:` block, so it is recorded rather than gated.
+
+- **Taken:** 2026-09-07 by TASK-140501, on the running stack, two Chrome profiles at `size 390 664`
+- **Commit:** `72421c7da1bb8456be9b9ff5342584b838b3fdbd`
+- **Runner:** `node scripts/qa/drive.mjs <port> size 390 664` then `… eval '<the expression above>'`,
+  profile `A` on port `9232`, profile `B` on port `9233`, each freshly cleared
+  (`localStorage.clear()`) before B1 so the reading is a first-time device rather than one carrying
+  an earlier session's profile — see the note below the table
+
+| beat | `scrollHeight` / `clientHeight` | `scrollWidth` / `clientWidth` | worst plate overhang |
+| --- | --- | --- | --- |
+| B1 the front door | 664 / 664 | 390 / 390 | — (no plate on this screen) |
+| B2 hand 1, first decision, no mark on either plate | 664 / 664 | 390 / 390 | −21 (both tabs, every plate) |
+| B3 the same hand after the first raise | 664 / 664 | 414 / 390 | +24.3 (B's tab, the `Your rival` plate — A's seat, carrying `Raise to 200`, `D`, `Timebank 3:00` and the stack together) |
+
+B3 reproduces the defect: `scrollWidth` (414) exceeds `clientWidth` (390) and the worst plate's
+`overhang` is positive. It reproduced on the **non-raiser's** tab (B, watching A's plate as `Your
+rival`), not on the raiser's own tab (A's own reading at that beat was 390 / 390, overhang −14.56) —
+the two tabs disagree at this beat and the worse number is recorded, per the instructions above. The
+figure (+24.3) sits just under the planner's predicted band of +25 to +55; the reproduction stands
+but at the narrow edge of it, and is not adjusted to fit.
+
+**The device reading is the human's** (`ADR-0121` §4, `ADR-0088`): no CI job and no agent owns an
+iPhone. It is taken on the phone in the photograph, in Safari, with the URL bar and tab bar fully
+expanded, and it may correct 390 × 664 **downward on either axis** and may never raise it.
+
+| device · browser · beat | judged height | judged width | fits |
+| --- | --- | --- | --- |
+| _to be filled by the human_ | | | |
+
 ## Metrics
 
 Filled in when the epic closes; feeds the Product B case study.
