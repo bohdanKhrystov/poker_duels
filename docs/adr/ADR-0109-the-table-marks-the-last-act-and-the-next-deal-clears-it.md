@@ -1,6 +1,6 @@
 # ADR-0109 — The table marks the last act, and the next deal clears it
 
-- **Status:** Accepted
+- **Status:** Accepted — §2's `Call` figure amended by [`ADR-0122`](ADR-0122-call-names-the-price-and-raise-to-names-the-total.md)
 - **Date:** 2026-09-02
 - **Resolves:** `DEC-117` — what does the table say about **the act just made**, and how long does
   it stand? Raised 2026-09-02 by the human after driving a duel end to end — *"opponent last action

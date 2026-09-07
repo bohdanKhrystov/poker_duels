@@ -2,7 +2,7 @@
 id: STORY-1414
 title: Call says what it costs
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, table, design, bug]
