@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141602
 title: The held-room answer is total, and not the map's order
 type: task
-status: backlog
+status: done
 parent: STORY-1416
 module: poker-server
 estimate: S
