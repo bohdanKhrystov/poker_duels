@@ -273,6 +273,9 @@
     background: var(--pd-surface); border: 1px solid var(--pd-hairline);
     border-radius: var(--pd-radius-medium); }
   .promise { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
+  .autostart { font-size: var(--pd-fs-small); color: var(--pd-text-muted); }
+  /* the hand-over: a press that could not copy leaves the whole link selected */
+  .linkbox.sel { background: var(--pd-accent-subtle); color: var(--pd-text); }
 
   .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
     margin-top: var(--pd-space-4); }
@@ -496,6 +499,7 @@
         <div class="seat seat-empty">
           <span class="who"><span class="name">Waiting for your rival</span></span>
         </div>
+        <p class="autostart">The duel starts by itself the moment your rival arrives, with nothing more needed from you.</p>
 
         <div class="code">7Q4M9K2T</div>
         <p class="ilabel">Invite link</p>
@@ -505,7 +509,7 @@
         </div>
 
         <div class="seat">
-          <span class="who"><span class="name">You</span></span>
+          <span class="who"></span>
         </div>
 
         <div class="actions">
@@ -515,6 +519,7 @@
       </div>
       <p class="note">no chips at all — ADR-0110 §3 states no game fact here</p>
       <p class="note">no clock and no timebank — nobody is on turn before the duel begins</p>
+      <p class="note">ADR-0129: the sentence above is the one place this table says what ends the wait</p>
     </div>
   </div>
 
@@ -525,6 +530,7 @@
         <div class="seat seat-empty">
           <span class="who"><span class="name">Waiting for your rival</span></span>
         </div>
+        <p class="autostart">The duel starts by itself the moment your rival arrives, with nothing more needed from you.</p>
 
         <div class="code">7Q4M9K2T</div>
         <p class="ilabel">Invite link</p>
@@ -535,7 +541,7 @@
         <p class="promise">Link copied.</p>
 
         <div class="seat">
-          <span class="who"><span class="name">You</span></span>
+          <span class="who"></span>
         </div>
 
         <div class="actions">
@@ -547,23 +553,24 @@
   </div>
 
   <div class="frame">
-    <h2>Host alone — the copy was refused</h2>
+    <h2>Host alone — the press could not copy</h2>
     <div class="viewport phone">
       <div class="table">
         <div class="seat seat-empty">
           <span class="who"><span class="name">Waiting for your rival</span></span>
         </div>
+        <p class="autostart">The duel starts by itself the moment your rival arrives, with nothing more needed from you.</p>
 
         <div class="code">7Q4M9K2T</div>
         <p class="ilabel">Invite link</p>
-        <div class="linkbox">…/?room=7Q4M9K2T</div>
+        <div class="linkbox sel">…/?room=7Q4M9K2T</div>
         <div class="actions">
           <button class="btn fill">Copy the link</button>
         </div>
         <p class="promise">Copy it from the box above.</p>
 
         <div class="seat">
-          <span class="who"><span class="name">You</span></span>
+          <span class="who"></span>
         </div>
 
         <div class="actions">
@@ -571,30 +578,7 @@
         </div>
         <p class="promise">The room stays open. That link still works for your rival, and it brings you back.</p>
       </div>
-    </div>
-  </div>
-
-  <div class="frame">
-    <h2>Host alone — no clipboard API</h2>
-    <div class="viewport phone">
-      <div class="table">
-        <div class="seat seat-empty">
-          <span class="who"><span class="name">Waiting for your rival</span></span>
-        </div>
-
-        <div class="code">7Q4M9K2T</div>
-        <p class="ilabel">Invite link</p>
-        <div class="linkbox">…/?room=7Q4M9K2T</div>
-
-        <div class="seat">
-          <span class="who"><span class="name">You</span></span>
-        </div>
-
-        <div class="actions">
-          <button class="btn ghost">Back to the lobby</button>
-        </div>
-        <p class="promise">The room stays open. That link still works for your rival, and it brings you back.</p>
-      </div>
+      <p class="note">reached two ways — the browser exposes no Clipboard API, or the write was refused: ADR-0128 §3 makes them one outcome, and the box takes focus with the whole link selected</p>
     </div>
   </div>
 </div>
