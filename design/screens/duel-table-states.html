@@ -224,7 +224,7 @@
 <div class="wrap">
   <p class="eyebrow">Poker Duels · Screens</p>
   <h1>Table states</h1>
-  <p class="lede">The same table at later moments of the same hand — the turn-card wait (checked through), then the river's two endings: ImKate bets and is called to a showdown, or you bet 800 and she folds. Every slot — the
+  <p class="lede">The same table at later moments of the same hand — the turn-card wait (checked through), then the river's three endings: ImKate bets and is called to a showdown you win or lose, or you bet 800 and she folds. Every slot — the
   opponent's hidden hand, the bet line, the pot row, the bar — exists in every state,
   so nothing appears, disappears, or moves; only text and card faces change.</p>
 
@@ -349,6 +349,73 @@
       the whole statement — no line says a hand was mucked; ADR-0095 §3 struck the second line; the pot row becomes the banner without
       changing shape, one line replacing one line, and the amount is mono like every chip
       number</p>
+    </div>
+
+    <div class="frame">
+      <h2>Showdown — ImKate shows, and the beat stands two seconds</h2>
+      <div class="tbl">
+        <div class="opp">
+          <div class="seat">
+            <span class="who"><span class="name">ImKate</span>
+              <span class="status"></span></span>
+            <span class="last-act">Call</span>
+            <span class="dealer">D</span>
+            <span class="timebank">Timebank&nbsp;3:00</span>
+            <span class="chips">7,800</span>
+            <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+          </div>
+          <div class="oppcards">
+            <span class="pc" style="--w:40px" role="img" aria-label="jack of spades"><span class="ix" aria-hidden="true"><span class="r">J</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+            <span class="pc red" style="--w:40px" role="img" aria-label="jack of diamonds"><span class="ix" aria-hidden="true"><span class="r">J</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
+          </div>
+          <div class="bet-line"></div>
+        </div>
+        <div class="center">
+          <div class="pot">
+            <span class="amount win">Your rival wins 4,850</span>
+            <span class="meta">Blinds 75/150 · Hand 14 · Hand complete</span>
+          </div>
+          <div class="board">
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="seven of diamonds"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♦︎</span></span><span class="pip" aria-hidden="true">♦︎</span></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="two of clubs"><span class="ix" aria-hidden="true"><span class="r">2</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
+            <span class="pc red" style="--w:var(--bw)" role="img" aria-label="jack of hearts"><span class="ix" aria-hidden="true"><span class="r">J</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="pc" style="--w:var(--bw)" role="img" aria-label="seven of clubs"><span class="ix" aria-hidden="true"><span class="r">7</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="hole">
+            <span class="pc red" style="--w:96px" role="img" aria-label="ace of hearts"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♥︎</span></span><span class="pip" aria-hidden="true">♥︎</span></span>
+            <span class="pc" style="--w:96px" role="img" aria-label="king of spades"><span class="ix" aria-hidden="true"><span class="r">K</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
+          </div>
+          <div class="seat">
+            <span class="who"><span class="name">You</span>
+              <span class="status"></span></span>
+            <span class="timebank">Timebank&nbsp;1:12</span>
+            <span class="chips">12,200</span>
+            <span class="pile"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+          </div>
+          <div class="bar off">
+            <div class="sizing">
+              <button class="chip">min</button><button class="chip">⅓</button>
+              <button class="chip">½</button><button class="chip">pot</button>
+              <button class="chip">all-in</button>
+              <span class="stepper"><button aria-label="decrease the bet">−</button><input class="total" aria-label="the total" value="3,250"><button aria-label="increase the bet">+</button></span>
+            </div>
+            <div class="waiting">Dealing hand 15<span class="dots">…</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="note">ADR-0120 §§2–3: these faces are already on the table — they come from
+      the snapshot's SeatView.holeCards, which the engine's projection layer populated for this
+      revealed seat, and nothing new is drawn here; what changed is that the beat now stands
+      2,000 ms, time and not entrance — the hand is already on screen the instant the beat
+      begins, nothing fades in and nothing scales, and the beat ends only when the next hand's
+      frames are applied, a fact arriving rather than a timer taking something away (ADR-0136
+      §6). ADR-0126 §1: no card is picked out — the cards that made ImKate's hand are drawn
+      exactly as the ones that did not, in either seat and on the board, and her hand is drawn
+      at 40px as a plain .pc, matching PlayingCard.tsx's one SHELL constant; the unused
+      .pc.mini rule is deliberately not reached</p>
     </div>
 
     <div class="frame">
