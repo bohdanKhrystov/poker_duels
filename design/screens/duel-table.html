@@ -173,19 +173,28 @@
   .disc { display: block; width: var(--pd-chip-size); height: var(--pd-chip-size);
     border-radius: 50%; background: var(--pd-chip-face); border: 1px solid var(--pd-chip-edge); }
   .disc + .disc { margin-top: calc(var(--pd-chip-size) * -0.55); }
-  /* pd-chip-flight runs once, from an offset of --pd-motion-chip-travel to
-   * transform: none — the frame the pile already has at rest — so the
-   * flight always ends where a still pile sits and nothing is ever animated
-   * out (ADR-0115 §1, §3, §6). */
-  .pile.flying { animation-name: pd-chip-flight; animation-duration: var(--pd-motion-chip-flight);
+  /* pd-chip-flight-down and pd-chip-flight-up each run once, from an offset of
+   * --pd-motion-chip-travel to transform: none — the frame the pile already
+   * has at rest — so a flight always ends where a still pile sits and nothing
+   * is ever animated out (ADR-0115 §1, §3, §6). They differ only in the side
+   * the chips come from: a pile below the middle of the table takes the pot's
+   * chips from above, a pile above it takes them from below. Neither states an
+   * amount — the numeral beside the pile does. */
+  .pile.flying-down { animation-name: pd-chip-flight-down; animation-duration: var(--pd-motion-chip-flight);
     animation-timing-function: var(--pd-motion-chip-ease); animation-fill-mode: both; }
-  @keyframes pd-chip-flight {
+  .pile.flying-up { animation-name: pd-chip-flight-up; animation-duration: var(--pd-motion-chip-flight);
+    animation-timing-function: var(--pd-motion-chip-ease); animation-fill-mode: both; }
+  @keyframes pd-chip-flight-down {
     from { transform: translateY(calc(var(--pd-motion-chip-travel) * -1)); }
+    to { transform: none; }
+  }
+  @keyframes pd-chip-flight-up {
+    from { transform: translateY(var(--pd-motion-chip-travel)); }
     to { transform: none; }
   }
   /* the same pile, its flight switched off exactly as .seat.on-turn.stilled
    * switches off above and as the prefers-reduced-motion block below
-   * switches off every animation product-wide (ADR-0115 §2) */
+   * switches off every animation product-wide (ADR-0115 §2) — in either direction */
   .pile.stilled { animation: none; }
 
   /* playing card — faithful copy of components/playing-card.html;
