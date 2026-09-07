@@ -2,7 +2,7 @@
 id: STORY-1411
 title: The showdown shows the hands it reached, and stands long enough to read
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, table, design, bug]
