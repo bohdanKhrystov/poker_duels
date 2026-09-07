@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bootDuelClient } from "./boot";
+import { bootDuelClient, REVEAL_READ_MS } from "./boot";
 import { FakeSocket } from "../protocol/fake-socket";
 import {
   openConnection,
@@ -8,6 +8,7 @@ import {
   writeRoomCode,
   type ServerMessage,
 } from "../protocol";
+import { aSeat, aView } from "../table/view-fixture";
 
 /**
  * An in-memory `Storage`, deliberately not the global `localStorage`.
@@ -405,5 +406,74 @@ describe("booting the duel client", () => {
     socket.receive('{"type":"RoomJoined","code":"ABCDEFGH","seat":1}');
 
     expect(client.roomAwaited).toBe(false);
+  });
+
+  it("holds a read beat at REVEAL_READ_MS when boot was told nothing", () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(globalThis, "setTimeout");
+    try {
+      const { socket } = bootOverFakeSocket();
+      socket.receive(
+        JSON.stringify({
+          type: "Snapshot",
+          view: aView({
+            street: "COMPLETE",
+            seats: [
+              aSeat({ index: 0, holeCards: [] }),
+              aSeat({ index: 1, holeCards: ["Qs", "Jd"] }),
+            ],
+          }),
+        }),
+      );
+      const calls = spy.mock.calls.filter(
+        (call) => typeof call[1] === "number",
+      );
+      expect(calls).toContainEqual([expect.any(Function), REVEAL_READ_MS]);
+    } finally {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    }
+  });
+
+  it("holds a read beat at the length boot was told", () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(globalThis, "setTimeout");
+    try {
+      const socket = new FakeSocket();
+      const storage = inMemoryStorage();
+      const connect = vi.fn((onMessage: (message: ServerMessage) => void) =>
+        openConnection({
+          socket: socket.asWebSocket(),
+          storage,
+          onMessage,
+        }),
+      );
+      const customReadMillis = 3000;
+      bootDuelClient({
+        connect,
+        joinRoomCode: null,
+        storage,
+        readMillis: customReadMillis,
+      });
+      socket.receive(
+        JSON.stringify({
+          type: "Snapshot",
+          view: aView({
+            street: "COMPLETE",
+            seats: [
+              aSeat({ index: 0, holeCards: [] }),
+              aSeat({ index: 1, holeCards: ["Qs", "Jd"] }),
+            ],
+          }),
+        }),
+      );
+      const calls = spy.mock.calls.filter(
+        (call) => typeof call[1] === "number",
+      );
+      expect(calls).toContainEqual([expect.any(Function), customReadMillis]);
+    } finally {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    }
   });
 });

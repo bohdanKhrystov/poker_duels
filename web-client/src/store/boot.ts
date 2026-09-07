@@ -10,6 +10,13 @@ import { createDuelStore, type DuelStore } from "./duel-store";
 export const REVEAL_STEP_MS = 600;
 
 /**
+ * How long a read beat (the final card reveal) stands before the showdown (`ADR-0120` §3),
+ * named once so nowhere else in the client spells out the number. This is a production seam,
+ * not a test-only door — a real browser shows this beat for two seconds before moving on.
+ */
+export const REVEAL_READ_MS = 2000;
+
+/**
  * How often a live turn clock re-arms (`ADR-0113` §6), named once so nowhere else in the client
  * spells out the number — `ADR-0108` §5's "ticking once per second".
  */
@@ -55,6 +62,12 @@ export interface BootOptions {
    */
   readonly stepMillis?: number;
   /**
+   * How long a read beat stands, in milliseconds, or absent for `REVEAL_READ_MS` — the
+   * production seam `ADR-0120` §3 fixes this at, not a test-only door. Never reached at
+   * `stepMillis: 0`, which silences every beat.
+   */
+  readonly readMillis?: number;
+  /**
    * How often a live turn clock re-arms, in milliseconds, or absent for `CLOCK_TICK_MS` — the
    * production seam `ADR-0113` §6 fixes this at, not a test-only door.
    */
@@ -69,6 +82,7 @@ export interface BootOptions {
 export function bootDuelClient(options: BootOptions): DuelClient {
   const store = createDuelStore({
     stepMillis: options.stepMillis ?? REVEAL_STEP_MS,
+    readMillis: options.readMillis ?? REVEAL_READ_MS,
     tickMillis: options.tickMillis ?? CLOCK_TICK_MS,
     now: () => performance.now(),
     schedule: (run, delayMillis) => {
