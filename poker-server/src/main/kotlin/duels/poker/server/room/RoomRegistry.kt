@@ -111,6 +111,42 @@ public class RoomRegistry(
     public fun get(code: RoomCode): Room? = rooms[code]?.room
 
     /**
+     * The room [player] currently holds a seat in, if any — a seat in a [RoomState.WAITING] or
+     * [RoomState.PLAYING] room and nothing else.
+     *
+     * [RoomState.FINISHED] and [RoomState.ABANDONED] rooms are excluded **by this method, not by
+     * its callers** (`ADR-0133` §1): `ADR-0105` §2 allows a holder of a finished seat a fresh
+     * room, and [Room.offerRematch] needs that seat to stay exactly where it is, so a caller that
+     * forgot to filter would silently break both. The filter lives in the one place a reader will
+     * look for it.
+     *
+     * It returns the whole room, never a boolean and never a bare code — the caller needs the
+     * state to choose its answer, the code to name the room, and the seat to address a frame, and
+     * all three must come off one snapshot rather than three separate reads of a moving registry.
+     *
+     * This is a lock-free scan: it iterates [rooms] and reads each [Holder.room] through the
+     * existing `@Volatile` field, exactly as [get] does. It acquires no mutex — it stays declared
+     * `fun`, not `suspend fun`, which is what makes taking one impossible (`ADR-0133` §§2, 4).
+     *
+     * When more than one room qualifies, the choice is arbitrary **today** and becomes total in a
+     * later ticket. Every test in the ticket that introduces this method arranges exactly one
+     * qualifying room for the player it asks about.
+     *
+     * @param player The player to find.
+     * @return The room [player] holds in [RoomState.WAITING] or [RoomState.PLAYING] state, or
+     *   `null` if no live room holds this player.
+     */
+    public fun heldRoom(player: PlayerId): Room? {
+        for ((_, holder) in rooms) {
+            val room = holder.room
+            if (room.seatOf(player) != null && (room.state == RoomState.WAITING || room.state == RoomState.PLAYING)) {
+                return room
+            }
+        }
+        return null
+    }
+
+    /**
      * Seat [player] into the room at [code], applying [Room.join] under that room's mutex.
      *
      * The lookup, the call to [Room.join] and the write-back of a [JoinResult.Seated] room all
