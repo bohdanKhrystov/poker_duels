@@ -1580,6 +1580,84 @@ describe("the duel state", () => {
     ]);
   });
 
+  it("a hand-ending view delivered a second time is a step, not a second read", () => {
+    const view = samplePlayerView({
+      handNumber: 4,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+      seats: [
+        sampleSeat({ index: 0, holeCards: ["Ah", "Kd"] }),
+        sampleSeat({ index: 1, holeCards: ["2c", "7h"] }),
+      ],
+    });
+    const firstDelivery = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Snapshot", view },
+    );
+    expect(firstDelivery.reveal?.steps.at(-1)?.hold).toBe("read");
+    const drained = duelState.advanceReveal(firstDelivery);
+    expect(drained.reveal).toBeNull();
+    const secondDelivery = duelState.applyServerMessage(drained, {
+      type: "Snapshot",
+      view,
+    });
+    expect(secondDelivery.reveal?.steps.at(-1)?.hold).toBe("step");
+  });
+
+  it("a repeat queued behind the beat it repeats is a step when the queue drains", () => {
+    const view = samplePlayerView({
+      handNumber: 4,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+      seats: [
+        sampleSeat({ index: 0, holeCards: ["Ah", "Kd"] }),
+        sampleSeat({ index: 1, holeCards: ["2c", "7h"] }),
+      ],
+    });
+    const firstDelivery = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Snapshot", view },
+    );
+    expect(firstDelivery.reveal?.steps.at(-1)?.hold).toBe("read");
+    const withRepeatQueued = duelState.applyServerMessage(firstDelivery, {
+      type: "Snapshot",
+      view,
+    });
+    expect(withRepeatQueued.reveal?.queued).toHaveLength(1);
+    const drained = duelState.advanceReveal(withRepeatQueued);
+    expect(drained.reveal?.steps.at(-1)?.hold).toBe("step");
+  });
+
+  it("the next hand's showdown is a read, however recently the last one was", () => {
+    const seats: readonly SeatView[] = [
+      sampleSeat({ index: 0, holeCards: ["Ah", "Kd"] }),
+      sampleSeat({ index: 1, holeCards: ["2c", "7h"] }),
+    ];
+    const firstHand = samplePlayerView({
+      handNumber: 4,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+      seats,
+    });
+    const firstDelivery = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Snapshot", view: firstHand },
+    );
+    expect(firstDelivery.reveal?.steps.at(-1)?.hold).toBe("read");
+    const drained = duelState.advanceReveal(firstDelivery);
+    const nextHand = samplePlayerView({
+      handNumber: 5,
+      street: "COMPLETE",
+      board: { cards: ["4d", "9c", "Jh", "Qs", "Th"] },
+      seats,
+    });
+    const secondDelivery = duelState.applyServerMessage(drained, {
+      type: "Snapshot",
+      view: nextHand,
+    });
+    expect(secondDelivery.reveal?.steps.at(-1)?.hold).toBe("read");
+  });
+
   it("a snapshot that does not end a hand lays out no steps at all", () => {
     const streetDealt: readonly StreetDealt[] = [
       {
