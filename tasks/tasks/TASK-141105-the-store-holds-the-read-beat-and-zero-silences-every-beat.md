@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141105
 title: The store holds the read beat, and zero silences every beat
 type: task
-status: backlog
+status: done
 parent: STORY-1411
 module: web-client
 estimate: S
