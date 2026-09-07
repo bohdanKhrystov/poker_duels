@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140402
 title: The copy control is never absent, and a press that cannot copy hands over the selection
 type: task
-status: backlog
+status: done
 parent: STORY-1404
 module: web-client
 estimate: S
