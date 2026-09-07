@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141103
 title: The card draws the split where both hands are shown
 type: task
-status: backlog
+status: done
 parent: STORY-1411
 module: design
 estimate: S
