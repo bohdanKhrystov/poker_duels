@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140503
 title: The second inert min-width is spelled so it generates, and a gate closes the class
 type: task
-status: backlog
+status: done
 parent: STORY-1405
 module: web-client
 estimate: XS
