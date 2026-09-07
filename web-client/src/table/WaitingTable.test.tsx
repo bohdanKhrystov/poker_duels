@@ -14,14 +14,30 @@ afterEach(() => {
 });
 
 describe("WaitingTable", () => {
-  it("names the empty seat and the host's seat exactly once each", () => {
-    render(<WaitingTable code="7Q4M9K2T" onLeave={vi.fn()} />);
+  it("names the empty seat once and leaves the host's plate standing and bare", () => {
+    const { container } = render(
+      <WaitingTable code="7Q4M9K2T" onLeave={vi.fn()} />,
+    );
 
     const rivalSeats = screen.getAllByText("Waiting for your rival");
-    const hostSeats = screen.getAllByText("You");
-
     expect(rivalSeats).toHaveLength(1);
-    expect(hostSeats).toHaveLength(1);
+
+    expect(screen.queryByText("You")).toBeNull();
+
+    const hostPlates = container.querySelectorAll(
+      "div.border-hairline.bg-surface",
+    );
+    expect(hostPlates).toHaveLength(1);
+    expect(hostPlates[0]?.textContent).toBe("");
+  });
+
+  it("says the duel starts by itself, once", () => {
+    render(<WaitingTable code="7Q4M9K2T" onLeave={vi.fn()} />);
+
+    const sentences = screen.getAllByText(
+      "The duel starts by itself the moment your rival arrives, with nothing more needed from you.",
+    );
+    expect(sentences).toHaveLength(1);
   });
 
   it("draws the invite whole", () => {

@@ -192,7 +192,7 @@ describe("what the table shows when there is no view", () => {
       "Waiting for your rival",
       "ABCDEFGH",
       "Invite link",
-      "You",
+      "The duel starts by itself the moment your rival arrives, with nothing more needed from you.",
       "Back to the lobby",
       "The room stays open. That link still works for your rival, and it brings you back.",
     ];
@@ -221,6 +221,26 @@ describe("what the table shows when there is no view", () => {
       [...BASELINE, "Copy the link", "Copy it from the box above."].sort(),
     );
     expect(spoken(rejected.container)).toEqual([]);
+  });
+
+  it("takes the sentence away with the state it stood on", () => {
+    const { store } = renderNullView("ABCDEFGH");
+
+    expect(
+      screen.getByText(
+        "The duel starts by itself the moment your rival arrives, with nothing more needed from you.",
+      ),
+    ).toBeDefined();
+
+    act(() => {
+      store.apply({ type: "Snapshot", view: aView() });
+    });
+
+    expect(
+      screen.queryByText(
+        "The duel starts by itself the moment your rival arrives, with nothing more needed from you.",
+      ),
+    ).toBeNull();
   });
 
   it("marks no acting seat before the server has named one", () => {

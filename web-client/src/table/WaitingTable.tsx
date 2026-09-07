@@ -2,6 +2,15 @@ import { type ReactElement } from "react";
 import { InvitePanel } from "./InvitePanel";
 
 /**
+ * ADR-0129 §1: the host-alone table says, in one sentence, that the duel begins
+ * by itself when the rival arrives. §4 pins no literal — the glyphs are the card's
+ * (design/screens/duel-table.html, the <p class="autostart"> node), so this is a
+ * transcription and never a re-wording. A verify: gate compares the two.
+ */
+const DUEL_STARTS_BY_ITSELF =
+  "The duel starts by itself the moment your rival arrives, with nothing more needed from you.";
+
+/**
  * The host waits here alone after creating a room and before the rival arrives.
  * The rival's empty seat says "Waiting for your rival", the invite is drawn at the
  * table, and the way back is beside the host's own seat. ADR-0110 §3: no game fact
@@ -22,15 +31,16 @@ export function WaitingTable(props: {
         <span className="block text-text-faint">Waiting for your rival</span>
       </div>
 
-      {/* The invite panel — code, link box, copy button with three states
-          (at rest, copied, refused, no clipboard) — (ADR-0110 §5). */}
+      {/* The invite panel — code, link box, copy button with two states
+          (at rest and after either outcome) — (ADR-0110 §5 as ADR-0128 §§1 and 3 amend it). */}
       <InvitePanel code={props.code} />
 
-      {/* The host's seat — the same plate, solid, carrying the single string
-          "You" and no stack (ADR-0110 §2). */}
-      <div className="flex items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-4">
-        <span className="block font-medium">You</span>
-      </div>
+      {/* ADR-0129 §1: one sentence, once, in this state only. */}
+      <p className="text-small text-text-muted">{DUEL_STARTS_BY_ITSELF}</p>
+
+      {/* The host's seat — the same plate, solid, and bare: ADR-0110 §§2-3 make
+          the shipped name optional, and STORY-1404 takes it off. */}
+      <div className="flex items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-4"></div>
 
       {/* The way back to the lobby (ADR-0073 §§2-3): "Back to the lobby" as an
           anchor link to "/" with today's class list, and beside it the promise
