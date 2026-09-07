@@ -2,7 +2,7 @@
 id: STORY-1405
 title: The table fits the phone it is played on
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, table, bug, manual-verify]
