@@ -385,7 +385,7 @@ export function Lobby(): ReactElement {
   if (standing === "unknown") return <></>;
 
   return (
-    <section className="p-6">
+    <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
       {/* ADR-0098 §1: the coin-and-two-tone lockup, card-drawn only on the
           front door's pre-create branch. `aria-label` pins the accessible
           name to "Poker Duels" — the card's markup has no text node between

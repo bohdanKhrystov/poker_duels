@@ -2,7 +2,7 @@
 id: STORY-1402
 title: The front door stops covering its own wordmark, and the door says Play duel
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, design, lobby, bug]
