@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141604
 title: Pressing play again hands back the room the host holds
 type: task
-status: backlog
+status: done
 parent: STORY-1416
 module: poker-server
 estimate: S
