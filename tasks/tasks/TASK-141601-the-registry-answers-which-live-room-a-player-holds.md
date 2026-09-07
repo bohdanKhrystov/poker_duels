@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141601
 title: The registry answers which live room a player holds
 type: task
-status: ready
+status: done
 parent: STORY-1416
 module: poker-server
 estimate: S
