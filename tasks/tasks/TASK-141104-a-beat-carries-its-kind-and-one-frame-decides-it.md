@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141104
 title: A beat carries its kind, and one frame decides it
 type: task
-status: backlog
+status: done
 parent: STORY-1411
 module: web-client
 estimate: S
