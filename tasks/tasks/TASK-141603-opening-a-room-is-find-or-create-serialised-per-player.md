@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141603
 title: Opening a room is find-or-create, serialised per player
 type: task
-status: backlog
+status: done
 parent: STORY-1416
 module: poker-server
 estimate: S

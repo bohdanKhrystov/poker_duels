@@ -18,6 +18,9 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
+/** The number of [heldOrOpen] player-stripe locks — arbitrary but bounded; see [RoomRegistry.stripeFor]. */
+private const val PLAYER_STRIPE_COUNT = 64
+
 /**
  * A concurrent registry of live rooms, keyed by [RoomCode].
  *
@@ -82,6 +85,11 @@ public class RoomRegistry(
      * minting the same code. A non-null result from `putIfAbsent` means the code collided with a
      * room already live; the mint is retried up to [MAX_CODE_ATTEMPTS] times before giving up.
      *
+     * **Production code reaches it only through [heldOrOpen].** `create` keeps its own contract —
+     * open a fresh room, unconditionally — and stays public and reachable directly for
+     * `RoomRegistryTest`, `RoomRegistryJoinTest` and the fixtures that call it that way; only the
+     * production call site is expected to go through [heldOrOpen]'s lock instead.
+     *
      * @param host The player opening the room.
      * @param format The duel's configuration.
      * @return The newly created, stored room.
@@ -145,6 +153,56 @@ public class RoomRegistry(
             .map { it.room }
             .filter { room -> room.seatOf(player) != null && (room.state == RoomState.WAITING || room.state == RoomState.PLAYING) }
             .minWithOrNull(HELD_ROOM_ORDER)
+    }
+
+    /**
+     * The lock [heldOrOpen] serialises one player's find-or-create against, one per
+     * [PLAYER_STRIPE_COUNT] stripe rather than one per [PlayerId].
+     *
+     * This is a **second, private** array — not [duels.poker.server.DuelSocket]'s `SeatOwnership`
+     * stripes. Sharing that one would serialise room opening against seat adoption, two unrelated
+     * operations, and would couple this class to `DuelSocket`'s internals (`ADR-0133` §3).
+     *
+     * Allocated once and never pruned, for `SeatOwnership`'s own reason, carried here in this
+     * file's words: a map keyed by [PlayerId] grows forever, because `ADR-0012` device ids are
+     * trivially minted, and pruning it races — removing a lock another coroutine is about to
+     * acquire hands out a second lock for the same player, reopening the very race this lock
+     * exists to close.
+     */
+    private val playerStripes = Array(PLAYER_STRIPE_COUNT) { Mutex() }
+
+    /**
+     * The stripe [heldOrOpen] takes for [player]. Two unrelated players sharing a stripe briefly
+     * serialise against each other, which is harmless — see [playerStripes].
+     */
+    private fun stripeFor(player: PlayerId): Mutex = playerStripes[(player.hashCode() and Int.MAX_VALUE) % PLAYER_STRIPE_COUNT]
+
+    /**
+     * The room [host] already holds, or a freshly opened one — find-or-create, serialised so that
+     * two coroutines asking at the same moment for the same player get **one** room, not two.
+     *
+     * The body is exactly `heldRoom(host) ?: create(host, format)`, executed under [host]'s
+     * [stripeFor] stripe. `ADR-0133` §4's deadlock answer rests on three properties, stated here
+     * because this is the one place they have to hold together:
+     * - [heldRoom] acquires nothing — an operation that takes no lock cannot appear in a wait-for
+     *   cycle;
+     * - this method acquires exactly one lock, the player's stripe, across nothing that can wait —
+     *   [heldRoom] and [create] are both non-suspending, and [create] stores with `putIfAbsent`
+     *   and takes no room mutex, so the critical section contains no suspension point;
+     * - **a player stripe is always outermost**: a room's mutex may be taken while a player stripe
+     *   is held, but a player stripe may never be taken while a room's mutex is held. Every
+     *   [mutate] call site keeps that true today because `mutate`'s `absent` and `block`
+     *   parameters are plain function types, not `suspend` ones — nothing executed inside a room's
+     *   critical section can acquire any mutex at all, this stripe included.
+     *
+     * @param host The player opening or resuming a room.
+     * @param format The duel's configuration, used only when a fresh room is opened.
+     * @return The room [host] already held, or the freshly created one.
+     */
+    public suspend fun heldOrOpen(host: PlayerId, format: DuelFormat = DuelFormat.DEFAULT): Room {
+        return stripeFor(host).withLock {
+            heldRoom(host) ?: create(host, format)
+        }
     }
 
     /**
