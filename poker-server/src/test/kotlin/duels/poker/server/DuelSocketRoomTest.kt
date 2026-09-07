@@ -11,7 +11,10 @@ import duels.poker.server.protocol.protocolJson
 import duels.poker.server.room.RandomRoomCodeSource
 import duels.poker.server.room.RoomCode
 import duels.poker.server.room.RoomRegistry
+import duels.poker.server.room.RoomState
 import duels.poker.server.session.testDeps
+import duels.poker.server.time.MutableClock
+import duels.poker.server.time.ServerClock
 import duels.poker.server.time.SystemClock
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -24,9 +27,12 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.io.File
 import java.lang.reflect.Field
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -35,7 +41,8 @@ import kotlin.time.Duration.Companion.seconds
 private val fixedSeeds = HandSeedSource { 7L }
 
 /** A [RoomRegistry] whose opening hand is reproducible — the code itself is still random. */
-private fun testRoomRegistry(): RoomRegistry = RoomRegistry(RandomRoomCodeSource(), SystemClock, seeds = fixedSeeds)
+private fun testRoomRegistry(clock: ServerClock = SystemClock): RoomRegistry =
+    RoomRegistry(RandomRoomCodeSource(), clock, seeds = fixedSeeds)
 
 /** Reads the next frame off [this] session as a decoded [ServerMessage]. */
 private suspend fun DefaultClientWebSocketSession.nextServerMessage(): ServerMessage {
@@ -315,5 +322,115 @@ class DuelSocketRoomTest {
             assertEquals(created.code, response.code)
             assertEquals(0, response.seat)
         }
+    }
+
+    /**
+     * `ADR-0124` §§1, 3: a second `CreateRoom` from the socket that already holds a `WAITING`
+     * room is answered with that room, not a fresh one — one socket, one held room, `rooms.size`
+     * never grows past `1`.
+     */
+    @Test
+    fun aSecondCreateRoomHandsBackTheRoomTheHostAlreadyHolds() = testApplication {
+        val rooms = testRoomRegistry()
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val (host, first) = client.openRoomAsHost("host")
+
+            host.send(Frame.Text(ProtocolCodec.encode(CreateRoom)))
+            val second = host.nextServerMessage() as ServerMessage.RoomJoined
+
+            assertEquals(first.code, second.code)
+            assertEquals(first.seat, second.seat)
+            assertEquals(1, rooms.size)
+        }
+    }
+
+    /**
+     * `ADR-0124` §4: handing a `WAITING` room back is not a re-stamp. The clock advances between
+     * the two presses, so a fresh room minted by the second press would carry a code
+     * [rooms.get] resolves to a room stamped `61_000` — the [MutableClock]'s value at that
+     * press. The reading is taken off the **second** reply's own code, never the first press's
+     * stashed one: a stale room the second press ignored would still read `1_000` no matter how
+     * many fresh rooms a bug opened beside it, so only the code and room the second reply itself
+     * names can tell "handed back" from "opened again". Both presses naming the **same** code is
+     * the first half of that proof — codes are minted fresh and unique per [Room.open], so a
+     * second, distinct room can never carry it — and that same code's room still stamped
+     * `1_000` is the second: a returned room does not restart its own ten minutes.
+     */
+    @Test
+    fun aReturnedRoomKeepsTheStampItWasOpenedWith() = testApplication {
+        val clock = MutableClock(1_000)
+        val rooms = testRoomRegistry(clock)
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val (host, created) = client.openRoomAsHost("host")
+            clock.advance(60_000)
+
+            host.send(Frame.Text(ProtocolCodec.encode(CreateRoom)))
+            val second = host.nextServerMessage() as ServerMessage.RoomJoined
+
+            assertEquals(created.code, second.code)
+            assertEquals(1_000L, rooms.get(RoomCode(second.code))!!.lastActivityAt)
+        }
+    }
+
+    /**
+     * `ADR-0133` §9: the `PLAYING` case must keep falling through to `create` — this story hands
+     * back only a `WAITING` room. A host of a room a guest has already turned `PLAYING` is given a
+     * brand new room by a second `CreateRoom`, the first stays `PLAYING`, and the registry now
+     * holds both.
+     */
+    @Test
+    fun aHolderOfAPlayingRoomStillGetsAFreshRoom() = testApplication {
+        val rooms = testRoomRegistry()
+        application {
+            module()
+            duelSocket(testDeps(rooms = rooms))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val (host, created) = client.openRoomAsHost("host")
+            client.joinRoom("guest", created.code)
+            host.drainServerMessages()
+
+            host.send(Frame.Text(ProtocolCodec.encode(CreateRoom)))
+            val second = host.nextServerMessage() as ServerMessage.RoomJoined
+
+            assertNotEquals(created.code, second.code)
+            assertEquals(2, rooms.size)
+            assertEquals(RoomState.PLAYING, rooms.get(RoomCode(created.code))!!.state)
+        }
+    }
+
+    /**
+     * Structural, on purpose: within this story a returned `WAITING` room and a freshly opened one
+     * carry the same seat, `0`, so no behavioural test can tell a derived seat from the constant it
+     * replaced. This reads `replyToCreateRoom`'s own body and asserts it derives the seat rather
+     * than hard-coding it, and that the shipped `RoomJoined(created.code.value, 0)` line is gone.
+     */
+    @Test
+    fun theCreateRoomAnswerReadsItsSeatOffTheRoom() {
+        val source = File("src/main/kotlin/duels/poker/server/DuelSocket.kt").readText()
+        val marker = "private suspend fun ConnectionWriter.replyToCreateRoom("
+        val start = source.indexOf(marker)
+        assertTrue(start >= 0)
+        val end = source.indexOf("\n}\n", start)
+        assertTrue(end >= 0)
+        val body = source.substring(start, end)
+
+        assertTrue(body.contains("heldOrOpen("))
+        assertTrue(body.contains("seatOf(session.player.id)"))
+        assertFalse(Regex("""RoomJoined\([^)]*,\s*0\s*\)""").containsMatchIn(body))
     }
 }

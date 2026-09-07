@@ -2,7 +2,7 @@
 id: STORY-1416
 title: Play again returns the host to the room they still hold
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: poker-server
 labels: [server, room, bug]
