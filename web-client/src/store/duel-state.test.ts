@@ -1469,10 +1469,14 @@ describe("the duel state", () => {
       view,
     });
     expect(state.reveal?.steps).toEqual([
-      { board: ["As", "7d", "2c"], street: "FLOP" },
-      { board: ["As", "7d", "2c", "Kh"], street: "TURN" },
-      { board: ["As", "7d", "2c", "Kh", "3s"], street: "RIVER" },
-      { board: ["As", "7d", "2c", "Kh", "3s"], street: "COMPLETE" },
+      { board: ["As", "7d", "2c"], street: "FLOP", hold: "step" },
+      { board: ["As", "7d", "2c", "Kh"], street: "TURN", hold: "step" },
+      { board: ["As", "7d", "2c", "Kh", "3s"], street: "RIVER", hold: "step" },
+      {
+        board: ["As", "7d", "2c", "Kh", "3s"],
+        street: "COMPLETE",
+        hold: "step",
+      },
     ]);
   });
 
@@ -1486,7 +1490,93 @@ describe("the duel state", () => {
       view,
     });
     expect(state.reveal?.steps).toEqual([
-      { board: ["As", "7d", "2c", "Kh", "3s"], street: "COMPLETE" },
+      {
+        board: ["As", "7d", "2c", "Kh", "3s"],
+        street: "COMPLETE",
+        hold: "step",
+      },
+    ]);
+  });
+
+  it("the same hand-ending view answers read for one seat and step for the other", () => {
+    const seats: readonly SeatView[] = [
+      sampleSeat({ index: 0, holeCards: [] }),
+      sampleSeat({ index: 1, holeCards: ["2c", "7h"] }),
+    ];
+    const viewForSeat0 = samplePlayerView({
+      viewerSeat: 0,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+      seats,
+    });
+    const viewForSeat1 = samplePlayerView({
+      viewerSeat: 1,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+      seats,
+    });
+    const stateForSeat0 = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Snapshot", view: viewForSeat0 },
+    );
+    const stateForSeat1 = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Snapshot", view: viewForSeat1 },
+    );
+    expect(stateForSeat0.reveal?.steps.at(-1)?.hold).toBe("read");
+    expect(stateForSeat1.reveal?.steps.at(-1)?.hold).toBe("step");
+  });
+
+  it("a fold's ending is a step, because no rival card came with it", () => {
+    const view = samplePlayerView({
+      viewerSeat: 0,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c"] },
+      seats: [
+        sampleSeat({ index: 0, holeCards: ["Ah", "Kd"] }),
+        sampleSeat({ index: 1, hasFolded: true, holeCards: [] }),
+      ],
+    });
+    const state = duelState.applyServerMessage(duelState.initialState(), {
+      type: "Snapshot",
+      view,
+    });
+    expect(state.reveal?.steps.at(-1)?.hold).toBe("step");
+  });
+
+  it("only the last step of a runout to a showdown is a read", () => {
+    const streetDealt: readonly StreetDealt[] = [
+      {
+        type: "StreetDealt",
+        sequence: 10,
+        street: "FLOP",
+        cards: ["As", "7d", "2c"],
+      },
+      { type: "StreetDealt", sequence: 11, street: "TURN", cards: ["Kh"] },
+      { type: "StreetDealt", sequence: 12, street: "RIVER", cards: ["3s"] },
+    ];
+    const stateWithEvents = duelState.applyServerMessage(
+      duelState.initialState(),
+      { type: "Events", events: streetDealt },
+    );
+    const view = samplePlayerView({
+      viewerSeat: 0,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+      seats: [
+        sampleSeat({ index: 0, holeCards: [] }),
+        sampleSeat({ index: 1, holeCards: ["2c", "7h"] }),
+      ],
+    });
+    const state = duelState.applyServerMessage(stateWithEvents, {
+      type: "Snapshot",
+      view,
+    });
+    expect(state.reveal?.steps.map((step) => step.hold)).toEqual([
+      "step",
+      "step",
+      "step",
+      "read",
     ]);
   });
 
