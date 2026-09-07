@@ -147,14 +147,23 @@
   .disc { display: block; width: var(--pd-chip-size); height: var(--pd-chip-size);
     border-radius: 50%; background: var(--pd-chip-face); border: 1px solid var(--pd-chip-edge); }
   .disc + .disc { margin-top: calc(var(--pd-chip-size) * -0.55); }
-  /* pd-chip-flight runs once, from an offset of --pd-motion-chip-travel to
-   * transform: none — the frame the pile already has at rest — so the
-   * flight always ends where a still pile sits and nothing is ever animated
-   * out (ADR-0115 §1, §3, §6). */
-  .pile.flying { animation-name: pd-chip-flight; animation-duration: var(--pd-motion-chip-flight);
+  /* pd-chip-flight-down and pd-chip-flight-up each run once, from an offset of
+   * --pd-motion-chip-travel to transform: none — the frame the pile already
+   * has at rest — so a flight always ends where a still pile sits and nothing
+   * is ever animated out (ADR-0115 §1, §3, §6). They differ only in the side
+   * the chips come from: a pile below the middle of the table takes the pot's
+   * chips from above, a pile above it takes them from below. Neither states an
+   * amount — the numeral beside the pile does. */
+  .pile.flying-down { animation-name: pd-chip-flight-down; animation-duration: var(--pd-motion-chip-flight);
     animation-timing-function: var(--pd-motion-chip-ease); animation-fill-mode: both; }
-  @keyframes pd-chip-flight {
+  .pile.flying-up { animation-name: pd-chip-flight-up; animation-duration: var(--pd-motion-chip-flight);
+    animation-timing-function: var(--pd-motion-chip-ease); animation-fill-mode: both; }
+  @keyframes pd-chip-flight-down {
     from { transform: translateY(calc(var(--pd-motion-chip-travel) * -1)); }
+    to { transform: none; }
+  }
+  @keyframes pd-chip-flight-up {
+    from { transform: translateY(var(--pd-motion-chip-travel)); }
     to { transform: none; }
   }
   /* the same pile, its flight switched off exactly as .seat.on-turn.stilled
@@ -332,7 +341,7 @@
               <span class="status"></span></span>
             <span class="timebank">Timebank&nbsp;1:12</span>
             <span class="chips">12,200</span>
-            <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+            <span class="pile flying-down"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="bar off">
             <div class="sizing">
@@ -362,7 +371,7 @@
             <span class="dealer">D</span>
             <span class="timebank">Timebank&nbsp;3:00</span>
             <span class="chips">7,800</span>
-            <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+            <span class="pile flying-up"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="oppcards">
             <span class="pc" style="--w:40px" role="img" aria-label="jack of spades"><span class="ix" aria-hidden="true"><span class="r">J</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
@@ -415,7 +424,7 @@
       §6). ADR-0126 §1: no card is picked out — the cards that made ImKate's hand are drawn
       exactly as the ones that did not, in either seat and on the board, and her hand is drawn
       at 40px as a plain .pc, matching PlayingCard.tsx's one SHELL constant; the unused
-      .pc.mini rule is deliberately not reached</p>
+      .pc.mini rule is deliberately not reached. The rival's stack flies upward from the pot below her seat; the flight states nothing the banner and the numeral do not already state (ADR-0115 §1).</p>
     </div>
 
     <div class="frame">
@@ -429,7 +438,7 @@
             <span class="dealer">D</span>
             <span class="timebank">Timebank&nbsp;3:00</span>
             <span class="chips">5,375</span>
-            <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+            <span class="pile flying-up"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="oppcards">
             <span class="pc" style="--w:40px" role="img" aria-label="ace of clubs"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♣︎</span></span><span class="pip" aria-hidden="true">♣︎</span></span>
@@ -460,7 +469,7 @@
               <span class="status"></span></span>
             <span class="timebank">Timebank&nbsp;1:12</span>
             <span class="chips">14,625</span>
-            <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+            <span class="pile flying-down"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="bar off">
             <div class="sizing">
@@ -518,7 +527,7 @@
               <span class="status"></span></span>
             <span class="timebank">Timebank&nbsp;1:12</span>
             <span class="chips">13,000</span>
-            <span class="pile flying"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
+            <span class="pile flying-down"><span class="disc"></span><span class="disc"></span><span class="disc"></span></span>
           </div>
           <div class="bar off">
             <div class="sizing">
