@@ -225,7 +225,7 @@
   <p class="eyebrow">Poker Duels · Screens</p>
   <h1>Table states</h1>
   <p class="lede">The same table at later moments of the same hand — the turn-card wait (checked through), then the river's two endings: ImKate bets and is called to a showdown, or you bet 800 and she folds. Every slot — the
-  opponent's hidden hand, the bet/muck line, the pot row, the bar — exists in every state,
+  opponent's hidden hand, the bet line, the pot row, the bar — exists in every state,
   so nothing appears, disappears, or moves; only text and card faces change.</p>
 
   <div class="frames">
@@ -307,12 +307,12 @@
             <span class="back mucked" style="--w:40px" role="img" aria-label="ImKate's mucked hand, not shown"></span>
             <span class="back mucked" style="--w:40px" aria-hidden="true"></span>
           </div>
-          <div class="bet-line">ImKate mucks</div>
+          <div class="bet-line"></div>
         </div>
         <div class="center">
           <div class="pot">
             <span class="amount win">You win 4,850</span>
-            <span class="meta">Two pair, aces and sevens</span>
+            <span class="meta">Blinds 75/150 · Hand 14 · Hand complete</span>
           </div>
           <div class="board">
             <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
@@ -345,9 +345,10 @@
           </div>
         </div>
       </div>
-      <p class="note">ADR-0008: the loser's cards stay down, dimmed, stated in words in the
-      reserved line; the pot row becomes the banner without changing shape — the amount is
-      mono like every chip number</p>
+      <p class="note">ADR-0008: the loser's cards stay down, dimmed, and ADR-0120 §1 says that is
+      the whole statement — no line says a hand was mucked; ADR-0095 §3 struck the second line; the pot row becomes the banner without
+      changing shape, one line replacing one line, and the amount is mono like every chip
+      number</p>
     </div>
 
     <div class="frame">
@@ -372,7 +373,7 @@
         <div class="center">
           <div class="pot">
             <span class="amount win">You win 3,250</span>
-            <span class="meta">Nobody shows — your river bet of 800 goes uncalled and returns</span>
+            <span class="meta">Blinds 75/150 · Hand 14 · Hand complete</span>
           </div>
           <div class="board">
             <span class="pc" style="--w:var(--bw)" role="img" aria-label="ace of spades"><span class="ix" aria-hidden="true"><span class="r">A</span><span class="s">♠︎</span></span><span class="pip" aria-hidden="true">♠︎</span></span>
@@ -407,7 +408,7 @@
       </div>
       <p class="note">ADR-0008: a fold winner shows nothing — the banner carries the amount and
       no hand name, your cards stay yours alone, the folded hand takes the muck's dimmed
-      treatment, and the returned bet leaves the stacks exactly as the wait frame showed
+      treatment, and ADR-0095 §§1–3 struck the second line because the numbers already agree without it; the returned bet leaves the stacks exactly as the wait frame showed
       them: 3,750 + 13,000 + 3,250 = 20,000</p>
     </div>
   </div>
