@@ -95,6 +95,25 @@ function manualClockSchedule(): {
   };
 }
 
+/**
+ * A `Schedule` double for a runout with no manual release: `schedule` records every
+ * `delayMillis` it was given, in order, and runs the callback immediately — the shape §7.4 needs
+ * to assert the recorded sequence of lengths, never a call count.
+ */
+function recordingSchedule(): {
+  readonly schedule: Schedule;
+  readonly delays: readonly number[];
+} {
+  const delays: number[] = [];
+  return {
+    schedule: (run, delayMillis) => {
+      delays.push(delayMillis);
+      run();
+    },
+    delays,
+  };
+}
+
 describe("the duel store", () => {
   it("starts at the reducer's initial state", () => {
     const store = createDuelStore();
@@ -171,6 +190,124 @@ describe("the duel store", () => {
       "Kh",
       "3s",
     ]);
+    expect(schedule).not.toHaveBeenCalled();
+  });
+
+  it("waits a step for every beat but the last, and the read for its own length", () => {
+    const { schedule, delays } = recordingSchedule();
+    const store = createDuelStore({
+      stepMillis: 600,
+      readMillis: 2000,
+      schedule,
+    });
+
+    store.apply({
+      type: "Events",
+      events: [
+        {
+          type: "StreetDealt",
+          sequence: 1,
+          street: "FLOP",
+          cards: ["As", "7d", "2c"],
+        },
+        { type: "StreetDealt", sequence: 2, street: "TURN", cards: ["Kh"] },
+        { type: "StreetDealt", sequence: 3, street: "RIVER", cards: ["3s"] },
+      ],
+    });
+    store.apply({
+      type: "Snapshot",
+      view: samplePlayerView({
+        street: "COMPLETE",
+        board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+        seats: [
+          sampleSeat({ index: 0, holeCards: [] }),
+          sampleSeat({ index: 1, holeCards: ["Qs", "Jd"] }),
+        ],
+      }),
+    });
+
+    // The sequence, in order, not a count (ADR-0136 §7.4): three street steps at stepMillis,
+    // and the last — the beat that turned the rival's hand face up — at readMillis.
+    expect(delays).toEqual([600, 600, 600, 2000]);
+  });
+
+  it("waits one step for an ending that turned nothing face up", () => {
+    const { schedule, delays } = recordingSchedule();
+    const store = createDuelStore({
+      stepMillis: 600,
+      readMillis: 2000,
+      schedule,
+    });
+
+    store.apply({
+      type: "Snapshot",
+      view: samplePlayerView({
+        street: "COMPLETE",
+        board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+        seats: [
+          // The hero's own cards are populated, so this cannot pass on a frame that carried no
+          // cards at all — only the rival's empty holeCards keep this a "step".
+          sampleSeat({ index: 0, holeCards: ["Ah", "Kd"] }),
+          sampleSeat({ index: 1, hasFolded: true, holeCards: [] }),
+        ],
+      }),
+    });
+
+    expect(delays).toEqual([600]);
+  });
+
+  it("schedules nothing at a step of zero, even where a read beat stands", () => {
+    const schedule = vi.fn();
+    // readMillis explicitly non-zero, so this cannot pass for the wrong reason: only the
+    // stepMillis gate, not an incidentally-zero readMillis, is what silences the read beat.
+    const store = createDuelStore({
+      stepMillis: 0,
+      readMillis: 2000,
+      schedule,
+    });
+
+    store.apply({
+      type: "Events",
+      events: [
+        { type: "StreetDealt", sequence: 1, street: "RIVER", cards: ["3s"] },
+      ],
+    });
+    store.apply({
+      type: "Snapshot",
+      view: samplePlayerView({
+        handNumber: 1,
+        street: "COMPLETE",
+        board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+        seats: [
+          sampleSeat({ index: 0, holeCards: ["Ah", "Kd"] }),
+          sampleSeat({ index: 1, holeCards: ["Qs", "Jd"] }),
+        ],
+      }),
+    });
+
+    // The queued next hand's Snapshot drains in the same turn — no clock tick competes for the
+    // spy, because tickMillis defaults to 0.
+    store.apply({
+      type: "Events",
+      events: [
+        {
+          type: "HandStarted",
+          sequence: 90,
+          handNumber: 2,
+          buttonSeat: 1,
+          smallBlind: 25,
+          bigBlind: 50,
+          stacks: [1500, 1500],
+        },
+      ],
+    });
+    store.apply({
+      type: "Snapshot",
+      view: samplePlayerView({ handNumber: 2, street: "PREFLOP" }),
+    });
+
+    expect(store.getState().reveal).toBeNull();
+    expect(store.getState().view?.handNumber).toBe(2);
     expect(schedule).not.toHaveBeenCalled();
   });
 

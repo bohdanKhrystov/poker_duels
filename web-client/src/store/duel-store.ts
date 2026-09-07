@@ -29,6 +29,11 @@ export interface DuelStoreOptions {
   readonly stepMillis?: number;
   /** Absent only where `stepMillis` is also absent, so this is never reached at `0`. */
   readonly schedule?: Schedule;
+  /** How long the beat that turned a hand face up the viewer had not seen stands, once it is the
+   * one now standing (`ADR-0136` §2). Absent means `stepMillis`, so a beat is a step unless a
+   * caller has asked for a longer read — a production seam beside `stepMillis`, in the same terms
+   * (`ADR-0102` §4), and never reached at `stepMillis === 0` (`ADR-0136` §3). */
+  readonly readMillis?: number;
   /**
    * The monotonic reading the store anchors and ticks a turn clock against (`ADR-0113` §6).
    * Absent defaults to `performance.now()` itself, so the dozens of merged `createDuelStore()`
@@ -46,6 +51,7 @@ export interface DuelStoreOptions {
 /** A fresh store at the reducer's initial state, with nobody listening yet. */
 export function createDuelStore(options: DuelStoreOptions = {}): DuelStore {
   const stepMillis = options.stepMillis ?? 0;
+  const readMillis = options.readMillis ?? stepMillis;
   const schedule = options.schedule ?? ((run) => run());
   const now = options.now ?? (() => performance.now());
   const tickMillis = options.tickMillis ?? 0;
@@ -77,7 +83,12 @@ export function createDuelStore(options: DuelStoreOptions = {}): DuelStore {
       tick();
       return;
     }
-    schedule(tick, stepMillis);
+    // The beat now standing is the head of the queue at the instant the tick is armed, so
+    // nothing here remembers which step it is on and nothing is re-derived per tick.
+    schedule(
+      tick,
+      state.reveal?.steps[0].hold === "read" ? readMillis : stepMillis,
+    );
   };
 
   // ADR-0113 §6, ADR-0102 §4's idiom applied to a server-stated deadline: one tick, re-armed
