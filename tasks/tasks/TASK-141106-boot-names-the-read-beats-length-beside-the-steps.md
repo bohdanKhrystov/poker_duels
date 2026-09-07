@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141106
 title: Boot names the read beat's length beside the step's
 type: task
-status: backlog
+status: done
 parent: STORY-1411
 module: web-client
 estimate: XS
