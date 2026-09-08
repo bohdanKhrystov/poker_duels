@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140904
 title: The name write's budget has two numbers
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: poker-server
 estimate: XS
