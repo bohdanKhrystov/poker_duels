@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140705
 title: The third list takes its offices, and the arity reaches a million
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
