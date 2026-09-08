@@ -2841,4 +2841,142 @@ describe("the lobby", () => {
     expect(screen.getByText("0")).toBeDefined();
     expect(screen.queryByText(/The server (folded|checked)/)).toBeNull();
   });
+
+  // ADR-0119 §1: the ask is not shown to a player who already holds a
+  // display name. The condition in the predicate gates the render itself.
+  it("never stands for a player who already holds a name", () => {
+    const { send } = renderLobbyForTheAsk({
+      profile: {
+        kind: "profile",
+        profile: aProfile({ displayName: "Ravenpost" }),
+        duels: [],
+      },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+
+    expect(
+      screen.queryByRole("region", { name: "choose your name" }),
+    ).toBeNull();
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
+  });
+
+  // ADR-0119 §1: the ask is not shown to a player whose name was removed.
+  // ADR-0052 §1 keeps that conversation on the name surface and nowhere else.
+  // The predicate returns false when displayNameRemoved is true.
+  it("never stands for a player whose name was removed", () => {
+    const { send } = renderLobbyForTheAsk({
+      profile: {
+        kind: "profile",
+        profile: aProfile({ displayNameRemoved: true }),
+        duels: [],
+      },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+
+    expect(
+      screen.queryByRole("region", { name: "choose your name" }),
+    ).toBeNull();
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
+  });
+
+  // ADR-0119 §5: skipping spends the ask in this browser — a second press
+  // by the same player never holds at the ask again. The predicate returns
+  // false when skipped is true.
+  it("never stands in a browser that already skipped", () => {
+    nameAskWiring.skipped = true;
+    const { send } = renderLobbyForTheAsk();
+
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+
+    expect(
+      screen.queryByRole("region", { name: "choose your name" }),
+    ).toBeNull();
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
+
+    // Restore for the next test
+    nameAskWiring.skipped = false;
+  });
+
+  // ADR-0119 §1: the ask is not shown before the profile read has landed.
+  // If the read never settles, the profile stays null and the predicate
+  // returns false.
+  it("never stands before the profile read has landed", () => {
+    const setName = vi.fn(
+      (): Promise<SetNameOutcome> => new Promise<SetNameOutcome>(() => {}),
+    );
+    const read = (): Promise<ProfileStripState> =>
+      new Promise<ProfileStripState>(() => {});
+    const send = vi.fn();
+
+    render(
+      <ProfileProvider read={read}>
+        <SetNameProvider setName={setName}>
+          <DuelProvider store={createDuelStore()} send={send}>
+            <Lobby />
+          </DuelProvider>
+        </SetNameProvider>
+      </ProfileProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+
+    expect(
+      screen.queryByRole("region", { name: "choose your name" }),
+    ).toBeNull();
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
+  });
+
+  // TASK-140716: a frame that seats this player takes the screen from a
+  // standing ask. The ask branch sits below the room branch in the render
+  // tree, so when a RoomJoined frame arrives, the waiting table replaces
+  // the ask in the same commit.
+  it("a frame that seats the player takes the screen from a standing ask", async () => {
+    const store = createDuelStore();
+    const setName = vi.fn(
+      (): Promise<SetNameOutcome> => new Promise<SetNameOutcome>(() => {}),
+    );
+    const state: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ displayName: null }),
+      duels: [],
+    };
+    const read = (): Promise<ProfileStripState> => Promise.resolve(state);
+    const send = vi.fn();
+
+    render(
+      <ProfileProvider read={read}>
+        <SetNameProvider setName={setName}>
+          <DuelProvider store={store} send={send}>
+            <Lobby />
+          </DuelProvider>
+        </SetNameProvider>
+      </ProfileProvider>,
+    );
+
+    // Wait for the "Play duel" button to be ready, then press it to trigger
+    // the ask
+    await screen.findByRole("button", { name: "Play duel" });
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+
+    // The ask should be visible now
+    await screen.findByRole("region", { name: "choose your name" });
+    expect(screen.queryByRole("button", { name: "Play duel" })).toBeNull();
+
+    // A frame arrives that seats the player
+    act(() => {
+      store.apply(ROOM_JOINED);
+    });
+
+    // The waiting table replaces the ask
+    await screen.findByText("Waiting for your rival");
+    expect(
+      screen.queryByRole("region", { name: "choose your name" }),
+    ).toBeNull();
+  });
 });
