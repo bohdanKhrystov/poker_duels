@@ -65,7 +65,10 @@ import kotlinx.coroutines.CancellationException
  * cost what the wrong-password case costs; a pre-check here would defeat it, silently. Only on a
  * verified credential is [signInBudget] refunded, before [AuthSessions.issue] is reached — a wrong
  * password never returns its reservation, or the budget would meter nothing at all (`ADR-0074`
- * §2). This endpoint writes to `auth_session` alone — no `player` row is created or read. Like
+ * §2). A call to [Credentials.verify] that throws instead of answering is refunded and rethrown
+ * unchanged, because a database fault is not a wrong password and must not leave a reservation
+ * behind for the rest of the window (`TASK-140919`); a plain wrong-password answer still keeps its
+ * reservation exactly as before. This endpoint writes to `auth_session` alone — no `player` row is created or read. Like
  * sign-up, it resolves no identity: no `X-Device-Id` header and no `Authorization` header are
  * read, so a browser that has never connected can still recover an account (`ADR-0030` §2).
  *
@@ -181,7 +184,17 @@ public fun Application.authRoutes(
                 return@post
             }
             val secret = PresentedSecret(request.password)
-            val playerId = credentials.verify(CredentialKind.PASSWORD, handle, secret)
+            // A verify() that throws instead of answering failed for a reason that is not this
+            // caller's — a database fault, not a wrong password — so the reservation above must
+            // still come back before the exception propagates unchanged. This must not touch the
+            // "wrong password keeps its reservation" rule below: only a thrown fault refunds here,
+            // never a plain null.
+            val playerId = try {
+                credentials.verify(CredentialKind.PASSWORD, handle, secret)
+            } catch (fault: Exception) {
+                signInBudget.refund(remoteAddress)
+                throw fault
+            }
             if (playerId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@post

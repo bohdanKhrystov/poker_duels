@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140919
 title: A thrown write does not keep its reservation
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: poker-server
 estimate: S

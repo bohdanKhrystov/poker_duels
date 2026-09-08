@@ -77,7 +77,9 @@ private const val BEARER_PREFIX: String = "Bearer "
  * (`ADR-0134` §5) — and, because the budget meters the string that was **spent** rather than the
  * attempt that was made, [budget] is refunded on every result that is not `NameSet`, so a `409`
  * costs the namespace nothing and a player hunting for an available name is never throttled for
- * it (`ADR-0134` §6).
+ * it (`ADR-0134` §6). A write that throws instead of returning is refunded too — the exception is
+ * rethrown once the reservation is returned, never swallowed — because a database fault is not a
+ * spend either, and TASK-140919 exists precisely so it never looks like one.
  *
  * These routes hold a `ProfileReads`, a `ProfileWrites`, an [IdentityResolver] and an
  * [AttemptBudget] — never a `PlayerDirectory` or a `DataSource` directly; resolving a credential
@@ -136,7 +138,17 @@ public fun Application.profileRoutes(
                 call.respond(HttpStatusCode.TooManyRequests)
                 return@put
             }
-            val result = writes.setDisplayName(PlayerId(profile.playerId), canonicalName)
+            // A write that throws instead of returning a SetNameResult failed for a reason that
+            // is not the player's — a database fault, not a taken name — so the reservation
+            // admit() made must still come back before the exception propagates, or a blip
+            // quietly tightens the limit on exactly the player ADR-0134 §6 protects. The
+            // exception itself is never swallowed: it is rethrown unchanged once refunded.
+            val result = try {
+                writes.setDisplayName(PlayerId(profile.playerId), canonicalName)
+            } catch (fault: Exception) {
+                budget.refund(profile.playerId)
+                throw fault
+            }
             // The budget meters spending, not trying: refund whatever result did not spend a
             // string, written as "not NameSet" rather than as a NameTaken branch so that a third
             // result added later refunds by default instead of silently burning a reservation
