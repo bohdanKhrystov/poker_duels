@@ -79,6 +79,26 @@ class NameRegistryMonotonicityTest {
         assertEquals(before?.retiredFrom, after?.retiredFrom)
     }
 
+    /**
+     * `name_registry_is_monotone`'s UPDATE branch checks only `name` and `reason`; it never
+     * references `created_at` or `retired_from`. This test asserts what *this* statement, which
+     * never mentions those columns, happens to leave alone, not a guarantee the trigger enforces.
+     * An UPDATE that also set `created_at` would succeed unchecked.
+     */
+    @Test
+    fun takenBecomesReplacedAndTheNameAndCreatedAtAreUntouched() {
+        insertName("Ann", "TAKEN")
+        val before = readRow("Ann")
+
+        promoteToReplaced("Ann")
+
+        val after = readRow("Ann")
+        assertEquals("REPLACED", after?.reason)
+        assertEquals(before?.name, after?.name)
+        assertEquals(before?.createdAt, after?.createdAt)
+        assertEquals(before?.retiredFrom, after?.retiredFrom)
+    }
+
     @Test
     fun retiredCannotGoBackToTaken() {
         insertName("Ann", "TAKEN")
@@ -124,6 +144,13 @@ class NameRegistryMonotonicityTest {
      * `retire_display_name`'s concern (`TASK-041012`).
      */
     private fun promoteToRetired(name: String) = updateReason(name, "RETIRED")
+
+    /**
+     * The second permitted terminal transition (`ADR-0134` §3): `TAKEN -> REPLACED` mirrors
+     * `promoteToRetired` above, so a monotonicity check that only widened the `CHECK` and not this
+     * trigger's `UPDATE` guard is caught here rather than passing on the `RETIRED` case alone.
+     */
+    private fun promoteToReplaced(name: String) = updateReason(name, "REPLACED")
 
     private fun insertName(name: String, reason: String) {
         dataSource.connection.use { connection ->

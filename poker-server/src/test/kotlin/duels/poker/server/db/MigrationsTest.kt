@@ -99,12 +99,12 @@ class MigrationsTest {
             connection.prepareStatement(
                 """
                 SELECT trigger_name FROM information_schema.triggers
-                WHERE trigger_name = 'player_display_name_permanent'
+                WHERE trigger_name = 'player_display_name_never_released'
                 """.trimIndent(),
             ).use { statement ->
                 statement.executeQuery().use { resultSet ->
-                    assertEquals(true, resultSet.next(), "player_display_name_permanent trigger should exist")
-                    assertEquals("player_display_name_permanent", resultSet.getString("trigger_name"))
+                    assertEquals(true, resultSet.next(), "player_display_name_never_released trigger should exist")
+                    assertEquals("player_display_name_never_released", resultSet.getString("trigger_name"))
                 }
             }
         }
@@ -240,8 +240,9 @@ class MigrationsTest {
                         .toList()
                         .sorted()
 
-                    // player_display_name_is_permanent is deliberately absent: it already exists
-                    // from V3, so its presence would prove nothing about this migration.
+                    // V3's permanence trigger function is deliberately absent from the IN list:
+                    // it already existed before V5 ran, so its presence would prove nothing about
+                    // what this migration added.
                     val expected = listOf(
                         "function:name_registry_is_monotone",
                         "function:retire_display_name",
@@ -332,6 +333,41 @@ class MigrationsTest {
                 statement.executeQuery().use { resultSet ->
                     resultSet.next()
                     assertEquals(playerCountBeforeV7, resultSet.getInt(1), "player count should be unchanged by V7")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun theNinthMigrationRenamesTheTriggerAndWidensTheRegistry() {
+        val dataSource = PostgresTestSupport.freshDatabase()
+
+        Migrations.migrate(dataSource)
+
+        dataSource.connection.use { connection ->
+            // V3's permanence function is gone and only the never-released function stands in its
+            // place: matching the whole player_display_name_is_* family, rather than probing for
+            // the new name alone, is what catches a CREATE OR REPLACE shortcut that renamed the
+            // trigger but left the old, false-named function behind.
+            connection.prepareStatement(
+                """
+                SELECT proname FROM pg_proc WHERE proname LIKE 'player\_display\_name\_is\_%' ESCAPE '\'
+                """.trimIndent(),
+            ).use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    val functions = generateSequence { if (resultSet.next()) resultSet.getString(1) else null }
+                        .toList()
+                        .sorted()
+                    assertEquals(listOf("player_display_name_is_never_released"), functions)
+                }
+            }
+
+            connection.prepareStatement(
+                "SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint WHERE conname = 'name_registry_reason'",
+            ).use { statement ->
+                statement.executeQuery().use { resultSet ->
+                    assertEquals(true, resultSet.next(), "name_registry_reason constraint should exist")
+                    assertTrue(resultSet.getString("def").contains("'REPLACED'"))
                 }
             }
         }

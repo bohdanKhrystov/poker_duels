@@ -136,23 +136,35 @@ class DisplayNamePermanenceTest {
         assertEquals("bob", readDisplayName(playerId))
     }
 
-    // The permitted transition is name -> NULL when the old name is RETIRED, not "the old name is
-    // RETIRED": an exception written the weaker way would let this write through, handing a
-    // retired profile a name it never chose -- the one thing ADR-0038 forbids. Registering
-    // "robert" first means a buggy trigger that allowed the write would be caught by this
-    // assertion, not incidentally saved by an unrelated constraint.
+    // ADR-0134 §1: the guard governs the string being *left*, not the one arriving. A name -> a
+    // different name now succeeds once the old string is already spent, so a player whose held
+    // name is RETIRED may have the column moved to another registered name. Registering "robert"
+    // first means a trigger that still refused this write would be caught here, not incidentally
+    // masked by name_registry_folded refusing an unregistered string.
     @Test
-    fun aRetiredNameStillCannotBecomeADifferentName() {
+    fun aSpentNameMayBecomeADifferentName() {
         val playerId = insertPlayerWithName("bob")
         retireRegistryRow("bob", playerId)
         registerName("robert")
 
-        val exception = assertFailsWith<SQLException> {
-            forceWriteName(playerId, "robert")
-        }
+        forceWriteName(playerId, "robert")
 
-        assertEquals("23001", exception.sqlState)
-        assertEquals("bob", readDisplayName(playerId))
+        assertEquals("robert", readDisplayName(playerId))
+    }
+
+    // The second member of the guard's IN list: a name a player replaced by renaming themselves
+    // spends the old string exactly as an operator's retirement does, so it too may be left behind.
+    // Using REPLACED here and RETIRED above means a body that named only one of the two values
+    // reddens exactly one of these tests.
+    @Test
+    fun aReplacedNameMayBeLeftBehind() {
+        val playerId = insertPlayerWithName("bob")
+        replaceRegistryRow("bob", playerId)
+        registerName("robert")
+
+        forceWriteName(playerId, "robert")
+
+        assertEquals("robert", readDisplayName(playerId))
     }
 
     private fun insertPlayerWithName(displayName: String): UUID {
@@ -252,6 +264,23 @@ class DisplayNamePermanenceTest {
         dataSource.connection.use { connection ->
             connection.prepareStatement(
                 "UPDATE name_registry SET reason = 'RETIRED', retired_from = ? WHERE name = ?",
+            ).use { statement ->
+                statement.setObject(1, retiredFrom)
+                statement.setString(2, displayName)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    /**
+     * Promotes a registry row to REPLACED by the permitted transition, run directly rather than
+     * through PostgresProfileWrites (TASK-140902): the trigger has to be shown to allow this on
+     * its own.
+     */
+    private fun replaceRegistryRow(displayName: String, retiredFrom: UUID) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "UPDATE name_registry SET reason = 'REPLACED', retired_from = ? WHERE name = ?",
             ).use { statement ->
                 statement.setObject(1, retiredFrom)
                 statement.setString(2, displayName)
