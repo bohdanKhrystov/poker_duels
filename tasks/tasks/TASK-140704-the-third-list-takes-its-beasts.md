@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140704
 title: The third list takes its beasts
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
