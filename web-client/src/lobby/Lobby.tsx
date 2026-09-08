@@ -10,13 +10,7 @@ import { useScreen } from "../routing/use-screen";
 import { tokenFromHash } from "../routing/screen";
 import { roomStanding, rulingOn } from "../routing/room-standing";
 import { useProfileStrip } from "../profile/profile-provider";
-import {
-  useHistory,
-  useLadder,
-  useSignedIn,
-  offerSettledHere,
-  settleOfferHere,
-} from "../main";
+import { useHistory, useLadder, useSignedIn } from "../main";
 import { ProfileStrip } from "../profile/ProfileStrip";
 import { NameSurface } from "../profile/NameSurface";
 import { useSetName } from "../profile/set-name-provider";
@@ -24,9 +18,6 @@ import { ActionBar } from "../table/ActionBar";
 import { CoinMark } from "../result/CoinMark";
 import { DuelResult } from "../result/DuelResult";
 import { RematchControl } from "../result/RematchControl";
-import { AccountOffer } from "../result/AccountOffer";
-import { offerAccount } from "../result/account-offer";
-import { verdictOf } from "../result/outcome-text";
 import { DuelTable } from "../table/DuelTable";
 import { HistoryScreen } from "../history/HistoryScreen";
 import { HISTORY_HEADING } from "../history/history-text";
@@ -57,9 +48,6 @@ export function Lobby(): ReactElement {
   const signedIn = useSignedIn();
   const account = useAccount();
   const roomAwaited = useRoomAwaited();
-  // The initialiser, not a call: this runs once per mount, so a dismissal
-  // (below) takes the offer off screen without waiting for a reload.
-  const [offerSettled, setOfferSettled] = useState(offerSettledHere);
   const [typedCode, setTypedCode] = useState("");
   const { screen, open, leave, clearToken } = useScreen();
   // A lazy initialiser, so this runs once per mount rather than on every
@@ -265,26 +253,6 @@ export function Lobby(): ReactElement {
               refusal={state.refusal}
               onOffer={() => send({ type: "OfferRematch" })}
             />
-          }
-          offer={
-            offerAccount({
-              verdict: verdictOf(state.outcome, state.mySeat),
-              signedIn,
-              settled: offerSettled,
-            }) ? (
-              // The two handlers deliberately differ (`ADR-0086` §6). Taking the
-              // offer settles it and stops there: the anchor still loads the
-              // account screen, and that page load is what replaces this tree.
-              // Dismissing settles it *and* hides it, because nothing else
-              // will — there is no page load coming to do it instead.
-              <AccountOffer
-                onAccept={settleOfferHere}
-                onDismiss={() => {
-                  settleOfferHere();
-                  setOfferSettled(true);
-                }}
-              />
-            ) : undefined
           }
           onLeave={forgetRoom}
         />

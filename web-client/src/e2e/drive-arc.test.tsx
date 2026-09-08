@@ -3,7 +3,6 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PROTOCOL_VERSION } from "../protocol";
 import type { ServerMessage } from "../protocol";
 import { readDeviceId } from "../protocol/device-id";
-import { OFFER_ACCEPT, OFFER_DISMISS } from "../result/account-offer-text";
 import {
   accountServer,
   type ServerPlayer,
@@ -93,9 +92,8 @@ function winFrames(): readonly string[] {
 /**
  * One full boot that has already won a duel: `bootClient` over `storage` and
  * `server`, then `winFrames()` delivered through the same socket exactly as
- * `bootClient` itself replays `welcomeFrame`. The offer's three terms — the
- * store's outcome, the session token and the key — never wait on a request,
- * so nothing here is `async` and no caller needs to `await` it.
+ * `bootClient` itself replays `welcomeFrame`. Delivering a frame never waits
+ * on a request, so nothing here is `async` and no caller needs to `await` it.
  */
 function bootAndWin(storage: Storage, server: AccountServer): HTMLElement {
   const { container, socket } = bootClient({
@@ -219,56 +217,17 @@ it("two storages reach two different profiles", async () => {
   expect(balanceA).not.toEqual(balanceB);
 });
 
-it("offers the account after a win, and never again once this browser has answered", () => {
+it("a win shows the verdict with no account offer beside it", () => {
   const storage = inMemoryStorage();
   const server = accountServer([ALICE]);
 
-  const first = bootAndWin(storage, server);
-  within(first).getByRole("region", { name: "the offer" });
+  const container = bootAndWin(storage, server);
 
-  act(() => {
-    fireEvent.click(within(first).getByRole("button", { name: OFFER_DISMISS }));
-  });
-  expect(within(first).queryByRole("region", { name: "the offer" })).toBeNull();
-
-  cleanup();
-
-  const second = bootAndWin(storage, server);
-  within(second).getByRole("region", { name: "the result" });
+  // Two assertions, not one: the result's presence is what makes the
+  // offer's absence a withheld offer rather than an empty screen.
+  within(container).getByRole("region", { name: "the result" });
   expect(
-    within(second).queryByRole("region", { name: "the offer" }),
-  ).toBeNull();
-});
-
-it("offers it again to a browser that was shown it and answered nothing", () => {
-  const storage = inMemoryStorage();
-  const server = accountServer([ALICE]);
-
-  const first = bootAndWin(storage, server);
-  within(first).getByRole("region", { name: "the offer" });
-
-  cleanup();
-
-  const second = bootAndWin(storage, server);
-  within(second).getByRole("region", { name: "the offer" });
-});
-
-it("spends the offer on the way to the account screen too", () => {
-  const storage = inMemoryStorage();
-  const server = accountServer([ALICE]);
-
-  const first = bootAndWin(storage, server);
-  act(() => {
-    fireEvent.click(within(first).getByRole("link", { name: OFFER_ACCEPT }));
-  });
-
-  cleanup();
-  window.location.hash = "";
-
-  const second = bootAndWin(storage, server);
-  within(second).getByRole("region", { name: "the result" });
-  expect(
-    within(second).queryByRole("region", { name: "the offer" }),
+    within(container).queryByRole("region", { name: "the offer" }),
   ).toBeNull();
 });
 
