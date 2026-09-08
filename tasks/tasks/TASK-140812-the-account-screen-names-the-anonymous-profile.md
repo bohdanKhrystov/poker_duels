@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140812
 title: The account screen names the anonymous profile
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: web-client
 estimate: S
