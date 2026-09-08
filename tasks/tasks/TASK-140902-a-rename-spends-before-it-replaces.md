@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140902
 title: A rename spends before it replaces
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: poker-server
 estimate: S
@@ -18,7 +18,7 @@ labels: [server, db, account]
 depends_on: [TASK-140901]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.db.PostgresProfileWritesTest' -PrequireDocker=true
-  - grep -q 'tests="15" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.db.PostgresProfileWritesTest.xml
+  - grep -q 'tests="17" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.db.PostgresProfileWritesTest.xml
   - ./gradlew :poker-server:test --tests 'duels.poker.server.db.TakedownIsInvisibleTest' -PrequireDocker=true
   - grep -q 'tests="4" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.db.TakedownIsInvisibleTest.xml
   - ./gradlew :poker-server:test --tests 'duels.poker.server.http.ProfileEndpointsDatabaseTest' -PrequireDocker=true
@@ -105,7 +105,7 @@ statement order, which statement 1's lock order copies.
 
 ## Tests
 
-`PostgresProfileWritesTest` — 13 tests on `develop` at `1c3c7fd9`, 15 after this ticket.
+`PostgresProfileWritesTest` — **15** tests on `develop` (measured 2026-09-08), **17** after this ticket. The ticket was written against 13 at `1c3c7fd9`; `TASK-140807` merged two password-flag tests into this same class afterwards, so the baseline moved before this ticket was started.
 
 | Test | Proves |
 | --- | --- |
@@ -162,7 +162,7 @@ statement order, which statement 1's lock order copies.
 - [ ] `PostgresProfileWritesTest.aRefusedRenameLeavesBothStringsWhereTheyWere` passes
 - [ ] `PostgresProfileWritesTest.aRenameThatFailsAfterTheRetirementRollsTheRetirementBack` passes
 - [ ] `PostgresProfileWritesTest.twoWritersRacingForTheSameProfileBothSucceedAndOneStringIsLeft` passes
-- [ ] `PostgresProfileWritesTest` reports exactly 15 tests, `failures="0" errors="0"` — 13 measured
+- [ ] `PostgresProfileWritesTest` reports exactly 17 tests, `failures="0" errors="0"` — 15 measured
       on `develop` at `1c3c7fd9` plus the two new cases named above
 - [ ] `sendingTheSameNameAgainSucceeds`, `aDifferentCaseOfOwnNameIsRefused`,
       `theSameNameAgainIsStillTheSameProfile` and `twoPlayersRacingForTheSameNameExactlyOneGetsIt`

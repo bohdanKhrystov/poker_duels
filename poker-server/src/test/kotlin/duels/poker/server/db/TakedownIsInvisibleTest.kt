@@ -79,14 +79,18 @@ class TakedownIsInvisibleTest {
     /**
      * `ADR-0053` §4.2's hazard, named: `RECENT_DUELS_SQL` already joins the *opponent's* `player`
      * row as `p`, so the same correlated `EXISTS` pasted there compiles, runs, and publishes a
-     * takedown to a stranger. `retired_from` may appear in exactly one file under
-     * `poker-server/src/main/kotlin`, and it is `PostgresProfileReads.kt`.
+     * takedown to a stranger. `retired_from` may appear in exactly two files under
+     * `poker-server/src/main/kotlin` — `PostgresProfileReads.kt`, unchanged, and
+     * `PostgresProfileWrites.kt`, which `ADR-0134` §3 makes the column's second writer, spending a
+     * rename's old string as part of the same transaction that hands the player the new one. The
+     * set stays an exact equality, not a superset check, so a third file naming the column still
+     * fails this test.
      */
     @Test
     fun retiredFromIsReadInExactlyOneFile() {
         val matching = sweepMainSource().filter { it.readText().contains("retired_from") }.map { it.name }.toSet()
 
-        assertEquals(setOf("PostgresProfileReads.kt"), matching)
+        assertEquals(setOf("PostgresProfileReads.kt", "PostgresProfileWrites.kt"), matching)
     }
 
     /**
