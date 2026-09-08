@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141108
 title: The read beat is spent once, and a repeat of the same hand is a step
 type: task
-status: ready
+status: done
 parent: STORY-1411
 module: web-client
 estimate: S

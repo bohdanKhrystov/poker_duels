@@ -315,7 +315,7 @@ export function applyServerMessage(
         pendingStreetDealt: [],
         reveal:
           message.view.street === "COMPLETE"
-            ? layOutReveal(message.view, state.pendingStreetDealt)
+            ? layOutReveal(message.view, state.pendingStreetDealt, state.view)
             : null,
       };
     case "Rejected":
@@ -458,16 +458,28 @@ function isAct(event: GameEvent): event is ActEvent {
 }
 
 /**
+ * Whether [view] carries hole cards for a seat other than the one it was addressed to — the
+ * frame-level half of `ADR-0120` §3, asked of whichever view it is given.
+ */
+function rivalCardsShown(view: PlayerView): boolean {
+  return view.seats.some(
+    (seat) => seat.index !== view.viewerSeat && seat.holeCards.length > 0,
+  );
+}
+
+/**
  * `ADR-0102` §2's steps for a hand-completing snapshot: one per `StreetDealt` the immediately
  * preceding `Events` frame carried, in the order the server sent them, then one final step for
  * the whole snapshot. Every board is a prefix of `view.board.cards`, at a length that is the
  * snapshot's own length minus the cards the *later* steps carry — reached backward from a total
  * the server just sent, never built forward from an assumed-empty board, which is why no previous
- * view is needed and a hand that opens all-in walks the same steps with no special case.
+ * view is needed for the boards, and a hand that opens all-in walks the same steps with no
+ * special case.
  */
 function layOutReveal(
   view: PlayerView,
   streetDealt: readonly StreetDealt[],
+  held: PlayerView | null,
 ): Reveal {
   const boardLength = view.board.cards.length;
   const steps: RevealStep[] = new Array(streetDealt.length + 1);
@@ -481,19 +493,20 @@ function layOutReveal(
     };
     cardsAfter += event.cards.length;
   }
-  // ADR-0120 §3's predicate, evaluated over this frame alone: it reads view.viewerSeat rather
-  // than any state carried across frames, so a hand-ending Snapshot queued behind another still
-  // classifies itself correctly when advanceReveal folds it back through this same reducer. The
-  // client reads a hole card here only to choose a schedule, never a face — the faces are
-  // DuelTable.tsx's, off the same snapshot, and PlayerView.of's showCards remains the only place
-  // a hole card is ever filtered (ADR-0136 §5).
-  const rivalShown = view.seats.some(
-    (seat) => seat.index !== view.viewerSeat && seat.holeCards.length > 0,
-  );
+  // ADR-0120 §3's rule is "has not been shown before", and held is the whole of what before
+  // means: PlayerView.of populates a revealed seat's holeCards on every projection of the hand,
+  // so a repeat delivery of the same hand-completing view is indistinguishable from the first at
+  // the frame level alone. The client reads a hole card here only to choose a schedule, never a
+  // face — the faces are DuelTable.tsx's, off the same snapshot, and PlayerView.of's showCards
+  // remains the only place a hole card is ever filtered (ADR-0136 §5).
+  const alreadyShown =
+    held !== null &&
+    held.handNumber === view.handNumber &&
+    rivalCardsShown(held);
   steps[streetDealt.length] = {
     board: view.board.cards,
     street: view.street,
-    hold: rivalShown ? "read" : "step",
+    hold: rivalCardsShown(view) && !alreadyShown ? "read" : "step",
   };
   return { steps, queued: [] };
 }
