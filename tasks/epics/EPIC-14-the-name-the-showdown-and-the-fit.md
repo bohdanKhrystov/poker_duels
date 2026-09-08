@@ -514,17 +514,31 @@ different ADRs, so nothing this epic raised, inherited or spawned is left open. 
 remains in `docs/adr/README.md` is `DEC-154`, which no answer of this epic's registered — it is
 `ADR-0141`'s own, the architect's, and it blocks only the ticket that implements `ADR-0141`.
 
-**`DEC-155` is registered on 2026-09-08, the architect's, and blocks nothing.** It was raised while
-landing `TASK-140811`, on a gap **two tickets reported independently**: `TASK-140710` transcribed six
-strings from `design/screens/name-ask.html` and `TASK-140811` three from `design/screens/account.html`,
-and in both cases the answer to *what would catch the module and the card drifting apart* came back
-**none** — checked against `design/check-drift.sh`, `design/check-frame-cards.sh` and both CI
-workflows. Each ticket's own `verify:` greps do compare the two, and they do not outlive the merge, so
-the words the design gate holds and the words the product ships are verified once and never again. The
-mechanism is genuinely open and half-invented: `account.html` carries `<!-- ANON-BLOCK: … -->` marker
-comments a gate could read, while `name-ask.html` and every other card carry none. Every string in
-question was verified by hand at its own review, so nothing is unsound today; what is missing is the
-thing that would keep it so.
+**`DEC-155` was registered on 2026-09-08, the architect's, and is answered the same day.** It was
+raised while landing `TASK-140811`, on a gap **two tickets reported independently**: `TASK-140710`
+transcribed six strings from `design/screens/name-ask.html` and `TASK-140811` three from
+`design/screens/account.html`, and in both cases the answer to *what would catch the module and the
+card drifting apart* came back **none** — checked against `design/check-drift.sh`,
+`design/check-frame-cards.sh` and both CI workflows. Each ticket's own `verify:` greps do compare the
+two, and they do not outlive the merge, so the words the design gate holds and the words the product
+ships were verified once and never again.
+
+[`ADR-0142`](../../docs/adr/ADR-0142-a-text-module-is-checked-against-the-rendered-card.md) answers
+it: **a text module is checked against the rendered card, by a test in the client's own suite.** It
+amends nothing — it is `ADR-0091` §4's own *"Adoption is gated where consumption happens — the
+client's own CI job"* carried out on a second fact — so the gate is
+`web-client/src/design/card-text.test.ts`, reading each card with `readFileSync` off
+`import.meta.url` exactly as `styles/tokens.test.ts` already reads `design/tokens/tokens.css`, with
+**no workflow line and no dependency**. That placement is evidence-led rather than stylistic:
+`design/check-frame-cards.sh` runs in **no workflow at all**, so *a gate only a ticket runs* has
+already happened here once, to a design gate, unnoticed. The half-invented mechanism this epic left
+behind is **not** the one chosen — the three `<!-- ANON-BLOCK: … -->` markers are **deleted** rather
+than extended to every card, because nothing ever compared a marker to the `<p class="line">` beside
+it and the gate reads the card's rendered text instead, comments stripped first. The costs are
+named: roughly twenty-six declared register lines to bootstrap, one classification per future export
+forever, and no carded sentence may ever span an inline element. And the yield is stated honestly —
+the gate would have been **green throughout** at `TASK-140710`'s merge, so it repairs nothing this
+epic shipped and its whole value is against the next edit.
 
 **The other follow-up those answers registered is answered on 2026-09-08.** `DEC-150` — whether a
 copy is achievable at all where `navigator.clipboard` is undefined, the architect's — is answered by
