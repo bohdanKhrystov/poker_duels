@@ -1,5 +1,6 @@
-import { useState, type FormEvent, type ReactElement } from "react";
+import { useRef, useState, type FormEvent, type ReactElement } from "react";
 
+import { useReportNameWrite } from "./profile-provider";
 import {
   NAME_ASK_HEADING,
   NAME_FIELD_LABEL,
@@ -8,6 +9,7 @@ import {
   SKIP_AND_PLAY_LABEL,
   TAKE_NAME_LABEL,
 } from "./name-ask-text";
+import { mayTryAgain, refusalSentence } from "./name-text";
 import { suggestName } from "./name-suggestion";
 import type { SetNameOutcome } from "./set-name";
 
@@ -32,16 +34,42 @@ export function NameAsk(props: {
   // The field's own state, seeded from the draw. Nothing ever writes over it besides the player
   // typing (`ADR-0119` §4) — a reroll on `conflict` is `TASK-140713`'s.
   const [value, setValue] = useState(drawn);
+  // A ref, not just state: the guard must see the current in-flight status the instant the
+  // second submit runs, not after a render has caught up.
+  const submitInFlight = useRef(false);
+  // State tracking for the UI disabled state — the ref is for the guard, this is for rendering.
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // The most recently settled refusal, if any. Replaced — never appended to — by the next
+  // attempt: a player who fails twice reads one sentence, not a log.
+  const [refusal, setRefusal] = useState<Exclude<
+    SetNameOutcome["kind"],
+    "named"
+  > | null>(null);
+  const reportNameWrite = useReportNameWrite();
+
+  const canTryAgain = refusal === null || mayTryAgain(refusal);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
+    if (submitInFlight.current) return;
+    submitInFlight.current = true;
+    setIsSubmitting(true);
     const typed = value;
     void props.setName(typed).then((outcome: SetNameOutcome) => {
+      // Unconditional: the hook itself is a no-op on every refusal kind, so branching on `kind`
+      // here would only duplicate that decision.
+      reportNameWrite(outcome);
       // `onNamed` fires only once the server has said yes, and only then — every other outcome
-      // is `TASK-140712`'s to answer.
+      // is a refusal.
       if (outcome.kind === "named") {
         props.onNamed();
+        return;
       }
+      // Every other outcome settles as a refusal: its sentence replaces whatever was on screen,
+      // and `mayTryAgain` — not a condition kept here too — decides whether the form survives it.
+      submitInFlight.current = false;
+      setIsSubmitting(false);
+      setRefusal(outcome.kind);
     });
   };
 
@@ -55,9 +83,21 @@ export function NameAsk(props: {
       </h2>
       <p className="text-small text-text-muted">{NAME_IS_FOR}</p>
       <p className="text-small text-text-muted">{NAME_KEEPS}</p>
+      {refusal !== null && (
+        <p role="status" className="text-small">
+          {refusalSentence(refusal)}
+        </p>
+      )}
+      {/*
+        Hidden, not unmounted: the field and button stay the same DOM node
+        across a settle a player can act on, so what they typed is never
+        lost to a remount, and `role` queries agree there is no form the
+        instant `mayTryAgain` says there is none.
+      */}
       <form
         onSubmit={handleSubmit}
         className="flex w-full flex-col items-center gap-4"
+        hidden={!canTryAgain}
       >
         <label
           htmlFor="name-ask-field"
@@ -74,6 +114,7 @@ export function NameAsk(props: {
         </label>
         <button
           type="submit"
+          disabled={isSubmitting}
           className="w-full rounded-medium bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         >
           {TAKE_NAME_LABEL}
