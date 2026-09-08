@@ -236,6 +236,7 @@ returned. There is no `X-Device-Id` fallback here; there is nothing to fall back
 | displayNameRemoved | boolean | `true` when the player holds no display name **and** a name has been removed from them by an operator (`ADR-0052`). `false` for a player who never set one, and `false` again once they set a new one. Never says anything about another player. |
 | deviceRouteLive | boolean | `true` exactly when this player currently holds a live device binding (`ADR-0049` §5), `false` once `DELETE /api/me/device` has revoked it. This is the field the account screen reads to decide whether to offer that route at all (`ADR-0050` §3). |
 | hasRecoveryEmail | boolean | `true` when the caller has a **verified** recovery address. `false` covers three cases this field does not distinguish — never attached, attached but not yet verified, and detached. The address itself is returned by no endpoint (`ADR-0031` §6.3). |
+| hasPassword | boolean | `true` exactly when this player holds a password credential; `false` covers a player who never made one. Per `ADR-0132` §3, no other endpoint answers it for a player the caller did not resolve to. |
 
 ### Set display name
 

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140808
 title: The document names the password field
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: poker-server
 estimate: XS
