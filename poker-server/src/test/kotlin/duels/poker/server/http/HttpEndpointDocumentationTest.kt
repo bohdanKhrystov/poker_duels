@@ -255,6 +255,25 @@ class HttpEndpointDocumentationTest {
     }
 
     @Test
+    fun theProfileSectionDocumentsHasPassword() {
+        val profileFields = documentedFieldNames(profileSection)
+        assertTrue(
+            "hasPassword" in profileFields,
+            "The profile section must document the 'hasPassword' field",
+        )
+
+        val hasPasswordRow = rowFor(profileSection, "hasPassword")
+            ?: error("Profile section must document the 'hasPassword' field")
+        assertTrue(
+            hasPasswordRow.contains("boolean", ignoreCase = true),
+            "The hasPassword row must mention 'boolean' to indicate the type: $hasPasswordRow",
+        )
+
+        val hasPasswordProperty = ProfileResponse::class.memberProperties.firstOrNull { it.name == "hasPassword" }
+            ?: error("ProfileResponse must have a 'hasPassword' property")
+    }
+
+    @Test
     fun theDocumentMarksTheOpponentDisplayNameNullable() {
         val opponentDisplayNameProperty = DuelSummaryResponse::class.memberProperties.firstOrNull { it.name == "opponentDisplayName" }
             ?: error("DuelSummaryResponse must have an 'opponentDisplayName' property")
