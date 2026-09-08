@@ -26,14 +26,14 @@ import kotlin.test.fail
 /**
  * Tests for [PostgresProfileWrites], against the container.
  *
- * Setting a name is two statements (`ADR-0051` §2), and these tests read their answers off what
- * the database returns or throws, never off a message string. The pair
+ * Setting a name is four statements under one row lock (`ADR-0134` §2), and these tests read
+ * their answers off what the database returns or throws, never off a message string. The pair
  * `sendingTheSameNameAgainSucceeds` and `aDifferentCaseOfOwnNameIsRefused` together pin what
  * "identical" means for the idempotent retry: **exact equality of the canonical form, not a case
  * fold**. A case variant of a player's own name is refused, and since `TASK-041004` it is refused
- * as `NameTaken` — the registry's fold index raises `23505` on the first statement, before the
- * `UPDATE` that used to answer `AlreadyNamed` is ever reached. The fold does not excuse a name for
- * belonging to the player who already holds it.
+ * as `NameTaken` — the registry's fold index raises `23505` on the second statement, before the
+ * `UPDATE` that hands a name over is ever reached. The fold does not excuse a name for belonging
+ * to the player who already holds it.
  */
 class PostgresProfileWritesTest {
     private lateinit var dataSource: DataSource
@@ -118,16 +118,42 @@ class PostgresProfileWritesTest {
         }
     }
 
+    // ADR-0134 §2: a rename is no longer refused. The holder of Alice writing Alicia gets the new
+    // string, and Alice's own registry row is the one statement 3 moves to REPLACED — the
+    // assertEquals on the reason, not a weaker check on the column alone, is what catches a
+    // mechanism that wrote RETIRED instead (What would still pass if the coder got it wrong).
     @Test
-    fun aDifferentNameForANamedPlayerIsRefused() {
+    fun aDifferentNameForANamedPlayerReplacesTheOne() {
         runBlocking {
             val player = playerDirectory.resolve(DeviceId("alice"))
             setPlayerDisplayName(player.id, "Alice")
 
             val result = profileWrites.setDisplayName(player.id, "Alicia")
 
-            assertEquals(SetNameResult.AlreadyNamed, result)
-            assertEquals("Alice", storedDisplayNameOf(player.id))
+            assertIs<SetNameResult.NameSet>(result)
+            assertEquals("Alicia", result.profile.displayName)
+            assertEquals("Alicia", storedDisplayNameOf(player.id))
+            assertEquals("REPLACED", registryReasonFor("Alice"))
+        }
+    }
+
+    // theReplacedRowRecordsThePlayerThatLeftIt uses two players who disagree, which is what makes
+    // it a correlation rather than a constant (What would still pass if the coder got it wrong):
+    // a hard-coded retired_from that happens to equal the first player's id would satisfy one row
+    // and fail the second.
+    @Test
+    fun theReplacedRowRecordsThePlayerThatLeftIt() {
+        runBlocking {
+            val first = playerDirectory.resolve(DeviceId("first"))
+            val second = playerDirectory.resolve(DeviceId("second"))
+            setPlayerDisplayName(first.id, "Alice")
+            setPlayerDisplayName(second.id, "Bea")
+
+            profileWrites.setDisplayName(first.id, "Alicia")
+            profileWrites.setDisplayName(second.id, "Bianca")
+
+            assertEquals(first.id.value, retiredFromFor("Alice"))
+            assertEquals(second.id.value, retiredFromFor("Bea"))
         }
     }
 
@@ -158,14 +184,16 @@ class PostgresProfileWritesTest {
             } catch (failure: SQLException) {
                 fail("setDisplayName let SQLSTATE ${failure.sqlState} escape instead of returning NameTaken")
             }
-            val alreadyNamedResult = try {
+            // ADR-0134 §2: this is now a rename, and it succeeds.
+            val renameResult = try {
                 profileWrites.setDisplayName(named.id, "Different")
             } catch (failure: SQLException) {
-                fail("setDisplayName let SQLSTATE ${failure.sqlState} escape instead of returning AlreadyNamed")
+                fail("setDisplayName let SQLSTATE ${failure.sqlState} escape instead of returning NameSet")
             }
 
             assertEquals(SetNameResult.NameTaken, takenResult)
-            assertEquals(SetNameResult.AlreadyNamed, alreadyNamedResult)
+            assertIs<SetNameResult.NameSet>(renameResult)
+            assertEquals("Different", renameResult.profile.displayName)
         }
     }
 
@@ -195,11 +223,16 @@ class PostgresProfileWritesTest {
         }
     }
 
-    // Same precedent, the other axis: one profile, two racing writers. The row lock (not the
-    // unique index) is what serialises this one, and exactly one of them still wins.
+    // Same precedent, the other axis: one profile, two racing writers. ADR-0134 §2: two concurrent
+    // PUTs from one player are both legal now. Statement 1's FOR UPDATE (not the unique index) is
+    // what serialises this one — the row lock forces the second writer to wait for the first's
+    // commit, then read the name the first left and replace that, rather than racing statement 3
+    // against a row the first writer already moved off TAKEN. Without the lock this would raise
+    // 23001, which is exactly what this test would catch escaping (What would still pass if the
+    // coder got it wrong).
     @Test
     @Timeout(60)
-    fun twoWritersRacingForTheSameProfileExactlyOneWins() {
+    fun twoWritersRacingForTheSameProfileBothSucceedAndOneStringIsLeft() {
         runBlocking(Dispatchers.Default) {
             val player = playerDirectory.resolve(DeviceId("shared"))
             val gate = CompletableDeferred<Unit>()
@@ -213,26 +246,59 @@ class PostgresProfileWritesTest {
             gate.complete(Unit)
             val results = jobs.awaitAll()
 
-            assertEquals(1, results.count { it is SetNameResult.NameSet })
-            assertEquals(1, results.count { it == SetNameResult.AlreadyNamed })
-            val stored = storedDisplayNameOf(player.id)
+            assertEquals(2, results.count { it is SetNameResult.NameSet })
+            val stored = requireNotNull(storedDisplayNameOf(player.id))
             assertTrue(stored == "Ann" || stored == "Anna")
+            val leftBehind = if (stored == "Ann") "Anna" else "Ann"
+            assertEquals("TAKEN", registryReasonFor(stored))
+            assertEquals("REPLACED", registryReasonFor(leftBehind))
         }
     }
 
     // ADR-0051 §2's defect, named directly: a registry row left behind by a refused claim burns
-    // a string nobody holds, forever. Without the rollback the count below is 1 and the result
-    // is still AlreadyNamed — every other assertion in this file stays green either way.
+    // a string nobody holds, forever. Without the rollback, Ann's own row would have been left
+    // REPLACED by the attempt even though the rename failed.
     @Test
-    fun aRefusedSecondNameLeavesNoRegistryRow() {
+    fun aRefusedRenameLeavesBothStringsWhereTheyWere() {
         runBlocking {
+            val holder = playerDirectory.resolve(DeviceId("holder"))
             val player = playerDirectory.resolve(DeviceId("alice"))
+            setPlayerDisplayName(holder.id, "Bea")
             profileWrites.setDisplayName(player.id, "Ann")
 
             val result = profileWrites.setDisplayName(player.id, "Bea")
 
-            assertEquals(SetNameResult.AlreadyNamed, result)
-            assertEquals(0, registryRowCountFor("Bea"))
+            assertEquals(SetNameResult.NameTaken, result)
+            assertEquals("Ann", storedDisplayNameOf(player.id))
+            assertEquals("TAKEN", registryReasonFor("Ann"))
+            assertEquals(1, registryRowCountFor("Bea"))
+            assertEquals("TAKEN", registryReasonFor("Bea"))
+        }
+    }
+
+    // ADR-0134 §2's rollback, more load-bearing than ADR-0051 §2's: a rename that spends the old
+    // string (statement 3) and then fails to land the new one (statement 4) must not strand the
+    // player holding a name the registry says is spent — ADR-0051 §9 refuses the un-retire that
+    // would repair it. player_display_name_unique is forced by a raw row that already holds the
+    // arriving string outside the registry, so statement 2 spends "Bea" cleanly (the registry
+    // knows nothing about it) and statement 4 is the one that fails.
+    @Test
+    fun aRenameThatFailsAfterTheRetirementRollsTheRetirementBack() {
+        runBlocking {
+            val player = playerDirectory.resolve(DeviceId("alice"))
+            val other = playerDirectory.resolve(DeviceId("other"))
+            profileWrites.setDisplayName(player.id, "Ann")
+            setRawDisplayNameBypassingRegistry(other.id, "Bea")
+
+            val result = try {
+                profileWrites.setDisplayName(player.id, "Bea")
+            } catch (failure: SQLException) {
+                fail("setDisplayName let SQLSTATE ${failure.sqlState} escape instead of returning a refusal")
+            }
+
+            assertEquals(SetNameResult.NameTaken, result)
+            assertEquals("Ann", storedDisplayNameOf(player.id))
+            assertEquals("TAKEN", registryReasonFor("Ann"))
         }
     }
 
@@ -353,6 +419,14 @@ class PostgresProfileWritesTest {
             }
         }
 
+    private fun retiredFromFor(name: String): String? =
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT retired_from FROM name_registry WHERE name = ?").use { statement ->
+                statement.setString(1, name)
+                statement.executeQuery().use { rows -> if (rows.next()) rows.getString(1) else null }
+            }
+        }
+
     private fun totalRegistryRowCount(): Int =
         dataSource.connection.use { connection ->
             connection.prepareStatement("SELECT count(*) FROM name_registry").use { statement ->
@@ -389,6 +463,26 @@ class PostgresProfileWritesTest {
                 } else {
                     statement.setString(1, displayName)
                 }
+                statement.setObject(2, UUID.fromString(playerId.value))
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    // A raw write, bypassing the registry entirely — the only way to make a player's column hold
+    // a string the registry has never spent, which is what forces statement 4 to be the one that
+    // fails in aRenameThatFailsAfterTheRetirementRollsTheRetirementBack (ADR-0134 §8's named hole:
+    // the trigger governs the string being left, not the one arriving). V6's
+    // player_display_name_registered foreign key refuses this directly, so the constraint is
+    // dropped first on this test's own, disposable database — the folded player_display_name_unique
+    // index this test exercises is untouched by that, so statement 4 still meets it.
+    private fun setRawDisplayNameBypassingRegistry(playerId: PlayerId, displayName: String) {
+        dataSource.connection.use { connection ->
+            connection.createStatement().use { statement ->
+                statement.execute("ALTER TABLE player DROP CONSTRAINT player_display_name_registered")
+            }
+            connection.prepareStatement("UPDATE player SET display_name = ? WHERE id = ?").use { statement ->
+                statement.setString(1, displayName)
                 statement.setObject(2, UUID.fromString(playerId.value))
                 statement.executeUpdate()
             }

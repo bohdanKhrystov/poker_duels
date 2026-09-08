@@ -242,8 +242,10 @@ class ProfileEndpointsDatabaseTest {
         assertEquals(null, bobProfile.displayName)
     }
 
+    // ADR-0130 abolished the cause of the 403 this test used to assert; ADR-0134 §2 is the
+    // mechanism that makes a second PUT succeed rather than merely stop being refused.
     @Test
-    fun aSecondNameForTheSameProfileIsForbidden() = testApplication {
+    fun aSecondNameForTheSameProfileReplacesTheFirst() = testApplication {
         application {
             module()
             profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
@@ -258,16 +260,16 @@ class ProfileEndpointsDatabaseTest {
 
         assertEquals(HttpStatusCode.OK, firstPutResponse.status)
 
-        // Alice tries to change her name, should get 403 Forbidden
+        // Alice renames herself, and the rename succeeds
         val secondPutResponse = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
             contentType(ContentType.Application.Json)
             setBody(protocolJson.encodeToString(SetNameRequest.serializer(), SetNameRequest("Eleanor")))
         }
 
-        assertEquals(HttpStatusCode.Forbidden, secondPutResponse.status)
+        assertEquals(HttpStatusCode.OK, secondPutResponse.status)
 
-        // Verify that Alice's profile still has the original name
+        // Verify that Alice's profile now reads the second name
         val getResponse = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "alice")
         }
@@ -276,6 +278,6 @@ class ProfileEndpointsDatabaseTest {
         val body = getResponse.bodyAsText()
         val profile = protocolJson.decodeFromString<ProfileResponse>(body)
 
-        assertEquals("Diana", profile.displayName)
+        assertEquals("Eleanor", profile.displayName)
     }
 }
