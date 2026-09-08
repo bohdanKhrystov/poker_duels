@@ -514,6 +514,18 @@ different ADRs, so nothing this epic raised, inherited or spawned is left open. 
 remains in `docs/adr/README.md` is `DEC-154`, which no answer of this epic's registered — it is
 `ADR-0141`'s own, the architect's, and it blocks only the ticket that implements `ADR-0141`.
 
+**`DEC-155` is registered on 2026-09-08, the architect's, and blocks nothing.** It was raised while
+landing `TASK-140811`, on a gap **two tickets reported independently**: `TASK-140710` transcribed six
+strings from `design/screens/name-ask.html` and `TASK-140811` three from `design/screens/account.html`,
+and in both cases the answer to *what would catch the module and the card drifting apart* came back
+**none** — checked against `design/check-drift.sh`, `design/check-frame-cards.sh` and both CI
+workflows. Each ticket's own `verify:` greps do compare the two, and they do not outlive the merge, so
+the words the design gate holds and the words the product ships are verified once and never again. The
+mechanism is genuinely open and half-invented: `account.html` carries `<!-- ANON-BLOCK: … -->` marker
+comments a gate could read, while `name-ask.html` and every other card carry none. Every string in
+question was verified by hand at its own review, so nothing is unsound today; what is missing is the
+thing that would keep it so.
+
 **The other follow-up those answers registered is answered on 2026-09-08.** `DEC-150` — whether a
 copy is achievable at all where `navigator.clipboard` is undefined, the architect's — is answered by
 [`ADR-0140`](../../docs/adr/ADR-0140-the-clipboard-api-is-the-only-copy-this-client-attempts.md):

@@ -9,6 +9,9 @@ describe("the account screen's words", () => {
     expect(Object.keys(accountText).sort()).toEqual(
       [
         "ACCOUNT_HEADING",
+        "ANONYMOUS_COST",
+        "ANONYMOUS_STATE",
+        "ANONYMOUS_WAY_OUT",
         "CANCEL",
         "DEVICE_ROUTE_LIVE",
         "DEVICE_ROUTE_REVOKED",
@@ -37,6 +40,15 @@ describe("the account screen's words", () => {
     );
 
     expect(accountText.ACCOUNT_HEADING).toBe("Account");
+    expect(accountText.ANONYMOUS_COST).toBe(
+      "The profile lives in this browser: the duel coins and the duels go with it, and nothing reaches them from another browser.",
+    );
+    expect(accountText.ANONYMOUS_STATE).toBe(
+      "This profile is anonymous: it has no password, and this browser is the only thing that signs in to it.",
+    );
+    expect(accountText.ANONYMOUS_WAY_OUT).toBe(
+      "The form below gives this profile a password and keeps every duel coin and every duel, because nothing moves.",
+    );
     expect(accountText.DEVICE_ROUTE_LIVE).toBe(
       "This device signs in to this account.",
     );

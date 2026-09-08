@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140811
 title: The words the anonymous block says
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: web-client
 estimate: XS
