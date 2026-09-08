@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140810
 title: The card draws the anonymous block
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: design
 estimate: XS
