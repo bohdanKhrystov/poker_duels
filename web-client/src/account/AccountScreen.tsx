@@ -10,6 +10,9 @@ import {
   ACCOUNT_HEADING,
   PASSWORD_ROUTE_LIVE,
   SIGN_IN_HEADING,
+  ANONYMOUS_STATE,
+  ANONYMOUS_COST,
+  ANONYMOUS_WAY_OUT,
   deviceRouteLine,
 } from "./account-text";
 import { recoveryLine } from "./recovery-text";
@@ -105,6 +108,14 @@ export function AccountScreen(props: {
   // may hold no usable profile at all.
   const showSignInDoor = !signedIn;
 
+  // This is the **told** fact, negated: the server said the player holds no
+  // password. It is not `!signedIn` — a browser holding no token is not a
+  // browser whose player holds no password (`ADR-0125` §4, `ADR-0132` §4).
+  const anonymous =
+    profile !== null &&
+    profile.kind === "profile" &&
+    !profile.profile.hasPassword;
+
   return (
     <section
       aria-label="account"
@@ -117,6 +128,13 @@ export function AccountScreen(props: {
       ) : null}
       {showPasswordRoute ? (
         <p className="text-small">{PASSWORD_ROUTE_LIVE}</p>
+      ) : null}
+      {anonymous ? (
+        <>
+          <p className="text-small">{ANONYMOUS_STATE}</p>
+          <p className="text-small">{ANONYMOUS_COST}</p>
+          <p className="text-small">{ANONYMOUS_WAY_OUT}</p>
+        </>
       ) : null}
       {showSignUp && signUp !== undefined && <SignUpForm signUp={signUp} />}
       {showAttach && attachRecoveryEmail !== undefined && (

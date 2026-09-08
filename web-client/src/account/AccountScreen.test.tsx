@@ -12,6 +12,9 @@ import {
   SIGN_IN_HEADING,
   SIGN_OUT_LABEL,
   SIGN_UP_LABEL,
+  ANONYMOUS_STATE,
+  ANONYMOUS_COST,
+  ANONYMOUS_WAY_OUT,
 } from "./account-text";
 import {
   RECOVERY_ON,
@@ -351,5 +354,117 @@ describe("the account screen", () => {
       expect(wrapper).not.toBeNull();
       expect(wrapper?.classList.contains("text-left")).toBe(true);
     }
+  });
+
+  it("names the profile anonymous when the profile it holds has no password", () => {
+    const profile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasPassword: false }),
+      duels: [],
+    };
+    render(<AccountScreen profile={profile} signedIn={false} />);
+
+    expect(screen.queryByText(ANONYMOUS_STATE)).not.toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).not.toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).not.toBeNull();
+  });
+
+  it("says nothing about the state to a profile that holds a password", () => {
+    const profile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasPassword: true }),
+      duels: [],
+    };
+    render(<AccountScreen profile={profile} signedIn={false} />);
+
+    expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
+    // Ensure the screen still renders
+    expect(
+      screen.getByRole("heading", { level: 2, name: ACCOUNT_HEADING }),
+    ).not.toBeNull();
+  });
+
+  it("says nothing about the state where it was told nothing", () => {
+    // Test with profile=null (still loading)
+    const { rerender } = render(
+      <AccountScreen profile={null} signedIn={false} />,
+    );
+    expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
+
+    // Test with kind="no-profile"
+    const noProfile: ProfileStripState = { kind: "no-profile" };
+    rerender(<AccountScreen profile={noProfile} signedIn={false} />);
+    expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
+
+    // Test with kind="unavailable"
+    const unavailable: ProfileStripState = { kind: "unavailable" };
+    rerender(<AccountScreen profile={unavailable} signedIn={false} />);
+    expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
+  });
+
+  it("says the same words to a named player and a nameless one", () => {
+    // First render with a named player
+    const namedProfile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasPassword: false, displayName: "Bob" }),
+      duels: [],
+    };
+    const { rerender } = render(
+      <AccountScreen profile={namedProfile} signedIn={false} />,
+    );
+    expect(screen.queryByText(ANONYMOUS_STATE)).not.toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).not.toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).not.toBeNull();
+    const namedCount = screen.getAllByText(ANONYMOUS_STATE).length;
+
+    // Second render with an anonymous player (no displayName)
+    const anonProfile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasPassword: false, displayName: null }),
+      duels: [],
+    };
+    rerender(<AccountScreen profile={anonProfile} signedIn={false} />);
+    expect(screen.queryByText(ANONYMOUS_STATE)).not.toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).not.toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).not.toBeNull();
+    const anonCount = screen.getAllByText(ANONYMOUS_STATE).length;
+
+    // The three sentences should appear exactly once in each render
+    expect(namedCount).toBe(1);
+    expect(anonCount).toBe(1);
+  });
+
+  it("never reads the session token for the state", () => {
+    // First case: signedIn=true with hasPassword=false should SHOW the block
+    const profile1: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasPassword: false }),
+      duels: [],
+    };
+    const { rerender } = render(
+      <AccountScreen profile={profile1} signedIn={true} />,
+    );
+    expect(screen.queryByText(ANONYMOUS_STATE)).not.toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).not.toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).not.toBeNull();
+
+    // Second case: signedIn=false with hasPassword=true should HIDE the block
+    const profile2: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasPassword: true }),
+      duels: [],
+    };
+    rerender(<AccountScreen profile={profile2} signedIn={false} />);
+    expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
   });
 });
