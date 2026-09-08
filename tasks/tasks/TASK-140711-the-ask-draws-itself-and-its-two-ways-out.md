@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140711
 title: The ask draws itself, and both ways out end in the duel
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
@@ -41,8 +41,10 @@ once the **server** has said yes; skipping sends nothing at all.
 
 Read [`ADR-0119`](../../docs/adr/ADR-0119-the-name-is-asked-at-the-first-press-and-skipping-plays.md)
 §§2–4, [`ADR-0137`](../../docs/adr/ADR-0137-a-name-suggestion-is-drawn-in-the-browser.md) §§5, 7,
-`design/screens/name-ask.html`, and `web-client/src/result/AccountOffer.tsx` — the shipped
-two-ways-out surface this one is shaped like: props in, no storage, no navigation, one section.
+`design/screens/name-ask.html`, and `web-client/src/result/DuelResult.tsx` — a shipped
+surface this one is shaped like: props in, no storage, no navigation, one section. (This line named
+`AccountOffer.tsx` when the story was split; `TASK-140802` deleted that file, so the pointer was
+corrected at landing rather than left aimed at nothing.)
 **Nothing outside the table above is changed** — `NameSurface.tsx`, `name-text.ts` and `Lobby.tsx`
 are not opened.
 
@@ -102,7 +104,7 @@ are not opened.
   is why every test here mounts it directly.
 - **A *suggest another* control**, a labelled suggestion, or any hint about availability.
 - **Styling beyond the card.** Compose the classes the client already uses on
-  `AccountOffer`/`NameSurface`; mint no value and add no raw length literal — `ADR-0091` §4's fourth
+  `DuelResult`/`NameSurface`; mint no value and add no raw length literal — `ADR-0091` §4's fourth
   client guard fails a `-[380px]`.
 
 ## Tests
