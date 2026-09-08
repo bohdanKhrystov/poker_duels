@@ -26,15 +26,9 @@ export function ProfileStrip(props: {
       return null;
 
     case "no-profile":
-      // The ordinary state of a first visit, not an error.
-      return (
-        <section
-          aria-label="your profile"
-          className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
-        >
-          <p className="text-small">No profile yet.</p>
-        </section>
-      );
+      // The ordinary state of a first visit, not an error — and a player who has not named
+      // themselves is not told about an absence they did not ask about (ADR-0125 §5).
+      return null;
 
     case "profile":
       // State the balance as the server signed it.

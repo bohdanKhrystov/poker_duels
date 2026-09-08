@@ -32,14 +32,12 @@ describe("the profile strip", () => {
     expect(screen.getByText("−1 Duel coins")).toBeDefined();
   });
 
-  it("says there is no profile yet, and raises no alarm", () => {
-    render(<ProfileStrip state={{ kind: "no-profile" }} />);
+  it("renders nothing at all when there is no profile", () => {
+    const { container } = render(
+      <ProfileStrip state={{ kind: "no-profile" }} />,
+    );
 
-    expect(screen.getByText("No profile yet.")).toBeDefined();
-    expect(screen.queryAllByRole("alert")).toHaveLength(0);
-    expect(
-      screen.getByText("No profile yet.").textContent?.toLowerCase(),
-    ).not.toContain("error");
+    expect(container.innerHTML).toBe("");
   });
 
   it("renders nothing at all when the read did not land", () => {

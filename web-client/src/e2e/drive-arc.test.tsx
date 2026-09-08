@@ -1,4 +1,10 @@
-import { act, cleanup, fireEvent, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PROTOCOL_VERSION } from "../protocol";
 import type { ServerMessage } from "../protocol";
@@ -122,16 +128,15 @@ it("a first boot mints a device id and asks the server nothing", async () => {
   const storage = inMemoryStorage();
   const server = accountServer([ALICE]);
 
-  const { container } = bootClient({
+  bootClient({
     storage,
     server,
     wiring,
     welcomeFrame: welcomeFrame(ALICE.deviceId),
   });
 
-  await within(container).findByText("No profile yet.");
+  await waitFor(() => expect(readDeviceId(storage)).toBe(ALICE.deviceId));
 
-  expect(readDeviceId(storage)).toBe(ALICE.deviceId);
   expect(server.requests).toEqual([]);
 });
 
