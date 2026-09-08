@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140702
 title: The vocabulary module, its first list, and the tests that make a 400 impossible
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
