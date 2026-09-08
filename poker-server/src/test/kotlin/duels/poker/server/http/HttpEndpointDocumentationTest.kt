@@ -191,13 +191,17 @@ class HttpEndpointDocumentationTest {
             "Document must contain 'PUT /api/me/name'",
         )
         // Each status code must appear in the Set display name section, not just anywhere in the document
-        val statusCodes = listOf("400", "401", "403", "409")
+        val statusCodes = listOf("400", "401", "409", "429")
         for (statusCode in statusCodes) {
             assertTrue(
                 setNameSection.contains(statusCode),
                 "The Set display name section must document status code '$statusCode'",
             )
         }
+        assertFalse(
+            setNameSection.contains("403"),
+            "The Set display name section must not contain '403'",
+        )
     }
 
     @Test
@@ -323,6 +327,14 @@ class HttpEndpointDocumentationTest {
         assertTrue(
             setNameSection.contains("409"),
             "The Set display name section must still document its '409' row after re-chaining",
+        )
+    }
+
+    @Test
+    fun theSetNameSectionRefusesToPromisePermanence() {
+        assertFalse(
+            setNameSection.contains("permanent"),
+            "The Set display name section must not contain the word 'permanent'",
         )
     }
 
