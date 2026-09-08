@@ -56,6 +56,6 @@ describe("the name vocabulary", () => {
   });
 
   it("holds the lists this story has shipped so far", () => {
-    expect(NAME_VOCABULARY.map((list) => list.length)).toEqual([50, 100]);
+    expect(NAME_VOCABULARY.map((list) => list.length)).toEqual([50, 100, 100]);
   });
 });
