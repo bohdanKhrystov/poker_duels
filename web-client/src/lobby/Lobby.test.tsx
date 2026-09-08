@@ -616,6 +616,48 @@ describe("the lobby", () => {
     expect(send).toHaveBeenCalledWith({ type: "JoinRoom", code: "ABCDEFGH" });
   });
 
+  // TASK-140718: the six chosen-screen branches sit above the ask branch, so
+  // navigating to one of them does not unmount `Lobby` — `heldPress` stays
+  // set, and the ask this ticket's fix removes would otherwise reappear
+  // still holding it. Driven through `askForAnAddress`, the same "typed
+  // address" control every other navigation test in this file uses
+  // (`ADR-0114` §7) — not a raw `window.location.hash` write, which is what
+  // `TASK-140801` had to repair here. Exercised against two of the six
+  // branches, in two independent renders, so a clear wired to only one of
+  // them cannot pass.
+  it("a chosen screen clears a press the ask was still holding", async () => {
+    for (const hash of ["#/leaderboard", "#/duels"]) {
+      const { send } = renderLobbyForTheAsk();
+
+      await screen.findByRole("button", { name: "Play duel" });
+      fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+      expect(
+        screen.getByRole("region", { name: "choose your name" }),
+      ).toBeDefined();
+
+      askForAnAddress(hash);
+      // The chosen screen's own "Back" affordance — present, and not the
+      // ask's, confirms the navigation actually landed rather than the ask
+      // simply persisting underneath an address change it never noticed.
+      expect(
+        screen.queryByRole("region", { name: "choose your name" }),
+      ).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+      // Back at "first" with no chosen screen honoured: the front door
+      // returns, not the ask, because there is no press left for it to
+      // hold. Answering it now — there being nothing to answer — starts
+      // nothing behind the player's back.
+      expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
+      expect(
+        screen.queryByRole("region", { name: "choose your name" }),
+      ).toBeNull();
+      expect(send).not.toHaveBeenCalled();
+
+      cleanup();
+    }
+  });
+
   it("sends a pasted code trimmed and upper-cased", () => {
     const { send } = renderLobby();
 
