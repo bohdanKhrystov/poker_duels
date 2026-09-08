@@ -37,7 +37,11 @@ and it is the first force.
 written by `TASK-141107` as a real invariant gate over `duel-table-states.html`. It appears in the
 `verify:` block of three tickets and **in no workflow**: `tickets.yml` runs `./design/check-drift.sh`
 and nothing runs `check-frame-cards.sh`. So the exact failure `DEC-155` names — *a gate that only a
-ticket runs* — has already happened once here, to a design gate, and went unnoticed. Any answer that
+ticket runs* — has already happened once here, to a design gate, and went unnoticed. (**Corrected
+2026-09-08, after this ADR merged**: `TASK-140719` wired that gate into `tickets.yml` precisely
+because this paragraph found it unwired. The paragraph is left standing because the argument it makes
+is about the risk a shell gate carries, and that risk was real — it had already cost this repository
+one unwired gate. What is no longer true is the present tense.) Any answer that
 ends in "and someone adds a line to a workflow" inherits that risk. A file the existing runner
 already globs does not.
 
@@ -77,7 +81,7 @@ cheapest way to ship a gate that reads as complete and is not.
 | `account-text.ts` exported string constants | 27, of which **12** appear in `account.html`'s rendered text — the three `TASK-140811` transcribed among them, found in the rendered `<p class="line">` text with comments already stripped, so no marker was read |
 | `*-text.ts` modules under `web-client/src` | 13; two are named by `DEC-155` |
 | `SIGN_OUT_WARNING`'s value as one literal in its own source | 0 occurrences |
-| Workflows invoking `check-frame-cards.sh` | 0 |
+| Workflows invoking `check-frame-cards.sh` | 0 **as measured on 2026-09-08 when this ADR was written**. [`TASK-140719`](../../tasks/tasks/TASK-140719-the-frame-card-gate-runs-in-ci.md) has since wired it into `tickets.yml`, on this ADR's own finding. The count is left as it was measured because §Context's argument rests on what was true then; the reader should know it is no longer true now |
 | The six `name-ask` strings at `TASK-140710`'s merge | all 6 on the card — this gate would have been **green** |
 
 ## Decision
