@@ -10,6 +10,7 @@ describe("who is asked for a name", () => {
     displayNameRemoved: false,
     deviceRouteLive: false,
     hasRecoveryEmail: false,
+    hasPassword: false,
   };
 
   const baseProfileState = {

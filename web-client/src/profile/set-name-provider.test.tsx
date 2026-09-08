@@ -31,6 +31,7 @@ describe("the set-name provider", () => {
         displayNameRemoved: false,
         deviceRouteLive: false,
         hasRecoveryEmail: false,
+        hasPassword: false,
       },
     }));
 

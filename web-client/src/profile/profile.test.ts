@@ -448,4 +448,58 @@ describe("the profile read", () => {
       profile: aProfile({ hasRecoveryEmail: false, deviceRouteLive: true }),
     });
   });
+
+  it("a body with no hasPassword is not a profile", async () => {
+    // Case 1: body with hasPassword deleted
+    writeDeviceId(storage, "d-1");
+    const body1 = meBody();
+    delete body1.hasPassword;
+    const mock1 = answering(ok(body1));
+    const result1 = await readProfile({
+      fetch: mock1.fetch,
+      storage,
+    });
+
+    expect(result1).toEqual({ kind: "unavailable" });
+
+    // Case 2: hasPassword is a string "yes" (wrong type)
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock2 = answering(ok(meBody({ hasPassword: "yes" })));
+    const result2 = await readProfile({
+      fetch: mock2.fetch,
+      storage,
+    });
+
+    expect(result2).toEqual({ kind: "unavailable" });
+  });
+
+  it("carries the password flag both ways", async () => {
+    // Case 1: hasPassword is true
+    writeDeviceId(storage, "d-1");
+    const mock1 = answering(ok(meBody({ hasPassword: true })));
+    const result1 = await readProfile({
+      fetch: mock1.fetch,
+      storage,
+    });
+
+    expect(result1).toEqual({
+      kind: "profile",
+      profile: aProfile({ hasPassword: true }),
+    });
+
+    // Case 2: hasPassword is false to ensure it's not hardcoded
+    storage = inMemoryStorage();
+    writeDeviceId(storage, "d-1");
+    const mock2 = answering(ok(meBody({ hasPassword: false })));
+    const result2 = await readProfile({
+      fetch: mock2.fetch,
+      storage,
+    });
+
+    expect(result2).toEqual({
+      kind: "profile",
+      profile: aProfile({ hasPassword: false }),
+    });
+  });
 });

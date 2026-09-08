@@ -40,6 +40,7 @@ describe("accountServer", () => {
       displayNameRemoved: false,
       deviceRouteLive: true,
       hasRecoveryEmail: false,
+      hasPassword: false,
     });
 
     // Request for player 1
@@ -55,6 +56,7 @@ describe("accountServer", () => {
       displayNameRemoved: false,
       deviceRouteLive: true,
       hasRecoveryEmail: false,
+      hasPassword: false,
     });
 
     // Verify they are different
@@ -514,6 +516,7 @@ describe("accountServer", () => {
       displayNameRemoved: false,
       deviceRouteLive: true,
       hasRecoveryEmail: false,
+      hasPassword: false,
     });
 
     // The two fixture players differ in every field below, so the wrong
@@ -582,6 +585,7 @@ describe("accountServer", () => {
       displayNameRemoved: false,
       deviceRouteLive: true,
       hasRecoveryEmail: false,
+      hasPassword: false,
     });
   });
 
@@ -648,6 +652,7 @@ describe("accountServer", () => {
       displayNameRemoved: false,
       deviceRouteLive: true,
       hasRecoveryEmail: false,
+      hasPassword: false,
     });
   });
 });
