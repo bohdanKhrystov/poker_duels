@@ -406,6 +406,71 @@ class PostgresProfileReadsTest {
         assertEquals(false, profile?.displayNameRemoved)
     }
 
+    /**
+     * `ADR-0134` §4's first reason a renamer reads `false`: they hold a name, so
+     * `p.display_name IS NULL` is already false regardless of what `reason` the vacated row
+     * carries. That is exactly why this test alone would pass on a mechanism that mistakenly
+     * wrote `RETIRED` for a rename instead of `REPLACED` — [theRenamersRowIsReplacedAndNotRetired]
+     * is the one that catches that. One database holds both a renamer and a taken-down player so
+     * a query answering a constant `false` or a constant `true` fails one half of this test.
+     */
+    @Test
+    fun aPlayerWhoRenamedThemselvesWasNotMovedOn() = runBlocking {
+        profileWrites.setDisplayName(alice.id, "Ann")
+        profileWrites.setDisplayName(alice.id, "Bea")
+        givenARetiredName(bob, "Cid")
+
+        val aliceProfile = profileReads.profileOf(alice.id)
+        val bobProfile = profileReads.profileOf(bob.id)
+
+        assertEquals("Bea", aliceProfile?.displayName)
+        assertEquals(false, aliceProfile?.displayNameRemoved)
+
+        assertNull(bobProfile?.displayName)
+        assertEquals(true, bobProfile?.displayNameRemoved)
+    }
+
+    /**
+     * `ADR-0134` §4's second reason, asserted directly on the registry row rather than inferred
+     * from the bit: a rename leaves the string it spent `REPLACED`, a takedown leaves it
+     * `RETIRED` — the distinction `PROFILE_OF_SQL`'s `r.reason = 'RETIRED'` clause keys on, since
+     * both rows alike are no longer `TAKEN` and both alike carry a non-null `retired_from`.
+     */
+    @Test
+    fun theRenamersRowIsReplacedAndNotRetired() = runBlocking {
+        profileWrites.setDisplayName(alice.id, "Ann")
+        profileWrites.setDisplayName(alice.id, "Bea")
+        givenARetiredName(bob, "Cid")
+
+        assertEquals("REPLACED", reasonRetiredFrom(alice.id))
+        assertEquals("RETIRED", reasonRetiredFrom(bob.id))
+    }
+
+    /**
+     * `AND r.reason = 'RETIRED'` in `PROFILE_OF_SQL` is defensive, not load-bearing, against any
+     * state a shipped write path can produce today: `retire_display_name` is the only writer of
+     * `display_name = NULL`, and it promotes the vacated row to `RETIRED` in the same transaction
+     * before it nulls the column, so whenever `p.display_name IS NULL` holds, a matching
+     * `RETIRED` row already exists — the clause never changes the answer for a reachable state,
+     * and [aPlayerWhoRenamedThemselvesWasNotMovedOn] cannot tell it apart from a query that
+     * dropped it. This test constructs the one state that can: a player with `display_name`
+     * NULL whose only registry row is `REPLACED`, written by a raw `INSERT` that never goes
+     * through `setDisplayName` or `retire_display_name`. It is reachable in SQL because
+     * `name_registry_monotone` (`V5__name_registry.sql`) fires `BEFORE UPDATE OR DELETE`, never
+     * `INSERT`, so nothing stops a row from being born `REPLACED` outside the trigger's view — no
+     * server code takes that path today, which is exactly why the clause guarding it needs a test
+     * of its own rather than being deleted as dead weight.
+     */
+    @Test
+    fun aReplacedRowWithNoDisplayNameStillReadsFalse() = runBlocking {
+        givenAReplacedRowByRawInsertOnly(alice, "Zed")
+
+        val profile = profileReads.profileOf(alice.id)
+
+        assertNull(profile?.displayName)
+        assertEquals(false, profile?.displayNameRemoved)
+    }
+
     @Test
     fun aDuelAgainstANamedOpponentReadsBackThatName() = runBlocking {
         setPlayerDisplayName(bob.id.value, "Ingrid")
@@ -1292,6 +1357,39 @@ class PostgresProfileReadsTest {
                 statement.setObject(1, UUID.fromString(player.id.value))
                 statement.setString(2, displayName)
                 statement.executeQuery().use { rows -> rows.next() }
+            }
+        }
+    }
+
+    /**
+     * Inserts a `name_registry` row born `REPLACED`, retired from [player], without going
+     * through `setDisplayName` or `retire_display_name` — the state described on
+     * [aReplacedRowWithNoDisplayNameStillReadsFalse]. A raw `INSERT` skips
+     * `name_registry_monotone` entirely, since that trigger only fires `BEFORE UPDATE OR
+     * DELETE`, so no `CHECK` or trigger stands in the way of a row that no shipped write path
+     * would ever produce.
+     */
+    private fun givenAReplacedRowByRawInsertOnly(player: Player, displayName: String) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement(
+                "INSERT INTO name_registry (name, reason, retired_from) VALUES (?, 'REPLACED', ?)",
+            ).use { statement ->
+                statement.setString(1, displayName)
+                statement.setObject(2, UUID.fromString(player.id.value))
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    /** Reads the sole `name_registry.reason` of the row whose `retired_from` is [playerId]. */
+    private fun reasonRetiredFrom(playerId: PlayerId): String {
+        return dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT reason FROM name_registry WHERE retired_from = ?").use { statement ->
+                statement.setObject(1, UUID.fromString(playerId.value))
+                statement.executeQuery().use { rows ->
+                    rows.next()
+                    rows.getString(1)
+                }
             }
         }
     }

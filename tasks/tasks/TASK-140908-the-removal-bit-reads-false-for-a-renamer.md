@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140908
 title: The removal bit reads false for a renamer, for two independent reasons
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: poker-server
 estimate: S
@@ -14,7 +14,7 @@ labels: [server, db, account]
 depends_on: [TASK-140907]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.db.PostgresProfileReadsTest' -PrequireDocker=true
-  - grep -q 'tests="52" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.db.PostgresProfileReadsTest.xml
+  - grep -q 'tests="55" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.db.PostgresProfileReadsTest.xml
   - ./gradlew :poker-server:test --tests 'duels.poker.server.db.TakedownIsInvisibleTest' -PrequireDocker=true
   - grep -q 'tests="4" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.db.TakedownIsInvisibleTest.xml
   - grep -qF "r.retired_from = p.id AND r.reason = 'RETIRED'" poker-server/src/main/kotlin/duels/poker/server/db/PostgresProfileReads.kt
@@ -73,7 +73,7 @@ Read, and do not edit:
 
 ## Tests
 
-`PostgresProfileReadsTest` — 50 tests on `develop` at `1c3c7fd9`, 52 after.
+`PostgresProfileReadsTest` — **52** tests on `develop` (measured 2026-09-09), **55** after — two for the renamer, and a third added at review to pin the `reason` clause. The ticket was written against 50 at `1c3c7fd9`; `TASK-140806` added two password-flag cases to this class in between, so the baseline moved before this ticket started.
 
 | Test | Proves |
 | --- | --- |
