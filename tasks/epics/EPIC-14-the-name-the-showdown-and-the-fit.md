@@ -137,8 +137,11 @@ one**, as do the `DEC-140` and `DEC-141` the planner raised while splitting item
 thirteen are answered** — five of them **contradict a merged ADR**, a heavier thing than an open
 question and marked as such, and one of them **opens a decision that was already open**. A second
 already-open row, `DEC-108`, has since been **closed** by this epic's own answer to `DEC-135`.
-What is left open is the follow-ups those answers registered — `DEC-144`
-and `DEC-150` for the architect and `DEC-145` for the product owner. Five more were
+Of the follow-ups those answers registered, the architect's two are now answered — `DEC-144` by
+[`ADR-0138`](../../docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-the-dismissal-lives-in-the-mount.md)
+and `DEC-150` by
+[`ADR-0140`](../../docs/adr/ADR-0140-the-clipboard-api-is-the-only-copy-this-client-attempts.md) —
+so what is left open is `DEC-145`, the product owner's. Five more were
 answered on 2026-09-07 and stand under *Answered* below: `DEC-147`, by
 [`ADR-0132`](../../docs/adr/ADR-0132-the-profile-says-whether-it-holds-a-password.md); the
 pre-existing `DEC-110` that `ADR-0124` §6 widened, by
@@ -501,11 +504,29 @@ human's: relaxing `R3` for the scale, raising the judged shape, and any list of 
 commits to.
 
 **Nothing is open.** Every decision this epic raised or inherited is answered by a merged ADR —
-thirteen the product owner's and six the architect's — and the table that held them is empty. Two
-decisions registered *by* those answers stay open in `docs/adr/README.md` and **block nothing here**:
+thirteen the product owner's and six the architect's — and the table that held them is empty. One
+decision registered *by* those answers stays open in `docs/adr/README.md` and **blocks nothing here**:
 `DEC-145` (a player who holds a waiting room and then takes a seat in another by invite, the product
-owner's) and `DEC-150` (whether a copy is achievable at all where `navigator.clipboard` is undefined,
-the architect's). Neither gates a story, and neither is this epic's to close.
+owner's). It gates no story, and it is not this epic's to close.
+
+**The other follow-up those answers registered is answered on 2026-09-08.** `DEC-150` — whether a
+copy is achievable at all where `navigator.clipboard` is undefined, the architect's — is answered by
+[`ADR-0140`](../../docs/adr/ADR-0140-the-clipboard-api-is-the-only-copy-this-client-attempts.md):
+**none, and the reason is the missing read-back rather than the deprecation.**
+`execCommand("copy")`'s boolean says the command was supported and enabled, not that the clipboard
+holds the link, and the only in-page read-back —
+`navigator.clipboard.readText` — sits on the same `[SecureContext]` interface that is missing by
+hypothesis, so `ADR-0128` §4 is unmeetable and `Link copied.` stays gated on a resolved `writeText`.
+The **silent** copy — attempt it, claim nothing — is refused on `ADR-0128` **§3** rather than §4:
+the promise is that *"the screen says which"*, and a silent success prints
+`Copy it from the box above.` on the exact devices the mechanism serves. **No file changes and no
+ticket is owed** — `web-client/src/table/InvitePanel.tsx` already behaves this way, and the negative
+is pinned three times, including `Lobby.test.tsx`'s seven-string enumeration of this epic's own
+host-alone table. `ADR-0140` §6 names what would have to change before a mechanism could ever be
+proved here: measured this run, jsdom 24.1.3 has no `document.execCommand` at all, and `ADR-0117`
+§1's origin is secure, so a drive would need the bundle on a **non-secure** origin and a
+paste-based read-back verb in `scripts/qa/drive.mjs`. It supersedes nothing, registers nothing, and
+unblocks nothing — `ADR-0128` §7's *"`DEC-150` blocks nothing"* held to the end.
 
 **One more was registered on 2026-09-07 by the planner rather than by an answer, and it was
 answered the same day**: `DEC-153`, the architect's — how the client tells a **first** showing of
@@ -534,6 +555,7 @@ stands **exactly as written**, and gated nothing else.
 
 | ID | Answered by | What it means here |
 | --- | --- | --- |
+| `DEC-150` | [`ADR-0140`](../../docs/adr/ADR-0140-the-clipboard-api-is-the-only-copy-this-client-attempts.md) | **None — and the reason is the missing read-back, not the deprecation.** `navigator.clipboard.writeText` stays the only clipboard mechanism this client uses; where the API is undefined the press performs `ADR-0128` §3's hand-over and attempts nothing else. `execCommand("copy")` reports that the command was supported and enabled, never that the clipboard holds the link, and `navigator.clipboard.readText` — the one in-page read-back — is absent exactly where it would be needed, so §4's *"never of an attempt whose success the client cannot read"* cannot be met. The **silent** copy is refused on **§3**, whose promise is that *"the screen says which"*; a third, hedged outcome would be a string, and `ADR-0110` §6 makes that the product owner's. Nothing in this epic moves: no file, no card, no frame, no string, no ticket |
 | `DEC-153` | [`ADR-0139`](../../docs/adr/ADR-0139-the-read-beat-is-spent-once-and-the-store-already-remembers.md) | **The read beat is spent once per hand, and the store already remembers.** The word being repaired is `before` — `ADR-0120` §3's rule says *has not been shown before*, its own restatement drops it, and `ADR-0136` §1 shipped the restatement while calling it *not a paraphrase*; that claim is **withdrawn**. `layOutReveal` gains `held: PlayerView \| null`, the `Snapshot` case passes `state.view` — still the *previous* view on that path — and the final step is `"read"` only when the rival's cards are **newly** shown. **`DuelState` gains no field**: `state.view` was already there, is written only by the `Snapshot` case, is cleared by nothing, and holds a `COMPLETE` view only by having **painted** it, since a frame arriving while a reveal stands is queued rather than applied — which is why the amendment to `ADR-0136` §1 is three sentences and why all three of its reasons survive. The guard sits in the **reducer** because `advanceReveal` folds queued frames back through `applyServerMessage`, a path a guard in `duel-store.ts` would miss. Two ways it could be wrong are closed by merged facts: `HandRevealed` fires only in `reachShowdownAndSettle`, which settles in the same engine step, so rival cards cannot appear before `COMPLETE`; and the hand comparison keeps the **next** hand a read. **Measured unreachable** — 0 in 2,220 resume frames, against 602 from a falsified detector — which is why the second answer was real; it lost because its pin needed `poker-server`, which this epic forbids. Costs named: the classification is no longer a pure function of one frame, a one-day-old ADR is amended by the story implementing it, a reload still forgets, and **the change is unfalsifiable in the product**. Unblocks `TASK-141108`, which stands exactly as written; **registers no decision and creates no story** |
 | `DEC-144` | [`ADR-0138`](../../docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-the-dismissal-lives-in-the-mount.md) | **The panel mounts beside the lobby.** A props-less `RematchNotice` is `App`'s last child of `<main>`, beside `<Lobby />` — `Lobby.tsx` is not edited, the gate is a second call of `ADR-0114`'s `shown`/`ruling` with **no effect**, and the dismissal is one `useState` boolean living as long as the mount. `ADR-0123` §7's dismissal lifetime decided the mount point: state inside the cascade dies on one press of *Back*. Three of §2's prohibitions then hold structurally — outside every `<form>`, no timer, out of flow. The dismissal clears **during render** when the offer ends, or one *Not now* would hide every later offer for the tab's life. `role="status"`, no focus call, no key handler. **Nothing crosses the socket**, so `STORY-1415`'s ticket is not `atomic:` — it waits only on its minting card |
 | `DEC-142` | [`ADR-0137`](../../docs/adr/ADR-0137-a-name-suggestion-is-drawn-in-the-browser.md) | **Drawn in the browser, from a bundled vocabulary, and nothing consults `name_registry`.** The three halves of the question, answered in order. **What generates it:** `suggestName(random, replacing?)` in `web-client/src/profile/name-suggestion.ts` — a pure function that takes **no player fact of any kind**, so `ADR-0029` §6 and `ADR-0067` hold by the signature rather than by care; `random` is a `[0, 1)` source defaulting to `Math.random` at the call site, `reconnecting.ts`'s shipped `jitter` idiom, and the index is clamped so a source returning `1` cannot join `undefined` into a **permanent** name. **Does it consult the registry: no** — no query, no endpoint, no filter, no hint, so `ADR-0029` §5 and `ADR-0051` §9 are applied and not reopened. **Does it cross the wire: no** — no socket frame, no HTTP route, no `docs/protocol.md` edit, no Kotlin file, no migration; `ADR-0047` §2's fingerprint cannot move and **`STORY-1407`'s tickets are not `atomic:`** under `ADR-0068` §3. The property `ADR-0119` §4 asked for — *a refusal rare enough that accepting normally works first try* — is therefore bought with **size** rather than knowledge: an import-free vocabulary module of word lists, **arity as data**, joined by one `U+0020`, held by three tests — the product of the list lengths `>= SUGGESTION_SPACE_FLOOR = 1_000_000`, every entry NFC and free of `Cc`, `Cf` and all whitespace, and the longest-entry sum plus separators `<= 32` code points. So a suggestion can be refused with `409` and **can never be refused with `400`** — the product never offers a string its own write path rejects. One draw per mount, stored nowhere; a reroll on `conflict` alone and only into a field still holding the unedited suggestion; and the reroll is free because `ADR-0134` §6 meters *spending* and refunds a `409`. **This ADR ships no word** — the vocabulary's contents stay `ADR-0119`'s deliberate omission and are the implementing ticket's, under the human's eye |
