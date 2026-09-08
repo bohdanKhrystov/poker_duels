@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140803
 title: The app test stops mocking two exports that are gone
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: web-client
 estimate: XS
