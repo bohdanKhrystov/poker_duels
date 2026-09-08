@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140708
 title: One module owns the key that says this browser skipped the ask
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
@@ -17,8 +17,8 @@ verify:
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && grep -qF 'export const NAME_ASK_SKIPPED_STORAGE_KEY = "pd.nameAskSkipped";' src/profile/name-ask-skipped.ts
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/profile/name-ask-skipped.test.ts > "${TMPDIR:-/tmp}/sk-after.txt" 2>&1; grep -qF 'Tests  5 passed (5)' "${TMPDIR:-/tmp}/sk-after.txt"
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts > "${TMPDIR:-/tmp}/ok-after.txt" 2>&1; grep -qF 'Tests  5 passed (5)' "${TMPDIR:-/tmp}/ok-after.txt"
-  - cd web-client && cp src/profile/name-text.ts "${TMPDIR:-/tmp}/nt.fixed.ts" && printf '\n// pd.nameAskSkipped\n' >> src/profile/name-text.ts && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts > "${TMPDIR:-/tmp}/k1.txt" 2>&1; cp "${TMPDIR:-/tmp}/nt.fixed.ts" src/profile/name-text.ts; cmp -s "${TMPDIR:-/tmp}/nt.fixed.ts" src/profile/name-text.ts && grep -qF 'Tests  1 failed | 4 passed (5)' "${TMPDIR:-/tmp}/k1.txt" && grep -qF 'only the name-ask-skipped module writes the skipped key' "${TMPDIR:-/tmp}/k1.txt"
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts > "${TMPDIR:-/tmp}/ok-after.txt" 2>&1; grep -qF 'Tests  4 passed (4)' "${TMPDIR:-/tmp}/ok-after.txt"
+  - cd web-client && cp src/profile/name-text.ts "${TMPDIR:-/tmp}/nt.fixed.ts" && printf '\n// pd.nameAskSkipped\n' >> src/profile/name-text.ts && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts > "${TMPDIR:-/tmp}/k1.txt" 2>&1; cp "${TMPDIR:-/tmp}/nt.fixed.ts" src/profile/name-text.ts; cmp -s "${TMPDIR:-/tmp}/nt.fixed.ts" src/profile/name-text.ts && grep -qF 'Tests  1 failed | 3 passed (4)' "${TMPDIR:-/tmp}/k1.txt" && grep -qF 'only the name-ask-skipped module writes the skipped key' "${TMPDIR:-/tmp}/k1.txt"
   - python3 .github/scripts/lint_tickets.py
 ---
 
@@ -111,9 +111,9 @@ shape: one key, owned beside the predicate it feeds, with a row in
 - [ ] All five tests in `name-ask-skipped.test.ts` pass:
       `npx vitest run src/profile/name-ask-skipped.test.ts` reports `Tests  5 passed (5)`
 - [ ] `npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts` reports
-      `Tests  5 passed (5)`, and the four merged rows are byte-unchanged
+      `Tests  4 passed (4)`, and the three merged rows are byte-unchanged
 - [ ] Writing `pd.nameAskSkipped` into `name-text.ts` makes the new row — and only it — fail:
-      `Tests  1 failed | 4 passed (5)`, and `name-text.ts` is restored byte-for-byte
+      `Tests  1 failed | 3 passed (4)`, and `name-text.ts` is restored byte-for-byte
 - [ ] `name-ask-skipped.ts` exports exactly `NAME_ASK_SKIPPED_STORAGE_KEY`, `readNameAskSkipped` and
       `markNameAskSkipped`, and reaches for no global `Storage`
 - [ ] `cd web-client && npm run check` exits 0

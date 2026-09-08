@@ -74,4 +74,10 @@ describe("one module owns each storage key", () => {
       "room-memory.ts",
     ]);
   });
+
+  it("only the name-ask-skipped module writes the skipped key", () => {
+    expect(productionSourcesContaining("pd.nameAskSkipped")).toEqual([
+      "name-ask-skipped.ts",
+    ]);
+  });
 });
