@@ -1294,6 +1294,62 @@ class ProfileRouteTest {
     }
 
     @Test
+    fun aWriteThatThrowsKeepsNoBudget() = testApplication {
+        // A write that fails for a reason that is not the player's — a database fault, not a
+        // taken name — must not keep the reservation admit() made for it. Budget of two: the two
+        // successful writes that follow the throw only both succeed if the reservation the throw
+        // left behind came back, and the third proves the budget still enforces its real limit
+        // rather than merely "some" limit — the same inversion aRefusedNameCostsNoBudget guards
+        // against for a returned refusal. Against develop, the throw leaks the reservation and the
+        // second write already answers 429.
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+        val writes = ThrowOnceThenProfileWrites(
+            listOf(
+                SetNameResult.NameSet(profileResponse("p-alice", 0, "Alice")),
+                SetNameResult.NameSet(profileResponse("p-alice", 0, "Alicia")),
+            ),
+        )
+        val budget = AttemptBudget(AttemptLimits(2, 60_000L), MutableClock())
+        application {
+            module()
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), budget)
+        }
+        // testApplication runs the server in-process, so a route's uncaught exception surfaces
+        // directly to the calling coroutine rather than as an HTTP response — this is the
+        // assertion that the write's fault still propagates instead of being swallowed to protect
+        // the budget.
+        var caught: Throwable? = null
+        try {
+            client.put("/api/me/name") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"name":"Alice"}""")
+            }
+        } catch (fault: Throwable) {
+            caught = fault
+        }
+        assertTrue(caught is IllegalStateException, "the write's exception must still propagate")
+        val first = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alice"}""")
+        }
+        val second = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alicia"}""")
+        }
+        val third = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alicja"}""")
+        }
+        assertEquals(HttpStatusCode.OK, first.status)
+        assertEquals(HttpStatusCode.OK, second.status)
+        assertEquals(HttpStatusCode.TooManyRequests, third.status)
+    }
+
+    @Test
     fun aRefusedBodyCostsNoBudget() = testApplication {
         // Budget of one: a body that fails to decode answers 400 without ever reaching admit, so
         // the valid write that follows is the first real reservation and still answers 200 rather
@@ -1404,6 +1460,23 @@ class ProfileRouteTest {
             val result = results[index]
             if (index < results.lastIndex) index++
             return result
+        }
+    }
+
+    /**
+     * A [ProfileWrites] whose first call throws, standing in for `PostgresProfileWrites.writeName`
+     * rethrowing a `SQLException` mid-write, and whose every later call answers [results] in
+     * order, holding on the last entry once exhausted — the shape `aWriteThatThrowsKeepsNoBudget`
+     * needs to prove a thrown write still lets the reservation it consumed come back.
+     */
+    private class ThrowOnceThenProfileWrites(private val results: List<SetNameResult>) : ProfileWrites {
+        private var calls = 0
+
+        override suspend fun setDisplayName(playerId: PlayerId, canonicalName: String): SetNameResult {
+            calls++
+            if (calls == 1) throw IllegalStateException("simulated write fault")
+            val index = (calls - 2).coerceAtMost(results.lastIndex)
+            return results[index]
         }
     }
 
