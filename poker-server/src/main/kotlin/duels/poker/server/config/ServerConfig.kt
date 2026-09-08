@@ -48,6 +48,10 @@ public data class ServerConfig(
     val forgotPasswordWindowMillis: Long = 60_000L,
     val recoveryEmailMaxAttempts: Int = 5,
     val recoveryEmailWindowMillis: Long = 60_000L,
+    // These two fields have defaults so that existing construction sites can compile without
+    // specifying the name write budget, which is only used by TASK-140905.
+    val nameWriteMaxAttempts: Int = 5,
+    val nameWriteWindowMillis: Long = 60_000L,
 ) {
     /** Bundles the four room timeouts so callers do not reassemble them. */
     public fun roomTimeouts(): RoomTimeouts = RoomTimeouts(
@@ -68,6 +72,9 @@ public data class ServerConfig(
 
     /** Bundles the `recovery-email` budget's two numbers so callers do not reassemble them. */
     public fun recoveryEmailLimits(): AttemptLimits = AttemptLimits(recoveryEmailMaxAttempts, recoveryEmailWindowMillis)
+
+    /** Bundles the `name-write` budget's two numbers so callers do not reassemble them. */
+    public fun nameWriteLimits(): AttemptLimits = AttemptLimits(nameWriteMaxAttempts, nameWriteWindowMillis)
 
     public companion object {
         public const val DEFAULT_PORT: Int = 8080
@@ -164,6 +171,14 @@ public data class ServerConfig(
         public const val DEFAULT_RECOVERY_EMAIL_WINDOW_MILLIS: Long = 60_000L
         public const val RECOVERY_EMAIL_WINDOW_MILLIS_KEY: String = "auth.recoveryEmailWindowMillis"
         public const val AUTH_RECOVERY_EMAIL_WINDOW_MILLIS: String = "AUTH_RECOVERY_EMAIL_WINDOW_MILLIS"
+
+        public const val DEFAULT_NAME_WRITE_MAX_ATTEMPTS: Int = 5
+        public const val NAME_WRITE_MAX_ATTEMPTS_KEY: String = "auth.nameWriteMaxAttempts"
+        public const val AUTH_NAME_WRITE_MAX_ATTEMPTS: String = "AUTH_NAME_WRITE_MAX_ATTEMPTS"
+
+        public const val DEFAULT_NAME_WRITE_WINDOW_MILLIS: Long = 60_000L
+        public const val NAME_WRITE_WINDOW_MILLIS_KEY: String = "auth.nameWriteWindowMillis"
+        public const val AUTH_NAME_WRITE_WINDOW_MILLIS: String = "AUTH_NAME_WRITE_WINDOW_MILLIS"
 
         /**
          * Build a [ServerConfig] from a Ktor [ApplicationConfig] with environment variable
@@ -367,6 +382,28 @@ public data class ServerConfig(
                 "recovery-email window must be an integer, got: $recoveryEmailWindowMillisString"
             }
 
+            val nameWriteMaxAttemptsString = resolve(
+                config,
+                env,
+                AUTH_NAME_WRITE_MAX_ATTEMPTS,
+                NAME_WRITE_MAX_ATTEMPTS_KEY,
+                DEFAULT_NAME_WRITE_MAX_ATTEMPTS.toString(),
+            )
+            val nameWriteMaxAttempts = requireNotNull(nameWriteMaxAttemptsString.toIntOrNull()) {
+                "name-write max attempts must be an integer, got: $nameWriteMaxAttemptsString"
+            }
+
+            val nameWriteWindowMillisString = resolve(
+                config,
+                env,
+                AUTH_NAME_WRITE_WINDOW_MILLIS,
+                NAME_WRITE_WINDOW_MILLIS_KEY,
+                DEFAULT_NAME_WRITE_WINDOW_MILLIS.toString(),
+            )
+            val nameWriteWindowMillis = requireNotNull(nameWriteWindowMillisString.toLongOrNull()) {
+                "name-write window must be an integer, got: $nameWriteWindowMillisString"
+            }
+
             val baseUrl = resolve(config, env, BASE_URL_ENV, BASE_URL_KEY, DEFAULT_BASE_URL)
             require(baseUrl.isNotEmpty()) {
                 "$BASE_URL_KEY must not be empty"
@@ -400,6 +437,8 @@ public data class ServerConfig(
                 forgotPasswordWindowMillis = forgotPasswordWindowMillis,
                 recoveryEmailMaxAttempts = recoveryEmailMaxAttempts,
                 recoveryEmailWindowMillis = recoveryEmailWindowMillis,
+                nameWriteMaxAttempts = nameWriteMaxAttempts,
+                nameWriteWindowMillis = nameWriteWindowMillis,
             )
         }
 

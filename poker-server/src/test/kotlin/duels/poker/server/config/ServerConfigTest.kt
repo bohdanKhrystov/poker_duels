@@ -381,6 +381,42 @@ class ServerConfigTest {
     }
 
     @Test
+    fun nameWriteIsFiveAMinuteWithNothingConfigured() {
+        // ADR-0134: 5 / 60000 as the rate limit on name write spends
+        val config = MapApplicationConfig()
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(AttemptLimits(5, 60_000L), serverConfig.nameWriteLimits())
+    }
+
+    @Test
+    fun nameWriteReadsItsTwoNumbersFromTheFile() {
+        // ADR-0134: name write budget reads both from config file with distinct values
+        val config = MapApplicationConfig(
+            ServerConfig.NAME_WRITE_MAX_ATTEMPTS_KEY to "7",
+            ServerConfig.NAME_WRITE_WINDOW_MILLIS_KEY to "222000",
+        )
+        val serverConfig = ServerConfig.from(config) { null }
+        assertEquals(AttemptLimits(7, 222_000L), serverConfig.nameWriteLimits())
+    }
+
+    @Test
+    fun theEnvironmentOutranksTheFileForTheNameWriteBudget() {
+        // ADR-0134: environment must override both name write budget values from file
+        val config = MapApplicationConfig(
+            ServerConfig.NAME_WRITE_MAX_ATTEMPTS_KEY to "7",
+            ServerConfig.NAME_WRITE_WINDOW_MILLIS_KEY to "222000",
+        )
+        val serverConfig = ServerConfig.from(config) { name ->
+            when (name) {
+                ServerConfig.AUTH_NAME_WRITE_MAX_ATTEMPTS -> "4"
+                ServerConfig.AUTH_NAME_WRITE_WINDOW_MILLIS -> "444000"
+                else -> null
+            }
+        }
+        assertEquals(AttemptLimits(4, 444_000L), serverConfig.nameWriteLimits())
+    }
+
+    @Test
     fun theShippedTurnAllowanceIsTheDeclaredOne() {
         val config = MapApplicationConfig()
         val serverConfig = ServerConfig.from(config) { null }
