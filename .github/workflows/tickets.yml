@@ -32,3 +32,6 @@ jobs:
 
       - name: Check design-card invariants
         run: ./design/check-drift.sh
+
+      - name: Check frame-card invariants
+        run: ./design/check-frame-cards.sh

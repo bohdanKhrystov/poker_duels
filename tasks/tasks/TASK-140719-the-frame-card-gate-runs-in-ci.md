@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140719
 title: The frame-card gate runs in CI
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: repo
 estimate: XS
