@@ -1,6 +1,8 @@
 package duels.poker.server.http
 
 import duels.poker.server.ServerComponents
+import duels.poker.server.auth.AttemptBudget
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.PresentedSecret
 import duels.poker.server.auth.ResetToken
@@ -14,6 +16,7 @@ import duels.poker.server.protocol.http.SignInResponse
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.serverComponents
 import duels.poker.server.session.PlayerId
+import duels.poker.server.time.MutableClock
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -99,7 +102,7 @@ class ResetPasswordEndsSessionsTest {
                 components.signUpBudget,
                 components.signInBudget,
             )
-            profileRoutes(components.reads, components.writes, components.identities)
+            profileRoutes(components.reads, components.writes, components.identities, generousNameWriteBudget())
             recoveryRoutes(
                 components.recoveryEmails,
                 components.passwordResets,
@@ -154,7 +157,7 @@ class ResetPasswordEndsSessionsTest {
                 components.signUpBudget,
                 components.signInBudget,
             )
-            profileRoutes(components.reads, components.writes, components.identities)
+            profileRoutes(components.reads, components.writes, components.identities, generousNameWriteBudget())
             recoveryRoutes(
                 components.recoveryEmails,
                 components.passwordResets,
@@ -211,7 +214,7 @@ class ResetPasswordEndsSessionsTest {
                 components.signUpBudget,
                 components.signInBudget,
             )
-            profileRoutes(components.reads, components.writes, components.identities)
+            profileRoutes(components.reads, components.writes, components.identities, generousNameWriteBudget())
             recoveryRoutes(
                 components.recoveryEmails,
                 components.passwordResets,
@@ -258,7 +261,7 @@ class ResetPasswordEndsSessionsTest {
                 components.signUpBudget,
                 components.signInBudget,
             )
-            profileRoutes(components.reads, components.writes, components.identities)
+            profileRoutes(components.reads, components.writes, components.identities, generousNameWriteBudget())
             recoveryRoutes(
                 components.recoveryEmails,
                 components.passwordResets,
@@ -359,4 +362,10 @@ class ResetPasswordEndsSessionsTest {
     /** Presents [token] as a bearer session token against `GET /api/me`. */
     private suspend fun HttpClient.meWith(token: String): HttpResponse =
         get("/api/me") { header(HttpHeaders.Authorization, "Bearer $token") }
+
+    // This suite is about sessions ending on a reset, not the write budget (ADR-0134 §6); none of
+    // its tests write a name, but a limit reachable by a human would still be the wrong thing to
+    // depend on here.
+    private fun generousNameWriteBudget(): AttemptBudget =
+        AttemptBudget(AttemptLimits(1_000_000, 60_000L), MutableClock())
 }

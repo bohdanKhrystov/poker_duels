@@ -1,5 +1,7 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.AttemptBudget
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.module
 import duels.poker.server.protocol.http.DuelOutcomeLabel
 import duels.poker.server.protocol.http.DuelSummaryResponse
@@ -9,6 +11,7 @@ import duels.poker.server.protocol.http.duelSummaryResponse
 import duels.poker.server.protocol.http.profileResponse
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.session.PlayerId
+import duels.poker.server.time.MutableClock
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.put
@@ -33,7 +36,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "alice")
@@ -54,7 +57,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "bob")
@@ -69,7 +72,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me")
         assertEquals(HttpStatusCode.Unauthorized, response.status)
@@ -81,7 +84,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "  ")
@@ -95,7 +98,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "ghost")
@@ -114,7 +117,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 4)))
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me") {
             header(HttpHeaders.Authorization, "not-a-bearer-token")
@@ -140,7 +143,7 @@ class ProfileRouteTest {
         val sessions = FixedAuthSessions(mapOf("t-signed" to "p-signed"))
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions), generousBudget())
         }
         val response = client.get("/api/me") {
             header(HttpHeaders.Authorization, "Bearer t-signed")
@@ -169,7 +172,7 @@ class ProfileRouteTest {
         val sessions = FixedAuthSessions(mapOf("t-signed" to "p-signed"))
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions), generousBudget())
         }
         val response = client.get("/api/me") {
             header(DEVICE_ID_HEADER, "d-anon")
@@ -196,7 +199,7 @@ class ProfileRouteTest {
         val sessions = FixedAuthSessions(mapOf("t-signed" to "p-signed"))
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions), generousBudget())
         }
         val response = client.get("/api/me") {
             header(HttpHeaders.Authorization, "Bearer nonsense")
@@ -222,7 +225,7 @@ class ProfileRouteTest {
         val sessions = FixedAuthSessions(mapOf("t-signed" to "p-signed"))
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles, sessions), generousBudget())
         }
         val response = client.get("/api/me") {
             header(HttpHeaders.Authorization, "Bearer ")
@@ -259,7 +262,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -288,7 +291,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -314,7 +317,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -331,7 +334,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -351,7 +354,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -370,7 +373,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -391,7 +394,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me/duels?limit=999") {
             header(DEVICE_ID_HEADER, "alice")
@@ -410,7 +413,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me/duels?limit=abc") {
             header(DEVICE_ID_HEADER, "alice")
@@ -427,7 +430,7 @@ class ProfileRouteTest {
         )
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me/duels") {
             header(DEVICE_ID_HEADER, "alice")
@@ -442,7 +445,7 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(emptyMap())
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.get("/api/me/duels?limit=abc") {
             header(DEVICE_ID_HEADER, "ghost")
@@ -459,7 +462,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val cursor =
                 DuelCursor(
@@ -483,7 +486,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?after=not-a-cursor") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -503,7 +506,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?after=") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -519,7 +522,7 @@ class ProfileRouteTest {
             val reads = FakeProfileReads(emptyMap())
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?after=not-a-cursor") {
                 header(DEVICE_ID_HEADER, "ghost")
@@ -538,7 +541,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?outcome=WON") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -557,7 +560,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?opponent=Halvard") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -576,7 +579,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?outcome=won") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -596,7 +599,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?opponent=") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -613,7 +616,7 @@ class ProfileRouteTest {
             val reads = FakeProfileReads(emptyMap())
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?outcome=won")
             assertEquals(HttpStatusCode.Unauthorized, response.status)
@@ -665,7 +668,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?limit=3") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -714,7 +717,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             // The fake holds exactly `limit` rows: the probe finds nothing. A naive
             // returned == limit ⇒ there is more would get this wrong.
@@ -753,7 +756,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?limit=3") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -774,7 +777,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val response = client.get("/api/me/duels?limit=3") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -832,7 +835,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val firstPage = client.get("/api/me/duels?limit=3") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -865,7 +868,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val firstPage = client.get("/api/me/duels?limit=1&outcome=WON") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -903,7 +906,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val mintingPage = client.get("/api/me/duels?limit=1&outcome=WON") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -935,7 +938,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val mintingPage = client.get("/api/me/duels?limit=1") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -965,7 +968,7 @@ class ProfileRouteTest {
             )
             application {
                 module()
-                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles))
+                profileRoutes(reads, FakeProfileWrites(), identitiesFor(reads.profiles), generousBudget())
             }
             val mintingPage = client.get("/api/me/duels?limit=1&opponent=Halvard") {
                 header(DEVICE_ID_HEADER, "alice")
@@ -992,7 +995,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.NameSet(profileResponse("p-alice", 4, "Alice")))
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1012,7 +1015,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.NameSet(profileResponse("p-alice", 0, "Bob")))
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1029,7 +1032,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         // A valid body, so a wrong implementation that answered on the body would answer 200,
         // not 401 — the identity refusal below, not the body one.
@@ -1047,7 +1050,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         // A body that cannot even decode: if identity were checked after the body were read,
         // this would answer 400 — the same wrong answer the body's own defect would produce —
@@ -1067,7 +1070,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "ghost")
@@ -1084,7 +1087,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1101,7 +1104,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites()
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1118,7 +1121,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.NameTaken)
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1136,7 +1139,12 @@ class ProfileRouteTest {
         val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
         application {
             module()
-            profileRoutes(reads, FakeProfileWrites(SetNameResult.NameTaken), identitiesFor(reads.profiles))
+            profileRoutes(
+                reads,
+                FakeProfileWrites(SetNameResult.NameTaken),
+                identitiesFor(reads.profiles),
+                generousBudget(),
+            )
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1154,7 +1162,7 @@ class ProfileRouteTest {
         val writes = FakeProfileWrites(SetNameResult.NameSet(profile))
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), generousBudget())
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
@@ -1166,6 +1174,149 @@ class ProfileRouteTest {
         assertTrue(body.contains("\"playerId\":\"p-alice\""))
         assertTrue(body.contains("\"coinBalance\":2"))
         assertTrue(body.contains("\"displayName\":\"Alice\""))
+    }
+
+    @Test
+    fun theWriteAfterTheBudgetIsSpentAnswersTooManyRequests() = testApplication {
+        // ADR-0134 §6's inversion: a successful write spends the budget, so the third of three
+        // successful writes against a budget of two is the one that answers 429 — a budget that
+        // metered attempts rather than spending would answer this test identically, but
+        // aRefusedNameCostsNoBudget below is what tells the two apart.
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+        val writes = SequencedProfileWrites(
+            listOf(
+                SetNameResult.NameSet(profileResponse("p-alice", 0, "Alice")),
+                SetNameResult.NameSet(profileResponse("p-alice", 0, "Alicia")),
+                SetNameResult.NameSet(profileResponse("p-alice", 0, "Alicja")),
+            ),
+        )
+        val budget = AttemptBudget(AttemptLimits(2, 60_000L), MutableClock())
+        application {
+            module()
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), budget)
+        }
+        val first = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alice"}""")
+        }
+        val second = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alicia"}""")
+        }
+        val third = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alicja"}""")
+        }
+        assertEquals(HttpStatusCode.OK, first.status)
+        assertEquals(HttpStatusCode.OK, second.status)
+        assertEquals(HttpStatusCode.TooManyRequests, third.status)
+        assertEquals("", third.bodyAsText())
+    }
+
+    @Test
+    fun aRefusedNameCostsNoBudget() = testApplication {
+        // Six refusals against a budget of two: without the refund, admit is already exhausted by
+        // the third one and answers 429 instead of letting the port refuse with 409 — one refusal
+        // against a budget of two would pass whether or not it was refunded, so six is what
+        // catches a coder who never calls refund at all. Alice's two successful writes that follow
+        // then run her own budget to exactly its capacity, so carol's first write is a genuine test
+        // of a per-player key: a constant key shared with alice's already-exhausted budget would
+        // answer 429 here too, and only a key of alice's own playerId lets it through.
+        val reads = FakeProfileReads(
+            mapOf(
+                "alice" to profileResponse("p-alice", 0),
+                "carol" to profileResponse("p-carol", 0),
+            ),
+        )
+        val results = List(6) { SetNameResult.NameTaken } +
+            listOf(
+                SetNameResult.NameSet(profileResponse("p-alice", 0, "Alice")),
+                SetNameResult.NameSet(profileResponse("p-alice", 0, "Alicia")),
+                SetNameResult.NameSet(profileResponse("p-carol", 0, "Carol")),
+            )
+        val writes = SequencedProfileWrites(results)
+        val budget = AttemptBudget(AttemptLimits(2, 60_000L), MutableClock())
+        application {
+            module()
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), budget)
+        }
+        repeat(6) {
+            val response = client.put("/api/me/name") {
+                header(DEVICE_ID_HEADER, "alice")
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"name":"Taken"}""")
+            }
+            assertEquals(HttpStatusCode.Conflict, response.status)
+        }
+        val aliceFirstSet = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alice"}""")
+        }
+        assertEquals(HttpStatusCode.OK, aliceFirstSet.status)
+        val aliceSecondSet = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alicia"}""")
+        }
+        assertEquals(HttpStatusCode.OK, aliceSecondSet.status)
+        val carolFirstSet = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "carol")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Carol"}""")
+        }
+        assertEquals(HttpStatusCode.OK, carolFirstSet.status)
+    }
+
+    @Test
+    fun aStrangerOverTheBudgetIsStillUnauthorized() = testApplication {
+        // No device id, sent five times against a budget of one: the budget is keyed by the
+        // resolved player and consulted after identity, so a stranger who never resolves never
+        // reaches it and never turns a 401 into a 429 (ADR-0134 §6, ADR-0074 §2).
+        val reads = FakeProfileReads(emptyMap())
+        val writes = FakeProfileWrites()
+        val budget = AttemptBudget(AttemptLimits(1, 60_000L), MutableClock())
+        application {
+            module()
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), budget)
+        }
+        repeat(5) {
+            val response = client.put("/api/me/name") {
+                header(HttpHeaders.ContentType, "application/json")
+                setBody("""{"name":"Bob"}""")
+            }
+            assertEquals(HttpStatusCode.Unauthorized, response.status)
+        }
+        assertTrue(writes.received.isEmpty())
+    }
+
+    @Test
+    fun aRefusedBodyCostsNoBudget() = testApplication {
+        // Budget of one: a body that fails to decode answers 400 without ever reaching admit, so
+        // the valid write that follows is the first real reservation and still answers 200 rather
+        // than 429.
+        val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
+        val writes = FakeProfileWrites(SetNameResult.NameSet(profileResponse("p-alice", 0, "Alice")))
+        val budget = AttemptBudget(AttemptLimits(1, 60_000L), MutableClock())
+        application {
+            module()
+            profileRoutes(reads, writes, identitiesFor(reads.profiles), budget)
+        }
+        val malformed = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"nickname":"bob"}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, malformed.status)
+        val valid = client.put("/api/me/name") {
+            header(DEVICE_ID_HEADER, "alice")
+            header(HttpHeaders.ContentType, "application/json")
+            setBody("""{"name":"Alice"}""")
+        }
+        assertEquals(HttpStatusCode.OK, valid.status)
     }
 
     // Two rows and `limit=1`, so the first page always carries a nextCursor to hand back.
@@ -1236,4 +1387,30 @@ class ProfileRouteTest {
             return result
         }
     }
+
+    /**
+     * A [ProfileWrites] that answers [results] in order, one per call, holding on the last entry
+     * once exhausted — unlike [FakeProfileWrites], which answers the same result every time. This
+     * is what lets a single test drive a mix of refused and successful writes from one player, in
+     * a chosen order, to exercise `budget.refund`'s "not `NameSet`" rule against more than one
+     * shape of refusal in the same run.
+     */
+    private class SequencedProfileWrites(private val results: List<SetNameResult>) : ProfileWrites {
+        val received: MutableList<String> = mutableListOf()
+        private var index = 0
+
+        override suspend fun setDisplayName(playerId: PlayerId, canonicalName: String): SetNameResult {
+            received.add(canonicalName)
+            val result = results[index]
+            if (index < results.lastIndex) index++
+            return result
+        }
+    }
+
+    /**
+     * A budget so far above anything a test in this file drives that it never refuses — for the
+     * tests that exist to prove something other than the write budget itself (`ADR-0134` §6's
+     * inversion has its own tests, above, each with a small budget chosen to be reachable).
+     */
+    private fun generousBudget(): AttemptBudget = AttemptBudget(AttemptLimits(1_000_000, 60_000L), MutableClock())
 }

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140906
 title: The write is admitted before it spends, and refunded when it does not
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: poker-server
 estimate: S

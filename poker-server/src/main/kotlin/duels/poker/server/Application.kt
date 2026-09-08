@@ -99,7 +99,7 @@ public fun Application.duelServer(
         components.signUpBudget,
         components.signInBudget,
     )
-    profileRoutes(components.reads, components.writes, components.identities)
+    profileRoutes(components.reads, components.writes, components.identities, components.nameWriteBudget)
     deviceRoutes(components.identities, components.credentials, components.bindings)
     standingsRoutes(components.reads, components.standings, components.wallClock, components.identities)
     // A supervisor child of the application's job, per ADR-0077 §3: a child, so shutdown cancels
