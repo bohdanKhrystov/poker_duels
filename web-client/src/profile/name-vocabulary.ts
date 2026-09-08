@@ -1,0 +1,62 @@
+// A suggestion is drawn client-side, synchronously, from data bundled with this file — never
+// fetched, never dynamically imported — so a name can never fail to arrive (ADR-0137 §3). That
+// is why this module imports nothing: it must be usable before the network exists.
+//
+// Each list is a register of the product's voice — dark, quiet, minimal — and each entry is
+// capitalised exactly as it appears on the ladder, forever, because the joiner adds nothing but
+// one U+0020 between entries.
+
+export const NAME_VOCABULARY: readonly (readonly string[])[] = [
+  [
+    "Quiet",
+    "Cold",
+    "Ashen",
+    "Level",
+    "Patient",
+    "Silent",
+    "Grim",
+    "Steady",
+    "Stark",
+    "Bleak",
+    "Hollow",
+    "Iron",
+    "Grey",
+    "Pale",
+    "Sharp",
+    "Still",
+    "Faint",
+    "Dim",
+    "Numb",
+    "Wary",
+    "Dour",
+    "Frozen",
+    "Muted",
+    "Blunt",
+    "Rigid",
+    "Somber",
+    "Austere",
+    "Solemn",
+    "Distant",
+    "Weary",
+    "Terse",
+    "Curt",
+    "Spare",
+    "Barren",
+    "Fallow",
+    "Withered",
+    "Ragged",
+    "Gaunt",
+    "Hushed",
+    "Shadowed",
+    "Veiled",
+    "Unlit",
+    "Waning",
+    "Fading",
+    "Idle",
+    "Fixed",
+    "Blank",
+    "Empty",
+    "Cracked",
+    "Worn",
+  ],
+];
