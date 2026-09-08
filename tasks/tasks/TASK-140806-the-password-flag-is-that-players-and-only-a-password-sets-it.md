@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140806
 title: The password flag is that player's, and only a password sets it
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: poker-server
 estimate: S

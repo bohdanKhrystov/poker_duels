@@ -3,7 +3,9 @@ package duels.poker.server.db
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
 import duels.poker.engine.duel.EndCondition
+import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.EmailAddress
+import duels.poker.server.auth.PresentedSecret
 import duels.poker.server.auth.VerificationToken
 import duels.poker.server.duel.FinishedDuel
 import duels.poker.server.duel.formatLabel
@@ -48,6 +50,13 @@ import kotlin.test.fail
  * email table would redden these tests — and that only the `recovery_email` table decides it,
  * not pending claims in `email_verification`. Each method holds two players in the same database
  * asserting opposite values, so a constant flag in either direction reddens here.
+ *
+ * `theProfileReadsTrueForAPlayerHoldingAPassword` and `aCredentialOfAnotherKindIsNotAPassword`
+ * test that the `hasPassword` flag is per-player and sensitive to credential kind — an uncorrelated
+ * `EXISTS` over the credential table would redden these tests, as would one ignoring the kind
+ * filter. Each method holds two players in the same database asserting opposite values (or equal
+ * falseness), so a constant flag in either direction or a query ignoring credential kind reddens
+ * here (ADR-0132 §2).
  */
 class PostgresProfileReadsTest {
     private lateinit var dataSource: DataSource
@@ -56,6 +65,7 @@ class PostgresProfileReadsTest {
     private lateinit var profileWrites: PostgresProfileWrites
     private lateinit var duelResultStore: PostgresDuelResultStore
     private lateinit var recoveryEmails: PostgresRecoveryEmails
+    private lateinit var credentials: PostgresCredentials
     private lateinit var alice: Player
     private lateinit var bob: Player
 
@@ -68,6 +78,7 @@ class PostgresProfileReadsTest {
         profileWrites = PostgresProfileWrites(dataSource)
         duelResultStore = PostgresDuelResultStore(dataSource)
         recoveryEmails = PostgresRecoveryEmails(dataSource, Clock.fixed(Instant.now(), ZoneOffset.UTC))
+        credentials = PostgresCredentials(dataSource)
 
         runBlocking {
             alice = playerDirectory.resolve(DeviceId("alice"))
@@ -1005,6 +1016,35 @@ class PostgresProfileReadsTest {
             bobProfile?.hasRecoveryEmail,
             aliceProfile?.hasRecoveryEmail,
             "a pending player's hasRecoveryEmail must equal a never-claiming player's, not merely also be false",
+        )
+    }
+
+    @Test
+    fun theProfileReadsTrueForAPlayerHoldingAPassword() = runBlocking {
+        val password = PresentedSecret("my-password")
+        credentials.create(alice.id, CredentialKind.PASSWORD, "alice@example.com", password)
+
+        val aliceProfile = profileReads.profileOf(alice.id)
+        val bobProfile = profileReads.profileOf(bob.id)
+
+        assertEquals(true, aliceProfile?.hasPassword, "alice with password credential must read true")
+        assertEquals(false, bobProfile?.hasPassword, "bob with no credential must read false")
+    }
+
+    @Test
+    fun aCredentialOfAnotherKindIsNotAPassword() = runBlocking {
+        val secret = PresentedSecret("my-secret")
+        val passphraseKind = CredentialKind("passphrase")
+        credentials.create(alice.id, passphraseKind, "alice@example.com", secret)
+
+        val aliceProfile = profileReads.profileOf(alice.id)
+        val bobProfile = profileReads.profileOf(bob.id)
+
+        assertEquals(false, aliceProfile?.hasPassword, "alice with passphrase credential must read false")
+        assertEquals(
+            bobProfile?.hasPassword,
+            aliceProfile?.hasPassword,
+            "a non-password credential must read false and equal a never-credentialed player's, not merely also be false",
         )
     }
 
