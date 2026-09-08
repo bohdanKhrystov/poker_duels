@@ -137,11 +137,13 @@ one**, as do the `DEC-140` and `DEC-141` the planner raised while splitting item
 thirteen are answered** — five of them **contradict a merged ADR**, a heavier thing than an open
 question and marked as such, and one of them **opens a decision that was already open**. A second
 already-open row, `DEC-108`, has since been **closed** by this epic's own answer to `DEC-135`.
-Of the follow-ups those answers registered, the architect's two are now answered — `DEC-144` by
-[`ADR-0138`](../../docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-the-dismissal-lives-in-the-mount.md)
-and `DEC-150` by
-[`ADR-0140`](../../docs/adr/ADR-0140-the-clipboard-api-is-the-only-copy-this-client-attempts.md) —
-so what is left open is `DEC-145`, the product owner's. Five more were
+Of the follow-ups those answers registered, **all three are now answered** — `DEC-144` by
+[`ADR-0138`](../../docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-the-dismissal-lives-in-the-mount.md),
+`DEC-150` by
+[`ADR-0140`](../../docs/adr/ADR-0140-the-clipboard-api-is-the-only-copy-this-client-attempts.md), and
+`DEC-145`, the product owner's, on 2026-09-08 by
+[`ADR-0141`](../../docs/adr/ADR-0141-taking-a-seat-elsewhere-releases-the-room-you-were-holding.md),
+which registered `DEC-154` for the architect in its place. Five more were
 answered on 2026-09-07 and stand under *Answered* below: `DEC-147`, by
 [`ADR-0132`](../../docs/adr/ADR-0132-the-profile-says-whether-it-holds-a-password.md); the
 pre-existing `DEC-110` that `ADR-0124` §6 widened, by
@@ -484,7 +486,9 @@ player it is about, a body missing it reads `unavailable` rather than `false`, a
 re-reads after `signUp`'s `signed-up` — the one profile-changing outcome that does not already
 reload. No wire moves, so item 1b's anonymous block is startable and `STORY-1408`'s ticket is not
 `atomic:`. `ADR-0124`'s **`DEC-145`**, the product
-owner's, blocks nothing here and stands in the registers rather than in the table below. The phone
+owner's, blocked nothing here and stood in the registers rather than in the table below; it is **answered on 2026-09-08** by
+[`ADR-0141`](../../docs/adr/ADR-0141-taking-a-seat-elsewhere-releases-the-room-you-were-holding.md) and
+stands under *Answered*. The phone
 is set out in full because it changes what a later ticket is measured against:
 
 **`DEC-136` → [`ADR-0121`](../../docs/adr/ADR-0121-the-table-reflows-never-scales-and-the-shape-is-measured-on-the-device.md)
@@ -504,10 +508,11 @@ human's: relaxing `R3` for the scale, raising the judged shape, and any list of 
 commits to.
 
 **Nothing is open.** Every decision this epic raised or inherited is answered by a merged ADR —
-thirteen the product owner's and six the architect's — and the table that held them is empty. One
-decision registered *by* those answers stays open in `docs/adr/README.md` and **blocks nothing here**:
-`DEC-145` (a player who holds a waiting room and then takes a seat in another by invite, the product
-owner's). It gates no story, and it is not this epic's to close.
+**fourteen** the product owner's and six the architect's — and the table that held them is empty.
+**Both of the decisions those answers registered are answered as well**, on 2026-09-08 and by two
+different ADRs, so nothing this epic raised, inherited or spawned is left open. The one row that
+remains in `docs/adr/README.md` is `DEC-154`, which no answer of this epic's registered — it is
+`ADR-0141`'s own, the architect's, and it blocks only the ticket that implements `ADR-0141`.
 
 **The other follow-up those answers registered is answered on 2026-09-08.** `DEC-150` — whether a
 copy is achievable at all where `navigator.clipboard` is undefined, the architect's — is answered by
@@ -527,6 +532,18 @@ proved here: measured this run, jsdom 24.1.3 has no `document.execCommand` at al
 §1's origin is secure, so a drive would need the bundle on a **non-secure** origin and a
 paste-based read-back verb in `scripts/qa/drive.mjs`. It supersedes nothing, registers nothing, and
 unblocks nothing — `ADR-0128` §7's *"`DEC-150` blocks nothing"* held to the end.
+
+**`DEC-145` is answered the same day.** A player who holds a waiting room and then takes a seat in
+another by invite — the product owner's — is answered by
+[`ADR-0141`](../../docs/adr/ADR-0141-taking-a-seat-elsewhere-releases-the-room-you-were-holding.md):
+**the seat is taken and the held room is released in the same act**, its code then answering
+`UNKNOWN_ROOM` so that a released room is indistinguishable from a reaped one — no string, no wire,
+no client file and nothing stored. Only a room still `WAITING` and holding nobody else is ever
+released, a join that seats nobody changes nothing, and **a duel can still begin into a seat that is
+already away**, which stays `ADR-0073` §3's promise working. It supersedes two sentences of
+`ADR-0073`, amends `ADR-0105` §2's `WAITING` row on its `JoinRoom` half, and registers **`DEC-154`**
+for the architect. It gates no story here and is not this epic's to close: `STORY-1416` is `done`,
+and its *Out of scope* already excluded every change to `replyToJoinRoom`.
 
 **One more was registered on 2026-09-07 by the planner rather than by an answer, and it was
 answered the same day**: `DEC-153`, the architect's — how the client tells a **first** showing of
@@ -555,6 +572,7 @@ stands **exactly as written**, and gated nothing else.
 
 | ID | Answered by | What it means here |
 | --- | --- | --- |
+| `DEC-145` | [`ADR-0141`](../../docs/adr/ADR-0141-taking-a-seat-elsewhere-releases-the-room-you-were-holding.md) | **The seat elsewhere is taken, and the room they were holding is released in the same act.** The one route `ADR-0124` §7 left into two duels at once, closed from `docs/vision.md` in **two halves from two sentences**: the seat by the first success condition — *"Send a link. She opens it in a browser. We play a full heads-up match."* with *"Everything else is downstream of that moment."*, which `ADR-0094` §1 already read to ship this path, so it gains **no second qualification**; the room by *"One duel coin per win… A counter of duels won."* with *"Two people, **one link**, one heads-up poker match"* and *"Not a multi-table poker room."*, `ADR-0124`'s own three sentences for `DEC-111`. **A released room is indistinguishable from a reaped one** — `UNKNOWN_ROOM`, and `Lobby.tsx` prints the string it already prints — so **no string, no wire, no client file, nothing stored**. Bounded three ways: only a room still `WAITING` and holding nobody else (§3), only on a join that seated somebody (§4), and **never** because the holder merely left, dropped or closed the tab (§5) — a duel can still begin into a seat that is already away, and that stays `ADR-0073` §3's promise working. Nothing is said, to anyone (§6). Supersedes two sentences of `ADR-0073` as statements about a `WAITING` room in general, amends `ADR-0105` §2's `WAITING` row on its `JoinRoom` half, and registers **`DEC-154`** for the architect. **It changes nothing this epic ships**: `STORY-1416` is `done` and its `Out of scope` already excluded every change to `replyToJoinRoom` |
 | `DEC-150` | [`ADR-0140`](../../docs/adr/ADR-0140-the-clipboard-api-is-the-only-copy-this-client-attempts.md) | **None — and the reason is the missing read-back, not the deprecation.** `navigator.clipboard.writeText` stays the only clipboard mechanism this client uses; where the API is undefined the press performs `ADR-0128` §3's hand-over and attempts nothing else. `execCommand("copy")` reports that the command was supported and enabled, never that the clipboard holds the link, and `navigator.clipboard.readText` — the one in-page read-back — is absent exactly where it would be needed, so §4's *"never of an attempt whose success the client cannot read"* cannot be met. The **silent** copy is refused on **§3**, whose promise is that *"the screen says which"*; a third, hedged outcome would be a string, and `ADR-0110` §6 makes that the product owner's. Nothing in this epic moves: no file, no card, no frame, no string, no ticket |
 | `DEC-153` | [`ADR-0139`](../../docs/adr/ADR-0139-the-read-beat-is-spent-once-and-the-store-already-remembers.md) | **The read beat is spent once per hand, and the store already remembers.** The word being repaired is `before` — `ADR-0120` §3's rule says *has not been shown before*, its own restatement drops it, and `ADR-0136` §1 shipped the restatement while calling it *not a paraphrase*; that claim is **withdrawn**. `layOutReveal` gains `held: PlayerView \| null`, the `Snapshot` case passes `state.view` — still the *previous* view on that path — and the final step is `"read"` only when the rival's cards are **newly** shown. **`DuelState` gains no field**: `state.view` was already there, is written only by the `Snapshot` case, is cleared by nothing, and holds a `COMPLETE` view only by having **painted** it, since a frame arriving while a reveal stands is queued rather than applied — which is why the amendment to `ADR-0136` §1 is three sentences and why all three of its reasons survive. The guard sits in the **reducer** because `advanceReveal` folds queued frames back through `applyServerMessage`, a path a guard in `duel-store.ts` would miss. Two ways it could be wrong are closed by merged facts: `HandRevealed` fires only in `reachShowdownAndSettle`, which settles in the same engine step, so rival cards cannot appear before `COMPLETE`; and the hand comparison keeps the **next** hand a read. **Measured unreachable** — 0 in 2,220 resume frames, against 602 from a falsified detector — which is why the second answer was real; it lost because its pin needed `poker-server`, which this epic forbids. Costs named: the classification is no longer a pure function of one frame, a one-day-old ADR is amended by the story implementing it, a reload still forgets, and **the change is unfalsifiable in the product**. Unblocks `TASK-141108`, which stands exactly as written; **registers no decision and creates no story** |
 | `DEC-144` | [`ADR-0138`](../../docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-the-dismissal-lives-in-the-mount.md) | **The panel mounts beside the lobby.** A props-less `RematchNotice` is `App`'s last child of `<main>`, beside `<Lobby />` — `Lobby.tsx` is not edited, the gate is a second call of `ADR-0114`'s `shown`/`ruling` with **no effect**, and the dismissal is one `useState` boolean living as long as the mount. `ADR-0123` §7's dismissal lifetime decided the mount point: state inside the cascade dies on one press of *Back*. Three of §2's prohibitions then hold structurally — outside every `<form>`, no timer, out of flow. The dismissal clears **during render** when the offer ends, or one *Not now* would hide every later offer for the tab's life. `role="status"`, no focus call, no key handler. **Nothing crosses the socket**, so `STORY-1415`'s ticket is not `atomic:` — it waits only on its minting card |
