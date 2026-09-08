@@ -152,6 +152,47 @@
       failure — not drawn as their own frames; the three states above are the ones this ticket
       names.</p>
     </div>
+
+    <div class="frame">
+      <h2>No name yet</h2>
+      <div class="panel">
+        <p class="line">You can change your name whenever you like.</p>
+        <p class="line">But the name you give up is gone for good — you cannot take it back,
+        and nobody else can take it either.</p>
+        <div class="field"><span class="lbl">Name</span><div class="box"></div></div>
+        <button class="btn fill" type="button">Set my name</button>
+      </div>
+      <!-- NAME-FORM: changeable: You can change your name whenever you like. -->
+      <!-- NAME-FORM: spent: But the name you give up is gone for good — you cannot take it back, and nobody else can take it either. -->
+      <!-- NAME-FORM: throttled: You're changing names too fast. Wait a moment, then try again. -->
+      <p class="note">NameSurface.tsx's field and button — the shape this card is drawn
+      against — moved to the account screen by ADR-0130 §6: one surface for both a first name
+      and every later change. The two lines above are ADR-0130 §5's obligations 1 and 2,
+      transcribed word for word into the changeable and spent comments above so TASK-140910 and
+      TASK-140911 copy them rather than re-keying by eye. The throttled comment above is
+      ADR-0134 §5's answer to a 429 on this endpoint — a sentence about the request, not the
+      name — and it names no third frame: a rate limit is only ever seen after a write, never
+      shown in advance. ADR-0052 §1's removal notice is not redrawn in this panel; it
+      already travels with the surface unchanged (ADR-0130 §6) and stays NameSurface.tsx's own
+      conditional, not this card's to repeat.</p>
+    </div>
+
+    <div class="frame">
+      <h2>Changing a name</h2>
+      <div class="panel">
+        <p class="line">This profile is called <strong>Copper Owl</strong> right now.</p>
+        <p class="line">You can change your name whenever you like.</p>
+        <p class="line">But the name you give up is gone for good — you cannot take it back,
+        and nobody else can take it either.</p>
+        <div class="field"><span class="lbl">Name</span><div class="box"></div></div>
+        <button class="btn fill" type="button">Set my name</button>
+      </div>
+      <p class="note">The same panel and the same two obligations as the frame before it,
+      because ADR-0130 §1 makes setting a first name and changing an existing one the same
+      act — one form, drawn once. The name a profile holds now is shown as text, not placed in
+      the field: the field is for the new name being typed, exactly as NameSurface.tsx's single
+      input already works, and this card mints no default value for it.</p>
+    </div>
   </div>
 </div>
 </body>
