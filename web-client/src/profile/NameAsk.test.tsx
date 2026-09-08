@@ -1,8 +1,15 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { NAME_VOCABULARY } from "./name-vocabulary";
 import { NameAsk } from "./NameAsk";
+import { ProfileProvider, useProfileStrip } from "./profile-provider";
 import type { PlayerProfile } from "./profile";
 import type { SetNameOutcome } from "./set-name";
 
@@ -133,5 +140,152 @@ describe("the name ask", () => {
 
     expect(onSkip).toHaveBeenCalledTimes(1);
     expect(setName).toHaveBeenCalledTimes(0);
+  });
+
+  it("reads a refusal in the words the product already uses", async () => {
+    let settle: (outcome: SetNameOutcome) => void = () => {};
+    const answer = new Promise<SetNameOutcome>((resolve) => {
+      settle = resolve;
+    });
+    const setName = vi.fn(() => answer);
+    const onNamed = vi.fn();
+
+    render(
+      <NameAsk
+        setName={setName}
+        onNamed={onNamed}
+        onSkip={vi.fn()}
+        random={scripted([0, 0, 0])}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Take this name" }));
+    settle({ kind: "conflict" });
+
+    await waitFor(() => {
+      const statusText = screen.getByRole("status").textContent;
+      expect(statusText).toBe("That name is not available. Try another.");
+    });
+    expect(onNamed).not.toHaveBeenCalled();
+  });
+
+  it("withdraws the form a refusal has closed, and leaves the skip standing", async () => {
+    let settle: (outcome: SetNameOutcome) => void = () => {};
+    const answer = new Promise<SetNameOutcome>((resolve) => {
+      settle = resolve;
+    });
+    const setName = vi.fn(() => answer);
+    const onSkip = vi.fn();
+
+    render(
+      <NameAsk
+        setName={setName}
+        onNamed={vi.fn()}
+        onSkip={onSkip}
+        random={scripted([0, 0, 0])}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Take this name" }));
+    settle({ kind: "unavailable" });
+
+    await waitFor(() => {
+      const textboxes = screen.queryAllByRole("textbox");
+      expect(textboxes).toHaveLength(0);
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Duel without a name" }),
+    );
+    expect(onSkip).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends one write for two presses", () => {
+    const answer = new Promise<SetNameOutcome>(() => {
+      // never settle
+    });
+    const setName = vi.fn(() => answer);
+
+    render(
+      <NameAsk
+        setName={setName}
+        onNamed={vi.fn()}
+        onSkip={vi.fn()}
+        random={scripted([0, 0, 0])}
+      />,
+    );
+
+    const submitButton = screen.getByRole("button", {
+      name: "Take this name",
+    }) as HTMLButtonElement;
+    // Both clicks inside one `act`: it is re-entrant and flushes only when
+    // the outermost call exits, so the state from the first click has not
+    // committed while the second is dispatched — the button is still
+    // enabled, `handleSubmit` runs a second time, and
+    // `submitInFlight.current` is the only thing that stops it sending
+    // twice.
+    act(() => {
+      fireEvent.click(submitButton);
+      fireEvent.click(submitButton);
+    });
+
+    expect(setName).toHaveBeenCalledTimes(1);
+  });
+
+  it("carries the accepted name to the profile the client holds", async () => {
+    let settle: (outcome: SetNameOutcome) => void = () => {};
+    const answer = new Promise<SetNameOutcome>((resolve) => {
+      settle = resolve;
+    });
+    const setName = vi.fn(() => answer);
+    const namedProfile: PlayerProfile = {
+      playerId: "p1",
+      coinBalance: 0,
+      displayName: "Ravenpost",
+      displayNameRemoved: false,
+      deviceRouteLive: true,
+      hasRecoveryEmail: false,
+    };
+
+    function ProfileConsumer(): React.ReactElement {
+      const strip = useProfileStrip();
+      return (
+        <div>
+          {strip?.kind === "profile" && <p>{strip.profile.displayName}</p>}
+        </div>
+      );
+    }
+
+    render(
+      <ProfileProvider
+        read={async () => ({
+          kind: "profile",
+          profile: {
+            playerId: "p1",
+            coinBalance: 0,
+            displayName: null,
+            displayNameRemoved: false,
+            deviceRouteLive: true,
+            hasRecoveryEmail: false,
+          },
+          duels: [],
+        })}
+      >
+        <NameAsk
+          setName={setName}
+          onNamed={vi.fn()}
+          onSkip={vi.fn()}
+          random={scripted([0, 0, 0])}
+        />
+        <ProfileConsumer />
+      </ProfileProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Take this name" }));
+    settle({ kind: "named", profile: namedProfile });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ravenpost")).toBeDefined();
+    });
   });
 });

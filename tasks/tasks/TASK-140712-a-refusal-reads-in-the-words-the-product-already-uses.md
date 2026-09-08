@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140712
 title: A refusal reads in the words the product already uses, and never blocks the skip
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
