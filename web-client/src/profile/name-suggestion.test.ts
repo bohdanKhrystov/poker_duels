@@ -9,6 +9,18 @@ function scripted(values: readonly number[]): () => number {
   return () => values[call++];
 }
 
+/** Like {@link scripted}, but also exposes how many times the source has been called. */
+function countingScripted(values: readonly number[]): {
+  random: () => number;
+  calls: () => number;
+} {
+  let call = 0;
+  return {
+    random: () => values[call++],
+    calls: () => call,
+  };
+}
+
 /** ADR-0137 §2's index expression, computed here so a test can name the entry it expects. */
 function indexFor(list: readonly string[], draw: number): number {
   return Math.min(list.length - 1, Math.floor(draw * list.length));
@@ -70,5 +82,37 @@ describe("suggestName", () => {
       expect(name).not.toContain("  ");
       expect(name.trim()).toBe(name);
     }
+  });
+
+  it("draws again when the draw is the string being replaced", () => {
+    const firstDraws = [0, 0, 0];
+    const secondDraws = [0.41, 0.63, 0.87];
+    const replacing = NAME_VOCABULARY.map((list, i) =>
+      entryFor(list, firstDraws[i]),
+    ).join(" ");
+    const second = NAME_VOCABULARY.map((list, i) =>
+      entryFor(list, secondDraws[i]),
+    ).join(" ");
+    const source = countingScripted([...firstDraws, ...secondDraws]);
+
+    const name = suggestName(source.random, replacing);
+
+    expect(name).toBe(second);
+    expect(source.calls()).toBe(2 * NAME_VOCABULARY.length);
+  });
+
+  it("stops after four draws when every draw repeats", () => {
+    const stuckDraw = 0.5;
+    const stuckName = NAME_VOCABULARY.map((list) =>
+      entryFor(list, stuckDraw),
+    ).join(" ");
+    const source = countingScripted(
+      Array(4 * NAME_VOCABULARY.length).fill(stuckDraw),
+    );
+
+    const name = suggestName(source.random, stuckName);
+
+    expect(name).toBe(stuckName);
+    expect(source.calls()).toBe(4 * NAME_VOCABULARY.length);
   });
 });
