@@ -29,10 +29,12 @@ export function NameAsk(props: {
   readonly random?: () => number;
 }): ReactElement {
   const { random = Math.random } = props;
-  // One draw per mount, in the initialiser — never a render body (`ADR-0137` §5).
-  const [drawn] = useState(() => suggestName(random));
+  // One draw per mount, in the initialiser — never a render body (`ADR-0137` §5). `drawn` is
+  // updated again on a `conflict` redraw, so the settle handler can tell an untouched suggestion
+  // from the player's own typing by equality, not a flag (`ADR-0137` §5).
+  const [drawn, setDrawn] = useState(() => suggestName(random));
   // The field's own state, seeded from the draw. Nothing ever writes over it besides the player
-  // typing (`ADR-0119` §4) — a reroll on `conflict` is `TASK-140713`'s.
+  // typing (`ADR-0119` §4) and a `conflict` redraw over an untouched suggestion.
   const [value, setValue] = useState(drawn);
   // A ref, not just state: the guard must see the current in-flight status the instant the
   // second submit runs, not after a render has caught up.
@@ -70,6 +72,16 @@ export function NameAsk(props: {
       submitInFlight.current = false;
       setIsSubmitting(false);
       setRefusal(outcome.kind);
+      // A `conflict` is refused on the string, not the player — but only when the field still
+      // holds the suggestion untouched. A player's own typing is never thrown away for a fresh
+      // draw. `replacing` is `drawn`, so `TASK-140707`'s bounded redraw cannot hand back the name
+      // that was just refused, and this is a redraw in the browser, not a second write — no `409`
+      // is spent (`ADR-0134` §6).
+      if (outcome.kind === "conflict" && value === drawn) {
+        const next = suggestName(random, drawn);
+        setDrawn(next);
+        setValue(next);
+      }
     });
   };
 
