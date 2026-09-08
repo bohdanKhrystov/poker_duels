@@ -409,4 +409,63 @@ describe("the name ask", () => {
     expect(field.value).toBe(a);
     expect(random.mock.calls.length).toBe(callsAfterMount);
   });
+
+  it("sends a second write after a refusal settles", async () => {
+    let settleFirst: (outcome: SetNameOutcome) => void = () => {};
+    const firstAnswer = new Promise<SetNameOutcome>((resolve) => {
+      settleFirst = resolve;
+    });
+
+    // Never settle the second answer — the test ends after the second call
+    const secondAnswer = new Promise<SetNameOutcome>(() => {
+      // never settles
+    });
+
+    let callCount = 0;
+    const setName = vi.fn(() => {
+      callCount++;
+      return callCount === 1 ? firstAnswer : secondAnswer;
+    });
+    const onNamed = vi.fn();
+
+    render(
+      <NameAsk
+        setName={setName}
+        onNamed={onNamed}
+        onSkip={vi.fn()}
+        random={scripted([0, 0, 0])}
+      />,
+    );
+
+    const field = screen.getByLabelText("Your name") as HTMLInputElement;
+    const firstName = field.value;
+
+    // First submit with the drawn name
+    fireEvent.click(screen.getByRole("button", { name: "Take this name" }));
+
+    expect(setName).toHaveBeenCalledTimes(1);
+    expect(setName).toHaveBeenCalledWith(firstName);
+
+    // Settle with a refusal that allows retry
+    settleFirst({ kind: "conflict" });
+
+    await waitFor(() => {
+      const statusText = screen.getByRole("status").textContent;
+      expect(statusText).toBe("That name is not available. Try another.");
+    });
+
+    expect(onNamed).not.toHaveBeenCalled();
+
+    // Change to a different name
+    const secondName = "Different Name";
+    fireEvent.change(field, { target: { value: secondName } });
+    expect(field.value).toBe(secondName);
+    expect(field.value).not.toBe(firstName);
+
+    // Press submit again
+    fireEvent.click(screen.getByRole("button", { name: "Take this name" }));
+
+    expect(setName).toHaveBeenCalledTimes(2);
+    expect(setName).toHaveBeenCalledWith(secondName);
+  });
 });
