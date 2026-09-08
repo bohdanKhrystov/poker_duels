@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140801
 title: The offer leaves the result screen
 type: task
-status: ready
+status: done
 parent: STORY-1408
 module: web-client
 estimate: S
@@ -11,7 +11,7 @@ tier: sonnet
 review: standard
 files_touched: 5
 atomic:
-  - web-client `npm run typecheck` — deleting `DuelResult`'s `offer` prop fails every construction site at once, and `DuelResult.test.tsx` is one of them
+  - web-client `npm run typecheck` — deleting `DuelResult`'s `offer` prop *before* its construction sites stop passing one fails every site at once, and `DuelResult.test.tsx` is one of them. This forbids one order, not the grouping; see *Atomicity, corrected at landing*
   - web-client `npm run lint` — `Lobby.tsx`'s five offer imports become unused the moment the prop stops being passed
   - web-client `npm run test` — three merged tests in `Lobby.test.tsx` and three in `drive-arc.test.tsx` assert the offer renders
 labels: [client, account, result]
@@ -87,6 +87,26 @@ ticket**; `web-client/src/virtual-time.test.ts` — the merged gate named below.
 - In `drive-arc.test.tsx`, delete the three offer cases and the `account-offer-text` import, keep
   `bootAndWin` and rewrite its KDoc (its second sentence is about the offer's three terms), and add
   the one replacement case below.
+
+## Atomicity, corrected at landing
+
+The `atomic:` block above claimed five files that cannot be fewer. **They can be**, and the
+review measured it: revert `DuelResult.tsx` to `develop`, keep the other four files' changes,
+and `cd web-client && npm run check` still exits 0 — typecheck, lint, format and all 1176 tests.
+
+The reason is one character. `DuelResult`'s prop is declared `offer?: ReactNode` — **optional**.
+A commit that stops *passing* the offer therefore leaves `DuelResult.tsx` compiling untouched and
+rendering nothing into the slot, so a legal **4-then-1** split exists and the gates named above do
+not forbid it.
+
+What those gates *do* forbid is the other order: removing the prop before its construction sites
+stop passing one breaks every site in the same commit. That is a constraint on sequence, not on
+grouping, and the original bullet stated it as though the two were the same thing.
+
+The work landed as one commit anyway — five files is small, and splitting a removal into a
+dead-slot commit and a cleanup commit would put a state on `develop` whose only description is
+"halfway through deleting something". That is a **choice**, made here in the open, and no longer a
+necessity the ticket asserts. Nobody should cite this ticket as an example of an earned `atomic:`.
 
 ## The order dependence this ticket inherits
 

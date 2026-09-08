@@ -64,14 +64,11 @@ import { LADDER_HEADING } from "../ladder/ladder-text";
 const historyRead = vi.hoisted(() => vi.fn(() => new Promise<never>(() => {})));
 const ladderRead = vi.hoisted(() => vi.fn(() => new Promise<never>(() => {})));
 
-// A boolean and a spy, deliberately, and not a real `Storage`: what storage
-// does with the answer is `account-offer-settled.test.ts`'s, and what a whole
-// browser does with it across two boots is `TASK-041508`'s. This file's
-// subject is what `Lobby` asks the seam and what it does with the reply.
-const offerWiring = vi.hoisted(() => ({
+// A boolean, deliberately, and not a real `Storage`: `Lobby` reads this seam
+// only for the account screen's own `signedIn` prop, and what storage does
+// with it is `../main`'s own tests', not this file's.
+const signedInWiring = vi.hoisted(() => ({
   signedIn: false,
-  settled: false,
-  settle: vi.fn(),
 }));
 
 vi.mock("../main", async (importOriginal) => {
@@ -80,9 +77,7 @@ vi.mock("../main", async (importOriginal) => {
     ...actual,
     useHistory: () => historyRead,
     useLadder: () => ladderRead,
-    useSignedIn: () => offerWiring.signedIn,
-    offerSettledHere: () => offerWiring.settled,
-    settleOfferHere: offerWiring.settle,
+    useSignedIn: () => signedInWiring.signedIn,
   };
 });
 
@@ -129,9 +124,7 @@ beforeEach(() => {
   window.location.hash = "";
   historyRead.mockClear();
   ladderRead.mockClear();
-  offerWiring.signedIn = false;
-  offerWiring.settled = false;
-  offerWiring.settle.mockClear();
+  signedInWiring.signedIn = false;
 });
 
 afterEach(() => {
@@ -218,8 +211,8 @@ function renderLobbyWithAccount(
 
 /**
  * Renders `Lobby` with a duel this client sat seat 0 of, finished with the
- * given winner (`null` for a draw). Only the three account-offer tests below
- * call this: every other test in this file builds its own store.
+ * given winner (`null` for a draw). Every other test in this file builds its
+ * own store.
  */
 function renderFinishedDuel(winner: number | null): void {
   const store = createDuelStore();
@@ -1786,15 +1779,10 @@ describe("the lobby", () => {
     });
     renderLobby(store);
 
-    // ADR-0116 §6's first owed fact and a regression test: red on the tree
-    // at 1a09fb46, where STORY-1310's P5 pressed "Keep them with a
-    // password" and reached nothing — the account branch sat below the
-    // room's own screen and never ran for a held FINISHED room. The second
-    // owed fact — that an offer rendered and not pressed is still offered
-    // afterwards — is already gated by "offers an account after a win, and
-    // after nothing else"'s closing
-    // `expect(offerWiring.settle).not.toHaveBeenCalled()`, so it is not
-    // repeated here.
+    // ADR-0112 §5's first half, and a regression test: red on the tree at
+    // 1a09fb46, where STORY-1310's P5 pressed an account door and reached
+    // nothing — the account branch sat below the room's own screen and
+    // never ran for a held FINISHED room.
     expect(
       screen.getByRole("heading", { name: ACCOUNT_HEADING }),
     ).toBeDefined();
@@ -1948,77 +1936,6 @@ describe("the lobby", () => {
     expect(window.location.hash).toBe("");
   });
 
-  it("offers an account after a win, and after nothing else", () => {
-    // Three renders over the same seat, not one: a single case cannot tell a
-    // decision from a constant (STORY-0415). The result panel is asserted
-    // present in all three, so the offer's absence in the last two is a
-    // withheld offer and not an empty screen.
-    const cases: ReadonlyArray<{ winner: number | null; offered: boolean }> = [
-      { winner: 0, offered: true },
-      { winner: 1, offered: false },
-      { winner: null, offered: false },
-    ];
-
-    for (const { winner, offered } of cases) {
-      renderFinishedDuel(winner);
-
-      expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
-      if (offered) {
-        expect(screen.getByRole("region", { name: "the offer" })).toBeDefined();
-      } else {
-        expect(screen.queryByRole("region", { name: "the offer" })).toBeNull();
-      }
-
-      cleanup();
-    }
-
-    // ADR-0085 §2: "not the prompt merely having been rendered". Being shown
-    // the offer three times above must not have spent it.
-    expect(offerWiring.settle).not.toHaveBeenCalled();
-  });
-
-  it("withholds the offer from a browser that answered, and from one holding a credential", () => {
-    // Each render is a one-field delta from the offered case above (winner:
-    // 0, settled: false, signedIn: false): without this test both terms
-    // could be hard-coded and the test above would still pass.
-    offerWiring.settled = true;
-    renderFinishedDuel(0);
-
-    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
-    expect(screen.queryByRole("region", { name: "the offer" })).toBeNull();
-
-    cleanup();
-    offerWiring.settled = false;
-    offerWiring.signedIn = true;
-    renderFinishedDuel(0);
-
-    expect(screen.getByRole("region", { name: "the result" })).toBeDefined();
-    expect(screen.queryByRole("region", { name: "the offer" })).toBeNull();
-  });
-
-  it("answers from either control, and only Not now takes the offer off the screen", () => {
-    renderFinishedDuel(0);
-
-    fireEvent.click(
-      screen.getByRole("link", { name: "Keep them with a password" }),
-    );
-
-    // Taking the offer settles it and stops there: the anchor's own page
-    // load is what replaces this tree (ADR-0086 §6), so the offer and the
-    // rest of the panel are still on screen right after the click.
-    expect(offerWiring.settle).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("region", { name: "the offer" })).toBeDefined();
-    expect(window.location.hash).toBe("");
-
-    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
-
-    // Dismissing settles it a second time and, unlike accepting, also hides
-    // it: nothing else will, since there is no page load coming.
-    expect(offerWiring.settle).toHaveBeenCalledTimes(2);
-    expect(screen.queryByRole("region", { name: "the offer" })).toBeNull();
-    expect(screen.getByText("Victory")).toBeDefined();
-  });
-
   it("puts the attach form on the account screen, wired to the account seam", async () => {
     const attachRecoveryEmail = vi.fn(
       async () => ({ kind: "accepted" }) as const,
@@ -2033,8 +1950,6 @@ describe("the lobby", () => {
       verifyEmail: vi.fn(),
       resetPassword: vi.fn(),
     };
-
-    window.location.hash = "#/account";
 
     const profileState: ProfileStripState = {
       kind: "profile",
@@ -2061,10 +1976,17 @@ describe("the lobby", () => {
       </ProfileProvider>,
     );
 
-    // Wait for the profile to load by looking for recovery status text
-    await screen.findByText(/Recovery is/);
+    // Reached through the product's own door, not staged on the address
+    // before render: an `<a href="/">` click in an earlier test leaves a
+    // refused navigation that jsdom retires a task later, and staging the
+    // fragment here raced that retirement and lost the fragment it had just
+    // set. Awaiting the front door's own button is what retires the stray
+    // navigation; the press that follows is what puts #/account up.
+    fireEvent.click(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    );
 
-    fireEvent.change(screen.getByLabelText("Email address"), {
+    fireEvent.change(await screen.findByLabelText("Email address"), {
       target: { value: "test@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Current password"), {
