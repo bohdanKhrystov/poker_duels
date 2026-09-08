@@ -1,5 +1,6 @@
 #!/bin/sh
-# Poker Duels — per-frame rival-hand gate (TASK-141107).
+# Poker Duels — per-frame rival-hand gate for duel-table-states.html only; all other cards
+# under design/screens/ are outside scope (TASK-141107).
 #
 # TASK-141102's gates are whole-file aggregate counts over
 # design/screens/duel-table-states.html: 29 `class="pc"`, 4 `back mucked`, and so on.
@@ -156,6 +157,7 @@ unset IFS
 # value in some awks — the same discipline check-drift.sh uses for its sheet set.
 gated_file=$(mktemp)
 printf '%s\n' "$gated" > "$gated_file"
+frame_count=$(printf '%s\n' "$data" | grep -c .)
 printf '%s\n' "$data" | awk -F'\t' '
   NR == FNR { if ($0 != "") g[$0] = 1; next }
   {
@@ -163,4 +165,4 @@ printf '%s\n' "$data" | awk -F'\t' '
     printf "check-frame-cards: %s — %s: pc=%s pcred=%s back=%s backmucked=%s\n", $1, state, $2, $3, $4, $5
   }
 ' "$gated_file" -
-echo "check-frame-cards: the rival oppcards slot holds the right cards in every gated frame"
+echo "check-frame-cards: duel-table-states.html — $frame_count frames: the rival oppcards slot holds the right cards in every gated frame"

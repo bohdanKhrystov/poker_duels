@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140720
 title: The frame gate says which card it guards
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: repo
 estimate: XS
