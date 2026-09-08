@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140805
 title: The profile says whether it holds a password
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: poker-server
 estimate: S

@@ -31,7 +31,15 @@ import kotlinx.serialization.Serializable
  *   exactly an account with no email"). Per `ADR-0031` §6.3 this is the whole of what crosses the
  *   wire: no address, no masked form, no `verifiedAt` — the client can say *recovery is on* and
  *   can never display the address. No default value, for the same `encodeDefaults` reason as
- *   `displayNameRemoved` above. Declared last.
+ *   `displayNameRemoved` above.
+ * @property hasPassword Whether the caller holds a `credential` row of kind
+ *   `CredentialKind.PASSWORD` — `true` exactly when one exists for this player, `false`
+ *   otherwise. Named for the kind rather than the concept: `ADR-0027` §1 keeps `credential`
+ *   deliberately open to a passphrase or a third-party subject, so a `hasCredential` would one
+ *   day read `true` for a player whose only stated way out is the password form (`ADR-0132` §1).
+ *   No default value, for the same `encodeDefaults` reason as `displayNameRemoved` above — a
+ *   default here is what would collapse *not told* into *told anonymous* on the client
+ *   (`ADR-0132` §1). Declared last.
  */
 @Serializable
 public data class ProfileResponse(
@@ -41,6 +49,7 @@ public data class ProfileResponse(
     val displayNameRemoved: Boolean,
     val deviceRouteLive: Boolean,
     val hasRecoveryEmail: Boolean,
+    val hasPassword: Boolean,
 )
 
 /**

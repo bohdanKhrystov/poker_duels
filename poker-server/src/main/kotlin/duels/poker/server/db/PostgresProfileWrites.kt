@@ -1,5 +1,6 @@
 package duels.poker.server.db
 
+import duels.poker.server.auth.CredentialKind
 import duels.poker.server.http.ProfileWrites
 import duels.poker.server.http.SetNameResult
 import duels.poker.server.protocol.http.ProfileResponse
@@ -63,6 +64,10 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
         val setProfile = connection.prepareStatement(SET_NAME_SQL).use { statement ->
             statement.setString(1, canonicalName)
             statement.setObject(2, UUID.fromString(playerId.value))
+            // The bound kind sits inside RETURNING, which is textually after the WHERE clause,
+            // so it becomes `?` 3 here — unlike the select-list EXISTS in PROFILE_OF_SQL and
+            // CURRENT_PROFILE_SQL, where the same EXISTS precedes the WHERE and binds first.
+            statement.setString(3, CredentialKind.PASSWORD.value)
             statement.executeQuery().use { rows -> if (rows.next()) rows.toProfile() else null }
         }
         if (setProfile != null) {
@@ -94,7 +99,11 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
 
     private fun readProfile(connection: Connection, playerId: PlayerId): ProfileResponse =
         connection.prepareStatement(CURRENT_PROFILE_SQL).use { statement ->
-            statement.setObject(1, UUID.fromString(playerId.value))
+            // The bound kind sits inside a select-list EXISTS, which precedes the WHERE clause
+            // textually, so it is `?` 1 and the player id — still bound exactly once — moves to
+            // `?` 2, exactly as in PROFILE_OF_SQL.
+            statement.setString(1, CredentialKind.PASSWORD.value)
+            statement.setObject(2, UUID.fromString(playerId.value))
             statement.executeQuery().use { rows ->
                 check(rows.next()) { "no player row for $playerId" }
                 rows.toProfile()
@@ -115,6 +124,10 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
     // rather than adding a third correlated EXISTS to both statements below. Unlike
     // displayNameRemoved's false above, this one is not false-by-construction — a player with a
     // verified address who renames still reads false on this particular response.
+    //
+    // hasPassword is explicitly not given hasRecoveryEmail's literal treatment (ADR-0132 §2): it
+    // is read off the ResultSet from the same correlated EXISTS both statements below now carry,
+    // so PUT /api/me/name's 200 cannot turn a claimed player anonymous.
     private fun ResultSet.toProfile(): ProfileResponse =
         ProfileResponse(
             getString("id"),
@@ -123,6 +136,7 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
             false,
             getBoolean("device_route_live"),
             false,
+            getBoolean("has_password"),
         )
 
     private companion object {
@@ -134,12 +148,24 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
         private const val DEVICE_ROUTE_LIVE_EXISTS =
             "EXISTS (SELECT 1 FROM device_binding b WHERE b.player_id = player.id AND b.revoked_at IS NULL)"
 
+        // The same EXISTS PostgresProfileReads.PROFILE_OF_SQL carries, correlated to player.id
+        // exactly as that one is (ADR-0132 §2). The kind is bound as a statement parameter from
+        // CredentialKind.PASSWORD.value below, never spelled as a SQL literal here.
+        private const val HAS_PASSWORD_EXISTS =
+            "EXISTS (SELECT 1 FROM credential c WHERE c.player_id = player.id AND c.kind = ?)"
+
+        // The bound kind above sits in RETURNING, which is textually after the WHERE clause, so
+        // it is `?` 3 here — the id at `?` 2 and the name at `?` 1 keep the positions they had
+        // before this field existed.
         private const val SET_NAME_SQL =
             "UPDATE player SET display_name = ? WHERE id = ? AND display_name IS NULL " +
-                "RETURNING id, coin_balance, display_name, $DEVICE_ROUTE_LIVE_EXISTS AS device_route_live"
+                "RETURNING id, coin_balance, display_name, $DEVICE_ROUTE_LIVE_EXISTS AS device_route_live, " +
+                "$HAS_PASSWORD_EXISTS AS has_password"
 
+        // Here the bound kind sits in the select list, textually before the WHERE clause, so it
+        // is `?` 1 and the player id — still bound exactly once — moves to `?` 2.
         private const val CURRENT_PROFILE_SQL =
-            "SELECT id, coin_balance, display_name, $DEVICE_ROUTE_LIVE_EXISTS AS device_route_live " +
-                "FROM player WHERE id = ?"
+            "SELECT id, coin_balance, display_name, $DEVICE_ROUTE_LIVE_EXISTS AS device_route_live, " +
+                "$HAS_PASSWORD_EXISTS AS has_password FROM player WHERE id = ?"
     }
 }

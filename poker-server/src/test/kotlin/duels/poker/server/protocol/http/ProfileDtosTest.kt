@@ -15,7 +15,7 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 3)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals(
-            """{"playerId":"p-1","coinBalance":3,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":false}""",
+            """{"playerId":"p-1","coinBalance":3,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":false,"hasPassword":false}""",
             encoded,
         )
     }
@@ -143,7 +143,7 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 0, displayName = null, displayNameRemoved = true)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals(
-            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":true,"deviceRouteLive":true,"hasRecoveryEmail":false}""",
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":true,"deviceRouteLive":true,"hasRecoveryEmail":false,"hasPassword":false}""",
             encoded,
         )
 
@@ -156,7 +156,7 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 0, deviceRouteLive = false)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals(
-            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":false,"hasRecoveryEmail":false}""",
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":false,"hasRecoveryEmail":false,"hasPassword":false}""",
             encoded,
         )
 
@@ -169,7 +169,7 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 0, hasRecoveryEmail = true)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals(
-            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":true}""",
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":true,"hasPassword":false}""",
             encoded,
         )
     }
@@ -179,9 +179,29 @@ class ProfileDtosTest {
         val profile = profileResponse("p-1", 0, hasRecoveryEmail = false)
         val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
         assertEquals(
-            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":false}""",
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":false,"hasPassword":false}""",
             encoded,
         )
+    }
+
+    @Test
+    fun aProfileHoldingAPasswordSaysSo() {
+        val profile = profileResponse("p-1", 0, hasPassword = true)
+        val encoded = protocolJson.encodeToString(ProfileResponse.serializer(), profile)
+        assertEquals(
+            """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":false,"hasPassword":true}""",
+            encoded,
+        )
+    }
+
+    @Test
+    fun aProfileWithoutThePasswordFieldIsRefused() {
+        assertThrows<IllegalArgumentException> {
+            protocolJson.decodeFromString(
+                ProfileResponse.serializer(),
+                """{"playerId":"p-1","coinBalance":0,"displayName":null,"displayNameRemoved":false,"deviceRouteLive":true,"hasRecoveryEmail":false}""",
+            )
+        }
     }
 
     // Two independent checks, because they guard two different mistakes: a new field named for

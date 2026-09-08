@@ -207,6 +207,7 @@ class StandingsRouteTest {
                     displayNameRemoved = false,
                     deviceRouteLive = true,
                     hasRecoveryEmail = false,
+                    hasPassword = false,
                 ),
                 "device-2" to duels.poker.server.protocol.http.ProfileResponse(
                     "player-2",
@@ -215,6 +216,7 @@ class StandingsRouteTest {
                     displayNameRemoved = false,
                     deviceRouteLive = true,
                     hasRecoveryEmail = false,
+                    hasPassword = false,
                 ),
             ),
         )

@@ -16,6 +16,7 @@ internal fun profileResponse(
     displayNameRemoved: Boolean = false,
     deviceRouteLive: Boolean = true,
     hasRecoveryEmail: Boolean = false,
+    hasPassword: Boolean = false,
 ): ProfileResponse = ProfileResponse(
     playerId,
     coinBalance,
@@ -23,6 +24,7 @@ internal fun profileResponse(
     displayNameRemoved,
     deviceRouteLive,
     hasRecoveryEmail,
+    hasPassword,
 )
 
 internal fun duelSummaryResponse(

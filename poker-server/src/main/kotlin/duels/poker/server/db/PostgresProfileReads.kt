@@ -1,5 +1,6 @@
 package duels.poker.server.db
 
+import duels.poker.server.auth.CredentialKind
 import duels.poker.server.http.DuelCursor
 import duels.poker.server.http.DuelFilter
 import duels.poker.server.http.ProfileReads
@@ -29,7 +30,11 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
     override suspend fun profileOf(playerId: PlayerId): ProfileResponse? = withContext(Dispatchers.IO) {
         dataSource.connection.use { connection ->
             connection.prepareStatement(PROFILE_OF_SQL).use { statement ->
-                statement.setObject(1, UUID.fromString(playerId.value))
+                // The bound kind sits inside a select-list EXISTS, which precedes the WHERE
+                // clause textually, so it is `?` 1 and the player id — bound exactly once, never
+                // to a second `?` — moves to `?` 2.
+                statement.setString(1, CredentialKind.PASSWORD.value)
+                statement.setObject(2, UUID.fromString(playerId.value))
                 statement.executeQuery().use { rows ->
                     if (rows.next()) {
                         ProfileResponse(
@@ -39,6 +44,7 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                             rows.getBoolean(4),
                             rows.getBoolean(5),
                             rows.getBoolean(6),
+                            rows.getBoolean(7),
                         )
                     } else {
                         null
@@ -165,6 +171,13 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         // unverified claim answers false here exactly as no claim at all does (ADR-0031 §3) — the
         // same statement PostgresRecoveryEmails.HAS_RECOVERY_EMAIL_SQL already reads for the
         // identical question, correlated here instead of bound a second time.
+        // has_password is a fourth, independent correlated EXISTS, over credential, correlated to
+        // p.id and never to a second player parameter (ADR-0132 §2). The kind is bound as a
+        // statement parameter from CredentialKind.PASSWORD.value, never spelled as a SQL literal,
+        // so a renamed constant cannot leave a statement that silently answers false for every
+        // player. Because this EXISTS sits in the select list, its bound kind is textually before
+        // the WHERE clause, so it is `?` 1 and the player id — still bound exactly once, and
+        // never to a second `?` — moves to `?` 2.
         private const val PROFILE_OF_SQL =
             """
             SELECT p.id,
@@ -176,7 +189,9 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
                    EXISTS (SELECT 1 FROM device_binding b
                             WHERE b.player_id = p.id AND b.revoked_at IS NULL) AS device_route_live,
                    EXISTS (SELECT 1 FROM recovery_email r
-                            WHERE r.player_id = p.id) AS has_recovery_email
+                            WHERE r.player_id = p.id) AS has_recovery_email,
+                   EXISTS (SELECT 1 FROM credential c
+                            WHERE c.player_id = p.id AND c.kind = ?) AS has_password
             FROM player p
             WHERE p.id = ?
             """
