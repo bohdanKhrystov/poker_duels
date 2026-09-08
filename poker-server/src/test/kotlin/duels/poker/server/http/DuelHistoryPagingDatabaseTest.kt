@@ -2,6 +2,8 @@ package duels.poker.server.http
 
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
+import duels.poker.server.auth.AttemptBudget
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.db.Migrations
 import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
@@ -15,6 +17,7 @@ import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
+import duels.poker.server.time.MutableClock
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -87,7 +90,12 @@ class DuelHistoryPagingDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+                profileRoutes(
+                    PostgresProfileReads(dataSource),
+                    PostgresProfileWrites(dataSource),
+                    identitiesFor(dataSource),
+                    generousNameWriteBudget(),
+                )
             }
 
             val pages = walkAllPages(client, "alice", PAGE_LIMIT)
@@ -108,7 +116,12 @@ class DuelHistoryPagingDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+                profileRoutes(
+                    PostgresProfileReads(dataSource),
+                    PostgresProfileWrites(dataSource),
+                    identitiesFor(dataSource),
+                    generousNameWriteBudget(),
+                )
             }
 
             val firstPage = fetchPage(client, "alice", PAGE_LIMIT, after = null)
@@ -128,7 +141,12 @@ class DuelHistoryPagingDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+                profileRoutes(
+                    PostgresProfileReads(dataSource),
+                    PostgresProfileWrites(dataSource),
+                    identitiesFor(dataSource),
+                    generousNameWriteBudget(),
+                )
             }
 
             val alicesFirstPage = fetchPage(client, "alice", PAGE_LIMIT, after = null)
@@ -186,4 +204,10 @@ class DuelHistoryPagingDatabaseTest {
                 "last cursor was $cursor",
         )
     }
+
+    // This suite walks many pages of /api/me/duels through one profileRoutes install and is not
+    // about the write budget (ADR-0134 §6); a limit reachable by a human would start failing it
+    // for a reason that has nothing to do with what it tests.
+    private fun generousNameWriteBudget(): AttemptBudget =
+        AttemptBudget(AttemptLimits(1_000_000, 60_000L), MutableClock())
 }

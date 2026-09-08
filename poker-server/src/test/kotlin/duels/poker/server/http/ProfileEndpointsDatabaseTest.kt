@@ -2,6 +2,8 @@ package duels.poker.server.http
 
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
+import duels.poker.server.auth.AttemptBudget
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.db.Migrations
 import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
@@ -18,6 +20,7 @@ import duels.poker.server.protocol.http.SetNameRequest
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
+import duels.poker.server.time.MutableClock
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.put
@@ -75,7 +78,12 @@ class ProfileEndpointsDatabaseTest {
     fun aDuelThatJustFinishedAppearsInTheList() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+            profileRoutes(
+                profileReads,
+                PostgresProfileWrites(dataSource),
+                identitiesFor(dataSource),
+                generousNameWriteBudget(),
+            )
         }
 
         val response = client.get("/api/me/duels") {
@@ -101,7 +109,12 @@ class ProfileEndpointsDatabaseTest {
     fun theLosersBalanceComesBackOverTheWireAsMinusOne() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+            profileRoutes(
+                profileReads,
+                PostgresProfileWrites(dataSource),
+                identitiesFor(dataSource),
+                generousNameWriteBudget(),
+            )
         }
 
         val response = client.get("/api/me") {
@@ -119,7 +132,12 @@ class ProfileEndpointsDatabaseTest {
     fun anUnknownDeviceIsRefusedAndCreatesNoProfile() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+            profileRoutes(
+                profileReads,
+                PostgresProfileWrites(dataSource),
+                identitiesFor(dataSource),
+                generousNameWriteBudget(),
+            )
         }
 
         val countBefore = playerRowCount()
@@ -148,7 +166,12 @@ class ProfileEndpointsDatabaseTest {
     fun aNameSetOverHttpIsReadBackOnTheProfile() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+            profileRoutes(
+                profileReads,
+                PostgresProfileWrites(dataSource),
+                identitiesFor(dataSource),
+                generousNameWriteBudget(),
+            )
         }
 
         // PUT a name for alice
@@ -176,7 +199,12 @@ class ProfileEndpointsDatabaseTest {
     fun theStoredNameIsTheCanonicalOne() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+            profileRoutes(
+                profileReads,
+                PostgresProfileWrites(dataSource),
+                identitiesFor(dataSource),
+                generousNameWriteBudget(),
+            )
         }
 
         // Create a decomposed version of "Élodie" with surrounding spaces
@@ -209,7 +237,12 @@ class ProfileEndpointsDatabaseTest {
     fun aSecondDeviceCannotTakeTheSameName() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+            profileRoutes(
+                profileReads,
+                PostgresProfileWrites(dataSource),
+                identitiesFor(dataSource),
+                generousNameWriteBudget(),
+            )
         }
 
         // Alice sets her name
@@ -248,7 +281,12 @@ class ProfileEndpointsDatabaseTest {
     fun aSecondNameForTheSameProfileReplacesTheFirst() = testApplication {
         application {
             module()
-            profileRoutes(profileReads, PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+            profileRoutes(
+                profileReads,
+                PostgresProfileWrites(dataSource),
+                identitiesFor(dataSource),
+                generousNameWriteBudget(),
+            )
         }
 
         // Alice sets her name
@@ -280,4 +318,10 @@ class ProfileEndpointsDatabaseTest {
 
         assertEquals("Eleanor", profile.displayName)
     }
+
+    // This suite drives many name writes from a handful of players and is not about the write
+    // budget (ADR-0134 §6); a limit reachable by a human would start failing it for a reason that
+    // has nothing to do with what it tests.
+    private fun generousNameWriteBudget(): AttemptBudget =
+        AttemptBudget(AttemptLimits(1_000_000, 60_000L), MutableClock())
 }

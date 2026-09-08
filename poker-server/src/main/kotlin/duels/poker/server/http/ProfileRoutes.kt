@@ -1,5 +1,6 @@
 package duels.poker.server.http
 
+import duels.poker.server.auth.AttemptBudget
 import duels.poker.server.auth.Identity
 import duels.poker.server.auth.IdentityResolver
 import duels.poker.server.auth.SessionToken
@@ -68,22 +69,36 @@ private const val BEARER_PREFIX: String = "Bearer "
  * fails to decode — a missing `name`, an unrecognised field, or invalid JSON — answers
  * `400 Bad Request`, still before [writes] is called. The decoded name is then run through
  * `canonicalDisplayNameOrNull`; a name the rules refuse is a client error and also answers `400`,
- * again before [writes] is called. Only a canonical name reaches [ProfileWrites.setDisplayName]:
+ * again before [writes] is called. Only once a canonical name exists is [budget] consulted, keyed
+ * by the resolved player and never by a header, a body field or a remote address: over budget
+ * answers `429 Too Many Requests` with an empty body and no advance notice of how many attempts
+ * remain, before [writes] is called. An admitted write reaches [ProfileWrites.setDisplayName]:
  * `NameSet` answers `200 OK` with the updated profile, and `NameTaken` answers `409 Conflict`
- * (`ADR-0134` §5).
+ * (`ADR-0134` §5) — and, because the budget meters the string that was **spent** rather than the
+ * attempt that was made, [budget] is refunded on every result that is not `NameSet`, so a `409`
+ * costs the namespace nothing and a player hunting for an available name is never throttled for
+ * it (`ADR-0134` §6).
  *
- * These routes hold a `ProfileReads`, a `ProfileWrites` and an [IdentityResolver] — never a
- * `PlayerDirectory` or a `DataSource` directly; resolving a credential into a player is
- * [IdentityResolver]'s job, not this file's. Profile creation happens on the socket handshake only
- * (`ADR-0012`), so a crawler hitting this endpoint mints no rows. The routes are installed in
- * production by `Application.duelServer` against a shared set of `ServerComponents` that backs all
- * routes; a test may still install them directly with its own collaborators.
+ * These routes hold a `ProfileReads`, a `ProfileWrites`, an [IdentityResolver] and an
+ * [AttemptBudget] — never a `PlayerDirectory` or a `DataSource` directly; resolving a credential
+ * into a player is [IdentityResolver]'s job, not this file's. Profile creation happens on the
+ * socket handshake only (`ADR-0012`), so a crawler hitting this endpoint mints no rows. The routes
+ * are installed in production by `Application.duelServer` against a shared set of
+ * `ServerComponents` that backs all routes; a test may still install them directly with its own
+ * collaborators.
  *
  * @param reads The port for reading player profiles and balances.
  * @param writes The port for writing player profiles, used by `PUT /api/me/name` only.
  * @param identities The port that resolves a session token or a device id into a player.
+ * @param budget The name-write rate limiter, keyed by the resolved player, consulted by
+ *   `PUT /api/me/name` only, immediately before [writes] is called.
  */
-public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites, identities: IdentityResolver) {
+public fun Application.profileRoutes(
+    reads: ProfileReads,
+    writes: ProfileWrites,
+    identities: IdentityResolver,
+    budget: AttemptBudget,
+) {
     routing {
         get("/api/me") {
             val profile = call.resolvedPlayerOrNull(identities)?.let { reads.profileOf(it) }
@@ -114,7 +129,20 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites,
                 call.respond(HttpStatusCode.BadRequest)
                 return@put
             }
-            when (val result = writes.setDisplayName(PlayerId(profile.playerId), canonicalName)) {
+            // The budget is admitted last, immediately before the write it guards, and keyed by
+            // the resolved player: a stranger, a malformed body and a refused character all keep
+            // their existing answers and never spend it (ADR-0134 §6).
+            if (!budget.admit(profile.playerId)) {
+                call.respond(HttpStatusCode.TooManyRequests)
+                return@put
+            }
+            val result = writes.setDisplayName(PlayerId(profile.playerId), canonicalName)
+            // The budget meters spending, not trying: refund whatever result did not spend a
+            // string, written as "not NameSet" rather than as a NameTaken branch so that a third
+            // result added later refunds by default instead of silently burning a reservation
+            // (ADR-0134 §6).
+            if (result !is SetNameResult.NameSet) budget.refund(profile.playerId)
+            when (result) {
                 is SetNameResult.NameSet -> call.respond(result.profile)
                 SetNameResult.NameTaken -> call.respond(HttpStatusCode.Conflict)
             }

@@ -3,6 +3,8 @@ package duels.poker.server.http
 import duels.poker.engine.duel.DuelFormat
 import duels.poker.engine.duel.DuelOutcome
 import duels.poker.engine.duel.EndCondition
+import duels.poker.server.auth.AttemptBudget
+import duels.poker.server.auth.AttemptLimits
 import duels.poker.server.db.Migrations
 import duels.poker.server.db.PostgresDuelResultStore
 import duels.poker.server.db.PostgresPlayerDirectory
@@ -17,6 +19,7 @@ import duels.poker.server.protocol.http.RecentDuelsResponse
 import duels.poker.server.protocol.protocolJson
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.Player
+import duels.poker.server.time.MutableClock
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -83,7 +86,12 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+                profileRoutes(
+                    PostgresProfileReads(dataSource),
+                    PostgresProfileWrites(dataSource),
+                    identitiesFor(dataSource),
+                    generousNameWriteBudget(),
+                )
             }
 
             val wonPage = fetchDuels(client, outcome = "WON")
@@ -100,7 +108,12 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+                profileRoutes(
+                    PostgresProfileReads(dataSource),
+                    PostgresProfileWrites(dataSource),
+                    identitiesFor(dataSource),
+                    generousNameWriteBudget(),
+                )
             }
 
             // Lower-cased term against the stored "Halvardsen": proves the case fold, the
@@ -117,7 +130,12 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+                profileRoutes(
+                    PostgresProfileReads(dataSource),
+                    PostgresProfileWrites(dataSource),
+                    identitiesFor(dataSource),
+                    generousNameWriteBudget(),
+                )
             }
 
             val both = fetchDuels(client, outcome = "WON", opponent = "Halvardsen")
@@ -144,7 +162,12 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+                profileRoutes(
+                    PostgresProfileReads(dataSource),
+                    PostgresProfileWrites(dataSource),
+                    identitiesFor(dataSource),
+                    generousNameWriteBudget(),
+                )
             }
 
             val page = fetchDuels(client, opponent = "Sigrid")
@@ -159,7 +182,12 @@ class DuelHistoryFilterDatabaseTest {
         testApplication {
             application {
                 module()
-                profileRoutes(PostgresProfileReads(dataSource), PostgresProfileWrites(dataSource), identitiesFor(dataSource))
+                profileRoutes(
+                    PostgresProfileReads(dataSource),
+                    PostgresProfileWrites(dataSource),
+                    identitiesFor(dataSource),
+                    generousNameWriteBudget(),
+                )
             }
 
             val response =
@@ -235,4 +263,10 @@ class DuelHistoryFilterDatabaseTest {
         val body = response.bodyAsText()
         return protocolJson.decodeFromString<RecentDuelsResponse>(body)
     }
+
+    // This suite drives many /api/me/duels requests through one profileRoutes install and is not
+    // about the write budget (ADR-0134 §6); a limit reachable by a human would start failing it
+    // for a reason that has nothing to do with what it tests.
+    private fun generousNameWriteBudget(): AttemptBudget =
+        AttemptBudget(AttemptLimits(1_000_000, 60_000L), MutableClock())
 }
