@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141202
 title: A gate says the drawing of a card does not depend on whether it played
 type: task
-status: backlog
+status: done
 parent: STORY-1412
 module: web-client
 estimate: S
