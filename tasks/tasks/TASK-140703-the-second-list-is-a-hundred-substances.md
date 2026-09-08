@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140703
 title: The second list is a hundred substances
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
