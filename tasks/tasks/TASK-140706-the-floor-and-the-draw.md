@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140706
 title: The floor and the draw
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
