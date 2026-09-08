@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140813
 title: The profile provider can be told to read again
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: web-client
 estimate: S

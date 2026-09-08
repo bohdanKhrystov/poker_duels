@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
   type ReactNode,
@@ -14,6 +15,7 @@ import type { SetNameOutcome } from "./set-name";
 interface ProfileContextValue {
   readonly state: ProfileStripState | null;
   readonly reportNameWrite: (outcome: SetNameOutcome) => void;
+  readonly refresh: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextValue | null>(null);
@@ -31,16 +33,19 @@ export function ProfileProvider(props: {
 }): ReactElement {
   const { read, children } = props;
   const [state, setState] = useState<ProfileStripState | null>(null);
+  const live = useRef(true);
 
   useEffect(() => {
-    let live = true;
-    void read().then((answer) => {
-      if (live) setState(answer);
-    });
     return (): void => {
-      live = false;
+      live.current = false;
     };
-  }, [read]);
+  }, []);
+
+  useEffect(() => {
+    void read().then((answer) => {
+      if (live.current) setState(answer);
+    });
+  }, [read, live]);
 
   // `SetNameOutcome`'s "named" case already carries the profile the server
   // returned, never the string the player typed (`ADR-0029` §5) — adopted
@@ -56,9 +61,20 @@ export function ProfileProvider(props: {
     }));
   }, []);
 
+  // Re-reads the profile from the server and adopts the answer (`ADR-0132` §6).
+  // Guards against unmounting between the call and the answer with the same `live`
+  // flag the mount effect uses. Any answer — profile, no-profile, or unavailable —
+  // is adopted wholesale; the client never composes a status code with a held
+  // profile or keeps a stale profile because the fresh answer was worse.
+  const refresh = useCallback((): void => {
+    void read().then((answer) => {
+      if (live.current) setState(answer);
+    });
+  }, [read, live]);
+
   const contextValue = useMemo<ProfileContextValue>(
-    () => ({ state, reportNameWrite }),
-    [state, reportNameWrite],
+    () => ({ state, reportNameWrite, refresh }),
+    [state, reportNameWrite, refresh],
   );
 
   return (
@@ -84,4 +100,19 @@ export function useProfileStrip(): ProfileStripState | null {
 export function useReportNameWrite(): (outcome: SetNameOutcome) => void {
   const ctx = useContext(ProfileContext);
   return ctx?.reportNameWrite ?? ((): void => {});
+}
+
+/**
+ * Re-reads the profile from the server and adopts the answer, the only way
+ * the held profile is replaced other than the mount read and `reportNameWrite`.
+ *
+ * Called by code that knows the server has changed the caller's own profile
+ * — at this time, the sole case is `signUp`'s `signed-up` outcome (`ADR-0132` §6).
+ *
+ * A no-op where no provider is above — mirrors `useReportNameWrite`'s contract
+ * for the same case.
+ */
+export function useRefreshProfile(): () => void {
+  const ctx = useContext(ProfileContext);
+  return ctx?.refresh ?? ((): void => {});
 }
