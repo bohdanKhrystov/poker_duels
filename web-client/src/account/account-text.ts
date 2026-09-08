@@ -68,6 +68,19 @@ export const SIGN_IN_REFUSED =
 export const CANCEL = "Cancel";
 
 /**
+ * `ADR-0125` §3's three claims about an anonymous profile: what it is, what that costs, and the
+ * way out with what it keeps.
+ */
+export const ANONYMOUS_STATE =
+  "This profile is anonymous: it has no password, and this browser is the only thing that signs in to it.";
+
+export const ANONYMOUS_COST =
+  "The profile lives in this browser: the duel coins and the duels go with it, and nothing reaches them from another browser.";
+
+export const ANONYMOUS_WAY_OUT =
+  "The form below gives this profile a password and keeps every duel coin and every duel, because nothing moves.";
+
+/**
  * The sentence stating whether this device still signs in to this account.
  *
  * `ADR-0037` requires the account screens to state which routes are live: a player who has not
