@@ -3,13 +3,13 @@ schema: 2
 id: TASK-140903
 title: AlreadyNamed is deleted, and 403 leaves the route
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: poker-server
 estimate: XS
 tier: sonnet
 review: standard
-files_touched: 4
+files_touched: 6
 atomic:
   - "`:poker-server:compileTestKotlin` — `ProfileRouteTest` names `SetNameResult.AlreadyNamed` twice and fails *Unresolved reference* the moment the object goes"
   - "`:poker-server:compileKotlin` — `ProfileRoutes`'s `when` over the sealed interface stops compiling with a branch for a case that no longer exists"
@@ -50,6 +50,8 @@ appeared only once the tree compiled.
 | `poker-server/src/main/kotlin/duels/poker/server/http/ProfileRoutes.kt` | modify | The `when` branch and the `profileRoutes` KDoc paragraph that documents the `403` |
 | `poker-server/src/test/kotlin/duels/poker/server/http/ProfileRouteTest.kt` | modify | *Unresolved reference 'AlreadyNamed'* at lines 1135 and 1173 on `compileTestKotlin` |
 | `poker-server/src/test/kotlin/duels/poker/server/http/ProfileWritesPortTest.kt` | modify | `assertEquals(3, sealedSubclasses.size, …)` and an `assertContains(classNames, "AlreadyNamed", …)` — **reflection**, so it compiles fine and fails at test execution |
+| `poker-server/src/main/kotlin/duels/poker/server/db/PostgresProfileWrites.kt` | modify | **Added at landing, comment only.** Line 102 reads *"unlike the old `AlreadyNamed` branch this replaces"* — a comment `TASK-140902` introduced, naming a type **this** ticket deletes. Reword to keep the explanation without the dangling name; no code changes |
+| `poker-server/src/test/kotlin/duels/poker/server/db/NameBlocklistTest.kt` | modify | **Added at landing, comment only.** Line 144 names the same deleted outcome, and predates this ticket's baseline. Same treatment: reword, do not delete — the comment explains why a blocklisted name refuses differently, which is still true |
 
 Read, and do not edit:
 [`ADR-0134`](../../docs/adr/ADR-0134-a-rename-spends-before-it-replaces.md) §2 and §5.
@@ -68,6 +70,24 @@ Read, and do not edit:
   `AlreadyNamed` becomes an **equality** over the whole name set —
   `assertEquals(setOf("NameSet", "NameTaken"), classNames.toSet())` — so a fourth subclass added
   later fails here too. 3 tests stay 3.
+
+## The whole-tree grep, widened at landing
+
+`verify:` asserts `AlreadyNamed` appears **nowhere** under `poker-server/src`. After the four files
+above it survives in exactly two **comments**, neither in the original Files table and one of them
+explicitly listed out of scope:
+
+- `PostgresProfileWrites.kt:102`, introduced by `TASK-140902` — which merged an hour before this
+  ticket started. The chain created its own obstacle.
+- `NameBlocklistTest.kt:144`, predating this ticket's baseline.
+
+The gate is right and the file budget was wrong. A comment naming a type the same commit deletes is a
+**dangling reference**, and the alternative — narrowing the gate to the files the ticket owns — would
+leave the product referring to something that no longer exists while a green run said otherwise.
+
+Both are reworded, not deleted: each says something true about *why* a refusal behaves as it does, and
+only the name of the vanished outcome has to go. `PostgresProfileWrites.kt` remains out of scope for
+every purpose except this comment — no SQL, no logic, no test.
 
 ## Out of scope
 

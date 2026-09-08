@@ -1130,60 +1130,21 @@ class ProfileRouteTest {
     }
 
     @Test
-    fun aPlayerWhoAlreadyHasANameIsForbidden() = testApplication {
+    fun theOnlyRefusalTheWriteCanAnswerIsAConflict() = testApplication {
+        // ADR-0134 §5: 403 leaves the route entirely — a rename is no longer forbidden, and
+        // NameTaken's 409 is the only refusal a write can answer.
         val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
-        val writes = FakeProfileWrites(SetNameResult.AlreadyNamed)
         application {
             module()
-            profileRoutes(reads, writes, identitiesFor(reads.profiles))
+            profileRoutes(reads, FakeProfileWrites(SetNameResult.NameTaken), identitiesFor(reads.profiles))
         }
         val response = client.put("/api/me/name") {
             header(DEVICE_ID_HEADER, "alice")
             header(HttpHeaders.ContentType, "application/json")
-            setBody("""{"name":"Charlie"}""")
+            setBody("""{"name":"Bob"}""")
         }
-        assertEquals(HttpStatusCode.Forbidden, response.status)
-        assertEquals("", response.bodyAsText())
-    }
-
-    @Test
-    fun theTwoRefusalsAreDifferentStatuses() {
-        // Test both result types and verify they produce different status codes.
-        // This catches a mapping that incorrectly treats them the same.
-        var takenStatus: HttpStatusCode? = null
-        testApplication {
-            val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
-            application {
-                module()
-                profileRoutes(reads, FakeProfileWrites(SetNameResult.NameTaken), identitiesFor(reads.profiles))
-            }
-            val response = client.put("/api/me/name") {
-                header(DEVICE_ID_HEADER, "alice")
-                header(HttpHeaders.ContentType, "application/json")
-                setBody("""{"name":"Bob"}""")
-            }
-            takenStatus = response.status
-        }
-
-        var alreadyNamedStatus: HttpStatusCode? = null
-        testApplication {
-            val reads = FakeProfileReads(mapOf("alice" to profileResponse("p-alice", 0)))
-            application {
-                module()
-                profileRoutes(reads, FakeProfileWrites(SetNameResult.AlreadyNamed), identitiesFor(reads.profiles))
-            }
-            val response = client.put("/api/me/name") {
-                header(DEVICE_ID_HEADER, "alice")
-                header(HttpHeaders.ContentType, "application/json")
-                setBody("""{"name":"Bob"}""")
-            }
-            alreadyNamedStatus = response.status
-        }
-
-        assertEquals(HttpStatusCode.Conflict, takenStatus)
-        assertEquals(HttpStatusCode.Forbidden, alreadyNamedStatus)
-        // Verify they're different — a mapping collapsing both to one status fails here
-        assertTrue(takenStatus != alreadyNamedStatus)
+        assertEquals(HttpStatusCode.Conflict, response.status)
+        assertTrue(response.status != HttpStatusCode.Forbidden)
     }
 
     @Test

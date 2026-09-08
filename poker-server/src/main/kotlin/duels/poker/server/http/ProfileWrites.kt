@@ -30,10 +30,9 @@ public interface ProfileWrites {
 /**
  * The answer to a request to set a display name.
  *
- * A sealed type because callers must act on the three outcomes differently (`ADR-0029` §5):
- * the name was set successfully, or the name is already taken, or this player already has
- * a different name. These are distinct HTTP codes (200, 409, 403) and distinct decisions
- * a client must make.
+ * A sealed type because callers must act on the two outcomes differently (`ADR-0134` §5):
+ * the name was set successfully, or the folded name collides with an already-spent string.
+ * These are distinct HTTP codes (200, 409) and distinct decisions a client must make.
  */
 public sealed interface SetNameResult {
     /**
@@ -46,19 +45,11 @@ public sealed interface SetNameResult {
     public data class NameSet(val profile: ProfileResponse) : SetNameResult
 
     /**
-     * The folded name collides with another player's name. The name is already taken.
+     * The folded name collides with an already-spent string — held, blocked, retired, or
+     * replaced by an earlier rename. The name is already taken.
      *
      * This answers `409 Conflict`. The fold uses `lower(name COLLATE "und-x-icu")`,
      * so `Bob` and `bob` collide (`ADR-0029` §1). The player may send a different name.
      */
     public object NameTaken : SetNameResult
-
-    /**
-     * This player already has a different name set. Display names are permanent once set.
-     *
-     * This answers `403 Forbidden`. `403` rather than `409` for an existing name, deliberately
-     * (`ADR-0029` §5): `409` invites a retry, and no state this client can ever reach makes
-     * the request succeed. `403` is honest — tell the client there is no state change possible.
-     */
-    public object AlreadyNamed : SetNameResult
 }
