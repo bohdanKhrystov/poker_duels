@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140710
 title: The ask's words are transcribed from the card
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
