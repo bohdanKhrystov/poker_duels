@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140807
 title: A name write answers with the password flag it read
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: poker-server
 estimate: S

@@ -1,5 +1,7 @@
 package duels.poker.server.db
 
+import duels.poker.server.auth.CredentialKind
+import duels.poker.server.auth.PresentedSecret
 import duels.poker.server.http.SetNameResult
 import duels.poker.server.session.DeviceId
 import duels.poker.server.session.PlayerId
@@ -37,6 +39,7 @@ class PostgresProfileWritesTest {
     private lateinit var dataSource: DataSource
     private lateinit var playerDirectory: PostgresPlayerDirectory
     private lateinit var profileWrites: PostgresProfileWrites
+    private lateinit var credentials: PostgresCredentials
 
     @BeforeEach
     fun setupDatabase() {
@@ -44,6 +47,7 @@ class PostgresProfileWritesTest {
         Migrations.migrate(dataSource)
         playerDirectory = PostgresPlayerDirectory(dataSource)
         profileWrites = PostgresProfileWrites(dataSource)
+        credentials = PostgresCredentials(dataSource)
     }
 
     @Test
@@ -271,6 +275,62 @@ class PostgresProfileWritesTest {
 
             assertIs<SetNameResult.NameSet>(secondClaim)
             assertEquals("Dot", secondClaim.profile.displayName)
+        }
+    }
+
+    @Test
+    fun aNameWriteAnswersTrueForAPlayerHoldingAPassword() {
+        runBlocking {
+            val withPassword = playerDirectory.resolve(DeviceId("withPassword"))
+            val withoutPassword = playerDirectory.resolve(DeviceId("withoutPassword"))
+
+            // Create a password credential for the first player
+            credentials.create(
+                withPassword.id,
+                CredentialKind.PASSWORD,
+                "alice@example.com",
+                PresentedSecret("password"),
+            )
+
+            // Both players set names for the first time
+            val resultWithPassword = profileWrites.setDisplayName(withPassword.id, "Alice")
+            val resultWithoutPassword = profileWrites.setDisplayName(withoutPassword.id, "Bob")
+
+            // Verify the results
+            assertIs<SetNameResult.NameSet>(resultWithPassword)
+            assertTrue(resultWithPassword.profile.hasPassword)
+            assertIs<SetNameResult.NameSet>(resultWithoutPassword)
+            assertEquals(false, resultWithoutPassword.profile.hasPassword)
+        }
+    }
+
+    @Test
+    fun theIdempotentRetryAnswersWithThePasswordFlagToo() {
+        runBlocking {
+            val withPassword = playerDirectory.resolve(DeviceId("withPassword"))
+            val withoutPassword = playerDirectory.resolve(DeviceId("withoutPassword"))
+
+            // Create a password credential for the first player
+            credentials.create(
+                withPassword.id,
+                CredentialKind.PASSWORD,
+                "alice@example.com",
+                PresentedSecret("password"),
+            )
+
+            // Both players set names for the first time
+            profileWrites.setDisplayName(withPassword.id, "Alice")
+            profileWrites.setDisplayName(withoutPassword.id, "Bob")
+
+            // Both players send the same name again (idempotent retry)
+            val retryWithPassword = profileWrites.setDisplayName(withPassword.id, "Alice")
+            val retryWithoutPassword = profileWrites.setDisplayName(withoutPassword.id, "Bob")
+
+            // Verify the retry results
+            assertIs<SetNameResult.NameSet>(retryWithPassword)
+            assertTrue(retryWithPassword.profile.hasPassword)
+            assertIs<SetNameResult.NameSet>(retryWithoutPassword)
+            assertEquals(false, retryWithoutPassword.profile.hasPassword)
         }
     }
 
