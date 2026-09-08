@@ -1,10 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import {
   ProfileProvider,
   useProfileStrip,
   useReportNameWrite,
+  useRefreshProfile,
 } from "./profile-provider";
 import type { ProfileStripState } from "./profile-strip";
 import type { SetNameOutcome } from "./set-name";
@@ -45,6 +46,48 @@ function NameConsumer(props: {
       <button onClick={() => report(props.outcome)}>report</button>
     </div>
   );
+}
+
+/** Renders the coin balance and a button that calls `useRefreshProfile()`. */
+function RefreshConsumer(): ReactElement {
+  const state = useProfileStrip();
+  const refresh = useRefreshProfile();
+  if (state === null) {
+    return (
+      <div>
+        <p>no answer yet</p>
+        <button onClick={() => refresh()}>refresh</button>
+      </div>
+    );
+  }
+  if (state.kind === "profile") {
+    return (
+      <div>
+        <p>{`balance ${state.profile.coinBalance}`}</p>
+        <p>{`has password: ${state.profile.hasPassword}`}</p>
+        <button onClick={() => refresh()}>refresh</button>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <p>{state.kind}</p>
+      <button onClick={() => refresh()}>refresh</button>
+    </div>
+  );
+}
+
+/** Calls `useRefreshProfile()` outside a provider and renders nothing. */
+function RefreshNoProvider(): ReactElement {
+  const refresh = useRefreshProfile();
+  const canCall = (): void => {
+    try {
+      refresh();
+    } catch {
+      throw new Error("refresh threw outside provider");
+    }
+  };
+  return <button onClick={canCall}>try refresh</button>;
 }
 
 describe("the profile provider", () => {
@@ -168,5 +211,98 @@ describe("the profile provider", () => {
     // read resolved with — not merely an equal-looking one.
     expect(seen.length).toBe(rendersBeforeReport);
     expect(seen[seen.length - 1]).toBe(initial);
+  });
+
+  it("reads again when asked, and adopts what came back", async () => {
+    const first: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ coinBalance: 100, hasPassword: false }),
+      duels: [aDuelLine()],
+    };
+    const second: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ coinBalance: 200, hasPassword: true }),
+      duels: [aDuelLine()],
+    };
+
+    let call = 0;
+    const read = (): Promise<ProfileStripState> => {
+      call += 1;
+      if (call === 1) return Promise.resolve(first);
+      return Promise.resolve(second);
+    };
+
+    render(
+      <ProfileProvider read={read}>
+        <RefreshConsumer />
+      </ProfileProvider>,
+    );
+    await screen.findByText("balance 100");
+    expect(screen.getByText("has password: false")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "refresh" }));
+
+    expect(await screen.findByText("balance 200")).toBeDefined();
+    expect(screen.getByText("has password: true")).toBeDefined();
+  });
+
+  it("reads once and only once until it is asked", async () => {
+    const answer: ProfileStripState = { kind: "no-profile" };
+    const read = vi.fn(() => Promise.resolve(answer));
+
+    render(
+      <ProfileProvider read={read}>
+        <RefreshConsumer />
+      </ProfileProvider>,
+    );
+    await screen.findByText("no-profile");
+
+    expect(read).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "refresh" }));
+
+    // The spy counts the call immediately when read() is invoked, not when
+    // the promise settles, so we can check the count right away.
+    expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it("asking where no provider is above does nothing", () => {
+    render(<RefreshNoProvider />);
+
+    expect(() => {
+      fireEvent.click(screen.getByRole("button", { name: "try refresh" }));
+    }).not.toThrow();
+  });
+
+  it("when the re-read fails, adopts unavailable over the stale profile", async () => {
+    const initial: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ coinBalance: 100, hasPassword: false }),
+      duels: [aDuelLine()],
+    };
+
+    let call = 0;
+    const read = (): Promise<ProfileStripState> => {
+      call += 1;
+      if (call === 1) return Promise.resolve(initial);
+      return Promise.resolve({ kind: "unavailable" });
+    };
+
+    render(
+      <ProfileProvider read={read}>
+        <RefreshConsumer />
+      </ProfileProvider>,
+    );
+    await screen.findByText("balance 100");
+    expect(screen.getByText("has password: false")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "refresh" }));
+
+    // Wait for the second read's promise to settle and setState to render unavailable.
+    await waitFor(() => {
+      expect(screen.getByText("unavailable")).toBeDefined();
+    });
+
+    expect(screen.queryByText("balance 100")).toBeNull();
   });
 });
