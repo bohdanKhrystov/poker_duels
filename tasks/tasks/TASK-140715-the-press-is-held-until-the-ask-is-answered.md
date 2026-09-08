@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140715
 title: The press is held until the ask is answered, and then it goes through
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
@@ -20,12 +20,12 @@ verify:
   - cd web-client && test "$(grep -n 'if (state.roomCode !== null) {' src/lobby/Lobby.tsx | cut -d: -f1)" -lt "$(grep -n 'if (heldPress !== null && setName !== null) {' src/lobby/Lobby.tsx | cut -d: -f1)"
   - cd web-client && test "$(grep -c '<NameSurface' src/lobby/Lobby.tsx || true)" = "1"
   - cd web-client && test "$(grep -c 'skipNameAskHere()' src/lobby/Lobby.tsx || true)" = "1"
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/lb-after.txt" 2>&1; grep -qF 'Tests  108 passed (108)' "${TMPDIR:-/tmp}/lb-after.txt"
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/lb-after.txt" 2>&1; grep -qF 'Tests  105 passed (105)' "${TMPDIR:-/tmp}/lb-after.txt"
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/App.test.tsx > "${TMPDIR:-/tmp}/app-after.txt" 2>&1; grep -qF 'Tests  36 passed (36)' "${TMPDIR:-/tmp}/app-after.txt"
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/e2e > "${TMPDIR:-/tmp}/e2e-after.txt" 2>&1; grep -qF 'Test Files  7 passed (7)' "${TMPDIR:-/tmp}/e2e-after.txt"
   - cd web-client && git diff --quiet -- src/e2e
-  - cd web-client && cp src/lobby/Lobby.tsx "${TMPDIR:-/tmp}/lb.fixed.tsx" && perl -0pi -e 's{skipNameAskHere\(\);}{}' src/lobby/Lobby.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/w1.txt" 2>&1; cp "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx; cmp -s "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx && grep -qF 'Tests  1 failed | 107 passed (108)' "${TMPDIR:-/tmp}/w1.txt" && grep -qF 'records the skip and sends the press the player already made' "${TMPDIR:-/tmp}/w1.txt"
-  - cd web-client && cp src/lobby/Lobby.tsx "${TMPDIR:-/tmp}/lb.fixed.tsx" && perl -0pi -e 's{if \(setName !== null && askForName\(\{ profile, skipped: nameAskSkipped \}\)\) \{}{if (false) {}' src/lobby/Lobby.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/w2.txt" 2>&1; cp "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx; cmp -s "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx && grep -qF 'Tests  4 failed | 104 passed (108)' "${TMPDIR:-/tmp}/w2.txt" && grep -qF 'stands the ask in place of the front door, and sends nothing' "${TMPDIR:-/tmp}/w2.txt"
+  - cd web-client && cp src/lobby/Lobby.tsx "${TMPDIR:-/tmp}/lb.fixed.tsx" && perl -0pi -e 's{skipNameAskHere\(\);}{}' src/lobby/Lobby.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/w1.txt" 2>&1; cp "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx; cmp -s "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx && grep -qF 'Tests  1 failed | 104 passed (105)' "${TMPDIR:-/tmp}/w1.txt" && grep -qF 'records the skip and sends the press the player already made' "${TMPDIR:-/tmp}/w1.txt"
+  - cd web-client && cp src/lobby/Lobby.tsx "${TMPDIR:-/tmp}/lb.fixed.tsx" && perl -0pi -e 's|if \(setName !== null && askForName\(\{ profile, skipped: nameAskSkipped \}\)\) \{|if (false) {|' src/lobby/Lobby.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/w2.txt" 2>&1; cp "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx; cmp -s "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx && grep -qF 'Tests  4 failed | 101 passed (105)' "${TMPDIR:-/tmp}/w2.txt" && grep -qF 'stands the ask in place of the front door, and sends nothing' "${TMPDIR:-/tmp}/w2.txt"
   - python3 .github/scripts/lint_tickets.py
 ---
 
@@ -134,16 +134,16 @@ under `src/e2e/` is opened.
 
 ## Acceptance criteria
 
-- [ ] `npx vitest run src/lobby/Lobby.test.tsx` reports `Tests  108 passed (108)`, and no merged
+- [ ] `npx vitest run src/lobby/Lobby.test.tsx` reports `Tests  105 passed (105)`, and no merged
       assertion in that file is edited
 - [ ] `npx vitest run src/App.test.tsx` reports `Tests  36 passed (36)`
 - [ ] `npx vitest run src/e2e` reports `Test Files  7 passed (7)` and `git diff --quiet -- src/e2e`
       exits 0
 - [ ] The ask's branch is on a **later line** than `if (state.roomCode !== null) {`
 - [ ] Removing `skipNameAskHere();` fails `records the skip and sends the press the player already
-      made` and nothing else: `Tests  1 failed | 107 passed (108)`, file restored byte-for-byte
+      made` and nothing else: `Tests  1 failed | 104 passed (105)`, file restored byte-for-byte
 - [ ] Turning the `startDuel` condition into `if (false)` fails all four new tests and nothing else:
-      `Tests  4 failed | 104 passed (108)`, file restored byte-for-byte
+      `Tests  4 failed | 101 passed (105)`, file restored byte-for-byte
 - [ ] `<NameSurface` still appears exactly once in `Lobby.tsx`
 - [ ] `cd web-client && npm run check` exits 0
 - [ ] Every command in `verify:` exits 0

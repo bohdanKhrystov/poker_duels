@@ -45,6 +45,7 @@ import {
 import { readSessionToken, writeSessionToken } from "../protocol/session-token";
 import { HISTORY_HEADING } from "../history/history-text";
 import { LADDER_HEADING } from "../ladder/ladder-text";
+import { SKIP_AND_PLAY_LABEL, TAKE_NAME_LABEL } from "../profile/name-ask-text";
 
 // `read` (`useHistory()`) is wired by the real app boot in "../main", which
 // this suite never runs — every other test here leaves it `null` and never
@@ -71,6 +72,18 @@ const signedInWiring = vi.hoisted(() => ({
   signedIn: false,
 }));
 
+// Beside `signedInWiring`: `Lobby` reads two more browser facts through
+// "../main" — whether this browser answered the name ask before
+// (`nameAskSkippedHere`) and the write that records a skip
+// (`skipNameAskHere`). `skipped` is a boolean the tests below set directly;
+// `skip` is a spy they assert was called, never a real `Storage`, for the
+// same reason `signedInWiring` is a boolean and not one — what storage does
+// with either fact is `../main`'s own tests', not this file's.
+const nameAskWiring = vi.hoisted(() => ({
+  skipped: false,
+  skip: vi.fn(),
+}));
+
 vi.mock("../main", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../main")>();
   return {
@@ -78,6 +91,8 @@ vi.mock("../main", async (importOriginal) => {
     useHistory: () => historyRead,
     useLadder: () => ladderRead,
     useSignedIn: () => signedInWiring.signedIn,
+    nameAskSkippedHere: () => nameAskWiring.skipped,
+    skipNameAskHere: nameAskWiring.skip,
   };
 });
 
@@ -125,6 +140,8 @@ beforeEach(() => {
   historyRead.mockClear();
   ladderRead.mockClear();
   signedInWiring.signedIn = false;
+  nameAskWiring.skipped = false;
+  nameAskWiring.skip.mockClear();
 });
 
 afterEach(() => {
@@ -173,6 +190,46 @@ function renderLobbyWithProfile(
       </SetNameProvider>
     </ProfileProvider>,
   );
+}
+
+/**
+ * Mounts the tree `ADR-0119`'s ask needs — `ProfileProvider` over
+ * `SetNameProvider` over `DuelProvider` — with a profile holding no name, so
+ * `askForName` answers `true` for the two front-door controls this file
+ * exercises. Returns the `send` and `setName` spies, the two seams the ask's
+ * own tests assert against.
+ */
+function renderLobbyForTheAsk(
+  overrides: {
+    profile?: ProfileStripState;
+    setName?: (name: string) => Promise<SetNameOutcome>;
+  } = {},
+): {
+  send: ReturnType<typeof vi.fn>;
+  setName: (name: string) => Promise<SetNameOutcome>;
+} {
+  const state: ProfileStripState = overrides.profile ?? {
+    kind: "profile",
+    profile: aProfile({ displayName: null }),
+    duels: [],
+  };
+  const read = (): Promise<ProfileStripState> => Promise.resolve(state);
+  const setName =
+    overrides.setName ??
+    vi.fn((): Promise<SetNameOutcome> => new Promise<SetNameOutcome>(() => {}));
+  const send = vi.fn();
+
+  render(
+    <ProfileProvider read={read}>
+      <SetNameProvider setName={setName}>
+        <DuelProvider store={createDuelStore()} send={send}>
+          <Lobby />
+        </DuelProvider>
+      </SetNameProvider>
+    </ProfileProvider>,
+  );
+
+  return { send, setName };
 }
 
 /**
@@ -473,6 +530,90 @@ describe("the lobby", () => {
 
     expect(send).toHaveBeenCalledOnce();
     expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
+  });
+
+  // ADR-0119 §1: the first press by a player the predicate names is held —
+  // the ask stands in the front door's place, and nothing is sent yet.
+  // `renderLobby()` above never wires a `ProfileProvider`, so `setName` is
+  // `null` there and the press always goes straight through (item 4 of this
+  // ticket) — this is the one test in the file that gives the predicate a
+  // profile to name.
+  it("stands the ask in place of the front door, and sends nothing", async () => {
+    const { send } = renderLobbyForTheAsk();
+
+    await screen.findByRole("button", { name: "Play duel" });
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+
+    expect(
+      screen.getByRole("region", { name: "choose your name" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Play duel" })).toBeNull();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  // The press is held, not dropped: once the ask is answered by naming, the
+  // frame the player already pressed for is sent, unchanged.
+  it("sends the press the player already made once they take a name", async () => {
+    const setName = vi.fn((): Promise<SetNameOutcome> =>
+      Promise.resolve({
+        kind: "named",
+        profile: aProfile({ displayName: "Zqx" }),
+      }),
+    );
+    const { send } = renderLobbyForTheAsk({ setName });
+
+    await screen.findByRole("button", { name: "Play duel" });
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: TAKE_NAME_LABEL }),
+    );
+
+    // The ask's own settle runs off a resolved promise, so the send this
+    // ticket owns lands on a later microtask than the click that triggered
+    // it — `findBy*` is what waits for it rather than asserting too soon.
+    await screen.findByRole("button", { name: "Play duel" });
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
+    expect(
+      screen.queryByRole("region", { name: "choose your name" }),
+    ).toBeNull();
+  });
+
+  // ADR-0119 §2: skipping is not a dead end — it plays. `nameAskWiring.skip`
+  // is the mocked `skipNameAskHere`, called exactly once, and `send` still
+  // carries the frame the player pressed for before the ask ever stood.
+  it("records the skip and sends the press the player already made", async () => {
+    const { send } = renderLobbyForTheAsk();
+
+    await screen.findByRole("button", { name: "Play duel" });
+    fireEvent.click(screen.getByRole("button", { name: "Play duel" }));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: SKIP_AND_PLAY_LABEL }),
+    );
+
+    expect(nameAskWiring.skip).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "CreateRoom" });
+  });
+
+  // The held frame is the one the press actually carried, not a re-read of
+  // the field once the ask has settled: the code is captured in `heldPress`
+  // at the moment `Join the duel` is pressed.
+  it("carries the join code through the ask", async () => {
+    const { send } = renderLobbyForTheAsk();
+
+    await screen.findByRole("button", { name: "Play duel" });
+    typeCode("abcdefgh");
+    fireEvent.click(screen.getByRole("button", { name: "Join the duel" }));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: SKIP_AND_PLAY_LABEL }),
+    );
+
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith({ type: "JoinRoom", code: "ABCDEFGH" });
   });
 
   it("sends a pasted code trimmed and upper-cased", () => {
