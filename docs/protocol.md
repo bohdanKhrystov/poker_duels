@@ -233,7 +233,7 @@ returned. There is no `X-Device-Id` fallback here; there is nothing to fall back
 | playerId | string | The unique identifier of the player |
 | coinBalance | number | The player's current coin balance, computed as wins minus losses. This is a signed integer and may be negative per `ADR-0014` — a balance of `−1` is a correct answer, not an error. |
 | displayName | string or null | The player's chosen display name, or `null` if never set. Null means *never set*, and the server fabricates no placeholder per `ADR-0029` §6. |
-| displayNameRemoved | boolean | `true` when the player holds no display name **and** a name has been removed from them by an operator (`ADR-0052`). `false` for a player who never set one, and `false` again once they set a new one. Never says anything about another player. |
+| displayNameRemoved | boolean | `true` when the player holds no display name **and** a name has been removed from them by an operator (`ADR-0052`). `false` for a player who never set one, `false` again once they set a new one, and `false` for a player who holds a name and replaced a previous one by renaming. Never says anything about another player. |
 | deviceRouteLive | boolean | `true` exactly when this player currently holds a live device binding (`ADR-0049` §5), `false` once `DELETE /api/me/device` has revoked it. This is the field the account screen reads to decide whether to offer that route at all (`ADR-0050` §3). |
 | hasRecoveryEmail | boolean | `true` when the caller has a **verified** recovery address. `false` covers three cases this field does not distinguish — never attached, attached but not yet verified, and detached. The address itself is returned by no endpoint (`ADR-0031` §6.3). |
 | hasPassword | boolean | `true` exactly when this player holds a password credential; `false` covers a player who never made one. Per `ADR-0132` §3, no other endpoint answers it for a player the caller did not resolve to. |
@@ -258,7 +258,7 @@ returned. There is no `X-Device-Id` fallback here; there is nothing to fall back
 4. **Characters:** The server refuses:
    - Any character in Unicode category `Cc` (control) or `Cf` (format) — these are invisible and spoofable.
    - Any whitespace character other than `U+0020` (regular space).
-   - Two or more consecutive `U+0020` characters — names that render identically but are stored differently are permanent once set, so this is prevented at write time.
+   - Two or more consecutive `U+0020` characters — names that render identically but are stored differently are spent forever once written, so this is prevented at write time.
 
 A name that the player typed as, for example, `  Alice  ` becomes `Alice` (9 code points become 5). The database confirms all these rules via constraints; `ADR-0029` §2 lists them.
 
@@ -266,11 +266,11 @@ A name that the player typed as, for example, `  Alice  ` becomes `Alice` (9 cod
 
 | Status | Body | Meaning | Retryable? |
 | --- | --- | --- | --- |
-| `200 OK` | `ProfileResponse` with the canonical `displayName` | The name was set successfully. The response includes the exact string the player now owns (trimmed and normalised), because the server did both, and the client must be told what it received rather than assume it got what it sent. | No, the client already owns the name. Re-sending the identical name is idempotent and returns `200` again. |
+| `200 OK` | `ProfileResponse` with the canonical `displayName` | The name was set successfully. The response includes the exact string the player now owns (trimmed and normalised), because the server did both, and the client must be told what it received rather than assume it got what it sent. | Yes, the client may set a name again, and re-sending the identical name is idempotent and returns `200` again. |
 | `400 Bad Request` | Empty | The body was absent, empty, malformed JSON, or named an unrecognised field; **or** the name failed canonicalisation (empty after trim, over 32 code points, or contains a refused character). The write is never attempted. | Yes, the client may fix the name and retry. |
 | `401 Unauthorized` | Empty | No device id was provided, it was blank, or it is unknown. The write is never attempted. | No, the client must log in first. |
-| `403 Forbidden` | Empty | This player already has a different name set. A display name is permanent once set (`ADR-0029` §4); a player who has chosen a name may never change it. Sending the identical name (exact bytes match) returns `200`, not `403`, so a retry is safe if the client is uncertain. | No, the name cannot be changed. |
 | `409 Conflict` | Empty | The requested name (after canonicalisation) collides with another player's name. Names are unique case-insensitively (`ADR-0029` §1); `bob` and `Bob` cannot both exist. The write is never attempted. | Yes, the client may try a different name. |
+| `429 Too Many Requests` | Empty | This player has recently made too many name changes; nothing was written and no field was refused. The budget is keyed by the **player**, not the device or the address, so it follows a player across browsers and is not shared by two players using one. It counts only writes that **succeeded** — a `400` or a `409` costs nothing, because hunting for an available name is not throttled (`ADR-0134` §6). The refusal is about requests, not about the name, and a `429` invalidates nothing the player typed (`ADR-0134` §5): the name the player entered may yet be stored if the rate limit clears. No `Retry-After` header is present, and the body is empty. | Yes, the client may try again shortly. |
 
 ### Revoke this device
 

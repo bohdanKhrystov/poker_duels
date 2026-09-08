@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140907
 title: The document answers 429 and no longer answers 403
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: docs
 estimate: XS
@@ -14,7 +14,7 @@ labels: [docs, protocol, server, account]
 depends_on: [TASK-140906]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.http.HttpEndpointDocumentationTest' -PrequireDocker=true
-  - grep -q 'tests="44" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.http.HttpEndpointDocumentationTest.xml
+  - grep -q 'tests="45" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.http.HttpEndpointDocumentationTest.xml
   - sh -c 'awk "/^### Set display name/{f=1} /^### Revoke this device/{f=0} f" docs/protocol.md | grep -qF "429 Too Many Requests"'
   - sh -c '! awk "/^### Set display name/{f=1} /^### Revoke this device/{f=0} f" docs/protocol.md | grep -qF "403"'
   - sh -c '! awk "/^### Set display name/{f=1} /^### Revoke this device/{f=0} f" docs/protocol.md | grep -qF "permanent"'
@@ -79,7 +79,7 @@ Read, and do not edit:
 
 ## Tests
 
-`HttpEndpointDocumentationTest` — 43 tests on `develop` at `1c3c7fd9`, 44 after.
+`HttpEndpointDocumentationTest` — 44 tests on `develop` at `develop` today — the ticket's 43 predates `TASK-140808`, which added one case, 44 after.
 
 | Test | Proves |
 | --- | --- |

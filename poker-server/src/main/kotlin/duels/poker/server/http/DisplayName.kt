@@ -36,12 +36,13 @@ public fun canonicalDisplayNameOrNull(raw: String): String? {
 }
 
 /**
- * ADR-0029 §3: a name that renders as another name is a spoof and is then permanent, so this
- * refuses every code point in Unicode category `Cc` (control) or `Cf` (format) — that alone
- * covers `U+0000`–`U+001F` (so tab and newline need no separate rule), zero-width characters and
- * bidirectional overrides, and `U+FEFF` — plus any whitespace other than `U+0020`, and two or
- * more consecutive `U+0020`. Testing the Unicode category, rather than a fixed list, is what
- * keeps the next zero-width character from arriving unrefused.
+ * ADR-0029 §3: a name that renders as another name is a spoof, and names that render identically
+ * but are stored differently are spent forever once written, so this refuses every code point in
+ * Unicode category `Cc` (control) or `Cf` (format) — that alone covers `U+0000`–`U+001F` (so tab
+ * and newline need no separate rule), zero-width characters and bidirectional overrides, and
+ * `U+FEFF` — plus any whitespace other than `U+0020`, and two or more consecutive `U+0020`.
+ * Testing the Unicode category, rather than a fixed list, is what keeps the next zero-width
+ * character from arriving unrefused.
  *
  * This is deliberately not a script or alphabet rule: nothing here inspects which letters a name
  * uses, only whether a code point is invisible, foreign whitespace, or a doubled space.
