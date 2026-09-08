@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140701
 title: The card draws the ask — four frames, two ways out, and the words
 type: task
-status: ready
+status: done
 parent: STORY-1407
 module: design
 estimate: S
