@@ -121,6 +121,34 @@ export function Lobby(): ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown, mailedToken]);
 
+  // TASK-140718: the six chosen-screen branches below sit above the ask
+  // branch, so navigating to one of them does not unmount `Lobby` — it stays
+  // mounted with `heldPress` still set. Left alone, returning to an address
+  // where no chosen screen is honoured brings the ask back holding a press
+  // made before the player left, and their next answer commits them to it.
+  // Keyed on `shown`, matching the token effect above rather than `screen`,
+  // so a refused or held ruling — which never shows a chosen screen — clears
+  // nothing; this does not touch what sets `heldPress` (`ADR-0119` §5), only
+  // when a press stops being held. `react-hooks/set-state-in-effect` treats
+  // every direct setState call in an effect body as cascading-render risk on
+  // principle, but there is no cascade to have here: `setHeldPress(null)` is
+  // a no-op once `heldPress` already is null, which is every render this
+  // effect does not itself change something on, so it settles in the one
+  // extra render React already gives an effect and never repeats.
+  useEffect(() => {
+    if (
+      shown === "leaderboard" ||
+      shown === "duels" ||
+      shown === "verify" ||
+      shown === "reset" ||
+      shown === "account" ||
+      shown === "sign-in"
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHeldPress(null);
+    }
+  }, [shown]);
+
   // ADR-0114 §3: a refused ask restores the address in the same commit that
   // refused it. `useLayoutEffect`, not `useEffect`, is what makes that
   // true — it runs synchronously after the commit that refused the ask and

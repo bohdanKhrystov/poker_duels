@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140718
 title: A held press does not outlive the screen it was made on
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
