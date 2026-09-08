@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140804
 title: The front door stops describing an absence
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: web-client
 estimate: S
