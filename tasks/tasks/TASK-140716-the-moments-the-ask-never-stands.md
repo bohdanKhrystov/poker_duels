@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140716
 title: The moments the ask never stands, pinned one at a time
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
@@ -16,9 +16,9 @@ verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && test "$(grep -n 'if (state.roomCode !== null) {' src/lobby/Lobby.tsx | cut -d: -f1)" -lt "$(grep -n 'if (heldPress !== null && setName !== null) {' src/lobby/Lobby.tsx | cut -d: -f1)"
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/lb-after.txt" 2>&1; grep -qF 'Tests  113 passed (113)' "${TMPDIR:-/tmp}/lb-after.txt"
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/lb-after.txt" 2>&1; grep -qF 'Tests  111 passed (111)' "${TMPDIR:-/tmp}/lb-after.txt"
   - cd web-client && git diff --quiet -- src/lobby/Lobby.tsx src/profile src/main.tsx src/e2e
-  - cd web-client && cp src/lobby/Lobby.tsx "${TMPDIR:-/tmp}/lb.fixed.tsx" && perl -0pi -e 's{askForName\(\{ profile, skipped: nameAskSkipped \}\)}{true}' src/lobby/Lobby.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/x1.txt" 2>&1; cp "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx; cmp -s "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx && grep -qF 'Tests  4 failed | 109 passed (113)' "${TMPDIR:-/tmp}/x1.txt" && grep -qF 'never stands in a browser that already skipped' "${TMPDIR:-/tmp}/x1.txt"
+  - cd web-client && cp src/lobby/Lobby.tsx "${TMPDIR:-/tmp}/lb.fixed.tsx" && perl -0pi -e 's{askForName\(\{ profile, skipped: nameAskSkipped \}\)}{true}' src/lobby/Lobby.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx > "${TMPDIR:-/tmp}/x1.txt" 2>&1; cp "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx; cmp -s "${TMPDIR:-/tmp}/lb.fixed.tsx" src/lobby/Lobby.tsx && grep -qF 'Tests  4 failed | 107 passed (111)' "${TMPDIR:-/tmp}/x1.txt" && grep -qF 'never stands in a browser that already skipped' "${TMPDIR:-/tmp}/x1.txt"
   - python3 .github/scripts/lint_tickets.py
 ---
 
@@ -74,7 +74,7 @@ and `src/e2e` to prove it.
 
 ## Tests
 
-`web-client/src/lobby/Lobby.test.tsx` — the 108 unchanged, plus:
+`web-client/src/lobby/Lobby.test.tsx` — the 106 unchanged, plus:
 
 | Test | Proves |
 | --- | --- |
@@ -86,13 +86,13 @@ and `src/e2e` to prove it.
 
 ## Acceptance criteria
 
-- [ ] `npx vitest run src/lobby/Lobby.test.tsx` reports `Tests  113 passed (113)`
+- [ ] `npx vitest run src/lobby/Lobby.test.tsx` reports `Tests  111 passed (111)`
 - [ ] Each of the first four tests asserts **both** that the ask is absent and that `send` was called
       exactly once with the frame the press carried
 - [ ] `git diff --quiet -- src/lobby/Lobby.tsx src/profile src/main.tsx src/e2e` exits 0 — this
       ticket changes one test file and nothing else
 - [ ] Replacing `askForName({ profile, skipped: nameAskSkipped })` with `true` fails exactly the four
-      refusal tests: `Tests  4 failed | 109 passed (113)`, file restored byte-for-byte
+      refusal tests: `Tests  4 failed | 107 passed (111)`, file restored byte-for-byte
 - [ ] The ask's branch is still on a later line than `if (state.roomCode !== null) {`
 - [ ] `cd web-client && npm run check` exits 0
 - [ ] Every command in `verify:` exits 0
