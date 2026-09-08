@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
-import kotlin.test.assertContains
 import kotlin.test.assertIs
 import kotlin.test.fail
 
@@ -81,27 +80,13 @@ class ProfileWritesPortTest {
     }
 
     @Test
-    fun theResultIsSealedAndHasExactlyThreeCases() {
+    fun theResultTypeIsSealedWithTheOutcomesTheRoutesMap() {
         val sealedSubclasses = SetNameResult::class.sealedSubclasses
 
-        assertEquals(3, sealedSubclasses.size, "SetNameResult must have exactly 3 sealed subclasses")
-
+        // An equality over the whole name set, not two containments: a third subclass added
+        // later fails here too, rather than slipping in silently (ADR-0134 §5).
         val classNames = sealedSubclasses.map { it.simpleName }.toSet()
-        assertContains(
-            classNames,
-            "NameSet",
-            "SetNameResult must have a NameSet sealed subclass",
-        )
-        assertContains(
-            classNames,
-            "NameTaken",
-            "SetNameResult must have a NameTaken sealed subclass",
-        )
-        assertContains(
-            classNames,
-            "AlreadyNamed",
-            "SetNameResult must have an AlreadyNamed sealed subclass",
-        )
+        assertEquals(setOf("NameSet", "NameTaken"), classNames)
     }
 
     @Test

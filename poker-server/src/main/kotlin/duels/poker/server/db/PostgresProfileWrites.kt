@@ -99,7 +99,7 @@ public class PostgresProfileWrites(private val dataSource: DataSource) : Profile
     // the happy path needs no second round trip to build the profile it hands back. The WHERE
     // clause dropped its guard that a nameless column was the only one this statement could
     // touch: statement 1's FOR UPDATE is the interlock now, so a zero-row result is unreachable
-    // and is a check, not a fourth outcome — unlike the old AlreadyNamed branch this replaces,
+    // and is a check, not a fourth outcome — unlike the forbidden-rename branch this replaces,
     // holding a name is no longer a reason this statement finds nothing.
     // player_display_name_unique is a second line of defence (ADR-0051 §2) — it can only fire if
     // the registry and the column have disagreed, which is unreachable once every writer goes

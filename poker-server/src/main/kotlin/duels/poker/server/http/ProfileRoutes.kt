@@ -62,15 +62,15 @@ private const val BEARER_PREFIX: String = "Bearer "
  * `PUT /api/me/name` sets the resolved player's display name. Identity is resolved first — exactly
  * as the other two routes resolve it, and **before the body is even read**: an unresolved caller
  * answers `401 Unauthorized` with an empty body, and [writes] is never invoked. This order is the
- * whole point, not an optimisation: answering `409` or `403` for a name before identity is
- * confirmed would let an anonymous caller learn whether a name is taken or already held, which
- * makes the endpoint an enumeration oracle. Only once identity is confirmed is the body decoded as
- * `SetNameRequest`; a body that fails to decode — a missing `name`, an unrecognised field, or
- * invalid JSON — answers `400 Bad Request`, still before [writes] is called. The decoded name is
- * then run through `canonicalDisplayNameOrNull`; a name the rules refuse is a client error and also
- * answers `400`, again before [writes] is called. Only a canonical name reaches
- * [ProfileWrites.setDisplayName]: `NameSet` answers `200 OK` with the updated profile, `NameTaken`
- * answers `409 Conflict`, and `AlreadyNamed` answers `403 Forbidden` (`ADR-0029` §5).
+ * whole point, not an optimisation: answering `409` for a name before identity is confirmed would
+ * let an anonymous caller learn whether a name is taken, which makes the endpoint an enumeration
+ * oracle. Only once identity is confirmed is the body decoded as `SetNameRequest`; a body that
+ * fails to decode — a missing `name`, an unrecognised field, or invalid JSON — answers
+ * `400 Bad Request`, still before [writes] is called. The decoded name is then run through
+ * `canonicalDisplayNameOrNull`; a name the rules refuse is a client error and also answers `400`,
+ * again before [writes] is called. Only a canonical name reaches [ProfileWrites.setDisplayName]:
+ * `NameSet` answers `200 OK` with the updated profile, and `NameTaken` answers `409 Conflict`
+ * (`ADR-0134` §5).
  *
  * These routes hold a `ProfileReads`, a `ProfileWrites` and an [IdentityResolver] — never a
  * `PlayerDirectory` or a `DataSource` directly; resolving a credential into a player is
@@ -92,7 +92,7 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites,
         get("/api/me/duels") { call.respondWithDuels(reads, identities) }
         put("/api/me/name") {
             // Identity first: an unresolved caller is refused before the body is read, so a
-            // stranger never reaches the 409/403 that would tell them whether a name is taken.
+            // stranger never reaches the 409 that would tell them whether a name is taken.
             val profile = call.resolvedPlayerOrNull(identities)?.let { reads.profileOf(it) }
             if (profile == null) {
                 call.respond(HttpStatusCode.Unauthorized)
@@ -117,9 +117,6 @@ public fun Application.profileRoutes(reads: ProfileReads, writes: ProfileWrites,
             when (val result = writes.setDisplayName(PlayerId(profile.playerId), canonicalName)) {
                 is SetNameResult.NameSet -> call.respond(result.profile)
                 SetNameResult.NameTaken -> call.respond(HttpStatusCode.Conflict)
-                // 403 rather than 409 for a name already owned: 409 invites a retry, but no state
-                // this client can reach makes the request succeed, so 403 is honest (ADR-0029 §5).
-                SetNameResult.AlreadyNamed -> call.respond(HttpStatusCode.Forbidden)
             }
         }
     }

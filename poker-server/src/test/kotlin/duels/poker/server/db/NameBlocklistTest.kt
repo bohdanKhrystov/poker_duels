@@ -140,9 +140,9 @@ class NameBlocklistTest {
         runBlocking { profileWrites.setDisplayName(carol, "Gone") }
         retireDisplayName(carol, "Gone")
 
-        // A distinct claimant per string: a shared claimant already holding a name would answer
-        // AlreadyNamed for the second and third attempts instead, a different refusal that would
-        // hide whichever source ran second and third.
+        // A distinct claimant per string: a shared claimant already holding a name would rename
+        // onto the second and third strings instead of being refused by NameTaken, hiding
+        // whichever source ran second and third.
         val dave = resolvePlayer("dave")
         val eve = resolvePlayer("eve")
         val frank = resolvePlayer("frank")
