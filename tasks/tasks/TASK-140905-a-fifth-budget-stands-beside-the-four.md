@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140905
 title: A fifth budget stands beside the four
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: poker-server
 estimate: XS
