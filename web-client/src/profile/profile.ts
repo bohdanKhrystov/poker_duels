@@ -19,6 +19,8 @@ export interface PlayerProfile {
   readonly deviceRouteLive: boolean;
   /** `true` only when this player holds a **verified** recovery address (`ADR-0031` §3). */
   readonly hasRecoveryEmail: boolean;
+  /** Whether this player holds a password, per the server. Never derived, never defaulted. */
+  readonly hasPassword: boolean;
 }
 
 export type ProfileRead =
@@ -29,7 +31,7 @@ export type ProfileRead =
 /**
  * Parses a wire body into a `PlayerProfile`, or returns `null` if the body is invalid.
  *
- * `playerId`, `coinBalance`, `displayName`, `displayNameRemoved`, `deviceRouteLive`, and `hasRecoveryEmail`
+ * `playerId`, `coinBalance`, `displayName`, `displayNameRemoved`, `deviceRouteLive`, `hasRecoveryEmail`, and `hasPassword`
  * are required on the wire — no defaults. A missing or wrong-typed field answers `null`.
  */
 export function profileFromBody(body: unknown): PlayerProfile | null {
@@ -40,7 +42,8 @@ export function profileFromBody(body: unknown): PlayerProfile | null {
     typeof (body as Record<string, unknown>).coinBalance === "number" &&
     typeof (body as Record<string, unknown>).displayNameRemoved === "boolean" &&
     typeof (body as Record<string, unknown>).deviceRouteLive === "boolean" &&
-    typeof (body as Record<string, unknown>).hasRecoveryEmail === "boolean"
+    typeof (body as Record<string, unknown>).hasRecoveryEmail === "boolean" &&
+    typeof (body as Record<string, unknown>).hasPassword === "boolean"
   ) {
     const displayName = (body as Record<string, unknown>).displayName;
     if (typeof displayName === "string" || displayName === null) {
@@ -54,6 +57,7 @@ export function profileFromBody(body: unknown): PlayerProfile | null {
           .deviceRouteLive as boolean,
         hasRecoveryEmail: (body as Record<string, unknown>)
           .hasRecoveryEmail as boolean,
+        hasPassword: (body as Record<string, unknown>).hasPassword as boolean,
       };
     }
   }

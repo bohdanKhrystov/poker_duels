@@ -8,6 +8,7 @@ describe("the profile fixtures", () => {
       "deviceRouteLive",
       "displayName",
       "displayNameRemoved",
+      "hasPassword",
       "hasRecoveryEmail",
       "playerId",
     ]);
@@ -31,6 +32,7 @@ describe("the profile fixtures", () => {
       "deviceRouteLive",
       "displayName",
       "displayNameRemoved",
+      "hasPassword",
       "hasRecoveryEmail",
       "playerId",
     ]);

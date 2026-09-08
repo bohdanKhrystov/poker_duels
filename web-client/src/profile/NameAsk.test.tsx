@@ -26,6 +26,7 @@ const NAMED_PROFILE: PlayerProfile = {
   displayNameRemoved: false,
   deviceRouteLive: true,
   hasRecoveryEmail: false,
+  hasPassword: false,
 };
 
 describe("the name ask", () => {
@@ -245,6 +246,7 @@ describe("the name ask", () => {
       displayNameRemoved: false,
       deviceRouteLive: true,
       hasRecoveryEmail: false,
+      hasPassword: false,
     };
 
     function ProfileConsumer(): React.ReactElement {
@@ -267,6 +269,7 @@ describe("the name ask", () => {
             displayNameRemoved: false,
             deviceRouteLive: true,
             hasRecoveryEmail: false,
+            hasPassword: false,
           },
           duels: [],
         })}

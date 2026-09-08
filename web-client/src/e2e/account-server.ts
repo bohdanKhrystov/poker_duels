@@ -128,6 +128,7 @@ export function accountServer(players: readonly ServerPlayer[]): AccountServer {
         displayNameRemoved: false,
         deviceRouteLive: true,
         hasRecoveryEmail: false,
+        hasPassword: false,
       });
 
       return {
@@ -186,6 +187,7 @@ export function accountServer(players: readonly ServerPlayer[]): AccountServer {
         displayNameRemoved: false,
         deviceRouteLive: true,
         hasRecoveryEmail: false,
+        hasPassword: false,
       });
 
       return {

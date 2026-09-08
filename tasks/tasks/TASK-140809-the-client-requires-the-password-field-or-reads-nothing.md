@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140809
 title: The client requires the password field, or reads nothing
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: web-client
 estimate: S
