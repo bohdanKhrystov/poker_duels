@@ -3,13 +3,13 @@ schema: 2
 id: TASK-140901
 title: The trigger stops saying permanent, and the registry gains a fourth reason
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: poker-server
 estimate: S
 tier: sonnet
 review: deep
-files_touched: 4
+files_touched: 5
 atomic:
   - "`:poker-server:test` — `MigrationsTest.theThirdMigrationAddsTheIndexAndTheTrigger` selects `information_schema.triggers` by the literal name `player_display_name_permanent`, which this migration drops"
   - "`:poker-server:test` — `SchemaConstraintsTest.anUpdateToAnAlreadySetDisplayNameIsRejected` asserts the exception message contains `display_name is permanent once set`, which this migration replaces"
@@ -47,7 +47,7 @@ Four, **probed not remembered** (`ADR-0069`, `ADR-0070`). The migration file was
 `./gradlew check -PrequireDocker=true` — the command `.github/workflows/build.yml` runs on a pull
 request — was run in full: `1794 tests completed, 3 failed`, one in each of the three test files
 below. The minimal propagation was applied at each and the command was run again to `BUILD
-SUCCESSFUL`. Docker was available and every database suite ran, so this enumeration is complete
+SUCCESSFUL`. Docker was available and every database suite ran, so this enumeration is complete **as corrected**: it named four files while four other sections of this ticket required a fifth, and the row above was added at landing
 rather than a prefix.
 
 | File | Action | Why it cannot be fewer |
@@ -56,6 +56,7 @@ rather than a prefix.
 | `poker-server/src/test/kotlin/duels/poker/server/db/MigrationsTest.kt` | modify | `theThirdMigrationAddsTheIndexAndTheTrigger` fails at `MigrationsTest.kt:106` — it queries `information_schema.triggers` for the literal old name |
 | `poker-server/src/test/kotlin/duels/poker/server/db/SchemaConstraintsTest.kt` | modify | `anUpdateToAnAlreadySetDisplayNameIsRejected` fails at `SchemaConstraintsTest.kt:232` — it asserts the old exception message, and only the message |
 | `poker-server/src/test/kotlin/duels/poker/server/db/DisplayNamePermanenceTest.kt` | modify | `aRetiredNameStillCannotBecomeADifferentName` fails at `DisplayNamePermanenceTest.kt:150` — its expectation **inverts** under `ADR-0134` §1 |
+| `poker-server/src/test/kotlin/duels/poker/server/db/NameRegistryMonotonicityTest.kt` | modify | **Added at landing.** The Scope, the Tests table, two acceptance criteria and the `verify:` block all require `takenBecomesReplacedAndTheNameAndCreatedAtAreUntouched` here, taking the class 7 → 8; only this table omitted it, and `ADR-0070` §4's carve-out excludes adding a test, so the coder was right to refuse rather than widen scope. The omission is corrected, not the requirement |
 
 Read, and do not edit:
 [`ADR-0134`](../../docs/adr/ADR-0134-a-rename-spends-before-it-replaces.md) §1, §3 and §8;

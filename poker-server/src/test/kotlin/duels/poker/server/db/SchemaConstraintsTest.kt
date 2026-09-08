@@ -230,8 +230,9 @@ class SchemaConstraintsTest {
 
         assertEquals("23001", exception.sqlState)
         assertTrue(
-            exception.message?.contains("display_name is permanent once set") ?: false,
-            "Exception message should contain trigger message 'display_name is permanent once set', got: ${exception.message}",
+            exception.message?.contains("a display name is spent before it is left") ?: false,
+            "Exception message should contain trigger message " +
+                "'a display name is spent before it is left', got: ${exception.message}",
         )
     }
 
