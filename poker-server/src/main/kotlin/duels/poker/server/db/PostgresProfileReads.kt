@@ -157,9 +157,11 @@ public class PostgresProfileReads(private val dataSource: DataSource) : ProfileR
         // per profile row whatever name_registry holds. Correlated to p.id, never to a second
         // `?`: the statement binds the caller's player id exactly once, so a later edit cannot
         // make the boolean describe a different player than the row does.
-        // `r.reason = 'RETIRED'` is redundant under the partial index
-        // name_registry_retired_from, and stays — the statement should read correctly without
-        // the constraint in hand.
+        // `r.reason = 'RETIRED'` is no longer redundant (ADR-0134 §3). A rename now writes
+        // `REPLACED`, not `TAKEN`, on the string it leaves, and that row lands an entry in the
+        // partial index name_registry_retired_from_idx exactly as a takedown's `RETIRED` row
+        // does — so the index alone cannot tell the two apart. This clause is what does: it keys
+        // the read on which reason the vacated row carries, not on whether the row exists.
         // device_route_live is a second, independent correlated EXISTS on the same reasoning: a
         // player has at most one live device_binding row but may hold several revoked ones, so a
         // JOIN would again multiply the profile row. Correlated to p.id, never to a second `?`,
