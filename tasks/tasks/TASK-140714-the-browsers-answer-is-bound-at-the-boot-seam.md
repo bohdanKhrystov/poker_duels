@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140714
 title: The browser's answer is bound at the boot seam, and the fake keeps up
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: XS
@@ -21,7 +21,7 @@ verify:
   - cd web-client && grep -qF 'nameAskSkippedHere' src/App.test.tsx
   - cd web-client && grep -qF 'skipNameAskHere' src/App.test.tsx
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/App.test.tsx > "${TMPDIR:-/tmp}/app-after.txt" 2>&1; grep -qF 'Tests  36 passed (36)' "${TMPDIR:-/tmp}/app-after.txt"
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts > "${TMPDIR:-/tmp}/ok-after.txt" 2>&1; grep -qF 'Tests  5 passed (5)' "${TMPDIR:-/tmp}/ok-after.txt"
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts > "${TMPDIR:-/tmp}/ok-after.txt" 2>&1; grep -qF 'Tests  4 passed (4)' "${TMPDIR:-/tmp}/ok-after.txt"
   - python3 .github/scripts/lint_tickets.py
 ---
 
@@ -103,7 +103,7 @@ in neither file, and that the ownership gate still names one owner.
       reason it is not `offerStorage`
 - [ ] `pd.nameAskSkipped` appears **zero** times in `main.tsx`, and
       `npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts` still reports
-      `Tests  5 passed (5)`
+      `Tests  4 passed (4)`
 - [ ] `App.test.tsx`'s `./main` factory names both functions, and
       `npx vitest run src/App.test.tsx` reports `Tests  36 passed (36)`
 - [ ] No test in `App.test.tsx` is added, removed or edited

@@ -36,6 +36,10 @@ import { readLadderPage, type LadderRead } from "./ladder/ladder-read";
 import { readSessionToken } from "./protocol/session-token";
 import type { ApiFetch } from "./profile/api";
 import { hashForScreen } from "./routing/screen";
+import {
+  readNameAskSkipped,
+  markNameAskSkipped,
+} from "./profile/name-ask-skipped";
 
 // Module scope, built once, so every read below shares one wrapper rather
 // than each opening its own. authorizedFetch reads the session token on
@@ -168,6 +172,22 @@ const nullStorage: Storage = {
   key: () => null,
   length: 0,
 };
+
+// ADR-0125: askStorage is a binding of its own, not reused from offerStorage.
+// STORY-1408 retires the account offer whole, so offerStorage and its two
+// functions leave the product in that story's scope. A shared constant would drag
+// this story's code into that deletion, so the two bindings stay apart.
+const askStorage: Storage = localStorage ?? nullStorage;
+
+/** Whether this browser has recorded that the player skipped the name ask. */
+export function nameAskSkippedHere(): boolean {
+  return readNameAskSkipped(askStorage);
+}
+
+/** Record that the player skipped the name ask on this browser. */
+export function skipNameAskHere(): void {
+  markNameAskSkipped(askStorage);
+}
 
 // Module scope read of the session token, run once at boot. Node 24+ defines an
 // inert `localStorage` global that shadows jsdom's under Vitest (DEC-032), so a

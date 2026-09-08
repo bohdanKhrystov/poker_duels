@@ -67,6 +67,8 @@ vi.mock("./main", () => {
     // reconfigure this per test with mockReturnValue(true), and beforeEach
     // resets it to false so every other test keeps the signed-out default.
     useSignedIn: vi.fn(() => false),
+    nameAskSkippedHere: () => false,
+    skipNameAskHere: vi.fn(),
   };
 });
 
