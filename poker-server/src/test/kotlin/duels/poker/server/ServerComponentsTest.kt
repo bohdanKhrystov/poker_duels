@@ -115,6 +115,25 @@ class ServerComponentsTest {
         assertEquals("TestName", profile!!.displayName, "Display name should be what we wrote")
     }
 
+    @Test
+    fun theNameWriteBudgetIsItsOwnInstanceOnItsOwnNumbers() {
+        val config = buildServerConfig(
+            coordinates,
+            nameWriteMaxAttempts = 1,
+            signInMaxAttempts = 10,
+        )
+        val components = serverComponents(config, dataSource)
+
+        // Verify distinctness: two budgets, same key
+        val firstNameWriteAttempt = runBlocking { components.nameWriteBudget.admit("k") }
+        val secondNameWriteAttempt = runBlocking { components.nameWriteBudget.admit("k") }
+        val firstSignInAttempt = runBlocking { components.signInBudget.admit("k") }
+
+        assertTrue(firstNameWriteAttempt, "First nameWrite attempt with key should succeed")
+        assertEquals(false, secondNameWriteAttempt, "Second nameWrite attempt with same key should fail (exhausted)")
+        assertTrue(firstSignInAttempt, "signInBudget.admit with same key should still succeed (different budget)")
+    }
+
     /**
      * Build a [ServerConfig] for testing, with reasonable defaults overridable per test.
      */
@@ -122,6 +141,9 @@ class ServerComponentsTest {
         coordinates: DatabaseCoordinates,
         maxFrameLength: Int = ServerConfig.DEFAULT_MAX_FRAME_LENGTH,
         maxFrameNestingDepth: Int = ServerConfig.DEFAULT_MAX_FRAME_NESTING_DEPTH,
+        signUpMaxAttempts: Int = ServerConfig.DEFAULT_SIGN_UP_MAX_ATTEMPTS,
+        signInMaxAttempts: Int = ServerConfig.DEFAULT_SIGN_IN_MAX_ATTEMPTS,
+        nameWriteMaxAttempts: Int = 5,
     ): ServerConfig {
         return ServerConfig(
             port = ServerConfig.DEFAULT_PORT,
@@ -133,6 +155,9 @@ class ServerComponentsTest {
             databasePoolSize = 2,
             roomWaitingTimeoutMillis = RoomTimeouts.DEFAULT_WAITING_MILLIS,
             roomFinishedTimeoutMillis = RoomTimeouts.DEFAULT_FINISHED_MILLIS,
+            signUpMaxAttempts = signUpMaxAttempts,
+            signInMaxAttempts = signInMaxAttempts,
+            nameWriteMaxAttempts = nameWriteMaxAttempts,
         )
     }
 

@@ -54,6 +54,7 @@ public data class ServerComponents(
     val sessions: AuthSessions,
     val signUpBudget: AttemptBudget,
     val signInBudget: AttemptBudget,
+    val nameWriteBudget: AttemptBudget,
     val bindings: DeviceBindings,
     val recoveryEmails: RecoveryEmails,
     val passwordResets: PasswordResets,
@@ -118,9 +119,11 @@ public fun serverComponents(
     // §2 requires a monotonic source, since an NTP step must never widen or void a budget window.
     // ADR-0074 §1 requires the same discipline for sign-in, over its own limits and its own
     // AttemptBudget instance — one instance shared between the two endpoints would let sign-ups
-    // spend sign-in's budget and the reverse.
+    // spend sign-in's budget and the reverse. Three instances now, and one shared instance would
+    // let a name write spend sign-in's budget, which is the failure that comment already warns about.
     val signUpBudget = AttemptBudget(config.signUpLimits(), clock)
     val signInBudget = AttemptBudget(config.signInLimits(), clock)
+    val nameWriteBudget = AttemptBudget(config.nameWriteLimits(), clock)
     val bindings = PostgresDeviceBindings(dataSource)
     // The wall clock, not the ServerClock: the same instrument PostgresAuthSessions takes above,
     // per ADR-0062 §2.
@@ -145,6 +148,7 @@ public fun serverComponents(
         sessions = authSessions,
         signUpBudget = signUpBudget,
         signInBudget = signInBudget,
+        nameWriteBudget = nameWriteBudget,
         bindings = bindings,
         recoveryEmails = recoveryEmails,
         passwordResets = passwordResets,
