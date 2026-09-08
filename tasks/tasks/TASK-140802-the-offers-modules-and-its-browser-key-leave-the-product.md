@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140802
 title: The offer's modules and its browser key leave the product
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: web-client
 estimate: S
@@ -79,6 +79,28 @@ if it does not change, so it is `TASK-140803` and **not this ticket's**.
 - In `one-module-owns-each-storage-key.test.ts`, delete the whole
   `only the account-offer-settled module writes the offer-settled key` case. The three other key
   cases stay exactly as they are.
+
+## Atomicity, corrected at landing
+
+The `atomic:` block above claimed thirteen files that cannot be fewer. **They can be**, and the
+landing measured it rather than argued it.
+
+- Restore `account-offer-text.ts` alone from `develop`, keep every other change:
+  `cd web-client && npm run check` exits **0**. A leaf module whose every consumer is deleted in
+  the same commit is inert — nothing imports it, nothing lints it, nothing compiles against it.
+  A legal **12-then-1** split therefore exists.
+- Restore `account-offer.test.ts` alone: `npm run check` exits **2**, with
+  `TS2307: Cannot find module './account-offer'`.
+
+So what the gates forbid is **pairing**, not grouping: a test and the module it imports must move in
+the same commit, and a module may not be deleted while a surviving test names it. That is a
+constraint on which files travel *together*, and it does not imply that all thirteen must.
+
+This is the second ticket in `STORY-1408` whose `atomic:` justification did not survive being
+probed — `TASK-140801` was the first, for the same underlying reason: the block reasons about one
+direction of a removal and states the conclusion as though it held in both. The work landed as one
+commit anyway, which is a **choice** about not leaving `develop` halfway through a deletion, and is
+recorded here as a choice. Nobody should cite this ticket as an example of an earned `atomic:`.
 
 ## What is deliberately not cleared
 

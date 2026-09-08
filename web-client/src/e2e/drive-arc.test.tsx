@@ -11,8 +11,8 @@ import {
 import { bootClient, type ArcWiring } from "./drive-arc";
 import { inMemoryStorage } from "./drive-duel";
 
-// `Lobby.tsx:6` reads `useHistory`, `useSignedIn`, `offerSettledHere` and
-// `settleOfferHere` from `../main`'s module scope, not from a prop, so
+// `Lobby.tsx:6` reads `useHistory` and `useSignedIn`
+// from `../main`'s module scope, not from a prop, so
 // there is no seam to pass them through `bootClient`. `wiring` is the plain
 // object `bootClient` writes into on every boot (see `ArcWiring`'s doc
 // comment in `drive-arc.tsx`); the mock below reads it back on every
@@ -20,12 +20,10 @@ import { inMemoryStorage } from "./drive-duel";
 // would replace the module for every test in this file and export none of
 // its real bindings, so `Lobby` could never reach `../main`'s actual
 // `AccountProvider`-adjacent wiring — this partial mock, `importOriginal`
-// plus a four-field override, is the merged shape (`Lobby.test.tsx:41-47`).
+// plus a two-field override, is the merged shape (`Lobby.test.tsx:41-47`).
 const wiring = vi.hoisted((): ArcWiring => ({
   history: null,
   signedIn: false,
-  offerSettled: () => false,
-  settleOffer: () => {},
 }));
 
 vi.mock("../main", async (importOriginal) => {
@@ -34,8 +32,6 @@ vi.mock("../main", async (importOriginal) => {
     ...actual,
     useHistory: () => wiring.history,
     useSignedIn: () => wiring.signedIn,
-    offerSettledHere: () => wiring.offerSettled(),
-    settleOfferHere: () => wiring.settleOffer(),
   };
 });
 
