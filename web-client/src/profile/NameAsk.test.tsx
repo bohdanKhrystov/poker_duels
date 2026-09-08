@@ -291,4 +291,122 @@ describe("the name ask", () => {
       expect(screen.getByText("Ravenpost")).toBeDefined();
     });
   });
+
+  it("puts a fresh suggestion in a field the player never touched", async () => {
+    // The first `NAME_VOCABULARY.length` draws give every list's first word (tuple A, the
+    // initial suggestion); the next `NAME_VOCABULARY.length` give every list's last word
+    // (tuple B, what the redraw must produce) — the same construction the first test in this
+    // file uses to get two suggestions guaranteed to differ.
+    const values = [
+      ...Array(NAME_VOCABULARY.length).fill(0),
+      ...Array(NAME_VOCABULARY.length).fill(1),
+    ];
+    const random = vi.fn(scripted(values));
+    const a = NAME_VOCABULARY.map((list) => list[0]).join(" ");
+    const b = NAME_VOCABULARY.map((list) => list[list.length - 1]).join(" ");
+    expect(b).not.toBe(a);
+
+    let settle: (outcome: SetNameOutcome) => void = () => {};
+    const answer = new Promise<SetNameOutcome>((resolve) => {
+      settle = resolve;
+    });
+    const setName = vi.fn(() => answer);
+
+    render(
+      <NameAsk
+        setName={setName}
+        onNamed={vi.fn()}
+        onSkip={vi.fn()}
+        random={random}
+      />,
+    );
+
+    const field = screen.getByLabelText("Your name") as HTMLInputElement;
+    expect(field.value).toBe(a);
+
+    fireEvent.click(screen.getByRole("button", { name: "Take this name" }));
+    settle({ kind: "conflict" });
+
+    await waitFor(() => {
+      expect(field.value).toBe(b);
+    });
+    expect(field.value).not.toBe(a);
+  });
+
+  it("never overwrites a name the player typed", async () => {
+    const values = [
+      ...Array(NAME_VOCABULARY.length).fill(0),
+      ...Array(NAME_VOCABULARY.length).fill(1),
+    ];
+    const random = vi.fn(scripted(values));
+
+    let settle: (outcome: SetNameOutcome) => void = () => {};
+    const answer = new Promise<SetNameOutcome>((resolve) => {
+      settle = resolve;
+    });
+    const setName = vi.fn(() => answer);
+
+    render(
+      <NameAsk
+        setName={setName}
+        onNamed={vi.fn()}
+        onSkip={vi.fn()}
+        random={random}
+      />,
+    );
+
+    const field = screen.getByLabelText("Your name") as HTMLInputElement;
+    const callsAfterMount = random.mock.calls.length;
+
+    fireEvent.change(field, { target: { value: "Ravenpost" } });
+    fireEvent.click(screen.getByRole("button", { name: "Take this name" }));
+    settle({ kind: "conflict" });
+
+    await waitFor(() => {
+      const statusText = screen.getByRole("status").textContent;
+      expect(statusText).toBe("That name is not available. Try another.");
+    });
+
+    expect(field.value).toBe("Ravenpost");
+    expect(random.mock.calls.length).toBe(callsAfterMount);
+  });
+
+  it("redraws on a conflict and on nothing else", async () => {
+    const values = [
+      ...Array(NAME_VOCABULARY.length).fill(0),
+      ...Array(NAME_VOCABULARY.length).fill(1),
+    ];
+    const random = vi.fn(scripted(values));
+    const a = NAME_VOCABULARY.map((list) => list[0]).join(" ");
+
+    let settle: (outcome: SetNameOutcome) => void = () => {};
+    const answer = new Promise<SetNameOutcome>((resolve) => {
+      settle = resolve;
+    });
+    const setName = vi.fn(() => answer);
+
+    render(
+      <NameAsk
+        setName={setName}
+        onNamed={vi.fn()}
+        onSkip={vi.fn()}
+        random={random}
+      />,
+    );
+
+    const field = screen.getByLabelText("Your name") as HTMLInputElement;
+    expect(field.value).toBe(a);
+    const callsAfterMount = random.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Take this name" }));
+    settle({ kind: "unavailable" });
+
+    await waitFor(() => {
+      const textboxes = screen.queryAllByRole("textbox");
+      expect(textboxes).toHaveLength(0);
+    });
+
+    expect(field.value).toBe(a);
+    expect(random.mock.calls.length).toBe(callsAfterMount);
+  });
 });

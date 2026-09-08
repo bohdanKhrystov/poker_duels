@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140713
 title: A conflict redraws, and only over what the generator put there
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: S
