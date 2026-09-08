@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140717
 title: A refused player may press again, and a test says so
 type: task
-status: backlog
+status: done
 parent: STORY-1407
 module: web-client
 estimate: XS
@@ -15,9 +15,9 @@ depends_on: [TASK-140712]
 verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/profile/NameAsk.test.tsx > "${TMPDIR:-/tmp}/ask9.txt" 2>&1; grep -qF 'Tests  9 passed (9)' "${TMPDIR:-/tmp}/ask9.txt"
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/profile/NameAsk.test.tsx > "${TMPDIR:-/tmp}/ask9.txt" 2>&1; grep -qF 'Tests  12 passed (12)' "${TMPDIR:-/tmp}/ask9.txt"
   - cd web-client && grep -qF 'sends a second write after a refusal settles' src/profile/NameAsk.test.tsx
-  - cd web-client && cp src/profile/NameAsk.tsx "${TMPDIR:-/tmp}/ask.fixed.tsx" && perl -0pi -e 's{submitInFlight\.current = false;}{}g' src/profile/NameAsk.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/profile/NameAsk.test.tsx > "${TMPDIR:-/tmp}/r1.txt" 2>&1; cp "${TMPDIR:-/tmp}/ask.fixed.tsx" src/profile/NameAsk.tsx; cmp -s "${TMPDIR:-/tmp}/ask.fixed.tsx" src/profile/NameAsk.tsx && grep -qF 'Tests  1 failed | 8 passed (9)' "${TMPDIR:-/tmp}/r1.txt" && grep -qF 'sends a second write after a refusal settles' "${TMPDIR:-/tmp}/r1.txt"
+  - cd web-client && cp src/profile/NameAsk.tsx "${TMPDIR:-/tmp}/ask.fixed.tsx" && perl -0pi -e 's{submitInFlight\.current = false;}{}g' src/profile/NameAsk.tsx && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/profile/NameAsk.test.tsx > "${TMPDIR:-/tmp}/r1.txt" 2>&1; cp "${TMPDIR:-/tmp}/ask.fixed.tsx" src/profile/NameAsk.tsx; cmp -s "${TMPDIR:-/tmp}/ask.fixed.tsx" src/profile/NameAsk.tsx && grep -qF 'Tests  1 failed | 11 passed (12)' "${TMPDIR:-/tmp}/r1.txt" && grep -qF 'sends a second write after a refusal settles' "${TMPDIR:-/tmp}/r1.txt"
   - python3 .github/scripts/lint_tickets.py
 ---
 
@@ -78,9 +78,9 @@ that allowed the write from one that deduplicated it.
 
 ## Acceptance criteria
 
-1. `NameAsk.test.tsx` reports `Tests  9 passed (9)`.
+1. `NameAsk.test.tsx` reports `Tests  12 passed (12)`.
 2. Deleting `submitInFlight.current = false;` from the component reddens **only** the new test,
-   reporting `Tests  1 failed | 8 passed (9)`, and the component is restored byte-for-byte.
+   reporting `Tests  1 failed | 11 passed (12)`, and the component is restored byte-for-byte.
 3. `NameAsk.tsx` is byte-unchanged in the diff.
 
 ## Definition of done
