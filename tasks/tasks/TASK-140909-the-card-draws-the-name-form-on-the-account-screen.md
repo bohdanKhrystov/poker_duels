@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140909
 title: The card draws the name form on the account screen
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: design
 estimate: S

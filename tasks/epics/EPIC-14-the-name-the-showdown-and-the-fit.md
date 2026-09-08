@@ -507,7 +507,9 @@ repair is measured** — nothing else establishes the shape the repair is aimed 
 human's: relaxing `R3` for the scale, raising the judged shape, and any list of devices the product
 commits to.
 
-**Nothing is open.** Every decision this epic raised or inherited is answered by a merged ADR —
+**One is open: `DEC-156`, the product owner's, registered 2026-09-09 while landing `TASK-140909` and blocking nothing.** The account screen now carries the anonymous block, the recovery address, a password form and a name form — and the name form is the **only act on it that spends something forever**. Its *"gone for good — you cannot take it back, and nobody else can take it either"* is the only sentence on the card claiming an act cannot be undone, and it carries no more weight than the lines around it: same box, same button shape, same muted type, no accent, no separation. The distinction lives in the words alone, so a player skimming rather than reading loses a name permanently. `ADR-0091` §2 gives layout to the card and `ADR-0130` §5 already removed *permanent* from the product, so this is neither a wording question nor a re-opening of that decision: it asks whether irreversibility is owed a visual grammar at all, which generalises past this screen.
+
+**Otherwise nothing is open.** Every decision this epic raised or inherited is answered by a merged ADR —
 **fourteen** the product owner's and six the architect's — and the table that held them is empty.
 **Both of the decisions those answers registered are answered as well**, on 2026-09-08 and by two
 different ADRs, so nothing this epic raised, inherited or spawned is left open. The one row that
