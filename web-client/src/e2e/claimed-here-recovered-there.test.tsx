@@ -681,14 +681,29 @@ it("the second client learns who it is only from an answer", async () => {
     welcomeFrame: welcomeFrame(PLAYER_SEAT_1.deviceId),
   });
 
-  // The request that told B who it is: the reboot's GET /api/me, the only
-  // request in this arc carrying a live session's Authorization header.
-  const meRead = server.requests.find(
+  // The request that told B who it is: the reboot's GET /api/me. It is not
+  // the only authorized `/api/me` in this arc any more (`TASK-140814`): A's
+  // own sign-up above now triggers its own re-read (`ADR-0132` §6), an
+  // authorized `GET /api/me` of its own that lands first, on A's device id,
+  // never B's. Filtering on B's own device id is what tells the two apart —
+  // and `meRead` is drawn from the same filtered set the count below proves
+  // has exactly one member, so a finder that let A's request back in fails
+  // both together, not the count alone.
+  //
+  // The claim `meRead.headers["X-Device-Id"]` used to make directly is a
+  // tautology once the finder already filters on that same header; what it
+  // was really proving survives as this count, taken before the replay below
+  // adds a request of its own to the log: exactly one authorized GET
+  // /api/me carries B's device id, so A's own refresh can never be it.
+  const authorizedMeReadsForB = server.requests.filter(
     (request) =>
       request.path === "/api/me" &&
       request.method === "GET" &&
-      request.headers["Authorization"] !== undefined,
+      request.headers["Authorization"] !== undefined &&
+      request.headers["X-Device-Id"] === PLAYER_SEAT_1.deviceId,
   );
+  expect(authorizedMeReadsForB).toHaveLength(1);
+  const [meRead] = authorizedMeReadsForB;
 
   expect(meRead).toBeDefined();
   if (meRead === undefined) {
@@ -700,7 +715,8 @@ it("the second client learns who it is only from an answer", async () => {
   // request invented here — GET /api/me is a pure read with no side
   // effects (the raw fetch a few tests up relies on the same fact), so this
   // reproduces exactly what B received without account-server.ts needing
-  // to log responses too.
+  // to log responses too. This call lands in `server.requests` too, which
+  // is why the count above is taken before it, not after.
   const response = await server.fetch(meRead.path, {
     method: meRead.method,
     headers: meRead.headers,
@@ -714,7 +730,6 @@ it("the second client learns who it is only from an answer", async () => {
   // Authorization and B's own X-Device-Id.
   expect(meRead.path.includes(PLAYER_SEAT_0.playerId)).toBe(false);
   expect(meRead.body).toBeNull();
-  expect(meRead.headers["X-Device-Id"]).toBe(PLAYER_SEAT_1.deviceId);
 
   const headerKeys = Object.keys(meRead.headers);
   const allowedKeys = [

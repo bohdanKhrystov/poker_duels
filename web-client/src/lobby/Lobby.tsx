@@ -1,4 +1,10 @@
-import { useEffect, useLayoutEffect, useState, type ReactElement } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactElement,
+} from "react";
 import type { CreateRoom, JoinRoom, ProtocolError } from "../protocol";
 import {
   useDuelState,
@@ -9,7 +15,10 @@ import {
 import { useScreen } from "../routing/use-screen";
 import { tokenFromHash } from "../routing/screen";
 import { roomStanding, rulingOn } from "../routing/room-standing";
-import { useProfileStrip } from "../profile/profile-provider";
+import {
+  useProfileStrip,
+  useRefreshProfile,
+} from "../profile/profile-provider";
 import {
   nameAskSkippedHere,
   skipNameAskHere,
@@ -34,6 +43,7 @@ import { LADDER_HEADING } from "../ladder/ladder-text";
 import { AccountScreen } from "../account/AccountScreen";
 import { ACCOUNT_HEADING, SIGN_IN_HEADING } from "../account/account-text";
 import { useAccount, type AccountCalls } from "../account/account-provider";
+import type { SignUpOutcome } from "../account/sign-up";
 import { SignInForm } from "../account/SignInForm";
 import { ForgotPasswordForm } from "../account/ForgotPasswordForm";
 import { FORGOT_PASSWORD_LABEL } from "../account/recovery-text";
@@ -55,6 +65,28 @@ export function Lobby(): ReactElement {
   const readLadder = useLadder();
   const signedIn = useSignedIn();
   const account = useAccount();
+  const refreshProfile = useRefreshProfile();
+  // ADR-0132 §6: `sign-up.ts` passes `noReload` on purpose, and answers
+  // `signed-up` on the `201` whether or not its own follow-up sign-in
+  // succeeds — a successful sign-up is therefore the one transition that
+  // flips `hasPassword` with nothing else re-asking. This wrapper is the
+  // seam that re-reads the profile once `signUp` resolves, and only when the
+  // credential was actually created; every other outcome changes no profile.
+  // Declared unconditionally, above every early return below — the
+  // `account !== null ? … : undefined` shape at the call site is what makes
+  // the prop reflect whether an account provider is above, not a branch
+  // around this hook. `account === null` is unreachable in practice, since
+  // the wrapper below is only ever handed to `AccountScreen` in that case,
+  // but the callback must still exist on every render for the rules of hooks.
+  const signUp = useCallback(
+    async (handle: string, password: string): Promise<SignUpOutcome> => {
+      if (account === null) return { kind: "failed" };
+      const outcome = await account.signUp(handle, password);
+      if (outcome.kind === "signed-up") refreshProfile();
+      return outcome;
+    },
+    [account, refreshProfile],
+  );
   const roomAwaited = useRoomAwaited();
   const [typedCode, setTypedCode] = useState("");
   const { screen, open, leave, clearToken } = useScreen();
@@ -257,7 +289,7 @@ export function Lobby(): ReactElement {
         <AccountScreen
           profile={profile}
           signedIn={signedIn}
-          signUp={account !== null ? account.signUp : undefined}
+          signUp={account !== null ? signUp : undefined}
           signOut={account !== null ? account.signOut : undefined}
           attachRecoveryEmail={
             account !== null ? account.attachRecoveryEmail : undefined

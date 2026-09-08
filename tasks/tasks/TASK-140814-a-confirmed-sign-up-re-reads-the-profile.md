@@ -3,13 +3,13 @@ schema: 2
 id: TASK-140814
 title: A confirmed sign-up re-reads the profile
 type: task
-status: backlog
+status: done
 parent: STORY-1408
 module: web-client
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 2
+files_touched: 3
 labels: [client, account, profile]
 depends_on: [TASK-140813]
 verify:
@@ -47,6 +47,7 @@ answers from `GET /api/me`, and the form submitted in between.
 | --- | --- |
 | `web-client/src/lobby/Lobby.tsx` | modify |
 | `web-client/src/lobby/Lobby.test.tsx` | modify |
+| `web-client/src/e2e/claimed-here-recovered-there.test.tsx` | modify | Added at landing. Its `meRead` finder selects *the only request in this arc carrying a live session's Authorization header* — a premise **this ticket's own change falsifies**, since the refresh is a second such request and arrives first. Green on `develop`, red with the wiring, confirmed both ways |
 
 Read, and do not edit:
 `web-client/src/profile/profile-provider.tsx` — `useRefreshProfile`, landed by `TASK-140813`;
@@ -71,6 +72,28 @@ Read, and do not edit:
 - No other outcome triggers a re-read. `handle-refused`, `unavailable-handle`, `password-refused`,
   `no-profile`, `throttled` and `failed` change no profile, and `ADR-0132` §6 enumerates no second
   trigger because none exists.
+
+## The e2e repair, added at landing
+
+`web-client/src/e2e/claimed-here-recovered-there.test.tsx`'s *the second client learns who it is only
+from an answer* goes red under this ticket's change, and it is **this change that breaks it**:
+measured green on `develop` and red with the wiring, three runs each way.
+
+Its `meRead` finder takes the first `GET /api/me` carrying an `Authorization` header, on a comment
+that calls it *"the only request in this arc carrying a live session's Authorization header"*. The
+refresh `ADR-0132` §6 requires is a second one, and it arrives **first** — so the finder now returns
+client A's refresh where the case is about client B's post-reboot mount read.
+
+**The fix, decided here rather than left open**, because the coder was right that it admits more than
+one edit and so is not `ADR-0070` §4 propagation:
+
+1. Narrow the finder to B's request by `headers["X-Device-Id"] === PLAYER_SEAT_1.deviceId`.
+2. Correct the comment: it is no longer the only authorized `/api/me` in the arc, it is B's.
+3. **Do not leave the old `X-Device-Id` assertion standing as-is** — selecting by device id and then
+   asserting the device id is a tautology that passes whatever the code does. Replace it with the
+   claim it was really making: that **exactly one** authorized `GET /api/me` carries B's device id,
+   so A's refresh cannot be mistaken for B's read. The player-id and header-allowlist assertions
+   around it are untouched and still discriminate.
 
 ## Out of scope
 

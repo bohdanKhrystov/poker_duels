@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -34,13 +35,19 @@ import {
 } from "../account/recovery-text";
 import {
   ACCOUNT_HEADING,
+  ANONYMOUS_COST,
+  ANONYMOUS_STATE,
+  ANONYMOUS_WAY_OUT,
   CANCEL,
   HANDLE_LABEL,
+  HANDLE_UNAVAILABLE,
   PASSWORD_LABEL,
   PASSWORD_REFUSED,
   SIGN_IN_HEADING,
   SIGN_IN_LABEL,
   SIGN_IN_REFUSED,
+  SIGN_UP_LABEL,
+  SIGNED_UP,
 } from "../account/account-text";
 import { readSessionToken, writeSessionToken } from "../protocol/session-token";
 import { HISTORY_HEADING } from "../history/history-text";
@@ -2213,6 +2220,124 @@ describe("the lobby", () => {
 
     await screen.findByRole("heading", { name: "Account" });
     expect(screen.queryByRole("button", { name: ATTACH_LABEL })).toBeNull();
+  });
+
+  it("a confirmed sign-up takes the anonymous block off the screen", async () => {
+    // `TASK-140814`: `signUp` passes `noReload` on purpose, so a `signed-up`
+    // outcome is the one transition in this product that flips `hasPassword`
+    // with nothing else re-asking (`ADR-0132` §6). Two different answers from
+    // `read`, not one held profile re-rendered, is the only thing a passing
+    // test here can mean.
+    const read = vi
+      .fn()
+      .mockResolvedValueOnce({
+        kind: "profile",
+        profile: aProfile({ hasPassword: false }),
+        duels: [],
+      })
+      .mockResolvedValueOnce({
+        kind: "profile",
+        profile: aProfile({ hasPassword: true }),
+        duels: [],
+      });
+    const signUp = vi.fn().mockResolvedValueOnce({ kind: "signed-up" });
+
+    render(
+      <ProfileProvider read={read}>
+        <SetNameProvider setName={vi.fn()}>
+          <AccountProvider calls={accountCallsFixture({ signUp })}>
+            <DuelProvider
+              store={createDuelStore()}
+              send={vi.fn()}
+              forgetRoom={vi.fn()}
+            >
+              <Lobby />
+            </DuelProvider>
+          </AccountProvider>
+        </SetNameProvider>
+      </ProfileProvider>,
+    );
+
+    // Reached through the product's own door, the same reason "puts the
+    // attach form on the account screen" above does it this way rather than
+    // staging the fragment before render.
+    fireEvent.click(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    );
+
+    await screen.findByText(ANONYMOUS_STATE);
+    expect(screen.getByText(ANONYMOUS_COST)).toBeDefined();
+    expect(screen.getByText(ANONYMOUS_WAY_OUT)).toBeDefined();
+
+    fireEvent.change(screen.getByLabelText(HANDLE_LABEL), {
+      target: { value: "zqxhandle" },
+    });
+    fireEvent.change(screen.getByLabelText(PASSWORD_LABEL), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: SIGN_UP_LABEL }));
+
+    // Two different reads must both have landed, not just the first: a
+    // wrapper that never re-read would still show SIGNED_UP here.
+    await waitFor(() => {
+      expect(screen.getByText(SIGNED_UP)).toBeDefined();
+      expect(read).toHaveBeenCalledTimes(2);
+    });
+
+    expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
+    expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
+  });
+
+  it("a refused sign-up reads nothing again and leaves the block standing", async () => {
+    // The counterpart to the test above: without this one, a wrapper that
+    // re-read on every `signUp` outcome — not only `signed-up` — would pass
+    // it just the same.
+    const read = vi.fn().mockResolvedValue({
+      kind: "profile",
+      profile: aProfile({ hasPassword: false }),
+      duels: [],
+    });
+    const signUp = vi
+      .fn()
+      .mockResolvedValueOnce({ kind: "unavailable-handle" });
+
+    render(
+      <ProfileProvider read={read}>
+        <SetNameProvider setName={vi.fn()}>
+          <AccountProvider calls={accountCallsFixture({ signUp })}>
+            <DuelProvider
+              store={createDuelStore()}
+              send={vi.fn()}
+              forgetRoom={vi.fn()}
+            >
+              <Lobby />
+            </DuelProvider>
+          </AccountProvider>
+        </SetNameProvider>
+      </ProfileProvider>,
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    );
+
+    await screen.findByText(ANONYMOUS_STATE);
+
+    fireEvent.change(screen.getByLabelText(HANDLE_LABEL), {
+      target: { value: "zqxhandle" },
+    });
+    fireEvent.change(screen.getByLabelText(PASSWORD_LABEL), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: SIGN_UP_LABEL }));
+
+    await screen.findByText(HANDLE_UNAVAILABLE);
+
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(ANONYMOUS_STATE)).toBeDefined();
+    expect(screen.getByText(ANONYMOUS_COST)).toBeDefined();
+    expect(screen.getByText(ANONYMOUS_WAY_OUT)).toBeDefined();
   });
 
   it("opens a mailed verification link and sends the token behind the slug", () => {
