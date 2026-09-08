@@ -36,8 +36,6 @@ import { driveScriptedDuel, inMemoryStorage } from "./drive-duel";
 const wiring = vi.hoisted((): ArcWiring => ({
   history: null,
   signedIn: false,
-  offerSettled: () => false,
-  settleOffer: () => {},
 }));
 
 vi.mock("../main", async (importOriginal) => {
@@ -46,8 +44,6 @@ vi.mock("../main", async (importOriginal) => {
     ...actual,
     useHistory: () => wiring.history,
     useSignedIn: () => wiring.signedIn,
-    offerSettledHere: () => wiring.offerSettled(),
-    settleOfferHere: () => wiring.settleOffer(),
   };
 });
 
