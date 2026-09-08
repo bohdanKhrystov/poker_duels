@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141201
 title: Two more frames say in their margin that no card is picked out
 type: task
-status: backlog
+status: done
 parent: STORY-1412
 module: design
 estimate: XS
