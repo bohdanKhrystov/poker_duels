@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, type ReactElement } from "react";
-import type { ProtocolError } from "../protocol";
+import type { CreateRoom, JoinRoom, ProtocolError } from "../protocol";
 import {
   useDuelState,
   useForgetRoom,
@@ -10,9 +10,17 @@ import { useScreen } from "../routing/use-screen";
 import { tokenFromHash } from "../routing/screen";
 import { roomStanding, rulingOn } from "../routing/room-standing";
 import { useProfileStrip } from "../profile/profile-provider";
-import { useHistory, useLadder, useSignedIn } from "../main";
+import {
+  nameAskSkippedHere,
+  skipNameAskHere,
+  useHistory,
+  useLadder,
+  useSignedIn,
+} from "../main";
 import { ProfileStrip } from "../profile/ProfileStrip";
 import { NameSurface } from "../profile/NameSurface";
+import { NameAsk } from "../profile/NameAsk";
+import { askForName } from "../profile/name-ask";
 import { useSetName } from "../profile/set-name-provider";
 import { ActionBar } from "../table/ActionBar";
 import { CoinMark } from "../result/CoinMark";
@@ -59,6 +67,28 @@ export function Lobby(): ReactElement {
   // both (TASK-041719).
   const [mailedToken] = useState(() => tokenFromHash(window.location.hash));
   const code = roomCodeFromField(typedCode);
+
+  // ADR-0119 §1: the frame a duel-starting press would have sent, held while
+  // the ask stands in its place. Typed as what it can only ever be — a frame
+  // that starts a duel — never the wider `ClientMessage`.
+  const [heldPress, setHeldPress] = useState<CreateRoom | JoinRoom | null>(
+    null,
+  );
+  // The lazy initialiser, not a call: read once per mount, so a skip this
+  // render answers `askForName` on this same render rather than waiting for
+  // the next boot.
+  const [nameAskSkipped, setNameAskSkipped] = useState(nameAskSkippedHere);
+
+  // ADR-0119 §1: the one seam both front-door controls call instead of
+  // `send` directly. A player the predicate names is held at the ask; every
+  // other player passes straight through, unheld and unrendered-to.
+  const startDuel = (intent: CreateRoom | JoinRoom): void => {
+    if (setName !== null && askForName({ profile, skipped: nameAskSkipped })) {
+      setHeldPress(intent);
+      return;
+    }
+    send(intent);
+  };
 
   // ADR-0114 §§1-2: one predicate answers every ask, computed once above
   // every branch. `standing` is what the frames the server has sent say
@@ -352,6 +382,33 @@ export function Lobby(): ReactElement {
   // because a clock is not a fact the server sent.
   if (standing === "unknown") return <></>;
 
+  // ADR-0119 §1: the ask stands in place of the front door for as long as a
+  // held press waits on it. Placed here — after every store branch above —
+  // so a frame that seats the player wins the branch race the moment it
+  // arrives, exactly as `TASK-140716` pins.
+  if (heldPress !== null && setName !== null) {
+    return (
+      <NameAsk
+        setName={setName}
+        onNamed={() => {
+          // The profile the client holds was already brought up to date by
+          // the ask itself (`TASK-140712`), so nothing else needs settling
+          // here — just send the frame the player already pressed for.
+          send(heldPress);
+          setHeldPress(null);
+        }}
+        onSkip={() => {
+          // ADR-0119 §5: skipping spends the ask, in this browser, and
+          // nothing else does.
+          skipNameAskHere();
+          setNameAskSkipped(true);
+          send(heldPress);
+          setHeldPress(null);
+        }}
+      />
+    );
+  }
+
   return (
     <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
       {/* ADR-0098 §1: the coin-and-two-tone lockup, card-drawn only on the
@@ -371,7 +428,7 @@ export function Lobby(): ReactElement {
       <button
         type="button"
         className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
-        onClick={() => send({ type: "CreateRoom" })}
+        onClick={() => startDuel({ type: "CreateRoom" })}
       >
         Play duel
       </button>
@@ -381,7 +438,7 @@ export function Lobby(): ReactElement {
           // An empty code would spend one of the ten failed joins ADR-0022
           // budgets this player every minute, and tell them nothing.
           if (code === "") return;
-          send({ type: "JoinRoom", code });
+          startDuel({ type: "JoinRoom", code });
         }}
       >
         <label htmlFor="room-code">Room code</label>
