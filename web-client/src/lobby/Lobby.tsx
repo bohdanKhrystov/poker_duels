@@ -42,6 +42,7 @@ import { LADDER_HEADING } from "../ladder/ladder-text";
 import { AccountScreen } from "../account/AccountScreen";
 import { ACCOUNT_HEADING, SIGN_IN_HEADING } from "../account/account-text";
 import { useAccount, type AccountCalls } from "../account/account-provider";
+import { useSignOutHandsANewProfile } from "../account/device-standing-provider";
 import type { SignUpOutcome } from "../account/sign-up";
 import { SignInForm } from "../account/SignInForm";
 import { ForgotPasswordForm } from "../account/ForgotPasswordForm";
@@ -64,6 +65,11 @@ export function Lobby(): ReactElement {
   const readLadder = useLadder();
   const signedIn = useSignedIn();
   const account = useAccount();
+  // ADR-0135 §6: the provider's own default is the fallback — a client with
+  // no `DeviceStandingProvider` above it, or one whose read has not yet
+  // answered, reads `false` from the context itself. A branch or a `&&` here
+  // would be a second place able to disagree with that rule.
+  const signOutHandsANewProfile = useSignOutHandsANewProfile();
   const refreshProfile = useRefreshProfile();
   // ADR-0132 §6: `sign-up.ts` passes `noReload` on purpose, and answers
   // `signed-up` on the `201` whether or not its own follow-up sign-in
@@ -288,7 +294,7 @@ export function Lobby(): ReactElement {
         <AccountScreen
           profile={profile}
           signedIn={signedIn}
-          signOutHandsANewProfile={false}
+          signOutHandsANewProfile={signOutHandsANewProfile}
           signUp={account !== null ? signUp : undefined}
           signOut={account !== null ? account.signOut : undefined}
           attachRecoveryEmail={
