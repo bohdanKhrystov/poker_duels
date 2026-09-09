@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141003
 title: The server says which sign-out this is
 type: task
-status: backlog
+status: done
 parent: STORY-1410
 module: poker-server
 estimate: S

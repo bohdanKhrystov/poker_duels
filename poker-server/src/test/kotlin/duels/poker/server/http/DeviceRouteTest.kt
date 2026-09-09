@@ -3,9 +3,11 @@ package duels.poker.server.http
 import duels.poker.server.auth.CredentialKind
 import duels.poker.server.auth.RecordingDeviceBindings
 import duels.poker.server.auth.SessionToken
+import duels.poker.server.module
 import duels.poker.server.protocol.http.profileResponse
 import duels.poker.server.session.PlayerId
 import io.ktor.client.request.delete
+import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -17,11 +19,16 @@ import org.junit.jupiter.api.Test
 
 class DeviceRouteTest {
     /**
-     * `"device-1"` resolves to `"player-1"` — the same player session `"t-1"` names. Shared by
-     * every test below so that [aDeviceIdAloneIsRefused]'s refusal is tested against a device
-     * that genuinely resolves, not a fixture that would answer `401` for the wrong reason.
+     * `"device-1"` resolves to `"player-1"` — the same player session `"t-1"` names.
+     * `"device-2"` resolves to `"player-2"` — a different player. Shared by every test below so
+     * that [aDeviceIdAloneIsRefused]'s refusal is tested against a device that genuinely
+     * resolves, not a fixture that would answer `401` for the wrong reason, and so that the two
+     * `GET` resolution tests below differ only in which header they send.
      */
-    private val profiles = mapOf("device-1" to profileResponse("player-1", 0))
+    private val profiles = mapOf(
+        "device-1" to profileResponse("player-1", 0),
+        "device-2" to profileResponse("player-2", 0),
+    )
     private val identities = identitiesFor(profiles, FixedAuthSessions(mapOf("t-1" to "player-1")))
 
     @Test
@@ -184,6 +191,95 @@ class DeviceRouteTest {
         }
         val response = client.delete("/api/me/device")
         assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertTrue(credentials.holdsCalls.isEmpty())
+    }
+
+    @Test
+    fun aSessionWhoseDeviceNamesThemIsHandedANewProfile() = testApplication {
+        application {
+            module()
+            deviceRoutes(identities, RecordingCredentials(holds = true), RecordingDeviceBindings())
+        }
+        val response = client.get("/api/me/device") {
+            header(HttpHeaders.Authorization, "Bearer t-1")
+            header(DEVICE_ID_HEADER, "device-1")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("{\"signOutHandsANewProfile\":true}", response.bodyAsText())
+    }
+
+    @Test
+    fun aSessionWhoseDeviceNamesAnotherPlayerKeepsItsProfile() = testApplication {
+        application {
+            module()
+            deviceRoutes(identities, RecordingCredentials(holds = true), RecordingDeviceBindings())
+        }
+        val response = client.get("/api/me/device") {
+            header(HttpHeaders.Authorization, "Bearer t-1")
+            header(DEVICE_ID_HEADER, "device-2")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("{\"signOutHandsANewProfile\":false}", response.bodyAsText())
+    }
+
+    @Test
+    fun aSessionPresentingNoDeviceIsHandedANewProfile() = testApplication {
+        application {
+            module()
+            deviceRoutes(identities, RecordingCredentials(holds = true), RecordingDeviceBindings())
+        }
+        val response = client.get("/api/me/device") {
+            header(HttpHeaders.Authorization, "Bearer t-1")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("{\"signOutHandsANewProfile\":true}", response.bodyAsText())
+    }
+
+    @Test
+    fun aRevokedBindingIsHandedANewProfile() = testApplication {
+        // A device id the directory answers nothing for is exactly what a revoked binding is,
+        // since findOrNull filters on revoked_at IS NULL: ADR-0135 §5's own row.
+        application {
+            module()
+            deviceRoutes(identities, RecordingCredentials(holds = true), RecordingDeviceBindings())
+        }
+        val response = client.get("/api/me/device") {
+            header(HttpHeaders.Authorization, "Bearer t-1")
+            header(DEVICE_ID_HEADER, "no-such-device")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("{\"signOutHandsANewProfile\":true}", response.bodyAsText())
+    }
+
+    @Test
+    fun aDeviceIdAloneIsRefusedOnTheStandingRoute() = testApplication {
+        // The positive control is aSessionWhoseDeviceNamesThemIsHandedANewProfile above, against
+        // the same fixture: device-1 genuinely resolves, so this is not a 401 for the wrong reason.
+        application {
+            module()
+            deviceRoutes(identities, RecordingCredentials(holds = true), RecordingDeviceBindings())
+        }
+        val response = client.get("/api/me/device") {
+            header(DEVICE_ID_HEADER, "device-1")
+        }
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals("", response.bodyAsText())
+    }
+
+    @Test
+    fun theStandingRouteNeverAsksAboutCredentials() = testApplication {
+        // RecordingCredentials(holds = false) is the fixture that makes DELETE answer 409; this
+        // route needs no equivalent guard (ADR-0135 §4), asserted as an absence of a call and not
+        // just as a status.
+        val credentials = RecordingCredentials(holds = false)
+        application {
+            module()
+            deviceRoutes(identities, credentials, RecordingDeviceBindings())
+        }
+        val response = client.get("/api/me/device") {
+            header(HttpHeaders.Authorization, "Bearer t-1")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
         assertTrue(credentials.holdsCalls.isEmpty())
     }
 }

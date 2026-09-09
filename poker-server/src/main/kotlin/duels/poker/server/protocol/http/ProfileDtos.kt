@@ -53,6 +53,23 @@ public data class ProfileResponse(
 )
 
 /**
+ * The body of `GET /api/me/device`, carrying the one fact `ADR-0131` §1's confirmation needs
+ * before the caller's next press: which of the two sign-outs this one would be.
+ *
+ * @property signOutHandsANewProfile Whether the caller's next sign-out would hand the browser a
+ *   new, empty profile rather than return it to the one it already owns (`ADR-0135` §4's table).
+ *   This is a fact about the **pair of credentials presented on this one request**, never about
+ *   the player — which is the line `ADR-0135` §Consequences draws between this DTO and
+ *   [ProfileResponse], and the reason this is its own type rather than a seventh field there. No
+ *   default value: kotlinx.serialization omits a default-valued property unless
+ *   `encodeDefaults = true`, and `Application.module()` installs `ContentNegotiation { json() }`,
+ *   whose `Json` has `encodeDefaults = false` — a defaulted property here would be omitted from
+ *   the wire for exactly the caller whose answer is `true`, the one this route exists to tell.
+ */
+@Serializable
+public data class DeviceStandingResponse(val signOutHandsANewProfile: Boolean)
+
+/**
  * The outcome of a duel from the requesting player's perspective.
  */
 @Serializable
