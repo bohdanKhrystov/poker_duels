@@ -3,13 +3,13 @@ schema: 2
 id: TASK-141203
 title: The card-text register ADR-0142 owes
 type: task
-status: backlog
+status: done
 parent: STORY-1412
 module: web-client
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 3
+files_touched: 2
 labels: [client, design, process]
 depends_on: []
 verify:
@@ -45,7 +45,7 @@ nothing executable enforces — so leaving it unwritten would be the joke tellin
 | --- | --- |
 | `web-client/src/design/card-text.test.ts` | create |
 | `design/screens/account.html` | modify |
-| `web-client/src/account/account-text.ts` | modify |
+| `web-client/src/account/account-text.ts` | **not modified** — listed here when I wrote the ticket, on the assumption it would need classification comments. It does not: the gate **imports** its values rather than editing the source, and `SIGN_OUT_WARNING`'s hand-concatenated form is handled by that import. The coder flagged the discrepancy instead of inventing an edit to match the count, which was right |
 
 Read [`ADR-0142`](../../docs/adr/ADR-0142-a-text-module-is-checked-against-the-rendered-card.md) in
 full — it specifies the mechanism, and this ticket implements exactly what it says.

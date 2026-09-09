@@ -93,9 +93,6 @@
       it, and nothing reaches them from another browser.</p>
       <p class="line">The form below gives this profile a password and keeps every duel coin
       and every duel, because nothing moves.</p>
-      <!-- ANON-BLOCK: This profile is anonymous: it has no password, and this browser is the only thing that signs in to it. -->
-      <!-- ANON-BLOCK: The profile lives in this browser: the duel coins and the duels go with it, and nothing reaches them from another browser. -->
-      <!-- ANON-BLOCK: The form below gives this profile a password and keeps every duel coin and every duel, because nothing moves. -->
       <div class="panel">
         <div class="field"><span class="lbl">Handle</span><div class="box"></div></div>
         <div class="field"><span class="lbl">Password</span><div class="box"></div></div>
@@ -109,8 +106,8 @@
       holds (ADR-0027 §6). The recovery line is recovery-text.ts's; the recovery-address panel
       (last frame) composes onto this state too, exactly as shown there — AccountScreen.tsx
       does not condition it on having a password yet, and whether it should is DEC-090,
-      open. The three ANON-BLOCK lines above discharge ADR-0125 §3's three obligations in
-      order — what the profile is, what that costs, and the way out — and they render only
+      open. The three anonymous-state sentences above discharge ADR-0125 §3's three obligations
+      in order — what the profile is, what that costs, and the way out — and they render only
       once the profile read comes back with hasPassword false (ADR-0132 §4): a told fact, never
       one inferred from the absence of a session token (ADR-0125 §4).</p>
     </div>
