@@ -7,6 +7,7 @@ import path from "path";
 
 import * as nameAskText from "../profile/name-ask-text";
 import * as accountText from "../account/account-text";
+import * as rematchText from "../result/rematch-text";
 
 /**
  * `ADR-0142` §1's mechanism: a text module is checked against the card it was transcribed from,
@@ -149,6 +150,20 @@ const PAIRS: readonly Pair[] = [
       SIGN_UP_THROTTLED: "no frame on this card draws a throttled sign-up",
       SIGN_IN_REFUSED: "no frame on this card draws a refused sign-in",
     },
+  },
+  {
+    modulePath: "result/rematch-text.ts",
+    moduleNamespace: rematchText,
+    card: "rematch-panel.html",
+    carded: [
+      "RIVAL_OFFERS",
+      "REMATCH_LABEL",
+      "DEALING_LEAD",
+      "DEALING_TAIL",
+      "ROOM_GONE",
+      "NOT_NOW",
+    ],
+    notCarded: {},
   },
 ];
 

@@ -1,6 +1,13 @@
 import { useState, type ReactElement } from "react";
 import type { ProtocolError } from "../protocol/protocol.gen";
 import { rematchStand } from "./rematch-stand";
+import {
+  RIVAL_OFFERS,
+  REMATCH_LABEL,
+  DEALING_LEAD,
+  DEALING_TAIL,
+  ROOM_GONE,
+} from "./rematch-text";
 
 /**
  * The rematch button and its companion states. One click calls the callback; a second press is harmless.
@@ -38,9 +45,7 @@ export function RematchControl(props: {
   // The room is gone: retire the control and state it plainly.
   if (props.refusal === "UNKNOWN_ROOM") {
     return (
-      <div className="text-center text-small text-text-muted">
-        That duel room is gone.
-      </div>
+      <div className="text-center text-small text-text-muted">{ROOM_GONE}</div>
     );
   }
 
@@ -53,8 +58,9 @@ export function RematchControl(props: {
   if (accepted || (mine && theirs)) {
     return (
       <div className="text-center text-text-muted">
-        Rematch. The button changes sides —<br />
-        dealing hand 1…
+        {DEALING_LEAD}
+        <br />
+        {DEALING_TAIL}
       </div>
     );
   }
@@ -71,7 +77,7 @@ export function RematchControl(props: {
     return (
       <>
         <div className="text-center text-small font-medium text-accent">
-          Your rival offers a rematch
+          {RIVAL_OFFERS}
         </div>
         <button
           type="button"
@@ -81,7 +87,7 @@ export function RematchControl(props: {
           }}
           className="rounded-medium bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         >
-          Rematch
+          {REMATCH_LABEL}
         </button>
       </>
     );
@@ -93,7 +99,7 @@ export function RematchControl(props: {
       onClick={props.onOffer}
       className="rounded-medium bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
     >
-      Rematch
+      {REMATCH_LABEL}
     </button>
   );
 }
