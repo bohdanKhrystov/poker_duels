@@ -3,9 +3,11 @@ import type { ProfileStripState } from "../profile/profile-strip";
 import type { SignUpOutcome } from "./sign-up";
 import type { SignOutOutcome } from "./sign-out";
 import type { AttachRecoveryOutcome } from "./attach-recovery-email";
+import type { SetNameOutcome } from "../profile/set-name";
 import { SignUpForm } from "./SignUpForm";
 import { RecoveryEmailForm } from "./RecoveryEmailForm";
 import { SignOutControl } from "./SignOutControl";
+import { NameSurface } from "../profile/NameSurface";
 import {
   ACCOUNT_HEADING,
   PASSWORD_ROUTE_LIVE,
@@ -21,7 +23,8 @@ import { recoveryLine } from "./recovery-text";
  * The account screen: states, in words, which routes currently sign in to
  * this profile, and carries the forms a browser needs on either side of a
  * session — give this profile a password or reach an account already made
- * with no session, and sign out with one.
+ * with no session, and sign out with one. It also carries the name form
+ * (`ADR-0130` §6).
  *
  * `ADR-0037` requires the account screens to state which routes are live, and
  * `ADR-0050` §4 makes `deviceRouteLive` the whole of what this screen reads to
@@ -50,9 +53,17 @@ export function AccountScreen(props: {
     address: string,
     currentPassword: string,
   ) => Promise<AttachRecoveryOutcome>;
+  readonly setName?: (name: string) => Promise<SetNameOutcome>;
 }): ReactElement {
-  const { profile, signedIn, signUp, signOut, onSignIn, attachRecoveryEmail } =
-    props;
+  const {
+    profile,
+    signedIn,
+    signUp,
+    signOut,
+    onSignIn,
+    attachRecoveryEmail,
+    setName,
+  } = props;
 
   // With no profile in hand — still loading, no-profile, or unavailable — the
   // screen asserts neither route (`ADR-0037`): a sentence built from a read
@@ -116,12 +127,25 @@ export function AccountScreen(props: {
     profile.kind === "profile" &&
     !profile.profile.hasPassword;
 
+  // The name form is rendered when a profile is in hand, it is of kind
+  // `profile`, and the caller has provided the `setName` callback. This
+  // mirrors the condition on the front door which this form will eventually
+  // replace (`TASK-140917`).
+  const showNameForm =
+    profile !== null && profile.kind === "profile" && setName !== undefined;
+
   return (
     <section
       aria-label="account"
       className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
     >
       <h2 className="text-small">{ACCOUNT_HEADING}</h2>
+      {showNameForm &&
+      profile !== null &&
+      profile.kind === "profile" &&
+      setName !== undefined ? (
+        <NameSurface profile={profile.profile} setName={setName} />
+      ) : null}
       {deviceLine !== null ? <p className="text-small">{deviceLine}</p> : null}
       {recoveryText !== null ? (
         <p className="text-small">{recoveryText}</p>

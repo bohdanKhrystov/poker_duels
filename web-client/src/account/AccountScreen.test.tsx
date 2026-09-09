@@ -27,6 +27,7 @@ import { aProfile } from "../profile/profile-fixture";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { AttachRecoveryOutcome } from "./attach-recovery-email";
 import type { SignUpOutcome } from "./sign-up";
+import type { SetNameOutcome } from "../profile/set-name";
 
 describe("the account screen", () => {
   it("says the device signs in, and says it stopped, from the server fact alone", () => {
@@ -466,5 +467,77 @@ describe("the account screen", () => {
     expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
+  });
+
+  it("carries the name form when it is given one", () => {
+    const setName = vi.fn<[string], Promise<SetNameOutcome>>();
+    setName.mockResolvedValue({ kind: "named", profile: aProfile() });
+
+    const profile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    };
+    render(
+      <AccountScreen profile={profile} signedIn={false} setName={setName} />,
+    );
+
+    const nameSurface = screen.getByLabelText("your display name");
+    expect(nameSurface).not.toBeNull();
+
+    // Verify it is the immediate next sibling of the Account heading
+    const heading = screen.getByRole("heading", {
+      level: 2,
+      name: ACCOUNT_HEADING,
+    });
+    const headingIndex = Array.from(
+      screen.getByLabelText("account").children,
+    ).indexOf(heading);
+    const surfaceIndex = Array.from(
+      screen.getByLabelText("account").children,
+    ).indexOf(nameSurface);
+    expect(surfaceIndex).toBe(headingIndex + 1);
+  });
+
+  it("carries no name form when it is given no setName", () => {
+    const profile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    };
+    render(<AccountScreen profile={profile} signedIn={false} />);
+
+    const nameSurface = screen.queryByLabelText("your display name");
+    expect(nameSurface).toBeNull();
+  });
+
+  it("carries no name form without a profile in hand", () => {
+    const setName = vi.fn<[string], Promise<SetNameOutcome>>();
+    setName.mockResolvedValue({ kind: "named", profile: aProfile() });
+
+    // Test with profile=null (still loading)
+    const { rerender } = render(
+      <AccountScreen profile={null} signedIn={false} setName={setName} />,
+    );
+    expect(screen.queryByLabelText("your display name")).toBeNull();
+
+    // Test with kind="loading" - but loading is not a kind in ProfileStripState,
+    // so we only test the non-profile states
+    const noProfile: ProfileStripState = { kind: "no-profile" };
+    rerender(
+      <AccountScreen profile={noProfile} signedIn={false} setName={setName} />,
+    );
+    expect(screen.queryByLabelText("your display name")).toBeNull();
+
+    // Test with kind="unavailable"
+    const unavailable: ProfileStripState = { kind: "unavailable" };
+    rerender(
+      <AccountScreen
+        profile={unavailable}
+        signedIn={false}
+        setName={setName}
+      />,
+    );
+    expect(screen.queryByLabelText("your display name")).toBeNull();
   });
 });

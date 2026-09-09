@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140914
 title: The account screen carries the name form
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: web-client
 estimate: XS
@@ -15,8 +15,8 @@ depends_on: [TASK-140913]
 verify:
   - cd web-client && npm ci
   - grep -qF "NameSurface" web-client/src/account/AccountScreen.tsx
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (18 tests)"'
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (104 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (23 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (113 tests)"'
   - cd web-client && npm run check
   - cd web-client && npm run build
   - python3 .github/scripts/lint_tickets.py
