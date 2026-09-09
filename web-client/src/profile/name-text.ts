@@ -7,9 +7,6 @@ export const NAME_REMOVED_BODY =
   "That name cannot be used again, by you or by anyone. " +
   "Choose a new one whenever you like.";
 
-export const PERMANENCE_LINE =
-  "A name is chosen once. You cannot change it later, and it can be taken away.";
-
 /**
  * The sentence from `design/screens/account.html` `NAME-FORM: changeable:` marker,
  * expressing the first obligation in ADR-0130 §5: that the name can be changed later.

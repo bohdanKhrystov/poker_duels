@@ -164,7 +164,7 @@ const NO_CARD: Readonly<Record<string, string>> = {
   "ladder/ladder-text.ts":
     "leaderboard.html exists as a card; this module's transcription is a future ticket's, not this bootstrap's",
   "profile/name-text.ts":
-    "no frame anywhere draws these three strings; name-ask.html's own NAME_KEEPS has superseded PERMANENCE_LINE's wording",
+    "no frame anywhere draws these exports; the permanence claim is in name-ask.html's NAME_KEEPS",
   "profile/profile-text.ts":
     "exports functions only, no string constant to classify",
   "result/outcome-text.ts":

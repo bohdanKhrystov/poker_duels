@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   NAME_REMOVED_HEADING,
   NAME_REMOVED_BODY,
-  PERMANENCE_LINE,
   CHANGEABLE_LINE,
   SPENT_LINE,
   refusalSentence,
@@ -87,13 +86,6 @@ describe("the name surface's words", () => {
     expect(mayTryAgain("throttled")).toBe(false);
     expect(mayTryAgain("no-profile")).toBe(false);
     expect(mayTryAgain("unavailable")).toBe(false);
-  });
-
-  it("says a name can be taken away, before anything is sent", () => {
-    const line =
-      "A name is chosen once. You cannot change it later, and it can be taken away.";
-    expect(PERMANENCE_LINE).toBe(line);
-    expect(PERMANENCE_LINE).toContain("and it can be taken away");
   });
 
   it("says the same thing about a player with no name wherever it is asked", () => {
