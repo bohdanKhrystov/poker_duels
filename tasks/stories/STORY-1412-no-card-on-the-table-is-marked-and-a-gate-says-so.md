@@ -2,7 +2,7 @@
 id: STORY-1412
 title: No card on the table is marked, and a gate says so
 type: story
-status: backlog
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, design, table, gate]

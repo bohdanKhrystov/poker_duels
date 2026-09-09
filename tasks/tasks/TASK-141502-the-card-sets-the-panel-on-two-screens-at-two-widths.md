@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141502
 title: The card sets the panel on two screens, at the phone and on the laptop
 type: task
-status: backlog
+status: done
 parent: STORY-1415
 module: design
 estimate: S

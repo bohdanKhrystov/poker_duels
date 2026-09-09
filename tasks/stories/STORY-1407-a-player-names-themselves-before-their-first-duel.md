@@ -2,7 +2,7 @@
 id: STORY-1407
 title: A player names themselves before their first duel
 type: story
-status: backlog
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, profile, lobby, design]

@@ -50,6 +50,27 @@
     display: flex; align-items: center; justify-content: center; color: var(--pd-text-faint);
     font-size: var(--pd-fs-small); text-align: center; padding: var(--pd-space-4); }
 
+  /* TASK-141502: the panel over two real screens, at two widths. Each frame here
+   * carries its own size instead of the shared 340px box above, because the
+   * question these frames answer — what the panel covers — only reads true at a
+   * width a player actually holds the app at (ADR-0103 §1). */
+  .frame.over.phone { width: 390px; }
+  .frame.over.laptop { width: 960px; }
+
+  /* A stand-in for the screen the panel sits over — named, never copied
+   * (ADR-0123 §8): a real leaderboard or account screen would go stale the
+   * moment either card moves, so this is only the screen's heading and shape,
+   * enough to show what the panel below it covers. */
+  .screen { position: relative; height: 664px; border: 1px dashed var(--pd-hairline);
+    border-radius: var(--pd-radius-small); padding: var(--pd-space-4);
+    display: flex; flex-direction: column; gap: var(--pd-space-3); overflow: hidden; }
+  .frame.over.laptop .screen { height: 420px; }
+  .screen h3 { font-size: var(--pd-fs-small); font-weight: 600; color: var(--pd-text-muted); }
+  .screen .row { border-radius: var(--pd-radius-small); background: var(--pd-surface-raised);
+    padding: var(--pd-space-3) var(--pd-space-4); color: var(--pd-text-faint);
+    font-size: var(--pd-fs-small); }
+  .screen .row.tail { margin-top: auto; }
+
   /* The panel's own shell — this card's to mint. Out of flow within its stand-in
    * screen (position: absolute, no participation in the stage's own layout), sized
    * to its own content and never to the stage, and lifted with the sheet's one
@@ -152,6 +173,82 @@
       nothing here fades, slides, pulses or repeats on a cycle — so ADR-0123 §8's requirement that
       each of the first three sit still under a reduced-motion preference is met by there being
       nothing to still, not by a rule that quietly does nothing.</p>
+    </div>
+
+    <div class="frame over phone">
+      <h2>Over the ladder — phone, 390 × 664</h2>
+      <div class="screen">
+        <h3>Leaderboard</h3>
+        <div class="row">1 · rival</div>
+        <div class="row">2 · you</div>
+        <div class="row">3 · rival</div>
+        <div class="row tail">Play again</div>
+      </div>
+      <div class="panel" role="status">
+        <div class="theirs">Your rival offers a rematch</div>
+        <button class="btn fill">Rematch</button>
+        <button class="btn ghost">Not now</button>
+      </div>
+      <p class="note">ADR-0103 §1's measured phone shape, drawn as a real 390px box rather than
+      described — ADR-0121's fit axis is scrollWidth ≤ clientWidth, so an overrun in the panel's
+      own width only shows up at the width it happens at. The panel keeps TASK-141501's insets and
+      stays position: absolute (ADR-0138 §5), so the ladder underneath never moves; what this
+      frame adds is only which screen the panel moved over, and how much of it sits under the
+      panel's bottom edge — here, the ladder's own last row.</p>
+    </div>
+
+    <div class="frame over phone">
+      <h2>Over the account screen — phone, 390 × 664</h2>
+      <div class="screen">
+        <h3>Account</h3>
+        <div class="row">Display name</div>
+        <div class="row">Region</div>
+        <div class="row tail">Sign out</div>
+      </div>
+      <div class="panel" role="status">
+        <div class="theirs">Your rival offers a rematch</div>
+        <button class="btn fill">Rematch</button>
+        <button class="btn ghost">Not now</button>
+      </div>
+      <p class="note">The same 390px box as the frame before this one, over the other screen a
+      standing offer can follow a player to. The panel's bottom edge lands on the same row here as
+      it did there — the account screen's own last control, not something either screen chose to
+      give up.</p>
+    </div>
+
+    <div class="frame over laptop">
+      <h2>Over the ladder — laptop</h2>
+      <div class="screen">
+        <h3>Leaderboard</h3>
+        <div class="row">1 · rival</div>
+        <div class="row">2 · you</div>
+        <div class="row">3 · rival</div>
+      </div>
+      <div class="panel" role="status">
+        <div class="theirs">Your rival offers a rematch</div>
+        <button class="btn fill">Rematch</button>
+        <button class="btn ghost">Not now</button>
+      </div>
+      <p class="note">TASK-141501's shell is unchanged at the wide column — same insets, same
+      content-sized box — so the fraction of the ladder it covers here is smaller only because the
+      stage grew under it, not because the panel did.</p>
+    </div>
+
+    <div class="frame over laptop">
+      <h2>Over the account screen — laptop</h2>
+      <div class="screen">
+        <h3>Account</h3>
+        <div class="row">Display name</div>
+        <div class="row">Region</div>
+      </div>
+      <div class="panel" role="status">
+        <div class="theirs">Your rival offers a rematch</div>
+        <button class="btn fill">Rematch</button>
+        <button class="btn ghost">Not now</button>
+      </div>
+      <p class="note">The same wide-column frame as the one before this, over the other screen a
+      standing offer can follow a player to. Nothing about the panel's shell changes between the
+      two — only the screen under it does.</p>
     </div>
   </div>
 </div>

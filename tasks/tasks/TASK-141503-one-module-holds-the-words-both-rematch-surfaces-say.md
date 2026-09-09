@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141503
 title: One module holds the words both rematch surfaces say
 type: task
-status: backlog
+status: ready
 parent: STORY-1415
 module: web-client
 estimate: XS
