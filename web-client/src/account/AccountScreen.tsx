@@ -43,6 +43,13 @@ import { recoveryLine } from "./recovery-text";
 export function AccountScreen(props: {
   readonly profile: ProfileStripState | null;
   readonly signedIn: boolean;
+  /**
+   * Which sign-out this screen offers — never whether a sign-out exists, which is answered by
+   * `signedIn`. A required boolean, not optional with a default, to refuse a screen mounted
+   * without being told (`ADR-0135` §7): a screen that could be mounted without an answer is a
+   * screen that will one day be mounted with the wrong one.
+   */
+  readonly signOutHandsANewProfile: boolean;
   readonly signUp?: (
     handle: string,
     password: string,
@@ -58,6 +65,7 @@ export function AccountScreen(props: {
   const {
     profile,
     signedIn,
+    signOutHandsANewProfile,
     signUp,
     signOut,
     onSignIn,
@@ -174,10 +182,9 @@ export function AccountScreen(props: {
         </button>
       )}
       {signOut !== undefined && (
-        // A literal until `TASK-141013` wires this screen's own answer through.
         <SignOutControl
           signedIn={signedIn}
-          signOutHandsANewProfile={false}
+          signOutHandsANewProfile={signOutHandsANewProfile}
           signOut={signOut}
         />
       )}

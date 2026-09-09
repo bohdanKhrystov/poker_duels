@@ -288,6 +288,7 @@ export function Lobby(): ReactElement {
         <AccountScreen
           profile={profile}
           signedIn={signedIn}
+          signOutHandsANewProfile={false}
           signUp={account !== null ? signUp : undefined}
           signOut={account !== null ? account.signOut : undefined}
           attachRecoveryEmail={

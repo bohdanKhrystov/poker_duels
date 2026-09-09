@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141014
 title: The lobby hands the screen the answer the server gave
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: web-client
 estimate: S
