@@ -3,7 +3,8 @@ import type { PlayerProfile } from "./profile";
 import { useReportNameWrite } from "./profile-provider";
 import type { SetNameOutcome } from "./set-name";
 import {
-  PERMANENCE_LINE,
+  CHANGEABLE_LINE,
+  SPENT_LINE,
   NAME_REMOVED_HEADING,
   NAME_REMOVED_BODY,
   refusalSentence,
@@ -52,9 +53,9 @@ export function NameSurface(props: {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // A name is permanent: a second submit while one is already in flight
-    // must send nothing, not race the first and let the server pick a
-    // winner (200) and a loser (403) the player never asked for.
+    // A second submit while one is already in flight must send nothing,
+    // not race the first and cause a rename (per ADR-0130 §1) that the
+    // player never intended.
     if (submitInFlight.current) {
       return;
     }
@@ -92,7 +93,8 @@ export function NameSurface(props: {
           <p className="text-small">{NAME_REMOVED_BODY}</p>
         </div>
       )}
-      <p className="text-small">{PERMANENCE_LINE}</p>
+      <p className="text-small">{CHANGEABLE_LINE}</p>
+      <p className="text-small">{SPENT_LINE}</p>
       {refusal !== null && (
         <p role="status" className="text-small">
           {refusalSentence(refusal)}

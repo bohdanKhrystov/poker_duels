@@ -10,7 +10,7 @@ import { NameSurface } from "./NameSurface";
 import { aProfile } from "./profile-fixture";
 import { useReportNameWrite } from "./profile-provider";
 import type { SetNameOutcome } from "./set-name";
-import { PERMANENCE_LINE } from "./name-text";
+import { CHANGEABLE_LINE, SPENT_LINE } from "./name-text";
 
 // A stubbed no-op by default, matching `useReportNameWrite`'s own answer
 // where no provider is above — the one test that cares what it was called
@@ -67,7 +67,7 @@ describe("the name surface", () => {
     expect(buttons[0].textContent).toBe("Set my name");
   });
 
-  it("says the choice is permanent before anything is sent", () => {
+  it("says the name can be changed and the one given up is gone, before anything is sent", () => {
     const setNameSpy = vi.fn<[string], Promise<SetNameOutcome>>();
 
     render(
@@ -77,11 +77,14 @@ describe("the name surface", () => {
       />,
     );
 
-    const permanenceLineElement = screen.getByText(PERMANENCE_LINE);
-    expect(permanenceLineElement).toBeDefined();
+    const changeableLineElement = screen.getByText(CHANGEABLE_LINE);
+    expect(changeableLineElement).toBeDefined();
+
+    const spentLineElement = screen.getByText(SPENT_LINE);
+    expect(spentLineElement).toBeDefined();
 
     const textbox = screen.getByRole("textbox");
-    expect(permanenceLineElement.compareDocumentPosition(textbox)).toBe(
+    expect(changeableLineElement.compareDocumentPosition(textbox)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
 
@@ -373,8 +376,8 @@ describe("the name surface", () => {
     }
 
     // Scoped to the refusal sentences themselves, not the whole screen:
-    // `PERMANENCE_LINE` legitimately says a name "can be taken away", a
-    // different sense that a page-wide check would wrongly indict.
+    // `SPENT_LINE` legitimately says a name is gone for good, carrying a
+    // sense of finality that a page-wide check would wrongly indict.
     const statusTexts = screen
       .getAllByRole("status")
       .map((element) => element.textContent ?? "");

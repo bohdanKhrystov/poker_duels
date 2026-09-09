@@ -24,7 +24,7 @@ function draw(random: () => number): string {
   for (const list of NAME_VOCABULARY) {
     // Clamped so a `random` that returns `1` still yields the list's last entry rather than
     // `undefined` — without the clamp, `undefined` could be joined into a string a player is
-    // offered as a permanent name (ADR-0137 §2).
+    // offered (ADR-0137 §2).
     const index = Math.min(list.length - 1, Math.floor(random() * list.length));
     words.push(list[index]);
   }
