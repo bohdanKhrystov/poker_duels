@@ -26,8 +26,8 @@ export function refusalSentence(
       return "That name cannot be used. Try another.";
     case "conflict":
       return "That name is not available. Try another.";
-    case "permanent":
-      return "You already have a display name. That choice is permanent and cannot be changed.";
+    case "throttled":
+      return "You're changing names too fast. Wait a moment, then try again.";
     case "no-profile":
       return "This browser has no profile. Reload the page and try again.";
     case "unavailable":
@@ -41,7 +41,9 @@ export function refusalSentence(
  * A `rejected` or `conflict` response means the player should try again
  * with a different name. All other refusals mean the player cannot proceed
  * until something else changes — their profile, their browser's state, or
- * the server's availability. Retrying without that change would be pointless.
+ * the server's availability. `throttled` is one of these: the field is not
+ * offered again immediately, because resending right away meets the same
+ * `429`. Retrying without that change would be pointless.
  */
 export function mayTryAgain(
   kind: Exclude<SetNameOutcome["kind"], "named">,
@@ -50,7 +52,7 @@ export function mayTryAgain(
     case "rejected":
     case "conflict":
       return true;
-    case "permanent":
+    case "throttled":
     case "no-profile":
     case "unavailable":
       return false;

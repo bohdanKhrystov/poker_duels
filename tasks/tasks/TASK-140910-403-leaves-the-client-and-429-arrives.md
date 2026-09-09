@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140910
 title: 403 leaves the client and 429 arrives
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: web-client
 estimate: S

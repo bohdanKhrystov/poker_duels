@@ -13,7 +13,7 @@ import type { ApiFetch } from "./api";
 export type SetNameOutcome =
   | { readonly kind: "named"; readonly profile: PlayerProfile } // 200
   | { readonly kind: "rejected" } // 400 — the rules refuse this name
-  | { readonly kind: "permanent" } // 403 — this player already has one
+  | { readonly kind: "throttled" } // 429 — too many requests, not this name
   | { readonly kind: "conflict" } // 409 — the name is not available
   | { readonly kind: "no-profile" } // 401 — absent, blank or unknown device id
   | { readonly kind: "unavailable" }; // anything else, or a fetch that rejected
@@ -60,8 +60,8 @@ export async function setDisplayName(request: {
       }
       case 400:
         return { kind: "rejected" };
-      case 403:
-        return { kind: "permanent" };
+      case 429:
+        return { kind: "throttled" };
       case 409:
         return { kind: "conflict" };
       case 401:

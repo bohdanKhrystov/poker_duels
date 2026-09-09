@@ -326,10 +326,10 @@ describe("the name surface", () => {
         sentence: "That name is not available. Try another.",
       },
       {
-        kind: "permanent",
+        kind: "throttled",
         typed: "Ada",
         sentence:
-          "You already have a display name. That choice is permanent and cannot be changed.",
+          "You're changing names too fast. Wait a moment, then try again.",
       },
       {
         kind: "no-profile",
@@ -389,7 +389,7 @@ describe("the name surface", () => {
       Exclude<SetNameOutcome["kind"], "named">
     > = ["rejected", "conflict"];
     const goesAway: ReadonlyArray<Exclude<SetNameOutcome["kind"], "named">> = [
-      "permanent",
+      "throttled",
       "no-profile",
       "unavailable",
     ];
