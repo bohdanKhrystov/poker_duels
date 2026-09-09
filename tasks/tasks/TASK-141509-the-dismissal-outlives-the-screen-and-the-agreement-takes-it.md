@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141509
 title: The dismissal outlives a walk through the lobby, and the agreement takes the screen with no panel over it
 type: task
-status: ready
+status: done
 parent: STORY-1415
 module: web-client
 estimate: S

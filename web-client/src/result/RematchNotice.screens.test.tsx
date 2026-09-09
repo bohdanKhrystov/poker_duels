@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, type RenderResult } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+  type RenderResult,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { App } from "../App";
 import { DuelProvider } from "../store/duel-provider";
@@ -9,12 +16,25 @@ import {
   AccountProvider,
   type AccountCalls,
 } from "../account/account-provider";
-import { RIVAL_OFFERS } from "./rematch-text";
+import { RIVAL_OFFERS, NOT_NOW } from "./rematch-text";
 import { HISTORY_HEADING } from "../history/history-text";
 import { LADDER_HEADING } from "../ladder/ladder-text";
 import { ACCOUNT_HEADING, SIGN_IN_HEADING } from "../account/account-text";
 import { VERIFY_HEADING, RESET_HEADING } from "../account/recovery-text";
 import { hashForScreen, type Screen } from "../routing/screen";
+import type { Snapshot, SeatView } from "../protocol";
+
+function seatView(index: number): SeatView {
+  return {
+    index,
+    stack: 500,
+    committedThisStreet: 0,
+    committedThisHand: 0,
+    hasFolded: false,
+    isAllIn: false,
+    holeCards: [],
+  };
+}
 
 // TASK-141508: this file proves App.tsx's one addition — <RematchNotice />
 // mounted beside <Lobby /> — actually follows onto every chosen screen
@@ -154,5 +174,108 @@ describe("the rematch notice, mounted by App", () => {
     const matches = screen.getAllByText(RIVAL_OFFERS);
     expect(matches).toHaveLength(1);
     expect(matches[0].closest('[role="status"]')).toBeNull();
+  });
+
+  it("the dismissal survives a screen change and a trip through the lobby", async () => {
+    // ADR-0138 §8's own discriminating assertion: a panel mounted inside
+    // Lobby's cascade would pass the first half of this walk (dismiss on
+    // #/duels, still hidden on #/account) and lose the dismissal the moment
+    // the walk passes back through "/", because that leg unmounts every
+    // branch Lobby renders. Mounting beside <Lobby />, as App.tsx does,
+    // survives all four legs.
+    window.location.hash = hashForScreen("duels");
+    const store = incomingOfferStore();
+    renderAppWith(store);
+
+    // The positive control for the first leg: the destination screen's own
+    // heading, not just the panel's presence.
+    expect(
+      screen.getByRole("heading", { name: HISTORY_HEADING }),
+    ).toBeDefined();
+    fireEvent.click(screen.getByText(NOT_NOW));
+
+    // #/duels -> #/account. Assigning the hash alone does not settle a
+    // useScreen consumer (jsdom queues hashchange; act's synchronous flush
+    // does not run it, measured at f20d07ed), so the await on the
+    // destination's own heading is the positive control that the address
+    // actually moved.
+    window.location.hash = hashForScreen("account");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: ACCOUNT_HEADING }),
+      ).toBeDefined(),
+    );
+    expect(screen.queryByText(RIVAL_OFFERS)).toBeNull();
+
+    // #/account -> "/", the leg that unmounts every branch Lobby renders.
+    // The positive control here is not a heading but the result screen's
+    // own line: getAllByText throws until RematchControl's line (not the
+    // panel's) is on screen, so a walk that silently failed to reach "/"
+    // fails here rather than passing on an absence that proves nothing.
+    window.location.hash = hashForScreen("first");
+    await waitFor(() => {
+      const matches = screen.getAllByText(RIVAL_OFFERS);
+      expect(matches).toHaveLength(1);
+      expect(matches[0].closest('[role="status"]')).toBeNull();
+    });
+
+    // "/" -> #/account again: the dismissal must still hold after the trip
+    // through the lobby, not merely across the first screen change.
+    window.location.hash = hashForScreen("account");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: ACCOUNT_HEADING }),
+      ).toBeDefined(),
+    );
+    expect(screen.queryByText(RIVAL_OFFERS)).toBeNull();
+  });
+
+  it("the agreement takes the screen with no panel over it", () => {
+    // Offer standing at #/account: the panel is up before the agreement
+    // arrives, so the assertion below proves the agreement took the screen
+    // away from the panel rather than there never having been one to take.
+    window.location.hash = hashForScreen("account");
+    const store = incomingOfferStore();
+    renderAppWith(store);
+
+    expect(
+      screen.getByRole("heading", { name: ACCOUNT_HEADING }),
+    ).toBeDefined();
+    expect(screen.getByText(RIVAL_OFFERS)).toBeDefined();
+
+    // The agreeing Snapshot, applied in its own act(): the same fixture
+    // App.test.tsx:967 builds for "shows the duel to a player reading the
+    // account screen when a frame seats them", which asserts the same
+    // table node and the same empty hash for the same restore.
+    const snapshot: Snapshot = {
+      type: "Snapshot",
+      view: {
+        viewerSeat: 1,
+        handNumber: 1,
+        buttonSeat: 0,
+        street: "PREFLOP",
+        board: { cards: [] },
+        pot: 30,
+        betToMatch: 20,
+        minRaiseTo: 40,
+        seatToAct: 0,
+        smallBlind: 10,
+        bigBlind: 20,
+        seats: [seatView(0), seatView(1)],
+      },
+    };
+
+    act(() => {
+      store.apply(snapshot);
+    });
+
+    // All three literals together: the table proves the Snapshot landed,
+    // the absent status role proves no panel is over it, and the empty
+    // hash proves ADR-0114 §3's layout restore ran in the same commit. Any
+    // two alone would also pass a version where the panel flashed over the
+    // table for one frame.
+    expect(screen.getByText("You")).toBeDefined();
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(window.location.hash).toBe("");
   });
 });
