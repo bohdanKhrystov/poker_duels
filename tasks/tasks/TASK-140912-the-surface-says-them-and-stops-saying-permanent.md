@@ -3,13 +3,13 @@ schema: 2
 id: TASK-140912
 title: The surface says them, and stops saying a name is permanent
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: web-client
 estimate: XS
 tier: haiku
 review: standard
-files_touched: 2
+files_touched: 3
 labels: [client, account]
 depends_on: [TASK-140911]
 verify:
@@ -37,6 +37,7 @@ up is gone for good **before** they send.
 | --- | --- |
 | `web-client/src/profile/NameSurface.tsx` | modify |
 | `web-client/src/profile/NameSurface.test.tsx` | modify |
+| `web-client/src/profile/name-suggestion.ts` | modify | **Added at landing, comment only.** This ticket's own gate greps the whole `profile/` directory for *permanent*, and that file's KDoc said a clamp stops `undefined` being *"offered as a permanent name"*. One word removed; no code, no test. `ADR-0070` §4 propagation — the gate admits exactly one edit |
 
 `name-text.ts` is **not** in this list: `PERMANENCE_LINE` stays exported for one more ticket, which
 is what keeps this diff to two files instead of four.
