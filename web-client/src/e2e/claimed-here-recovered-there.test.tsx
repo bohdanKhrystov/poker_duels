@@ -140,6 +140,11 @@ it("names the profile and then claims it, and the claim moves neither", async ()
     welcomeFrame: welcomeFrame(PLAYER_SEAT_0.deviceId),
   });
 
+  act(() => {
+    fireEvent.click(
+      within(container).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
   const nameRegion =
     await within(container).findByLabelText("your display name");
   fireEvent.change(within(nameRegion).getByRole("textbox"), {
@@ -149,11 +154,14 @@ it("names the profile and then claims it, and the claim moves neither", async ()
     within(nameRegion).getByRole("button", { name: "Set my name" }),
   );
   await within(nameRegion).findByText(NEW_NAME);
+  const nameBeforeClaim = within(nameRegion).getByText(NEW_NAME).textContent;
 
-  const profileRegion = within(container).getByLabelText("your profile");
+  act(() => {
+    fireEvent.click(within(container).getByRole("button", { name: "Back" }));
+  });
+  const profileRegion = await within(container).findByLabelText("your profile");
   const balanceBeforeClaim =
     within(profileRegion).getByText(/Duel coins$/).textContent;
-  const nameBeforeClaim = within(nameRegion).getByText(NEW_NAME).textContent;
 
   act(() => {
     fireEvent.click(
@@ -194,11 +202,16 @@ it("names the profile and then claims it, and the claim moves neither", async ()
 
   const profileRegionAfter =
     await within(containerAfter).findByLabelText("your profile");
-  const nameRegionAfter =
-    await within(containerAfter).findByLabelText("your display name");
-
   const balanceAfterClaim =
     within(profileRegionAfter).getByText(/Duel coins$/).textContent;
+
+  act(() => {
+    fireEvent.click(
+      within(containerAfter).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const nameRegionAfter =
+    await within(containerAfter).findByLabelText("your display name");
   const nameAfterClaim =
     within(nameRegionAfter).getByText(NEW_NAME).textContent;
 
@@ -274,6 +287,11 @@ it("signs in from the second client and reads back the same balance name and due
     welcomeFrame: welcomeFrame(PLAYER_SEAT_0.deviceId),
   });
 
+  act(() => {
+    fireEvent.click(
+      within(containerA).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
   const nameRegionA =
     await within(containerA).findByLabelText("your display name");
   fireEvent.change(within(nameRegionA).getByRole("textbox"), {
@@ -283,13 +301,17 @@ it("signs in from the second client and reads back the same balance name and due
     within(nameRegionA).getByRole("button", { name: "Set my name" }),
   );
   await within(nameRegionA).findByText(NEW_NAME);
+  const nameFromA = within(nameRegionA).getByText(NEW_NAME).textContent;
 
-  const profileRegionA = within(containerA).getByLabelText("your profile");
+  act(() => {
+    fireEvent.click(within(containerA).getByRole("button", { name: "Back" }));
+  });
+  const profileRegionA =
+    await within(containerA).findByLabelText("your profile");
   // Bindings, not literals: what B reads back is compared against what A's
   // own strip actually rendered, never against a number retyped here.
   const balanceFromA =
     within(profileRegionA).getByText(/Duel coins$/).textContent;
-  const nameFromA = within(nameRegionA).getByText(NEW_NAME).textContent;
 
   act(() => {
     fireEvent.click(
@@ -381,24 +403,29 @@ it("signs in from the second client and reads back the same balance name and due
 
   const profileRegionB =
     await within(containerB2).findByLabelText("your profile");
-  const nameRegionB =
-    await within(containerB2).findByLabelText("your display name");
-
   const balanceAfterSignIn =
     within(profileRegionB).getByText(/Duel coins$/).textContent;
-  const nameAfterSignIn = within(nameRegionB).getByText(NEW_NAME).textContent;
-
-  expect(balanceAfterSignIn).toBe(balanceFromA);
-  expect(nameAfterSignIn).toBe(nameFromA);
   // Not just equal to A's — also not still B's own.
   expect(
     within(profileRegionB).queryByText(
       `${coinBalanceText(PLAYER_SEAT_1.coinBalance)} Duel coins`,
     ),
   ).toBeNull();
+
+  act(() => {
+    fireEvent.click(
+      within(containerB2).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const nameRegionB =
+    await within(containerB2).findByLabelText("your display name");
+  const nameAfterSignIn = within(nameRegionB).getByText(NEW_NAME).textContent;
   expect(
     within(nameRegionB).queryByText(nameOrNone(PLAYER_SEAT_1.displayName)),
   ).toBeNull();
+
+  expect(balanceAfterSignIn).toBe(balanceFromA);
+  expect(nameAfterSignIn).toBe(nameFromA);
 
   // The duel, matched by identity: duelId is a React key only (ProfileStrip
   // and HistoryScreen), never DOM text, so this is asserted over the read.
@@ -768,6 +795,11 @@ it("signing out on the second client returns it to the profile it had", async ()
     welcomeFrame: welcomeFrame(PLAYER_SEAT_0.deviceId),
   });
 
+  act(() => {
+    fireEvent.click(
+      within(containerA).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
   const nameRegionA =
     await within(containerA).findByLabelText("your display name");
   fireEvent.change(within(nameRegionA).getByRole("textbox"), {
@@ -777,11 +809,15 @@ it("signing out on the second client returns it to the profile it had", async ()
     within(nameRegionA).getByRole("button", { name: "Set my name" }),
   );
   await within(nameRegionA).findByText(NEW_NAME);
+  const nameFromA = within(nameRegionA).getByText(NEW_NAME).textContent;
 
-  const profileRegionA = within(containerA).getByLabelText("your profile");
+  act(() => {
+    fireEvent.click(within(containerA).getByRole("button", { name: "Back" }));
+  });
+  const profileRegionA =
+    await within(containerA).findByLabelText("your profile");
   const balanceFromA =
     within(profileRegionA).getByText(/Duel coins$/).textContent;
-  const nameFromA = within(nameRegionA).getByText(NEW_NAME).textContent;
 
   act(() => {
     fireEvent.click(
@@ -821,21 +857,23 @@ it("signing out on the second client returns it to the profile it had", async ()
   // Capture B's anonymous profile before signing in
   const profileRegionB1 =
     await within(containerB1).findByLabelText("your profile");
-  const nameRegionB1 =
-    await within(containerB1).findByLabelText("your display name");
   const balanceFromB =
     within(profileRegionB1).getByText(/Duel coins$/).textContent;
-  const nameFromB = within(nameRegionB1).getByText(
-    nameOrNone(PLAYER_SEAT_1.displayName),
-  ).textContent;
 
-  // Sign in B with A's credentials
   act(() => {
     fireEvent.click(
       within(containerB1).getByRole("button", { name: ACCOUNT_HEADING }),
     );
   });
   const accountRegionB1 = await within(containerB1).findByLabelText("account");
+  const nameRegionB1 =
+    await within(accountRegionB1).findByLabelText("your display name");
+  const nameFromB = within(nameRegionB1).getByText(
+    nameOrNone(PLAYER_SEAT_1.displayName),
+  ).textContent;
+
+  // Sign in B with A's credentials (already on the account screen from the
+  // press above)
   act(() => {
     fireEvent.click(
       within(accountRegionB1).getByRole("button", { name: SIGN_IN_HEADING }),
@@ -876,14 +914,11 @@ it("signing out on the second client returns it to the profile it had", async ()
 
   const profileRegionB2 =
     await within(containerB2).findByLabelText("your profile");
-  const nameRegionB2 =
-    await within(containerB2).findByLabelText("your display name");
 
   // Verify B is signed in with A's profile at this point
   within(profileRegionB2).getByText(
     `${coinBalanceText(PLAYER_SEAT_0.coinBalance)} Duel coins`,
   );
-  within(nameRegionB2).getByText(NEW_NAME);
 
   // Navigate to account screen and sign out
   act(() => {
@@ -892,6 +927,9 @@ it("signing out on the second client returns it to the profile it had", async ()
     );
   });
   const accountRegionB2 = await within(containerB2).findByLabelText("account");
+  const nameRegionB2 =
+    await within(accountRegionB2).findByLabelText("your display name");
+  within(nameRegionB2).getByText(NEW_NAME);
 
   // Click sign-out label (first click shows confirmation)
   fireEvent.click(
@@ -925,22 +963,26 @@ it("signing out on the second client returns it to the profile it had", async ()
 
   const profileRegionB3 =
     await within(containerB3).findByLabelText("your profile");
-  const nameRegionB3 =
-    await within(containerB3).findByLabelText("your display name");
-
   const balanceAfterSignOut =
     within(profileRegionB3).getByText(/Duel coins$/).textContent;
+  // Verify B's profile is NOT A's
+  expect(within(profileRegionB3).queryByText(balanceFromA)).toBeNull();
+
+  act(() => {
+    fireEvent.click(
+      within(containerB3).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const nameRegionB3 =
+    await within(containerB3).findByLabelText("your display name");
   const nameAfterSignOut = within(nameRegionB3).getByText(
     nameOrNone(PLAYER_SEAT_1.displayName),
   ).textContent;
+  expect(within(nameRegionB3).queryByText(nameFromA)).toBeNull();
 
   // Verify B is back to its anonymous profile
   expect(balanceAfterSignOut).toBe(balanceFromB);
   expect(nameAfterSignOut).toBe(nameFromB);
-
-  // Verify B's profile is NOT A's
-  expect(within(profileRegionB3).queryByText(balanceFromA)).toBeNull();
-  expect(within(nameRegionB3).queryByText(nameFromA)).toBeNull();
 
   cleanup();
 });
@@ -964,6 +1006,11 @@ it("the first client is unaffected by the second signing out", async () => {
     welcomeFrame: welcomeFrame(PLAYER_SEAT_0.deviceId),
   });
 
+  act(() => {
+    fireEvent.click(
+      within(containerA).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
   const nameRegionA =
     await within(containerA).findByLabelText("your display name");
   fireEvent.change(within(nameRegionA).getByRole("textbox"), {
@@ -973,11 +1020,15 @@ it("the first client is unaffected by the second signing out", async () => {
     within(nameRegionA).getByRole("button", { name: "Set my name" }),
   );
   await within(nameRegionA).findByText(NEW_NAME);
+  const nameFromA = within(nameRegionA).getByText(NEW_NAME).textContent;
 
-  const profileRegionA = within(containerA).getByLabelText("your profile");
+  act(() => {
+    fireEvent.click(within(containerA).getByRole("button", { name: "Back" }));
+  });
+  const profileRegionA =
+    await within(containerA).findByLabelText("your profile");
   const balanceFromA =
     within(profileRegionA).getByText(/Duel coins$/).textContent;
-  const nameFromA = within(nameRegionA).getByText(NEW_NAME).textContent;
 
   act(() => {
     fireEvent.click(
@@ -1103,11 +1154,16 @@ it("the first client is unaffected by the second signing out", async () => {
 
   const profileRegionA2 =
     await within(containerA2).findByLabelText("your profile");
-  const nameRegionA2 =
-    await within(containerA2).findByLabelText("your display name");
-
   const balanceAfterB =
     within(profileRegionA2).getByText(/Duel coins$/).textContent;
+
+  act(() => {
+    fireEvent.click(
+      within(containerA2).getByRole("button", { name: ACCOUNT_HEADING }),
+    );
+  });
+  const nameRegionA2 =
+    await within(containerA2).findByLabelText("your display name");
   const nameAfterB = within(nameRegionA2).getByText(NEW_NAME).textContent;
 
   expect(balanceAfterB).toBe(balanceFromA);

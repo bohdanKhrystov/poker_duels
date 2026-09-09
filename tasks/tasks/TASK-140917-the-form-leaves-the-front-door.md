@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140917
 title: The form leaves the front door
 type: task
-status: backlog
+status: ready
 parent: STORY-1409
 module: web-client
 estimate: XS
