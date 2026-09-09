@@ -507,7 +507,7 @@ repair is measured** — nothing else establishes the shape the repair is aimed 
 human's: relaxing `R3` for the scale, raising the judged shape, and any list of devices the product
 commits to.
 
-**One is open, and this epic's own newest answer is what spawned it.** Every decision this epic
+**Two are open, and neither blocks anything: one this epic's own newest answer spawned, and one the last split raised.** Every decision this epic
 raised or inherited is answered by a merged ADR — the fourteen product-owner answers recorded below
 plus `DEC-156`'s, and six the architect's — and the table that held them is empty. **Both of the
 decisions the 2026-09-08 answers registered are answered as well**, by two different ADRs.
@@ -520,9 +520,25 @@ and stands under *Answered* below. That ADR registers **`DEC-157`**, the product
 *give this profile a password* owes an irreversibility sentence of its own, since it claims a handle
 into `credential`'s unique index that nothing in the product gives back (`ADR-0039` refuses account
 deletion in v0.1) while saying nothing about it. **`DEC-157` blocks nothing**, changes no ticket in
-this epic, and is the only row this epic has left open. The other row that remains in
+this epic, and was until 2026-09-09 the only row this epic had left open — `DEC-158`, below, is
+the second. The other row that remains in
 `docs/adr/README.md` is `DEC-154`, which no answer of this epic's registered — it is `ADR-0141`'s
 own, the architect's, and it blocks only the ticket that implements `ADR-0141`.
+
+**`DEC-158` was registered on 2026-09-09, the architect's, and is open.** It was raised while
+splitting `STORY-1415`, by reading `design/screens/rematch-states.html` beside the component it
+was drawn from: measured on `develop` at `f20d07ed`, the card says `ImKate offers a rematch` and
+`Rematch offered — waiting for ImKate` where `RematchControl.tsx:65,74` say *your rival*, and it
+draws no frame at all for `That duel room is gone.` — a state that has shipped since
+`TASK-030909`. **Which side is stale needed no decision**: `ADR-0123` §4 quotes *Your rival offers
+a rematch* and calls it *"the result screen's own line"*, so
+[`TASK-141511`](../tasks/TASK-141511-the-result-screens-card-says-the-words-the-result-screen-says.md)
+repairs the sentences as a transcription with nothing to judge. What **is** undecided is the
+gate: [`ADR-0142`](../../docs/adr/ADR-0142-a-text-module-is-checked-against-the-rendered-card.md)
+§7 names *the first time a stale sentence is found on a card* as the trigger for reopening its
+third direction, and this is that first time. It **blocks nothing** — no ticket in `STORY-1415`
+waits on it, and `TASK-141503` handles `ADR-0142` §6's register in both landing orders through
+`npm run check` alone.
 
 **`DEC-155` was registered on 2026-09-08, the architect's, and is answered the same day.** It was
 raised while landing `TASK-140811`, on a gap **two tickets reported independently**: `TASK-140710`
@@ -730,7 +746,7 @@ byte-unchanged and writes no client code. Each waits only on its own decision.
 | `STORY-1412` | No card on the table is marked, and a gate says so — *item 2b, answered **no** by [`ADR-0126`](../../docs/adr/ADR-0126-the-table-shows-the-cards-and-marks-none-of-them.md): no wire move, no `atomic:` ticket* | nothing — **written and split into two tickets on 2026-09-08**, exactly what `ADR-0126` §4 leaves: one gate and one line on the showdown card. **Where the gate lives was decided rather than assumed** — `ADR-0142` §1 restates `ADR-0091` §4 as a constraint, so a shell gate under `design/` may not read `web-client/`, and it becomes a vitest file beside `no-derivation.test.tsx` that `vitest run` globs into existence with **no workflow edited**. `design/check-frame-cards.sh` reads one card and **does** run in CI (`tickets.yml`, `TASK-140719`). Measured at `c6a41e6d`: **5** frames, **38** `class="pc`, **4** `back mucked`, **2** mentions of `ADR-0126` — and the frame-scoped `awk` is red on exactly the two frames that owe the line and green on the two that carry it. The gate is shown red against the defect it names by **two `verify:` mutations of `PlayingCard.tsx` itself**, both run here and both restoring the file. **No decision was raised** |
 | `STORY-1413` | The pot travels to the winner — *item 2c; a card and a client story, `ADR-0115` and `ADR-0102` govern it* | `STORY-1412` |
 | `STORY-1414` | `Call` says what it costs — *item 4; one label, and the mark goes bare on `Call`* | nothing — [`ADR-0122`](../../docs/adr/ADR-0122-call-names-the-price-and-raise-to-names-the-total.md) |
-| `STORY-1415` | The rematch offer finds the rival wherever they are — *item 5; a panel, never a modal ([`ADR-0123`](../../docs/adr/ADR-0123-a-standing-rematch-offer-follows-the-rival.md) §2)* | nothing — its minting card is the first ticket |
+| [`STORY-1415`](../stories/STORY-1415-the-rematch-offer-finds-the-rival-wherever-they-are.md) | The rematch offer finds the rival wherever they are — *item 5; a panel, never a modal ([`ADR-0123`](../../docs/adr/ADR-0123-a-standing-rematch-offer-follows-the-rival.md) §2), mounted beside the lobby ([`ADR-0138`](../../docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-the-dismissal-lives-in-the-mount.md)). **Written and split into eleven tickets on 2026-09-09**, the first two its minting card* | nothing — the card is the first ticket, and `DEC-158`, raised by the split, blocks none of them |
 | `STORY-1416` | Play again returns the host to the room they still hold — *item 6; strikes `DEC-111` with `DEC-139`* | **split on 2026-09-07 into four tickets, server only**; `DEC-139`/`DEC-111` by [`ADR-0124`](../../docs/adr/ADR-0124-one-waiting-room-and-play-again-hands-it-back.md), `DEC-110` by [`ADR-0133`](../../docs/adr/ADR-0133-the-room-a-player-holds-is-scanned-for.md) §9: build `heldRoom`, the stripes, `heldOrOpen` and the `WAITING` branch; **no wire, not `atomic:`**, and the `PLAYING` case still falls through to `create` — that half is `ADR-0105` §1's own ticket, outside this epic, and it **is** `atomic:`, because `ALREADY_IN_DUEL` moves `ADR-0047` §2's fingerprint and forces a `PROTOCOL_VERSION` step |
 
 ## Definition of done
