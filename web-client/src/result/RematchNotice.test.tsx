@@ -296,4 +296,73 @@ describe("the rematch notice", () => {
 
     expect(screen.getByText(RIVAL_OFFERS)).toBeDefined();
   });
+
+  it("listens for no key, anywhere", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+
+    // Spy on addEventListener to catch any key listener registration
+    const documentSpy = vi.spyOn(document, "addEventListener");
+    const windowSpy = vi.spyOn(window, "addEventListener");
+
+    renderNotice(store);
+
+    // Get the root panel (role="status")
+    const panel = screen.getByRole("status");
+
+    // Assert no tabindex attribute anywhere in the panel tree
+    const allElements = panel.querySelectorAll("*");
+    const elementsWithTabindex = Array.from(allElements).filter((el) =>
+      el.hasAttribute("tabindex"),
+    );
+    expect(elementsWithTabindex).toHaveLength(0);
+
+    // Also check the root itself
+    expect(panel.hasAttribute("tabindex")).toBe(false);
+
+    // Assert no React event handlers (onKeyDown, onKeyUp, onKeyPress) on panel or children
+    // React stores props on the element through the __reactProps$ key
+    const allElementsIncludingRoot = [panel, ...Array.from(allElements)];
+    const keyHandlerProps = ["onKeyDown", "onKeyUp", "onKeyPress"];
+
+    // Positive control: the panel root always carries a React props object, so if
+    // no element in the tree yields one, the lookup itself has broken (React renamed
+    // or moved the internal key) — that must fail loudly, not read as "no handlers".
+    let fiberPropsFound = false;
+
+    allElementsIncludingRoot.forEach((el) => {
+      // Check React internal props
+      const fiberKey = Object.keys(el).find((key) =>
+        key.startsWith("__reactProps$"),
+      );
+      if (fiberKey) {
+        fiberPropsFound = true;
+        const props = (el as unknown as Record<string, unknown>)[
+          fiberKey
+        ] as Record<string, unknown>;
+        keyHandlerProps.forEach((handler) => {
+          expect(props[handler]).toBeUndefined();
+        });
+      }
+    });
+
+    expect(
+      fiberPropsFound,
+      "expected to find React's internal __reactProps$ key on at least one element in the panel tree, but found none — the lookup failed to find React's props, it did not find an absence of handlers",
+    ).toBe(true);
+
+    // Assert no key event listener was registered on document or window
+    const keyEventTypes = ["keydown", "keyup", "keypress"];
+
+    documentSpy.mock.calls.forEach((call) => {
+      expect(keyEventTypes).not.toContain(call[0]);
+    });
+    windowSpy.mock.calls.forEach((call) => {
+      expect(keyEventTypes).not.toContain(call[0]);
+    });
+
+    // Restore spies
+    documentSpy.mockRestore();
+    windowSpy.mockRestore();
+  });
 });
