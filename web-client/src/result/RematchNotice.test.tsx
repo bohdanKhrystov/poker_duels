@@ -5,6 +5,8 @@ import { createDuelStore, type DuelStore } from "../store/duel-store";
 import { RematchNotice } from "./RematchNotice";
 import { RIVAL_OFFERS, REMATCH_LABEL, ROOM_GONE } from "./rematch-text";
 
+const NOT_NOW = "Not now";
+
 // The room fixture: RoomJoined seats this tab, DuelFinished ends the duel
 // (clearing nothing an offer needs — duel-state.ts:350-361 — but establishing
 // `outcome`, which is what a rematch offer arrives beside), then
@@ -117,6 +119,7 @@ describe("the rematch notice", () => {
       screen.getByText(/The button changes sides.*dealing hand 1…/),
     ).toBeDefined();
     expect(screen.queryByRole("button", { name: REMATCH_LABEL })).toBeNull();
+    expect(screen.getByRole("button", { name: NOT_NOW })).toBeDefined();
   });
 
   it("the panel offers the button again after the offer that was accepted has gone", () => {
@@ -173,6 +176,7 @@ describe("the rematch notice", () => {
 
     expect(screen.getByText(ROOM_GONE)).toBeDefined();
     expect(screen.queryByRole("button", { name: REMATCH_LABEL })).toBeNull();
+    expect(screen.getByRole("button", { name: NOT_NOW })).toBeDefined();
   });
 
   it("a transient refusal leaves the accept standing", () => {
@@ -213,5 +217,83 @@ describe("the rematch notice", () => {
     expect(
       screen.getByText(ROOM_GONE).closest('[role="status"]'),
     ).not.toBeNull();
+  });
+
+  it("Not now takes the surface off the screen", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+    renderNotice(store);
+
+    fireEvent.click(screen.getByRole("button", { name: NOT_NOW }));
+
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText(RIVAL_OFFERS)).toBeNull();
+  });
+
+  it("Not now sends nothing", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+    const send = vi.fn();
+    renderNotice(store, send);
+
+    expect(send).toHaveBeenCalledTimes(0);
+    fireEvent.click(screen.getByRole("button", { name: NOT_NOW }));
+    expect(send).toHaveBeenCalledTimes(0);
+  });
+
+  it("a fresh render of the same tree shows the panel again", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+    const first = renderNotice(store);
+
+    fireEvent.click(
+      within(first.container).getByRole("button", { name: NOT_NOW }),
+    );
+    expect(within(first.container).queryByText(RIVAL_OFFERS)).toBeNull();
+    first.unmount();
+
+    const second = renderNotice(store);
+    expect(within(second.container).getByText(RIVAL_OFFERS)).toBeDefined();
+    second.unmount();
+  });
+
+  it("the next offer is not swallowed by the last dismissal", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+    renderNotice(store);
+
+    fireEvent.click(screen.getByRole("button", { name: NOT_NOW }));
+    expect(screen.queryByText(RIVAL_OFFERS)).toBeNull();
+
+    act(() => {
+      store.apply({
+        type: "Snapshot",
+        view: {
+          viewerSeat: 1,
+          handNumber: 1,
+          buttonSeat: 0,
+          street: "PREFLOP",
+          board: { cards: [] },
+          pot: 0,
+          betToMatch: 0,
+          minRaiseTo: 0,
+          seatToAct: 0,
+          smallBlind: 1,
+          bigBlind: 2,
+          seats: [],
+        },
+      });
+    });
+    act(() => {
+      store.apply({
+        type: "DuelFinished",
+        outcome: { winner: null, handsPlayed: 1, finalStacks: [0, 0] },
+      });
+    });
+    act(() => {
+      store.apply({ type: "RematchOffered", seat: 0 });
+    });
+
+    expect(screen.getByText(RIVAL_OFFERS)).toBeDefined();
   });
 });

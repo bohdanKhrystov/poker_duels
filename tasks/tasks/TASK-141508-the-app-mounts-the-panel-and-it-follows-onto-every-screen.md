@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141508
 title: The app mounts the panel beside the lobby, and it follows onto every chosen screen
 type: task
-status: backlog
+status: ready
 parent: STORY-1415
 module: web-client
 estimate: S
