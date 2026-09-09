@@ -187,4 +187,90 @@ describe("signing out", () => {
 
     expect(keepsProfile).toHaveBeenCalledWith(false);
   });
+
+  // ADR-0143 §2 obligation 2: the claim is the last thing read before the control that performs
+  // the act, with no other sentence between them.
+  test("the keeping sentence is the last thing before the confirming press", () => {
+    const signOut = vi.fn().mockResolvedValue({ kind: "signed-out" } as const);
+    const { getByRole, getByText } = render(
+      <SignOutControl
+        signedIn={true}
+        signOutHandsANewProfile={false}
+        signOut={signOut}
+      />,
+    );
+
+    // Enter the confirming step
+    fireEvent.click(getByRole("button", { name: SIGN_OUT_LABEL }));
+
+    // Find the sentence element (the <p> containing the warning text)
+    let sentenceElement = getByText(SIGN_OUT_WARNING);
+    while (sentenceElement && sentenceElement.tagName !== "P") {
+      sentenceElement = sentenceElement.parentElement as HTMLElement;
+    }
+    expect(sentenceElement).toBeTruthy();
+    expect(sentenceElement?.tagName).toBe("P");
+
+    // The next element sibling should be the confirming button
+    const nextElementSibling =
+      sentenceElement?.nextElementSibling as HTMLElement | null;
+    expect(nextElementSibling).toBeTruthy();
+    expect(nextElementSibling?.textContent?.trim()).toBe(SIGN_OUT_LABEL);
+
+    // Assert: no text node sits between them
+    let nextNode: Node | null = sentenceElement?.nextSibling || null;
+    while (nextNode && nextNode.nodeType === 3) {
+      // Text node type is 3
+      const textContent = (nextNode as Text).data;
+      if (textContent.trim() !== "") {
+        throw new Error(
+          `Non-whitespace text node found between sentence and button: "${textContent}"`,
+        );
+      }
+      nextNode = nextNode.nextSibling;
+    }
+  });
+
+  // ADR-0143 §2 obligation 2: the claim is the last thing read before the control that performs
+  // the act, with no other sentence between them.
+  test("the abandoning sentence is the last thing before the confirming press", () => {
+    const signOut = vi.fn().mockResolvedValue({ kind: "signed-out" } as const);
+    const { getByRole, getByText } = render(
+      <SignOutControl
+        signedIn={true}
+        signOutHandsANewProfile={true}
+        signOut={signOut}
+      />,
+    );
+
+    // Enter the confirming step
+    fireEvent.click(getByRole("button", { name: SIGN_OUT_LABEL }));
+
+    // Find the sentence element (the <p> containing the warning text)
+    let sentenceElement = getByText(SIGN_OUT_HANDS_A_NEW_PROFILE);
+    while (sentenceElement && sentenceElement.tagName !== "P") {
+      sentenceElement = sentenceElement.parentElement as HTMLElement;
+    }
+    expect(sentenceElement).toBeTruthy();
+    expect(sentenceElement?.tagName).toBe("P");
+
+    // The next element sibling should be the confirming button
+    const nextElementSibling =
+      sentenceElement?.nextElementSibling as HTMLElement | null;
+    expect(nextElementSibling).toBeTruthy();
+    expect(nextElementSibling?.textContent?.trim()).toBe(SIGN_OUT_LABEL);
+
+    // Assert: no text node sits between them
+    let nextNode: Node | null = sentenceElement?.nextSibling || null;
+    while (nextNode && nextNode.nodeType === 3) {
+      // Text node type is 3
+      const textContent = (nextNode as Text).data;
+      if (textContent.trim() !== "") {
+        throw new Error(
+          `Non-whitespace text node found between sentence and button: "${textContent}"`,
+        );
+      }
+      nextNode = nextNode.nextSibling;
+    }
+  });
 });

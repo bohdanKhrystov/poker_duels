@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141017
 title: The warning is the last thing read before the press
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: XS
@@ -14,7 +14,7 @@ labels: [client, account]
 depends_on: [TASK-141009]
 verify:
   - cd web-client && npm ci
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/SignOutControl.test.tsx 2>&1 | grep -qF "SignOutControl.test.tsx  (7 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/SignOutControl.test.tsx 2>&1 | grep -qF "SignOutControl.test.tsx  (10 tests)"'
   - sh -c 'cd web-client && grep -q "ADR-0143" src/account/SignOutControl.test.tsx'
   - git diff --exit-code -- web-client/src/account/SignOutControl.tsx web-client/src/account/account-text.ts
   - cd web-client && npm run check
@@ -66,7 +66,11 @@ Read, do not edit: `web-client/src/account/SignOutControl.tsx`,
   no other text node sits between them. Assert the relation over the rendered DOM, not over the
   source.
 - `ADR-0143` is named in a comment beside them, so the next grep for the ADR finds its test.
-- The count gate moves 5 → 7.
+- The count gate moves 8 → 10. **I wrote this ticket with 5 → 7, and that was already stale when
+  I filed it**: `TASK-141009` had taken the file to 8. Twenty-two literals in this epic have been
+  corrected for exactly this reason, and filing a twenty-third while complaining about the other
+  twenty-two is worth recording rather than quietly fixing. The lesson is the same one the epic
+  keeps teaching: measure at dispatch, never at authoring.
 
 ## Out of scope
 
@@ -98,7 +102,7 @@ Read, do not edit: `web-client/src/account/SignOutControl.tsx`,
 
 ## Acceptance
 
-- [ ] `SignOutControl.test.tsx` reports `(7 tests)` and all pass
+- [ ] `SignOutControl.test.tsx` reports `(10 tests)` and all pass
 - [ ] Inserting any sentence between the warning and the confirming control reddens both new tests,
       and the file is restored afterwards
 - [ ] `SignOutControl.tsx` and `account-text.ts` are byte-identical to `develop`
