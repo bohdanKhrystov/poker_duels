@@ -15,7 +15,7 @@ depends_on: [TASK-141504]
 verify:
   - cd web-client && npm ci
   - sh -c 'cd web-client && test $(grep -c "onKeyDown\|onKeyUp\|onKeyPress\|addEventListener" src/result/RematchNotice.test.tsx) -ge 1'
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qF "RematchNotice.test.tsx  (6 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qF "RematchNotice.test.tsx  (18 tests)"'
   - git diff --exit-code -- web-client/src/result/RematchNotice.tsx
   - cd web-client && npm run check
   - cd web-client && npm run build
@@ -71,7 +71,11 @@ Read, do not edit: `web-client/src/result/RematchNotice.tsx`,
   so this clause is narrower than the key one, which the grep misses entirely. What it cannot
   see is an attribute set through a helper, and the rendered DOM can. Same test, same mechanism,
   so it costs nothing to close both here rather than leave one half-guarded.
-- The count gate moves 5 → 6.
+- The count gate moves 17 → 18. **I filed this ticket saying 5 → 6, and it was right that day:**
+  the file held 5 when `TASK-141504` landed. `TASK-141505`, `141506`, `141507` and `141510` have
+  since taken it to 17. The third stale literal I authored myself, and the residual case
+  `TASK-000108` deliberately does not remove — this file **is** in this ticket's Files table, so a
+  count is the right gate here; it simply has to be measured at dispatch rather than at filing.
 
 ## Out of scope
 
@@ -100,7 +104,7 @@ Read, do not edit: `web-client/src/result/RematchNotice.tsx`,
 
 ## Acceptance
 
-- [ ] `RematchNotice.test.tsx` reports `(6 tests)` and all pass
+- [ ] `RematchNotice.test.tsx` reports `(18 tests)` and all pass
 - [ ] Adding `onKeyDown={() => {}}` to the root reddens the new test, and the file is restored
 - [ ] `RematchNotice.tsx` is byte-identical to `develop`
 - [ ] `npm run check` and `npm run build` exit 0 in `web-client`
