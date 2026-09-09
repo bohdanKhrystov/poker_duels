@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141009
 title: The confirmation states the sign-out it is about to make
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: web-client
 estimate: S

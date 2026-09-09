@@ -30,12 +30,14 @@ describe("the account screen's words", () => {
         "SIGN_IN_HEADING",
         "SIGN_IN_LABEL",
         "SIGN_IN_REFUSED",
+        "SIGN_OUT_HANDS_A_NEW_PROFILE",
         "SIGN_OUT_LABEL",
         "SIGN_OUT_WARNING",
         "SIGN_UP_FAILED",
         "SIGN_UP_LABEL",
         "SIGN_UP_THROTTLED",
         "deviceRouteLine",
+        "signOutWarning",
       ].sort(),
     );
 
@@ -72,6 +74,9 @@ describe("the account screen's words", () => {
     expect(accountText.SIGN_OUT_WARNING).toBe(
       "Signing out leaves any duel room this browser is in, and a duel left this way can be lost. " +
         "This browser goes back to the profile it had before.",
+    );
+    expect(accountText.SIGN_OUT_HANDS_A_NEW_PROFILE).toBe(
+      "Signing out leaves any duel room this browser is in, and a duel left this way can be lost. This browser becomes a new, empty profile — no name, no duel coins, no duels — and the profile being left keeps every duel coin and every duel, reached again by signing in with its password.",
     );
     expect(accountText.SIGN_UP_LABEL).toBe("Give this profile a password");
     expect(accountText.HANDLE_LABEL).toBe("Handle");
@@ -118,6 +123,20 @@ describe("the account screen's words", () => {
     );
     expect(accountText.deviceRouteLine(true)).not.toBe(
       accountText.deviceRouteLine(false),
+    );
+  });
+
+  it("says one thing about the sign-out in each of its two states", () => {
+    // Both inputs, and the inequality, in one test: a `signOutWarning` that ignores its
+    // argument would still pass a `true`-only test and a `false`-only test each written alone.
+    expect(accountText.signOutWarning(true)).toBe(
+      accountText.SIGN_OUT_HANDS_A_NEW_PROFILE,
+    );
+    expect(accountText.signOutWarning(false)).toBe(
+      accountText.SIGN_OUT_WARNING,
+    );
+    expect(accountText.signOutWarning(true)).not.toBe(
+      accountText.signOutWarning(false),
     );
   });
 

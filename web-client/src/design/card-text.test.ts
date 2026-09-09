@@ -122,6 +122,7 @@ const PAIRS: readonly Pair[] = [
       "PASSWORD_ROUTE_LIVE",
       "SIGN_OUT_LABEL",
       "SIGN_OUT_WARNING",
+      "SIGN_OUT_HANDS_A_NEW_PROFILE",
       "SIGN_UP_LABEL",
       "HANDLE_LABEL",
       "PASSWORD_LABEL",
