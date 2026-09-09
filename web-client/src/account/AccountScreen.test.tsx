@@ -750,4 +750,24 @@ describe("the account screen", () => {
     expect(screen.queryByText(SIGN_OUT_HANDS_A_NEW_PROFILE)).not.toBeNull();
     expect(screen.queryByText(SIGN_OUT_WARNING)).toBeNull();
   });
+
+  // ADR-0135 §7: a component that can be mounted without this prop is a component whose
+  // absence is invisible from the outside. This is a typechecker gate, not a runtime one — if
+  // `signOutHandsANewProfile` is ever made optional, the omission below stops being an error and
+  // the directive below stops being needed, so `tsc` fails on it going unused.
+  it("cannot be mounted without being told which sign-out this is", () => {
+    const profile: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile(),
+      duels: [],
+    };
+    render(
+      // @ts-expect-error ADR-0135 §7: signOutHandsANewProfile is required, not optional.
+      <AccountScreen profile={profile} signedIn={false} />,
+    );
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: ACCOUNT_HEADING }),
+    ).not.toBeNull();
+  });
 });

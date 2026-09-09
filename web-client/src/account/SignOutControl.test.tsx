@@ -273,4 +273,18 @@ describe("signing out", () => {
       nextNode = nextNode.nextSibling;
     }
   });
+
+  // ADR-0135 §7: a component that can be mounted without this prop is a component whose
+  // absence is invisible from the outside. This is a typechecker gate, not a runtime one — if
+  // `signOutHandsANewProfile` is ever made optional, the omission below stops being an error and
+  // the directive below stops being needed, so `tsc` fails on it going unused.
+  test("cannot be mounted without being told which sign-out this is", () => {
+    const signOut = vi.fn();
+    const { getByRole } = render(
+      // @ts-expect-error ADR-0135 §7: signOutHandsANewProfile is required, not optional.
+      <SignOutControl signedIn={true} signOut={signOut} />,
+    );
+
+    expect(getByRole("button", { name: SIGN_OUT_LABEL })).toBeTruthy();
+  });
 });

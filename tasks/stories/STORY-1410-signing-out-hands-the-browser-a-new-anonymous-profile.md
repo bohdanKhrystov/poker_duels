@@ -2,7 +2,7 @@
 id: STORY-1410
 title: Signing out hands the browser a new anonymous profile, and the confirmation says so
 type: story
-status: backlog
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, server, account, design]
