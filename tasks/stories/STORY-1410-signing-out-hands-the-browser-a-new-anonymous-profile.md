@@ -213,6 +213,7 @@ is false.
 | --- | --- | --- |
 | [TASK-141001](../tasks/TASK-141001-the-account-card-draws-both-sign-out-confirmations.md) | The account card draws both sign-out confirmations | backlog |
 | [TASK-141002](../tasks/TASK-141002-the-resolver-answers-whether-a-device-names-a-player.md) | The resolver answers whether a device names a player | backlog |
+| [TASK-141015](../tasks/TASK-141015-the-resolver-stops-answering-a-comparison-and-the-smoke-test-names-an-unasked-verb.md) | The resolver stops answering a comparison, and the smoke test names a verb nobody asked for — *inserted by `ADR-0144`; numbered fifteenth, runs third* | ready |
 | [TASK-141003](../tasks/TASK-141003-the-server-says-which-sign-out-this-is.md) | The server says which sign-out this is | backlog |
 | [TASK-141004](../tasks/TASK-141004-the-document-names-the-device-standing-route.md) | The document names the device-standing route | backlog |
 | [TASK-141005](../tasks/TASK-141005-the-device-id-can-be-forgotten-by-its-own-module.md) | The device id can be forgotten, by its own module and no other | backlog |
