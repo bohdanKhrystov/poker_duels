@@ -3,13 +3,13 @@ schema: 2
 id: TASK-141008
 title: The confirmation has a sentence for each of the two sign-outs
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 2
+files_touched: 3
 labels: [client, account, copy]
 depends_on: [TASK-141007]
 verify:
@@ -38,6 +38,7 @@ verify:
 | --- | --- |
 | `web-client/src/account/account-text.ts` | modify |
 | `web-client/src/account/account-text.test.ts` | modify |
+| `web-client/src/design/card-text.test.ts` | modify |
 
 Read, do not edit: `design/screens/account.html` (the two frames `TASK-141001` added — this is
 where the words come from), `docs/adr/ADR-0131-signing-out-of-your-own-account-hands-the-browser-a-new-profile.md`

@@ -24,6 +24,9 @@ export const SIGN_OUT_WARNING =
   "Signing out leaves any duel room this browser is in, and a duel left this way can be lost. " +
   "This browser goes back to the profile it had before.";
 
+// prettier-ignore
+export const SIGN_OUT_HANDS_A_NEW_PROFILE = "Signing out leaves any duel room this browser is in, and a duel left this way can be lost. This browser becomes a new, empty profile — no name, no duel coins, no duels — and the profile being left keeps every duel coin and every duel, reached again by signing in with its password.";
+
 export const SIGN_UP_LABEL = "Give this profile a password";
 
 export const HANDLE_LABEL = "Handle";
@@ -95,4 +98,22 @@ export function deviceRouteLine(live: boolean): string {
     return DEVICE_ROUTE_LIVE;
   }
   return DEVICE_ROUTE_REVOKED;
+}
+
+/**
+ * The sentence to show before a sign-out, chosen by which of the two things a sign-out does here.
+ *
+ * `ADR-0131` requires the account screen to say what a sign-out actually does: a player whose
+ * session belongs to a profile this browser still owns is entitled to hear that nothing is lost,
+ * and a player whose sign-out hands the browser a new, empty profile is entitled to hear that the
+ * old one is abandoned. These are two different facts about the world, and this function is the
+ * single place that branches on them — just as `deviceRouteLine` is the only place that branches
+ * on whether this device still signs in. A component choosing between the two sentences inline
+ * would be a second place able to get it wrong.
+ */
+export function signOutWarning(handsANewProfile: boolean): string {
+  if (handsANewProfile) {
+    return SIGN_OUT_HANDS_A_NEW_PROFILE;
+  }
+  return SIGN_OUT_WARNING;
 }
