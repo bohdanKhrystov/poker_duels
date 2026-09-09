@@ -47,7 +47,7 @@ export function AccountScreen(props: {
     handle: string,
     password: string,
   ) => Promise<SignUpOutcome>;
-  readonly signOut?: () => Promise<SignOutOutcome>;
+  readonly signOut?: (handsANewProfile: boolean) => Promise<SignOutOutcome>;
   readonly onSignIn?: () => void;
   readonly attachRecoveryEmail?: (
     address: string,

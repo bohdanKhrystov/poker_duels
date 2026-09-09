@@ -16,7 +16,7 @@ import type { ResetPasswordOutcome } from "./reset-password";
 export interface AccountCalls {
   readonly signUp: (handle: string, password: string) => Promise<SignUpOutcome>;
   readonly signIn: (handle: string, password: string) => Promise<SignInOutcome>;
-  readonly signOut: () => Promise<SignOutOutcome>;
+  readonly signOut: (handsANewProfile: boolean) => Promise<SignOutOutcome>;
   readonly revokeThisDevice: () => Promise<RevokeOutcome>;
   readonly attachRecoveryEmail: (
     address: string,

@@ -130,14 +130,12 @@ const accountCalls: AccountCalls = {
       handle,
       password,
     }),
-  signOut: () =>
-    // TASK-141010 threads the real answer; false is ADR-0135 §6's keep, so
-    // behaviour is unchanged until that ticket lands.
+  signOut: (handsANewProfile) =>
     signOut({
       fetch: plainFetch,
       storage: localStorage,
       reload,
-      handsANewProfile: false,
+      handsANewProfile,
     }),
   revokeThisDevice: () =>
     revokeThisDevice({ fetch: plainFetch, storage: localStorage }),

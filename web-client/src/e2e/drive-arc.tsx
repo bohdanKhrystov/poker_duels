@@ -124,13 +124,12 @@ export function bootClient(options: BootOptions): BootResult {
         handle,
         password,
       }),
-    signOut: () =>
-      // TASK-141010 threads the real answer; false is ADR-0135 §6's keep.
+    signOut: (handsANewProfile) =>
       signOut({
         fetch: server.fetch,
         storage,
         reload,
-        handsANewProfile: false,
+        handsANewProfile,
       }),
     revokeThisDevice: () => revokeThisDevice({ fetch: server.fetch, storage }),
     // Stubs, not real calls: this harness's fake server serves no recovery
