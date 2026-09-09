@@ -5,16 +5,21 @@ import duels.poker.server.auth.Credentials
 import duels.poker.server.auth.DeviceBindings
 import duels.poker.server.auth.Identity
 import duels.poker.server.auth.IdentityResolver
+import duels.poker.server.protocol.http.DeviceStandingResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 
 /**
  * Installs `DELETE /api/me/device`, the route through which a signed-in player revokes their
- * device's standing as a credential (`ADR-0037`).
+ * device's standing as a credential (`ADR-0037`), and `GET /api/me/device`, the route through
+ * which a signed-in player learns which of `ADR-0131` §1's two sign-outs their next one would be
+ * (`ADR-0135` §4).
  *
  * Identity is resolved through [identities], exactly as `profileRoutes` resolves it, but this
  * route does **not** reuse the helper the other three route files share for turning an
@@ -84,5 +89,50 @@ public fun Application.deviceRoutes(
             bindings.revoke(playerId, keeping = checkNotNull(token))
             call.respond(HttpStatusCode.NoContent)
         }
+        get("/api/me/device") {
+            call.respondWithDeviceStanding(identities)
+        }
     }
+}
+
+/**
+ * The body of `GET /api/me/device`. Extracted from [deviceRoutes]' `routing` block per detekt's
+ * `LongMethod` budget — the shape `ProfileRoutes.kt`'s `respondWithDuels` already uses.
+ *
+ * **A session is required**, on the same reasoning as `DELETE /api/me/device`: a caller with no
+ * session has no sign-out to make, so [Identity.Device], [Identity.UnknownDevice],
+ * [Identity.Refused] and [Identity.Anonymous] all answer `401 Unauthorized` with an empty body
+ * (`ADR-0049` §5, restated by `ADR-0135` §4). **No credential guard**: a session is issued by
+ * `POST /api/auth/sign-in` and by nothing else, so a session-identified caller holds a password
+ * credential by construction (`ADR-0135` §4) — `credentials` is never consulted here.
+ *
+ * Once a session names the caller, [identities] is asked a second, different question — *who does
+ * the presented device id name, on its own?* — with an explicit `token = null`, per `ADR-0144`
+ * §5: a non-null token would make `resolve` ignore the device id entirely (`ADR-0027` §4's
+ * precedence), and the device id is read from this same request's header, never a stored
+ * association, or the route would become an enumeration surface (`ADR-0135` §4).
+ */
+private suspend fun ApplicationCall.respondWithDeviceStanding(identities: IdentityResolver) {
+    val token = sessionTokenOrNull()
+    val playerId = when (val identity = identities.resolve(token, deviceIdOrNull())) {
+        is Identity.Session -> identity.playerId
+        is Identity.Device -> null
+        is Identity.UnknownDevice -> null
+        is Identity.Refused -> null
+        is Identity.Anonymous -> null
+    }
+    if (playerId == null) {
+        respond(HttpStatusCode.Unauthorized)
+        return
+    }
+    val handsANewProfile = when (val standing = identities.resolve(token = null, deviceId = deviceIdOrNull())) {
+        is Identity.Device -> standing.playerId == playerId
+        is Identity.UnknownDevice -> true
+        Identity.Anonymous -> true
+        // A null token cannot produce either of these. If one ever did, keep the profile:
+        // ADR-0135 §6 makes every unknown a keep, and this is an unknown.
+        is Identity.Session -> false
+        Identity.Refused -> false
+    }
+    respond(DeviceStandingResponse(handsANewProfile))
 }

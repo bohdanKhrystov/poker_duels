@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141004
 title: The document names the device-standing route
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: poker-server
 estimate: S
