@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140917
 title: The form leaves the front door
 type: task
-status: ready
+status: done
 parent: STORY-1409
 module: web-client
 estimate: XS
@@ -16,7 +16,7 @@ verify:
   - cd web-client && npm ci
   - sh -c '! grep -qF "NameSurface" web-client/src/lobby/Lobby.tsx'
   - grep -qF "setName={setName ?? undefined}" web-client/src/lobby/Lobby.tsx
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (105 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (114 tests)"'
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/e2e/claimed-here-recovered-there.test.tsx 2>&1 | grep -qF "claimed-here-recovered-there.test.tsx  (8 tests)"'
   - cd web-client && npm run check
   - cd web-client && npm run build
@@ -59,7 +59,11 @@ the strip stays and is what the front door keeps.
   `renders the front door with one heading and the name printed once`: `TestPlayer` now appears
   **once**, in the strip, not twice; the heading count stays at one and is still the wordmark. The
   old comment explaining the count of two is replaced rather than left contradicting the assertion.
-- **105 tests stay 105.** Both cases are rewritten in place.
+- **114 tests stay 114.** Both cases are rewritten in place. The ticket said 105 on a baseline
+  taken before `TASK-140911`, `TASK-140913` and `TASK-140915` landed; the file holds 114 on
+  `develop` at `2c96f98f`, so the literal was stale before the work began rather than wrong about
+  what this change does — which is nothing, since both cases are rewritten and neither is added
+  nor removed.
 
 ## Out of scope
 
@@ -70,7 +74,7 @@ the strip stays and is what the front door keeps.
 
 ## Tests
 
-`Lobby.test.tsx` — 105 tests after `TASK-140915`, 105 after this ticket.
+`Lobby.test.tsx` — 114 tests after `TASK-140915`, 114 after this ticket.
 
 | Test | Proves |
 | --- | --- |
@@ -101,7 +105,7 @@ the strip stays and is what the front door keeps.
 - [ ] `Lobby.test.tsx.renders the front door with one heading and the name printed once` passes
 - [ ] `Lobby.test.tsx.puts the name form on the account screen, wired to the same handler the door
       holds` passes unchanged
-- [ ] `Lobby.test.tsx` reports exactly 105 tests, all passing
+- [ ] `Lobby.test.tsx` reports exactly 114 tests, all passing
 - [ ] `claimed-here-recovered-there.test.tsx` reports exactly 8 tests, all passing, and is not edited
 - [ ] `NameSurface` appears nowhere in `Lobby.tsx`, and `setName={setName ?? undefined}` still does
 - [ ] `npm run check` and `npm run build` exit 0 in `web-client`
