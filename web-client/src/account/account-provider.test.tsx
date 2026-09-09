@@ -195,7 +195,7 @@ describe("the account calls", () => {
     expect(receivedCalls!.signOut).not.toBe(receivedCalls!.revokeThisDevice);
 
     // Call signOut
-    await receivedCalls!.signOut();
+    await receivedCalls!.signOut(false);
 
     // Verify signOut was called once
     expect(signOutSpy).toHaveBeenCalledTimes(1);
@@ -263,5 +263,44 @@ describe("the account calls", () => {
       receivedCalls!.resetPassword,
     );
     expect(receivedCalls!.verifyEmail).not.toBe(receivedCalls!.resetPassword);
+  });
+
+  it("the sign-out call carries the answer its caller gave it", async () => {
+    const signOutSpy = vi.fn(async (): Promise<SignOutOutcome> => ({
+      kind: "signed-out",
+    }));
+
+    const calls: AccountCalls = {
+      signUp: vi.fn() as unknown as AccountCalls["signUp"],
+      signIn: vi.fn() as unknown as AccountCalls["signIn"],
+      signOut: signOutSpy,
+      revokeThisDevice: vi.fn() as unknown as AccountCalls["revokeThisDevice"],
+      attachRecoveryEmail:
+        vi.fn() as unknown as AccountCalls["attachRecoveryEmail"],
+      forgotPassword: vi.fn() as unknown as AccountCalls["forgotPassword"],
+      verifyEmail: vi.fn() as unknown as AccountCalls["verifyEmail"],
+      resetPassword: vi.fn() as unknown as AccountCalls["resetPassword"],
+    };
+
+    let receivedCalls: AccountCalls | null = null;
+
+    render(
+      <AccountProvider calls={calls}>
+        <Probe
+          onCall={(c) => {
+            receivedCalls = c;
+          }}
+        />
+      </AccountProvider>,
+    );
+
+    // Two inputs, because one call cannot tell a threaded argument from a
+    // constant: a binding that ignores its parameter and always passes
+    // `false` would pass a single-call assertion.
+    await receivedCalls!.signOut(true);
+    await receivedCalls!.signOut(false);
+
+    expect(signOutSpy).toHaveBeenNthCalledWith(1, true);
+    expect(signOutSpy).toHaveBeenNthCalledWith(2, false);
   });
 });

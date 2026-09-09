@@ -3,13 +3,13 @@ schema: 2
 id: TASK-141010
 title: The account calls carry which sign-out this is
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: S
 tier: sonnet
 review: standard
-files_touched: 4
+files_touched: 5
 atomic:
   - "`cd web-client && npm run check` — its `typecheck` step (`tsc --noEmit`), in `.github/workflows/build.yml`'s `client` job. Probed at `c6a41e6d`: giving `AccountCalls.signOut` a parameter fails `TS2554 Expected 1 arguments, but got 0` at `src/account/account-provider.test.tsx:198`, and threading the value fails `TS2353` at `src/main.tsx:133` and `src/e2e/drive-arc.tsx:127`. The interface and its three dependents break in the same edit"
   - "`ADR-0135` §7 — the value must reach `signOut`'s **required** field, and `AccountCalls` is the only path from the React tree to `main.tsx`'s module-scope binding. A staged version would have to give the interface member an optional parameter, which is the shape §7 refuses in writing"
@@ -39,7 +39,8 @@ takes it, and both bindings — the product's and the arc harness's — pass it 
 ## Files
 
 Four, and the count is `tsc`'s: one interface member's signature and its three dependents fail in
-the same commit.
+the same commit. A fifth was added during implementation under the `ADR-0070` §4 propagation
+exception — see that row's "Why it cannot be fewer" column.
 
 | File | Action | Why it cannot be fewer |
 | --- | --- | --- |
@@ -47,6 +48,7 @@ the same commit.
 | `web-client/src/account/account-provider.test.tsx` | modify | `TS2554 Expected 1 arguments, but got 0` at line 198, which calls `receivedCalls!.signOut()` |
 | `web-client/src/main.tsx` | modify | `TS2353` — the lambda must take the parameter before it can pass the field |
 | `web-client/src/e2e/drive-arc.tsx` | modify | `TS2353` at line 127, the harness's own `AccountCalls` literal, for the same reason |
+| `web-client/src/account/AccountScreen.tsx` | modify | `ADR-0070` §4 propagation: `npm run check`'s typecheck step fails at `Lobby.tsx(292,11)` — `TS2322`, "Target signature provides too few arguments. Expected 1 or more, but got 0" — because `AccountScreen`'s own `signOut` prop was left at `() => Promise<SignOutOutcome>` (its comment defers the real value to `TASK-141013`); `Lobby.tsx` is protected by this ticket's own `git diff --exit-code` gate, so the only place to widen the declaration is here. Reverting `account-provider.tsx`'s signature change alone removes the failure, confirming it is this ticket's own edit that causes it. One line, the prop's type annotation; `signOut={signOut}` is unchanged |
 
 Read, do not edit: `docs/adr/ADR-0135-the-server-says-which-sign-out-this-is-and-the-browser-forgets-one-key.md`
 §7, `web-client/src/account/sign-out.ts`.
