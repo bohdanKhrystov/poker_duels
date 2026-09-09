@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141001
 title: The account card draws both sign-out confirmations
 type: task
-status: backlog
+status: done
 parent: STORY-1410
 module: design
 estimate: S
@@ -27,7 +27,7 @@ verify:
   - awk 'index($0,"<h2>"){f=0} index($0,"<h2>Signing out — this browser becomes a new profile</h2>"){f=1} f && index($0,">Cancel<"){n++} END{exit (n!=1)}' design/screens/account.html
   - awk 'index($0,"<h2>"){f=0} index($0,"<h2>Signing out — back to the profile this browser owns</h2>"){f=1} f && index($0,">Sign out<"){n++} END{exit (n!=1)}' design/screens/account.html
   - awk 'index($0,"<h2>"){f=0} index($0,"<h2>Signing out — back to the profile this browser owns</h2>"){f=1} f && index($0,">Cancel<"){n++} END{exit (n!=1)}' design/screens/account.html
-  - awk 'index($0,"<h2>"){n++} END{exit (n!=5)}' design/screens/account.html
+  - awk 'index($0,"<h2>"){n++} END{exit (n!=7)}' design/screens/account.html
   - python3 .github/scripts/lint_tickets.py
 ---
 
@@ -101,7 +101,7 @@ gates.
 | Gate | Proves |
 | --- | --- |
 | the two `<h2>` anchor gates | each new heading appears **exactly once**, so every frame-scoped gate below has exactly one span to read |
-| `<h2>` total is **5** | measured: `account.html` carries **3** frames at `c6a41e6d`; two are added and no more |
+| `<h2>` total is **7** | measured: `account.html` carries **5** frames on `develop`, after `TASK-140909`'s two name-form frames landed on top of the original three; two are added and no more |
 | one `class="line"` per new frame | one paragraph each, exactly as `SignOutControl` renders one `<p>` — a card that split the abandoning text across two paragraphs would describe a component this client does not have |
 | the returning frame carries the whole shipped `SIGN_OUT_WARNING` value | the sentence `ADR-0131` §5 says *stays* is written down verbatim, on one line, ready for `TASK-141008` to compare against |
 | the abandoning frame carries the shipped **first** sentence | leaving a duel room is true on both branches, so the branch is the second half and not the whole string |
@@ -118,7 +118,7 @@ gates.
 - **Copying the whole shipped string into the abandoning frame** — the tempting shortcut, because
   it is right there — passes every positive gate and fails the negative one, which is why that gate
   is written as an absence with an expected count of **0** rather than as prose in the ticket.
-- **Wrapping the new paragraph across source lines**, the way the other three frames wrap theirs,
+- **Wrapping the new paragraph across source lines**, the way the other five frames wrap theirs,
   makes every `index()` gate report absent. That failure is loud, and the note the frame carries is
   what tells the next editor why.
 - **The three refusals themselves cannot be gated**, and this ticket does not pretend otherwise:
@@ -127,7 +127,7 @@ gates.
 
 ## Acceptance criteria
 
-- [ ] Both `<h2>` anchor gates exit 0, and the `<h2>` total gate (`n != 5`) exits 0
+- [ ] Both `<h2>` anchor gates exit 0, and the `<h2>` total gate (`n != 7`) exits 0
 - [ ] Both `class="line"` count gates exit 0
 - [ ] The returning frame's whole-sentence gate exits 0
 - [ ] The abandoning frame's first-sentence gate exits 0

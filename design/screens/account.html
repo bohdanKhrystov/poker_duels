@@ -193,6 +193,39 @@
       the field: the field is for the new name being typed, exactly as NameSurface.tsx's single
       input already works, and this card mints no default value for it.</p>
     </div>
+
+    <div class="frame">
+      <h2>Signing out — back to the profile this browser owns</h2>
+      <p class="line">Signing out leaves any duel room this browser is in, and a duel left this way can be lost. This browser goes back to the profile it had before.</p>
+      <button class="btn ghost" type="button">Sign out</button>
+      <button class="btn ghost" type="button">Cancel</button>
+      <p class="note">ADR-0131 §5 and ADR-0125 §3, re-applied: this frame draws row two of
+      ADR-0131 §1 — the session being ended belongs to an account this browser does not own, so
+      the browser returns to the profile it already owns, unchanged. The line above carries the
+      whole shipped SIGN_OUT_WARNING sentence, unedited, because ADR-0131 §5 says this case is
+      already exactly right and stays. signedIn decides only whether a sign-out is offered at
+      all, never which of these two frames applies — that is a server fact (ADR-0135 §7), not
+      something this card infers. Written on one source line, unlike the frames above that wrap
+      theirs, so the plain index() gates that read this card can match the sentence whole.</p>
+    </div>
+
+    <div class="frame">
+      <h2>Signing out — this browser becomes a new profile</h2>
+      <p class="line">Signing out leaves any duel room this browser is in, and a duel left this way can be lost. This browser becomes a new, empty profile — no name, no duel coins, no duels — and the profile being left keeps every duel coin and every duel, reached again by signing in with its password.</p>
+      <button class="btn ghost" type="button">Sign out</button>
+      <button class="btn ghost" type="button">Cancel</button>
+      <p class="note">ADR-0131 §5 and ADR-0125 §3, re-applied: this frame draws row one of
+      ADR-0131 §1 — the session being ended belongs to the profile this browser owns, so signing
+      out hands the browser a new, empty profile and leaves the old one whole and reachable by
+      its password. It states, it does not urge — no urging question about certainty, no red,
+      no count of what is at stake, no plea to attach a recovery address first — and it is not a
+      warning about loss, because nothing is lost: the coin sentence exists only so a number
+      going to zero on the next screen is not a surprise. signedIn decides only whether a
+      sign-out is offered at all, never which of these two frames applies — that is a server
+      fact (ADR-0135 §7), not something this card infers. Written on one source line, unlike the
+      frames above that wrap theirs, so the plain index() gates that read this card can match
+      the sentence whole.</p>
+    </div>
   </div>
 </div>
 </body>
