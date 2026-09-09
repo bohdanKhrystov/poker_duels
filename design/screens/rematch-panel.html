@@ -1,0 +1,159 @@
+<!-- @dsCard group="Screens" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rematch panel — Poker Duels</title>
+<style>
+  /* Values inlined from design/tokens/tokens.css — that file is canonical (ADR-0024). */
+  :root {
+    --pd-bg: #131211; --pd-surface: #1c1a18; --pd-surface-raised: #262421; --pd-hairline: #363330;
+    --pd-text: #ece9e3; --pd-text-muted: #a6a099; --pd-text-faint: #888279;
+    --pd-accent: #4d8bc9; --pd-accent-fill: #3372b5; --pd-accent-fill-hover: #2e67a4; --pd-on-accent: #ffffff;
+    --pd-accent-subtle: rgba(77, 139, 201, 0.14);
+    --pd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pd-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --pd-fs-micro: 0.6875rem; --pd-fs-small: 0.8125rem; --pd-fs-body: 0.9375rem;
+    --pd-lh-tight: 1.15; --pd-lh-body: 1.5;
+    --pd-track-caps: 0.08em;
+    --pd-space-2: 4px; --pd-space-3: 8px; --pd-space-4: 12px; --pd-space-5: 16px; --pd-space-7: 32px;
+    --pd-radius-medium: 8px; --pd-radius-small: 4px;
+    --pd-focus: 2px solid var(--pd-accent); --pd-focus-offset: 2px;
+    --pd-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--pd-bg); color: var(--pd-text); font-family: var(--pd-font-ui);
+    font-size: var(--pd-fs-body); line-height: var(--pd-lh-body); padding: var(--pd-space-7);
+    -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .eyebrow { font-size: var(--pd-fs-micro); font-weight: 500; letter-spacing: var(--pd-track-caps);
+    text-transform: uppercase; color: var(--pd-text-faint); margin-bottom: var(--pd-space-3); }
+  h1 { font-size: 1.875rem; line-height: 1.15; font-weight: 700; }
+  .lede { color: var(--pd-text-muted); margin-top: var(--pd-space-3); max-width: 60ch; }
+  .frames { display: flex; gap: 24px; flex-wrap: wrap; margin-top: var(--pd-space-7); align-items: flex-start; }
+
+  /* Screen-specific: each .frame stands for one screen a player could be on — the
+   * generic surface the panel would sit above, never one particular screen (that
+   * pairing is TASK-141502's). It is a plain rectangle so the panel is what reads. */
+  .frame { width: 340px; min-height: 220px; border: 1px solid var(--pd-hairline); border-radius: var(--pd-radius-medium);
+    background: var(--pd-surface); padding: var(--pd-space-5);
+    display: flex; flex-direction: column; gap: var(--pd-space-4); position: relative; }
+  .frame h2 { font-size: var(--pd-fs-micro); letter-spacing: var(--pd-track-caps); text-transform: uppercase;
+    color: var(--pd-text-muted); font-weight: 500; }
+  .note { font-size: 0.75rem; font-family: var(--pd-font-mono); color: var(--pd-text-faint);
+    margin-top: var(--pd-space-4); text-align: left; max-width: 340px; }
+
+  /* Stand-in content for the screen underneath — abstract on purpose, so the fourth
+   * frame reads as "whatever screen was already showing" and not a specific one. */
+  .stub { flex: 1; border: 1px dashed var(--pd-hairline); border-radius: var(--pd-radius-small);
+    display: flex; align-items: center; justify-content: center; color: var(--pd-text-faint);
+    font-size: var(--pd-fs-small); text-align: center; padding: var(--pd-space-4); }
+
+  /* The panel's own shell — this card's to mint. Out of flow within its stand-in
+   * screen (position: absolute, no participation in the stage's own layout), sized
+   * to its own content and never to the stage, and lifted with the sheet's one
+   * float shadow rather than a border or a tint, so nothing about its dress says
+   * "be careful" (ADR-0143 §1) — only that it floats (ADR-0138 §5). */
+  .panel { position: absolute; left: var(--pd-space-4); right: var(--pd-space-4); bottom: var(--pd-space-4);
+    background: var(--pd-surface-raised); border-radius: var(--pd-radius-medium);
+    padding: var(--pd-space-5); display: flex; flex-direction: column; gap: var(--pd-space-4);
+    box-shadow: var(--pd-shadow-pop); text-align: left; }
+
+  /* The one accent this card spends: a standing offer is a thing this client
+   * already names in color (ADR-0143 §1), so the line that states it carries the
+   * same border-and-tint pairing RematchControl already uses. It marks what the
+   * line is, and nothing about how urgent it is. */
+  .theirs { border: 1px solid var(--pd-accent); background: var(--pd-accent-subtle);
+    border-radius: var(--pd-radius-small); padding: var(--pd-space-3) var(--pd-space-4);
+    font-size: var(--pd-fs-body); }
+
+  .line { font-size: var(--pd-fs-body); }
+
+  .btn { font-family: var(--pd-font-ui); font-size: var(--pd-fs-body); font-weight: 500;
+    line-height: var(--pd-lh-tight); padding: var(--pd-space-4) var(--pd-space-5);
+    border-radius: var(--pd-radius-medium); border: 1px solid transparent; cursor: pointer;
+    text-align: center; }
+  .btn.fill { background: var(--pd-accent-fill); color: var(--pd-on-accent); }
+  .btn.fill:hover { background: var(--pd-accent-fill-hover); }
+  .btn.ghost { background: none; border-color: var(--pd-hairline); color: var(--pd-text); }
+  .btn:focus-visible { outline: var(--pd-focus); outline-offset: var(--pd-focus-offset); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Poker Duels · Screens</p>
+  <h1>Rematch panel</h1>
+  <p class="lede">The product's first surface that sits above another screen (ADR-0123 §8): a
+  standing rematch offer, drawn so it can follow a player onto every screen they hold their room
+  on without ever taking one. Four frames: the offer standing, the accepted span, the room gone,
+  and the screen with the panel set aside — which is the screen, unchanged.</p>
+
+  <div class="frames">
+    <div class="frame">
+      <h2>The offer standing</h2>
+      <div class="stub">whatever screen the player asked for</div>
+      <div class="panel" role="status">
+        <div class="theirs">Your rival offers a rematch</div>
+        <button class="btn fill">Rematch</button>
+        <button class="btn ghost">Not now</button>
+      </div>
+      <p class="note">ADR-0138 §5: the live panel's root is taken out of the document's own flow —
+      position: fixed — so its arrival can never move the screen underneath, and this frame's
+      stand-in stage is what that screen stands for. ADR-0138 §6: the root carries role="status"
+      and nothing about it ever takes focus, sets a tab stop of its own, or listens for a key —
+      a press only reaches it once a player has deliberately moved to one of its two controls.
+      The sentence and both labels are RematchControl's own words, unedited (ADR-0123 §4); "Not
+      now" is copied here rather than imported, because the module it once lived on is gone
+      (ADR-0138 §4). ADR-0143 §1: the line's border and tint are the one accent this card spends —
+      they say what the line is, a standing offer, exactly as the client's own control already
+      colors it, and mark nothing about how carefully to read it.</p>
+    </div>
+
+    <div class="frame">
+      <h2>The accepted span</h2>
+      <div class="stub">whatever screen the player asked for</div>
+      <div class="panel" role="status">
+        <p class="line">Rematch. The button changes sides —<br>dealing hand 1…</p>
+        <button class="btn ghost">Not now</button>
+      </div>
+      <p class="note">The wire sends no frame that says both seats have agreed, so between the
+      press and the new duel the panel shows the same sentence the result screen already shows in
+      that span, in place of the button that just sent OfferRematch. The sentence is split by one
+      <code>&lt;br&gt;</code>, exactly as the merged control splits it, into the two words this
+      card and the client share as separate units — one joined line would be one unit and the two
+      would match nothing. "Not now" still stands: it asserts nothing about the game, so it
+      remains the only way off a panel that never leaves by itself (ADR-0138 §4). No line here is
+      timed and none of this card holds a clock — the three standing states stay exactly where
+      they are until a player or a fresh frame moves them.</p>
+    </div>
+
+    <div class="frame">
+      <h2>The room is gone</h2>
+      <div class="stub">whatever screen the player asked for</div>
+      <div class="panel" role="status">
+        <p class="line">That duel room is gone.</p>
+        <button class="btn ghost">Not now</button>
+      </div>
+      <p class="note">A press refused because the room has been reaped — ADR-0044 §6's frame that
+      ends a rematch — leaves the panel standing with this sentence in place of the button, plain
+      and unmarked, exactly as the other two states are. "Not now" still stands, for the same
+      reason it stands in the frame before this one: it is the only way off a panel that answers
+      to nothing but a player's own press.</p>
+    </div>
+
+    <div class="frame">
+      <h2>Set aside — the screen, unchanged</h2>
+      <div class="stub">the same screen, with nothing taken and nothing added</div>
+      <p class="note">ADR-0123 §7: a dismissal hides the surface, never the offer — the offer
+      still stands in the room, and a player can still answer it from the room's own screen. What
+      "Not now" buys is exactly this frame: the screen the player was already on, with no panel
+      drawn over it at all. This card holds no motion of any kind on any of its four frames —
+      nothing here fades, slides, pulses or repeats on a cycle — so ADR-0123 §8's requirement that
+      each of the first three sit still under a reduced-motion preference is met by there being
+      nothing to still, not by a rule that quietly does nothing.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
