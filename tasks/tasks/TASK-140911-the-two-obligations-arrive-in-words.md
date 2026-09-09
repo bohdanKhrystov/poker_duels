@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140911
 title: The two obligations arrive, in the card's words
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: web-client
 estimate: XS
