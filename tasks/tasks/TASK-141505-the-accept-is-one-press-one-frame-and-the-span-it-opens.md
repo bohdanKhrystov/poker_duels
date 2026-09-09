@@ -17,7 +17,7 @@ verify:
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +9 passed \(9\)$'
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchControl.test.tsx 2>&1 | grep -qE '^ *Tests +12 passed \(12\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qE '^ *Tests +113 passed \(113\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qE '^ *Tests +116 passed \(116\)$'
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"useEffect") || index($0,"useLayoutEffect") || index($0,"setTimeout") || index($0,"setInterval") { n++ } END { exit (n != 0) }' web-client/src/result/RematchNotice.tsx
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"type=\"button\"") { n++ } END { exit (n != 1) }' web-client/src/result/RematchNotice.tsx
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"{REMATCH_LABEL}") { n++ } END { exit (n != 1) }' web-client/src/result/RematchNotice.tsx
@@ -152,7 +152,10 @@ returns the room to a finished standing that can carry a new offer.
 - [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **9 passed (9)**, the four new ones
       being the four named above and the original five unedited
 - [ ] `src/result/RematchControl.test.tsx` reports **12 passed (12)** and `src/lobby/Lobby.test.tsx`
-      **113 passed (113)** — measured on `develop` at `f20d07ed`
+      **116 passed (116)** — the ticket said 113, measured on `develop` at `f20d07ed`;
+      `TASK-140915` and `TASK-141014` have added three since, and neither `Lobby.tsx` nor
+      `Lobby.test.tsx` is in this ticket's Files table, so 116 is the base's number and not
+      this change's. Re-measured on `develop` at `13da1501`
 - [ ] `RematchNotice.tsx` has, on non-comment lines, `OfferRematch` **1**, `type="button"` **1**,
       `{REMATCH_LABEL}` **1**, `{DEALING_LEAD}` **1**, `{DEALING_TAIL}` **1**, `disabled` **0**, and
       still **0** of `useEffect`, `useLayoutEffect`, `setTimeout`, `setInterval`
