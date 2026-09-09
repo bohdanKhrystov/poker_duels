@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141019
 title: The boot nests the provider above the profile
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: XS
@@ -100,4 +100,17 @@ Read, do not edit: `web-client/src/main.tsx`,
 - [ ] Rewriting `main.tsx` so the provider is a sibling reddens the new test, and the file is
       restored afterwards
 - [ ] `main.tsx` is byte-identical to `develop`
+
+## Known limitation, measured
+
+Review probed the regex against five shapes. It holds for both opening tags on one line,
+attributes wrapped across lines, heavy whitespace, and the sibling arrangement it exists to
+reject. It **fails** on one: a JSX comment containing the literal text
+`</DeviceStandingProvider>` sitting between the two opening tags — the negative lookahead stops
+at the characters inside the comment, and a correct boot would read as broken.
+
+Landed with that known rather than fixed, because the failure direction is the safe one: it is a
+false alarm that stops CI loudly and is investigated, not a defect that passes silently. No such
+comment exists in `main.tsx` today. If one is ever written, strip comment blocks before matching
+rather than loosening the lookahead.
 - [ ] `npm run check` and `npm run build` exit 0 in `web-client`

@@ -1270,4 +1270,18 @@ describe("App", () => {
     expect(occurrencesIn(mainSource, "reloadAtAccount")).toBe(2);
     expect(occurrencesIn(mainSource, "reloadAtAccount()")).toBe(0);
   });
+
+  it("the device standing provider is above the profile provider", () => {
+    // DeviceStandingProvider must wrap ProfileProvider, not sit beside it.
+    // A sibling mount would have the same occurrence counts as a wrapped one,
+    // so the nesting structure needs its own assertion: between the opening
+    // <DeviceStandingProvider and the opening <ProfileProvider, no closing
+    // </DeviceStandingProvider> appears. Presence is already counted;
+    // this pins containment.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(mainSource).toMatch(
+      /<DeviceStandingProvider(?:(?!<\/DeviceStandingProvider>)[\s\S])*?<ProfileProvider/,
+    );
+  });
 });
