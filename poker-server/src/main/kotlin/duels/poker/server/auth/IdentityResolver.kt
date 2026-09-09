@@ -47,6 +47,10 @@ public sealed interface Identity {
  * This resolver never creates a profile. Minting one on an unknown device id is a caller's
  * decision — the socket mints, HTTP refuses — so this class hands back a value each entry point
  * acts on rather than making that choice itself.
+ *
+ * This class also answers a comparison question via [namesPlayer], which is **not** a second
+ * resolution path. It answers whether a device id resolves to a specific player, and never
+ * creates or mints a profile — `resolve` and all five [Identity] cases are byte-unchanged.
  */
 public class IdentityResolver(private val sessions: AuthSessions, private val players: PlayerDirectory) {
     /**
@@ -67,4 +71,19 @@ public class IdentityResolver(private val sessions: AuthSessions, private val pl
         val player = players.findOrNull(deviceId)
         return if (player != null) Identity.Device(player.id, deviceId) else Identity.UnknownDevice(deviceId)
     }
+
+    /**
+     * Answers whether a device id resolves, through a live binding, to a specific player.
+     *
+     * This is **not** a second resolution path. It answers a comparison and never mints — this
+     * method exists solely to check whether a device belongs to a player, used by the session
+     * restoration endpoint per `ADR-0135` §4. A revoked binding resolves to nobody, so a revoked
+     * device id answered by `false`.
+     *
+     * @param deviceId The device id to look up.
+     * @param playerId The player id to compare against.
+     * @return `true` if the device resolves to the player, `false` otherwise.
+     */
+    public suspend fun namesPlayer(deviceId: DeviceId, playerId: PlayerId): Boolean =
+        players.findOrNull(deviceId)?.id == playerId
 }
