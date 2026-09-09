@@ -64,6 +64,13 @@ Read, do not edit: `web-client/src/result/RematchNotice.tsx`,
   the component registers no document- or window-level key listener. Assert over the rendered DOM
   and a spied `addEventListener`, not over the source text — a source grep is what already exists
   and it is the thing being repaired.
+- **The same test also asserts no element in the panel carries a `tabindex` attribute.** Added
+  2026-09-10 while landing `TASK-141510`, whose coder reported that of `ADR-0138` §6's three
+  prohibitions its diff pins *takes focus* by assertion and leaves *sets a tab stop* resting on
+  `TASK-141504`'s source grep. That grep does catch a literal `tabIndex={0}` — probed, exit 1 —
+  so this clause is narrower than the key one, which the grep misses entirely. What it cannot
+  see is an attribute set through a helper, and the rendered DOM can. Same test, same mechanism,
+  so it costs nothing to close both here rather than leave one half-guarded.
 - The count gate moves 5 → 6.
 
 ## Out of scope
