@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { DuelProvider } from "../store/duel-provider";
 import { createDuelStore, type DuelStore } from "../store/duel-store";
 import { RematchNotice } from "./RematchNotice";
-import { RIVAL_OFFERS, REMATCH_LABEL } from "./rematch-text";
+import { RIVAL_OFFERS, REMATCH_LABEL, ROOM_GONE } from "./rematch-text";
 
 // The room fixture: RoomJoined seats this tab, DuelFinished ends the duel
 // (clearing nothing an offer needs — duel-state.ts:350-361 — but establishing
@@ -160,5 +160,58 @@ describe("the rematch notice", () => {
     expect(
       screen.queryByText(/The button changes sides.*dealing hand 1…/),
     ).toBeNull();
+  });
+
+  it("states that the room is gone in place of the accept", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+    renderNotice(store);
+
+    act(() => {
+      store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    });
+
+    expect(screen.getByText(ROOM_GONE)).toBeDefined();
+    expect(screen.queryByRole("button", { name: REMATCH_LABEL })).toBeNull();
+  });
+
+  it("a transient refusal leaves the accept standing", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+    renderNotice(store);
+
+    act(() => {
+      store.apply({ type: "Failure", error: "REMATCH_UNAVAILABLE" });
+    });
+
+    expect(screen.getByRole("button", { name: REMATCH_LABEL })).toBeDefined();
+    expect(screen.queryByText(ROOM_GONE)).toBeNull();
+  });
+
+  it("a recorded refusal that isn't the gone room leaves the accept standing", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+    renderNotice(store);
+
+    act(() => {
+      store.apply({ type: "Failure", error: "NOT_IN_DUEL" });
+    });
+
+    expect(screen.getByRole("button", { name: REMATCH_LABEL })).toBeDefined();
+    expect(screen.queryByText(ROOM_GONE)).toBeNull();
+  });
+
+  it("the panel is still there after the room is gone", () => {
+    window.location.hash = "#/account";
+    const store = storeWith(1, 0);
+    renderNotice(store);
+
+    act(() => {
+      store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    });
+
+    expect(
+      screen.getByText(ROOM_GONE).closest('[role="status"]'),
+    ).not.toBeNull();
   });
 });

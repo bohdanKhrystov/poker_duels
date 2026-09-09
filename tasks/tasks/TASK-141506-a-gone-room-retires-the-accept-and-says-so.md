@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141506
 title: A gone room retires the accept and says so, and no other refusal touches it
 type: task
-status: ready
+status: done
 parent: STORY-1415
 module: web-client
 estimate: XS
@@ -15,8 +15,8 @@ depends_on: [TASK-141505]
 verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +12 passed \(12\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchControl.test.tsx 2>&1 | grep -qE '^ *Tests +12 passed \(12\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +13 passed \(13\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchControl.test.tsx 2>&1 | grep -qE '^ *Tests +13 passed \(13\)$'
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"UNKNOWN_ROOM") { n++ } END { exit (n != 1) }' web-client/src/result/RematchNotice.tsx
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"{ROOM_GONE}") { n++ } END { exit (n != 1) }' web-client/src/result/RematchNotice.tsx
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"REMATCH_UNAVAILABLE") { n++ } END { exit (n != 0) }' web-client/src/result/RematchNotice.tsx
@@ -98,7 +98,8 @@ else, and it is the one that fails against that component.
 
 ## Acceptance criteria
 
-- [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **12 passed (12)**, the three new
+- [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **13 passed (13)** — twelve as the
+      ticket planned, plus one added in review to make the refusal case discriminate, the four new
       ones being the three named above and the previous nine unedited
 - [ ] `src/result/RematchControl.test.tsx` reports **12 passed (12)** — measured on `develop` at
       `f20d07ed`, and that file is not opened
@@ -107,8 +108,16 @@ else, and it is the one that fails against that component.
       `setInterval`
 - [ ] `git diff --quiet develop` is clean for `Lobby.tsx`, `App.tsx` and `RematchControl.tsx`
 - [ ] **Shown red, then reverted:** widening the branch to `state.refusal !== null` makes
-      `a transient refusal leaves the accept standing` fail and leaves the other eleven green. The
-      mutation was run, observed red by that name, and reverted
+      `a recorded refusal that isn't the gone room leaves the accept standing` fail and leaves the
+      other twelve green. The mutation was run, observed red by that name, and reverted.
+      ~~`a transient refusal leaves the accept standing` fail~~ — **this ticket named the wrong
+      test and the claim was false.** Review ran the mutation and all twelve passed. That test
+      drives `REMATCH_UNAVAILABLE`, the one `ProtocolError` `duel-state.ts` returns early on
+      without setting `refusal`, so `state.refusal` is `null` on both sides of the mutation and it
+      cannot separate *checks `UNKNOWN_ROOM`* from *fires on any refusal* — the property this
+      ticket says it pins. The added test drives `NOT_IN_DUEL`, which does set `refusal`, and is
+      the discriminator. The transient test is kept: it pins the transient path, which is a real
+      and different property, just not this one
 - [ ] `npm run check` exits 0
 
 ## Definition of done
