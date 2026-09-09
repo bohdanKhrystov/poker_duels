@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141504
 title: The notice stands where an incoming offer stands, and nowhere else
 type: task
-status: backlog
+status: ready
 parent: STORY-1415
 module: web-client
 estimate: S
