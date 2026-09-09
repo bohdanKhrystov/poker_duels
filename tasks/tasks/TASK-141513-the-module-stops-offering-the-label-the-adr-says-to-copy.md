@@ -3,13 +3,13 @@ schema: 2
 id: TASK-141513
 title: The module stops offering the label the ADR says to copy
 type: task
-status: ready
+status: done
 parent: STORY-1415
 module: web-client
 estimate: XS
 tier: haiku
 review: light
-files_touched: 2
+files_touched: 3
 labels: [client, rematch, notice, text]
 depends_on: [TASK-141511]
 verify:
@@ -62,6 +62,7 @@ Found on 2026-09-10 while reviewing `TASK-141511`, from a reviewer's aside that 
 | --- | --- |
 | `web-client/src/result/rematch-text.ts` | modify |
 | `web-client/src/design/card-text.test.ts` | modify |
+| `web-client/src/result/RematchNotice.screens.test.tsx` | modify | `ADR-0070` §4 propagation: it imported `NOT_NOW` from the module and now declares its own, as `RematchNotice.test.tsx` already did |
 
 Read, do not edit: `web-client/src/result/RematchNotice.tsx`,
 `docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-the-dismissal-lives-in-the-mount.md` §4,

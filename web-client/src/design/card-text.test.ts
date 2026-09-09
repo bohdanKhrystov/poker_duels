@@ -161,7 +161,6 @@ const PAIRS: readonly Pair[] = [
       "DEALING_LEAD",
       "DEALING_TAIL",
       "ROOM_GONE",
-      "NOT_NOW",
     ],
     notCarded: {},
   },
