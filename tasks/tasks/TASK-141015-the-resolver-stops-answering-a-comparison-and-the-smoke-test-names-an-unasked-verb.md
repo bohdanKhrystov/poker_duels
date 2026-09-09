@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141015
 title: The resolver stops answering a comparison, and the smoke test names a verb nobody asked for
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: poker-server
 estimate: XS

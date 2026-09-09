@@ -17,6 +17,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -185,10 +186,12 @@ class DuelServerRoutesTest {
     }
 
     @Test
-    fun theDeviceRouteIsNotInstalledOnAnyOtherVerb(): Unit = testApplication {
+    fun theDeviceRouteIsNotInstalledOnUnaskedVerbs(): Unit = testApplication {
         application { duelServer(serverComponents(config, dataSource)) }
-        val response = client.get("/api/me/device")
-        // Only DELETE was asked for (ADR-0049 §5); assert not OK and not Unauthorized
+        val response = client.put("/api/me/device")
+        // Negative control for theDeviceRouteIsInstalled (ADR-0144 §2): names a verb no merged
+        // ADR has asked for, so a handler typed beside the installed ones cannot be invisible.
+        // Not a prohibition on the path — PUT is live elsewhere under /api/me/.
         assert(response.status != HttpStatusCode.OK)
         assert(response.status != HttpStatusCode.Unauthorized)
     }
