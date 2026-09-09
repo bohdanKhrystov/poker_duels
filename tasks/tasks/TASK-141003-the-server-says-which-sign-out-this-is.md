@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141003
 title: The server says which sign-out this is
 type: task
-status: blocked
+status: backlog
 parent: STORY-1410
 module: poker-server
 estimate: S
@@ -11,7 +11,7 @@ tier: sonnet
 review: deep
 files_touched: 3
 labels: [server, account, auth]
-depends_on: [TASK-141002]
+depends_on: [TASK-141002, TASK-141015]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.http.DeviceRouteTest' -PrequireDocker=true
   - grep -q 'tests="16" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.http.DeviceRouteTest.xml
@@ -20,6 +20,7 @@ verify:
   - grep -q 'public data class DeviceStandingResponse(val signOutHandsANewProfile: Boolean)' poker-server/src/main/kotlin/duels/poker/server/protocol/http/ProfileDtos.kt
   - sh -c '! grep -q "signOutHandsANewProfile: Boolean = " poker-server/src/main/kotlin/duels/poker/server/protocol/http/ProfileDtos.kt'
   - sh -c '! grep -rqF "signOutHandsANewProfile" poker-server/src/main/kotlin/duels/poker/server/protocol/ProtocolCodec.kt poker-server/src/main/kotlin/duels/poker/server/session/'
+  - sh -c '! grep -rqF "namesPlayer" poker-server/src'
   - git diff --exit-code -- web-client/src/protocol/protocol.gen.ts docs/protocol-versions.md poker-server/src/main/resources/db/migration
   - ./gradlew :poker-server:ktlintCheck
   - ./gradlew :poker-server:detekt
@@ -41,7 +42,10 @@ verify:
 | `poker-server/src/test/kotlin/duels/poker/server/http/DeviceRouteTest.kt` | modify |
 
 Read, do not edit: `docs/adr/ADR-0135-the-server-says-which-sign-out-this-is-and-the-browser-forgets-one-key.md`
-§§4–5, `poker-server/src/test/kotlin/duels/poker/server/http/ProfileReadsDoubles.kt` (the
+§§4–6, `docs/adr/ADR-0144-a-negative-route-test-is-a-control-and-the-predicate-resolves-the-device-once.md`
+§5 (which supersedes §4's mechanism — read it **with** §4, not instead of it),
+`poker-server/src/main/kotlin/duels/poker/server/auth/IdentityResolver.kt`,
+`poker-server/src/test/kotlin/duels/poker/server/http/ProfileReadsDoubles.kt` (the
 `identitiesFor` / `FixedAuthSessions` doubles this test builds on).
 
 ## Scope
@@ -70,9 +74,30 @@ Read, do not edit: `docs/adr/ADR-0135-the-server-says-which-sign-out-this-is-and
     by nothing else, so a session-identified caller holds a password credential by construction"*,
     which makes `ADR-0131` §2's invariant a property of the identity rule. `credentials` is not
     consulted on this path.
-  - The body is `DeviceStandingResponse(signOutHandsANewProfile = !identities.namesPlayer(deviceId, playerId))`
-    where `deviceId` is the header the caller presented on **this same request** — and when none
-    was presented, the answer is `true` without asking the directory anything. Never a stored
+  - The body's boolean comes from resolving the presented device **on its own**, per
+    [`ADR-0144`](../../docs/adr/ADR-0144-a-negative-route-test-is-a-control-and-the-predicate-resolves-the-device-once.md)
+    §5, which supersedes `ADR-0135` §4's `namesPlayer` mechanism — that function answers one boolean
+    and `ADR-0135` §5 requires *resolves to nobody* and *resolves to somebody else* to differ. It is
+    deleted by `TASK-141015`; `IdentityResolver` gains nothing here, and `resolve` already answers
+    the three-way question:
+
+    ```kotlin
+    val handsANewProfile = when (val standing = identities.resolve(token = null, deviceId = call.deviceIdOrNull())) {
+        is Identity.Device -> standing.playerId == playerId
+        is Identity.UnknownDevice -> true
+        Identity.Anonymous -> true
+        // A null token cannot produce either of these. If one ever did, keep the profile:
+        // ADR-0135 §6 makes every unknown a keep, and this is an unknown.
+        is Identity.Session -> false
+        Identity.Refused -> false
+    }
+    ```
+
+    The explicit `token = null` is the question and not an oversight — it asks *who does this device
+    name, on its own*, and `ADR-0027` §4's precedence makes `resolve` ignore the device id entirely
+    whenever a token is present. It costs one `players.findOrNull`, exactly what `namesPlayer` would
+    have cost, and it mints nothing (`IdentityResolver`: *"This resolver never creates a profile"*).
+    The device id is the header the caller presented on **this same request**, never a stored
     association: `ADR-0135` §4 says computing it any other way turns the route into an enumeration
     surface.
 - If adding the handler pushes `deviceRoutes` past detekt's `LongMethod` budget, extract the body
@@ -114,6 +139,12 @@ the count gate of 16 is 10 + 6.
 
 ## What would still pass if the coder were wrong
 
+- **`!identities.namesPlayer(deviceId, playerId)`**, the expression this ticket carried before
+  `ADR-0144`, passes `aSessionPresentingNoDeviceIsHandedANewProfile` and
+  `aRevokedBindingIsHandedANewProfile` and fails the first two. `identities.namesPlayer(...)`
+  *without* the negation passes the first two and fails those two. **No sign repairs it** — rows two
+  and four of `ADR-0135` §5 must differ and one boolean cannot make them — which is why the mechanism
+  changed rather than the operator, and why all four resolution tests are needed to see it.
 - **A route that always answers `true`** passes four of the six and fails
   `aSessionWhoseDeviceNamesAnotherPlayerKeepsItsProfile`. That is the one row `ADR-0131` §2
   forbids getting wrong, and it is why the two-input pair shares a fixture.
@@ -136,6 +167,8 @@ the count gate of 16 is 10 + 6.
 - [ ] `ProfileDtosTest` still reports `tests="27" skipped="0" failures="0" errors="0"`
 - [ ] The `DeviceStandingResponse` declaration gate exits 0 and the no-default gate exits 0
 - [ ] The gate proving `signOutHandsANewProfile` appears in no codec and no session source exits 0
+- [ ] `namesPlayer` appears nowhere under `poker-server/src` — `TASK-141015` deleted it and this
+      ticket does not bring it back
 - [ ] `git diff --exit-code` over `protocol.gen.ts`, `docs/protocol-versions.md` and the migration
       directory exits 0
 - [ ] `./gradlew :poker-server:ktlintCheck`, `:poker-server:detekt` and
