@@ -1,5 +1,6 @@
 package duels.poker.server.http
 
+import duels.poker.server.protocol.http.DeviceStandingResponse
 import duels.poker.server.protocol.http.DuelSummaryResponse
 import duels.poker.server.protocol.http.ProfileResponse
 import duels.poker.server.protocol.http.RecentDuelsResponse
@@ -53,7 +54,9 @@ class HttpEndpointDocumentationTest {
     private val setNameSection: String =
         sectionBetween("### Set display name", "### Revoke this device")
     private val deviceSection: String =
-        sectionBetween("### Revoke this device", "### Recent duels endpoint")
+        sectionBetween("### Revoke this device", "### Device standing")
+    private val deviceStandingSection: String =
+        sectionBetween("### Device standing", "### Recent duels endpoint")
     private val recentDuelsSection: String =
         sectionBetween("### Recent duels endpoint", "Each duel summary in the array contains:")
     private val duelSummarySection: String =
@@ -402,6 +405,97 @@ class HttpEndpointDocumentationTest {
             deviceSection.contains("No live socket is closed"),
             "The Revoke this device section must say no live socket is closed",
         )
+    }
+
+    @Test
+    fun theRevokeSectionIsStillWhereItWas() {
+        // Re-chaining sectionBetween's end marker to make room for the new device standing
+        // section must not shrink deviceSection to nothing: this checks the section itself, not
+        // the whole document.
+        assertTrue(
+            deviceSection.contains("`DELETE /api/me/device`"),
+            "The Revoke this device section must still contain '`DELETE /api/me/device`' after re-chaining",
+        )
+        assertTrue(
+            deviceSection.contains("| `409 Conflict` |"),
+            "The Revoke this device section must still document its '409 Conflict' row after re-chaining",
+        )
+    }
+
+    @Test
+    fun theDeviceStandingSectionNamesItsMethodAndPath() {
+        // Pinned to the backtick-delimited code span the "Method and path" line actually uses, so
+        // a longer path sharing this prefix does not satisfy this check.
+        assertTrue(
+            deviceStandingSection.contains("`GET /api/me/device`"),
+            "The Device standing section must contain the exact code span '`GET /api/me/device`'",
+        )
+    }
+
+    @Test
+    fun theDeviceStandingSectionRequiresASessionAndRefusesTheDeviceFallback() {
+        assertTrue(
+            deviceStandingSection.contains("Authorization: Bearer"),
+            "The Device standing section must name the 'Authorization: Bearer' header",
+        )
+        // The refusal wraps across a markdown source line, so a bare contains() of the whole
+        // clause would fail on the embedded newline; whitespace is collapsed first so the pinned
+        // clause reads as one span and cannot be satisfied by prose that instead says the device
+        // id alone is accepted.
+        val normalizedSection = deviceStandingSection.replace(Regex("\\s+"), " ")
+        assertTrue(
+            normalizedSection.contains(
+                "presenting a device id alone, with no valid session token, answers `401 Unauthorized`",
+            ),
+            "The Device standing section must say a caller presenting a device id alone, with no " +
+                "valid session token, is refused with 401 Unauthorized",
+        )
+    }
+
+    @Test
+    fun theDeviceStandingSectionNamesItsTwoStatusRows() {
+        // Pinned to the table cell's own pipe-and-backtick boundary, not a bare digit: '401' is
+        // also echoed in the Authentication paragraph, so a bare digit check would still pass
+        // with the status row itself deleted.
+        val statusRows = listOf("| `200 OK` |", "| `401 Unauthorized` |")
+        for (statusRow in statusRows) {
+            assertTrue(
+                deviceStandingSection.contains(statusRow),
+                "The Device standing section must document the status row '$statusRow', not merely " +
+                    "mention the code in prose",
+            )
+        }
+    }
+
+    @Test
+    fun theDeviceStandingSectionAndTheDtoAgreeInBothDirections() {
+        val reflectedProperties = DeviceStandingResponse::class.memberProperties.map { it.name }.toSet()
+        assertTrue(
+            reflectedProperties.isNotEmpty(),
+            "DeviceStandingResponse must expose at least one property to check",
+        )
+        // Scoped to the field table alone, not the whole section: the section's own status table
+        // ("| `200 OK` | ... |") would otherwise be read as documented field names too, and this
+        // is the one test in the file that checks both directions.
+        val fieldTableSection = sectionBetween("### Device standing", "**Responses:**")
+        val documentedFields = documentedFieldNames(fieldTableSection).toSet()
+        assertTrue(
+            documentedFields.isNotEmpty(),
+            "Expected at least one documented field for DeviceStandingResponse",
+        )
+        for (field in reflectedProperties) {
+            assertTrue(
+                field in documentedFields,
+                "Property '$field' on DeviceStandingResponse must appear in the Device standing " +
+                    "section's response table",
+            )
+        }
+        for (field in documentedFields) {
+            assertTrue(
+                field in reflectedProperties,
+                "Documented field '$field' does not exist on DeviceStandingResponse",
+            )
+        }
     }
 
     @Test
