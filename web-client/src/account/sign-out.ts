@@ -4,6 +4,7 @@ import {
   readSessionToken,
 } from "../protocol/session-token";
 import { forgetRoomCode } from "../protocol/room-memory";
+import { forgetDeviceId } from "../protocol/device-id";
 
 /** The result of one sign-out attempt. */
 export type SignOutOutcome =
@@ -22,15 +23,17 @@ export type SignOutOutcome =
  * a `204` would, because a browser that kept a token the server has already
  * deleted is a defect no later screen can detect.
  *
- * Only `forgetSessionToken` and `forgetRoomCode` run — `ADR-0030` §8: sign-out
- * clears the token and only the token. The room code goes too, because
- * `ADR-0072` remembers a room only "until the player leaves it" and
- * `ADR-0030` §6 says signing out abandons the seat; a code the next boot
- * rejoined under a different identity would be refused by the server and
- * show that new player a refusal about a room they were never in. The device
- * id is never read, written or cleared here: `ADR-0030` §8 makes it
- * write-once for the life of the browser, and clearing it would abandon the
- * anonymous profile it names.
+ * `forgetSessionToken` and `forgetRoomCode` always run — `ADR-0030` §8: sign-out
+ * clears the token and only the token, for every other moment in the life of
+ * the browser. The room code goes too, because `ADR-0072` remembers a room
+ * only "until the player leaves it" and `ADR-0030` §6 says signing out
+ * abandons the seat; a code the next boot rejoined under a different identity
+ * would be refused by the server and show that new player a refusal about a
+ * room they were never in. `ADR-0131` supersedes that rule for one case only:
+ * when `request.handsANewProfile` is `true`, the device id is forgotten too,
+ * abandoning the anonymous profile it names so the next boot is issued a new
+ * one. `handsANewProfile` is answered by the caller, before this function is
+ * reached, and is trusted here.
  *
  * `reload` is injected, for `sign-in.ts`'s reason: a module that reached for
  * the real navigation API itself would be untestable under jsdom, and a full
@@ -44,6 +47,7 @@ export async function signOut(request: {
   readonly fetch: ApiFetch;
   readonly storage: Storage;
   readonly reload: () => void;
+  readonly handsANewProfile: boolean;
 }): Promise<SignOutOutcome> {
   const token = readSessionToken(request.storage);
   if (token === null) {
@@ -64,6 +68,7 @@ export async function signOut(request: {
 
   forgetSessionToken(request.storage);
   forgetRoomCode(request.storage);
+  if (request.handsANewProfile) forgetDeviceId(request.storage);
   request.reload();
 
   return { kind: "signed-out" };

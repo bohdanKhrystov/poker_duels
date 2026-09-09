@@ -223,7 +223,12 @@ async function driveEveryAccountCall(): Promise<{
   hrefsAfterEachCall.push(window.location.href);
 
   writeSessionToken(storage, TOKEN);
-  await signOut({ fetch: recorder.fetch, storage, reload });
+  await signOut({
+    fetch: recorder.fetch,
+    storage,
+    reload,
+    handsANewProfile: false,
+  });
   hrefsAfterEachCall.push(window.location.href);
 
   return { calls: recorder.calls, hrefsAfterEachCall };

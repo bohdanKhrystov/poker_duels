@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141007
 title: Signing out forgets the device id when it is told to, and never otherwise
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: S

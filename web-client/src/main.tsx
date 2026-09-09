@@ -130,7 +130,15 @@ const accountCalls: AccountCalls = {
       handle,
       password,
     }),
-  signOut: () => signOut({ fetch: plainFetch, storage: localStorage, reload }),
+  signOut: () =>
+    // TASK-141010 threads the real answer; false is ADR-0135 §6's keep, so
+    // behaviour is unchanged until that ticket lands.
+    signOut({
+      fetch: plainFetch,
+      storage: localStorage,
+      reload,
+      handsANewProfile: false,
+    }),
   revokeThisDevice: () =>
     revokeThisDevice({ fetch: plainFetch, storage: localStorage }),
   // Wrapped, unlike the three below: POST /api/auth/recovery-email accepts
