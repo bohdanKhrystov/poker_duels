@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141020
 title: A required prop is required in the typechecker
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: XS
