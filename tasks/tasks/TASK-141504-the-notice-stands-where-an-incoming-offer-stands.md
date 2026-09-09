@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141504
 title: The notice stands where an incoming offer stands, and nowhere else
 type: task
-status: ready
+status: done
 parent: STORY-1415
 module: web-client
 estimate: S
@@ -16,8 +16,8 @@ verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +5 passed \(5\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qE '^ *Tests +113 passed \(113\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/App.test.tsx 2>&1 | grep -qE '^ *Tests +36 passed \(36\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qE '^ *Tests +116 passed \(116\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/App.test.tsx 2>&1 | grep -qE '^ *Tests +38 passed \(38\)$'
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchControl.test.tsx 2>&1 | grep -qE '^ *Tests +12 passed \(12\)$'
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"role=\"status\"") { n++ } END { exit (n != 1) }' web-client/src/result/RematchNotice.tsx
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"useEffect") || index($0,"useLayoutEffect") || index($0,"setTimeout") || index($0,"setInterval") { n++ } END { exit (n != 0) }' web-client/src/result/RematchNotice.tsx
@@ -144,7 +144,11 @@ prototype and both discriminate: the `-0` grep finds nothing on the correct form
 
 - [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **5 passed (5)**, and the five
       tests are the five named above
-- [ ] `src/lobby/Lobby.test.tsx` reports **113 passed (113)**, `src/App.test.tsx` **36 passed (36)**
+- [ ] `src/lobby/Lobby.test.tsx` reports **116 passed (116)**, `src/App.test.tsx` **38 passed (38)**
+      — the ticket asked 113 and 36 against `develop` at `f20d07ed`; `TASK-140915` and
+      `TASK-141014` added three to the first and `TASK-141012` and `TASK-141019` two to the
+      second. Both files are byte-identical to `develop` here, so these are the base's numbers
+      and not this change's
       and `src/result/RematchControl.test.tsx` **12 passed (12)** — all measured on `develop` at
       `f20d07ed`, and none of the three files is opened here
 - [ ] `git diff --quiet develop -- web-client/src/lobby/Lobby.tsx` and the same for `App.tsx` both
