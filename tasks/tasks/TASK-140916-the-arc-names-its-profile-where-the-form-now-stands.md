@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140916
 title: The arc names its profile where the form now stands
 type: task
-status: ready
+status: done
 parent: STORY-1409
 module: web-client
 estimate: S
