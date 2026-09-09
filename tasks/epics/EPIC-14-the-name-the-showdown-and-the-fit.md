@@ -525,6 +525,8 @@ the second. The other row that remains in
 `docs/adr/README.md` is `DEC-154`, which no answer of this epic's registered — it is `ADR-0141`'s
 own, the architect's, and it blocks only the ticket that implements `ADR-0141`.
 
+**`DEC-159` is registered on 2026-09-09, the architect's, and it blocks `TASK-141003`.** `ADR-0135` requires `GET /api/me/device`, and the merged `DuelServerRoutesTest.theDeviceRouteIsNotInstalledOnAnyOtherVerb` asserts that route is **unwired**, citing `ADR-0049` §5's *"only DELETE was asked for"*. The ticket, correctly implemented, falsifies it; repairing the test takes the ticket to **four** files, which `lint_tickets.py` permits only under `atomic:` — and `ADR-0135` forbids `atomic:` in as many words. `ADR-0049`, `ADR-0068` and `ADR-0135` are **jointly unsatisfiable** and one must yield. The same ADR owes a second correction: §4's predicate `!namesPlayer(deviceId, playerId)` does not reproduce §5's own truth table — it inverts the first two rows — and `namesPlayer`'s single boolean cannot distinguish *resolves to nobody* from *resolves to someone else*, which §5 requires to differ.
+
 **`DEC-158` was registered on 2026-09-09, the architect's, and is open.** It was raised while
 splitting `STORY-1415`, by reading `design/screens/rematch-states.html` beside the component it
 was drawn from: measured on `develop` at `f20d07ed`, the card says `ImKate offers a rematch` and
