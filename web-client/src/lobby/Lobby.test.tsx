@@ -3104,4 +3104,68 @@ describe("the lobby", () => {
       screen.queryByRole("region", { name: "choose your name" }),
     ).toBeNull();
   });
+
+  it("puts the name form on the account screen, wired to the same handler the door holds", async () => {
+    const setName = vi.fn(
+      async (name: string) =>
+        ({ kind: "named", profile: aProfile({ displayName: name }) }) as const,
+    );
+
+    const profileState: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ displayName: null }),
+      duels: [],
+    };
+
+    const read = (): Promise<ProfileStripState> =>
+      Promise.resolve(profileState);
+
+    const accountCalls: AccountCalls = {
+      signUp: vi.fn(),
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+      revokeThisDevice: vi.fn(),
+      attachRecoveryEmail: vi.fn(),
+      forgotPassword: vi.fn(),
+      verifyEmail: vi.fn(),
+      resetPassword: vi.fn(),
+    };
+
+    render(
+      <AccountProvider calls={accountCalls}>
+        <ProfileProvider read={read}>
+          <SetNameProvider setName={setName}>
+            <DuelProvider
+              store={createDuelStore()}
+              send={vi.fn()}
+              forgetRoom={vi.fn()}
+            >
+              <Lobby />
+            </DuelProvider>
+          </SetNameProvider>
+        </ProfileProvider>
+      </AccountProvider>,
+    );
+
+    // Click the Account button to open the account screen
+    fireEvent.click(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    );
+
+    // Wait for the account screen to render, then find the name input
+    await screen.findByRole("region", { name: "account" });
+    const nameInput = document.getElementById("name-input") as HTMLInputElement;
+
+    // Type a name
+    fireEvent.change(nameInput, { target: { value: "TestPlayer" } });
+
+    // Click the "Set my name" button
+    fireEvent.click(screen.getByRole("button", { name: "Set my name" }));
+
+    // Assert the spy was called once with the typed string
+    await waitFor(() => {
+      expect(setName).toHaveBeenCalledOnce();
+      expect(setName).toHaveBeenCalledWith("TestPlayer");
+    });
+  });
 });

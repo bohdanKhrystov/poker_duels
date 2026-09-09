@@ -294,6 +294,7 @@ export function Lobby(): ReactElement {
           attachRecoveryEmail={
             account !== null ? account.attachRecoveryEmail : undefined
           }
+          setName={setName ?? undefined}
           onSignIn={() => open("sign-in")}
         />
         <button type="button" onClick={leave}>

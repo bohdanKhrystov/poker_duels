@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140915
 title: The front door hands the form to the account screen
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: web-client
 estimate: XS
@@ -16,7 +16,7 @@ verify:
   - cd web-client && npm ci
   - grep -qF "setName={setName ?? undefined}" web-client/src/lobby/Lobby.tsx
   - sh -c 'test $(grep -c "NameSurface" web-client/src/lobby/Lobby.tsx) -eq 2'
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (105 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (114 tests)"'
   - cd web-client && npm run check
   - cd web-client && npm run build
   - python3 .github/scripts/lint_tickets.py
@@ -89,8 +89,10 @@ Read, and do not edit:
 
 - [ ] `Lobby.test.tsx.puts the name form on the account screen, wired to the same handler the door
       holds` passes, and asserts the spy was called once with the typed string
-- [ ] `Lobby.test.tsx` reports exactly 105 tests — 104 measured on `develop` at `1c3c7fd9` plus the
-      one above
+- [ ] `Lobby.test.tsx` reports exactly 114 tests — 113 measured on `develop` at `8c001054` plus the
+      one above. The ticket was written against `1c3c7fd9`, where the file held 104; nine tests
+      landed between that commit and this one, so the original literal was stale before the work
+      started rather than wrong about what this change adds
 - [ ] `Lobby.tsx` names `NameSurface` exactly twice: the import and the front-door render
 - [ ] `npm run check` and `npm run build` exit 0 in `web-client`
 - [ ] Every command in `verify:` exits 0
