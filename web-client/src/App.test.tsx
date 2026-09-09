@@ -267,9 +267,21 @@ describe("App", () => {
     // Two needles, two different answers: one declaration, and a binding for
     // every account call whose endpoint takes no authentication — these four
     // plus the three recovery calls that join them on the same rule
-    // (forgotPassword, verifyEmail, resetPassword).
+    // (forgotPassword, verifyEmail, resetPassword), plus the device-standing
+    // read, which sets its own bearer header the same way.
     expect(occurrencesIn(mainSource, "const plainFetch")).toBe(1);
-    expect(occurrencesIn(mainSource, "fetch: plainFetch")).toBe(7);
+    expect(occurrencesIn(mainSource, "fetch: plainFetch")).toBe(8);
+  });
+
+  it("reads the device standing through the raw fetch, never the wrapper", () => {
+    // readDeviceStanding sets Authorization: Bearer itself, so binding it to
+    // apiFetch would attach a second header behind its back. [^}]* stops at
+    // the argument object's closing brace, so a binding that named apiFetch
+    // cannot pass by reaching the next binding's plainFetch.
+    const mainSource = readFileSync(resolve(here, "main.tsx"), "utf-8");
+
+    expect(mainSource).toMatch(/readDeviceStanding\([^}]*fetch: plainFetch/);
+    expect(mainSource).not.toMatch(/readDeviceStanding\([^}]*fetch: apiFetch/);
   });
 
   it("refuses to wrap sign-in, the one request that must carry nothing", () => {

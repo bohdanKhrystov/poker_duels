@@ -10,6 +10,8 @@ import ReactDOM from "react-dom/client";
 import { authorizedFetch } from "./account/authorized-fetch";
 import { jsonBodyFetch } from "./profile/json-body-fetch";
 import { AccountProvider, type AccountCalls } from "./account/account-provider";
+import { readDeviceStanding } from "./account/device-standing";
+import { DeviceStandingProvider } from "./account/device-standing-provider";
 import { signIn } from "./account/sign-in";
 import { signOut } from "./account/sign-out";
 import { signUp } from "./account/sign-up";
@@ -74,6 +76,14 @@ const readProfile = (): Promise<ProfileStripState> =>
     fetch: apiFetch,
     storage: localStorage,
   });
+
+// Module scope, so the provider's effect sees one stable reference and one
+// mount means one read. plainFetch, not apiFetch: this read sets
+// Authorization: Bearer itself, so the wrapper would attach a second one
+// behind its back — the same rule signIn, signUp, signOut and
+// revokeThisDevice already follow.
+const readStanding = (): Promise<boolean> =>
+  readDeviceStanding({ fetch: plainFetch, storage: localStorage });
 
 // Module scope, so the provider hands down one stable reference. A reference
 // that changed on every render would be a new function on every render.
@@ -281,22 +291,24 @@ if (container) {
     <React.StrictMode>
       <SignedInProvider>
         <AccountProvider calls={accountCalls}>
-          <ProfileProvider read={readProfile}>
-            <SetNameProvider setName={setName}>
-              <HistoryProvider>
-                <LadderProvider>
-                  <DuelProvider
-                    store={client.store}
-                    send={client.send}
-                    forgetRoom={client.forgetRoom}
-                    roomAwaited={client.roomAwaited}
-                  >
-                    <App />
-                  </DuelProvider>
-                </LadderProvider>
-              </HistoryProvider>
-            </SetNameProvider>
-          </ProfileProvider>
+          <DeviceStandingProvider read={readStanding}>
+            <ProfileProvider read={readProfile}>
+              <SetNameProvider setName={setName}>
+                <HistoryProvider>
+                  <LadderProvider>
+                    <DuelProvider
+                      store={client.store}
+                      send={client.send}
+                      forgetRoom={client.forgetRoom}
+                      roomAwaited={client.roomAwaited}
+                    >
+                      <App />
+                    </DuelProvider>
+                  </LadderProvider>
+                </HistoryProvider>
+              </SetNameProvider>
+            </ProfileProvider>
+          </DeviceStandingProvider>
         </AccountProvider>
       </SignedInProvider>
     </React.StrictMode>,

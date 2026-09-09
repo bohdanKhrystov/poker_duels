@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141013
 title: The account screen is told which sign-out it offers
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: web-client
 estimate: S
