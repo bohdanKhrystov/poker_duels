@@ -15,7 +15,7 @@ depends_on: [TASK-141506]
 verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +16 passed \(16\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +17 passed \(17\)$'
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchControl.test.tsx 2>&1 | grep -qE '^ *Tests +12 passed \(12\)$'
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"{NOT_NOW}") { n++ } END { exit (n != 1) }' web-client/src/result/RematchNotice.tsx
   - awk '$0 ~ /^[[:space:]]*(\/\/|\/?\*)/ { next } index($0,"type=\"button\"") { n++ } END { exit (n != 2) }' web-client/src/result/RematchNotice.tsx
@@ -98,7 +98,10 @@ and `design/screens/rematch-panel.html`, whose three panel frames each carry the
 
 ## Tests
 
-`RematchNotice.test.tsx` grows from **12** to **16**.
+`RematchNotice.test.tsx` grows from **13** to **17**. The ticket said 12 → 16; `TASK-141506`'s
+review added a thirteenth test — the `NOT_IN_DUEL` discriminator that its own acceptance criterion
+turned out to need — so the baseline moved after this ticket was written. The four new tests below
+are unchanged; only the arithmetic around them is.
 
 | Test | Proves |
 | --- | --- |
@@ -139,7 +142,7 @@ render is what covers *the dismissal does not survive*.
 
 ## Acceptance criteria
 
-- [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **16 passed (16)**
+- [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **17 passed (17)**
 - [ ] `src/result/RematchControl.test.tsx` reports **12 passed (12)** — measured on `develop` at
       `f20d07ed`, and that file is not opened
 - [ ] `RematchNotice.tsx` has, on non-comment lines, `{NOT_NOW}` **1**, `type="button"` **2**,
