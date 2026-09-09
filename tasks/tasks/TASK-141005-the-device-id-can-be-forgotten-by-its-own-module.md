@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141005
 title: The device id can be forgotten, by its own module and no other
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: XS
@@ -14,7 +14,7 @@ labels: [client, account]
 depends_on: [TASK-141004]
 verify:
   - cd web-client && npm ci
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/protocol/device-id.test.ts 2>&1 | grep -qF "device-id.test.ts  (7 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/protocol/device-id.test.ts 2>&1 | grep -qF "device-id.test.ts  (8 tests)"'
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/protocol/one-module-owns-each-storage-key.test.ts 2>&1 | grep -qF "one-module-owns-each-storage-key.test.ts  (4 tests)"'
   - sh -c 'cd web-client && test $(grep -c "export function " src/protocol/device-id.ts) -eq 3'
   - sh -c 'cd web-client && test $(grep -c "removeItem" src/protocol/device-id.ts) -eq 1'
@@ -94,7 +94,9 @@ Node 24 shadows and leaves inert under Vitest (`DEC-032`).
 
 ## Acceptance criteria
 
-- [ ] `device-id.test.ts` reports `(7 tests)` and all pass
+- [ ] `device-id.test.ts` reports `(8 tests)` and all pass — the ticket asked for 7, but review
+      proved a conditional `removeItem` passed all 7 and the whole 1238-test suite, so an eighth
+      test pins `ADR-0135` §2's *unconditional* removal by observing the call with the key absent
 - [ ] `one-module-owns-each-storage-key.test.ts` reports `(4 tests)` and all pass
 - [ ] `grep -c "export function "` on `device-id.ts` is 3, and `grep -c "removeItem"` is 1
 - [ ] `git diff --exit-code` over `sign-out.ts` and `connection.ts` exits 0
