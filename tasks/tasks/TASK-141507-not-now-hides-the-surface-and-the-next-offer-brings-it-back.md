@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141507
 title: Not now hides the surface, sends nothing, and the next offer brings it back
 type: task
-status: backlog
+status: ready
 parent: STORY-1415
 module: web-client
 estimate: S

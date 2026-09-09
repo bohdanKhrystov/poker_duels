@@ -8,6 +8,7 @@ import {
   REMATCH_LABEL,
   DEALING_LEAD,
   DEALING_TAIL,
+  ROOM_GONE,
 } from "./rematch-text";
 
 /**
@@ -58,7 +59,11 @@ export function RematchNotice(): ReactElement | null {
       role="status"
       className="fixed right-5 bottom-5 left-5 z-10 mx-auto flex max-w-md flex-col gap-4 rounded-medium bg-surface-raised p-5 shadow-pop"
     >
-      {accepted ? (
+      {state.refusal === "UNKNOWN_ROOM" ? (
+        <p className="rounded-small border border-accent bg-accent-subtle px-4 py-3 text-body">
+          {ROOM_GONE}
+        </p>
+      ) : accepted ? (
         <p className="text-center text-text-muted">
           {DEALING_LEAD}
           <br />
