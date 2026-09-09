@@ -16,8 +16,8 @@ verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.screens.test.tsx 2>&1 | grep -qE '^ *Tests +8 passed \(8\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +16 passed \(16\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/App.test.tsx 2>&1 | grep -qE '^ *Tests +36 passed \(36\)$'
+  - git diff --quiet develop -- web-client/src/result/RematchNotice.test.tsx
+  - git diff --quiet develop -- web-client/src/App.test.tsx
   - git diff --quiet develop -- web-client/src/App.tsx
   - git diff --quiet develop -- web-client/src/lobby/Lobby.tsx
   - git diff --quiet develop -- web-client/src/result/RematchNotice.tsx
@@ -113,8 +113,12 @@ observable half of a claim whose real proof is structural.
       new ones being the four named above
 - [ ] The test file carries a comment recording that the front-door `Enter` case is vacuous by the
       gate, and a comment recording which of `ADR-0123` §2's prohibitions remain a reader's
-- [ ] `src/result/RematchNotice.test.tsx` reports **16 passed (16)** and `src/App.test.tsx`
-      **36 passed (36)**
+- [ ] `src/result/RematchNotice.test.tsx` and `src/App.test.tsx` are **byte-identical to
+      `develop`** — `git diff --quiet` on each. The ticket pinned them at 16 and 36 absolute
+      tests; both were stale on its own base `11c6ac78` (17 and 38), and both are files this
+      ticket does not modify. The five diff guards it already carried covered the **production**
+      files — `App.tsx`, `RematchNotice.tsx` — and not their test counterparts, which is the gap
+      `TASK-000108` names
 - [ ] `git diff --quiet develop` is clean for `App.tsx`, `Lobby.tsx`, `RematchNotice.tsx`,
       `RematchControl.tsx` and `SignInForm.tsx`
 - [ ] **Shown red, then reverted, twice.** (a) Move `<RematchNotice />` inside `SignInForm`'s
