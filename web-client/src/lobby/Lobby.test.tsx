@@ -18,6 +18,7 @@ import {
   AccountProvider,
   type AccountCalls,
 } from "../account/account-provider";
+import { DeviceStandingProvider } from "../account/device-standing-provider";
 import type { ProfileStripState } from "../profile/profile-strip";
 import { writeRoomCode, type SeatView, type ServerMessage } from "../protocol";
 import type { SetNameOutcome } from "../profile/set-name";
@@ -46,6 +47,9 @@ import {
   SIGN_IN_HEADING,
   SIGN_IN_LABEL,
   SIGN_IN_REFUSED,
+  SIGN_OUT_HANDS_A_NEW_PROFILE,
+  SIGN_OUT_LABEL,
+  SIGN_OUT_WARNING,
   SIGN_UP_LABEL,
   SIGNED_UP,
 } from "../account/account-text";
@@ -3161,5 +3165,140 @@ describe("the lobby", () => {
       expect(setName).toHaveBeenCalledOnce();
       expect(setName).toHaveBeenCalledWith("TestPlayer");
     });
+  });
+
+  // TASK-141014: the last literal goes. `Lobby` no longer decides which
+  // sentence the account screen shows — it reads `useSignOutHandsANewProfile`
+  // and hands the answer straight through, unconditionally and above every
+  // early return, the same shape `signUp` above already documents. Two
+  // renders in one test, one wrapping in a `DeviceStandingProvider` whose
+  // `read` resolves `true` and one resolving `false`, because a single
+  // render cannot tell a threaded value from a constant (`ADR-0131`
+  // §Consequences).
+  it("the account screen states the sign-out the server described", async () => {
+    signedInWiring.signedIn = true;
+
+    render(
+      <DeviceStandingProvider read={() => Promise.resolve(true)}>
+        <AccountProvider calls={accountCallsFixture()}>
+          <DuelProvider
+            store={createDuelStore()}
+            send={vi.fn()}
+            forgetRoom={vi.fn()}
+          >
+            <Lobby />
+          </DuelProvider>
+        </AccountProvider>
+      </DeviceStandingProvider>,
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: SIGN_OUT_LABEL }),
+    );
+
+    expect(await screen.findByText(SIGN_OUT_HANDS_A_NEW_PROFILE)).toBeDefined();
+    expect(screen.queryByText(SIGN_OUT_WARNING)).toBeNull();
+
+    cleanup();
+    // Two renders in one test share `window.location.hash` (ADR-0114's
+    // routing state lives on the address, not in any React tree this test
+    // unmounts): without resetting it, the second render would start
+    // already on the account screen, past the door it needs to press.
+    window.location.hash = "";
+    signedInWiring.signedIn = true;
+
+    render(
+      <DeviceStandingProvider read={() => Promise.resolve(false)}>
+        <AccountProvider calls={accountCallsFixture()}>
+          <DuelProvider
+            store={createDuelStore()}
+            send={vi.fn()}
+            forgetRoom={vi.fn()}
+          >
+            <Lobby />
+          </DuelProvider>
+        </AccountProvider>
+      </DeviceStandingProvider>,
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: SIGN_OUT_LABEL }),
+    );
+
+    expect(await screen.findByText(SIGN_OUT_WARNING)).toBeDefined();
+    expect(screen.queryByText(SIGN_OUT_HANDS_A_NEW_PROFILE)).toBeNull();
+  });
+
+  // The seam where the whole chain — provider, lobby, screen, control, call —
+  // becomes one observable assertion: the press that confirms sign-out
+  // carries the provider's own answer to `AccountCalls.signOut`, not a
+  // constant that happens to read true in this test. Two wrappings, both
+  // polarities, for the same reason the test above carries both.
+  it("the press carries that same answer to the account call", async () => {
+    signedInWiring.signedIn = true;
+    const signOutTrue = vi.fn();
+
+    render(
+      <DeviceStandingProvider read={() => Promise.resolve(true)}>
+        <AccountProvider calls={accountCallsFixture({ signOut: signOutTrue })}>
+          <DuelProvider
+            store={createDuelStore()}
+            send={vi.fn()}
+            forgetRoom={vi.fn()}
+          >
+            <Lobby />
+          </DuelProvider>
+        </AccountProvider>
+      </DeviceStandingProvider>,
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: SIGN_OUT_LABEL }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: SIGN_OUT_LABEL }),
+    );
+
+    expect(signOutTrue).toHaveBeenCalledWith(true);
+
+    cleanup();
+    window.location.hash = "";
+    signedInWiring.signedIn = true;
+    const signOutFalse = vi.fn();
+
+    render(
+      <DeviceStandingProvider read={() => Promise.resolve(false)}>
+        <AccountProvider calls={accountCallsFixture({ signOut: signOutFalse })}>
+          <DuelProvider
+            store={createDuelStore()}
+            send={vi.fn()}
+            forgetRoom={vi.fn()}
+          >
+            <Lobby />
+          </DuelProvider>
+        </AccountProvider>
+      </DeviceStandingProvider>,
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: ACCOUNT_HEADING }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: SIGN_OUT_LABEL }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: SIGN_OUT_LABEL }),
+    );
+
+    expect(signOutFalse).toHaveBeenCalledWith(false);
   });
 });

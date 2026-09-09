@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141014
 title: The lobby hands the screen the answer the server gave
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: S
@@ -14,7 +14,7 @@ labels: [client, account]
 depends_on: [TASK-141013]
 verify:
   - cd web-client && npm ci
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (115 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (116 tests)"'
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/App.test.tsx 2>&1 | grep -qF "App.test.tsx  (37 tests)"'
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/e2e/claimed-here-recovered-there.test.tsx 2>&1 | grep -qF "claimed-here-recovered-there.test.tsx  (8 tests)"'
   - sh -c 'cd web-client && ! grep -q "signOutHandsANewProfile={false}" src/lobby/Lobby.tsx'
@@ -74,7 +74,8 @@ Read, do not edit: `web-client/src/account/device-standing-provider.tsx`,
 
 ## Tests
 
-`Lobby.test.tsx`, **113 today → 115**. No merged test is edited: every one of the 113 renders
+`Lobby.test.tsx`, **114 today → 116**. The ticket said 113, measured before `TASK-140915` added
+one; `develop` holds 114 at `74a4f166`. No merged test is edited: every one of the 114 renders
 `Lobby` without a `DeviceStandingProvider` above it, so the hook answers its context default
 `false` and the account branch behaves exactly as it did.
 
@@ -86,7 +87,7 @@ Read, do not edit: `web-client/src/account/device-standing-provider.tsx`,
 ## What would still pass if the coder were wrong
 
 - **Passing `false`, or passing `signedIn`** — the two shapes that ship today's behaviour — pass
-  all 113 merged tests, because none of them mounts a provider. Both new tests fail, and they fail
+  all 114 merged tests, because none of them mounts a provider. Both new tests fail, and they fail
   on the `true` half specifically, which is why each carries both polarities rather than only the
   new one.
 - **Reading the hook inside the `account` branch** works at runtime for every path a test drives
@@ -105,7 +106,7 @@ Read, do not edit: `web-client/src/account/device-standing-provider.tsx`,
 
 ## Acceptance criteria
 
-- [ ] `Lobby.test.tsx` reports `(115 tests)` and all pass
+- [ ] `Lobby.test.tsx` reports `(116 tests)` and all pass
 - [ ] `the account screen states the sign-out the server described` passes
 - [ ] `the press carries that same answer to the account call` passes
 - [ ] `App.test.tsx` reports `(37 tests)` and `claimed-here-recovered-there.test.tsx` reports

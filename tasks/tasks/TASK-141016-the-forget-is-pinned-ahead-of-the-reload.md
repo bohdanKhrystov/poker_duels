@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141016
 title: The forget is pinned ahead of the reload
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: web-client
 estimate: XS
