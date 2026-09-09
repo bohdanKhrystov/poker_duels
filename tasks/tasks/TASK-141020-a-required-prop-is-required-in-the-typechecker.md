@@ -14,7 +14,7 @@ labels: [client, account]
 depends_on: [TASK-141013]
 verify:
   - cd web-client && npm ci
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/SignOutControl.test.tsx 2>&1 | grep -qF "SignOutControl.test.tsx  (9 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/SignOutControl.test.tsx 2>&1 | grep -qF "SignOutControl.test.tsx  (11 tests)"'
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (25 tests)"'
   - sh -c 'cd web-client && test $(grep -c "@ts-expect-error" src/account/SignOutControl.test.tsx) -eq 1'
   - sh -c 'cd web-client && test $(grep -c "@ts-expect-error" src/account/AccountScreen.test.tsx) -eq 1'
@@ -67,7 +67,11 @@ Read, do not edit: `web-client/src/account/SignOutControl.tsx`,
   assertion.
 - Each test also asserts the component still rendered, so it is a test and not a bare type
   annotation.
-- Count gates: `SignOutControl.test.tsx` 8 → 9, `AccountScreen.test.tsx` 24 → 25.
+- Count gates: `SignOutControl.test.tsx` 10 → 11, `AccountScreen.test.tsx` 24 → 25.
+  **I wrote 8 → 9 and it was stale before the ticket was filed**: `TASK-141017` had already added
+  its two adjacency tests, taking the file to 10. That is the twenty-fourth stale literal in this
+  epic and the second I authored myself, from the same cause as the other twenty-three — measuring
+  at authoring rather than at dispatch. `AccountScreen.test.tsx`'s 24 → 25 was right.
 
 ## Out of scope
 
@@ -101,7 +105,7 @@ Read, do not edit: `web-client/src/account/SignOutControl.tsx`,
 
 ## Acceptance
 
-- [ ] `SignOutControl.test.tsx` reports `(9 tests)` and `AccountScreen.test.tsx` `(25 tests)`, all
+- [ ] `SignOutControl.test.tsx` reports `(11 tests)` and `AccountScreen.test.tsx` `(25 tests)`, all
       passing
 - [ ] Making either prop optional with a `= false` default makes `npm run check` fail on the unused
       `@ts-expect-error`, and both files are restored afterwards
