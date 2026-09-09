@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141009
 title: The confirmation states the sign-out it is about to make
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: S
@@ -15,7 +15,7 @@ depends_on: [TASK-141008]
 verify:
   - cd web-client && npm ci
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/SignOutControl.test.tsx 2>&1 | grep -qF "SignOutControl.test.tsx  (8 tests)"'
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (20 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (23 tests)"'
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/App.test.tsx 2>&1 | grep -qF "App.test.tsx  (36 tests)"'
   - sh -c 'cd web-client && test $(grep -c "signOutWarning" src/account/SignOutControl.tsx) -eq 2'
   - sh -c 'cd web-client && ! grep -q "SIGN_OUT_WARNING" src/account/SignOutControl.tsx'
@@ -132,7 +132,10 @@ The three new tests:
 ## Acceptance criteria
 
 - [ ] `SignOutControl.test.tsx` reports `(8 tests)` and all pass
-- [ ] `AccountScreen.test.tsx` reports `(20 tests)` and `App.test.tsx` reports `(36 tests)`, all
+- [ ] `AccountScreen.test.tsx` reports `(23 tests)` — the ticket asked 20, measured before
+      `TASK-140914` added the name form and its five tests; this ticket leaves the file
+      untouched, so 23 is both what `develop` holds and what this change makes — and
+      `App.test.tsx` reports `(36 tests)`, all
       passing
 - [ ] `grep -c "signOutWarning"` in `SignOutControl.tsx` is 2 and `SIGN_OUT_WARNING` appears 0 times
 - [ ] `grep -c "signOutHandsANewProfile={false}"` in `AccountScreen.tsx` is 1
