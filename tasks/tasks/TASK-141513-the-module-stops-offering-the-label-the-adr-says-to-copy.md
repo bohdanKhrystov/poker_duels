@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141513
 title: The module stops offering the label the ADR says to copy
 type: task
-status: backlog
+status: ready
 parent: STORY-1415
 module: web-client
 estimate: XS
