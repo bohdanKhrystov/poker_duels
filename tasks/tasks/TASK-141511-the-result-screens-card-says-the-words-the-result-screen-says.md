@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141511
 title: The result screen's card says the words the result screen says
 type: task
-status: ready
+status: done
 parent: STORY-1415
 module: design
 estimate: XS

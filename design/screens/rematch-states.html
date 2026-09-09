@@ -64,19 +64,19 @@
   <p class="eyebrow">Poker Duels · Screens</p>
   <h1>Rematch states</h1>
   <p class="lede">A rematch starts only when both seats want it (STORY-0206). Three quiet
-  states on the duel-end layout — no countdowns, no pressure, the offer just stands until
+  states on the duel-end layout — no timers, no pressure, the offer just stands until
   the room is cleared.</p>
 
   <div class="frames">
     <div class="frame">
       <h2>You offered</h2>
-      <div class="offered">Rematch offered — waiting for ImKate</div>
+      <div class="offered">Rematch offered — waiting for your rival</div>
       <p class="note">the button becomes the state; accent-subtle fill, no spinner</p>
     </div>
 
     <div class="frame">
       <h2>They offered</h2>
-      <div class="theirs">ImKate offers a rematch</div>
+      <div class="theirs">Your rival offers a rematch</div>
       <button class="btn fill">Rematch</button>
       <p class="note">their offer sits above your live button — accepting is the same
       press it always was</p>
@@ -88,6 +88,12 @@
         dealing hand 1…</div>
       <p class="note">the dealer flips per the room's rematch rule; stacks reset to
       10,000; the same room, the same link</p>
+    </div>
+
+    <div class="frame">
+      <h2>Room is gone</h2>
+      <div class="dealing">That duel room is gone.</div>
+      <p class="note">the room lifecycle ends when either seat leaves before a new hand begins</p>
     </div>
   </div>
 </div>

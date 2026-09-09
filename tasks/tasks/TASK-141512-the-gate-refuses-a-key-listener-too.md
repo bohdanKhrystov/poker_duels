@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141512
 title: The gate refuses a key listener too
 type: task
-status: backlog
+status: ready
 parent: STORY-1415
 module: web-client
 estimate: XS
