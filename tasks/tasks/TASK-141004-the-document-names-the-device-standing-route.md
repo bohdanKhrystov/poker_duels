@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141004
 title: The document names the device-standing route
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: poker-server
 estimate: S
@@ -14,7 +14,7 @@ labels: [server, docs, account]
 depends_on: [TASK-141003]
 verify:
   - ./gradlew :poker-server:test --tests 'duels.poker.server.http.HttpEndpointDocumentationTest' -PrequireDocker=true
-  - grep -q 'tests="49" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.http.HttpEndpointDocumentationTest.xml
+  - grep -q 'tests="50" skipped="0" failures="0" errors="0"' poker-server/build/test-results/test/TEST-duels.poker.server.http.HttpEndpointDocumentationTest.xml
   - awk 'index($0,"### Device standing"){n++} END{exit (n!=1)}' docs/protocol.md
   - awk 'index($0,"### Device standing"){f=1} index($0,"### Recent duels endpoint"){f=0} f && index($0,"`GET /api/me/device`"){n++} END{exit (n<1)}' docs/protocol.md
   - awk 'index($0,"### Revoke this device"){f=1} index($0,"### Device standing"){f=0} f && index($0,"`DELETE /api/me/device`"){n++} END{exit (n!=1)}' docs/protocol.md
@@ -80,7 +80,9 @@ Read, do not edit: `docs/adr/ADR-0135-the-server-says-which-sign-out-this-is-and
 
 ## Tests
 
-`HttpEndpointDocumentationTest`, **44 today → 49**.
+`HttpEndpointDocumentationTest`, **45 today → 50**. The ticket was written against a baseline of
+44; `TASK-140907` (`4613eeb8`) added one before this ticket started, so the original 44 → 49 was
+stale before any work began rather than wrong about what this change adds.
 
 | Test | Proves |
 | --- | --- |
@@ -90,13 +92,13 @@ Read, do not edit: `docs/adr/ADR-0135-the-server-says-which-sign-out-this-is-and
 | `theDeviceStandingSectionAndTheDtoAgreeInBothDirections` | every documented field name in the section is a property of `DeviceStandingResponse`, **and** every property of `DeviceStandingResponse` is documented in the section. `ADR-0142` §Context names this file's asymmetry as a defect — *"No DTO in that file gets both, so for every one of them a staleness of one kind is invisible"* — and this is the first section that closes it |
 | `theRevokeSectionIsStillWhereItWas` | after the re-chaining, `deviceSection` still contains `` `DELETE /api/me/device` `` and its `` | `409 Conflict` | `` row. The file already carries `theSetNameSectionIsStillWhereItWas` for exactly this reason, written when the device section was first chained in; this is the same guard for the same kind of move |
 
-The 44 merged tests are **not edited**, and the count gate of 49 is 44 + 5. Their assertions are
+The 45 merged tests are **not edited**, and the count gate of 50 is 45 + 5. Their assertions are
 `contains` over `deviceSection`, which shrinks rather than moves, and all of what they name stays
 inside it.
 
 ## What would still pass if the coder were wrong
 
-- **Adding the section without re-chaining** leaves all 44 green and the five new ones green too:
+- **Adding the section without re-chaining** leaves all 45 green and the five new ones green too:
   `deviceStandingSection` would not exist to be wrong, and `deviceSection` would silently span both
   sections. `theRevokeSectionIsStillWhereItWas` is the only thing that would notice — and only
   because it names the revoke section's own `409` row, which the new section is forbidden to carry.
@@ -110,7 +112,7 @@ inside it.
 
 ## Acceptance criteria
 
-- [ ] `HttpEndpointDocumentationTest` reports `tests="49" skipped="0" failures="0" errors="0"`
+- [ ] `HttpEndpointDocumentationTest` reports `tests="50" skipped="0" failures="0" errors="0"`
 - [ ] All five named tests pass
 - [ ] The `### Device standing` heading gate (`n != 1`) exits 0
 - [ ] The two frame-scoped path gates exit 0 (`GET` inside the new section, exactly one `DELETE`

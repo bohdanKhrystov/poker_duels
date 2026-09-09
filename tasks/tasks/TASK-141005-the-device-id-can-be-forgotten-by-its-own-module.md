@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141005
 title: The device id can be forgotten, by its own module and no other
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: web-client
 estimate: XS

@@ -298,6 +298,35 @@ credential: returning one to a caller who did not already hold it would hand ove
 sign in as that profile. A "your devices" listing is refused for the same reason — refused, not
 merely absent (`ADR-0049` §5's last bullet).
 
+### Device standing
+
+**Method and path:** `GET /api/me/device`
+
+**Authentication:** `Authorization: Bearer <token>` — the session token `POST /api/auth/sign-in`
+returned. There is no `X-Device-Id` fallback here: presenting a device id alone, with no valid
+session token, answers `401 Unauthorized`, the same words the revoke section uses for the same
+rule. The `X-Device-Id` header travels alongside the token when the browser holds one, and the
+answer is computed from the two credentials presented **on that same request**, never from a
+stored association.
+
+**Request body:** None.
+
+**Response:** `200 OK` with a JSON object:
+
+| Field | Type | Semantics |
+| --- | --- | --- |
+| signOutHandsANewProfile | boolean | `true` when the caller's next sign-out would hand the browser a new, empty profile rather than return it to the one it already owns: no device id was presented, the presented device id resolves to no live binding, or the presented device id names the caller's own player. `false` only when the presented device id names, through a live binding, a different player. The answer is a fact about the pair of credentials presented on this one request, never about the player. |
+
+**Responses:**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200 OK` | The object above | The comparison described above, computed fresh for this request. |
+| `401 Unauthorized` | Empty | No valid session was presented — including a request presenting only a device id and no `Authorization` header, and an invalid, expired, or unknown token. |
+
+**No device id ever appears in the body of this response**, for the same reason the revoke
+section gives: a device id is a bearer credential.
+
 ### Recent duels endpoint
 
 **Method and path:** `GET /api/me/duels`
