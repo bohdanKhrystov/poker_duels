@@ -3,7 +3,7 @@ schema: 2
 id: TASK-000107
 title: The split procedure carries the design-card rule ADR-0091 placed in it
 type: task
-status: ready
+status: done
 parent: STORY-0001
 estimate: S
 tier: sonnet

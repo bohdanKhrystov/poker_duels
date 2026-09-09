@@ -141,6 +141,56 @@ Exactly one ticket should be startable at the start of the story: `status: ready
 dependencies `done`. The rest are `backlog` and the driver promotes them as their dependencies
 merge.
 
+## A new screen owes a card
+
+This section carries the rule `ADR-0091` §2 placed here, sharpened by `ADR-0145` §§2–3, so a split
+can answer *does this story owe a card* and *is this card minting or composing* without opening
+either ADR. `ADR-0091` and `ADR-0145` are the durable record; this file is the working copy, the
+one place the rule lives.
+
+**The trigger — `ADR-0091` §2.** At split time, a story whose tickets put a new screen in front of
+a player names, in its `## Design notes`, the card or cards under `design/screens/` that its
+screens implement. If no such card exists, the split's first ticket is the card, and it merges
+before the ticket implementing the screen is startable. The mechanical floor of *new screen* is a
+new member of the `Screen` union in `web-client/src/routing/screen.ts`. A new player-facing surface
+behind an **existing** slug — a panel, an offer, a profile strip — is the same rule applied by your
+judgment; the floor sees slugs only, which is `ADR-0091` §Consequences' own admission.
+
+**Who authors the card — `ADR-0091` §3.** Minting (a new token, a new component, new visual
+language) is worked interactively with the human, because taste does not survive a verify block.
+Composing (a screen card assembled from the settled vocabulary) is an ordinary dispatched ticket:
+`module: design`, estimate `S` read as one card one file, `review: light`. Either way the verdict
+that matters is the human's visual one (`ADR-0024` §3) and it may trail the merge — `ADR-0145` §1
+settles that the split governs authorship, never approval.
+
+**The transcriber test — `ADR-0145` §2.** A card holds two kinds of drawing. Subject is what the
+product will render; a coder transcribes it into `web-client/`. Scaffolding is what the card draws
+so the subject reads — `.wrap`, `.eyebrow`, `.lede`, `.frame`, `.note`, and stand-ins such as
+`.stub` and `.screen`. The test, applied per drawing at split time:
+name the file that will transcribe it. A client file that exists, or one a ticket in the same
+split will write, means the ticket mints that drawing. *Nothing; it exists so the subject reads*
+means the drawing is scaffolding, and
+scaffolding is composing, at any level of detail — detail is not the axis, since
+it could only be graded after the drawing exists, which is one dispatch too late. Direction:
+minting runs card → client, so a ticket copying *from* **shipped code** into a card mints nothing.
+Escalation: scaffolding stops being scaffolding **one transcriber away** — the moment a client file
+is pointed at a stand-in, it is subject and the next ticket touching it is minting.
+
+**The three-clause floor — `ADR-0145` §3.** A card ticket is minting, without argument, if any of
+these is true: it writes `design/tokens/tokens.css`; it creates a file under `design/components/`
+or `design/graphics/`; or its scaffolding depicts a named product screen with no card under
+`design/screens/`, checked with `ls design/screens/`. Above the floor, judge by the transcriber
+test; the floor is sufficient for minting and not necessary, and it misses a genuinely new
+treatment drawn inside an otherwise ordinary screen card, which only the transcriber test catches
+(`ADR-0145` §Consequences).
+
+**What the floor cannot be read from, said out loud.** `ADR-0145` §3 says all three clauses are
+answerable from the ticket's `## Files` table plus a directory listing. Clauses 1 and 2 are.
+Clause 3 is not — no Files table says what a drawing depicts, so it is read from the scope you are writing, not from `ls`.
+If your ticket does not say what its stand-ins stand in for, clause 3 is unanswerable: write the
+stand-in's subject into the ticket's own scope, or record the clause as unanswerable there, rather
+than guessing.
+
 ## When you are given an epic
 
 `tasks/BOARD.md` states when this happens: *epics are written when the one before them is close to
