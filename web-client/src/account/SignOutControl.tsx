@@ -1,5 +1,5 @@
 import { useState, type ReactElement } from "react";
-import { CANCEL, SIGN_OUT_LABEL, SIGN_OUT_WARNING } from "./account-text";
+import { CANCEL, SIGN_OUT_LABEL, signOutWarning } from "./account-text";
 import type { SignOutOutcome } from "./sign-out";
 
 type Step = { readonly kind: "offered" } | { readonly kind: "confirming" };
@@ -15,13 +15,20 @@ type Step = { readonly kind: "offered" } | { readonly kind: "confirming" };
  * of one.
  *
  * Offered only while `signedIn` — there is nothing to sign out of otherwise. Pressing
- * `SIGN_OUT_LABEL` only asks: it shows `SIGN_OUT_WARNING` and a confirming control, and
- * `props.signOut` is called from nowhere else. An in-page step, never a native dialog, exactly
- * as `RevokeControl` does — one shape for both confirmations on this screen.
+ * `SIGN_OUT_LABEL` only asks: it shows the sentence chosen by `props.signOutHandsANewProfile`
+ * and a confirming control, and `props.signOut` is called from nowhere else. An in-page step,
+ * never a native dialog, exactly as `RevokeControl` does — one shape for both confirmations on
+ * this screen.
+ *
+ * `signOutHandsANewProfile` is required, not optional, for the reason `ADR-0135` §7 gives for
+ * requiring the same value on `signOut`: a component that can be mounted without it is a
+ * component whose absence is invisible from the outside. `signedIn` still decides whether a
+ * sign-out exists at all, and never which of the two it is.
  */
 export function SignOutControl(props: {
   readonly signedIn: boolean;
-  readonly signOut: () => Promise<SignOutOutcome>;
+  readonly signOutHandsANewProfile: boolean;
+  readonly signOut: (handsANewProfile: boolean) => Promise<SignOutOutcome>;
 }): ReactElement | null {
   const [step, setStep] = useState<Step>({ kind: "offered" });
 
@@ -31,11 +38,11 @@ export function SignOutControl(props: {
 
   if (step.kind === "confirming") {
     const confirm = (): void => {
-      void props.signOut();
+      void props.signOut(props.signOutHandsANewProfile);
     };
     return (
       <div>
-        <p>{SIGN_OUT_WARNING}</p>
+        <p>{signOutWarning(props.signOutHandsANewProfile)}</p>
         <button
           type="button"
           className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"

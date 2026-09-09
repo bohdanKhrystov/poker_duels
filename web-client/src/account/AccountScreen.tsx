@@ -174,7 +174,12 @@ export function AccountScreen(props: {
         </button>
       )}
       {signOut !== undefined && (
-        <SignOutControl signedIn={signedIn} signOut={signOut} />
+        // A literal until `TASK-141013` wires this screen's own answer through.
+        <SignOutControl
+          signedIn={signedIn}
+          signOutHandsANewProfile={false}
+          signOut={signOut}
+        />
       )}
     </section>
   );
