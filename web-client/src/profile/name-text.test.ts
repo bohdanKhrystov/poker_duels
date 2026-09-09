@@ -3,6 +3,8 @@ import {
   NAME_REMOVED_HEADING,
   NAME_REMOVED_BODY,
   PERMANENCE_LINE,
+  CHANGEABLE_LINE,
+  SPENT_LINE,
   refusalSentence,
   mayTryAgain,
   nameOrNone,
@@ -113,5 +115,14 @@ describe("the name surface's words", () => {
     expect(result).not.toContain("deleted");
     expect(result).not.toMatch(/moderat/i); // Match case-insensitively
     expect(result).not.toContain("former");
+  });
+
+  it("says a name can be changed and that the one given up is gone", () => {
+    const changeableText = "You can change your name whenever you like.";
+    expect(CHANGEABLE_LINE).toBe(changeableText);
+
+    const spentText =
+      "But the name you give up is gone for good — you cannot take it back, and nobody else can take it either.";
+    expect(SPENT_LINE).toBe(spentText);
   });
 });

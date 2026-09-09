@@ -11,6 +11,19 @@ export const PERMANENCE_LINE =
   "A name is chosen once. You cannot change it later, and it can be taken away.";
 
 /**
+ * The sentence from `design/screens/account.html` `NAME-FORM: changeable:` marker,
+ * expressing the first obligation in ADR-0130 §5: that the name can be changed later.
+ */
+export const CHANGEABLE_LINE = "You can change your name whenever you like.";
+
+/**
+ * The sentence from `design/screens/account.html` `NAME-FORM: spent:` marker,
+ * expressing the second obligation in ADR-0130 §5: that the name given up is gone for good.
+ */
+export const SPENT_LINE =
+  "But the name you give up is gone for good — you cannot take it back, and nobody else can take it either.";
+
+/**
  * The sentence describing why a name could not be set.
  *
  * Each refusal kind has its own sentence, addressing the player directly
