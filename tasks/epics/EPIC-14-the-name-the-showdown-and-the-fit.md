@@ -507,9 +507,9 @@ repair is measured** — nothing else establishes the shape the repair is aimed 
 human's: relaxing `R3` for the scale, raising the judged shape, and any list of devices the product
 commits to.
 
-**Two are open, and neither blocks anything: one this epic's own newest answer spawned, and one the last split raised.** Every decision this epic
+**Three are open, and none blocks anything: one this epic's own newest answer spawned, one the last split raised, and one [`ADR-0145`](../../docs/adr/ADR-0145-a-cards-scaffolding-is-composing-and-the-transcriber-names-the-mint.md) registered while answering a third.** Every decision this epic
 raised or inherited is answered by a merged ADR — the fourteen product-owner answers recorded below
-plus `DEC-156`'s, and six the architect's — and the table that held them is empty. **Both of the
+plus `DEC-156`'s, and seven the architect's — and the table that held them is empty. **Both of the
 decisions the 2026-09-08 answers registered are answered as well**, by two different ADRs.
 
 **`DEC-156` was raised on 2026-09-09, the product owner's, and is answered the same day.** It was
@@ -527,23 +527,59 @@ own, the architect's, and it blocks only the ticket that implements `ADR-0141`.
 
 **`DEC-159` was registered on 2026-09-09, the architect's, and is answered the same day** by [`ADR-0144`](../../docs/adr/ADR-0144-a-negative-route-test-is-a-control-and-the-predicate-resolves-the-device-once.md). `ADR-0135` requires `GET /api/me/device`; the merged `DuelServerRoutesTest.theDeviceRouteIsNotInstalledOnAnyOtherVerb` asserted that route **unwired**, citing `ADR-0049` §5's *"only DELETE was asked for"*; repairing it took `TASK-141003` to **four** files, which the linter permits only under `atomic:`, which `ADR-0135` §8 forbids in as many words. **None of the three sources yields, because they were never jointly unsatisfiable.** `ADR-0049` §5 specifies `DELETE /api/me/device` and **contains no sentence constraining any other method on that path** — the prohibition was the **test comment's**, not an ADR's, so §1 withdraws the citation and supersedes nothing in `ADR-0049`. §2 rules that a negative route assertion is a **control for a positive row**, must name a verb no merged ADR has asked for, and **moves** when a later ADR asks for it: the test is renamed `…OnUnaskedVerbs` and issues `client.put`, keeping both inequalities and `TASK-040611`'s own reason, *"a `get(...)` typed beside the `delete(...)` would otherwise be invisible"*. §3 finds `ADR-0068` §4 already deciding the sizing question in the same direction — *"a scope that grew after the ticket was written… it is still a split, still today"* — so **no linter constant moves** and `ADR-0135` §8 stands; §4 lands the edit **before** the route, the only direction in which every intermediate assertion is true when it lands. **The second correction is made and named as an error**: §5 supersedes `ADR-0135` §4's `namesPlayer` mechanism, which cannot reproduce §5's own truth table and cannot be repaired by a sign, and computes the predicate from the shipped `resolve(token = null, deviceId)` instead — `Identity.Device`, `UnknownDevice` and `Anonymous` are §5's four rows, with **no new public surface**. §6 registers the ticket edits: new **`TASK-141015`** before `TASK-141003`, which stays three files and plain. **Registers no decision**, and names the recurrence as a trigger rather than claiming it is fixed: nothing detects an ADR asking for a verb a merged control denies, and **the second occurrence makes the verb list a mechanism decision**.
 
-**`DEC-160` was registered on 2026-09-09, the architect's, and is open.** It was raised while
-landing `TASK-141502`, whose `light` review returned `fail` on the classification rather than on the
-artifact: every gate passed, the words matched the shipped component exactly, and the card holds no
-motion. `ADR-0091` §3 splits on what a card **creates** — *"a new token, a new component, new visual
-language"* is minting and is worked interactively with the human, because *"taste does not survive a
-verify block"*, while a screen card *"assembled from the settled vocabulary"* is an ordinary
-dispatched ticket. The card adds a `.screen` class: a dashed rectangle with a heading and rows,
-standing in for the ladder and the account screen so the panel has something to cover, which is
-`ADR-0123` §8's *"what the panel covers is the thing most likely to be wrong"*. Every value in it is a
-token, and the only raw numbers are `664px` and `420px` — the device heights `ADR-0103` §1 fixes and
-the ticket's whole point. The driver read it as **composing** and landed on that reading, stated here
-so it can be overruled: §3's criterion is what a card creates *for the product*, and card furniture is
-never transcribed into the client. What is genuinely undecided is where the line sits as scaffolding
-grows specific — `TASK-141501` called its stand-in *"abstract on purpose"* and this one names two real
-screens, which is a step along that axis and why a reviewer reached the opposite verdict. **It blocks
-nothing**, because §3 lets the human's visual verdict trail the merge *"so an unattended run never
-stalls at a pane"* — but it recurs on `TASK-141511` and on every card after it.
+**`DEC-160` was registered on 2026-09-09, the architect's, and is answered the same day** by
+[`ADR-0145`](../../docs/adr/ADR-0145-a-cards-scaffolding-is-composing-and-the-transcriber-names-the-mint.md):
+**a design card's own scaffolding is composing, and the criterion is the transcriber, never the
+level of detail.** It was raised while landing `TASK-141502`, whose `light` review returned `fail`
+on the classification rather than on the artifact — every gate passed, the words matched
+`RematchControl` exactly, and the card holds no motion. **§1 settles the reading the driver could
+not**: `ADR-0091` §3 splits on what a card **creates for the product**, and has never been about
+what the human has not yet seen, because §3's own *"**Either way** the verdict that matters stays
+the human's visual one … and it may **trail the merge**"* puts the human's sight downstream of
+**both** branches — the not-yet-seen reading empties the composing branch and contradicts the
+paragraph it sits in, and `ADR-0091`'s first named cost says the same from the other side, that a
+merged card ticket *"reads as* the look was approved *when it only means* the look was recorded and
+is structurally sound."* **§2**: a card holds **subject**, which a coder transcribes into
+`web-client/`, and **scaffolding** — `.wrap`, `.eyebrow`, `.lede`, `.frames`, `.frame`, `.note`,
+`.stub`, `.screen` — which nothing transcribes; the split-time test is **name the file that will
+transcribe it**, `ADR-0033` §1's consumer test lifted from values to drawings, with §3's *promotion
+is one shared consumer away* carried over intact and a **direction** — a card copying **from**
+shipped code mints nothing. **§3's mechanical floor** is three clauses read from the ticket's
+`## Files` table plus `ls`, on `ADR-0091` §2's floor-plus-judgment pattern: writing
+`design/tokens/tokens.css`; creating a file under `design/components/` or `design/graphics/`; or
+scaffolding that depicts a **named product screen with no card under `design/screens/`**. The third
+decides `TASK-141502` — `leaderboard.html` and `account.html` both exist, so the stand-in cannot
+claim an authority already occupied, and had either card been missing the same drawing would have
+been **minting**. **Specificity, the axis both parties argued, is rejected**: *abstract enough*
+cannot be judged from a ticket, which moves the argument to the merge where it just cost a round
+trip. Measured on `develop` at `702408ed`: `.wrap` in **20 of 21** cards, `1020px` in **19**,
+`.frame` and `.note` in **all 12** screen cards, **406 raw `px` outside `:root`** — so
+scaffolding-is-minting would reclassify all **86** `module: design` tickets, including the 43
+already accepted at the pane. **§4: both merged tickets stand and nothing is owed** — `.panel` is
+subject and `TASK-141501`'s `minting` label was right; the driver's conclusion is upheld and its
+**stated ground corrected**, four raw lengths having landed rather than two, and `ADR-0103` §1
+fixing 390 × 664 and **720 × 900**, so `960px` and `420px` have no external source. **`TASK-141511`
+is composing**, its tier and dispatch unchanged. **§5 does not settle what the minting side costs**
+and registers **`DEC-161`**, the architect's, below. **§6** records that `ADR-0091` §2's rule was
+**never written into `.claude/agents/planner.md`**, the one file §2 names, and states what that file
+owes — a defect with a known repair and no decision in it, and a ticket for the planner to cut from
+the ADR.
+
+**`DEC-161` was registered on 2026-09-09, the architect's, and is open.** `ADR-0091` §3 says a
+minting card *"is worked interactively with the human, because taste does not survive a verify
+block"*. Measured across all **86** `module: design` tickets, four carry the `minting` label —
+`TASK-130301`, `TASK-130601`, `TASK-130701`, `TASK-141501` — and **all four are `review: standard`,
+were dispatched to a coder and merged as ordinary PRs**. §3's interactive branch has not been
+practised once since `ADR-0091` merged on 2026-08-30, and nothing failed; `.claude/agents/qa-manager.md`
+independently reads §3 as prescribing a dispatched `module: design`, `review: light` ticket for a
+whole missing card. So either the merged practice is a standing deviation owing a repair, or §3's
+minting branch means something narrower than its words — a stricter tier and a labelled ticket,
+rather than a different authorship channel. `ADR-0145` §5 registers it rather than answering it,
+because `DEC-160` asks which **side** of the line scaffolding falls on and that is answerable
+without settling what the other side costs. **Not in scope**: `ADR-0024` §3 assigns the visual
+verdict to the human on every card, and `ADR-0091` names delegating taste as the one thing only the
+human can give away — an answer that moved the **verdict** would be the human's. **It blocks
+nothing**; its trigger is the next ticket a planner would label `minting`.
 
 **`DEC-158` was registered on 2026-09-09, the architect's, and is open.** It was raised while
 splitting `STORY-1415`, by reading `design/screens/rematch-states.html` beside the component it
@@ -644,6 +680,7 @@ stands **exactly as written**, and gated nothing else.
 
 | ID | Answered by | What it means here |
 | --- | --- | --- |
+| `DEC-160` | [`ADR-0145`](../../docs/adr/ADR-0145-a-cards-scaffolding-is-composing-and-the-transcriber-names-the-mint.md) | **A design card's own scaffolding is composing, and the criterion is the transcriber, never the level of detail.** `ADR-0091` §3 splits on what a card **creates for the product** — settled by §3's own *"**Either way** the verdict … may **trail the merge**"*, which puts the human's sight downstream of both branches, so the not-yet-seen reading empties the composing branch. A card holds **subject** (a coder transcribes it into `web-client/`) and **scaffolding** (`.wrap`, `.frame`, `.note`, `.stub`, `.screen` — nothing transcribes it); the split-time test is **name the file that will transcribe it**, `ADR-0033` §1's consumer test lifted from values to drawings, with a **direction** — copying *from* shipped code mints nothing. The floor is three clauses read from the `## Files` table plus `ls`: `tokens.css`; a new file under `components/` or `graphics/`; or scaffolding depicting a **named screen with no card under `design/screens/`** — the clause that decides `TASK-141502`, since `leaderboard.html` and `account.html` both exist. **Specificity is rejected as the axis**; authority is the axis. **Here**: `TASK-141501` and `TASK-141502` both stand, **nothing owed**, with the landing measurement corrected (`ADR-0103` §1 fixes 390 × 664 and **720 × 900**, so `960px` and `420px` have no source); the `fail` was a finding against the **split**, not the diff. **`TASK-141511` is composing** and its ticket does not change. Registers **`DEC-161`** for what the minting side costs, and records that `ADR-0091` §2's rule was **never written into `.claude/agents/planner.md`** |
 | `DEC-156` | [`ADR-0143`](../../docs/adr/ADR-0143-irreversibility-is-said-last-and-never-coloured.md) | **Yes, an irreversible act gets weight — and the weight is words, position and a press, never a treatment.** Derived from *Positioning*'s *"The reference points are **Lichess** and **Chess.com**, not PokerStars. **Dark, quiet, fast, minimal.**"*, after correcting the premise by measurement: the account surface carries **three** irreversible acts, not one — the name, `REVOKE_PERMANENT`'s *"This device will never sign in to this account again. This cannot be undone."*, and `SIGN_OUT_WARNING` — and the product's shipped grammar for the other two is `RevokeControl`'s and `SignOutControl`'s **in-page second press in plain type**, *"never a native dialog… one shape for both confirmations on this screen"*. **§1: no danger register** — no accent, tint, border, box, rule, icon, badge, size or weight step, capitalisation or motion, on any screen, and none in the assistive register either (**no `role="alert"`**, no `aria-live` urgency, no hidden *Warning:* prefix). Measured: colour in this client names **what a thing is** — a result, a clock running out, whose turn it is, your own ranked row, a standing offer, a control — and has **never** named a consequence, all **eight** `role="status"` refusals across seven components being plain; and `tokens.css` reserves the only urgency hue in its own comment (*"Amber exists only for the turn clock running down."*), so a treatment needs a **new** hue and minting is the human's (`ADR-0091` §3). **§2: three obligations** on a screen of controls, stopping at the table's edge — say it cannot be undone; make that claim **the last thing read before the control**; take a **second press wherever no merged ADR has refused one**. **§3:** the name form takes the first two and **cannot** take the third, because `ADR-0130` §1's *"no confirmation step"* and §7's *"no confirmation press"* are **applied, not reopened** — leaving the display name the one irreversible act whose entire guard is a sentence. **§4** tables every irreversible act and registers the one that is unguarded as **`DEC-157`** rather than answering it. **§5: `TASK-140909`'s two name-form frames already conform** — the *gone for good* line is last, with only the field between it and the button — so the card owes **one margin sentence** recording that the flatness is the decision, and **no frame changes**; `TASK-140910`–`TASK-140912` keep transcribing into plain `text-small`. **No gate is bought**, and `ADR-0126` §Consequences 5's price is paid again knowingly. **§7:** reversed by **one player asking for a name back** — which needs no instrument, because `ADR-0130` §2 leaves no mechanism that could serve them — or by the human at the pane in one sentence; another agent re-reading the card is explicitly **not** evidence. **Supersedes nothing**; narrows `ADR-0130` §5's grant of layout to the card **by exactly one relation**. **Nothing this epic ships changes**: no wire, no server file, no engine file, no new string, no new token, no new control |
 | `DEC-145` | [`ADR-0141`](../../docs/adr/ADR-0141-taking-a-seat-elsewhere-releases-the-room-you-were-holding.md) | **The seat elsewhere is taken, and the room they were holding is released in the same act.** The one route `ADR-0124` §7 left into two duels at once, closed from `docs/vision.md` in **two halves from two sentences**: the seat by the first success condition — *"Send a link. She opens it in a browser. We play a full heads-up match."* with *"Everything else is downstream of that moment."*, which `ADR-0094` §1 already read to ship this path, so it gains **no second qualification**; the room by *"One duel coin per win… A counter of duels won."* with *"Two people, **one link**, one heads-up poker match"* and *"Not a multi-table poker room."*, `ADR-0124`'s own three sentences for `DEC-111`. **A released room is indistinguishable from a reaped one** — `UNKNOWN_ROOM`, and `Lobby.tsx` prints the string it already prints — so **no string, no wire, no client file, nothing stored**. Bounded three ways: only a room still `WAITING` and holding nobody else (§3), only on a join that seated somebody (§4), and **never** because the holder merely left, dropped or closed the tab (§5) — a duel can still begin into a seat that is already away, and that stays `ADR-0073` §3's promise working. Nothing is said, to anyone (§6). Supersedes two sentences of `ADR-0073` as statements about a `WAITING` room in general, amends `ADR-0105` §2's `WAITING` row on its `JoinRoom` half, and registers **`DEC-154`** for the architect. **It changes nothing this epic ships**: `STORY-1416` is `done` and its `Out of scope` already excluded every change to `replyToJoinRoom` |
 | `DEC-150` | [`ADR-0140`](../../docs/adr/ADR-0140-the-clipboard-api-is-the-only-copy-this-client-attempts.md) | **None — and the reason is the missing read-back, not the deprecation.** `navigator.clipboard.writeText` stays the only clipboard mechanism this client uses; where the API is undefined the press performs `ADR-0128` §3's hand-over and attempts nothing else. `execCommand("copy")` reports that the command was supported and enabled, never that the clipboard holds the link, and `navigator.clipboard.readText` — the one in-page read-back — is absent exactly where it would be needed, so §4's *"never of an attempt whose success the client cannot read"* cannot be met. The **silent** copy is refused on **§3**, whose promise is that *"the screen says which"*; a third, hedged outcome would be a string, and `ADR-0110` §6 makes that the product owner's. Nothing in this epic moves: no file, no card, no frame, no string, no ticket |
