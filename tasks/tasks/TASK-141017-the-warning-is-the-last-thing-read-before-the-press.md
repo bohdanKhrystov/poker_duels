@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141017
 title: The warning is the last thing read before the press
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: web-client
 estimate: XS

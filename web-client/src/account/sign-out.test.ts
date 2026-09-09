@@ -325,4 +325,19 @@ describe("signing out", () => {
     expect(stayingStorage.getItem(NAME_ASK_SKIPPED_KEY)).toBe("1");
     expect(stayingStorage.length).toBe(2);
   });
+
+  it("the device id is already forgotten by the time the page reloads", async () => {
+    const storage = inMemoryStorage({
+      [SESSION_TOKEN_STORAGE_KEY]: "tok-10",
+      [DEVICE_ID_STORAGE_KEY]: "d-abandoned",
+    });
+    const { fetch } = recordingFetch(async () => noContentResponse());
+    const reload = vi.fn(() => {
+      expect(readDeviceId(storage)).toBeNull();
+    });
+
+    await signOut({ fetch, storage, reload, handsANewProfile: true });
+
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
 });

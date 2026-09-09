@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141016
 title: The forget is pinned ahead of the reload
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: XS
@@ -79,8 +79,13 @@ Read, do not edit: `web-client/src/account/sign-out.ts`,
 - Asserting only that `forgetDeviceId` was called leaves the ordering unpinned — that is what the
   nine existing tests already do, and it is why this ticket exists. The assertion must sit **inside
   the `reload` mock body**, which is the only place that runs at the moment ordering is decidable.
-- Driving it with `handsANewProfile: false` makes the test vacuous: nothing is removed in that case,
-  so `readDeviceId` is non-null before and after, and the assertion could never fail.
+- ~~Driving it with `handsANewProfile: false` makes the test vacuous.~~ **This bullet was wrong when
+  the ticket was written, and the coder said so.** With `false` nothing is removed, so
+  `readDeviceId` is still the stored id when the mock runs and an assertion of `null` *fails* —
+  loudly, not vacuously. The real risk is the opposite shape: an assertion weak enough to hold
+  either way, such as checking only that `reload` was called, or `not.toBeUndefined()`. Corrected
+  rather than deleted, because a ticket that quietly loses a wrong claim reads as though it never
+  made one.
 
 ## Acceptance
 
