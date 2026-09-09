@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141018
 title: The storage reads sit inside the catch
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: XS

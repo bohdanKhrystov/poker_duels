@@ -187,4 +187,59 @@ describe("readDeviceStanding", () => {
       false,
     );
   });
+
+  it("a storage that throws on the token read is a keep", async () => {
+    const storage: Storage = {
+      length: 0,
+      clear() {},
+      getItem(key: string) {
+        if (key === "pd.sessionToken") {
+          throw new Error("storage access blocked");
+        }
+        return null;
+      },
+      key() {
+        return null;
+      },
+      removeItem() {},
+      setItem() {},
+    };
+    const calls: RecordedCall[] = [];
+    const fetch = recordingFetch(calls, () =>
+      jsonResponse(200, { signOutHandsANewProfile: true }),
+    );
+
+    const answer = await readDeviceStanding({ fetch, storage });
+
+    expect(calls.length).toBe(0);
+    expect(answer).toBe(false);
+  });
+
+  it("a storage that throws on the device-id read is a keep", async () => {
+    const storage: Storage = {
+      length: 0,
+      clear() {},
+      getItem(key: string) {
+        if (key === "pd.deviceId") {
+          throw new Error("storage access blocked");
+        }
+        // Return token for session token read
+        return key === "pd.sessionToken" ? "token-8" : null;
+      },
+      key() {
+        return null;
+      },
+      removeItem() {},
+      setItem() {},
+    };
+    const calls: RecordedCall[] = [];
+    const fetch = recordingFetch(calls, () =>
+      jsonResponse(200, { signOutHandsANewProfile: true }),
+    );
+
+    const answer = await readDeviceStanding({ fetch, storage });
+
+    expect(calls.length).toBe(0);
+    expect(answer).toBe(false);
+  });
 });
