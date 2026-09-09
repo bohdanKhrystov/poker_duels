@@ -16,8 +16,8 @@ verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.screens.test.tsx 2>&1 | grep -qE '^ *Tests +4 passed \(4\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +16 passed \(16\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qE '^ *Tests +113 passed \(113\)$'
+  - git diff --quiet develop -- web-client/src/result/RematchNotice.test.tsx
+  - git diff --quiet develop -- web-client/src/lobby/Lobby.test.tsx
   - git diff --quiet develop -- web-client/src/App.tsx
   - git diff --quiet develop -- web-client/src/lobby/Lobby.tsx
   - git diff --quiet develop -- web-client/src/result/RematchNotice.tsx
@@ -121,8 +121,11 @@ sequence of four navigations, and a reviewer has to check the **order**, not jus
       new ones being the two named above
 - [ ] The dismissal test navigates `#/duels` → `#/account` → `/` → `#/account`, in that order, and
       awaits a heading or the result screen's own line at each of the last three
-- [ ] `src/result/RematchNotice.test.tsx` reports **16 passed (16)** and `src/lobby/Lobby.test.tsx`
-      **113 passed (113)**
+- [ ] `src/result/RematchNotice.test.tsx` and `src/lobby/Lobby.test.tsx` are **byte-identical to
+      `develop`** — `git diff --quiet` on each. The ticket originally pinned them at 16 and 113
+      absolute tests; both were stale on its own base (17 and 116), and both are files this
+      ticket does not modify, so the counts were standing in for *unchanged*. `TASK-000108`'s
+      rule applies: the guard proves more than the count and cannot rot
 - [ ] `git diff --quiet develop` is clean for `App.tsx`, `Lobby.tsx`, `RematchNotice.tsx` and
       `RematchControl.tsx` — this ticket writes tests and nothing else
 - [ ] **Shown red, then reverted:** deleting the `/` leg from the dismissal test and re-running
