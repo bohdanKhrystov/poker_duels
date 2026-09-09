@@ -92,14 +92,19 @@ function serverErrorResponse(): ApiResponse {
 }
 
 describe("signing out", () => {
-  it("clears the token and leaves the device id exactly where it was", async () => {
+  it("clears the token and leaves the device id where it was when the profile stays", async () => {
     const storage = inMemoryStorage({
       [SESSION_TOKEN_STORAGE_KEY]: "tok-1",
       [DEVICE_ID_STORAGE_KEY]: "d-before",
     });
     const { fetch } = recordingFetch(async () => noContentResponse());
 
-    const outcome = await signOut({ fetch, storage, reload: vi.fn() });
+    const outcome = await signOut({
+      fetch,
+      storage,
+      reload: vi.fn(),
+      handsANewProfile: false,
+    });
 
     expect(outcome).toEqual({ kind: "signed-out" });
     expect(readSessionToken(storage)).toBeNull();
@@ -113,7 +118,12 @@ describe("signing out", () => {
     });
     const { fetch } = recordingFetch(async () => noContentResponse());
 
-    await signOut({ fetch, storage, reload: vi.fn() });
+    await signOut({
+      fetch,
+      storage,
+      reload: vi.fn(),
+      handsANewProfile: false,
+    });
 
     expect(readRoomCode(storage)).toBeNull();
   });
@@ -125,7 +135,12 @@ describe("signing out", () => {
     });
     const { fetch, calls } = recordingFetch(async () => noContentResponse());
 
-    await signOut({ fetch, storage, reload: vi.fn() });
+    await signOut({
+      fetch,
+      storage,
+      reload: vi.fn(),
+      handsANewProfile: false,
+    });
 
     expect(Object.keys(calls[0].init.headers).sort()).toEqual([
       "Authorization",
@@ -146,6 +161,7 @@ describe("signing out", () => {
       fetch: rejectedFetch,
       storage: rejectedStorage,
       reload: reloadOnRejected,
+      handsANewProfile: false,
     });
 
     expect(rejectedOutcome).toEqual({ kind: "signed-out" });
@@ -166,6 +182,7 @@ describe("signing out", () => {
       fetch: serverErrorFetch,
       storage: serverErrorStorage,
       reload: reloadOnServerError,
+      handsANewProfile: false,
     });
 
     expect(serverErrorOutcome).toEqual({ kind: "signed-out" });
@@ -181,7 +198,12 @@ describe("signing out", () => {
     const { fetch, calls } = recordingFetch(async () => noContentResponse());
     const reload = vi.fn();
 
-    const outcome = await signOut({ fetch, storage, reload });
+    const outcome = await signOut({
+      fetch,
+      storage,
+      reload,
+      handsANewProfile: true,
+    });
 
     expect(outcome).toEqual({ kind: "not-signed-in" });
     expect(calls.length).toBe(0);
@@ -198,8 +220,109 @@ describe("signing out", () => {
       expect(readSessionToken(storage)).toBeNull();
     });
 
-    await signOut({ fetch, storage, reload });
+    await signOut({ fetch, storage, reload, handsANewProfile: false });
 
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("told the sign-out hands a new profile, it forgets the device id", async () => {
+    const storage = inMemoryStorage({
+      [SESSION_TOKEN_STORAGE_KEY]: "tok-7",
+      [DEVICE_ID_STORAGE_KEY]: "d-abandoned",
+    });
+    const { fetch } = recordingFetch(async () => noContentResponse());
+
+    await signOut({
+      fetch,
+      storage,
+      reload: vi.fn(),
+      handsANewProfile: true,
+    });
+
+    expect(readDeviceId(storage)).toBeNull();
+    expect(storage.getItem(DEVICE_ID_STORAGE_KEY)).toBeNull();
+  });
+
+  it("the device id goes whatever the server answered", async () => {
+    const rejectedStorage = inMemoryStorage({
+      [SESSION_TOKEN_STORAGE_KEY]: "tok-8a",
+      [DEVICE_ID_STORAGE_KEY]: "d-rejected",
+    });
+    const { fetch: rejectedFetch } = rejectingFetch();
+    const reloadOnRejected = vi.fn();
+
+    await signOut({
+      fetch: rejectedFetch,
+      storage: rejectedStorage,
+      reload: reloadOnRejected,
+      handsANewProfile: true,
+    });
+
+    expect(readDeviceId(rejectedStorage)).toBeNull();
+    expect(reloadOnRejected).toHaveBeenCalledTimes(1);
+
+    const serverErrorStorage = inMemoryStorage({
+      [SESSION_TOKEN_STORAGE_KEY]: "tok-8b",
+      [DEVICE_ID_STORAGE_KEY]: "d-server-error",
+    });
+    const { fetch: serverErrorFetch } = recordingFetch(async () =>
+      serverErrorResponse(),
+    );
+    const reloadOnServerError = vi.fn();
+
+    await signOut({
+      fetch: serverErrorFetch,
+      storage: serverErrorStorage,
+      reload: reloadOnServerError,
+      handsANewProfile: true,
+    });
+
+    expect(readDeviceId(serverErrorStorage)).toBeNull();
+    expect(reloadOnServerError).toHaveBeenCalledTimes(1);
+  });
+
+  it("no key beyond the three ever moves", async () => {
+    const NAME_ASK_SKIPPED_KEY = "pd.nameAskSkipped";
+
+    const abandoningStorage = inMemoryStorage({
+      [DEVICE_ID_STORAGE_KEY]: "d-abandoning",
+      [SESSION_TOKEN_STORAGE_KEY]: "tok-9a",
+      [ROOM_CODE_STORAGE_KEY]: "ROOM9001",
+      [NAME_ASK_SKIPPED_KEY]: "1",
+    });
+    const { fetch: abandoningFetch } = recordingFetch(async () =>
+      noContentResponse(),
+    );
+
+    await signOut({
+      fetch: abandoningFetch,
+      storage: abandoningStorage,
+      reload: vi.fn(),
+      handsANewProfile: true,
+    });
+
+    expect(abandoningStorage.getItem(NAME_ASK_SKIPPED_KEY)).toBe("1");
+    expect(abandoningStorage.length).toBe(1);
+
+    const stayingStorage = inMemoryStorage({
+      [DEVICE_ID_STORAGE_KEY]: "d-staying",
+      [SESSION_TOKEN_STORAGE_KEY]: "tok-9b",
+      [ROOM_CODE_STORAGE_KEY]: "ROOM9002",
+      [NAME_ASK_SKIPPED_KEY]: "1",
+    });
+    const { fetch: stayingFetch } = recordingFetch(async () =>
+      noContentResponse(),
+    );
+
+    await signOut({
+      fetch: stayingFetch,
+      storage: stayingStorage,
+      reload: vi.fn(),
+      handsANewProfile: false,
+    });
+
+    expect(readDeviceId(stayingStorage)).toBe("d-staying");
+    expect(stayingStorage.getItem(NAME_ASK_SKIPPED_KEY)).toBe("1");
+    expect(stayingStorage.length).toBe(2);
   });
 });
