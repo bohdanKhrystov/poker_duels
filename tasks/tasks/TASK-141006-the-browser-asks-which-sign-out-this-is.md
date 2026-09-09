@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141006
 title: The browser asks the server which sign-out this is
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: S
