@@ -527,6 +527,24 @@ own, the architect's, and it blocks only the ticket that implements `ADR-0141`.
 
 **`DEC-159` was registered on 2026-09-09, the architect's, and is answered the same day** by [`ADR-0144`](../../docs/adr/ADR-0144-a-negative-route-test-is-a-control-and-the-predicate-resolves-the-device-once.md). `ADR-0135` requires `GET /api/me/device`; the merged `DuelServerRoutesTest.theDeviceRouteIsNotInstalledOnAnyOtherVerb` asserted that route **unwired**, citing `ADR-0049` §5's *"only DELETE was asked for"*; repairing it took `TASK-141003` to **four** files, which the linter permits only under `atomic:`, which `ADR-0135` §8 forbids in as many words. **None of the three sources yields, because they were never jointly unsatisfiable.** `ADR-0049` §5 specifies `DELETE /api/me/device` and **contains no sentence constraining any other method on that path** — the prohibition was the **test comment's**, not an ADR's, so §1 withdraws the citation and supersedes nothing in `ADR-0049`. §2 rules that a negative route assertion is a **control for a positive row**, must name a verb no merged ADR has asked for, and **moves** when a later ADR asks for it: the test is renamed `…OnUnaskedVerbs` and issues `client.put`, keeping both inequalities and `TASK-040611`'s own reason, *"a `get(...)` typed beside the `delete(...)` would otherwise be invisible"*. §3 finds `ADR-0068` §4 already deciding the sizing question in the same direction — *"a scope that grew after the ticket was written… it is still a split, still today"* — so **no linter constant moves** and `ADR-0135` §8 stands; §4 lands the edit **before** the route, the only direction in which every intermediate assertion is true when it lands. **The second correction is made and named as an error**: §5 supersedes `ADR-0135` §4's `namesPlayer` mechanism, which cannot reproduce §5's own truth table and cannot be repaired by a sign, and computes the predicate from the shipped `resolve(token = null, deviceId)` instead — `Identity.Device`, `UnknownDevice` and `Anonymous` are §5's four rows, with **no new public surface**. §6 registers the ticket edits: new **`TASK-141015`** before `TASK-141003`, which stays three files and plain. **Registers no decision**, and names the recurrence as a trigger rather than claiming it is fixed: nothing detects an ADR asking for a verb a merged control denies, and **the second occurrence makes the verb list a mechanism decision**.
 
+**`DEC-160` was registered on 2026-09-09, the architect's, and is open.** It was raised while
+landing `TASK-141502`, whose `light` review returned `fail` on the classification rather than on the
+artifact: every gate passed, the words matched the shipped component exactly, and the card holds no
+motion. `ADR-0091` §3 splits on what a card **creates** — *"a new token, a new component, new visual
+language"* is minting and is worked interactively with the human, because *"taste does not survive a
+verify block"*, while a screen card *"assembled from the settled vocabulary"* is an ordinary
+dispatched ticket. The card adds a `.screen` class: a dashed rectangle with a heading and rows,
+standing in for the ladder and the account screen so the panel has something to cover, which is
+`ADR-0123` §8's *"what the panel covers is the thing most likely to be wrong"*. Every value in it is a
+token, and the only raw numbers are `664px` and `420px` — the device heights `ADR-0103` §1 fixes and
+the ticket's whole point. The driver read it as **composing** and landed on that reading, stated here
+so it can be overruled: §3's criterion is what a card creates *for the product*, and card furniture is
+never transcribed into the client. What is genuinely undecided is where the line sits as scaffolding
+grows specific — `TASK-141501` called its stand-in *"abstract on purpose"* and this one names two real
+screens, which is a step along that axis and why a reviewer reached the opposite verdict. **It blocks
+nothing**, because §3 lets the human's visual verdict trail the merge *"so an unattended run never
+stalls at a pane"* — but it recurs on `TASK-141511` and on every card after it.
+
 **`DEC-158` was registered on 2026-09-09, the architect's, and is open.** It was raised while
 splitting `STORY-1415`, by reading `design/screens/rematch-states.html` beside the component it
 was drawn from: measured on `develop` at `f20d07ed`, the card says `ImKate offers a rematch` and

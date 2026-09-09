@@ -2,7 +2,7 @@
 id: STORY-1408
 title: The account screen names the anonymous profile, the post-win offer goes, and the front door stops describing an absence
 type: story
-status: ready
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, server, design, account, docs]
