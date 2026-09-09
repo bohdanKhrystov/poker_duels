@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140918
 title: A player who holds a name is offered the form that changes it
 type: task
-status: backlog
+status: ready
 parent: STORY-1409
 module: web-client
 estimate: S

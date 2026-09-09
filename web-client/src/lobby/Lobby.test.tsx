@@ -1247,7 +1247,7 @@ describe("the lobby", () => {
     expect(screen.getByText("Pot 30")).toBeDefined();
   });
 
-  it("shows the name surface beside the strip, and only with a profile to show", async () => {
+  it("shows the strip and no name form on the front door", async () => {
     const state: ProfileStripState = {
       kind: "profile",
       profile: aProfile({ displayName: null }),
@@ -1256,13 +1256,9 @@ describe("the lobby", () => {
     renderLobbyWithProfile(state);
 
     const profileStrip = await screen.findByLabelText("your profile");
-    const nameSurface = screen.getByLabelText("your display name");
     expect(profileStrip).toBeDefined();
-    expect(nameSurface).toBeDefined();
-    // Verify document order: name surface comes after profile strip
-    expect(profileStrip.compareDocumentPosition(nameSurface)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
+    // The name form is not rendered on the front door
+    expect(screen.queryByLabelText("your display name")).toBeNull();
 
     cleanup();
 
@@ -1287,7 +1283,7 @@ describe("the lobby", () => {
     expect(screen.getByText("Pot 30")).toBeDefined();
   });
 
-  it("renders the lobby with no headings from the name surface", async () => {
+  it("renders the front door with one heading and the name printed once", async () => {
     const state: ProfileStripState = {
       kind: "profile",
       profile: aProfile({ displayName: "TestPlayer" }),
@@ -1296,13 +1292,11 @@ describe("the lobby", () => {
     renderLobbyWithProfile(state);
 
     await screen.findByLabelText("your profile");
-    // TestPlayer now appears in both ProfileStrip and NameSurface
-    expect(await screen.findAllByText("TestPlayer")).toHaveLength(2);
-    // The lobby mounts with SetNameProvider, so NameSurface will render.
-    // Verify NameSurface adds no heading of its own: the only heading on the
-    // front door is its own wordmark (ADR-0098 §1), so the count stays at
-    // one and it is that heading — a heading NameSurface contributed would
-    // make it two, which is the whole reason this test exists.
+    // TestPlayer now appears only in ProfileStrip, not NameSurface
+    expect(await screen.findAllByText("TestPlayer")).toHaveLength(1);
+    // The only heading on the front door is its own wordmark (ADR-0098 §1).
+    // NameSurface is no longer rendered on the front door, so it contributes
+    // no heading. The count stays at one.
     const headings = screen.queryAllByRole("heading");
     expect(headings.length).toBe(1);
     expect(headings[0].getAttribute("aria-label")).toBe("Poker Duels");

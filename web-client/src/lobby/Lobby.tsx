@@ -27,7 +27,6 @@ import {
   useSignedIn,
 } from "../main";
 import { ProfileStrip } from "../profile/ProfileStrip";
-import { NameSurface } from "../profile/NameSurface";
 import { NameAsk } from "../profile/NameAsk";
 import { askForName } from "../profile/name-ask";
 import { useSetName } from "../profile/set-name-provider";
@@ -517,9 +516,6 @@ export function Lobby(): ReactElement {
         </button>
       </form>
       {profile !== null && <ProfileStrip state={profile} />}
-      {profile !== null && profile.kind === "profile" && setName !== null && (
-        <NameSurface profile={profile.profile} setName={setName} />
-      )}
       {/* TASK-121303: the three doors were adjacent inline-level buttons with
           no text node between them (JSX elides it) and no layout on the
           bare section around them, so they abutted with no space at any
