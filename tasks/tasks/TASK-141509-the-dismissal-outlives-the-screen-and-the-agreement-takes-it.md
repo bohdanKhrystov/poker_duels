@@ -55,7 +55,7 @@ Read [`ADR-0138`](../../docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-
 - **Two tests appended to the file `TASK-141508` created**, taking it from **2** to **4**. Its
   fixture builder, its `vi.mock("./main")` factory and its provider stack are reused, not rewritten.
 - **Moving the address mid-test needs one of two forms, and a bare assignment is neither.**
-  Measured at `899d81f7`: assigning `window.location.hash` inside `act()` leaves a `useScreen`
+  Measured at `f20d07ed`: assigning `window.location.hash` inside `act()` leaves a `useScreen`
   consumer showing the **old** screen, because jsdom queues `hashchange` and `act`'s synchronous
   flush does not run it. Two forms were probed and both work:
 

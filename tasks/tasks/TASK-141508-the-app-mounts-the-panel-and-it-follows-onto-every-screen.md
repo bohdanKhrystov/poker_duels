@@ -95,7 +95,7 @@ changed**; three `verify:` lines diff `Lobby.tsx`, `RematchControl.tsx` and `App
 `RematchNotice.screens.test.tsx` — **2** tests. The room fixture is `RoomJoined`, then
 `DuelFinished`, then `RematchOffered` from the rival's seat, in that order.
 
-**The address is set before `render()`, never after.** Measured at `899d81f7`: assigning
+**The address is set before `render()`, never after.** Measured at `f20d07ed`: assigning
 `window.location.hash` inside `act()` does **not** settle a `useScreen` consumer — jsdom queues
 `hashchange` and `act`'s synchronous flush does not run it, so the component still reports the old
 screen. Setting the hash before the render sidesteps it entirely, and it is what
@@ -135,7 +135,7 @@ count, and it cannot distinguish two from three. The count is the assertion.
 - [ ] `src/result/RematchNotice.test.tsx` reports **16 passed (16)**; `src/App.test.tsx` reports
       **36 passed (36)**; `src/lobby/Lobby.test.tsx` reports **113 passed (113)**;
       `src/result/RematchControl.test.tsx` reports **12 passed (12)** — the last three measured on
-      `develop` at `899d81f7` and none of them opened here
+      `develop` at `f20d07ed` and none of them opened here
 - [ ] `git diff --quiet develop` is clean for `Lobby.tsx`, `RematchControl.tsx` and `App.test.tsx`
 - [ ] **Shown red, then reverted:** removing `<RematchNotice />` from `App.tsx` fails **exactly
       one** test — `follows onto every chosen screen` — and **no test in `App.test.tsx`**. Run it,

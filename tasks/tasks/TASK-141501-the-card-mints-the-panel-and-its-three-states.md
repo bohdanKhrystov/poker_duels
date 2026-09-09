@@ -76,7 +76,7 @@ and not `design/screens/rematch-states.html`, which is `TASK-141509`'s.
   copy** of `design/screens/account.html`'s, plus `--pd-accent`, `--pd-accent-subtle` and
   `--pd-shadow-pop`. `check-drift.sh` compares every inlined `--pd-NAME: VALUE` against the
   canonical sheet and fails on a single re-typed value — copy the lines, do not re-derive them.
-- **`--pd-shadow-pop` gets its first use in the product.** Measured at `899d81f7`: it is declared
+- **`--pd-shadow-pop` gets its first use in the product.** Measured at `f20d07ed`: it is declared
   (`design/tokens/tokens.css:117`, *"for what floats (menus, dialogs)"*), mapped
   (`web-client/src/styles/app.css:73`) and used by **no component and no screen card**. This card is
   what floats. A gate requires it at least twice — the inlined declaration and at least one rule.
@@ -98,6 +98,12 @@ and not `design/screens/rematch-states.html`, which is `TASK-141509`'s.
   `web-client/src/result/RematchControl.tsx` (`ADR-0123` §4: *"No new words are minted"*). `Not now`
   is `ADR-0123` §4's word for an offer that may be set aside. Four gates pin them, and two more pin
   that each control label has exactly **one** distinct spelling.
+- **All five sentences plus `Not now` become gated a second time, by the client.** `TASK-141503`
+  pairs `result/rematch-text.ts` with this card in `ADR-0142` §6's register, whose third assertion
+  matches each carded value against **one text unit** of this card. Two consequences for the drawing:
+  the dealing sentence must stay split across the `<br>` — one joined line would be one unit and the
+  two constants would match nothing — and no sentence may be broken by an inline element, because
+  `ADR-0142` §2 replaces every tag with the separator.
 - **The panel's shell is this card's to mint**: its box, its width, its place on the viewport, its
   colours and its type. Two constraints it is written inside, both from merged decisions —
   `ADR-0121`'s fit axis (`scrollWidth ≤ clientWidth`) bounds it to the viewport width, and
@@ -114,7 +120,7 @@ and not `design/screens/rematch-states.html`, which is `TASK-141509`'s.
   `@media (prefers-reduced-motion: reduce)` block, and adds the three stilled frames. It is not this
   ticket and it is not a coder's to add.
 - **`z-index` is refused, and the reason is measured, not stylistic.** There is **no `z-index`
-  anywhere** in `web-client/src` or `design/` at `899d81f7`, and the live panel is the last child of
+  anywhere** in `web-client/src` or `design/` at `f20d07ed`, and the live panel is the last child of
   `<main>` with `PlayingCard`'s absolute glyphs its only positioned competition — earlier in the
   document, so painted first. A card that mints a stacking order mints a vocabulary the product does
   not need.

@@ -79,7 +79,7 @@ the table above is changed**; three `verify:` lines diff `Lobby.tsx`, `App.tsx` 
   if (accepted && !theirs) setAccepted(false);
   ```
 
-  **This needs no `eslint-disable`.** Probed at `899d81f7`: `react-hooks/set-state-in-render` is at
+  **This needs no `eslint-disable`.** Probed at `f20d07ed`: `react-hooks/set-state-in-render` is at
   `error` in `eslint-plugin-react-hooks@^7`'s `recommended-latest`, it fires on an unguarded
   `setAccepted(x)` in a render body, and it passes the guarded form above with exit 0. A
   suppression comment here is noise; the explanatory comment is not.
@@ -152,7 +152,7 @@ returns the room to a finished standing that can carry a new offer.
 - [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **9 passed (9)**, the four new ones
       being the four named above and the original five unedited
 - [ ] `src/result/RematchControl.test.tsx` reports **12 passed (12)** and `src/lobby/Lobby.test.tsx`
-      **113 passed (113)** — measured on `develop` at `899d81f7`
+      **113 passed (113)** — measured on `develop` at `f20d07ed`
 - [ ] `RematchNotice.tsx` has, on non-comment lines, `OfferRematch` **1**, `type="button"` **1**,
       `{REMATCH_LABEL}` **1**, `{DEALING_LEAD}` **1**, `{DEALING_TAIL}` **1**, `disabled` **0**, and
       still **0** of `useEffect`, `useLayoutEffect`, `setTimeout`, `setInterval`

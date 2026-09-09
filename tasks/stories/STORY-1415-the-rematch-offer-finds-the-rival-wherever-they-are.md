@@ -51,7 +51,7 @@ Both sources are merged and neither is re-derived here.
   on the root, never `alert`/`dialog`/`alertdialog`; no focus call, no focus trap, no key handler.
   Nothing crosses the socket, so **no ticket in this story is `atomic:`**.
 
-Everything below was **measured in this worktree on `develop` at `899d81f7`, 2026-09-09**, not
+Everything below was **measured in this worktree on `develop` at `f20d07ed`, 2026-09-09**, not
 recalled. Where a number is a specification rather than a measurement it says so.
 
 ### The story is eleven tickets and the first two are the card
@@ -82,7 +82,7 @@ on the day a chosen screen's guard can go false at runtime, and no such screen e
 
 `Lobby.tsx:170-181` carries a documented `// eslint-disable-next-line react-hooks/set-state-in-effect` at `:179`
 for its `setHeldPress(null)`, so the question was whether the panel's **render-phase** clear owes the
-same. Probed at `899d81f7`: `eslint-plugin-react-hooks@^7`'s `recommended-latest` set has
+same. Probed at `f20d07ed`: `eslint-plugin-react-hooks@^7`'s `recommended-latest` set has
 **`react-hooks/set-state-in-render` at `error`**, and it is live — an unguarded
 `setDismissed(!theirs)` in a render body fails `npx eslint` with *"Cannot call setState during
 render"*. The **guarded** form `if (dismissed && !theirs) setDismissed(false);` in the same
@@ -105,7 +105,7 @@ name a test for their own.
 
 ### What was measured
 
-| Fact | Value at `899d81f7` |
+| Fact | Value at `f20d07ed` |
 | --- | --- |
 | `src/result/RematchControl.test.tsx` | **12** tests, green |
 | `src/App.test.tsx` | **36** tests, green |
@@ -144,16 +144,23 @@ bind it and no ticket here adds a second press or a cost sentence. What does bin
 things colour in this client already says, so the panel may wear `--pd-accent` for what it **is**.
 The card ticket states this so the flatness question is not re-litigated at the pane.
 
-### `ADR-0142`'s register, whichever ticket lands second
+### `ADR-0142`'s register is now merged, so the obligation is unconditional
 
-`web-client/src/design/card-text.test.ts` does **not** exist at `899d81f7` and `TASK-141203`
-(`STORY-1412`, `backlog`) is the ticket that creates it. `ADR-0142` §6 globs
-`web-client/src/**/*-text.ts` and fails on any module in neither `PAIRS` nor `NO_CARD`, so
-`rematch-text.ts` and that register have the same mutual obligation `TASK-141203` already records
-for `STORY-1410`'s two exports: **whichever lands second classifies the module.** `TASK-141503`
-carries it from this side, and its `npm run check` gate enforces it in both orders — with no
-register there is nothing to classify and the run is green; with one, the run is red until
-`rematch-text.ts` is paired with `design/screens/rematch-panel.html`.
+**This changed during the split and the split was re-measured rather than left alone.** When it
+began, `develop` was `899d81f7` and `web-client/src/design/card-text.test.ts` did not exist;
+`TASK-141203` merged as **`f20d07ed`** while these tickets were being written. Every number below
+was re-measured at that head — `RematchControl.test.tsx` 12, `App.test.tsx` 36, `Lobby.test.tsx`
+113, `check-drift.sh` at 20 cards, all unchanged — and one ticket changed shape.
+
+`ADR-0142` §6's last test globs `web-client/src/**/*-text.ts` and fails on any module in neither
+`PAIRS` nor `NO_CARD`, so **creating `rematch-text.ts` without registering it reddens the suite**.
+`TASK-141503` therefore opens three files rather than two and adds the pair
+`result/rematch-text.ts → rematch-panel.html`, all six exports `carded`, taking that file from
+**7** tests to **10**.
+
+`ADR-0142` §5c matches a carded value against **one** text unit of the card, which is the second
+reason `ADR-0138` §4 made the dealing sentence two constants: the card's `<br>` is a tag, §2 replaces
+every tag with the separator, and one joined constant would match no unit at all.
 
 ## Tasks
 
@@ -192,7 +199,7 @@ it.
 - [ ] The agreeing `Snapshot` leaves the duel table on screen, no panel anywhere, and
       `window.location.hash` empty — `hashForScreen("first")` is `"/"`, which `replaceState` writes
       as an empty fragment, and `App.test.tsx:967` already asserts exactly that for the same restore
-- [ ] `Lobby.tsx` is byte-identical to `899d81f7`, and `App.test.tsx` and `Lobby.test.tsx` are not
+- [ ] `Lobby.tsx` is byte-identical to `f20d07ed`, and `App.test.tsx` and `Lobby.test.tsx` are not
       opened by any ticket in this story
 - [ ] `git diff --stat develop -- poker-engine poker-server docs/protocol.md` is empty
 

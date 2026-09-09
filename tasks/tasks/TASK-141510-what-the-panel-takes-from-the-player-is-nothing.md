@@ -51,7 +51,7 @@ Read [`ADR-0123`](../../docs/adr/ADR-0123-a-standing-rematch-offer-follows-the-r
 Four tests appended to the file, taking it from **4** to **8**. The fixture builder, the
 `vi.mock("./main")` factory and the provider stack are reused.
 
-- **`Enter` is proved structurally, not by a keypress.** Measured at `899d81f7`: **jsdom does not
+- **`Enter` is proved structurally, not by a keypress.** Measured at `f20d07ed`: **jsdom does not
   perform implicit form submission** — `keyDown`, `keyPress` and `keyUp` with `key: "Enter"` on a
   field inside a `<form onSubmit>` fire the handler **0 times**. So a `keyDown`-based test would
   pass against a panel sitting *inside* the form, which is the defect it exists to catch. The proof

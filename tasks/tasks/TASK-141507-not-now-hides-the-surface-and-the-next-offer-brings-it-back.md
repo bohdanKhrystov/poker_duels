@@ -67,7 +67,7 @@ and `design/screens/rematch-panel.html`, whose three panel frames each carry the
   is `ADR-0123` §7's *"a reload brings the panel back"*, with **no storage key, no context, no
   provider, no store field and no module-scope variable**. A gate holds `localStorage` and
   `sessionStorage` at **0**.
-- **No `eslint-disable`, and a gate refuses one.** Probed at `899d81f7`:
+- **No `eslint-disable`, and a gate refuses one.** Probed at `f20d07ed`:
   `react-hooks/set-state-in-render` is at `error` in `eslint-plugin-react-hooks@^7`'s
   `recommended-latest` and fires on an unguarded `setDismissed(x)` in a render body, while the
   guarded form above passes with exit 0. `Lobby.tsx:170-181` carries a documented suppression at `:179` for a
@@ -141,7 +141,7 @@ render is what covers *the dismissal does not survive*.
 
 - [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **16 passed (16)**
 - [ ] `src/result/RematchControl.test.tsx` reports **12 passed (12)** — measured on `develop` at
-      `899d81f7`, and that file is not opened
+      `f20d07ed`, and that file is not opened
 - [ ] `RematchNotice.tsx` has, on non-comment lines, `{NOT_NOW}` **1**, `type="button"` **2**,
       `setDismissed(false)` **1**, `OfferRematch` **1**, and **0** of `useEffect`,
       `useLayoutEffect`, `setTimeout`, `setInterval`, `localStorage`, `sessionStorage`,

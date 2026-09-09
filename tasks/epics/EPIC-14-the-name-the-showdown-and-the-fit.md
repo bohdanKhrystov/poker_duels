@@ -527,7 +527,7 @@ own, the architect's, and it blocks only the ticket that implements `ADR-0141`.
 
 **`DEC-158` was registered on 2026-09-09, the architect's, and is open.** It was raised while
 splitting `STORY-1415`, by reading `design/screens/rematch-states.html` beside the component it
-was drawn from: measured on `develop` at `899d81f7`, the card says `ImKate offers a rematch` and
+was drawn from: measured on `develop` at `f20d07ed`, the card says `ImKate offers a rematch` and
 `Rematch offered — waiting for ImKate` where `RematchControl.tsx:65,74` say *your rival*, and it
 draws no frame at all for `That duel room is gone.` — a state that has shipped since
 `TASK-030909`. **Which side is stale needed no decision**: `ADR-0123` §4 quotes *Your rival offers

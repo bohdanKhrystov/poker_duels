@@ -9,13 +9,16 @@ module: web-client
 estimate: XS
 tier: haiku
 review: light
-files_touched: 2
+files_touched: 3
 labels: [client, rematch, notice, text]
 depends_on: [TASK-141502]
 verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchControl.test.tsx 2>&1 | grep -qE '^ *Tests +12 passed \(12\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/design/card-text.test.ts 2>&1 | grep -qE '^ *Tests +10 passed \(10\)$'
+  - awk 'index($0, "result/rematch-text.ts") { n++ } END { exit (n != 1) }' web-client/src/design/card-text.test.ts
+  - awk 'index($0, "rematch-panel.html") { n++ } END { exit (n != 1) }' web-client/src/design/card-text.test.ts
   - awk 'index($0, "export const RIVAL_OFFERS =") { n++ } END { exit (n != 1) }' web-client/src/result/rematch-text.ts
   - awk 'index($0, "export const REMATCH_LABEL =") { n++ } END { exit (n != 1) }' web-client/src/result/rematch-text.ts
   - awk 'index($0, "export const DEALING_LEAD =") { n++ } END { exit (n != 1) }' web-client/src/result/rematch-text.ts
@@ -53,6 +56,7 @@ that a compiler can hold instead.
 | --- | --- |
 | `web-client/src/result/rematch-text.ts` | create |
 | `web-client/src/result/RematchControl.tsx` | modify |
+| `web-client/src/design/card-text.test.ts` | modify |
 
 Read [`ADR-0138`](../../docs/adr/ADR-0138-the-panel-mounts-beside-the-lobby-and-the-dismissal-lives-in-the-mount.md)
 §4, [`ADR-0142`](../../docs/adr/ADR-0142-a-text-module-is-checked-against-the-rendered-card.md) §6,
@@ -95,15 +99,40 @@ assert that a constant equals itself).
   and that sentence is in none of them: it is the `mine` state, and `ADR-0123` §3 says a player's own
   standing offer follows them nowhere, so the panel never says it and there is no second surface to
   share it with. A gate pins it at **1**, still spelled in `RematchControl.tsx`.
-- **`ADR-0142` §6's register, whichever ticket lands second.** `web-client/src/design/card-text.test.ts`
-  does not exist on `develop` at `899d81f7`; `TASK-141203` (`STORY-1412`) creates it, and §6 globs
-  `web-client/src/**/*-text.ts` and fails on any module classified in neither `PAIRS` nor `NO_CARD`.
-  **If that file exists when this ticket is worked**, add the pair
-  `result/rematch-text.ts → design/screens/rematch-panel.html` with all six names in `carded` — every
-  one of them is on that card, put there by `TASK-141501` — and if it does not, add nothing. Either
-  way `npm run check` is the gate and it is correct in both orders: with no register there is nothing
-  to classify, and with one the run stays red until the pair is declared. `TASK-141203` records the
-  same obligation from its side.
+- **`ADR-0142` §6's register gains a third pair, and this is no longer conditional.**
+  `TASK-141203` **merged on 2026-09-09** as `f20d07ed`, so `web-client/src/design/card-text.test.ts`
+  exists and its last test globs `web-client/src/**/*-text.ts` and fails on any module classified in
+  neither `PAIRS` nor `NO_CARD`. **Creating `rematch-text.ts` without registering it reddens the
+  suite.** Add, beside the two bootstrapped pairs, an `import * as rematchText from
+  "../result/rematch-text";` and:
+
+  ```ts
+  {
+    modulePath: "result/rematch-text.ts",
+    moduleNamespace: rematchText,
+    card: "rematch-panel.html",
+    carded: [
+      "RIVAL_OFFERS",
+      "REMATCH_LABEL",
+      "DEALING_LEAD",
+      "DEALING_TAIL",
+      "ROOM_GONE",
+      "NOT_NOW",
+    ],
+    notCarded: {},
+  },
+  ```
+
+  **All six are `carded`, and all six are on the card by construction**: `TASK-141501` pins each of
+  them there with an exact count gate. `NO_CARD` is not touched. The register's third assertion
+  matches a value against **one** text unit of the card — which is exactly why `ADR-0138` §4 made the
+  dealing sentence two constants rather than one string with a newline in it: the card's `<br>` is a
+  tag, `ADR-0142` §2 replaces every tag with the separator, and a single joined constant would match
+  no unit at all.
+
+  The file is at **7** tests today and a third pair adds three, so the gate is **10** — measured at
+  `f20d07ed`, and derived from the register's own `describe.each` over `PAIRS` (three `it`s per pair
+  plus one global), not guessed.
 
 ## Out of scope
 
@@ -117,7 +146,7 @@ assert that a constant equals itself).
 ## Tests
 
 No new test file. The proof is `RematchControl.test.tsx` at **12 passing, unchanged** — measured
-green on `develop` at `899d81f7` — which asserts all four moved strings through the rendered DOM:
+green on `develop` at `f20d07ed` — which asserts all four moved strings through the rendered DOM:
 `getByText("Your rival offers a rematch")`, `getByRole("button", { name: "Rematch" })`,
 `getByText(/The button changes sides.*dealing hand 1…/)` and
 `getByText("That duel room is gone.")`.
@@ -133,7 +162,7 @@ and the interpolations alone pass on a component that has both.
 `awk index()` is substring, so `Rematch` cannot be gated that way — the word appears in the KDoc, in
 `RematchControl`, in `rematchStand` and in `RematchOffered`. The gate is instead a **line** that is
 nothing but the word, which is how JSX renders that button's child, and which was measured at **2**
-on `899d81f7`.
+on `f20d07ed`.
 
 ## Acceptance criteria
 
@@ -147,6 +176,7 @@ on `899d81f7`.
 - [ ] `RematchControl.tsx` still contains `Rematch offered — waiting for your rival` once and
       `<br />` once
 - [ ] `npx vitest run src/result/RematchControl.test.tsx` reports **12 passed (12)**
+- [ ] `card-text.test.ts` carries `result/rematch-text.ts` once and `rematch-panel.html` once, and reports **10 passed (10)**
 - [ ] `npm run check` exits 0
 - [ ] Every command in `verify:` exits 0
 

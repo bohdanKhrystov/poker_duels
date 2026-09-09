@@ -101,7 +101,7 @@ else, and it is the one that fails against that component.
 - [ ] `npx vitest run src/result/RematchNotice.test.tsx` reports **12 passed (12)**, the three new
       ones being the three named above and the previous nine unedited
 - [ ] `src/result/RematchControl.test.tsx` reports **12 passed (12)** — measured on `develop` at
-      `899d81f7`, and that file is not opened
+      `f20d07ed`, and that file is not opened
 - [ ] `RematchNotice.tsx` has, on non-comment lines, `UNKNOWN_ROOM` **1**, `{ROOM_GONE}` **1**,
       `REMATCH_UNAVAILABLE` **0**, and still **0** of `useEffect`, `useLayoutEffect`, `setTimeout`,
       `setInterval`

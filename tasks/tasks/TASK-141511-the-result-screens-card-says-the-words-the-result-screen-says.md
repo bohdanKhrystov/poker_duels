@@ -40,7 +40,7 @@ draws the fourth state it already has. The drift this story found, closed.
 ## Why this is a ticket at all
 
 Found while writing `STORY-1415`, by reading the merged card beside the merged component. Measured
-on `develop` at `899d81f7`, the card says **`ImKate offers a rematch`** and **`Rematch offered —
+on `develop` at `f20d07ed`, the card says **`ImKate offers a rematch`** and **`Rematch offered —
 waiting for ImKate`** where `RematchControl.tsx:65,74` say *your rival*, and it draws **no frame at
 all** for `That duel room is gone.`, which `TASK-030909` shipped and `RematchControl.test.tsx`
 asserts.
@@ -105,7 +105,7 @@ human's (`ADR-0024` §3).
 ## What would still pass if this were done wrong
 
 `ImKate` at **0** is file-wide rather than frame-scoped, because the two occurrences measured at
-`899d81f7` are both in frames and a repair that moved one into a note would satisfy a frame-scoped
+`f20d07ed` are both in frames and a repair that moved one into a note would satisfy a frame-scoped
 gate. The two replacement sentences are pinned at **1** each rather than `>= 1`, so a repair that
 pasted the new sentence beside the old one fails.
 

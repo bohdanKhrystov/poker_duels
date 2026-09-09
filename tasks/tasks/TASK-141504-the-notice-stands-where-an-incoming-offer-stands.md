@@ -86,7 +86,7 @@ diff `Lobby.tsx` and `App.tsx` against `develop` and fail on one byte.
   panel would move the screen beneath it at the instant it arrived, and out-of-flow is what makes
   `ADR-0123` §2's *"the player may go on doing what they were doing"* literally true rather than
   nearly true.
-- **Every spacing utility uses a named step `1`–`9`.** Measured at `899d81f7`: `app.css:55` sets
+- **Every spacing utility uses a named step `1`–`9`.** Measured at `f20d07ed`: `app.css:55` sets
   `--spacing: initial`, so `inset-0`, `inset-x-0`, `inset-y-0`, `top-0`, `bottom-0`, `left-0` and
   `right-0` generate **no CSS at all** — verified absent from `dist/assets/*.css` after
   `npx vite build`, while `bottom-5`, `left-5`, `right-5`, `mx-auto`, `fixed`, `z-10`,
@@ -146,7 +146,7 @@ prototype and both discriminate: the `-0` grep finds nothing on the correct form
       tests are the five named above
 - [ ] `src/lobby/Lobby.test.tsx` reports **113 passed (113)**, `src/App.test.tsx` **36 passed (36)**
       and `src/result/RematchControl.test.tsx` **12 passed (12)** — all measured on `develop` at
-      `899d81f7`, and none of the three files is opened here
+      `f20d07ed`, and none of the three files is opened here
 - [ ] `git diff --quiet develop -- web-client/src/lobby/Lobby.tsx` and the same for `App.tsx` both
       exit 0. A failure here means either this ticket touched them or `develop` moved them; rebase
       and re-check before changing anything
