@@ -34,7 +34,7 @@ describe("the name surface's words", () => {
     const allSentences = [
       refusalSentence("rejected"),
       refusalSentence("conflict"),
-      refusalSentence("permanent"),
+      refusalSentence("throttled"),
       refusalSentence("no-profile"),
       refusalSentence("unavailable"),
     ];
@@ -52,7 +52,7 @@ describe("the name surface's words", () => {
     const sentences = new Set([
       refusalSentence("rejected"),
       refusalSentence("conflict"),
-      refusalSentence("permanent"),
+      refusalSentence("throttled"),
       refusalSentence("no-profile"),
       refusalSentence("unavailable"),
     ]);
@@ -67,8 +67,8 @@ describe("the name surface's words", () => {
     expect(refusalSentence("conflict")).toBe(
       "That name is not available. Try another.",
     );
-    expect(refusalSentence("permanent")).toBe(
-      "You already have a display name. That choice is permanent and cannot be changed.",
+    expect(refusalSentence("throttled")).toBe(
+      "You're changing names too fast. Wait a moment, then try again.",
     );
     expect(refusalSentence("no-profile")).toBe(
       "This browser has no profile. Reload the page and try again.",
@@ -82,7 +82,7 @@ describe("the name surface's words", () => {
     // mayTryAgain is true for exactly two cases
     expect(mayTryAgain("rejected")).toBe(true);
     expect(mayTryAgain("conflict")).toBe(true);
-    expect(mayTryAgain("permanent")).toBe(false);
+    expect(mayTryAgain("throttled")).toBe(false);
     expect(mayTryAgain("no-profile")).toBe(false);
     expect(mayTryAgain("unavailable")).toBe(false);
   });

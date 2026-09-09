@@ -206,7 +206,7 @@ describe("setting a display name", () => {
       readonly kind: SetNameOutcome["kind"];
     }> = [
       { status: 400, kind: "rejected" },
-      { status: 403, kind: "permanent" },
+      { status: 429, kind: "throttled" },
       { status: 409, kind: "conflict" },
       { status: 401, kind: "no-profile" },
       { status: 500, kind: "unavailable" },
