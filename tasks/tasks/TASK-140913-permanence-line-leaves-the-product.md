@@ -3,13 +3,13 @@ schema: 2
 id: TASK-140913
 title: PERMANENCE_LINE leaves the product
 type: task
-status: backlog
+status: done
 parent: STORY-1409
 module: web-client
 estimate: XS
 tier: haiku
 review: light
-files_touched: 2
+files_touched: 3
 labels: [client, account]
 depends_on: [TASK-140912]
 verify:
@@ -34,6 +34,7 @@ gone from this product, together with the constant that carried it — `ADR-0130
 | --- | --- |
 | `web-client/src/profile/name-text.ts` | modify |
 | `web-client/src/profile/name-text.test.ts` | modify |
+| `web-client/src/design/card-text.test.ts` | modify | **Added at landing.** `TASK-141203`'s register named `PERMANENCE_LINE` in a `NO_CARD` reason, and this ticket deletes that export — so the register had to stop naming it. `ADR-0070` §4 propagation: the reason string only, no classification changed |
 
 Two, and no more, because `TASK-140912` already removed both importers. **Measured on `develop` at
 `1c3c7fd9`**: `PERMANENCE_LINE` is named in exactly four files under `web-client/src` —
