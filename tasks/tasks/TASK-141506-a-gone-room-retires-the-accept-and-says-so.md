@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141506
 title: A gone room retires the accept and says so, and no other refusal touches it
 type: task
-status: backlog
+status: ready
 parent: STORY-1415
 module: web-client
 estimate: XS

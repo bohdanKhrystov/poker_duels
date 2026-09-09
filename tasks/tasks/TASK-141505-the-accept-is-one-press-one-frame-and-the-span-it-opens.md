@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141505
 title: The accept is one press, one frame, and the span it opens
 type: task
-status: ready
+status: done
 parent: STORY-1415
 module: web-client
 estimate: S
