@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141012
 title: The boot reads the device standing once, beside the profile
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: web-client
 estimate: S
