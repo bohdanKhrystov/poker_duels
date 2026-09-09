@@ -3,7 +3,7 @@ schema: 2
 id: TASK-140918
 title: A player who holds a name is offered the form that changes it
 type: task
-status: ready
+status: done
 parent: STORY-1409
 module: web-client
 estimate: S
@@ -15,8 +15,8 @@ depends_on: [TASK-140917]
 verify:
   - cd web-client && npm ci
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/profile/NameSurface.test.tsx 2>&1 | grep -qF "NameSurface.test.tsx  (13 tests)"'
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (105 tests)"'
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (18 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (114 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (23 tests)"'
   - sh -c '! grep -qiE "suggest" web-client/src/profile/NameSurface.tsx'
   - sh -c 'test $(grep -c "return (" web-client/src/profile/NameSurface.tsx) -eq 1'
   - cd web-client && npm run check
@@ -124,7 +124,10 @@ of your own name is a `409`, forever.
 - [ ] `sends what the player typed, once, however many times the button is pressed` and
       `tells the player their name was removed, and tells the player beside them nothing` pass with
       no assertion weakened
-- [ ] `Lobby.test.tsx` reports 105 tests and `AccountScreen.test.tsx` 18, both unedited
+- [ ] `Lobby.test.tsx` reports 114 tests and `AccountScreen.test.tsx` 23, both unedited — the
+      ticket asked 105 and 18, both measured before `TASK-140911`, `TASK-140913`, `TASK-140914`
+      and `TASK-140915` landed. Neither file is touched here, so the measured numbers are both
+      what `develop` holds and what this change leaves
 - [ ] The word `suggest` appears nowhere in `NameSurface.tsx`, case-insensitively
 - [ ] `NameSurface.tsx` has exactly one `return (` — two on `develop` at `1c3c7fd9`, and losing the
       early return is the whole of the change

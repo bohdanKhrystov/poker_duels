@@ -2,7 +2,7 @@
 id: STORY-1409
 title: A name can be changed in account settings, and the name it leaves is spent
 type: story
-status: backlog
+status: done
 parent: EPIC-14
 module: poker-server
 labels: [server, db, client, design, docs, account]

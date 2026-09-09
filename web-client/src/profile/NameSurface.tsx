@@ -17,7 +17,8 @@ export function NameSurface(props: {
 }): ReactElement {
   const { profile, setName } = props;
   const [inputValue, setInputValue] = useState("");
-  // What the server sent back on a `named` outcome. Once set, this — not
+  // What the server sent back on a `named` outcome — a first name or a
+  // replacement, the surface does not distinguish. Once set, this — not
   // the (by then stale) `profile` prop — is what the surface renders,
   // exactly as ADR-0029 §5 intends: the client is told the canonical name,
   // never left to assume the typed string survived unchanged.
@@ -40,17 +41,6 @@ export function NameSurface(props: {
 
   const displayName = wonName ?? profile.displayName;
 
-  if (displayName !== null) {
-    return (
-      <section
-        aria-label="your display name"
-        className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
-      >
-        <p className="text-small">{displayName}</p>
-      </section>
-    );
-  }
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // A second submit while one is already in flight must send nothing,
@@ -67,6 +57,10 @@ export function NameSurface(props: {
       reportNameWrite(outcome);
       if (outcome.kind === "named") {
         setWonName(outcome.profile.displayName);
+        // The form stays on screen for the next change, and must not offer
+        // back the string that was just spent — the same refusal to
+        // pre-fill that governs the field on first mount.
+        setInputValue("");
         return;
       }
       // Every other outcome settles as a refusal: its sentence replaces
@@ -85,6 +79,7 @@ export function NameSurface(props: {
       aria-label="your display name"
       className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
     >
+      {displayName !== null && <p className="text-small">{displayName}</p>}
       {profile.displayName === null && profile.displayNameRemoved && (
         <div className="w-full">
           <p className="text-small">

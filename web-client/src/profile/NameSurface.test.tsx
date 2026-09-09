@@ -20,7 +20,7 @@ vi.mock("./profile-provider", () => ({
 }));
 
 describe("the name surface", () => {
-  it("shows the name the server sent, and offers no way to change it", () => {
+  it("shows the name the server sent, beside the form that can change it", () => {
     const setNameSpy = vi.fn<[string], Promise<SetNameOutcome>>();
 
     const { unmount } = render(
@@ -31,8 +31,8 @@ describe("the name surface", () => {
     );
 
     expect(screen.getByText("Ada")).toBeDefined();
-    expect(screen.queryAllByRole("textbox")).toHaveLength(0);
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    expect(screen.queryAllByRole("textbox")).toHaveLength(1);
+    expect(screen.queryAllByRole("button")).toHaveLength(1);
 
     unmount();
 
@@ -44,8 +44,84 @@ describe("the name surface", () => {
     );
 
     expect(screen.getByText("Grace")).toBeDefined();
-    expect(screen.queryAllByRole("textbox")).toHaveLength(0);
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    expect(screen.queryAllByRole("textbox")).toHaveLength(1);
+    expect(screen.queryAllByRole("button")).toHaveLength(1);
+  });
+
+  it("offers the form to a player who already holds a name", () => {
+    const setNameSpy = vi.fn<[string], Promise<SetNameOutcome>>();
+
+    render(
+      <NameSurface
+        profile={aProfile({ displayName: "Ada" })}
+        setName={setNameSpy}
+      />,
+    );
+
+    expect(screen.getByText("Ada")).toBeDefined();
+    expect(screen.getByText(CHANGEABLE_LINE)).toBeDefined();
+    expect(screen.getByText(SPENT_LINE)).toBeDefined();
+
+    const textboxes = screen.queryAllByRole("textbox");
+    expect(textboxes).toHaveLength(1);
+    expect((textboxes[0] as HTMLInputElement).value).toBe("");
+
+    expect(screen.queryAllByRole("button")).toHaveLength(1);
+  });
+
+  it("a change is sent exactly as typed, and the surface adopts what the server answered", async () => {
+    // The fake answers a string that differs from what was typed — proof
+    // that the section renders the server's outcome, not an echo of the
+    // input, on the named branch just as it does on the nameless one.
+    const setNameSpy = vi.fn<[string], Promise<SetNameOutcome>>(() =>
+      Promise.resolve({
+        kind: "named",
+        profile: aProfile({ displayName: "Grace" }),
+      }),
+    );
+
+    render(
+      <NameSurface
+        profile={aProfile({ displayName: "Ada" })}
+        setName={setNameSpy}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "grace" },
+    });
+    fireEvent.click(screen.getByRole("button"));
+
+    expect(await screen.findByText("Grace")).toBeDefined();
+    expect(setNameSpy).toHaveBeenCalledTimes(1);
+    expect(setNameSpy).toHaveBeenCalledWith("grace");
+    expect(screen.queryByText("Ada")).toBeNull();
+  });
+
+  it("offers no suggestion and never proposes the name already held", () => {
+    const setNameSpy = vi.fn<[string], Promise<SetNameOutcome>>();
+
+    const { unmount } = render(
+      <NameSurface
+        profile={aProfile({ displayName: "Ada" })}
+        setName={setNameSpy}
+      />,
+    );
+
+    const namedTextbox = screen.getByRole("textbox") as HTMLInputElement;
+    expect(namedTextbox.value).toBe("");
+
+    unmount();
+
+    render(
+      <NameSurface
+        profile={aProfile({ displayName: null })}
+        setName={setNameSpy}
+      />,
+    );
+
+    const namelessTextbox = screen.getByRole("textbox") as HTMLInputElement;
+    expect(namelessTextbox.value).toBe("");
   });
 
   it("offers the form to a player who has no name", () => {
@@ -251,7 +327,11 @@ describe("the name surface", () => {
     fireEvent.click(screen.getByRole("button"));
 
     expect(await screen.findByText("Ada")).toBeDefined();
-    expect(screen.queryAllByRole("textbox")).toHaveLength(0);
+    // The form stays — a named player is still offered the change — but the
+    // field it left behind carries no trace of what was typed.
+    const textboxes = screen.queryAllByRole("textbox");
+    expect(textboxes).toHaveLength(1);
+    expect((textboxes[0] as HTMLInputElement).value).toBe("");
 
     const renderedText =
       screen.getByRole("region", { name: "your display name" }).textContent ??
