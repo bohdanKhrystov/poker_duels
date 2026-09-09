@@ -231,6 +231,7 @@ fixture and reddens on any platform.
 | | [TASK-000104](tasks/TASK-000104-a-second-branch-cannot-claim-the-same-protocol-version.md) A second branch cannot claim the same PROTOCOL_VERSION | S | **done** |
 | | [TASK-000105](tasks/TASK-000105-two-build-files-that-were-never-source.md) Two build files that were never source | XS | done |
 | | [TASK-000106](tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) The board and the ticket file are one register, and the linter reads both | S | **done** |
+| | [TASK-000107](tasks/TASK-000107-the-split-procedure-carries-the-design-card-rule.md) The split procedure carries the design-card rule ADR-0091 placed in it | S | **ready** |
 
 `TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
 Actions minutes free at once, and `develop` is now protected: a pull request and two green checks
@@ -278,6 +279,24 @@ last row is `PROTOCOL_VERSION` and its fingerprint is the live wire's, which fai
 of resolving that conflict and, for free, an unversioned wire change. `STORY-0213`, `STORY-0214` and
 `STORY-0405` all hold unlanded bumps and share the lock today; each now also pays a hand-written
 ledger row, and no wire-shape change can skip a version bump.
+
+`TASK-000107` is **new**, filed on 2026-09-09, and it lives here for `TASK-000104`'s reason: the
+rule it writes binds every story split in every epic, so it belongs to the ways of working rather
+than to the epic that surfaced it.
+[`ADR-0091`](../docs/adr/ADR-0091-design-gets-no-agent-a-new-screen-owes-a-card.md) §2 said its rule
+*"lives in **one** place: the planner's split procedure, `.claude/agents/planner.md`"* — and,
+measured on `develop` at `e5f865e8`, that file is 224 lines containing **0** occurrences of
+`ADR-0091`, **0** of `screen.ts` and **0** of *design card*. The rule §2 placed has never been
+written into the file §2 names, ten days on.
+[`ADR-0145`](../docs/adr/ADR-0145-a-cards-scaffolding-is-composing-and-the-transcriber-names-the-mint.md)
+§6 states the same measurement at `702408ed`, calls it *"a defect with a known repair and no
+decision in it"*, and assigns the ticket to the planner. `EPIC-14` surfaced it rather than owning
+it: `TASK-141502` was dispatched as composing, reviewed as minting and landed as composing — one
+round trip and one held story, bought by a rule that existed only in an ADR. The repair is one file
+and one new section, `## A new screen owes a card`, carrying both `ADR-0091` §2's trigger and §3's
+classification as `ADR-0145` §§2–3 sharpened it. Six of its ten gates were run red on `e5f865e8`
+and green against a draft, so none of them is already satisfied by today's file; the section also
+records the one clause of that floor — clause 3 — that a Files table cannot answer.
 
 ---
 
