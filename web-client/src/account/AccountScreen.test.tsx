@@ -11,6 +11,8 @@ import {
   PASSWORD_ROUTE_LIVE,
   SIGN_IN_HEADING,
   SIGN_OUT_LABEL,
+  SIGN_OUT_WARNING,
+  SIGN_OUT_HANDS_A_NEW_PROFILE,
   SIGN_UP_LABEL,
   ANONYMOUS_STATE,
   ANONYMOUS_COST,
@@ -37,7 +39,11 @@ describe("the account screen", () => {
       duels: [],
     };
     const { rerender } = render(
-      <AccountScreen profile={live} signedIn={false} />,
+      <AccountScreen
+        profile={live}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByText(DEVICE_ROUTE_LIVE)).not.toBeNull();
     expect(screen.queryByText(DEVICE_ROUTE_REVOKED)).toBeNull();
@@ -47,7 +53,13 @@ describe("the account screen", () => {
       profile: aProfile({ deviceRouteLive: false }),
       duels: [],
     };
-    rerender(<AccountScreen profile={revoked} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={revoked}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(DEVICE_ROUTE_REVOKED)).not.toBeNull();
     expect(screen.queryByText(DEVICE_ROUTE_LIVE)).toBeNull();
   });
@@ -58,7 +70,13 @@ describe("the account screen", () => {
       profile: aProfile(),
       duels: [],
     };
-    render(<AccountScreen profile={profile} signedIn={true} />);
+    render(
+      <AccountScreen
+        profile={profile}
+        signedIn={true}
+        signOutHandsANewProfile={false}
+      />,
+    );
 
     expect(screen.queryByText(PASSWORD_ROUTE_LIVE)).not.toBeNull();
   });
@@ -69,14 +87,26 @@ describe("the account screen", () => {
       profile: aProfile(),
       duels: [],
     };
-    render(<AccountScreen profile={profile} signedIn={false} />);
+    render(
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
 
     expect(screen.queryByText(PASSWORD_ROUTE_LIVE)).toBeNull();
     expect(screen.queryByText(DEVICE_ROUTE_LIVE)).not.toBeNull();
   });
 
   it("asserts no route of its own while the profile has not landed", () => {
-    render(<AccountScreen profile={null} signedIn={false} />);
+    render(
+      <AccountScreen
+        profile={null}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
 
     expect(screen.queryByText(DEVICE_ROUTE_LIVE)).toBeNull();
     expect(screen.queryByText(DEVICE_ROUTE_REVOKED)).toBeNull();
@@ -89,14 +119,24 @@ describe("the account screen", () => {
   it("says nothing about routes when the profile read failed", () => {
     const unavailable: ProfileStripState = { kind: "unavailable" };
     const { rerender } = render(
-      <AccountScreen profile={unavailable} signedIn={false} />,
+      <AccountScreen
+        profile={unavailable}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByText(DEVICE_ROUTE_LIVE)).toBeNull();
     expect(screen.queryByText(DEVICE_ROUTE_REVOKED)).toBeNull();
     expect(screen.queryByText(PASSWORD_ROUTE_LIVE)).toBeNull();
 
     const noProfile: ProfileStripState = { kind: "no-profile" };
-    rerender(<AccountScreen profile={noProfile} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={noProfile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(DEVICE_ROUTE_LIVE)).toBeNull();
     expect(screen.queryByText(DEVICE_ROUTE_REVOKED)).toBeNull();
     expect(screen.queryByText(PASSWORD_ROUTE_LIVE)).toBeNull();
@@ -108,7 +148,13 @@ describe("the account screen", () => {
       profile: aProfile(),
       duels: [],
     };
-    render(<AccountScreen profile={profile} signedIn={true} />);
+    render(
+      <AccountScreen
+        profile={profile}
+        signedIn={true}
+        signOutHandsANewProfile={false}
+      />,
+    );
 
     const headings = screen.getAllByRole("heading");
     expect(headings).toHaveLength(1);
@@ -123,7 +169,11 @@ describe("the account screen", () => {
       duels: [],
     };
     const { rerender } = render(
-      <AccountScreen profile={recoveryOn} signedIn={false} />,
+      <AccountScreen
+        profile={recoveryOn}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByText(RECOVERY_ON)).not.toBeNull();
     expect(screen.queryByText(RECOVERY_OFF)).toBeNull();
@@ -133,7 +183,13 @@ describe("the account screen", () => {
       profile: aProfile({ hasRecoveryEmail: false }),
       duels: [],
     };
-    rerender(<AccountScreen profile={recoveryOff} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={recoveryOff}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(RECOVERY_OFF)).not.toBeNull();
     expect(screen.queryByText(RECOVERY_ON)).toBeNull();
   });
@@ -141,18 +197,34 @@ describe("the account screen", () => {
   it("says nothing about recovery when no profile is in hand", () => {
     const noProfile: ProfileStripState = { kind: "no-profile" };
     const { rerender } = render(
-      <AccountScreen profile={noProfile} signedIn={false} />,
+      <AccountScreen
+        profile={noProfile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByText(RECOVERY_ON)).toBeNull();
     expect(screen.queryByText(RECOVERY_OFF)).toBeNull();
 
     const unavailable: ProfileStripState = { kind: "unavailable" };
-    rerender(<AccountScreen profile={unavailable} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={unavailable}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(RECOVERY_ON)).toBeNull();
     expect(screen.queryByText(RECOVERY_OFF)).toBeNull();
 
     const nullProfile = null;
-    rerender(<AccountScreen profile={nullProfile} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={nullProfile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(RECOVERY_ON)).toBeNull();
     expect(screen.queryByText(RECOVERY_OFF)).toBeNull();
 
@@ -161,7 +233,13 @@ describe("the account screen", () => {
       profile: aProfile({ hasRecoveryEmail: true }),
       duels: [],
     };
-    rerender(<AccountScreen profile={withProfile} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={withProfile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(RECOVERY_ON)).not.toBeNull();
   });
 
@@ -172,7 +250,11 @@ describe("the account screen", () => {
       duels: [],
     };
     const { container } = render(
-      <AccountScreen profile={profile} signedIn={false} />,
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByText(RECOVERY_ON)).not.toBeNull();
     expect(container.textContent).not.toMatch(/@/);
@@ -192,13 +274,20 @@ describe("the account screen", () => {
       <AccountScreen
         profile={profile}
         signedIn={false}
+        signOutHandsANewProfile={false}
         attachRecoveryEmail={attach}
       />,
     );
     expect(screen.getByRole("button", { name: ATTACH_LABEL })).not.toBeNull();
 
     // With profile and no prop: form is absent.
-    rerender(<AccountScreen profile={profile} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByRole("button", { name: ATTACH_LABEL })).toBeNull();
 
     // With prop and profile=null: form is absent.
@@ -206,6 +295,7 @@ describe("the account screen", () => {
       <AccountScreen
         profile={null}
         signedIn={false}
+        signOutHandsANewProfile={false}
         attachRecoveryEmail={attach}
       />,
     );
@@ -217,6 +307,7 @@ describe("the account screen", () => {
       <AccountScreen
         profile={noProfile}
         signedIn={false}
+        signOutHandsANewProfile={false}
         attachRecoveryEmail={attach}
       />,
     );
@@ -237,6 +328,7 @@ describe("the account screen", () => {
       <AccountScreen
         profile={recoveryOn}
         signedIn={false}
+        signOutHandsANewProfile={false}
         attachRecoveryEmail={attach}
       />,
     );
@@ -253,6 +345,7 @@ describe("the account screen", () => {
       <AccountScreen
         profile={recoveryOff}
         signedIn={false}
+        signOutHandsANewProfile={false}
         attachRecoveryEmail={attach}
       />,
     );
@@ -261,7 +354,13 @@ describe("the account screen", () => {
   });
 
   it("the sign-in door is a drawn button, not a sentence", () => {
-    render(<AccountScreen profile={null} signedIn={false} />);
+    render(
+      <AccountScreen
+        profile={null}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
 
     const signIn = screen.getByRole("button", { name: SIGN_IN_HEADING });
     expect(signIn.classList.contains("border-hairline")).toBe(true);
@@ -270,7 +369,14 @@ describe("the account screen", () => {
 
   it("sign out and its confirmation are drawn buttons, not sentences", () => {
     const signOut = vi.fn().mockResolvedValue({ kind: "signed-out" } as const);
-    render(<AccountScreen profile={null} signedIn={true} signOut={signOut} />);
+    render(
+      <AccountScreen
+        profile={null}
+        signedIn={true}
+        signOutHandsANewProfile={false}
+        signOut={signOut}
+      />,
+    );
 
     const offered = screen.getByRole("button", { name: SIGN_OUT_LABEL });
     expect(offered.classList.contains("border-hairline")).toBe(true);
@@ -302,6 +408,7 @@ describe("the account screen", () => {
       <AccountScreen
         profile={profile}
         signedIn={false}
+        signOutHandsANewProfile={false}
         signUp={signUp}
         attachRecoveryEmail={attach}
       />,
@@ -331,6 +438,7 @@ describe("the account screen", () => {
       <AccountScreen
         profile={profile}
         signedIn={false}
+        signOutHandsANewProfile={false}
         signUp={signUp}
         attachRecoveryEmail={attach}
       />,
@@ -363,7 +471,13 @@ describe("the account screen", () => {
       profile: aProfile({ hasPassword: false }),
       duels: [],
     };
-    render(<AccountScreen profile={profile} signedIn={false} />);
+    render(
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
 
     expect(screen.queryByText(ANONYMOUS_STATE)).not.toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).not.toBeNull();
@@ -376,7 +490,13 @@ describe("the account screen", () => {
       profile: aProfile({ hasPassword: true }),
       duels: [],
     };
-    render(<AccountScreen profile={profile} signedIn={false} />);
+    render(
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
 
     expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
@@ -390,7 +510,11 @@ describe("the account screen", () => {
   it("says nothing about the state where it was told nothing", () => {
     // Test with profile=null (still loading)
     const { rerender } = render(
-      <AccountScreen profile={null} signedIn={false} />,
+      <AccountScreen
+        profile={null}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
@@ -398,14 +522,26 @@ describe("the account screen", () => {
 
     // Test with kind="no-profile"
     const noProfile: ProfileStripState = { kind: "no-profile" };
-    rerender(<AccountScreen profile={noProfile} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={noProfile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
 
     // Test with kind="unavailable"
     const unavailable: ProfileStripState = { kind: "unavailable" };
-    rerender(<AccountScreen profile={unavailable} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={unavailable}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
@@ -419,7 +555,11 @@ describe("the account screen", () => {
       duels: [],
     };
     const { rerender } = render(
-      <AccountScreen profile={namedProfile} signedIn={false} />,
+      <AccountScreen
+        profile={namedProfile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByText(ANONYMOUS_STATE)).not.toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).not.toBeNull();
@@ -432,7 +572,13 @@ describe("the account screen", () => {
       profile: aProfile({ hasPassword: false, displayName: null }),
       duels: [],
     };
-    rerender(<AccountScreen profile={anonProfile} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={anonProfile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(ANONYMOUS_STATE)).not.toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).not.toBeNull();
     expect(screen.queryByText(ANONYMOUS_WAY_OUT)).not.toBeNull();
@@ -451,7 +597,11 @@ describe("the account screen", () => {
       duels: [],
     };
     const { rerender } = render(
-      <AccountScreen profile={profile1} signedIn={true} />,
+      <AccountScreen
+        profile={profile1}
+        signedIn={true}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByText(ANONYMOUS_STATE)).not.toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).not.toBeNull();
@@ -463,7 +613,13 @@ describe("the account screen", () => {
       profile: aProfile({ hasPassword: true }),
       duels: [],
     };
-    rerender(<AccountScreen profile={profile2} signedIn={false} />);
+    rerender(
+      <AccountScreen
+        profile={profile2}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
     expect(screen.queryByText(ANONYMOUS_STATE)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_COST)).toBeNull();
     expect(screen.queryByText(ANONYMOUS_WAY_OUT)).toBeNull();
@@ -479,7 +635,12 @@ describe("the account screen", () => {
       duels: [],
     };
     render(
-      <AccountScreen profile={profile} signedIn={false} setName={setName} />,
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+        setName={setName}
+      />,
     );
 
     const nameSurface = screen.getByLabelText("your display name");
@@ -505,7 +666,13 @@ describe("the account screen", () => {
       profile: aProfile(),
       duels: [],
     };
-    render(<AccountScreen profile={profile} signedIn={false} />);
+    render(
+      <AccountScreen
+        profile={profile}
+        signedIn={false}
+        signOutHandsANewProfile={false}
+      />,
+    );
 
     const nameSurface = screen.queryByLabelText("your display name");
     expect(nameSurface).toBeNull();
@@ -517,7 +684,12 @@ describe("the account screen", () => {
 
     // Test with profile=null (still loading)
     const { rerender } = render(
-      <AccountScreen profile={null} signedIn={false} setName={setName} />,
+      <AccountScreen
+        profile={null}
+        signedIn={false}
+        setName={setName}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByLabelText("your display name")).toBeNull();
 
@@ -525,7 +697,12 @@ describe("the account screen", () => {
     // so we only test the non-profile states
     const noProfile: ProfileStripState = { kind: "no-profile" };
     rerender(
-      <AccountScreen profile={noProfile} signedIn={false} setName={setName} />,
+      <AccountScreen
+        profile={noProfile}
+        signedIn={false}
+        setName={setName}
+        signOutHandsANewProfile={false}
+      />,
     );
     expect(screen.queryByLabelText("your display name")).toBeNull();
 
@@ -536,8 +713,41 @@ describe("the account screen", () => {
         profile={unavailable}
         signedIn={false}
         setName={setName}
+        signOutHandsANewProfile={false}
       />,
     );
     expect(screen.queryByLabelText("your display name")).toBeNull();
+  });
+
+  it("hands the sign-out control the answer it was given", () => {
+    const signOut = vi.fn().mockResolvedValue({ kind: "signed-out" } as const);
+
+    // With signOutHandsANewProfile={false}, should show the warning
+    const { rerender } = render(
+      <AccountScreen
+        profile={null}
+        signedIn={true}
+        signOutHandsANewProfile={false}
+        signOut={signOut}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: SIGN_OUT_LABEL }));
+    expect(screen.queryByText(SIGN_OUT_WARNING)).not.toBeNull();
+    expect(screen.queryByText(SIGN_OUT_HANDS_A_NEW_PROFILE)).toBeNull();
+
+    // With signOutHandsANewProfile={true}, should show the new profile message
+    rerender(
+      <AccountScreen
+        profile={null}
+        signedIn={true}
+        signOutHandsANewProfile={true}
+        signOut={signOut}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: SIGN_OUT_LABEL }));
+    expect(screen.queryByText(SIGN_OUT_HANDS_A_NEW_PROFILE)).not.toBeNull();
+    expect(screen.queryByText(SIGN_OUT_WARNING)).toBeNull();
   });
 });

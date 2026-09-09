@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141013
 title: The account screen is told which sign-out it offers
 type: task
-status: ready
+status: done
 parent: STORY-1410
 module: web-client
 estimate: S
@@ -14,8 +14,8 @@ labels: [client, account]
 depends_on: [TASK-141012]
 verify:
   - cd web-client && npm ci
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (21 tests)"'
-  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (113 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/account/AccountScreen.test.tsx 2>&1 | grep -qF "AccountScreen.test.tsx  (24 tests)"'
+  - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qF "Lobby.test.tsx  (114 tests)"'
   - sh -c 'cd web-client && NO_COLOR=1 npx vitest run src/App.test.tsx 2>&1 | grep -qF "App.test.tsx  (37 tests)"'
   - sh -c 'cd web-client && ! grep -q "signOutHandsANewProfile={false}" src/account/AccountScreen.tsx'
   - sh -c 'cd web-client && test $(grep -c "signOutHandsANewProfile" src/account/AccountScreen.tsx) -eq 3'
@@ -103,9 +103,11 @@ show up there as a `tsc` failure rather than a silent pass.
 
 ## Acceptance criteria
 
-- [ ] `AccountScreen.test.tsx` reports `(21 tests)` and all pass
+- [ ] `AccountScreen.test.tsx` reports `(24 tests)` and all pass — the ticket asked 21 on a
+      baseline predating `TASK-140914`'s five; `develop` holds 23 and this ticket adds one
 - [ ] `hands the sign-out control the answer it was given` passes
-- [ ] `Lobby.test.tsx` reports `(113 tests)` and `App.test.tsx` reports `(37 tests)`, all passing
+- [ ] `Lobby.test.tsx` reports `(114 tests)` — asked 113, measured before `TASK-140915`'s one, and
+      untouched in count here — and `App.test.tsx` reports `(37 tests)`, all passing
 - [ ] `! grep -q "signOutHandsANewProfile={false}"` on `AccountScreen.tsx` exits 0
 - [ ] `grep -c "signOutHandsANewProfile"` is 3 in `AccountScreen.tsx` and
       `grep -c "signOutHandsANewProfile={false}"` is 1 in `Lobby.tsx`
