@@ -232,6 +232,7 @@ fixture and reddens on any platform.
 | | [TASK-000105](tasks/TASK-000105-two-build-files-that-were-never-source.md) Two build files that were never source | XS | done |
 | | [TASK-000106](tasks/TASK-000106-the-board-and-the-ticket-file-are-one-register.md) The board and the ticket file are one register, and the linter reads both | S | **done** |
 | | [TASK-000107](tasks/TASK-000107-the-split-procedure-carries-the-design-card-rule.md) The split procedure carries the design-card rule ADR-0091 placed in it | S | **done** |
+| | [TASK-000108](tasks/TASK-000108-a-count-is-pinned-only-where-the-ticket-writes.md) A count is pinned only where the ticket writes — *filed 2026-09-10 after `EPIC-14` corrected **thirty-one** stale count literals, every one measured at authoring and never re-measured at dispatch. In a serial chain each merge invalidates the counts behind it, so the defect is the default rather than the exception. Most were counts for files the ticket does not modify, doing the job of *this file is unchanged* — which `git diff --exit-code` does exactly, proves more, and cannot rot. **Named cost:** where a ticket does modify a file the count still matters and still needs a baseline commit, so this narrows the practice rather than ending it, and it is a rule planners must read rather than a gate that enforces itself* | S | **backlog** |
 
 `TASK-000102` is **done**. The repository went public on 2026-08-13, which made protection and
 Actions minutes free at once, and `develop` is now protected: a pull request and two green checks

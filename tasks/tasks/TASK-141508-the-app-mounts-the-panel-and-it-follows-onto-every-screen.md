@@ -16,9 +16,9 @@ verify:
   - cd web-client && npm ci
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npm run --silent check
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.screens.test.tsx 2>&1 | grep -qE '^ *Tests +2 passed \(2\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +16 passed \(16\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/App.test.tsx 2>&1 | grep -qE '^ *Tests +36 passed \(36\)$'
-  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qE '^ *Tests +113 passed \(113\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchNotice.test.tsx 2>&1 | grep -qE '^ *Tests +17 passed \(17\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/App.test.tsx 2>&1 | grep -qE '^ *Tests +38 passed \(38\)$'
+  - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/lobby/Lobby.test.tsx 2>&1 | grep -qE '^ *Tests +116 passed \(116\)$'
   - cd web-client && FORCE_COLOR=0 NO_COLOR=1 npx vitest run src/result/RematchControl.test.tsx 2>&1 | grep -qE '^ *Tests +12 passed \(12\)$'
   - awk 'index($0,"<RematchNotice />") { n++ } END { exit (n != 1) }' web-client/src/App.tsx
   - awk 'index($0,"<Lobby />") { n++ } END { exit (n != 1) }' web-client/src/App.tsx
@@ -69,7 +69,7 @@ changed**; three `verify:` lines diff `Lobby.tsx`, `RematchControl.tsx` and `App
   beneath.
 - **`Lobby.tsx` is not edited** — not its cascade, not its branch order, not either of its effects,
   not the block that computes `standing`, `ruling` and `shown`.
-- **A new test file, not `App.test.tsx`.** `App.test.tsx` is 1261 lines and 36 tests and this story
+- **A new test file, not `App.test.tsx`.** `App.test.tsx` is 1287 lines and 38 tests and this story
   opens none of them; a gate diffs it against `develop`. The new file copies that file's
   `vi.mock("./main")` **factory** — mounting the real `HistoryProvider` throws, because Node's own
   `localStorage` shadows jsdom's and reads `undefined` inside `HistoryScreen`'s mount effect.
