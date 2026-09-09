@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141510
 title: What the panel takes from the player is nothing
 type: task
-status: ready
+status: done
 parent: STORY-1415
 module: web-client
 estimate: S

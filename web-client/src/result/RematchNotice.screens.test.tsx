@@ -19,10 +19,14 @@ import {
 import { RIVAL_OFFERS, NOT_NOW } from "./rematch-text";
 import { HISTORY_HEADING } from "../history/history-text";
 import { LADDER_HEADING } from "../ladder/ladder-text";
-import { ACCOUNT_HEADING, SIGN_IN_HEADING } from "../account/account-text";
+import {
+  ACCOUNT_HEADING,
+  SIGN_IN_HEADING,
+  PASSWORD_LABEL,
+} from "../account/account-text";
 import { VERIFY_HEADING, RESET_HEADING } from "../account/recovery-text";
 import { hashForScreen, type Screen } from "../routing/screen";
-import type { Snapshot, SeatView } from "../protocol";
+import type { Snapshot, SeatView, ClientMessage } from "../protocol";
 
 function seatView(index: number): SeatView {
   return {
@@ -98,14 +102,31 @@ function incomingOfferStore(): DuelStore {
   return store;
 }
 
-function renderAppWith(store: DuelStore): RenderResult {
+function renderAppWith(
+  store: DuelStore,
+  send: (message: ClientMessage) => void = vi.fn(),
+): RenderResult {
   return render(
     <AccountProvider calls={fakeAccountCalls}>
-      <DuelProvider store={store} send={vi.fn()}>
+      <DuelProvider store={store} send={send}>
         <App />
       </DuelProvider>
     </AccountProvider>,
   );
+}
+
+// RoomJoined + DuelFinished only, with no RematchOffered yet — the fixture
+// the focus proof needs, since it must focus a control on the screen
+// beneath *before* the offer arrives, and incomingOfferStore() above already
+// carries the offer at construction.
+function preOfferStore(): DuelStore {
+  const store = createDuelStore();
+  store.apply({ type: "RoomJoined", code: "ABCDEF", seat: 1 });
+  store.apply({
+    type: "DuelFinished",
+    outcome: { winner: null, handsPlayed: 1, finalStacks: [0, 0] },
+  });
+  return store;
 }
 
 describe("the rematch notice, mounted by App", () => {
@@ -277,5 +298,119 @@ describe("the rematch notice, mounted by App", () => {
     expect(screen.getByText("You")).toBeDefined();
     expect(screen.queryByRole("status")).toBeNull();
     expect(window.location.hash).toBe("");
+  });
+
+  // TASK-141510: the four proofs that ADR-0123 §2's prohibitions can
+  // actually carry mechanically, and a plain statement of the two that
+  // cannot.
+  //
+  // ADR-0138 §8 also asks for "the same on the front door's room-code
+  // field". That case is not written here because it is vacuous: the front
+  // door is `shown === "first"` — the screen where TASK-141508's own fact
+  // ("one fact never has two live surfaces") means the panel never draws.
+  // There is no panel over that form for a keypress to reach, so a test
+  // pressing Enter into the room-code field would pass for no reason: it
+  // could not fail even against a version of RematchNotice mounted inside
+  // every form on every screen, because that defective version still never
+  // renders while `shown === "first"`.
+  //
+  // What stays a reader's, after these four: no scrim element, no `inert`,
+  // no `aria-hidden` on anything the panel does not own, no scroll lock on
+  // `<body>`, and nothing painting over anything outside its own box.
+  // TASK-141504's source gates hold the attributes at zero, but a scrim
+  // added later with `pointer-events: none` would set none of them and
+  // would pass every assertion in this file too — ADR-0138 §Consequences
+  // says so about itself, and nothing mechanical here closes that gap.
+
+  it("the panel is a descendant of no form", () => {
+    window.location.hash = hashForScreen("sign-in");
+    const store = incomingOfferStore();
+    renderAppWith(store);
+
+    // The positive control: there is a form on this screen at all, so the
+    // assertion below is about the panel's position and not about a screen
+    // that happens to have no form to fail against.
+    expect(
+      screen.getByLabelText(PASSWORD_LABEL).closest("form"),
+    ).not.toBeNull();
+
+    // getByRole, not queryByRole: it throws if the panel is missing, rather
+    // than returning null and letting a defensive `?.closest(...)` read as
+    // a pass.
+    const panelRoot = screen.getByRole("status");
+    expect(panelRoot.closest("form")).toBeNull();
+  });
+
+  it("submitting the form the player was already in sends no OfferRematch", async () => {
+    window.location.hash = hashForScreen("sign-in");
+    const store = incomingOfferStore();
+    const send = vi.fn();
+    vi.mocked(fakeAccountCalls.signIn).mockResolvedValue({
+      kind: "signed-in",
+    });
+    renderAppWith(store, send);
+
+    fireEvent.change(screen.getByLabelText(PASSWORD_LABEL), {
+      target: { value: "correct horse battery staple" },
+    });
+    const form = screen.getByLabelText(PASSWORD_LABEL).closest("form");
+    expect(form).not.toBeNull();
+
+    await act(async () => {
+      fireEvent.submit(form as HTMLFormElement);
+    });
+
+    expect(send).toHaveBeenCalledTimes(0);
+    // The positive control: signIn actually ran, so the zero above means
+    // the submit reached the form's own handler rather than nothing firing
+    // at all — jsdom performs no implicit form submission on a bare Enter,
+    // which is exactly the failure mode this test would otherwise hide
+    // (measured at f20d07ed).
+    expect(fakeAccountCalls.signIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("the offer arriving moves no focus and disables nothing", () => {
+    window.location.hash = hashForScreen("sign-in");
+    const store = preOfferStore();
+    renderAppWith(store);
+
+    const passwordField = screen.getByLabelText(
+      PASSWORD_LABEL,
+    ) as HTMLInputElement;
+    passwordField.focus();
+    expect(document.activeElement).toBe(passwordField);
+
+    act(() => {
+      store.apply({ type: "RematchOffered", seat: 0 });
+    });
+
+    // The panel is up now (RIVAL_OFFERS is on screen); the assertions below
+    // are about the screen beneath it, which is the field itself.
+    expect(screen.getByText(RIVAL_OFFERS)).toBeDefined();
+    expect(document.activeElement).toBe(passwordField);
+    expect(passwordField.disabled).toBe(false);
+
+    fireEvent.change(passwordField, { target: { value: "still typing" } });
+    expect(passwordField.value).toBe("still typing");
+  });
+
+  it("no amount of time retires it", () => {
+    vi.useFakeTimers();
+    try {
+      window.location.hash = hashForScreen("account");
+      const store = incomingOfferStore();
+      renderAppWith(store);
+
+      expect(screen.getByText(RIVAL_OFFERS)).toBeDefined();
+
+      act(() => {
+        vi.advanceTimersByTime(60 * 60 * 1000);
+      });
+
+      expect(screen.getByText(RIVAL_OFFERS)).toBeDefined();
+      expect(screen.getByRole("status")).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
