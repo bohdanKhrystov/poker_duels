@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141501
 title: The card mints the panel, and draws its three states and the screen without it
 type: task
-status: backlog
+status: done
 parent: STORY-1415
 module: design
 estimate: S
