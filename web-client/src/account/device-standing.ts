@@ -37,20 +37,20 @@ export async function readDeviceStanding(request: {
   readonly fetch: ApiFetch;
   readonly storage: Storage;
 }): Promise<boolean> {
-  const token = readSessionToken(request.storage);
-  if (token === null) {
-    return false;
-  }
-
-  const deviceId = readDeviceId(request.storage);
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-  };
-  if (deviceId !== null) {
-    headers["X-Device-Id"] = deviceId;
-  }
-
   try {
+    const token = readSessionToken(request.storage);
+    if (token === null) {
+      return false;
+    }
+
+    const deviceId = readDeviceId(request.storage);
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+    };
+    if (deviceId !== null) {
+      headers["X-Device-Id"] = deviceId;
+    }
+
     const response = await request.fetch("/api/me/device", { headers });
 
     if (response.status !== 200) {
