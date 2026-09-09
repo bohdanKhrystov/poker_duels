@@ -174,4 +174,65 @@ class IdentityResolverTest {
 
         assertEquals(seededProfileCount, directory.profileCount)
     }
+
+    @Test
+    fun aDeviceResolvingToThatPlayerNamesThem(): Unit = runBlocking {
+        val directory = InMemoryPlayerDirectory()
+        val d1 = DeviceId("d1")
+        val p1 = directory.resolve(d1)
+        val resolver = IdentityResolver(sessions = NoAuthSessions, players = directory)
+
+        val result = resolver.namesPlayer(d1, p1.id)
+
+        assertEquals(true, result)
+    }
+
+    @Test
+    fun aDeviceResolvingToAnotherPlayerDoesNotNameThem(): Unit = runBlocking {
+        val directory = InMemoryPlayerDirectory()
+        val d1 = DeviceId("d1")
+        val d2 = DeviceId("d2")
+        val p1 = directory.resolve(d1)
+        val p2 = directory.resolve(d2)
+        val resolver = IdentityResolver(sessions = NoAuthSessions, players = directory)
+        // Same directory, two device ids that resolve to different players: if the answer differs
+        // on input, not on fixture, one constant cannot pass both tests.
+        assertNotEquals(p1.id, p2.id)
+
+        val result = resolver.namesPlayer(d1, p2.id)
+
+        assertEquals(false, result)
+    }
+
+    @Test
+    fun aDeviceResolvingToNobodyNamesNobody(): Unit = runBlocking {
+        val resolver = IdentityResolver(sessions = NoAuthSessions, players = InMemoryPlayerDirectory())
+        val ghost = DeviceId("ghost")
+
+        val result = resolver.namesPlayer(ghost, PlayerId("p-nobody"))
+
+        assertEquals(false, result)
+    }
+
+    @Test
+    fun namesPlayerAsksTheDirectoryOnceAndNeverMints(): Unit = runBlocking {
+        val innerDirectory = InMemoryPlayerDirectory()
+        val d1 = DeviceId("d1")
+        val p1 = innerDirectory.resolve(d1)
+
+        val throwingDirectory = object : PlayerDirectory {
+            override suspend fun resolve(deviceId: DeviceId): Player =
+                throw UnsupportedOperationException("namesPlayer must not call resolve (which mints)")
+
+            override suspend fun findOrNull(deviceId: DeviceId): Player? =
+                innerDirectory.findOrNull(deviceId)
+        }
+
+        val countingDirectory = CountingPlayerDirectory(throwingDirectory)
+        val resolver = IdentityResolver(sessions = NoAuthSessions, players = countingDirectory)
+
+        resolver.namesPlayer(d1, p1.id)
+
+        assertEquals(1, countingDirectory.findOrNullCallCount)
+    }
 }

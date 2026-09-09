@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141002
 title: The resolver answers whether a device names a player
 type: task
-status: backlog
+status: done
 parent: STORY-1410
 module: poker-server
 estimate: XS
