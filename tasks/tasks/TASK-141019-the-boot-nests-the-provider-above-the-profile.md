@@ -3,7 +3,7 @@ schema: 2
 id: TASK-141019
 title: The boot nests the provider above the profile
 type: task
-status: backlog
+status: ready
 parent: STORY-1410
 module: web-client
 estimate: XS
