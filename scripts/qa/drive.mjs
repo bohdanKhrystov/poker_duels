@@ -16,7 +16,18 @@ import { writeFileSync } from "node:fs";
 
 const [, , portArg, verb, ...args] = process.argv;
 const PORT = portArg;
-const APP = "http://localhost:5173/";
+// ADR-0117 §3: the origin the browser is pointed at. By default, the relayed origin.
+const APP = process.env.PD_APP_ORIGIN || "http://localhost:4173/";
+// Extract the host:port for tab filtering. For http://localhost:4173/, this is "localhost:4173".
+const APP_ORIGIN = (() => {
+  try {
+    const url = new URL(APP);
+    return `${url.hostname}:${url.port || (url.protocol === "https:" ? 443 : 80)}`;
+  } catch {
+    // Fallback if URL parsing fails
+    return APP.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  }
+})();
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fail = (msg) => {
@@ -36,7 +47,7 @@ async function attach({ fresh = false } = {}) {
     t = await (await fetch(`http://localhost:${PORT}/json/new?url=about:blank`, { method: "PUT" })).json();
   } else {
     const list = await targets();
-    t = list.find((x) => x.type === "page" && x.url.includes("localhost:5173"));
+    t = list.find((x) => x.type === "page" && x.url.includes(APP_ORIGIN));
     if (!t) t = list.find((x) => x.type === "page");
     if (!t) t = await (await fetch(`http://localhost:${PORT}/json/new?url=about:blank`, { method: "PUT" })).json();
   }
@@ -310,7 +321,7 @@ try {
       // This is how a player closing their tab appears to the server — the WebSocket closes.
       const blank = await (await fetch(`http://localhost:${PORT}/json/new?url=about:blank`, { method: "PUT" })).json();
       const list = await targets();
-      const appTab = list.find((x) => x.type === "page" && x.url.includes("localhost:5173"));
+      const appTab = list.find((x) => x.type === "page" && x.url.includes(APP_ORIGIN));
       if (!appTab) {
         console.error(`drive: no app tab to close`);
         process.exit(1);
