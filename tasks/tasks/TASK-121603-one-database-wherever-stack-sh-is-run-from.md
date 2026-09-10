@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121603
 title: One database, wherever stack.sh is run from
 type: task
-status: backlog
+status: ready
 parent: STORY-1216
 estimate: XS
 tier: sonnet

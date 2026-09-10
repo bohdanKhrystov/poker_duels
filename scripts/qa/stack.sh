@@ -144,6 +144,42 @@ status)
     printf 'web:    %s\n' "$([ "$(curl -s -m 2 -o /dev/null -w '%{http_code}' "$WEB" 2>/dev/null)" = "200" ] && echo up || echo down)"
     ;;
 
+# Names the checkout and commit behind whatever is listening on a port, so a round can tell what it
+# is about to drive instead of assuming it (STORY-1216 round 1: a stale worktree, 92 commits behind,
+# answered both ports and nothing in the harness could tell). Read-only, no denied verb: `lsof` for
+# the pid, `ps` for the command line the pid was launched with. The checkout root is the longest
+# prefix of a path found in that command line that contains a `.git` entry — walking up from the
+# full path finds the closest, i.e. longest, such prefix first. Always exits 0: this must be
+# runnable in CI with no stack up, where both lines read `(nothing listening)`.
+served)
+    resolve() {
+        local port="$1" pid cmdline tok dir root commit
+        pid="$(lsof -ti tcp:"$port" -sTCP:LISTEN 2>/dev/null | head -1)" || true
+        [ -n "$pid" ] || { echo "(nothing listening)"; return 0; }
+        cmdline="$(ps -o command= -p "$pid" 2>/dev/null)" || true
+        [ -n "$cmdline" ] || { echo "(unresolved)"; return 0; }
+        root=""
+        for tok in $(printf '%s' "$cmdline" | tr ' :' '\n\n'); do
+            case "$tok" in
+                /*) ;;
+                *) continue ;;
+            esac
+            dir="$tok"
+            [ -d "$dir" ] || dir="$(dirname "$dir")"
+            while [ -n "$dir" ] && [ "$dir" != "/" ]; do
+                if [ -e "$dir/.git" ]; then root="$dir"; break 2; fi
+                dir="$(dirname "$dir")"
+            done
+        done
+        [ -n "$root" ] || { echo "(unresolved)"; return 0; }
+        commit="$(git -C "$root" rev-parse --short HEAD 2>/dev/null)" || true
+        [ -n "$commit" ] || { echo "(unresolved)"; return 0; }
+        echo "$root $commit"
+    }
+    echo "web: $(resolve 5173)"
+    echo "server: $(resolve 8080)"
+    ;;
+
 *)
     cat >&2 <<USAGE
 usage: scripts/qa/stack.sh <command>
@@ -155,6 +191,7 @@ usage: scripts/qa/stack.sh <command>
   chrome-up <port> <dir>   headless Chrome on its own profile
   chrome-down <port...>    close it over CDP (no kill)
   status                   what is up
+  served                   the checkout root and commit behind :5173 and :8080
 
 The JVM server and Vite are the skill's background tasks, not this script's — see the header.
 USAGE

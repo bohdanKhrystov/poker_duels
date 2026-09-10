@@ -99,3 +99,84 @@ if grep -q 'poker_duels-postgres-1' "$LOG1" "$LOG2" "$LOG3" "$LOG4" "$LOG5A" "$L
     fail "a recorded call named the retired literal" "$LOG1" "$LOG2" "$LOG3" "$LOG4" "$LOG5A" "$LOG5B"
 fi
 echo "A6 no recorded call names the retired literal: ok"
+
+# --- served (TASK-121601) --------------------------------------------------------------------
+# Stubs lsof/ps/git onto the same STUBDIR, ahead of the real ones on PATH. FIXTURE is a directory
+# this self-test creates and STUBDIR's trap deletes, holding a bare `.git` entry so stack.sh's
+# walk-up finds a root without ever touching the real repo.
+FIXTURE="$STUBDIR/fixture-checkout"
+mkdir -p "$FIXTURE"
+: > "$FIXTURE/.git"
+
+cat > "$STUBDIR/lsof" <<'STUBEOF'
+#!/usr/bin/env bash
+echo "lsof $*" >> "$STUB_LOG"
+port=""
+for a in "$@"; do
+    case "$a" in tcp:*) port="${a#tcp:}" ;; esac
+done
+case "$port" in
+    5173) [ "${STUB_LSOF_5173:-skip}" != "skip" ] && { echo "$STUB_LSOF_5173"; exit 0; }; exit 1 ;;
+    8080) [ "${STUB_LSOF_8080:-skip}" != "skip" ] && { echo "$STUB_LSOF_8080"; exit 0; }; exit 1 ;;
+    *) exit 1 ;;
+esac
+STUBEOF
+chmod +x "$STUBDIR/lsof"
+
+cat > "$STUBDIR/ps" <<'STUBEOF'
+#!/usr/bin/env bash
+echo "ps $*" >> "$STUB_LOG"
+if [ -n "${STUB_PS_CMD:-}" ]; then echo "$STUB_PS_CMD"; exit 0; fi
+exit 1
+STUBEOF
+chmod +x "$STUBDIR/ps"
+
+cat > "$STUBDIR/git" <<'STUBEOF'
+#!/usr/bin/env bash
+echo "git $*" >> "$STUB_LOG"
+echo "${STUB_GIT_COMMIT:-}"
+STUBEOF
+chmod +x "$STUBDIR/git"
+
+LOGB1="$STUBDIR/logb1"; LOGB2="$STUBDIR/logb2"; LOGB3="$STUBDIR/logb3"; LOGB4="$STUBDIR/logb4"
+
+# run_served <log> <lsof-5173> <lsof-8080> <ps-cmd> <git-commit> — a CHILD invocation of
+# `served`, the stub dir first on PATH. "skip" for an lsof value means that port answers nothing
+# listening. Sets RUN_OUT / RUN_RC for the caller.
+run_served() {
+    local log="$1" l5="$2" l8="$3" pscmd="$4" commit="$5"
+    : > "$log"
+    set +e
+    RUN_OUT="$(PATH="$STUBDIR:$PATH" STUB_LOG="$log" STUB_LSOF_5173="$l5" STUB_LSOF_8080="$l8" \
+        STUB_PS_CMD="$pscmd" STUB_GIT_COMMIT="$commit" bash "$STACK" served 2>&1)"
+    RUN_RC=$?
+    set -e
+}
+
+run_served "$LOGB1" 4242 4343 \
+    "/usr/bin/java -cp $FIXTURE/poker-server/build/classes/java/main:/other.jar App" b1c0mm1t
+{ [ "$RUN_RC" -eq 0 ] &&
+    [ "$RUN_OUT" = "web: $FIXTURE b1c0mm1t
+server: $FIXTURE b1c0mm1t" ] &&
+    grep -q "git -C $FIXTURE rev-parse --short HEAD" "$LOGB1"; } ||
+    fail "served did not name the fixture checkout and the commit git was asked for" "$LOGB1"
+echo "B1 served names the checkout and commit behind each port: ok"
+
+run_served "$LOGB2" skip skip "" ""
+[ "$RUN_RC" -eq 0 ] && [ "$RUN_OUT" = "web: (nothing listening)
+server: (nothing listening)" ] ||
+    fail "served did not report nothing listening on both ports" "$LOGB2"
+echo "B2 served says so when nothing is listening: ok"
+
+run_served "$LOGB3" 5151 6161 "/usr/bin/node /var/orphan/no/git/here/app.js" zzzzzzz
+[ "$RUN_RC" -eq 0 ] && [ "$RUN_OUT" = "web: (unresolved)
+server: (unresolved)" ] ||
+    fail "served did not report unresolved for a listener naming no checkout" "$LOGB3"
+echo "B3 served says so when a listener names no checkout: ok"
+
+run_served "$LOGB4" 7070 skip \
+    "/usr/bin/node $FIXTURE/web-client/node_modules/.bin/vite" d4d4d4d
+[ "$RUN_RC" -eq 0 ] && [ "$RUN_OUT" = "web: $FIXTURE d4d4d4d
+server: (nothing listening)" ] ||
+    fail "served did not read the two ports independently" "$LOGB4"
+echo "B4 served reports the two ports independently: ok"
