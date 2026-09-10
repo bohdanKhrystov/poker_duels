@@ -18,12 +18,15 @@ LOG5A="$STUBDIR/log5a"; LOG5B="$STUBDIR/log5b"
 # docker-compose is a symlink to it, the multi-call-binary trick. It answers `compose version`
 # from $STUB_PLUGIN so both compose() branches can be driven, prints $STUB_ID for `ps`, and exits 0
 # for everything else including `exec` — the point is what was called, never whether a database
-# answered.
+# answered. The full, unstripped line is what's recorded to $STUB_LOG above; the shifts below only
+# find the subcommand to answer, e.g. `docker compose -p poker_duels ps -q postgres` still logs
+# whole, but is dispatched on `ps`.
 cat > "$STUBDIR/docker" <<'STUBEOF'
 #!/usr/bin/env bash
 name="$(basename "$0")"
 echo "$name $*" >> "$STUB_LOG"
 if [ "$name" = "docker" ] && [ "${1:-}" = "compose" ]; then shift; fi
+if [ "${1:-}" = "-p" ]; then shift 2; fi
 case "${1:-}" in
     version)
         if [ "${STUB_PLUGIN:-0}" = "1" ]; then exit 0; else exit 1; fi
@@ -180,3 +183,68 @@ run_served "$LOGB4" 7070 skip \
 server: (nothing listening)" ] ||
     fail "served did not read the two ports independently" "$LOGB4"
 echo "B4 served reports the two ports independently: ok"
+
+# --- COMPOSE_PROJECT (TASK-121603) -----------------------------------------------------------
+# "compose line" below means a recorded call into the compose plugin or the standalone binary
+# that actually carries out a subcommand (up/down/ps) — not the plain `docker compose version`
+# capability probe compose() makes first, and not the unrelated `docker exec ... pg_isready`
+# calls, neither of which route through the project-naming branches this ticket touches.
+compose_lines() {
+    grep -hE '^(docker compose|docker-compose) ' "$@" 2>/dev/null | grep -v ' version$' || true
+}
+
+# run_at <stack.sh path> <log> <id> <plugin 0|1> <stack.sh args...> — like run(), but against an
+# arbitrary path to stack.sh, so C2 can drive it through a symlink instead of $STACK directly.
+run_at() {
+    local stack_bin="$1" log="$2" id="$3" plugin="$4"
+    shift 4
+    : > "$log"
+    set +e
+    RUN_OUT="$(PATH="$STUBDIR:$PATH" STUB_LOG="$log" STUB_ID="$id" STUB_PLUGIN="$plugin" \
+        bash "$stack_bin" "$@" 2>&1)"
+    RUN_RC=$?
+    set -e
+}
+
+LOGC1A="$STUBDIR/logc1-up"; LOGC1B="$STUBDIR/logc1-down"
+LOGC1C="$STUBDIR/logc1-container"; LOGC1D="$STUBDIR/logc1-status"
+
+run_at "$STACK" "$LOGC1A" pd-selftest-c1-1 1 db-up
+run_at "$STACK" "$LOGC1B" pd-selftest-c1-1 1 db-down
+run_at "$STACK" "$LOGC1C" pd-selftest-c1-1 1 db-container
+run_at "$STACK" "$LOGC1D" pd-selftest-c1-1 1 status
+
+compose_lines "$LOGC1A" "$LOGC1B" "$LOGC1C" "$LOGC1D" > "$STUBDIR/c1-total"
+grep -- '-p poker_duels' "$STUBDIR/c1-total" > "$STUBDIR/c1-named" || true
+c1_total=$(wc -l < "$STUBDIR/c1-total" | tr -d ' ')
+c1_named=$(wc -l < "$STUBDIR/c1-named" | tr -d ' ')
+[ "$c1_total" -gt 0 ] && [ "$c1_named" = "$c1_total" ] ||
+    fail "not every recorded compose call named -p poker_duels ($c1_named/$c1_total)" \
+        "$LOGC1A" "$LOGC1B" "$LOGC1C" "$LOGC1D"
+echo "C1 every compose call names the project explicitly: ok"
+
+# A fixture run only from this repository's own checkout could pass C1 by coincidence if this
+# checkout happens to be named "poker_duels" — that is today's defect wearing a new name. So C2
+# invokes stack.sh through a symlink sitting under scripts/qa/ of a fixture checkout named
+# something else entirely, the way a worktree does, and asserts the same count.
+FAKE_ROOT="$STUBDIR/agent-c2-nowhere-near-poker-duels"
+mkdir -p "$FAKE_ROOT/scripts/qa"
+ln -s "$STACK" "$FAKE_ROOT/scripts/qa/stack.sh"
+SYMSTACK="$FAKE_ROOT/scripts/qa/stack.sh"
+
+LOGC2A="$STUBDIR/logc2-up"; LOGC2B="$STUBDIR/logc2-down"
+LOGC2C="$STUBDIR/logc2-container"; LOGC2D="$STUBDIR/logc2-status"
+
+run_at "$SYMSTACK" "$LOGC2A" pd-selftest-c2-1 1 db-up
+run_at "$SYMSTACK" "$LOGC2B" pd-selftest-c2-1 1 db-down
+run_at "$SYMSTACK" "$LOGC2C" pd-selftest-c2-1 1 db-container
+run_at "$SYMSTACK" "$LOGC2D" pd-selftest-c2-1 1 status
+
+compose_lines "$LOGC2A" "$LOGC2B" "$LOGC2C" "$LOGC2D" > "$STUBDIR/c2-total"
+grep -- '-p poker_duels' "$STUBDIR/c2-total" > "$STUBDIR/c2-named" || true
+c2_total=$(wc -l < "$STUBDIR/c2-total" | tr -d ' ')
+c2_named=$(wc -l < "$STUBDIR/c2-named" | tr -d ' ')
+[ "$c2_total" -gt 0 ] && [ "$c2_named" = "$c2_total" ] ||
+    fail "the project name followed the checkout basename ($c2_named/$c2_total)" \
+        "$LOGC2A" "$LOGC2B" "$LOGC2C" "$LOGC2D"
+echo "C2 the project name does not follow the checkout: ok"

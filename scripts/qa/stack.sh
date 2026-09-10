@@ -16,14 +16,27 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
+# One project name, wherever this script is invoked from. Compose otherwise derives the project
+# from the working directory's basename, so every worktree's copy of this script would drive a
+# *different* project against the *same* published host port (TASK-121603). This is a literal, not
+# derived from $ROOT or `basename` — deriving it is the defect this ticket fixes.
+COMPOSE_PROJECT="poker_duels"
+
 # docker compose (space) is a CLI plugin that is not installed on every machine here; the
 # standalone binary is. ADR-0088 §2 step 1 is written with the space and fails as written.
-compose() { if docker compose version >/dev/null 2>&1; then docker compose "$@"; else docker-compose "$@"; fi; }
+compose() {
+    if docker compose version >/dev/null 2>&1; then
+        docker compose -p "$COMPOSE_PROJECT" "$@"
+    else
+        docker-compose -p "$COMPOSE_PROJECT" "$@"
+    fi
+}
 
-# Asked of compose, never written down: compose names a container after the project, which
-# defaults to the checkout directory's basename, so a literal here is right only in the checkout it
-# was written in. `|| true`: `compose ps` failing for any reason but "nothing is up" would
-# otherwise kill this script under `set -e` mid-`status`, whose job is to report `down`, not die.
+# Asked of compose, never written down: compose names a container after the project, which is now
+# the literal $COMPOSE_PROJECT above, so every checkout on this machine resolves the same running
+# database instead of starting its own. `|| true`: `compose ps` failing for any reason but "nothing
+# is up" would otherwise kill this script under `set -e` mid-`status`, whose job is to report
+# `down`, not die.
 db_container() { compose ps -q postgres 2>/dev/null || true; }
 
 HEALTH="http://localhost:8080/health"
