@@ -15,7 +15,7 @@
   is *"Dark, quiet, fast, minimal."*
 - **The number is a promise; the mechanism is not, and this ADR builds neither.** It states the
   duration and its shape. Where the floor lives, whether it is a constant or a configured field, and
-  how the reaper reads it are registered below as `DEC-166` for **the architect**, because carrying
+  how the reaper reads it are registered below as `DEC-167` for **the architect**, because carrying
   this out amends [`ADR-0152`](ADR-0152-the-finished-rooms-five-minutes-stand.md) §§3–4 and rewrites
   its §6 test.
 - **Amends** [`ADR-0152`](ADR-0152-the-finished-rooms-five-minutes-stand.md) §4 — *"A standing offer
@@ -27,7 +27,7 @@
   screen, and `ADR-0150` still opened no new interval.
 - **Also amends `ADR-0152` §3's closure at two writes**, in the one way §3 provides for: *"Any such
   addition needs an ADR, and if it moves what a player experiences as a duration it needs `DEC-165`
-  answered first."* `DEC-165` is answered here; the ADR that adds the write is `DEC-166`'s.
+  answered first."* `DEC-165` is answered here; the ADR that adds the write is `DEC-167`'s.
 - **Touches nothing in** [`ADR-0044`](ADR-0044-a-rematch-is-one-intent-and-one-room-fact.md) — one
   intent, one room fact, an idempotent offer, no withdrawal, silence as the decline, `UNKNOWN_ROOM`
   as the frame that ends a rematch, and §7's refusal to build a countdown, which this ADR confirms;
@@ -39,7 +39,7 @@
   turn allowance and the timebank, read here as evidence and left alone.
 - **Moves no wire type, no `PROTOCOL_VERSION`, no schema, no stored key, no engine file, and no word
   on any screen.** `RIVAL_OFFERS`, `REMATCH_LABEL`, `ROOM_GONE` and `Not now` are as merged.
-- **Registers, and does not answer:** `DEC-166` — **the architect's** — the mechanism for the floor
+- **Registers, and does not answer:** `DEC-167` — **the architect's** — the mechanism for the floor
   (§6).
 
 ## Context
@@ -147,9 +147,9 @@ deadline-blind. `RematchControl`'s own rule — *"A button that can only fail is
 **kept by §1 rather than by a new gate**: with sixty guaranteed seconds, a panel that appears is a
 panel that can be pressed, and the client never has to learn a deadline to know it.
 
-### 6. The mechanism is registered as `DEC-166`, for the architect
+### 6. The mechanism is registered as `DEC-167`, for the architect
 
-**`DEC-166` — the architect's — by what mechanism does a finished room's reaping deadline observe
+**`DEC-167` — the architect's — by what mechanism does a finished room's reaping deadline observe
 §1's floor?** Entirely *how*, and it is the ADR `ADR-0152` §3 requires before the write set at
 `lastActivityAt` may grow. It must settle: whether the floor is a second timestamp on `Room` read by
 `isReapable` or a write in the `Offered` branch `ADR-0152` §4 names (`Room.kt:330`); whether the sixty
@@ -159,7 +159,7 @@ not yet swept, given the sweep's one-second granularity; and the **rewrite** of 
 characterisation test, which pins the opposite and which §6 named as *"the thing deliberately
 rewritten rather than the thing that silently goes on passing."*
 
-**Nothing in `DEC-166` may** move the wire or `PROTOCOL_VERSION`, add a stored key, change any word on
+**Nothing in `DEC-167` may** move the wire or `PROTOCOL_VERSION`, add a stored key, change any word on
 any screen, make a room's life a function of presence (`ADR-0152` rejected that, and this ADR does not
 reopen it), or break §3's bound. **It blocks** the first ticket that implements §1, and nothing else.
 
