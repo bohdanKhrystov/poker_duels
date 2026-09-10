@@ -1,6 +1,6 @@
 # ADR-0008 — The loser mucks at showdown
 
-- **Status:** Accepted
+- **Status:** Accepted — amended by [`ADR-0158`](ADR-0158-the-human-played-and-the-showdown-answered-them.md) for a hand all in and called, which turns both hands face up before the runout and mucks nothing
 - **Date:** 2026-08-12
 - **Resolves:** `DEC-004`
 

@@ -1,6 +1,6 @@
 # ADR-0126 — The table shows the cards and marks none of them
 
-- **Status:** Accepted
+- **Status:** Superseded by [`ADR-0158`](ADR-0158-the-human-played-and-the-showdown-answered-them.md)
 - **Date:** 2026-09-06
 - **Resolves:** `DEC-134` — **the product owner's** — may the table **mark the five cards that won**,
   in the winner's hand and on the board? Raised 2026-09-06 by
