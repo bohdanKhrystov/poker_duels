@@ -73,7 +73,7 @@ export function PotStrip(props: {
     street === "COMPLETE" ? awardLineFor(view, narration) : null;
   const total = potCommittedToTheHand(view);
   return (
-    <div className="flex items-baseline gap-4 px-2 py-3">
+    <div className="flex flex-wrap items-baseline justify-center gap-x-4 gap-y-1 px-2 py-3 text-center">
       {awardLine === null && total > 0 && <ChipPile key={total} />}
       <span className="font-mono text-large tabular-nums">
         {awardLine ?? <>Pot&nbsp;{formatChips(total)}</>}

@@ -99,7 +99,16 @@ export function DuelTable(props: {
           {/* ADR-0103 §3.2: the rival's face-down hand narrows furthest of
               anything on the table — her name, her stack, her button and
               whose turn it is are on the plate directly above it. */}
-          <div className="flex justify-center gap-2 [--w:clamp(24px,calc((100cqi-135px)/10.625),40px)]">
+          <div
+            className={`flex justify-center gap-2 ${
+              rival.holeCards.length === 0
+                ? "[--w:clamp(24px,calc((100cqi-135px)/10.625),40px)]"
+                : // Face up, the rival's hand is read, not counted: it takes
+                  // the hero's own card width so a shown hand is as legible
+                  // as the one below it.
+                  "gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]"
+            }`}
+          >
             <Hand
               cards={rival.holeCards}
               hiddenLabel="your rival's hidden hand"
