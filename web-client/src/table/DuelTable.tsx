@@ -136,9 +136,14 @@ export function DuelTable(props: {
               is `BoardCards.tsx`'s own `--w`, repeated as the floor rather than
               shared through a variable, so this block never depends on a name
               declared outside it. A table that drew the shared five larger
-              than the private two would invert the game's own emphasis. */}
-          <BetLine committed={you.committedThisStreet} />
-          <div className="flex justify-center gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]">
+              than the private two would invert the game's own emphasis.
+              The hero's own bet line sits beside the cards, in the row's own
+              height, so it costs the phone shape no vertical room — the
+              column is measured to the pixel at 390 × 664 (ADR-0121). */}
+          <div className="relative flex justify-center gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]">
+            <div className="absolute top-[50%] left-[0px] -translate-y-[50%]">
+              <BetLine committed={you.committedThisStreet} />
+            </div>
             <Hand
               cards={you.holeCards}
               hiddenLabel="your hidden hand"
