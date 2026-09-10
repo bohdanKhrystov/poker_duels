@@ -2792,7 +2792,7 @@ describe("the lobby", () => {
           bigBlind: 50,
           stacks: [1500, 1500],
         },
-        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850 },
+        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850, hand: [] },
       ],
     });
     renderLobby(store);
@@ -2827,7 +2827,7 @@ describe("the lobby", () => {
           bigBlind: 50,
           stacks: [1500, 1500],
         },
-        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850 },
+        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850, hand: [] },
       ],
     });
     renderLobby(store);

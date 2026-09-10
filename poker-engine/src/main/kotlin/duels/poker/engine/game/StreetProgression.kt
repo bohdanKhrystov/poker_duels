@@ -98,6 +98,21 @@ private fun runOutBoard(afterEnd: GameState, endedEvent: BettingRoundEnded): Eng
     val events = mutableListOf<GameEvent>(endedEvent)
     var current = afterEnd
 
+    // Both hands go face up before a card is dealt, as they do at any live table once the
+    // chips are in and nobody can act: with no decision left to protect, a hand kept hidden
+    // through the runout would conceal nothing the game still needs concealed, and would take
+    // from both players the one thing an all-in is for — watching the board decide. The last
+    // aggressor shows first, or the first to act where nobody bet; both are shown either way,
+    // so the order is courtesy rather than information. `ADR-0008`'s muck applies to a hand
+    // that reaches showdown with a decision still behind it; here there is none.
+    val firstToShow = current.lastAggressor ?: firstToActOn(Street.RIVER, current.buttonSeat)
+    val shown = listOf(firstToShow, otherSeat(firstToShow))
+    for (seat in shown) {
+        val revealEvent = HandRevealed(current.eventCount, seat, current.seat(seat).holeCards)
+        current = StateProjection.apply(current, revealEvent)
+        events += revealEvent
+    }
+
     var next = current.street.next
     while (next != null && next.isBetting) {
         val deal = current.deck.deal(next.boardCards - current.board.size)
@@ -107,7 +122,7 @@ private fun runOutBoard(afterEnd: GameState, endedEvent: BettingRoundEnded): Eng
         next = current.street.next
     }
 
-    val showdown = reachShowdownAndSettle(current)
+    val showdown = reachShowdownAndSettle(current, alreadyShown = shown.toSet())
     events += showdown.events
 
     return EngineResult.accepted(showdown.newState, events)
@@ -121,19 +136,20 @@ private fun runOutBoard(afterEnd: GameState, endedEvent: BettingRoundEnded): Eng
  * [endBettingRound]'s river branch and [runOutBoard], the two places a betting round can end with
  * both seats still in the hand.
  */
-private fun reachShowdownAndSettle(state: GameState): EngineResult {
+private fun reachShowdownAndSettle(state: GameState, alreadyShown: Set<Int> = emptySet()): EngineResult {
     val showdownEvent = ShowdownReached(state.eventCount)
     var current = StateProjection.apply(state, showdownEvent)
     val events = mutableListOf<GameEvent>(showdownEvent)
 
     val winners = showdownWinners(current)
-    for (seat in revealOrder(current, winners)) {
+    // A hand already turned up by a runout ([runOutBoard]) is not shown twice.
+    for (seat in revealOrder(current, winners).filterNot { it in alreadyShown }) {
         val revealEvent = HandRevealed(current.eventCount, seat, current.seat(seat).holeCards)
         current = StateProjection.apply(current, revealEvent)
         events += revealEvent
     }
 
-    val settled = settleHand(current, winners)
+    val settled = settleHand(current, winners, winningHands(current, winners))
     events += settled.events
     return EngineResult.accepted(settled.newState, events)
 }

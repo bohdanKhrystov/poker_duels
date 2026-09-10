@@ -218,3 +218,13 @@ body {
     opacity: 1;
   }
 }
+
+/* The five that took the pot, at the hand's last beat: an accent ring around
+ * the card, drawn as an outline so the card's own size and place do not move.
+ * The cards that did not play stand beside it at reduced opacity (a utility
+ * on the element, not here). Nothing moves, so reduced motion has nothing to
+ * still. */
+@utility winning-card {
+  outline: 3px solid var(--pd-accent);
+  outline-offset: 2px;
+}

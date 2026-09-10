@@ -1,8 +1,7 @@
 import type { ReactElement } from "react";
 import { CardFace, CardSlot } from "./PlayingCard";
+import { standingOf } from "./winning-cards";
 
-// Five places, named by where they sit and not by the street: a place is what
-// the row reserves, and which street the hand is on is `view.street`'s to say.
 const PLACES = [
   "first flop card",
   "second flop card",
@@ -12,12 +11,14 @@ const PLACES = [
 ] as const;
 
 /**
- * The community cards: five places, every one of them always drawn.
- *
- * A place the server has dealt shows its card; a place it has not shows the
- * design's dashed outline, so the row's width never changes between streets.
+ * The five board places: a face for each card dealt, a dashed slot for each
+ * not yet dealt. `marked`, when given, is the set of cards that took the pot,
+ * and every face-up card is drawn in relation to it (`winning-cards.ts`).
  */
-export function BoardCards(props: { cards: readonly string[] }): ReactElement {
+export function BoardCards(props: {
+  cards: readonly string[];
+  marked?: ReadonlySet<string>;
+}): ReactElement {
   return (
     <div className="flex gap-3 [--w:clamp(48px,calc((100cqi-64px)/5),72px)]">
       {PLACES.map((place, index) => {
@@ -25,7 +26,11 @@ export function BoardCards(props: { cards: readonly string[] }): ReactElement {
         return card === undefined ? (
           <CardSlot key={place} label={`${place}, not yet dealt`} />
         ) : (
-          <CardFace key={place} card={card} />
+          <CardFace
+            key={place}
+            card={card}
+            standing={standingOf(card, props.marked)}
+          />
         );
       })}
     </div>

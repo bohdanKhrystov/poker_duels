@@ -71,6 +71,12 @@ Rules:
   position (the big blind).
 - Reveal order: the last aggressor on the river shows first; if there was no river bet, the
   player out of position shows first. The loser may muck.
+- **All in and called, both hands are turned face up before the board runs out** — the
+  last aggressor first — exactly as at a live table: with nobody left to act there is no
+  decision left to protect, and the runout is watched with both hands known. Nothing is
+  mucked from a runout.
+- Every pot awarded at a showdown names the five cards it was won with, so a table can mark
+  the winning combination without evaluating a hand of its own.
 
 ### Chips
 

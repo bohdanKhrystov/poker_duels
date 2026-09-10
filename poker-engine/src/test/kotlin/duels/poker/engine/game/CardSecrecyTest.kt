@@ -70,8 +70,12 @@ class CardSecrecyTest {
             val finalState = played.finalState
 
             // The shown seats are the ones ADR-0008 names, not `showdownWinners`: this test must
-            // not restate the logic it guards, only the log's own record of who was paid.
-            val shownSeats = played.events.filterIsInstance<PotAwarded>().map { it.seat }.toSet()
+            // not restate the logic it guards, only the log's own record of who was paid — plus
+            // both seats whenever a seat ended the hand all in, since a runout turns every hand
+            // face up before the board is dealt and leaves nothing to muck.
+            val paidSeats = played.events.filterIsInstance<PotAwarded>().map { it.seat }.toSet()
+            val ranOut = finalState.seats.any { it.isAllIn }
+            val shownSeats = if (ranOut) setOf(0, 1) else paidSeats
             val muckedSeats = finalState.seats.map { it.index }.filterNot { it in shownSeats }
 
             for (seat in muckedSeats) {

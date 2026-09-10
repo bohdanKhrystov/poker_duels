@@ -10,6 +10,7 @@ import { formatChips } from "./chips";
 import { ChipPile } from "./ChipPile";
 import { seatClock } from "./turn-clock";
 import { runoutView } from "./runout-view";
+import { winningCards } from "./winning-cards";
 
 /**
  * The duel table: one column, rival above, board between, you below.
@@ -69,6 +70,13 @@ export function DuelTable(props: {
     : props.view;
   const you = view.seats.find((seat) => seat.index === view.viewerSeat);
   const rival = view.seats.find((seat) => seat.index !== view.viewerSeat);
+  // The five that took the pot, marked only on the hand's last beat — never
+  // while a runout is still turning cards, and never mid-hand, where the set
+  // is empty anyway.
+  const marked =
+    !lagging && view.street === "COMPLETE"
+      ? winningCards(props.narration ?? [], view.handNumber)
+      : undefined;
   return (
     <>
       {rival !== undefined && (
@@ -95,6 +103,7 @@ export function DuelTable(props: {
             <Hand
               cards={rival.holeCards}
               hiddenLabel="your rival's hidden hand"
+              marked={marked}
             />
           </div>
           <BetLine committed={rival.committedThisStreet} />
@@ -109,7 +118,7 @@ export function DuelTable(props: {
           narration={props.narration}
           street={props.revealStep?.street}
         />
-        <BoardCards cards={board} />
+        <BoardCards cards={board} marked={marked} />
       </div>
       {you !== undefined && (
         <div className="flex flex-col gap-4">
@@ -121,7 +130,11 @@ export function DuelTable(props: {
               than the private two would invert the game's own emphasis. */}
           <BetLine committed={you.committedThisStreet} />
           <div className="flex justify-center gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]">
-            <Hand cards={you.holeCards} hiddenLabel="your hidden hand" />
+            <Hand
+              cards={you.holeCards}
+              hiddenLabel="your hidden hand"
+              marked={marked}
+            />
           </div>
           <SeatPlate
             name="You"

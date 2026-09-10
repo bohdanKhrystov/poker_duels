@@ -1,17 +1,17 @@
 import type { ReactElement } from "react";
 import { CardBack, CardFace } from "./PlayingCard";
+import { standingOf } from "./winning-cards";
 
 /**
- * A seat's two cards, always two places wide.
- *
- * A place the view carries a card for is drawn face up; a place it does not is
- * drawn face down. An empty `holeCards` means "not entitled to see" — never "no
- * cards" — so a hand is never a gap and never narrows. Whether a seat folded is
- * `hasFolded`'s to say, and whether it is all in is `isAllIn`'s.
+ * Two places for a seat's hole cards: a face for each card the view carries,
+ * a back for each it does not. `marked`, when given, is the set of cards that
+ * took the pot, and every face-up card is drawn in relation to it
+ * (`winning-cards.ts`).
  */
 export function Hand(props: {
   cards: readonly string[];
   hiddenLabel: string;
+  marked?: ReadonlySet<string>;
 }): ReactElement {
   return (
     <>
@@ -23,7 +23,11 @@ export function Hand(props: {
             label={place === 0 ? props.hiddenLabel : null}
           />
         ) : (
-          <CardFace key={place} card={card} />
+          <CardFace
+            key={place}
+            card={card}
+            standing={standingOf(card, props.marked)}
+          />
         );
       })}
     </>

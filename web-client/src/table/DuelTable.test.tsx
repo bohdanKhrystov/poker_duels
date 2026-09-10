@@ -127,6 +127,7 @@ const started = (handNumber: number): GameEvent => ({
 const awarded = (seat: number, amount: number): GameEvent => ({
   type: "PotAwarded",
   sequence: 99,
+  hand: [],
   seat,
   amount,
 });
@@ -731,7 +732,7 @@ describe("the duel table", () => {
         bigBlind: 100,
         stacks: [10_000, 10_000],
       },
-      { type: "PotAwarded", sequence: 2, seat: 0, amount: 19_800 },
+      { type: "PotAwarded", sequence: 2, seat: 0, amount: 19_800, hand: [] },
     ];
 
     const { rerender } = render(
@@ -742,12 +743,12 @@ describe("the duel table", () => {
       />,
     );
 
-    // Mid-runout: the pot is still in the middle, the winner's stack does not
-    // know it yet, and the rival's hand is still face down.
+    // Mid-runout: the pot is still in the middle and the winner's stack does
+    // not know it yet; both hands are up, as a runout turns them.
     expect(screen.getByText(/Pot 19,800/)).toBeDefined();
     expect(screen.getByText("200")).toBeDefined();
     expect(screen.queryByText("20,000")).toBeNull();
-    expect(screen.queryByLabelText("queen of spades")).toBeNull();
+    expect(screen.getByLabelText("queen of spades")).toBeDefined();
     expect(screen.getByLabelText("jack of hearts")).toBeDefined();
 
     rerender(
@@ -761,11 +762,9 @@ describe("the duel table", () => {
       />,
     );
 
-    // The last beat: the award is stated, the stacks are the snapshot's own,
-    // and the shown hand is shown.
+    // The last beat: the award is stated and the stacks are the snapshot's own.
     expect(screen.getByText("You win 19,800")).toBeDefined();
     expect(screen.getByText("20,000")).toBeDefined();
-    expect(screen.getByLabelText("queen of spades")).toBeDefined();
   });
 
   it("a runout paints three cards then four then five, naming Flop, Turn and River", () => {

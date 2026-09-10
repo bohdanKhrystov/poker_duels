@@ -90,6 +90,13 @@ public data class UncalledBetReturned(
 /**
  * Part or all of the pot going to a seat. A split pot emits one of these per seat.
  * The [amount] is a delta of chips moving out of the pot, not a street total.
+ *
+ * [hand] is the five cards that won it — the seat's best five of its two hole cards and the
+ * board, as [duels.poker.engine.hand.BestHand.cards] names them — so a table can mark the
+ * combination that took the pot without evaluating a hand of its own. Empty for a pot won on
+ * a fold, where no hand was ever compared. Every card in it is already public by the time this
+ * event exists: the board is, and the winner's hole cards were shown by the [HandRevealed]
+ * that precedes every showdown award.
  */
 @Serializable
 @SerialName("PotAwarded")
@@ -97,11 +104,14 @@ public data class PotAwarded(
     override val sequence: Int,
     val seat: Int,
     val amount: Int,
+    val hand: List<Card> = emptyList(),
 ) : DealerEvent {
     init {
         require(sequence >= 0) { "sequence must be non-negative, was $sequence" }
         require(seat in 0..1) { "seat must be 0 or 1, was $seat" }
         require(amount > 0) { "amount must be positive, was $amount" }
+        require(hand.isEmpty() || hand.size == 5) { "hand is the winning five or nothing, had ${hand.size}" }
+        require(hand.toSet().size == hand.size) { "hand must be distinct cards, was $hand" }
     }
 }
 

@@ -175,6 +175,7 @@ export interface PotAwarded {
   sequence: number;
   seat: number;
   amount: number;
+  hand: readonly string[];
 }
 
 export interface ShowdownReached {

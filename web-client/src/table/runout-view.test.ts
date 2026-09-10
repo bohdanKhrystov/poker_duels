@@ -27,7 +27,7 @@ describe("the runout view", () => {
     });
     const before = runoutView(view, [
       started,
-      { type: "PotAwarded", sequence: 9, seat: 0, amount: 19_800 },
+      { type: "PotAwarded", sequence: 9, seat: 0, amount: 19_800, hand: [] },
     ]);
 
     expect(before.pot).toBe(19_800);
@@ -47,8 +47,8 @@ describe("the runout view", () => {
     });
     const before = runoutView(view, [
       started,
-      { type: "PotAwarded", sequence: 9, seat: 0, amount: 1_000 },
-      { type: "PotAwarded", sequence: 10, seat: 1, amount: 1_000 },
+      { type: "PotAwarded", sequence: 9, seat: 0, amount: 1_000, hand: [] },
+      { type: "PotAwarded", sequence: 10, seat: 1, amount: 1_000, hand: [] },
     ]);
 
     expect(before.pot).toBe(2_000);
@@ -66,7 +66,7 @@ describe("the runout view", () => {
     });
     const before = runoutView(view, [
       started,
-      { type: "PotAwarded", sequence: 9, seat: 1, amount: 600 },
+      { type: "PotAwarded", sequence: 9, seat: 1, amount: 600, hand: [] },
     ]);
 
     expect(before.seats.map((seat) => seat.committedThisStreet)).toEqual([
@@ -74,7 +74,7 @@ describe("the runout view", () => {
     ]);
   });
 
-  it("keeps the viewer's own cards and turns the rival's face down", () => {
+  it("leaves both hands as the snapshot shows them — a runout turns them face up first", () => {
     const view = aView({
       handNumber: 7,
       viewerSeat: 1,
@@ -85,10 +85,10 @@ describe("the runout view", () => {
     });
     const before = runoutView(view, [
       started,
-      { type: "PotAwarded", sequence: 9, seat: 0, amount: 600 },
+      { type: "PotAwarded", sequence: 9, seat: 0, amount: 600, hand: [] },
     ]);
 
-    expect(before.seats[0].holeCards).toEqual([]);
+    expect(before.seats[0].holeCards).toEqual(["As", "Kd"]);
     expect(before.seats[1].holeCards).toEqual(["7h", "2c"]);
   });
 
@@ -99,7 +99,7 @@ describe("the runout view", () => {
     expect(
       runoutView(view, [
         { ...started, handNumber: 6 },
-        { type: "PotAwarded", sequence: 9, seat: 0, amount: 600 },
+        { type: "PotAwarded", sequence: 9, seat: 0, amount: 600, hand: [] },
       ]),
     ).toBe(view);
   });
@@ -112,9 +112,9 @@ describe("the runout view", () => {
     });
     const before = runoutView(view, [
       started,
-      { type: "PotAwarded", sequence: 9, seat: 0, amount: 9_999 },
+      { type: "PotAwarded", sequence: 9, seat: 0, amount: 9_999, hand: [] },
       { ...started, sequence: 10, handNumber: 8 },
-      { type: "PotAwarded", sequence: 11, seat: 1, amount: 100 },
+      { type: "PotAwarded", sequence: 11, seat: 1, amount: 100, hand: [] },
     ]);
 
     expect(before.pot).toBe(100);

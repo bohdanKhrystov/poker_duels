@@ -11,11 +11,12 @@ import { awardsForHand } from "./awards";
  * the board does, and "Pot 0" sits over a ten-thousand-chip runout.
  *
  * So for every step but the last, the table is drawn from this instead: each
- * seat's award is taken back out of its stack and put back in the pot, nothing
- * is left committed on the street, and the rival's hand stays face down until
- * the beat that shows it. Every figure here is one the server sent — an award
- * amount, a final stack — combined by nothing more than subtraction; the client
- * still names no winner and evaluates no hand.
+ * seat's award is taken back out of its stack and put back in the pot, and
+ * nothing is left committed on the street. Every figure here is one the server
+ * sent — an award amount, a final stack — combined by nothing more than
+ * subtraction; the client still names no winner and evaluates no hand. The
+ * hole cards are the snapshot's own: a runout turns both hands face up before
+ * the first card is dealt, and that is exactly what the steps should show.
  *
  * When this client holds no award for the hand (a resume that landed on the
  * finished snapshot, `ADR-0102` §5), there is nothing to take back and the
@@ -40,7 +41,6 @@ export function runoutView(
       ...seat,
       stack: seat.stack - (awardedTo.get(seat.index) ?? 0),
       committedThisStreet: 0,
-      holeCards: seat.index === view.viewerSeat ? seat.holeCards : [],
     })),
   };
 }

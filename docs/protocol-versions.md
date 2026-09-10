@@ -12,4 +12,4 @@ introduced after version 1's shape had already been replaced, and that shape is 
 | 4 | `0d6b8530325af82e` | STORY-0214 | 2026-08-23 |
 | 5 | `8456a1ec9cab47f7` | STORY-0405 | 2026-08-24 |
 | 6 | `dc6608a0a1520b6f` | STORY-1308 | 2026-09-03 |
-| 7 | `d97ae040dedd9d96` | client UX pass (SeatNames) | 2026-09-10 |
+| 7 | `93d732bb3550102f` | client UX pass (SeatNames, PotAwarded.hand) | 2026-09-10 |
