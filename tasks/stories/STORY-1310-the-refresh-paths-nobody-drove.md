@@ -2,7 +2,7 @@
 id: STORY-1310
 title: The refresh paths nobody drove, driven and written down
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: web-client
 labels: [client, qa, refresh]
