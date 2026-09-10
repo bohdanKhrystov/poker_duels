@@ -359,7 +359,7 @@ text, and no id turns into a profile — is untouched.
 
 ## Definition of done
 
-- [ ] Every story is `done` or `dropped`, and any story `dropped` says which decision killed it.
+- [x] Every story is `done` or `dropped`, and any story `dropped` says which decision killed it.
 - [ ] A player who has never signed up can open the ladder from the first screen and leave it again.
 - [ ] `STORY-0506` passes: a duel played end to end moves both players' standings by exactly what
       `ADR-0014` says, and the coins on the ladder sum to the coins in `duel_result`.

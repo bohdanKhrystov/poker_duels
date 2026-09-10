@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121604
 title: Three browsers launched back to back all bind
 type: task
-status: backlog
+status: ready
 parent: STORY-1216
 estimate: XS
 tier: haiku

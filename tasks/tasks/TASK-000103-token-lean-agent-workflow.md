@@ -3,7 +3,7 @@ schema: 2
 id: TASK-000103
 title: Token-lean agent workflow — planner, coder, reviewer, driver
 type: task
-status: in-progress
+status: done
 parent: STORY-0001
 estimate: S
 tier: opus

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-000108
 title: A count is pinned only where the ticket writes
 type: task
-status: backlog
+status: ready
 parent: STORY-0001
 module: process
 estimate: S

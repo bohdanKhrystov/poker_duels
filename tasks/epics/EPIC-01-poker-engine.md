@@ -66,13 +66,30 @@ depend on types that do not exist yet, and specifying them earlier would mean re
 
 ## Definition of done
 
-- [ ] Every story is `done`.
+- [x] Every story is `done`. Nine of nine — verified 2026-09-10.
 - [ ] A test plays a complete duel from deal to a declared winner.
 - [ ] Replaying a match from `(seed, actions)` reproduces it exactly, asserted over generated
       matches.
-- [ ] Chip conservation holds across 100 000 randomly generated hands.
-- [ ] `poker-engine` declares zero implementation dependencies, asserted by a test.
-- [ ] `poker-cli` can play a duel in a terminal against a random bot.
+- [ ] Chip conservation holds across 100 000 randomly generated hands. **Measured 2026-09-10: no
+      such test exists.** Conservation *is* asserted — `SeatChipsTest`, `SettleHandTest`,
+      `SplitPotTest`, `AllInRunOutTest` and others — but none of them at that volume, and the only
+      `100_000` literal under `poker-engine/src/test` is in `FastEvaluatorSevenCardTest`, which is
+      about the evaluator rather than about chips. The box asks for a number and the number is
+      absent, so it stays open.
+- [ ] `poker-engine` declares zero implementation dependencies, asserted by a test. **Measured
+      2026-09-10: no such test exists, and the claim is false as written.**
+      `poker-engine/build.gradle.kts` declares `implementation(libs.kotlinx.serialization.json)`.
+      `CLAUDE.md` says the engine *"depends on nothing"* and that it carries no *framework types*;
+      whether a serialization format counts as either is not settled anywhere, and no ADR is cited
+      by the dependency's presence. **This is a decision before it is a ticket** — the architect's:
+      is `kotlinx-serialization-json` an allowed implementation dependency of the pure engine, or is
+      its presence the violation this box was written to catch? A ticket that merely writes the
+      assertion would pick one answer by writing a test around it.
+- [ ] `poker-cli` can play a duel in a terminal against a random bot. **Measured 2026-09-10: the
+      module does not exist.** `settings.gradle.kts` includes exactly `:poker-engine`, `:poker-ai`
+      and `:poker-server`. This is unbuilt scope, not an unticked box — and it has been open since
+      the engine's last story merged, unnoticed because the engine's own suite is thorough enough
+      that nothing else failed.
 
 ## Metrics
 
