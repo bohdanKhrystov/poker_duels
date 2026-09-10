@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121602
 title: A round records the tree it drove, not its own HEAD
 type: task
-status: backlog
+status: ready
 parent: STORY-1216
 estimate: XS
 tier: sonnet

@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121601
 title: The harness names the tree it is serving
 type: task
-status: ready
+status: done
 parent: STORY-1216
 estimate: S
 tier: sonnet
