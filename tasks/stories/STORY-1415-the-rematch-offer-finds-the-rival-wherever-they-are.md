@@ -222,5 +222,7 @@ it.
   no frame at all for `That duel room is gone.` `TASK-141511` repairs the three sentences —
   `ADR-0123` §4 calls *Your rival offers a rematch* *"the result screen's own line"*, so the client
   is right and the card is stale, with nothing to decide. **Whether a register should now catch that
-  class is `DEC-158`, the architect's, and it blocks nothing.**
+  class is `DEC-158`, the architect's, and it blocks nothing.** **Answered on 2026-09-10** by
+  [`ADR-0148`](../../docs/adr/ADR-0148-a-module-names-every-card-that-draws-it-and-every-card-is-registered.md): **no** — the register goes on the **card** side, because two of
+  these three findings are `ADR-0142` §4's one-module-one-card cardinality, not §7's direction.
 - **A second notice of any kind, a persisted dismissal, an in-product notification setting.**
