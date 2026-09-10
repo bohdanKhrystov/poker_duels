@@ -32,6 +32,13 @@ export type ActEvent =
   | PlayerAllIn;
 
 export interface DuelState {
+  /**
+   * The player the server said this connection is, from `Welcome` — `null` until the handshake
+   * answers. A first visit has no device id until this frame writes one, so the profile read
+   * that ran at mount answered "no profile" without asking; whoever needs the profile re-reads
+   * once this is set.
+   */
+  readonly playerId: string | null;
   readonly mySeat: number | null;
   readonly roomCode: string | null;
   readonly view: PlayerView | null;
@@ -198,6 +205,7 @@ export interface TurnClockState {
 
 export function initialState(): DuelState {
   return {
+    playerId: null,
     mySeat: null,
     roomCode: null,
     view: null,
@@ -389,6 +397,12 @@ export function applyServerMessage(
         ...state,
         rematchOffers: [...state.rematchOffers, message.seat],
       };
+    case "Welcome":
+      // Idempotent: a second Welcome naming the same player changes nothing, so a store that
+      // notifies only on change stays quiet for it.
+      return state.playerId === message.playerId
+        ? state
+        : { ...state, playerId: message.playerId };
     case "SeatNames":
       return { ...state, seatNames: message.names };
     case "OpponentPresence":

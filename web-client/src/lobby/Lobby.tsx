@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
   type ReactElement,
 } from "react";
@@ -71,6 +72,22 @@ export function Lobby(): ReactElement {
   // would be a second place able to disagree with that rule.
   const signOutHandsANewProfile = useSignOutHandsANewProfile();
   const refreshProfile = useRefreshProfile();
+  // A first visit holds no device id when the profile is read at mount, so
+  // that read answers "no profile" without ever asking the server; the id
+  // arrives with `Welcome`. One re-read per welcomed player, and only while
+  // the answer on hand is the one that never asked — so the name ask can
+  // stand at the very first press, as it is meant to (ADR-0119 §1).
+  const rereadFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      state.playerId !== null &&
+      profile?.kind === "no-profile" &&
+      rereadFor.current !== state.playerId
+    ) {
+      rereadFor.current = state.playerId;
+      refreshProfile();
+    }
+  }, [state.playerId, profile, refreshProfile]);
   // ADR-0132 §6: `sign-up.ts` passes `noReload` on purpose, and answers
   // `signed-up` on the `201` whether or not its own follow-up sign-in
   // succeeds — a successful sign-up is therefore the one transition that

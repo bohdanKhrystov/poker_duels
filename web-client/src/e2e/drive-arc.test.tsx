@@ -124,11 +124,11 @@ afterEach(() => {
   cleanup();
 });
 
-it("a first boot mints a device id and asks the server nothing", async () => {
+it("a first boot mints a device id, then reads the profile under it", async () => {
   const storage = inMemoryStorage();
   const server = accountServer([ALICE]);
 
-  bootClient({
+  const { container } = bootClient({
     storage,
     server,
     wiring,
@@ -137,7 +137,16 @@ it("a first boot mints a device id and asks the server nothing", async () => {
 
   await waitFor(() => expect(readDeviceId(storage)).toBe(ALICE.deviceId));
 
-  expect(server.requests).toEqual([]);
+  // Nothing was asked before the id existed — a read with no device id
+  // answers "no profile" without a request. Once Welcome writes the id, the
+  // profile is read under it, so a first visitor is named on their first
+  // press rather than on their second visit.
+  const region = await within(container).findByLabelText("your profile");
+  within(region).getByText("Alice");
+  for (const request of server.requests) {
+    expect(request.headers["X-Device-Id"]).toBe(ALICE.deviceId);
+  }
+  expect(server.requests.length).toBeGreaterThan(0);
 });
 
 it("a second boot over the same storage reads the profile the server holds", async () => {
