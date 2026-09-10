@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131011
 title: The proof origin ADR-0117 described is built
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: web-client
 estimate: XS
