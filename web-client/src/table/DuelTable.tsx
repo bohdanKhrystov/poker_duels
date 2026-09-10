@@ -80,7 +80,7 @@ export function DuelTable(props: {
   return (
     <>
       {rival !== undefined && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 short:gap-1">
           <SeatPlate
             name={props.names?.[rival.index] ?? "Your rival"}
             seat={rival}
@@ -102,11 +102,11 @@ export function DuelTable(props: {
           <div
             className={`flex justify-center gap-2 ${
               rival.holeCards.length === 0
-                ? "[--w:clamp(24px,calc((100cqi-135px)/10.625),40px)]"
+                ? "[--w:min(clamp(24px,calc((100cqi-135px)/10.625),40px),6dvh)]"
                 : // Face up, the rival's hand is read, not counted: it takes
                   // the hero's own card width so a shown hand is as legible
                   // as the one below it.
-                  "gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]"
+                  "gap-3 [--w:min(clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px),8dvh)]"
             }`}
           >
             <Hand
@@ -115,13 +115,18 @@ export function DuelTable(props: {
               marked={marked}
             />
           </div>
-          <BetLine committed={rival.committedThisStreet} />
+          {/* Nothing is committed on a completed hand, and a shown rival hand is
+              drawn larger: the line's reserved height goes to the cards instead,
+              which is what keeps the last beat inside a phone's viewport. */}
+          {view.street !== "COMPLETE" && (
+            <BetLine committed={rival.committedThisStreet} />
+          )}
         </div>
       )}
       {/* ADR-0103 §1: the centre block is the one that claims the column's
           slack (`flex-1`) — it can only do that as a direct child of the
           `min-h-[100dvh]` column the screen above provides. */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-4">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 short:gap-2">
         <PotStrip
           view={view}
           narration={props.narration}
@@ -130,7 +135,7 @@ export function DuelTable(props: {
         <BoardCards cards={board} marked={marked} />
       </div>
       {you !== undefined && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 short:gap-2">
           {/* ADR-0103 §3.3: the hero's own hole cards narrow too, floored at
               the board's own card width — `clamp(48px,calc((100cqi-64px)/5),72px)`
               is `BoardCards.tsx`'s own `--w`, repeated as the floor rather than
@@ -140,7 +145,7 @@ export function DuelTable(props: {
               The hero's own bet line sits beside the cards, in the row's own
               height, so it costs the phone shape no vertical room — the
               column is measured to the pixel at 390 × 664 (ADR-0121). */}
-          <div className="relative flex justify-center gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]">
+          <div className="relative flex justify-center gap-3 [--w:min(clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px),10.5dvh)]">
             <div className="absolute top-[50%] left-[0px] -translate-y-[50%]">
               <BetLine committed={you.committedThisStreet} />
             </div>
