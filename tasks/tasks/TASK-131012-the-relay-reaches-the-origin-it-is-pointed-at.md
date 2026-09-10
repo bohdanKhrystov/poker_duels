@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131012
 title: The relay reaches the origin it is pointed at
 type: task
-status: ready
+status: done
 parent: STORY-1310
 module: qa
 estimate: S
