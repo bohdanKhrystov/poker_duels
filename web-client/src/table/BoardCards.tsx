@@ -20,7 +20,7 @@ export function BoardCards(props: {
   marked?: ReadonlySet<string>;
 }): ReactElement {
   return (
-    <div className="flex gap-3 [--w:clamp(48px,calc((100cqi-64px)/5),72px)]">
+    <div className="flex gap-3 [--w:min(clamp(48px,calc((100cqi-64px)/5),72px),10dvh)]">
       {PLACES.map((place, index) => {
         const card = props.cards.at(index);
         return card === undefined ? (

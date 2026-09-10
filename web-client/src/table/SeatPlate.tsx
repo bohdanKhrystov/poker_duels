@@ -43,7 +43,7 @@ export function SeatPlate(props: {
   const act = props.lastAct ? lastActText(props.lastAct) : null;
   return (
     <div
-      className={`flex items-center gap-4 rounded-medium border border-l-2 border-hairline bg-surface px-5 py-4 ${
+      className={`flex items-center gap-4 rounded-medium border border-l-2 border-hairline bg-surface px-5 py-4 short:py-2 ${
         onTurn ? "border-l-accent acting-mark" : "border-l-transparent"
       }`}
     >

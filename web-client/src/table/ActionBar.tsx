@@ -50,7 +50,7 @@ export function ActionBar(props: {
   return (
     <section
       aria-label="your move"
-      className="mx-auto flex w-full max-w-[460px] flex-col gap-3 rounded-medium border border-hairline bg-surface p-4"
+      className="mx-auto flex w-full max-w-[460px] flex-col gap-3 rounded-medium border border-hairline bg-surface p-4 short:gap-2 short:p-3"
     >
       {turn === null ? (
         <>
@@ -217,7 +217,7 @@ function Live(props: {
               : text.amount;
           return (
             <button
-              className={`flex-1 rounded-medium border px-3 py-4 leading-tight font-medium ${
+              className={`flex-1 rounded-medium border px-3 py-4 leading-tight font-medium short:py-3 ${
                 type === filled
                   ? "border-transparent bg-accent-fill text-on-accent"
                   : "border-hairline text-text"
@@ -331,7 +331,7 @@ function Waiting(): ReactElement {
   return (
     <>
       <div className="min-h-7" />
-      <p className="py-4 text-center leading-tight text-text-muted">
+      <p className="py-4 text-center leading-tight text-text-muted short:py-3">
         {"Waiting for your rival…"}
       </p>
     </>

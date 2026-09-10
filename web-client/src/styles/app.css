@@ -73,6 +73,14 @@
   --shadow-pop: var(--pd-shadow-pop);
 }
 
+/* `short:` — a viewport too short for the table at its full size. The card
+ * widths below already shrink with the viewport height; this variant lets the
+ * paddings and gaps between the table's blocks give too, so a phone with its
+ * browser bars showing fits the whole table without a scroll (the human's
+ * report from an iPhone, 2026-09-10). Width is the container's business
+ * (ADR-0103 §3); height is the viewport's. */
+@custom-variant short (@media (max-height: 640px));
+
 /* The acting seat's mark: pd-acting-seat pulses at --pd-motion-turn-period,
  * eased by --pd-motion-turn-ease, beside the border-l-accent edge SeatPlate
  * already draws — never instead of it (ADR-0115 §1, §6). Kept outside
