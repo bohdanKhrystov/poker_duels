@@ -222,7 +222,7 @@ export function Lobby(): ReactElement {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <LadderScreen read={readLadder} />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -233,7 +233,7 @@ export function Lobby(): ReactElement {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <HistoryScreen read={read} />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -257,7 +257,7 @@ export function Lobby(): ReactElement {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <VerifyScreen token={mailedToken} verify={account.verifyEmail} />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -285,7 +285,7 @@ export function Lobby(): ReactElement {
           reset={account.resetPassword}
           onDone={() => open("sign-in")}
         />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -310,7 +310,7 @@ export function Lobby(): ReactElement {
           setName={setName ?? undefined}
           onSignIn={() => open("sign-in")}
         />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -334,7 +334,7 @@ export function Lobby(): ReactElement {
           signIn={account.signIn}
           forgotPassword={account.forgotPassword}
         />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -582,6 +582,10 @@ export function Lobby(): ReactElement {
     </section>
   );
 }
+
+/** The way back from every chosen screen, dressed as the secondary control it is. */
+const BACK =
+  "w-full rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text";
 
 /** One line under the wordmark, so a first visitor knows what the button does. */
 const TAGLINE =

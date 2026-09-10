@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import type {
   ActionType,
   ClientMessage,
@@ -122,6 +122,47 @@ function Live(props: {
   const dialled =
     reading !== null && reading.kind === "amount" ? reading.to : null;
 
+  // The one press, shared by the button and its key: a bet or raise with no
+  // sendable amount says why and sends nothing (`ADR-0111` §1); everything
+  // else sends one `Act` and locks the bar until the next frame.
+  const press = (type: ActionType): void => {
+    if (sent) return;
+    if ((type === "BET" || type === "RAISE") && dialled === null) {
+      if (reading !== null && reading.kind === "refused") {
+        setEntryRefusal(reading.sentence);
+      }
+      return;
+    }
+    setSent(true);
+    props.send(actFrame(props.turn, type, dialled ?? 0));
+  };
+
+  // Desktop shortcuts: F folds, C checks or calls, R bets or raises the
+  // dialled total. Nothing fires while the player is typing in a field, with
+  // a modifier held, or for a key that names no action the server offered —
+  // and nothing here reaches all-in, which is a press worth a deliberate
+  // click.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA")
+      ) {
+        return;
+      }
+      const type = SHORTCUTS[event.key.toLowerCase()]?.find((candidate) =>
+        actions.allowed.includes(candidate),
+      );
+      if (type === undefined) return;
+      event.preventDefault();
+      press(type);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
   return (
     <>
       <div
@@ -183,19 +224,7 @@ function Live(props: {
               } disabled:border-hairline disabled:bg-transparent disabled:text-text-faint`}
               disabled={sent}
               key={type}
-              onClick={() => {
-                if ((type === "BET" || type === "RAISE") && dialled === null) {
-                  // No frame, no sent-lock, no rewrite (`ADR-0111` §1): the
-                  // entry the player typed stands exactly as it is, and the
-                  // refusal is only ever said, never enforced.
-                  if (reading !== null && reading.kind === "refused") {
-                    setEntryRefusal(reading.sentence);
-                  }
-                  return;
-                }
-                setSent(true);
-                props.send(actFrame(props.turn, type, dialled ?? 0));
-              }}
+              onClick={() => press(type)}
               type="button"
             >
               {text.verb}
@@ -219,6 +248,17 @@ function Live(props: {
     </>
   );
 }
+
+/**
+ * The key each action answers to, and the actions it may stand for in the
+ * order they are tried: one key for the passive line (check when it is
+ * offered, call when it is), one for the aggressive line (raise over bet).
+ */
+const SHORTCUTS: Record<string, readonly ActionType[]> = {
+  f: ["FOLD"],
+  c: ["CHECK", "CALL"],
+  r: ["RAISE", "BET"],
+};
 
 /**
  * The total the amount control starts at: the server's own minimum for whichever
