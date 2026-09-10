@@ -16,7 +16,7 @@ import {
   AccountProvider,
   type AccountCalls,
 } from "../account/account-provider";
-import { RIVAL_OFFERS, NOT_NOW } from "./rematch-text";
+import { RIVAL_OFFERS } from "./rematch-text";
 import { HISTORY_HEADING } from "../history/history-text";
 import { LADDER_HEADING } from "../ladder/ladder-text";
 import {
@@ -27,6 +27,8 @@ import {
 import { VERIFY_HEADING, RESET_HEADING } from "../account/recovery-text";
 import { hashForScreen, type Screen } from "../routing/screen";
 import type { Snapshot, SeatView, ClientMessage } from "../protocol";
+
+const NOT_NOW = "Not now";
 
 function seatView(index: number): SeatView {
   return {

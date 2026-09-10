@@ -2,7 +2,7 @@
 id: STORY-1415
 title: The rematch offer finds the rival wherever they are
 type: story
-status: backlog
+status: done
 parent: EPIC-14
 module: web-client
 labels: [client, design, rematch, notice]
