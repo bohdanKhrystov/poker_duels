@@ -118,6 +118,22 @@ scripts/qa/stack.sh wait-server
 scripts/qa/stack.sh wait-web
 ```
 
+Then, before any browser starts:
+
+```bash
+scripts/qa/stack.sh served
+```
+
+Read both lines against the commit you were told to test. **If either line does not name that
+commit, the round does not open** — report `STOP_INFRA`, say which checkout root and commit
+answered instead, and stop. Do not repair it by guessing; a stale listener is a human's to clear,
+because `kill`, `pkill`, `killall` and `rm` are all denied and no verb here can end it.
+
+Two things make a mismatch like this invisible if you skip this check. `wait-server` and
+`wait-web` ask only whether *something* answers on the port, never whether it is the commit under
+test. And `web-client/vite.config.ts` sets no `strictPort`, so a second `npm run dev` silently
+moves to another port and prints the real one only to a background log nobody is reading.
+
 Browsers get **fresh profile directories every round**, from `mktemp -d`. Not reused and not
 cleaned — `rm` is denied, and a reused profile is worse than a stale directory:
 

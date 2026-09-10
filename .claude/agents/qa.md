@@ -124,7 +124,8 @@ Exactly this shape. `qa-manager` parses it, so the field names are not negotiabl
 ```
 SCOPE: <what you were given>
 STACK: up | down
-COMMIT: <git rev-parse --short HEAD>
+SERVED: <what `scripts/qa/stack.sh served` printed — the web port's checkout root and short
+  commit, then the server port's checkout root and short commit>
 CASES: <run>/<total>  passed=<n> failed=<n> blocked=<n>
 
 FINDINGS:
