@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  preview: { port: 4173, strictPort: true },
   server: {
     proxy: {
       "/api": "http://localhost:8080",
