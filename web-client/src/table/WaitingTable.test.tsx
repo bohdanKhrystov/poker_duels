@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 describe("WaitingTable", () => {
-  it("names the empty seat once and leaves the host's plate standing and bare", () => {
+  it("names the empty seat once and draws no plate for the host", () => {
     const { container } = render(
       <WaitingTable code="7Q4M9K2T" onLeave={vi.fn()} />,
     );
@@ -24,11 +24,11 @@ describe("WaitingTable", () => {
 
     expect(screen.queryByText("You")).toBeNull();
 
-    const hostPlates = container.querySelectorAll(
-      "div.border-hairline.bg-surface",
+    // No empty bordered box anywhere: every surface on the screen says something.
+    const emptyBoxes = [...container.querySelectorAll("div")].filter(
+      (div) => div.className.includes("border") && div.textContent === "",
     );
-    expect(hostPlates).toHaveLength(1);
-    expect(hostPlates[0]?.textContent).toBe("");
+    expect(emptyBoxes).toHaveLength(0);
   });
 
   it("says the duel starts by itself, once", () => {

@@ -10,15 +10,21 @@ export function InvitePanel(props: { readonly code: string }): ReactElement {
   const box = useRef<HTMLInputElement>(null);
   return (
     <>
+      <p className="text-center text-small text-text-muted">Room code</p>
       <p className="rounded-medium border border-hairline bg-surface px-5 py-4 text-center font-mono text-display tracking-[var(--pd-track-code)] text-text">
         {props.code}
       </p>
-      <label htmlFor="invite-link">Invite link</label>
+      <label
+        htmlFor="invite-link"
+        className="mt-2 text-center text-small text-text-muted"
+      >
+        Invite link
+      </label>
       <input
         autoFocus
         ref={box}
         id="invite-link"
-        className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text"
+        className="w-full rounded-medium border border-hairline bg-surface px-5 py-4 text-center font-mono text-small text-text"
         readOnly
         value={link}
         onFocus={(event) => event.currentTarget.select()}
@@ -56,8 +62,11 @@ function CopyLink(props: {
       >
         Copy the link
       </button>
-      {outcome === "copied" && <p>Link copied.</p>}
-      {outcome === "refused" && <p>Copy it from the box above.</p>}
+      {/* Reserved whether or not there is anything to say, so saying it moves nothing. */}
+      <p className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-center text-small text-text-muted">
+        {outcome === "copied" && "Link copied."}
+        {outcome === "refused" && "Copy it from the box above."}
+      </p>
     </>
   );
 }

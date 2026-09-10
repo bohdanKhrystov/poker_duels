@@ -477,7 +477,7 @@ export function Lobby(): ReactElement {
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
+    <section className="pt-10 mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
       {/* ADR-0098 §1: the coin-and-two-tone lockup, card-drawn only on the
           front door's pre-create branch. `aria-label` pins the accessible
           name to "Poker Duels" — the card's markup has no text node between
@@ -491,15 +491,16 @@ export function Lobby(): ReactElement {
         <span>Poker</span>
         <span className="font-medium text-text-muted">Duels</span>
       </h1>
-      {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
+      <p className="-mt-2 text-center text-small text-text-muted">{TAGLINE}</p>
       <button
         type="button"
-        className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
+        className="w-full rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         onClick={() => startDuel({ type: "CreateRoom" })}
       >
         Play duel
       </button>
       <form
+        className="flex w-full flex-col gap-2"
         onSubmit={(event) => {
           event.preventDefault();
           // An empty code would spend one of the ten failed joins ADR-0022
@@ -508,44 +509,72 @@ export function Lobby(): ReactElement {
           startDuel({ type: "JoinRoom", code });
         }}
       >
-        <label htmlFor="room-code">Room code</label>
-        <input
-          id="room-code"
-          className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text"
-          value={typedCode}
-          onChange={(event) => setTypedCode(event.target.value)}
-        />
-        <button
-          type="submit"
-          className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        <label htmlFor="room-code" className="text-small text-text-muted">
+          Room code
+        </label>
+        <div className="flex w-full gap-2">
+          <input
+            id="room-code"
+            className="min-w-0 flex-1 rounded-medium border border-hairline bg-surface px-4 py-4 font-mono text-text placeholder:font-ui placeholder:text-text-faint"
+            placeholder="Code or invite link"
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            value={typedCode}
+            onChange={(event) => setTypedCode(event.target.value)}
+          />
+          <button
+            type="submit"
+            className="shrink-0 rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+          >
+            Join the duel
+          </button>
+        </div>
+        {/* Reserved whether or not there is anything to say, so a refusal
+            landing moves nothing below it. */}
+        <p
+          role="alert"
+          className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-small text-loss"
         >
-          Join the duel
-        </button>
+          {state.refusal !== null ? refusalMessage(state.refusal) : ""}
+        </p>
       </form>
       {profile !== null && <ProfileStrip state={profile} />}
-      {/* TASK-121303: the three doors were adjacent inline-level buttons with
-          no text node between them (JSX elides it) and no layout on the
-          bare section around them, so they abutted with no space at any
-          zoom. A flex column blockifies each button and gives it a gap —
-          separation only. DEC-094 (open) still owns whether a door should
-          wear the client's control dress; nothing here answers it. */}
-      <div className="flex flex-col gap-2">
-        <button type="button" onClick={() => open("duels")}>
+      {/* The three doors, as one row of equal, dressed controls: a door a
+          player cannot tell from a caption is not a door. */}
+      <nav aria-label="more" className="flex w-full gap-2">
+        <button
+          type="button"
+          className="flex-1 rounded-medium border border-hairline px-3 py-3 text-small leading-tight font-medium text-text"
+          onClick={() => open("duels")}
+        >
           {HISTORY_HEADING}
         </button>
-        <button type="button" onClick={() => open("leaderboard")}>
+        <button
+          type="button"
+          className="flex-1 rounded-medium border border-hairline px-3 py-3 text-small leading-tight font-medium text-text"
+          onClick={() => open("leaderboard")}
+        >
           {LADDER_HEADING}
         </button>
         {/* ADR-0036: the door is offered whatever the profile read answered —
             nothing here gates on having an account, the same rule the record's
             and the ladder's doors already carry. */}
-        <button type="button" onClick={() => open("account")}>
+        <button
+          type="button"
+          className="flex-1 rounded-medium border border-hairline px-3 py-3 text-small leading-tight font-medium text-text"
+          onClick={() => open("account")}
+        >
           {ACCOUNT_HEADING}
         </button>
-      </div>
+      </nav>
     </section>
   );
 }
+
+/** One line under the wordmark, so a first visitor knows what the button does. */
+const TAGLINE =
+  "Heads-up Texas Hold'em. Invite a rival, play a match, take the coin.";
 
 /**
  * The client shows the refusal and stops. Retrying on the player's behalf would

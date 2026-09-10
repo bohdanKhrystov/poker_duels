@@ -192,3 +192,29 @@ body {
   font-size: var(--pd-fs-body);
   line-height: var(--pd-lh-body);
 }
+
+/* The empty seat's pulse while the host waits alone: a dot that breathes at
+ * the turn period, so the plate reads as "listening" rather than as a box
+ * that forgot its text. Stilled under reduced motion like every other
+ * surface (ADR-0115). */
+@utility waiting-dot {
+  display: inline-block;
+  width: var(--pd-space-3);
+  height: var(--pd-space-3);
+  border-radius: var(--pd-radius-pill);
+  background: var(--pd-text-faint);
+  animation-name: pd-waiting-dot;
+  animation-duration: var(--pd-motion-turn-period);
+  animation-timing-function: var(--pd-motion-turn-ease);
+  animation-iteration-count: infinite;
+}
+
+@keyframes pd-waiting-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}

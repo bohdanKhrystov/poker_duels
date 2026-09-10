@@ -9,6 +9,7 @@ import { Hand } from "./Hand";
 import { formatChips } from "./chips";
 import { ChipPile } from "./ChipPile";
 import { seatClock } from "./turn-clock";
+import { runoutView } from "./runout-view";
 
 /**
  * The duel table: one column, rival above, board between, you below.
@@ -46,8 +47,19 @@ export function DuelTable(props: {
    */
   clock?: ClockReading | null;
 }): ReactElement {
-  const { view } = props;
-  const board = props.revealStep?.board ?? view.board.cards;
+  const board = props.revealStep?.board ?? props.view.board.cards;
+  // A runout step that is not the hand's last beat draws the seats and the
+  // pot as they stood before the award (`runout-view.ts`): the snapshot behind
+  // it has already paid the pot out, and a stack that knows the winner before
+  // the river is turned spoils the river. The last beat — the step whose street
+  // is the snapshot's own `COMPLETE` — draws the snapshot as it is.
+  const lagging =
+    props.revealStep !== null &&
+    props.revealStep !== undefined &&
+    props.revealStep.street !== "COMPLETE";
+  const view = lagging
+    ? runoutView(props.view, props.narration ?? [])
+    : props.view;
   const you = view.seats.find((seat) => seat.index === view.viewerSeat);
   const rival = view.seats.find((seat) => seat.index !== view.viewerSeat);
   return (
@@ -100,6 +112,7 @@ export function DuelTable(props: {
               shared through a variable, so this block never depends on a name
               declared outside it. A table that drew the shared five larger
               than the private two would invert the game's own emphasis. */}
+          <BetLine committed={you.committedThisStreet} />
           <div className="flex justify-center gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]">
             <Hand cards={you.holeCards} hiddenLabel="your hidden hand" />
           </div>
@@ -124,10 +137,12 @@ export function DuelTable(props: {
 }
 
 /**
- * The chips a seat has out on this street. The word is the field's, not an
- * action's: the view says how much is committed and never says whether it got
- * there by a blind, a call, a bet or a raise. The line keeps its height when
- * there is nothing to say, so nothing below it moves.
+ * The chips a seat has out on this street — drawn for both seats, so a player
+ * can see what they themselves have put in front of them as well as what
+ * their rival has. The word is the field's, not an action's: the view says how
+ * much is committed and never says whether it got there by a blind, a call, a
+ * bet or a raise. The line keeps its height when there is nothing to say, so
+ * nothing below it moves.
  */
 function BetLine(props: { committed: number }): ReactElement {
   return (

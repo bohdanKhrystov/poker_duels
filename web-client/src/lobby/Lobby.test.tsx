@@ -1557,7 +1557,7 @@ describe("the lobby", () => {
     expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
-  it("states the seven strings the host-alone table renders with no clipboard, and no eighth", () => {
+  it("states the eight strings the host-alone table renders with no clipboard, and no ninth", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
     renderLobby(store);
@@ -1585,6 +1585,7 @@ describe("the lobby", () => {
     expect(texts.sort()).toEqual(
       [
         "Waiting for your rival",
+        "Room code",
         "ABCDEFGH",
         "Invite link",
         "Copy the link",

@@ -35,7 +35,13 @@ export function DeviceStandingProvider(props: {
   const [handsANewProfile, setHandsANewProfile] = useState<boolean>(false);
   const live = useRef(true);
 
+  // Armed on every mount and disarmed on every unmount. React's StrictMode
+  // mounts, unmounts and remounts a tree in development: a ref that was only
+  // ever set to false would stay false after the remount, and the answer to a
+  // read that landed afterwards would be dropped on the floor — the lobby
+  // showed no profile, no name ask and no coin balance under `npm run dev`.
   useEffect(() => {
+    live.current = true;
     return (): void => {
       live.current = false;
     };

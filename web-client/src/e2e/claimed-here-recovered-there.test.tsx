@@ -448,9 +448,7 @@ it("signs in from the second client and reads back the same balance name and due
   expect(historyRead.duels[0]?.outcome).toBe(aDuelRow.outcome);
 
   // Corroborated by the rendered line too.
-  within(profileRegionB).getByText((content) =>
-    content.startsWith(`${outcomeWord(aDuelRow.outcome)} `),
-  );
+  within(profileRegionB).getByText(outcomeWord(aDuelRow.outcome));
 
   // The other identity — player-seat-1's own anonymous record — is unmoved
   // (ADR-0027 §4: "not merged, not deleted, not relinked"). A raw, unwrapped
