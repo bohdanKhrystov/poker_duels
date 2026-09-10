@@ -1,4 +1,4 @@
-# ADR-0146 — The held room is abandoned after the seat, under the joiner's own stripe
+# ADR-0147 — The held room is abandoned after the seat, under the joiner's own stripe
 
 - **Status:** Accepted
 - **Date:** 2026-09-10
