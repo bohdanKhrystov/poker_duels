@@ -93,7 +93,9 @@ against `develop`.
 - **`design/screens/rematch-panel.html`.** The new panel's card is `TASK-141501`'s and
   `TASK-141502`'s, and a `verify:` line refuses a byte of it.
 - **`web-client/`.** No client file is opened; the client is the side that is right.
-- **`ADR-0142` §7's register** — `DEC-158`, the architect's. It blocks nothing.
+- **`ADR-0142` §7's register** — `DEC-158`, the architect's. It blocks nothing. **Answered on
+  2026-09-10** by [`ADR-0148`](../../docs/adr/ADR-0148-a-module-names-every-card-that-draws-it-and-every-card-is-registered.md): no reverse register; the amendment lands on
+  `ADR-0142` §4's cardinality and on a card-side sweep.
 - **Whether the product should name the rival on the result screen.** `ADR-0123` §4 settles that it
   says *your rival*; reopening it is a product decision and not this ticket's.
 
