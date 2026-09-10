@@ -3,7 +3,7 @@ schema: 2
 id: TASK-121605
 title: The other two drivers name the tree they drove too
 type: task
-status: backlog
+status: done
 parent: STORY-1216
 module: process
 estimate: XS

@@ -104,7 +104,8 @@ verdict is `not met`** — a quoted string, never a feeling.
 SCOPE: <what you were given>
 FOCUS: audit
 STACK: up | down
-COMMIT: <git rev-parse --short HEAD>
+SERVED: <what `scripts/qa/stack.sh served` printed — the web port's checkout root and short
+  commit, then the server port's checkout root and short commit>
 SHAPES: <shapes walked — phone always, laptop where R2/R3 were re-answered>
 
 PER-CRITERION:
