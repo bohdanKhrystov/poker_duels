@@ -38,7 +38,7 @@
 - **Moves nothing outside the client.** No wire type, no `PROTOCOL_VERSION`, no server file, no
   engine change, no schema, no stored key, **no new player-facing string**, and no change to any
   word, colour or shape on any screen. `poker-engine` is not opened.
-- **Registers, and does not answer:** `DEC-165` — **the product owner's** — which of two merged
+- **Registers, and does not answer:** `DEC-166` — **the product owner's** — which of two merged
   sentences a player reads when the room behind a standing offer is gone and they are standing on
   the front door (§7). It **blocks nothing** here.
 
@@ -385,7 +385,7 @@ two controls apart.
 
 ### 7. Registers, and does not answer
 
-**`DEC-165` — the product owner's — two sentences about one dead room.** `Lobby.tsx:494` renders
+**`DEC-166` — the product owner's — two sentences about one dead room.** `Lobby.tsx:494` renders
 `No duel room has that code.` on the front door whenever `state.refusal !== null`, and
 `RematchNotice` renders `That duel room is gone.` when `state.refusal === "UNKNOWN_ROOM"`
 (`ADR-0138` §4). Until this ADR the two could not be on screen together, because the front door was
@@ -438,7 +438,7 @@ twice in two components' branch conditions.
   than the state, so the module's rule is bent rather than broken — but a reader can no longer say
   *nothing in this file knows about the client's own state*, and the next client-only term will find
   the door open.
-- **A new player-visible collision**, `DEC-165` above: two sentences about one gone room, one of
+- **A new player-visible collision**, `DEC-166` above: two sentences about one gone room, one of
   them addressed to a player who typed no code. Created by putting the front door under a held
   room, named rather than papered over, and blocking nothing.
 
@@ -452,7 +452,7 @@ twice in two components' branch conditions.
   screens (unchanged, `ADR-0112` §3 already honours them), the three store branches (§2), the
   `heldPress` ask (unchanged and correct — a player holding a finished room who presses `Play duel`
   into a name ask sees the ask), the `unknown` silence (unchanged), the front door's refusal line
-  (`DEC-165`), and boot's `joinRoomCode ?? remembered` (§3's `leave()`).
+  (`DEC-166`), and boot's `joinRoomCode ?? remembered` (§3's `leave()`).
 - **"One label, two behaviours"** — **inherited, and made sharper.** The two controls now differ in
   element as well as in effect: an anchor that forgets on the waiting screen, a button that
   remembers on the result screen. A reader of the tree can see the asymmetry that a reader of the
