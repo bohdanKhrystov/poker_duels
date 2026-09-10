@@ -3,7 +3,7 @@ schema: 2
 id: TASK-131006
 title: P3 — a genuinely dropped socket
 type: task
-status: blocked
+status: backlog
 parent: STORY-1310
 module: web-client
 estimate: XS
@@ -11,7 +11,7 @@ tier: sonnet
 review: standard
 files_touched: 1
 labels: [qa, refresh, manual-verify]
-depends_on: [TASK-131005]
+depends_on: [TASK-131005, TASK-131011]
 verify:
   - awk '/^\| `P3`/ { if (index($0, "NOT-YET-DRIVEN")) bad = 1; else ok = 1 } END { exit (bad || !ok) }' tasks/stories/STORY-1310-the-refresh-paths-nobody-drove.md
   - awk '{ n += gsub(/NOT-YET-DRIVEN/, "&") } END { exit (n > 3) }' tasks/stories/STORY-1310-the-refresh-paths-nobody-drove.md
