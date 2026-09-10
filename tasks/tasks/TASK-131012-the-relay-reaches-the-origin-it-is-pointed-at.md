@@ -16,6 +16,7 @@ verify:
   - node scripts/qa/delay.mjs --selftest
   - node scripts/qa/delay.mjs --selftest-cut
   - node scripts/qa/delay.mjs --selftest-unreachable
+  - node scripts/qa/delay.mjs --selftest-dualbind
   - python3 .github/scripts/lint_tickets.py
 ---
 

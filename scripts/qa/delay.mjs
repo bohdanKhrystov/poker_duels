@@ -1,15 +1,18 @@
-// A loopback TCP relay: forwards 127.0.0.1:<listenPort> to 127.0.0.1:<targetPort>, delaying every
-// byte in both directions by a fixed <delayMs> — wide enough to make the STORY-1310 round trip
-// visible past the 250ms drive.mjs samples at. No dependency (ADR-0089 §2a): node:net is the whole
-// toolkit, same discipline as drive.mjs, and this runs before `npm ci` in a QA context.
+// A loopback TCP relay: forwards 127.0.0.1:<listenPort> and [::1]:<listenPort> to localhost:<targetPort>
+// with autoSelectFamily, delaying every byte in both directions by a fixed <delayMs> — wide enough to make
+// the STORY-1310 round trip visible past the 250ms drive.mjs samples at. No dependency (ADR-0089 §2a):
+// node:net is the whole toolkit, same discipline as drive.mjs, and this runs before `npm ci` in a QA context.
 //
 //   node scripts/qa/delay.mjs <listenPort> <targetPort> <delayMs> [controlPort]
 //   node scripts/qa/delay.mjs cut <controlPort>
 //   node scripts/qa/delay.mjs --selftest
 //   node scripts/qa/delay.mjs --selftest-cut
+//   node scripts/qa/delay.mjs --selftest-unreachable
+//   node scripts/qa/delay.mjs --selftest-dualbind
 //
 // Exit codes follow drive.mjs's convention: 2 is usage. The relay never exits on its own — it is a
-// background process, killed by whoever started it.
+// background process, killed by whoever started it. The reachability check at start-up exits 1 if the
+// target is unreachable, naming it and the error code.
 //
 // With a controlPort, a second server listens for the cut side (TASK-131002): any connection to it
 // destroys every live relayed socket pair with destroy() — never end() — because P3 needs a
@@ -19,19 +22,27 @@
 
 import { createServer, connect } from "node:net";
 
+// Dial the target by name, resolving every address the name has. The relay and the browser it sits
+// in front of must be transparent to each other, so they resolve their addresses the same way.
+const TARGET_HOST = "localhost";
+
 function usage() {
   console.error("usage: node scripts/qa/delay.mjs <listenPort> <targetPort> <delayMs> [controlPort]");
   console.error("       node scripts/qa/delay.mjs cut <controlPort>");
+  console.error("       node scripts/qa/delay.mjs --selftest");
+  console.error("       node scripts/qa/delay.mjs --selftest-cut");
+  console.error("       node scripts/qa/delay.mjs --selftest-unreachable");
+  console.error("       node scripts/qa/delay.mjs --selftest-dualbind");
 }
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function listenAsync(server, port) {
+function listenAsync(server, port, host = "127.0.0.1") {
   return new Promise((resolve, reject) => {
     server.once("error", reject);
-    server.listen(port, "127.0.0.1", () => resolve(server.address().port));
+    server.listen(port, host, () => resolve(server.address().port));
   });
 }
 
@@ -58,21 +69,45 @@ function pipe(source, dest, delayMs) {
 // connection cut, not just the most recent one, and a drive can hold more than one tab through the
 // relay at once. Pairs untrack themselves on their own close, so a cut always counts pairs that are
 // actually still alive, never ones that already tore down on their own.
+//
+// The relay holds both 127.0.0.1 and ::1 on the listen port (ADR-0156 §3), or it does not start.
+// This is not a best-effort second bind — a failed second bind is fatal, named as such.
 async function startRelay(listenPort, targetPort, delayMs, controlPort) {
   const livePairs = new Set();
 
-  const server = createServer((incoming) => {
-    console.error(`delay: accepted connection on ${listenPort}, relaying to 127.0.0.1:${targetPort}`);
-    const outgoing = connect(targetPort, "127.0.0.1");
+  const connectionHandler = (incoming) => {
+    console.error(`delay: accepted connection on ${listenPort}, relaying to ${TARGET_HOST}:${targetPort}`);
+    const outgoing = connect({ port: targetPort, host: TARGET_HOST, autoSelectFamily: true });
     const pair = { incoming, outgoing };
     livePairs.add(pair);
     const untrack = () => livePairs.delete(pair);
     incoming.once("close", untrack);
     outgoing.once("close", untrack);
+
+    // A connection attempt that fails before connecting is an error, not a silence.
+    outgoing.once("error", (err) => {
+      if (!outgoing.connecting) return; // Already connected, error is from elsewhere
+      console.error(`delay: could not reach ${TARGET_HOST}:${targetPort} for a connection accepted on ${listenPort}: ${err.code}`);
+      incoming.destroy();
+    });
+
     pipe(incoming, outgoing, delayMs);
     pipe(outgoing, incoming, delayMs);
-  });
-  const port = await listenAsync(server, listenPort);
+  };
+
+  // Bind 127.0.0.1 first, then ::1 at the same resolved port.
+  const server4 = createServer(connectionHandler);
+  const port = await listenAsync(server4, listenPort, "127.0.0.1");
+  console.error(`delay: listening on 127.0.0.1:${port}`);
+
+  const server6 = createServer(connectionHandler);
+  try {
+    await listenAsync(server6, port, "::1");
+    console.error(`delay: listening on [::1]:${port}`);
+  } catch (err) {
+    server6.close();
+    throw new Error(`failed to bind [::1]:${port}: ${err.code}`);
+  }
 
   let controlServer;
   let boundControlPort;
@@ -95,7 +130,7 @@ async function startRelay(listenPort, targetPort, delayMs, controlPort) {
     console.error(`delay: control port listening on 127.0.0.1:${boundControlPort}`);
   }
 
-  return { server, port, controlServer, controlPort: boundControlPort };
+  return { server: server4, server6, port, controlServer, controlPort: boundControlPort };
 }
 
 // The client side of the control port: connects, reports exactly what the relay wrote back, and
@@ -123,7 +158,7 @@ async function startEcho() {
 // round-trip time once every byte is back. A dropped, doubled or reordered chunk throws instead of
 // returning a time, so a bad relay fails loudly rather than reporting an unchecked number.
 async function measureRoundTrip(echoPort, delayMs) {
-  const { server: relayServer, port: relayPort } = await startRelay(0, echoPort, delayMs);
+  const { server: relayServer, server6: relayServer6, port: relayPort } = await startRelay(0, echoPort, delayMs);
   const client = connect(relayPort, "127.0.0.1");
   await new Promise((resolve, reject) => {
     client.once("connect", resolve);
@@ -151,6 +186,7 @@ async function measureRoundTrip(echoPort, delayMs) {
 
   client.destroy();
   relayServer.close();
+  relayServer6.close();
   if (got !== want) {
     throw new Error(`echo mismatch at ${delayMs}ms: sent ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
   }
@@ -186,6 +222,29 @@ async function waitUntil(predicate, timeoutMs, description) {
   }
 }
 
+// Probes the target at start-up to verify the relay can reach it. On failure, exits 1 naming the
+// target and the error code. On success, prints the resolved address so every drive's record contains
+// the family the relay actually reached (ADR-0156 §4).
+async function probeTarget(targetPort) {
+  return new Promise((resolve, reject) => {
+    const socket = connect({ port: targetPort, host: TARGET_HOST, autoSelectFamily: true });
+    let resolved = false;
+    socket.once("connect", () => {
+      resolved = true;
+      const addr = socket.remoteAddress;
+      console.error(`delay: probe successful, resolved ${TARGET_HOST}:${targetPort} to ${addr}`);
+      socket.destroy();
+      resolve();
+    });
+    socket.once("error", (err) => {
+      if (!resolved) {
+        reject(new Error(`could not reach ${TARGET_HOST}:${targetPort}: ${err.code}`));
+      }
+      socket.destroy();
+    });
+  });
+}
+
 // Hermetic against a throwaway echo server, on ephemeral ports throughout. Echoes before it cuts: a
 // cut test that only watches the connection die would pass against a relay that never connected in
 // the first place, proving nothing about severing a live pair.
@@ -202,7 +261,7 @@ async function selftestCut() {
   const echoPort = await listenAsync(echoServer, 0);
 
   const delayMs = 150;
-  const { server: relayServer, controlServer, port: relayPort, controlPort } =
+  const { server: relayServer, server6: relayServer6, controlServer, port: relayPort, controlPort } =
     await startRelay(0, echoPort, delayMs, 0);
 
   const client = connect(relayPort, "127.0.0.1");
@@ -268,6 +327,7 @@ async function selftestCut() {
   // pair is gone rather than merely quiet.
   await sleep(delayMs + 500);
   relayServer.close();
+  relayServer6.close();
   if (controlServer) controlServer.close();
   echoServer.close();
 
@@ -282,6 +342,103 @@ async function selftestCut() {
   console.log("delay: selftest-cut passed");
 }
 
+// Tests that the relay correctly detects an unreachable target and fails loudly rather than silently.
+// A relay pointed at a port nothing listens on must exit non-zero and name the target. This proves
+// (ADR-0156 §4) that a later drive cannot silently fail to reach the origin and report a reading
+// instead of an error.
+async function selftestUnreachable() {
+  // Use a port that's very unlikely to have anything listening. We pick a high ephemeral port
+  // and don't start anything on it, so probeTarget should fail.
+  const unreachablePort = 60000;
+  let probeThrew = null;
+
+  try {
+    // Start a relay pointing at the unreachable port. The relay itself will bind, but probeTarget
+    // should fail because nothing is listening on the unreachable port.
+    const { server: relayServer, server6: relayServer6, port: relayPort, controlServer } =
+      await startRelay(0, unreachablePort, 50, 0);
+
+    console.error(`delay: started relay on port ${relayPort}, targeting unreachable port ${unreachablePort}`);
+
+    try {
+      await probeTarget(unreachablePort);
+      relayServer.close();
+      relayServer6.close();
+      if (controlServer) controlServer.close();
+      throw new Error("probe should have failed for an unreachable target");
+    } catch (err) {
+      probeThrew = err.message;
+      relayServer.close();
+      relayServer6.close();
+      if (controlServer) controlServer.close();
+    }
+  } catch (err) {
+    // If startRelay itself failed, that's also fine — the dual bind failing is ok in this test.
+    probeThrew = err.message;
+  }
+
+  if (!probeThrew || !probeThrew.includes("could not reach")) {
+    throw new Error(`expected probe to fail with "could not reach", got: ${probeThrew}`);
+  }
+  console.log(`delay: probe correctly failed: ${probeThrew}`);
+  console.log("delay: selftest-unreachable passed");
+}
+
+// Tests that the relay holds both loopback families on its listen port (ADR-0156 §3).
+// The relay must accept connections from both 127.0.0.1 and ::1, or it does not start.
+// A relay that binds only one family is half-deaf and cannot be distinguished from a fully
+// working relay until the other family is needed — the silence is exactly what produced the
+// `cut 0` that filed this ticket. This gate makes a failed second bind fatal.
+async function selftestDualbind() {
+  const { server: echoServer, port: echoPort } = await startEcho();
+  const delayMs = 50;
+
+  // Start a relay pointing at the echo server.
+  const { server: relayServer, server6: relayServer6, port: relayPort, controlServer } =
+    await startRelay(0, echoPort, delayMs, 0);
+
+  console.error(`delay: started dual-bind relay on port ${relayPort}`);
+
+  // Assertion 1: connect from 127.0.0.1 and get a live connection.
+  const client4 = connect(relayPort, "127.0.0.1");
+  let client4Connected = false;
+  await new Promise((resolve, reject) => {
+    client4.once("connect", () => {
+      client4Connected = true;
+      resolve();
+    });
+    client4.once("error", reject);
+    setTimeout(() => reject(new Error("timeout connecting from 127.0.0.1")), 5000);
+  });
+  console.log("delay: connected from 127.0.0.1");
+  client4.destroy();
+
+  // Assertion 2: connect from ::1 and get a live connection.
+  const client6 = connect({ port: relayPort, host: "::1" });
+  let client6Connected = false;
+  await new Promise((resolve, reject) => {
+    client6.once("connect", () => {
+      client6Connected = true;
+      resolve();
+    });
+    client6.once("error", reject);
+    setTimeout(() => reject(new Error("timeout connecting from ::1")), 5000);
+  });
+  console.log("delay: connected from ::1");
+  client6.destroy();
+
+  // Cleanup
+  relayServer.close();
+  relayServer6.close();
+  if (controlServer) controlServer.close();
+  echoServer.close();
+
+  if (!client4Connected || !client6Connected) {
+    throw new Error("one or both address families failed to connect");
+  }
+  console.log("delay: selftest-dualbind passed");
+}
+
 async function main() {
   if (process.argv[2] === "--selftest") {
     await selftest();
@@ -289,6 +446,14 @@ async function main() {
   }
   if (process.argv[2] === "--selftest-cut") {
     await selftestCut();
+    process.exit(0);
+  }
+  if (process.argv[2] === "--selftest-unreachable") {
+    await selftestUnreachable();
+    process.exit(0);
+  }
+  if (process.argv[2] === "--selftest-dualbind") {
+    await selftestDualbind();
     process.exit(0);
   }
   if (process.argv[2] === "cut") {
@@ -309,6 +474,8 @@ async function main() {
   const controlPort = Number.isFinite(controlPortArg) ? controlPortArg : undefined;
 
   await startRelay(listenPort, targetPort, delayMs, controlPort);
+  // Probe the target at start-up to ensure reachability before running.
+  await probeTarget(targetPort);
   // No process.exit here: the relay is a background process, meant to keep running until killed.
 }
 
