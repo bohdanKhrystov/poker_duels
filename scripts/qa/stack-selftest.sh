@@ -248,3 +248,43 @@ c2_named=$(wc -l < "$STUBDIR/c2-named" | tr -d ' ')
     fail "the project name followed the checkout basename ($c2_named/$c2_total)" \
         "$LOGC2A" "$LOGC2B" "$LOGC2C" "$LOGC2D"
 echo "C2 the project name does not follow the checkout: ok"
+
+# --- reap's candidate set (TASK-121606) ----------------------------------------------------------
+# `kill` is a bash *builtin*, so no PATH stub can intercept it and the signal itself cannot be
+# observed the way the docker calls above are. What can be — and what carries the whole safety
+# argument — is the set `reap` says it would touch, so these assert on `--dry-run` and never run the
+# destructive path. Running it here would be actively unsafe: in CI a real `reap` would be entitled
+# to every Gradle daemon under $ROOT, including the one running this test.
+#
+# Three real processes, told apart only by argv[0] via `exec -a`, so no file is created and the
+# fixture cannot accidentally match on a path that exists. D1 is the positive control the other two
+# need: without it, "did not name B" is equally true of a `reap` that names nothing at all.
+probe() { bash -c 'exec -a "$1" sleep 120' _ "$1" >/dev/null 2>&1 & echo $!; }
+D_IN="$(probe "pd-selftest-probe $ROOT/inside-the-root")"
+D_OUT="$(probe "pd-selftest-probe /pd-selftest-nowhere/outside-the-root")"
+D_SNAP="$(probe "pd-selftest-probe $ROOT/x snapshot-zsh-pretending-to-be-a-tool-call")"
+trap 'kill '"$D_IN $D_OUT $D_SNAP"' 2>/dev/null; rm -rf "$STUBDIR"' EXIT
+sleep 1
+
+set +e
+D_OUT_TXT="$(bash "$STACK" reap --dry-run 2>&1)"
+set -e
+: > "$STUBDIR/logd"; printf '%s\n' "$D_OUT_TXT" > "$STUBDIR/logd"
+
+grep -q "pid $D_IN " <<< "$D_OUT_TXT" ||
+    fail "reap --dry-run did not name the probe inside \$ROOT (pid $D_IN)" "$STUBDIR/logd"
+echo "D1 reap names a process whose command line is inside the root: ok"
+
+grep -q "pid $D_OUT " <<< "$D_OUT_TXT" &&
+    fail "reap --dry-run named a probe outside \$ROOT (pid $D_OUT)" "$STUBDIR/logd"
+echo "D2 reap does not name a process outside the root: ok"
+
+grep -q "pid $D_SNAP " <<< "$D_OUT_TXT" &&
+    fail "reap --dry-run named a harness tool-call shell (pid $D_SNAP)" "$STUBDIR/logd"
+echo "D3 reap does not name a harness tool-call shell: ok"
+
+# The three probes are still running: --dry-run must report and stop. If this fails, the flag is
+# decorative and every assertion above was made against a run that had already signalled.
+kill -0 "$D_IN" 2>/dev/null && kill -0 "$D_OUT" 2>/dev/null && kill -0 "$D_SNAP" 2>/dev/null ||
+    fail "reap --dry-run signalled a process" "$STUBDIR/logd"
+echo "D4 reap --dry-run reports without signalling: ok"
