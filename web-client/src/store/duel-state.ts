@@ -69,6 +69,13 @@ export interface DuelState {
    */
   readonly rivalPresence: SeatPresence | null;
   /**
+   * The display names of the room's two seats, in seat order, as the server last stated them
+   * (`SeatNames`) — `null` for a seat with no name or nobody in it. A profile fact, not a game
+   * fact: it lives beside `view`, never inside it. `[null, null]` until the first frame, and
+   * again whenever a `RoomJoined` names a different room.
+   */
+  readonly seatNames: readonly (string | null)[];
+  /**
    * How many `OpponentPresence` frames the server has sent. Client bookkeeping in the class of
    * `rejectionCount`, and the same job: something that always changes. Two separate disconnects
    * in one duel can carry the same `presence`, so the value alone cannot tell a second window
@@ -202,6 +209,7 @@ export function initialState(): DuelState {
     refusal: null,
     rematchOffers: [],
     rivalPresence: null,
+    seatNames: [null, null],
     presenceCount: 0,
     rivalReturned: false,
     serverAction: null,
@@ -381,6 +389,8 @@ export function applyServerMessage(
         ...state,
         rematchOffers: [...state.rematchOffers, message.seat],
       };
+    case "SeatNames":
+      return { ...state, seatNames: message.names };
     case "OpponentPresence":
       return {
         ...state,

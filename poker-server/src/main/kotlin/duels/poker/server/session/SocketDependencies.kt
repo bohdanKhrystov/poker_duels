@@ -23,4 +23,6 @@ public data class SocketDependencies(
     val maxFrameLength: Int,
     val maxFrameNestingDepth: Int,
     val identities: IdentityResolver,
+    /** Where the socket learns a seated player's display name; defaults to knowing none. */
+    val displayNames: DisplayNameLookup = DisplayNameLookup.NONE,
 )

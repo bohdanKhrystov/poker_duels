@@ -31,6 +31,7 @@ import duels.poker.server.room.RandomRoomCodeSource
 import duels.poker.server.room.RoomRegistry
 import duels.poker.server.session.ConnectionDirectory
 import duels.poker.server.session.DeviceIdSource
+import duels.poker.server.session.DisplayNameLookup
 import duels.poker.server.session.RandomDeviceIdSource
 import duels.poker.server.session.SessionRegistry
 import duels.poker.server.session.SocketDependencies
@@ -111,6 +112,7 @@ public fun serverComponents(
         maxFrameLength = config.maxFrameLength,
         maxFrameNestingDepth = config.maxFrameNestingDepth,
         identities = identities,
+        displayNames = DisplayNameLookup { reads.profileOf(it)?.displayName },
     )
 
     val credentials = PostgresCredentials(dataSource)

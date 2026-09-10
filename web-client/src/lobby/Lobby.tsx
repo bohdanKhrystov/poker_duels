@@ -49,7 +49,7 @@ import { ForgotPasswordForm } from "../account/ForgotPasswordForm";
 import { FORGOT_PASSWORD_LABEL } from "../account/recovery-text";
 import { VerifyScreen } from "../account/VerifyScreen";
 import { ResetScreen } from "../account/ResetScreen";
-import { roomCodeFromField } from "./room-link";
+import { roomCodeFromField, roomCodeFromSearch } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
 import { WaitingTable } from "../table/WaitingTable";
@@ -120,12 +120,19 @@ export function Lobby(): ReactElement {
   // `send` directly. A player the predicate names is held at the ask; every
   // other player passes straight through, unheld and unrendered-to.
   const startDuel = (intent: CreateRoom | JoinRoom): void => {
+    setPressedHere(true);
     if (setName !== null && askForName({ profile, skipped: nameAskSkipped })) {
       setHeldPress(intent);
       return;
     }
     send(intent);
   };
+  // Whether this player has pressed either front-door control on this boot.
+  // Before they have, a refusal can only answer the room this browser
+  // remembered or the one the address named — a code the player never typed,
+  // so "that code" would point at nothing they can see.
+  const [pressedHere, setPressedHere] = useState(false);
+  const arrivedByLink = roomCodeFromSearch(window.location.search) !== null;
 
   // ADR-0114 §§1-2: one predicate answers every ask, computed once above
   // every branch. `standing` is what the frames the server has sent say
@@ -343,6 +350,7 @@ export function Lobby(): ReactElement {
         <DuelResult
           outcome={state.outcome}
           mySeat={state.mySeat}
+          names={state.seatNames}
           rematch={
             <RematchControl
               offers={state.rematchOffers}
@@ -398,6 +406,7 @@ export function Lobby(): ReactElement {
       <div className="[container-type:inline-size] mx-auto flex min-h-[100dvh] max-w-[560px] flex-col gap-[var(--wgap)] p-[var(--wgap)] [--wgap:clamp(4px,calc((100cqi-340px)/12.5),16px)]">
         <DuelTable
           view={view}
+          names={state.seatNames}
           rivalPresence={state.rivalPresence}
           narration={state.narration}
           revealStep={state.reveal?.steps[0] ?? null}
@@ -536,7 +545,9 @@ export function Lobby(): ReactElement {
           role="alert"
           className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-small text-loss"
         >
-          {state.refusal !== null ? refusalMessage(state.refusal) : ""}
+          {state.refusal !== null
+            ? refusalMessage(state.refusal, pressedHere || arrivedByLink)
+            : ""}
         </p>
       </form>
       {profile !== null && <ProfileStrip state={profile} />}
@@ -580,10 +591,14 @@ const TAGLINE =
  * The client shows the refusal and stops. Retrying on the player's behalf would
  * spend the ten failed joins a minute `ADR-0022` budgets them.
  */
-function refusalMessage(error: ProtocolError): string {
+function refusalMessage(error: ProtocolError, askedForACode: boolean): string {
   switch (error) {
     case "UNKNOWN_ROOM":
-      return "No duel room has that code.";
+      // A remembered room the server no longer holds is not a code the
+      // player got wrong — say what happened, not what to retype.
+      return askedForACode
+        ? "No duel room has that code."
+        : "The duel room you were in has closed.";
     case "ROOM_FULL":
       return "That duel room already has a rival in it.";
     default:

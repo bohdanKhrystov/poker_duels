@@ -21,8 +21,19 @@ internal fun testDeps(
     maxFrameLength: Int = ServerConfig.DEFAULT_MAX_FRAME_LENGTH,
     maxFrameNestingDepth: Int = ServerConfig.DEFAULT_MAX_FRAME_NESTING_DEPTH,
     identities: IdentityResolver = IdentityResolver(NoAuthSessions, directory),
+    displayNames: DisplayNameLookup = DisplayNameLookup.NONE,
 ): SocketDependencies =
-    SocketDependencies(directory, deviceIds, sessions, rooms, connections, maxFrameLength, maxFrameNestingDepth, identities)
+    SocketDependencies(
+        directory,
+        deviceIds,
+        sessions,
+        rooms,
+        connections,
+        maxFrameLength,
+        maxFrameNestingDepth,
+        identities,
+        displayNames,
+    )
 
 internal fun fixedDeviceIds(vararg ids: String): DeviceIdSource {
     val queue = ArrayDeque(ids.toList())

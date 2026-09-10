@@ -2,7 +2,7 @@
 
 This document is the contract for EPIC-03 (the game server's protocol). The Kotlin definitions in `duels.poker.server.protocol` are the source of truth for the wire protocol; the TypeScript client is generated from this schema (see `ADR-0003` and `STORY-0203`).
 
-Protocol version: **6**
+Protocol version: **7**
 
 ## Messages
 
@@ -16,6 +16,7 @@ Protocol version: **6**
 | `Welcome` | server → client | `playerId`, `deviceId`, `protocolVersion` | Server accepts the connection |
 | `Failure` | server → client | `error` | Server refuses the connection |
 | `RoomJoined` | server → client | `code`, `seat` | The server seated you in a room |
+| `SeatNames` | server → client | `names` (two entries, in seat order, `null` for a seat with no name or nobody in it) | Straight after your own `RoomJoined`, and to both seats the moment a guest takes the second seat — so the table can name the rival across from it. A profile fact, carried on its own frame and never inside a `Snapshot` |
 | `RematchOffered` | server → client | `seat` | An offer from this seat to play again stands |
 | `Snapshot` | server → client | `view` (PlayerView) | Server sends current game state |
 | `Events` | server → client | `events` (List of GameEvent) | Server broadcasts game events |

@@ -443,7 +443,9 @@ describe("the lobby", () => {
       store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
     });
 
-    expect(screen.getByText("No duel room has that code.")).toBeDefined();
+    expect(
+      screen.getByText("The duel room you were in has closed."),
+    ).toBeDefined();
     expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
@@ -968,11 +970,25 @@ describe("the lobby", () => {
     expect(inviteLink.value).toBe("http://localhost:3000/?room=ABCDEFGH");
   });
 
-  it("says an unknown room is unknown", () => {
+  it("says an unknown room is unknown, once the player has asked for one", () => {
     const store = createDuelStore();
-    store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
     renderLobby(store);
+    // Nothing pressed yet: a refusal can only answer a remembered room, and
+    // the player typed no code it could be about.
+    act(() => {
+      store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    });
+    expect(
+      screen.getByText("The duel room you were in has closed."),
+    ).toBeDefined();
+    expect(screen.queryByText("No duel room has that code.")).toBeNull();
 
+    // Once the player has asked for a code themselves, the refusal is about it.
+    typeCode("NOSUCH01");
+    fireEvent.click(screen.getByRole("button", { name: "Join the duel" }));
+    act(() => {
+      store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    });
     expect(screen.getByText("No duel room has that code.")).toBeDefined();
   });
 

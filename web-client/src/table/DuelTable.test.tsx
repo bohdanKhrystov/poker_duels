@@ -680,6 +680,35 @@ describe("the duel table", () => {
     expect(screen.queryByLabelText("nine of diamonds")).toBeNull();
   });
 
+  it("names the rival by their display name, and falls back to Your rival", () => {
+    const view = aView({
+      viewerSeat: 0,
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    const { rerender } = render(
+      <DuelTable view={view} names={["Ada", "Sister Ace"]} />,
+    );
+    expect(screen.getByText("Sister Ace")).toBeDefined();
+    expect(screen.queryByText("Your rival")).toBeNull();
+    // The hero's plate says You whatever their own name is.
+    expect(screen.getByText("You")).toBeDefined();
+    expect(screen.queryByText("Ada")).toBeNull();
+
+    rerender(<DuelTable view={view} names={["Ada", null]} />);
+    expect(screen.getByText("Your rival")).toBeDefined();
+
+    // The names are read by seat index, not by position in the pair.
+    rerender(
+      <DuelTable
+        view={aView({ ...view, viewerSeat: 1 })}
+        names={["Ada", "Sister Ace"]}
+      />,
+    );
+    expect(screen.getByText("Ada")).toBeDefined();
+    expect(screen.queryByText("Sister Ace")).toBeNull();
+  });
+
   it("a runout step draws the pot and the stacks as they stood before the award", () => {
     const view = aView({
       handNumber: 3,

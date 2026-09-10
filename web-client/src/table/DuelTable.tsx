@@ -46,6 +46,13 @@ export function DuelTable(props: {
    * every existing caller and every existing test still gets.
    */
   clock?: ClockReading | null;
+  /**
+   * The two seats' display names, in seat order, as the server stated them in `SeatNames`
+   * — `null` for a seat with no name. The rival's plate carries their name when there is
+   * one and "Your rival" otherwise; the hero's plate always says "You", since across a
+   * heads-up table there is nobody else it could mean.
+   */
+  names?: readonly (string | null)[];
 }): ReactElement {
   const board = props.revealStep?.board ?? props.view.board.cards;
   // A runout step that is not the hand's last beat draws the seats and the
@@ -67,7 +74,7 @@ export function DuelTable(props: {
       {rival !== undefined && (
         <div className="flex flex-col gap-2">
           <SeatPlate
-            name="Your rival"
+            name={props.names?.[rival.index] ?? "Your rival"}
             seat={rival}
             hasButton={view.buttonSeat === rival.index}
             isToAct={view.seatToAct === rival.index}

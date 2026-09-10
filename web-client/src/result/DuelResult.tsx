@@ -34,6 +34,11 @@ export function DuelResult(props: {
    * has finished before the page leaves.
    */
   onLeave?: () => void;
+  /**
+   * The two seats' display names in seat order, `null` where a seat has none — the
+   * ledger line names the rival by it when there is one.
+   */
+  names?: readonly (string | null)[];
 }): ReactElement {
   const verdict = verdictOf(props.outcome, props.mySeat);
   const coin = coinLine(verdict);
@@ -54,7 +59,7 @@ export function DuelResult(props: {
         </p>
       )}
       <p className="text-small text-text-muted">
-        {metaLine(props.outcome, props.mySeat)}
+        {metaLine(props.outcome, props.mySeat, props.names ?? [])}
       </p>
       {props.rematch}
       <a
@@ -94,12 +99,16 @@ function verdictColour(verdict: Verdict): string {
  * client that does not know which side it sat on states the stacks plainly
  * rather than guessing which is whose.
  */
-function metaLine(outcome: DuelOutcome, mySeat: number | null): string {
+function metaLine(
+  outcome: DuelOutcome,
+  mySeat: number | null,
+  names: readonly (string | null)[],
+): string {
   const hands = `${outcome.handsPlayed} ${outcome.handsPlayed === 1 ? "hand" : "hands"}`;
   const stacks = outcome.finalStacks.map((stack, seat) =>
     mySeat === null
       ? formatChips(stack)
-      : `${seat === mySeat ? "You" : "Your rival"} ${formatChips(stack)}`,
+      : `${seat === mySeat ? "You" : (names[seat] ?? "Your rival")} ${formatChips(stack)}`,
   );
   return [hands, ...stacks].join(" · ");
 }

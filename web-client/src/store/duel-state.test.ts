@@ -41,6 +41,33 @@ function samplePlayerView(overrides: Partial<PlayerView> = {}): PlayerView {
 }
 
 describe("the duel state", () => {
+  it("holds the seats' names the server states, and drops them with the room", () => {
+    const named = duelState.applyServerMessage(
+      duelState.applyServerMessage(duelState.initialState(), {
+        type: "RoomJoined",
+        code: "ROOM0001",
+        seat: 0,
+      }),
+      { type: "SeatNames", names: ["Ada", null] },
+    );
+    expect(named.seatNames).toEqual(["Ada", null]);
+
+    // A later frame replaces the pair whole — the guest arriving is what fills seat 1.
+    const both = duelState.applyServerMessage(named, {
+      type: "SeatNames",
+      names: ["Ada", "Bob"],
+    });
+    expect(both.seatNames).toEqual(["Ada", "Bob"]);
+
+    // A RoomJoined naming a different room forgets the old room's names with the rest.
+    const moved = duelState.applyServerMessage(both, {
+      type: "RoomJoined",
+      code: "ROOM0002",
+      seat: 1,
+    });
+    expect(moved.seatNames).toEqual([null, null]);
+  });
+
   it("starts with nothing the server has not sent", () => {
     const state = duelState.initialState();
     expect(state).toEqual({
@@ -55,6 +82,7 @@ describe("the duel state", () => {
       refusal: null,
       rematchOffers: [],
       rivalPresence: null,
+      seatNames: [null, null],
       presenceCount: 0,
       rivalReturned: false,
       serverAction: null,
