@@ -12,6 +12,7 @@ import { formatChips } from "./chips";
 import { actFrame } from "./act-frame";
 import { rejectionText } from "./rejection-text";
 import { readTypedAmount } from "./typed-amount";
+import { tapProps } from "./tap";
 
 /**
  * The action bar: the one place a player asserts anything.
@@ -175,10 +176,10 @@ function Live(props: {
             className="shrink-0 rounded-medium border border-hairline px-3 py-2 font-mono text-small leading-tight text-text disabled:border-hairline disabled:text-text-faint"
             disabled={sent}
             key={chip.label}
-            onClick={() => {
+            {...tapProps(() => {
               setEntry(formatChips(chip.amount));
               setEntryRefusal(null);
-            }}
+            })}
             type="button"
           >
             {chip.label}
@@ -224,7 +225,7 @@ function Live(props: {
               } disabled:border-hairline disabled:bg-transparent disabled:text-text-faint`}
               disabled={sent}
               key={type}
-              onClick={() => press(type)}
+              {...tapProps(() => press(type))}
               type="button"
             >
               {text.verb}
