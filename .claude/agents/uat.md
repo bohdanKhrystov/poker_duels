@@ -115,7 +115,8 @@ with no card — `BLOCKED — no card`.
 SCOPE: <what you were given>
 FOCUS: uat
 STACK: up | down
-COMMIT: <git rev-parse --short HEAD>
+SERVED: <what `scripts/qa/stack.sh served` printed — the web port's checkout root and short
+  commit, then the server port's checkout root and short commit>
 SCREENS: <walked>/<in scope>
 
 PER-SCREEN:
