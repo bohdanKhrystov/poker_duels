@@ -2,7 +2,7 @@
 id: STORY-1311
 title: Only a running duel refuses another screen, and the refusal restores the address
 type: story
-status: ready
+status: done
 parent: EPIC-13
 module: web-client
 labels: [client, routing, lobby, recovery]
