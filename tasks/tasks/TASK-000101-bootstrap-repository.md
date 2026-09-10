@@ -2,7 +2,7 @@
 id: TASK-000101
 title: Bootstrap repository, documents and ticket system
 type: task
-status: in-review
+status: done
 parent: STORY-0001
 estimate: M
 labels: [process, meta]

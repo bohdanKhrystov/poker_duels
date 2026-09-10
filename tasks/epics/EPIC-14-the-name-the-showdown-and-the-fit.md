@@ -886,7 +886,7 @@ byte-unchanged and writes no client code. Each waits only on its own decision.
       [`ADR-0125`](../../docs/adr/ADR-0125-the-account-screen-names-the-anonymous-profile-and-owns-the-door.md),
       by deletion: the nudge it asks about goes with the offer, so the verdict is the only thing on
       the result screen and no surface inherits the question.
-- [ ] Every story is `done`, except `STORY-1406`, which
+- [x] Every story is `done`, except `STORY-1406`, which
       [`ADR-0127`](../../docs/adr/ADR-0127-a-control-stands-only-for-a-decision-the-server-has-opened.md)
       **retired** — an answer of *no* leaves it no work, and it is never split.
 - [ ] Every surface this epic adds is drawn on a card under `design/` **before** its implementing
