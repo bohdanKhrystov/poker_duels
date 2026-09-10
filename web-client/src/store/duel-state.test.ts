@@ -41,9 +41,37 @@ function samplePlayerView(overrides: Partial<PlayerView> = {}): PlayerView {
 }
 
 describe("the duel state", () => {
+  it("holds the seats' names the server states, and drops them with the room", () => {
+    const named = duelState.applyServerMessage(
+      duelState.applyServerMessage(duelState.initialState(), {
+        type: "RoomJoined",
+        code: "ROOM0001",
+        seat: 0,
+      }),
+      { type: "SeatNames", names: ["Ada", null] },
+    );
+    expect(named.seatNames).toEqual(["Ada", null]);
+
+    // A later frame replaces the pair whole — the guest arriving is what fills seat 1.
+    const both = duelState.applyServerMessage(named, {
+      type: "SeatNames",
+      names: ["Ada", "Bob"],
+    });
+    expect(both.seatNames).toEqual(["Ada", "Bob"]);
+
+    // A RoomJoined naming a different room forgets the old room's names with the rest.
+    const moved = duelState.applyServerMessage(both, {
+      type: "RoomJoined",
+      code: "ROOM0002",
+      seat: 1,
+    });
+    expect(moved.seatNames).toEqual([null, null]);
+  });
+
   it("starts with nothing the server has not sent", () => {
     const state = duelState.initialState();
     expect(state).toEqual({
+      playerId: null,
       mySeat: null,
       roomCode: null,
       view: null,
@@ -55,6 +83,7 @@ describe("the duel state", () => {
       refusal: null,
       rematchOffers: [],
       rivalPresence: null,
+      seatNames: [null, null],
       presenceCount: 0,
       rivalReturned: false,
       serverAction: null,
@@ -76,20 +105,27 @@ describe("the duel state", () => {
     expect(state.roomCode).toBe("ABCD");
   });
 
-  it("leaves state unchanged for a message it has no opinion about", () => {
+  it("records who the server says this connection is, once", () => {
     const initialState = duelState.initialState();
-    const stateWithSeat = duelState.applyServerMessage(initialState, {
+    const welcome = {
+      type: "Welcome" as const,
+      playerId: "test-player",
+      deviceId: "test-device",
+      protocolVersion: 2,
+    };
+    const welcomed = duelState.applyServerMessage(initialState, welcome);
+    expect(welcomed.playerId).toBe("test-player");
+
+    // A second Welcome naming the same player is a message the reducer has
+    // no further opinion about: the same reference comes back.
+    const stateWithSeat = duelState.applyServerMessage(welcomed, {
       type: "RoomJoined",
       code: "ABCD",
       seat: 1,
     });
-    const welcomed = duelState.applyServerMessage(stateWithSeat, {
-      type: "Welcome",
-      playerId: "test-player",
-      deviceId: "test-device",
-      protocolVersion: 2,
-    });
-    expect(welcomed).toBe(stateWithSeat);
+    expect(duelState.applyServerMessage(stateWithSeat, welcome)).toBe(
+      stateWithSeat,
+    );
   });
 
   it("exports only the reducer, the initial state, the per-tick advance and the clock's own tick", () => {

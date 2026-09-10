@@ -1,5 +1,7 @@
 package duels.poker.engine.game
 
+import duels.poker.engine.card.Card
+
 /**
  * A seat and the amount of chips coming back from an uncalled bet.
  *
@@ -63,7 +65,11 @@ public fun uncalledPortion(state: GameState): UncalledPortion? {
  * @return The accepted result: `UncalledBetReturned` (if any), one `PotAwarded` per winner in
  *   ascending seat order, then `HandFinished`.
  */
-public fun settleHand(state: GameState, winners: List<Int>): EngineResult {
+public fun settleHand(
+    state: GameState,
+    winners: List<Int>,
+    hands: Map<Int, List<Card>> = emptyMap(),
+): EngineResult {
     require(state.seats.all { it.committedThisStreet == 0 }) {
         "state must be swept: every seat's committedThisStreet must be zero, was ${state.seats}"
     }
@@ -96,7 +102,7 @@ public fun settleHand(state: GameState, winners: List<Int>): EngineResult {
     }
 
     awards.toSortedMap().forEach { (seat, amount) ->
-        val awarded = PotAwarded(current.eventCount, seat, amount)
+        val awarded = PotAwarded(current.eventCount, seat, amount, hands[seat] ?: emptyList())
         events += awarded
         current = StateProjection.apply(current, awarded)
     }

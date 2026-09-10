@@ -137,7 +137,9 @@ internal class SocketReconnectTest {
 
             val droppedSeat = duel.playDroppingTheSeatOnTurn(http)
 
-            val received = duel.seat(droppedSeat).received
+            // The seats' names follow every RoomJoined and say nothing about the resume itself,
+            // so they are set aside before the frames after the RoomJoined are read in order.
+            val received = duel.seat(droppedSeat).received.filterNot { it is ServerMessage.SeatNames }
             val resumeIndex = received.indexOfLast { it is ServerMessage.RoomJoined }
             assert(resumeIndex >= 0) {
                 "handSeed=$HAND_SEED seat=$droppedSeat: expected a RoomJoined from the reconnect, got $received"

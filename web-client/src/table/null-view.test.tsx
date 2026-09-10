@@ -190,6 +190,7 @@ describe("what the table shows when there is no view", () => {
     // this test's.
     const BASELINE = [
       "Waiting for your rival",
+      "Room code",
       "ABCDEFGH",
       "Invite link",
       "The duel starts by itself the moment your rival arrives, with nothing more needed from you.",

@@ -9,6 +9,8 @@ import { Hand } from "./Hand";
 import { formatChips } from "./chips";
 import { ChipPile } from "./ChipPile";
 import { seatClock } from "./turn-clock";
+import { runoutView } from "./runout-view";
+import { winningCards } from "./winning-cards";
 
 /**
  * The duel table: one column, rival above, board between, you below.
@@ -45,17 +47,42 @@ export function DuelTable(props: {
    * every existing caller and every existing test still gets.
    */
   clock?: ClockReading | null;
+  /**
+   * The two seats' display names, in seat order, as the server stated them in `SeatNames`
+   * — `null` for a seat with no name. The rival's plate carries their name when there is
+   * one and "Your rival" otherwise; the hero's plate always says "You", since across a
+   * heads-up table there is nobody else it could mean.
+   */
+  names?: readonly (string | null)[];
 }): ReactElement {
-  const { view } = props;
-  const board = props.revealStep?.board ?? view.board.cards;
+  const board = props.revealStep?.board ?? props.view.board.cards;
+  // A runout step that is not the hand's last beat draws the seats and the
+  // pot as they stood before the award (`runout-view.ts`): the snapshot behind
+  // it has already paid the pot out, and a stack that knows the winner before
+  // the river is turned spoils the river. The last beat — the step whose street
+  // is the snapshot's own `COMPLETE` — draws the snapshot as it is.
+  const lagging =
+    props.revealStep !== null &&
+    props.revealStep !== undefined &&
+    props.revealStep.street !== "COMPLETE";
+  const view = lagging
+    ? runoutView(props.view, props.narration ?? [])
+    : props.view;
   const you = view.seats.find((seat) => seat.index === view.viewerSeat);
   const rival = view.seats.find((seat) => seat.index !== view.viewerSeat);
+  // The five that took the pot, marked only on the hand's last beat — never
+  // while a runout is still turning cards, and never mid-hand, where the set
+  // is empty anyway.
+  const marked =
+    !lagging && view.street === "COMPLETE"
+      ? winningCards(props.narration ?? [], view.handNumber)
+      : undefined;
   return (
     <>
       {rival !== undefined && (
         <div className="flex flex-col gap-2">
           <SeatPlate
-            name="Your rival"
+            name={props.names?.[rival.index] ?? "Your rival"}
             seat={rival}
             hasButton={view.buttonSeat === rival.index}
             isToAct={view.seatToAct === rival.index}
@@ -72,10 +99,20 @@ export function DuelTable(props: {
           {/* ADR-0103 §3.2: the rival's face-down hand narrows furthest of
               anything on the table — her name, her stack, her button and
               whose turn it is are on the plate directly above it. */}
-          <div className="flex justify-center gap-2 [--w:clamp(24px,calc((100cqi-135px)/10.625),40px)]">
+          <div
+            className={`flex justify-center gap-2 ${
+              rival.holeCards.length === 0
+                ? "[--w:clamp(24px,calc((100cqi-135px)/10.625),40px)]"
+                : // Face up, the rival's hand is read, not counted: it takes
+                  // the hero's own card width so a shown hand is as legible
+                  // as the one below it.
+                  "gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]"
+            }`}
+          >
             <Hand
               cards={rival.holeCards}
               hiddenLabel="your rival's hidden hand"
+              marked={marked}
             />
           </div>
           <BetLine committed={rival.committedThisStreet} />
@@ -90,7 +127,7 @@ export function DuelTable(props: {
           narration={props.narration}
           street={props.revealStep?.street}
         />
-        <BoardCards cards={board} />
+        <BoardCards cards={board} marked={marked} />
       </div>
       {you !== undefined && (
         <div className="flex flex-col gap-4">
@@ -99,9 +136,19 @@ export function DuelTable(props: {
               is `BoardCards.tsx`'s own `--w`, repeated as the floor rather than
               shared through a variable, so this block never depends on a name
               declared outside it. A table that drew the shared five larger
-              than the private two would invert the game's own emphasis. */}
-          <div className="flex justify-center gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]">
-            <Hand cards={you.holeCards} hiddenLabel="your hidden hand" />
+              than the private two would invert the game's own emphasis.
+              The hero's own bet line sits beside the cards, in the row's own
+              height, so it costs the phone shape no vertical room — the
+              column is measured to the pixel at 390 × 664 (ADR-0121). */}
+          <div className="relative flex justify-center gap-3 [--w:clamp(clamp(48px,calc((100cqi-64px)/5),72px),calc((100cqi-40px)/5),96px)]">
+            <div className="absolute top-[50%] left-[0px] -translate-y-[50%]">
+              <BetLine committed={you.committedThisStreet} />
+            </div>
+            <Hand
+              cards={you.holeCards}
+              hiddenLabel="your hidden hand"
+              marked={marked}
+            />
           </div>
           <SeatPlate
             name="You"
@@ -124,10 +171,12 @@ export function DuelTable(props: {
 }
 
 /**
- * The chips a seat has out on this street. The word is the field's, not an
- * action's: the view says how much is committed and never says whether it got
- * there by a blind, a call, a bet or a raise. The line keeps its height when
- * there is nothing to say, so nothing below it moves.
+ * The chips a seat has out on this street — drawn for both seats, so a player
+ * can see what they themselves have put in front of them as well as what
+ * their rival has. The word is the field's, not an action's: the view says how
+ * much is committed and never says whether it got there by a blind, a call, a
+ * bet or a raise. The line keeps its height when there is nothing to say, so
+ * nothing below it moves.
  */
 function BetLine(props: { committed: number }): ReactElement {
   return (

@@ -16,6 +16,7 @@ import duels.poker.server.protocol.versionRefusalOrNull
 import duels.poker.server.room.JoinResult
 import duels.poker.server.room.RematchRefusal
 import duels.poker.server.room.RematchResult
+import duels.poker.server.room.Room
 import duels.poker.server.room.RoomCode
 import duels.poker.server.room.RoomRefusal
 import duels.poker.server.room.RoomState
@@ -530,7 +531,21 @@ private suspend fun ConnectionWriter.replyToCreateRoom(
         "the room this answer names came off a snapshot the registry has already committed to"
     }
     send(ProtocolCodec.encode(ServerMessage.RoomJoined(target.code.value, seat)))
+    send(ProtocolCodec.encode(seatNamesOf(target, deps)))
 }
+
+/**
+ * The [ServerMessage.SeatNames] frame for [room] as it stands now: the host's name at seat 0, the
+ * guest's at seat 1, `null` where there is no name or no guest. Read fresh on every call rather
+ * than cached on the room, so a name taken between two joins is the name the second join sees.
+ */
+private suspend fun seatNamesOf(room: Room, deps: SocketDependencies): ServerMessage.SeatNames =
+    ServerMessage.SeatNames(
+        listOf(
+            deps.displayNames.nameOf(room.host),
+            room.guest?.let { deps.displayNames.nameOf(it) },
+        ),
+    )
 
 /**
  * Enters, for [session]'s player, the room named by [code].
@@ -578,6 +593,7 @@ private suspend fun ConnectionWriter.replyToJoinRoom(
     if (resumed != null) {
         room.code = parsed
         send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, resumed.seat)))
+        send(ProtocolCodec.encode(seatNamesOf(resumed.room, deps)))
         deliver(resumed.outbound, resumed.room, deps.connections)
         // ADR-0044 §5: restated only now, after everything above — DuelFinished is where a
         // client enters its result screen, and an offer stated ahead of that frame would be
@@ -596,17 +612,24 @@ private suspend fun ConnectionWriter.replyToJoinRoom(
                 return
             }
             send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, seat)))
+            // Both seats learn who sits across from them the moment the table is full — the
+            // host has been waiting with no guest to name, and this is the first frame that
+            // can name one.
+            val names = seatNamesOf(result.room, deps)
+            deliver(listOf(Addressed(0, names), Addressed(1, names)), result.room, deps.connections)
             deliver(result.outbound, result.room, deps.connections)
         }
 
         is JoinResult.Refused -> when (result.reason) {
             RoomRefusal.ALREADY_SEATED -> {
                 room.code = parsed
-                val seat = deps.rooms.get(parsed)?.seatOf(session.player.id) ?: run {
+                val held = deps.rooms.get(parsed)
+                val seat = held?.seatOf(session.player.id) ?: run {
                     send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))
                     return
                 }
                 send(ProtocolCodec.encode(ServerMessage.RoomJoined(parsed.value, seat)))
+                send(ProtocolCodec.encode(seatNamesOf(held, deps)))
             }
 
             RoomRefusal.UNKNOWN_ROOM -> send(ProtocolCodec.encode(ServerMessage.Failure(ProtocolError.UNKNOWN_ROOM)))

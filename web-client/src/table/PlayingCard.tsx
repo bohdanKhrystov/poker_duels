@@ -7,21 +7,40 @@ import { cardText } from "./card-text";
 const SHELL =
   "aspect-[5/7] w-[var(--w)] shrink-0 rounded-[calc(var(--w)*0.0625)]";
 
+/**
+ * How a face-up card stands in relation to a marked hand: `"marked"` when it is
+ * one of the five that took the pot, `"unmarked"` when a mark stands on the
+ * table and this card is not in it, and `"plain"` while nothing is marked —
+ * mid-hand, or at a hand won on a fold, where every card is drawn alike.
+ */
+export type CardStanding = "plain" | "marked" | "unmarked";
+
+const STANDING: Record<CardStanding, string> = {
+  plain: "",
+  marked: "winning-card",
+  unmarked: "opacity-45",
+};
+
 /** A face-up card: the rank character, the suit glyph, and the suit's colour. */
-export function CardFace(props: { card: string }): ReactElement {
+export function CardFace(props: {
+  card: string;
+  standing?: CardStanding;
+}): ReactElement {
   const text = cardText(props.card);
   if (text === null) {
     // A card the client cannot read is not one it may guess at — and it still
     // holds its place, so an unreadable card never reflows the row.
     return <CardBack label="an unreadable card" />;
   }
+  const standing = props.standing ?? "plain";
   return (
     <span
       role="img"
       aria-label={text.label}
+      data-standing={standing}
       className={`${SHELL} relative bg-card-face shadow-[var(--pd-shadow-card)] ${
         text.isRed ? "text-suit-red" : "text-suit-black"
-      }`}
+      } ${STANDING[standing]}`}
     >
       <span
         aria-hidden="true"

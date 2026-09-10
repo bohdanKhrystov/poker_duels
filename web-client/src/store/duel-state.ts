@@ -32,6 +32,13 @@ export type ActEvent =
   | PlayerAllIn;
 
 export interface DuelState {
+  /**
+   * The player the server said this connection is, from `Welcome` — `null` until the handshake
+   * answers. A first visit has no device id until this frame writes one, so the profile read
+   * that ran at mount answered "no profile" without asking; whoever needs the profile re-reads
+   * once this is set.
+   */
+  readonly playerId: string | null;
   readonly mySeat: number | null;
   readonly roomCode: string | null;
   readonly view: PlayerView | null;
@@ -68,6 +75,13 @@ export interface DuelState {
    * goes on being played while a seat is absent.
    */
   readonly rivalPresence: SeatPresence | null;
+  /**
+   * The display names of the room's two seats, in seat order, as the server last stated them
+   * (`SeatNames`) — `null` for a seat with no name or nobody in it. A profile fact, not a game
+   * fact: it lives beside `view`, never inside it. `[null, null]` until the first frame, and
+   * again whenever a `RoomJoined` names a different room.
+   */
+  readonly seatNames: readonly (string | null)[];
   /**
    * How many `OpponentPresence` frames the server has sent. Client bookkeeping in the class of
    * `rejectionCount`, and the same job: something that always changes. Two separate disconnects
@@ -191,6 +205,7 @@ export interface TurnClockState {
 
 export function initialState(): DuelState {
   return {
+    playerId: null,
     mySeat: null,
     roomCode: null,
     view: null,
@@ -202,6 +217,7 @@ export function initialState(): DuelState {
     refusal: null,
     rematchOffers: [],
     rivalPresence: null,
+    seatNames: [null, null],
     presenceCount: 0,
     rivalReturned: false,
     serverAction: null,
@@ -381,6 +397,14 @@ export function applyServerMessage(
         ...state,
         rematchOffers: [...state.rematchOffers, message.seat],
       };
+    case "Welcome":
+      // Idempotent: a second Welcome naming the same player changes nothing, so a store that
+      // notifies only on change stays quiet for it.
+      return state.playerId === message.playerId
+        ? state
+        : { ...state, playerId: message.playerId };
+    case "SeatNames":
+      return { ...state, seatNames: message.names };
     case "OpponentPresence":
       return {
         ...state,

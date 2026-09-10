@@ -6,7 +6,8 @@ import {
   finishedAtText,
   outcomeWord,
 } from "./profile-text";
-import { nameOrNone } from "./name-text";
+import { isStandInName, nameOrNone } from "./name-text";
+import { CoinMark } from "../result/CoinMark";
 
 /**
  * The profile strip: states the duel coin balance, or announces no profile yet,
@@ -35,33 +36,69 @@ export function ProfileStrip(props: {
       return (
         <section
           aria-label="your profile"
-          className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
+          className="mx-auto flex w-full max-w-[380px] flex-col gap-3 rounded-medium border border-hairline bg-surface px-5 py-4"
         >
-          <p className="text-small">{nameOrNone(state.profile.displayName)}</p>
-          <p className="font-mono text-small">
-            {coinBalanceText(state.profile.coinBalance)} Duel coins
-          </p>
+          <div className="flex items-center justify-between gap-4">
+            <p
+              className={`min-w-0 truncate font-medium ${
+                isStandInName(state.profile.displayName)
+                  ? "text-text-muted"
+                  : ""
+              }`}
+            >
+              {nameOrNone(state.profile.displayName)}
+            </p>
+            <p className="flex shrink-0 items-center gap-2 font-mono text-small tabular-nums">
+              <CoinMark />
+              <span>
+                {coinBalanceText(state.profile.coinBalance)} Duel coins
+              </span>
+            </p>
+          </div>
           {state.duels.length === 0 ? (
-            <p className="text-small">No duels yet.</p>
+            <p className="text-small text-text-muted">No duels yet.</p>
           ) : (
             <ul className="w-full text-small">
               {state.duels.map((duel) => (
                 <li
                   key={duel.duelId}
-                  className="border-t border-hairline py-3 first:border-t-0"
+                  className="flex flex-col gap-1 border-t border-hairline py-2 first:border-t-0"
                 >
-                  <p>
-                    {outcomeWord(duel.outcome)} {coinDeltaText(duel.coinDelta)}{" "}
-                    {duel.handsPlayed}{" "}
-                    {duel.handsPlayed === 1 ? "hand" : "hands"} vs{" "}
-                    {nameOrNone(duel.opponentDisplayName)}{" "}
+                  <span className="flex items-baseline gap-3">
+                    <span
+                      className={`w-[3.5em] shrink-0 font-medium ${outcomeColour(duel.outcome)}`}
+                    >
+                      {outcomeWord(duel.outcome)}
+                    </span>
+                    <span className="w-[2.5em] shrink-0 font-mono tabular-nums">
+                      {coinDeltaText(duel.coinDelta)}
+                    </span>{" "}
+                    <span className="min-w-0 flex-1 truncate text-text-muted">
+                      {duel.handsPlayed}{" "}
+                      {duel.handsPlayed === 1 ? "hand" : "hands"} vs{" "}
+                      {nameOrNone(duel.opponentDisplayName)}
+                    </span>
+                  </span>
+                  <span className="text-micro text-text-faint">
                     {finishedAtText(duel.finishedAt)}
-                  </p>
+                  </span>
                 </li>
               ))}
             </ul>
           )}
         </section>
       );
+  }
+}
+
+/** The result screen's two colours, and neither for a draw. */
+function outcomeColour(outcome: "WON" | "LOST" | "DREW"): string {
+  switch (outcome) {
+    case "WON":
+      return "text-win";
+    case "LOST":
+      return "text-loss";
+    case "DREW":
+      return "";
   }
 }

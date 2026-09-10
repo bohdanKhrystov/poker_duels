@@ -164,7 +164,7 @@ describe("the pot strip", () => {
             bigBlind: 150,
             stacks: [13400, 4550],
           },
-          { type: "PotAwarded", sequence: 2, seat: 0, amount: 4850 },
+          { type: "PotAwarded", sequence: 2, seat: 0, amount: 4850, hand: [] },
         ]}
       />,
     );

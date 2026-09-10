@@ -7,6 +7,7 @@ import duels.poker.engine.game.LegalActions
 import duels.poker.engine.game.PlayerView
 import duels.poker.engine.game.Street
 import duels.poker.server.protocol.Hello
+import duels.poker.server.protocol.ServerMessage
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.serializer
 import org.junit.jupiter.api.Test
@@ -52,6 +53,16 @@ class TypeScriptTypesTest {
         val cardsDescriptor = boardDescriptor.getElementDescriptor(cardsIndex)
         val cardsType = typeReference(cardsDescriptor)
         assertEquals("readonly string[]", cardsType)
+    }
+
+    @Test
+    fun aListOfNullableElementsBracketsTheUnion() {
+        // `readonly string | null[]` would parse as `string | (null[])` — an array of nulls
+        // or a string — which is not a list of names some of which are missing.
+        val namesDescriptor = ServerMessage.SeatNames.serializer().descriptor
+        val namesIndex = namesDescriptor.getElementIndex("names")
+        val namesType = typeReference(namesDescriptor.getElementDescriptor(namesIndex))
+        assertEquals("readonly (string | null)[]", namesType)
     }
 
     @Test

@@ -127,6 +127,7 @@ const started = (handNumber: number): GameEvent => ({
 const awarded = (seat: number, amount: number): GameEvent => ({
   type: "PotAwarded",
   sequence: 99,
+  hand: [],
   seat,
   amount,
 });
@@ -680,6 +681,92 @@ describe("the duel table", () => {
     expect(screen.queryByLabelText("nine of diamonds")).toBeNull();
   });
 
+  it("names the rival by their display name, and falls back to Your rival", () => {
+    const view = aView({
+      viewerSeat: 0,
+      seats: [aSeat({ index: 0 }), aSeat({ index: 1 })],
+    });
+
+    const { rerender } = render(
+      <DuelTable view={view} names={["Ada", "Sister Ace"]} />,
+    );
+    expect(screen.getByText("Sister Ace")).toBeDefined();
+    expect(screen.queryByText("Your rival")).toBeNull();
+    // The hero's plate says You whatever their own name is.
+    expect(screen.getByText("You")).toBeDefined();
+    expect(screen.queryByText("Ada")).toBeNull();
+
+    rerender(<DuelTable view={view} names={["Ada", null]} />);
+    expect(screen.getByText("Your rival")).toBeDefined();
+
+    // The names are read by seat index, not by position in the pair.
+    rerender(
+      <DuelTable
+        view={aView({ ...view, viewerSeat: 1 })}
+        names={["Ada", "Sister Ace"]}
+      />,
+    );
+    expect(screen.getByText("Ada")).toBeDefined();
+    expect(screen.queryByText("Sister Ace")).toBeNull();
+  });
+
+  it("a runout step draws the pot and the stacks as they stood before the award", () => {
+    const view = aView({
+      handNumber: 3,
+      street: "COMPLETE",
+      board: { cards: ["As", "7d", "2c", "Kh", "3s"] },
+      pot: 0,
+      viewerSeat: 0,
+      seats: [
+        aSeat({ index: 0, stack: 20_000, holeCards: ["Jh", "9c"] }),
+        aSeat({ index: 1, stack: 0, holeCards: ["Qs", "Qd"] }),
+      ],
+    });
+    const narration: GameEvent[] = [
+      {
+        type: "HandStarted",
+        sequence: 1,
+        handNumber: 3,
+        buttonSeat: 0,
+        smallBlind: 50,
+        bigBlind: 100,
+        stacks: [10_000, 10_000],
+      },
+      { type: "PotAwarded", sequence: 2, seat: 0, amount: 19_800, hand: [] },
+    ];
+
+    const { rerender } = render(
+      <DuelTable
+        view={view}
+        narration={narration}
+        revealStep={{ board: ["As", "7d", "2c"], street: "FLOP" }}
+      />,
+    );
+
+    // Mid-runout: the pot is still in the middle and the winner's stack does
+    // not know it yet; both hands are up, as a runout turns them.
+    expect(screen.getByText(/Pot 19,800/)).toBeDefined();
+    expect(screen.getByText("200")).toBeDefined();
+    expect(screen.queryByText("20,000")).toBeNull();
+    expect(screen.getByLabelText("queen of spades")).toBeDefined();
+    expect(screen.getByLabelText("jack of hearts")).toBeDefined();
+
+    rerender(
+      <DuelTable
+        view={view}
+        narration={narration}
+        revealStep={{
+          board: ["As", "7d", "2c", "Kh", "3s"],
+          street: "COMPLETE",
+        }}
+      />,
+    );
+
+    // The last beat: the award is stated and the stacks are the snapshot's own.
+    expect(screen.getByText("You win 19,800")).toBeDefined();
+    expect(screen.getByText("20,000")).toBeDefined();
+  });
+
   it("a runout paints three cards then four then five, naming Flop, Turn and River", () => {
     const board = ["As", "7d", "2c", "Kh", "3s"];
     const withEvents = applyServerMessage(initialState(), {
@@ -834,7 +921,7 @@ describe("the duel table", () => {
     expect(container.querySelectorAll(".chip-pile").length).toBeGreaterThan(0);
   });
 
-  it("gives the hero no bet line of their own", () => {
+  it("gives the hero a bet line of their own, showing what they have committed", () => {
     const view = aView({
       viewerSeat: 0,
       seats: [
@@ -845,8 +932,10 @@ describe("the duel table", () => {
 
     const { container } = render(<DuelTable view={view} />);
 
-    expect(container.querySelectorAll("p")).toHaveLength(1);
-    expect(container.querySelectorAll("p .chip-pile")).toHaveLength(0);
+    // Two bet lines — the rival's, empty, and the hero's, carrying the 900.
+    expect(container.querySelectorAll("p")).toHaveLength(2);
+    expect(container.querySelectorAll("p .chip-pile")).toHaveLength(1);
+    expect(screen.getByText("900")).toBeDefined();
     expect(screen.getByText(/Pot/)).toBeDefined();
   });
 

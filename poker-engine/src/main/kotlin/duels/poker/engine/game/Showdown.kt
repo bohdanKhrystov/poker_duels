@@ -1,5 +1,7 @@
 package duels.poker.engine.game
 
+import duels.poker.engine.card.Card
+import duels.poker.engine.hand.BestHand
 import duels.poker.engine.hand.FastHandEvaluator
 
 private const val COMPLETE_BOARD = 5
@@ -37,6 +39,16 @@ public fun showdownWinners(state: GameState): List<Int> {
         else -> listOf(0, 1)
     }
 }
+
+/**
+ * The five cards each of [seats] wins with on [state]'s complete board — [BestHand.cards] for
+ * that seat's two hole cards and the five on the board. Computed here, beside [showdownWinners],
+ * so the cards a [PotAwarded] carries come from the same evaluation that chose the winner.
+ */
+public fun winningHands(state: GameState, seats: List<Int>): Map<Int, List<Card>> =
+    seats.associateWith { seat ->
+        FastHandEvaluator.bestOfSeven(state.seat(seat).holeCards + state.board.cards).cards
+    }
 
 /**
  * Names the seats that show their hole cards at a showdown, in the order they show, per

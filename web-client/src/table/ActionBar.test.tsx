@@ -217,6 +217,65 @@ describe("the action bar", () => {
     expect((field as HTMLInputElement).disabled).toBe(true);
   });
 
+  it("answers F, C and R from the keyboard with the action each names", () => {
+    const { send, unmount } = bar();
+
+    // Nothing fires while the player is typing in the total field.
+    fireEvent.keyDown(
+      document.querySelector('input[aria-label="the total"]')!,
+      {
+        key: "f",
+      },
+    );
+    expect(send).not.toHaveBeenCalled();
+
+    // A modifier means the key is for something else.
+    fireEvent.keyDown(window, { key: "f", metaKey: true });
+    expect(send).not.toHaveBeenCalled();
+
+    // R raises to the dialled total — the server's minimum, untouched.
+    fireEvent.keyDown(window, { key: "r" });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].action).toEqual({
+      type: "Raise",
+      seat: 0,
+      to: aLegalActions().minRaiseTo,
+    });
+
+    // The bar is locked once it has sent; a second key sends nothing more.
+    fireEvent.keyDown(window, { key: "f" });
+    expect(send).toHaveBeenCalledTimes(1);
+    unmount();
+
+    // C calls where a call is offered, and checks where a check is.
+    const calling = bar();
+    fireEvent.keyDown(window, { key: "C" });
+    expect(calling.send.mock.calls[0][0].action.type).toBe("Call");
+    calling.unmount();
+
+    const checking = bar({
+      turn: aTurn({
+        legalActions: aLegalActions({ allowed: ["CHECK", "BET", "ALL_IN"] }),
+      }),
+    });
+    fireEvent.keyDown(window, { key: "c" });
+    expect(checking.send.mock.calls[0][0].action.type).toBe("Check");
+    checking.unmount();
+
+    // F folds; A reaches nothing, all-in being a click worth making on purpose.
+    const folding = bar();
+    fireEvent.keyDown(window, { key: "a" });
+    expect(folding.send).not.toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: "f" });
+    expect(folding.send.mock.calls[0][0].action.type).toBe("Fold");
+    folding.unmount();
+
+    // With no turn there is no bar to answer a key.
+    const idle = bar({ turn: null });
+    fireEvent.keyDown(window, { key: "f" });
+    expect(idle.send).not.toHaveBeenCalled();
+  });
+
   it("sends the exact total the player typed", () => {
     const { getByRole, send, unmount } = bar();
 

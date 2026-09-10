@@ -82,7 +82,11 @@ private suspend fun HttpClient.openRoomAsHost(
     val host = webSocketSession("/ws")
     host.completeHandshake(deviceId)
     host.send(Frame.Text(ProtocolCodec.encode(CreateRoom)))
-    return host to (host.nextServerMessage() as ServerMessage.RoomJoined)
+    val joined = host.nextServerMessage() as ServerMessage.RoomJoined
+    // Every RoomJoined is followed by the seats' names; consumed here so a test reads the
+    // frames it is about, not the one that names the table.
+    check(host.nextServerMessage() is ServerMessage.SeatNames) { "a RoomJoined is followed by SeatNames" }
+    return host to joined
 }
 
 /** Opens a `/ws` connection for [deviceId], completes its handshake, and attempts to join [code]. */
@@ -93,7 +97,11 @@ private suspend fun HttpClient.joinRoom(
     val session = webSocketSession("/ws")
     session.completeHandshake(deviceId)
     session.send(Frame.Text(ProtocolCodec.encode(JoinRoom(code))))
-    return session to session.nextServerMessage()
+    val response = session.nextServerMessage()
+    if (response is ServerMessage.RoomJoined) {
+        check(session.nextServerMessage() is ServerMessage.SeatNames) { "a RoomJoined is followed by SeatNames" }
+    }
+    return session to response
 }
 
 /** Removes a room from the registry using reflection to access its internal state. */
@@ -143,6 +151,50 @@ class DuelSocketRoomTest {
 
             assertEquals(created.code, joined.code)
             assertEquals(1, joined.seat)
+        }
+    }
+
+    @Test
+    fun bothSeatsAreToldEachOthersNamesOnceTheTableIsFull() = testApplication {
+        // The directory mints player ids from device ids; the lookup below names players by the
+        // id the socket resolved, so the two tables agree by construction rather than by string.
+        val directory = duels.poker.server.session.InMemoryPlayerDirectory()
+        val names = duels.poker.server.session.DisplayNameLookup { player ->
+            when (player) {
+                directory.findOrNull(duels.poker.server.session.DeviceId("host"))?.id -> "Ada"
+                else -> null
+            }
+        }
+        application {
+            module()
+            duelSocket(testDeps(directory = directory, rooms = testRoomRegistry(), displayNames = names))
+        }
+        val client = createClient { install(WebSockets) }
+
+        withTimeout(5.seconds) {
+            val host = client.webSocketSession("/ws")
+            host.completeHandshake("host")
+            host.send(Frame.Text(ProtocolCodec.encode(CreateRoom)))
+            val created = host.nextServerMessage() as ServerMessage.RoomJoined
+            // Straight after the host's own RoomJoined: the host's name, and no guest yet.
+            assertEquals(ServerMessage.SeatNames(listOf("Ada", null)), host.nextServerMessage())
+
+            val guest = client.webSocketSession("/ws")
+            guest.completeHandshake("guest")
+            guest.send(Frame.Text(ProtocolCodec.encode(JoinRoom(created.code))))
+            assertTrue(guest.nextServerMessage() is ServerMessage.RoomJoined)
+
+            // The moment the second seat is taken, both sockets are told both names — the
+            // guest has none, and reads as null rather than as a stand-in string — and the
+            // names precede the opening hand, so a table never draws a nameless rival for a
+            // frame and then corrects itself.
+            val expected = ServerMessage.SeatNames(listOf("Ada", null))
+            val guestFrames = guest.drainServerMessages()
+            val hostFrames = host.drainServerMessages()
+            assertEquals(expected, guestFrames.first())
+            assertEquals(expected, hostFrames.first())
+            assertTrue(guestFrames.any { it is ServerMessage.Snapshot })
+            assertTrue(hostFrames.any { it is ServerMessage.Snapshot })
         }
     }
 

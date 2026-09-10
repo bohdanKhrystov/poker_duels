@@ -64,7 +64,7 @@ export function SignUpForm(props: {
     return (
       <section
         aria-label="sign up for an account"
-        className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
+        className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 text-center"
       >
         <p role="status" className="text-small">
           {SIGNED_UP}
@@ -93,7 +93,7 @@ export function SignUpForm(props: {
   return (
     <section
       aria-label="sign up for an account"
-      className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
+      className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 text-center"
     >
       {outcome !== null && (
         <p role="status" className="text-small">

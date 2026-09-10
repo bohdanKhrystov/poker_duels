@@ -11,8 +11,8 @@ private data class Probe(val a: Int = 7)
 
 class ProtocolJsonTest {
     @Test
-    fun theProtocolVersionIsSix() {
-        assertEquals(6, PROTOCOL_VERSION)
+    fun theProtocolVersionIsSeven() {
+        assertEquals(7, PROTOCOL_VERSION)
     }
 
     @Test

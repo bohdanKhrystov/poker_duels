@@ -13,6 +13,7 @@ const SERVER_MESSAGE_TABLE = {
   Rejected: true,
   RematchOffered: true,
   RoomJoined: true,
+  SeatNames: true,
   Snapshot: true,
   TurnClock: true,
   Welcome: true,

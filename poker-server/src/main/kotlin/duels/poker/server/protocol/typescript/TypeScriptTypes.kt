@@ -49,8 +49,12 @@ internal fun typeReference(descriptor: SerialDescriptor): String {
         PrimitiveKind.LONG, PrimitiveKind.FLOAT, PrimitiveKind.DOUBLE,
         -> "number"
         StructureKind.LIST -> {
-            val elementType = typeReference(descriptor.getElementDescriptor(0))
-            "readonly $elementType[]"
+            val element = descriptor.getElementDescriptor(0)
+            val elementType = typeReference(element)
+            // A union element must be bracketed: `readonly string | null[]` parses as a union of
+            // `string` and `null[]`, not as an array of nullable strings.
+            val bracketed = if (element.isNullable) "($elementType)" else elementType
+            "readonly $bracketed[]"
         }
         StructureKind.CLASS, StructureKind.OBJECT, SerialKind.ENUM,
         PolymorphicKind.SEALED,

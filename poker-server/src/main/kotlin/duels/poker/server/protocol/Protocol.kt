@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
  * Version 5 is the version in which `ClientMessage.Hello` gained `sessionToken`, `ServerMessage.Welcome` gained `playerId` and its `deviceId` became nullable, and `ProtocolError` gained `INVALID_SESSION` (ADR-0027).
  * Version 6 is the version in which `ServerMessage` gained `TurnClock`, `OpponentPresence` lost its remaining-duration field, and `ProtocolError` lost its pause-refusal entry (ADR-0113).
  */
-public const val PROTOCOL_VERSION: Int = 6
+public const val PROTOCOL_VERSION: Int = 7
 
 /**
  * The shared Json instance for encoding and decoding all protocol frames.

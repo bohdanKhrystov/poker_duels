@@ -95,6 +95,8 @@ describe("the duel provider", () => {
   it("does not re-render when the reducer had no opinion", () => {
     const store = createDuelStore();
     const send: (message: ClientMessage) => void = vi.fn();
+    // A repeated Welcome is the message the reducer has no opinion about.
+    store.apply(WELCOME);
     store.apply(ROOM_JOINED);
     const rendered = vi.fn();
 

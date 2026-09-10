@@ -84,3 +84,12 @@ export function nameOrNone(displayName: string | null): string {
   }
   return displayName;
 }
+
+/**
+ * Whether a display name is the stand-in `nameOrNone` supplies rather than
+ * a name the player chose — so a surface can dress the stand-in differently
+ * without becoming a second place that decides what the stand-in says.
+ */
+export function isStandInName(displayName: string | null): boolean {
+  return displayName === null;
+}

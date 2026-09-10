@@ -17,6 +17,10 @@ const DUEL_STARTS_BY_ITSELF =
  * is shown before the opening Snapshot — no pot, no board, no bar, no dealer button,
  * no stack numeral, no blind level, no hand number, no street name, no card or suit
  * glyph, no timer, no amount.
+ *
+ * The host's own plate is not drawn: with no name, no stack and no status to put
+ * on it, a bordered box with nothing inside read as a rendering fault rather than
+ * as a seat.
  */
 export function WaitingTable(props: {
   readonly code: string;
@@ -28,31 +32,31 @@ export function WaitingTable(props: {
           the single string "Waiting for your rival": capital W, no full stop,
           no status line, no stack, no button (ADR-0110 §2). */}
       <div className="flex items-center gap-4 rounded-medium border border-dashed border-hairline px-5 py-4">
+        <span className="waiting-dot" aria-hidden="true" />
         <span className="block text-text-faint">Waiting for your rival</span>
       </div>
 
       {/* The invite panel — code, link box, copy button with two states
           (at rest and after either outcome) — (ADR-0110 §5 as ADR-0128 §§1 and 3 amend it). */}
-      <InvitePanel code={props.code} />
-
-      {/* ADR-0129 §1: one sentence, once, in this state only. */}
-      <p className="text-small text-text-muted">{DUEL_STARTS_BY_ITSELF}</p>
-
-      {/* The host's seat — the same plate, solid, and bare: ADR-0110 §§2-3 make
-          the shipped name optional, and STORY-1404 takes it off. */}
-      <div className="flex items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-4"></div>
+      <div className="flex flex-1 flex-col justify-center gap-4 py-6">
+        <InvitePanel code={props.code} />
+        {/* ADR-0129 §1: one sentence, once, in this state only. */}
+        <p className="text-center text-small text-text-muted">
+          {DUEL_STARTS_BY_ITSELF}
+        </p>
+      </div>
 
       {/* The way back to the lobby (ADR-0073 §§2-3): "Back to the lobby" as an
           anchor link to "/" with today's class list, and beside it the promise
           message that the room stays open and the rival's link still works. */}
       <a
-        className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        className="rounded-medium border border-hairline px-5 py-4 text-center leading-tight font-medium text-text"
         href="/"
         onClick={props.onLeave}
       >
         Back to the lobby
       </a>
-      <p className="text-small text-text-muted">
+      <p className="text-center text-small text-text-muted">
         The room stays open. That link still works for your rival, and it brings
         you back.
       </p>

@@ -69,33 +69,52 @@ class AllInRunOutTest {
         val (_, result) = bothAllInPreflop()
 
         val dealerEvents = result.events.filterIsInstance<DealerEvent>()
-        assertEquals(8, dealerEvents.size)
+        assertEquals(9, dealerEvents.size)
 
         assertTrue(dealerEvents[0] is BettingRoundEnded)
 
-        val flop = dealerEvents[1]
+        // Both hands face up before a card is dealt: nobody can act, so nothing is concealed.
+        val shownFirst = dealerEvents[1]
+        val shownSecond = dealerEvents[2]
+        assertTrue(shownFirst is HandRevealed)
+        assertTrue(shownSecond is HandRevealed)
+        assertEquals(setOf(0, 1), setOf((shownFirst as HandRevealed).seat, (shownSecond as HandRevealed).seat))
+
+        val flop = dealerEvents[3]
         assertTrue(flop is StreetDealt)
         assertEquals(Street.FLOP, (flop as StreetDealt).street)
         assertEquals(3, flop.cards.size)
 
-        val turn = dealerEvents[2]
+        val turn = dealerEvents[4]
         assertTrue(turn is StreetDealt)
         assertEquals(Street.TURN, (turn as StreetDealt).street)
         assertEquals(1, turn.cards.size)
 
-        val river = dealerEvents[3]
+        val river = dealerEvents[5]
         assertTrue(river is StreetDealt)
         assertEquals(Street.RIVER, (river as StreetDealt).street)
         assertEquals(1, river.cards.size)
 
-        assertTrue(dealerEvents[4] is ShowdownReached)
+        assertTrue(dealerEvents[6] is ShowdownReached)
 
-        val revealed = dealerEvents[5]
-        assertTrue(revealed is HandRevealed)
-        val awarded = dealerEvents.subList(6, dealerEvents.size - 1)
+        // No hand is shown twice: the showdown adds no HandRevealed of its own.
+        val awarded = dealerEvents.subList(7, dealerEvents.size - 1)
         assertTrue(awarded.all { it is PotAwarded })
-        assertEquals((revealed as HandRevealed).seat, (awarded.single() as PotAwarded).seat)
+        assertEquals(1, awarded.size)
+        // The award names the five cards it was won with, all of them public by now.
+        val winning = (awarded.single() as PotAwarded).hand
+        assertEquals(5, winning.size)
+        val public = result.newState.board.cards + result.newState.seat((awarded.single() as PotAwarded).seat).holeCards
+        assertTrue(public.containsAll(winning), "winning five $winning are not all among the public cards $public")
         assertTrue(dealerEvents.last() is HandFinished)
+    }
+
+    @Test
+    fun theAllInHandsAreShownAggressorFirst() {
+        // Seat 0 shoved and seat 1 called: the shove is the last aggression, so seat 0 shows first.
+        val (_, result) = bothAllInPreflop()
+        val revealed = result.events.filterIsInstance<HandRevealed>().map { it.seat }
+        assertEquals(listOf(0, 1), revealed)
     }
 
     @Test

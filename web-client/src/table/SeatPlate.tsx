@@ -50,7 +50,7 @@ export function SeatPlate(props: {
       <span className="min-w-[0px] flex-1">
         <span className="block truncate font-medium">{props.name}</span>
         <span
-          className={`mt-1 block min-h-[1.5em] text-micro leading-body ${
+          className={`mt-1 block min-h-[1.5em] text-micro leading-body whitespace-nowrap ${
             onTurn
               ? "font-medium tracking-caps text-accent uppercase"
               : "text-text-faint"

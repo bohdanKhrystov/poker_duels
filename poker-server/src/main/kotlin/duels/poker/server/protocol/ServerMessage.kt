@@ -86,6 +86,19 @@ public sealed interface ServerMessage {
      *
      * @property seat The seat (0 or 1) whose offer stands.
      */
+    /**
+     * The display names of the room's two seats, in seat order — `null` for a seat whose player
+     * has no name, or that nobody holds yet. Sent to a player straight after their own
+     * [RoomJoined], and to both seats the moment a guest takes the second seat, so the table can
+     * name the rival across from it. A name is a profile fact and not a game fact: it reaches the
+     * client on its own frame rather than inside [Snapshot], whose [PlayerView] is the engine's.
+     */
+    @Serializable
+    @SerialName("SeatNames")
+    public data class SeatNames(val names: List<String?>) : ServerMessage {
+        init { require(names.size == 2) { "names must name exactly two seats, had ${names.size}" } }
+    }
+
     @Serializable
     @SerialName("RematchOffered")
     public data class RematchOffered(val seat: Int) : ServerMessage {

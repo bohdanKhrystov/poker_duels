@@ -137,6 +137,9 @@ describe("the duel store", () => {
 
   it("notifies nobody when the reducer had no opinion", () => {
     const store = createDuelStore();
+    // The first Welcome names the player; a repeat of it is the message the
+    // reducer has no opinion about.
+    store.apply(WELCOME);
     const listener = vi.fn();
     store.subscribe(listener);
     store.apply(WELCOME);
@@ -145,6 +148,7 @@ describe("the duel store", () => {
 
   it("hands out the same state reference until a message changes it", () => {
     const store = createDuelStore();
+    store.apply(WELCOME);
     const state1 = store.getState();
     store.apply(WELCOME);
     const state2 = store.getState();

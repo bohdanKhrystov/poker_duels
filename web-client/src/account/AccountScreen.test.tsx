@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { AccountScreen } from "./AccountScreen";
 import {
   ACCOUNT_HEADING,
@@ -264,10 +264,12 @@ describe("the account screen", () => {
     const attach = vi.fn<[string, string], Promise<AttachRecoveryOutcome>>();
     attach.mockResolvedValue({ kind: "accepted" });
 
-    // With profile and prop: form is present.
+    // With a password-holding profile and the prop: form is present. An
+    // anonymous profile is never offered it — the route needs a session and
+    // the current password, which such a profile cannot present.
     const profile: ProfileStripState = {
       kind: "profile",
-      profile: aProfile(),
+      profile: aProfile({ hasPassword: true }),
       duels: [],
     };
     const { rerender } = render(
@@ -321,7 +323,7 @@ describe("the account screen", () => {
     // Recovery on: form is present and recovery sentence is RECOVERY_ON.
     const recoveryOn: ProfileStripState = {
       kind: "profile",
-      profile: aProfile({ hasRecoveryEmail: true }),
+      profile: aProfile({ hasRecoveryEmail: true, hasPassword: true }),
       duels: [],
     };
     const { rerender } = render(
@@ -338,7 +340,7 @@ describe("the account screen", () => {
     // Recovery off: form is present and recovery sentence is RECOVERY_OFF.
     const recoveryOff: ProfileStripState = {
       kind: "profile",
-      profile: aProfile({ hasRecoveryEmail: false }),
+      profile: aProfile({ hasRecoveryEmail: false, hasPassword: true }),
       duels: [],
     };
     rerender(
@@ -393,68 +395,81 @@ describe("the account screen", () => {
     expect(cancel.classList.contains("px-5")).toBe(true);
   });
 
-  it("both account forms submit with the card's fill button", () => {
+  /**
+   * The two account forms never share a screen — sign-up is for a profile
+   * with no password, attaching an address for one that has it — so each is
+   * rendered with the profile that shows it.
+   */
+  function renderBothForms(): {
+    readonly signUpScreen: ReturnType<typeof render>;
+    readonly attachScreen: ReturnType<typeof render>;
+  } {
     const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
     signUp.mockResolvedValue({ kind: "signed-up" });
     const attach = vi.fn<[string, string], Promise<AttachRecoveryOutcome>>();
     attach.mockResolvedValue({ kind: "accepted" });
 
-    const profile: ProfileStripState = {
+    const anonymous: ProfileStripState = {
       kind: "profile",
-      profile: aProfile(),
+      profile: aProfile({ hasPassword: false }),
       duels: [],
     };
-    render(
+    const signUpScreen = render(
       <AccountScreen
-        profile={profile}
+        profile={anonymous}
         signedIn={false}
         signOutHandsANewProfile={false}
         signUp={signUp}
         attachRecoveryEmail={attach}
       />,
     );
+    const withPassword: ProfileStripState = {
+      kind: "profile",
+      profile: aProfile({ hasPassword: true }),
+      duels: [],
+    };
+    const attachScreen = render(
+      <AccountScreen
+        profile={withPassword}
+        signedIn={true}
+        signOutHandsANewProfile={false}
+        signUp={signUp}
+        attachRecoveryEmail={attach}
+      />,
+    );
+    return { signUpScreen, attachScreen };
+  }
 
-    const signUpSubmit = screen.getByRole("button", { name: SIGN_UP_LABEL });
+  it("both account forms submit with the card's fill button", () => {
+    const { signUpScreen, attachScreen } = renderBothForms();
+
+    const signUpSubmit = within(signUpScreen.container).getByRole("button", {
+      name: SIGN_UP_LABEL,
+    });
     expect(signUpSubmit.classList.contains("bg-accent-fill")).toBe(true);
     expect(signUpSubmit.classList.contains("text-on-accent")).toBe(true);
 
-    const attachSubmit = screen.getByRole("button", { name: ATTACH_LABEL });
+    const attachSubmit = within(attachScreen.container).getByRole("button", {
+      name: ATTACH_LABEL,
+    });
     expect(attachSubmit.classList.contains("bg-accent-fill")).toBe(true);
     expect(attachSubmit.classList.contains("text-on-accent")).toBe(true);
   });
 
   it("both account forms left-align their fields and mute their labels", () => {
-    const signUp = vi.fn<[string, string], Promise<SignUpOutcome>>();
-    signUp.mockResolvedValue({ kind: "signed-up" });
-    const attach = vi.fn<[string, string], Promise<AttachRecoveryOutcome>>();
-    attach.mockResolvedValue({ kind: "accepted" });
-
-    const profile: ProfileStripState = {
-      kind: "profile",
-      profile: aProfile(),
-      duels: [],
-    };
-    render(
-      <AccountScreen
-        profile={profile}
-        signedIn={false}
-        signOutHandsANewProfile={false}
-        signUp={signUp}
-        attachRecoveryEmail={attach}
-      />,
-    );
+    const { signUpScreen, attachScreen } = renderBothForms();
 
     // Every field on both forms, enumerated — a fix applied to one label or
     // one form and not the rest must fail this, not just the first field.
-    const fieldLabels = [
-      HANDLE_LABEL,
-      PASSWORD_LABEL,
-      ADDRESS_LABEL,
-      CURRENT_PASSWORD_LABEL,
+    const fields: ReadonlyArray<[HTMLElement, string]> = [
+      [signUpScreen.container, HANDLE_LABEL],
+      [signUpScreen.container, PASSWORD_LABEL],
+      [attachScreen.container, ADDRESS_LABEL],
+      [attachScreen.container, CURRENT_PASSWORD_LABEL],
     ];
 
-    for (const labelText of fieldLabels) {
-      const label = screen.getByText(labelText);
+    for (const [root, labelText] of fields) {
+      const label = within(root).getByText(labelText, { selector: "label" });
       expect(label.tagName).toBe("LABEL");
       expect(label.classList.contains("text-small")).toBe(true);
       expect(label.classList.contains("text-text-muted")).toBe(true);
@@ -646,18 +661,16 @@ describe("the account screen", () => {
     const nameSurface = screen.getByLabelText("your display name");
     expect(nameSurface).not.toBeNull();
 
-    // Verify it is the immediate next sibling of the Account heading
+    // The name block is the first block under the Account heading.
     const heading = screen.getByRole("heading", {
       level: 2,
       name: ACCOUNT_HEADING,
     });
-    const headingIndex = Array.from(
-      screen.getByLabelText("account").children,
-    ).indexOf(heading);
-    const surfaceIndex = Array.from(
-      screen.getByLabelText("account").children,
-    ).indexOf(nameSurface);
-    expect(surfaceIndex).toBe(headingIndex + 1);
+    const blocks = Array.from(screen.getByLabelText("account").children);
+    const headingIndex = blocks.indexOf(heading);
+    const nameBlock = screen.getByLabelText("Your name");
+    expect(blocks.indexOf(nameBlock)).toBe(headingIndex + 1);
+    expect(nameBlock.contains(nameSurface)).toBe(true);
   });
 
   it("carries no name form when it is given no setName", () => {

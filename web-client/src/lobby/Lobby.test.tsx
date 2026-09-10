@@ -443,7 +443,9 @@ describe("the lobby", () => {
       store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
     });
 
-    expect(screen.getByText("No duel room has that code.")).toBeDefined();
+    expect(
+      screen.getByText("The duel room you were in has closed."),
+    ).toBeDefined();
     expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
@@ -968,11 +970,25 @@ describe("the lobby", () => {
     expect(inviteLink.value).toBe("http://localhost:3000/?room=ABCDEFGH");
   });
 
-  it("says an unknown room is unknown", () => {
+  it("says an unknown room is unknown, once the player has asked for one", () => {
     const store = createDuelStore();
-    store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
     renderLobby(store);
+    // Nothing pressed yet: a refusal can only answer a remembered room, and
+    // the player typed no code it could be about.
+    act(() => {
+      store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    });
+    expect(
+      screen.getByText("The duel room you were in has closed."),
+    ).toBeDefined();
+    expect(screen.queryByText("No duel room has that code.")).toBeNull();
 
+    // Once the player has asked for a code themselves, the refusal is about it.
+    typeCode("NOSUCH01");
+    fireEvent.click(screen.getByRole("button", { name: "Join the duel" }));
+    act(() => {
+      store.apply({ type: "Failure", error: "UNKNOWN_ROOM" });
+    });
     expect(screen.getByText("No duel room has that code.")).toBeDefined();
   });
 
@@ -1557,7 +1573,7 @@ describe("the lobby", () => {
     expect(screen.getByRole("button", { name: "Play duel" })).toBeDefined();
   });
 
-  it("states the seven strings the host-alone table renders with no clipboard, and no eighth", () => {
+  it("states the eight strings the host-alone table renders with no clipboard, and no ninth", () => {
     const store = createDuelStore();
     store.apply(ROOM_JOINED);
     renderLobby(store);
@@ -1585,6 +1601,7 @@ describe("the lobby", () => {
     expect(texts.sort()).toEqual(
       [
         "Waiting for your rival",
+        "Room code",
         "ABCDEFGH",
         "Invite link",
         "Copy the link",
@@ -2141,7 +2158,7 @@ describe("the lobby", () => {
 
     const profileState: ProfileStripState = {
       kind: "profile",
-      profile: aProfile(),
+      profile: aProfile({ hasPassword: true }),
       duels: [],
     };
 
@@ -2775,7 +2792,7 @@ describe("the lobby", () => {
           bigBlind: 50,
           stacks: [1500, 1500],
         },
-        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850 },
+        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850, hand: [] },
       ],
     });
     renderLobby(store);
@@ -2810,7 +2827,7 @@ describe("the lobby", () => {
           bigBlind: 50,
           stacks: [1500, 1500],
         },
-        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850 },
+        { type: "PotAwarded", sequence: 9, seat: 0, amount: 4850, hand: [] },
       ],
     });
     renderLobby(store);

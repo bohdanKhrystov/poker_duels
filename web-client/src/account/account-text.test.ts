@@ -43,13 +43,13 @@ describe("the account screen's words", () => {
 
     expect(accountText.ACCOUNT_HEADING).toBe("Account");
     expect(accountText.ANONYMOUS_COST).toBe(
-      "The profile lives in this browser: the duel coins and the duels go with it, and nothing reaches them from another browser.",
+      "Clear this browser, or open another, and the duel coins and duels stay behind.",
     );
     expect(accountText.ANONYMOUS_STATE).toBe(
-      "This profile is anonymous: it has no password, and this browser is the only thing that signs in to it.",
+      "This profile is anonymous: it has no password, and only this browser signs in to it.",
     );
     expect(accountText.ANONYMOUS_WAY_OUT).toBe(
-      "The form below gives this profile a password and keeps every duel coin and every duel, because nothing moves.",
+      "A password lets you sign in to this same profile anywhere — every coin and every duel comes with it.",
     );
     expect(accountText.DEVICE_ROUTE_LIVE).toBe(
       "This device signs in to this account.",

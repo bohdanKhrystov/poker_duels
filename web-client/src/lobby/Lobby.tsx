@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
   type ReactElement,
 } from "react";
@@ -49,7 +50,7 @@ import { ForgotPasswordForm } from "../account/ForgotPasswordForm";
 import { FORGOT_PASSWORD_LABEL } from "../account/recovery-text";
 import { VerifyScreen } from "../account/VerifyScreen";
 import { ResetScreen } from "../account/ResetScreen";
-import { roomCodeFromField } from "./room-link";
+import { roomCodeFromField, roomCodeFromSearch } from "./room-link";
 import { PresenceNotice } from "../table/PresenceNotice";
 import { absentActionText } from "../table/absent-action-text";
 import { WaitingTable } from "../table/WaitingTable";
@@ -71,6 +72,22 @@ export function Lobby(): ReactElement {
   // would be a second place able to disagree with that rule.
   const signOutHandsANewProfile = useSignOutHandsANewProfile();
   const refreshProfile = useRefreshProfile();
+  // A first visit holds no device id when the profile is read at mount, so
+  // that read answers "no profile" without ever asking the server; the id
+  // arrives with `Welcome`. One re-read per welcomed player, and only while
+  // the answer on hand is the one that never asked — so the name ask can
+  // stand at the very first press, as it is meant to (ADR-0119 §1).
+  const rereadFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      state.playerId !== null &&
+      profile?.kind === "no-profile" &&
+      rereadFor.current !== state.playerId
+    ) {
+      rereadFor.current = state.playerId;
+      refreshProfile();
+    }
+  }, [state.playerId, profile, refreshProfile]);
   // ADR-0132 §6: `sign-up.ts` passes `noReload` on purpose, and answers
   // `signed-up` on the `201` whether or not its own follow-up sign-in
   // succeeds — a successful sign-up is therefore the one transition that
@@ -120,12 +137,19 @@ export function Lobby(): ReactElement {
   // `send` directly. A player the predicate names is held at the ask; every
   // other player passes straight through, unheld and unrendered-to.
   const startDuel = (intent: CreateRoom | JoinRoom): void => {
+    setPressedHere(true);
     if (setName !== null && askForName({ profile, skipped: nameAskSkipped })) {
       setHeldPress(intent);
       return;
     }
     send(intent);
   };
+  // Whether this player has pressed either front-door control on this boot.
+  // Before they have, a refusal can only answer the room this browser
+  // remembered or the one the address named — a code the player never typed,
+  // so "that code" would point at nothing they can see.
+  const [pressedHere, setPressedHere] = useState(false);
+  const arrivedByLink = roomCodeFromSearch(window.location.search) !== null;
 
   // ADR-0114 §§1-2: one predicate answers every ask, computed once above
   // every branch. `standing` is what the frames the server has sent say
@@ -215,7 +239,7 @@ export function Lobby(): ReactElement {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <LadderScreen read={readLadder} />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -226,7 +250,7 @@ export function Lobby(): ReactElement {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <HistoryScreen read={read} />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -250,7 +274,7 @@ export function Lobby(): ReactElement {
     return (
       <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
         <VerifyScreen token={mailedToken} verify={account.verifyEmail} />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -278,7 +302,7 @@ export function Lobby(): ReactElement {
           reset={account.resetPassword}
           onDone={() => open("sign-in")}
         />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -303,7 +327,7 @@ export function Lobby(): ReactElement {
           setName={setName ?? undefined}
           onSignIn={() => open("sign-in")}
         />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -327,7 +351,7 @@ export function Lobby(): ReactElement {
           signIn={account.signIn}
           forgotPassword={account.forgotPassword}
         />
-        <button type="button" onClick={leave}>
+        <button type="button" className={BACK} onClick={leave}>
           Back
         </button>
       </section>
@@ -343,6 +367,7 @@ export function Lobby(): ReactElement {
         <DuelResult
           outcome={state.outcome}
           mySeat={state.mySeat}
+          names={state.seatNames}
           rematch={
             <RematchControl
               offers={state.rematchOffers}
@@ -398,6 +423,7 @@ export function Lobby(): ReactElement {
       <div className="[container-type:inline-size] mx-auto flex min-h-[100dvh] max-w-[560px] flex-col gap-[var(--wgap)] p-[var(--wgap)] [--wgap:clamp(4px,calc((100cqi-340px)/12.5),16px)]">
         <DuelTable
           view={view}
+          names={state.seatNames}
           rivalPresence={state.rivalPresence}
           narration={state.narration}
           revealStep={state.reveal?.steps[0] ?? null}
@@ -477,7 +503,7 @@ export function Lobby(): ReactElement {
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
+    <section className="pt-10 mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 p-6">
       {/* ADR-0098 §1: the coin-and-two-tone lockup, card-drawn only on the
           front door's pre-create branch. `aria-label` pins the accessible
           name to "Poker Duels" — the card's markup has no text node between
@@ -491,15 +517,16 @@ export function Lobby(): ReactElement {
         <span>Poker</span>
         <span className="font-medium text-text-muted">Duels</span>
       </h1>
-      {state.refusal !== null && <p>{refusalMessage(state.refusal)}</p>}
+      <p className="-mt-2 text-center text-small text-text-muted">{TAGLINE}</p>
       <button
         type="button"
-        className="rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
+        className="w-full rounded-medium border border-transparent bg-accent-fill px-5 py-4 leading-tight font-medium text-on-accent"
         onClick={() => startDuel({ type: "CreateRoom" })}
       >
         Play duel
       </button>
       <form
+        className="flex w-full flex-col gap-2"
         onSubmit={(event) => {
           event.preventDefault();
           // An empty code would spend one of the ten failed joins ADR-0022
@@ -508,53 +535,91 @@ export function Lobby(): ReactElement {
           startDuel({ type: "JoinRoom", code });
         }}
       >
-        <label htmlFor="room-code">Room code</label>
-        <input
-          id="room-code"
-          className="rounded-medium border border-hairline bg-surface px-5 py-4 text-text"
-          value={typedCode}
-          onChange={(event) => setTypedCode(event.target.value)}
-        />
-        <button
-          type="submit"
-          className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+        <label htmlFor="room-code" className="text-small text-text-muted">
+          Room code
+        </label>
+        <div className="flex w-full gap-2">
+          <input
+            id="room-code"
+            className="min-w-0 flex-1 rounded-medium border border-hairline bg-surface px-4 py-4 font-mono text-text placeholder:font-ui placeholder:text-text-faint"
+            placeholder="Code or invite link"
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            value={typedCode}
+            onChange={(event) => setTypedCode(event.target.value)}
+          />
+          <button
+            type="submit"
+            className="shrink-0 rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+          >
+            Join the duel
+          </button>
+        </div>
+        {/* Reserved whether or not there is anything to say, so a refusal
+            landing moves nothing below it. */}
+        <p
+          role="alert"
+          className="min-h-[calc(var(--pd-fs-small)*var(--pd-lh-body))] text-small text-loss"
         >
-          Join the duel
-        </button>
+          {state.refusal !== null
+            ? refusalMessage(state.refusal, pressedHere || arrivedByLink)
+            : ""}
+        </p>
       </form>
       {profile !== null && <ProfileStrip state={profile} />}
-      {/* TASK-121303: the three doors were adjacent inline-level buttons with
-          no text node between them (JSX elides it) and no layout on the
-          bare section around them, so they abutted with no space at any
-          zoom. A flex column blockifies each button and gives it a gap —
-          separation only. DEC-094 (open) still owns whether a door should
-          wear the client's control dress; nothing here answers it. */}
-      <div className="flex flex-col gap-2">
-        <button type="button" onClick={() => open("duels")}>
+      {/* The three doors, as one row of equal, dressed controls: a door a
+          player cannot tell from a caption is not a door. */}
+      <nav aria-label="more" className="flex w-full gap-2">
+        <button
+          type="button"
+          className="flex-1 rounded-medium border border-hairline px-3 py-3 text-small leading-tight font-medium text-text"
+          onClick={() => open("duels")}
+        >
           {HISTORY_HEADING}
         </button>
-        <button type="button" onClick={() => open("leaderboard")}>
+        <button
+          type="button"
+          className="flex-1 rounded-medium border border-hairline px-3 py-3 text-small leading-tight font-medium text-text"
+          onClick={() => open("leaderboard")}
+        >
           {LADDER_HEADING}
         </button>
         {/* ADR-0036: the door is offered whatever the profile read answered —
             nothing here gates on having an account, the same rule the record's
             and the ladder's doors already carry. */}
-        <button type="button" onClick={() => open("account")}>
+        <button
+          type="button"
+          className="flex-1 rounded-medium border border-hairline px-3 py-3 text-small leading-tight font-medium text-text"
+          onClick={() => open("account")}
+        >
           {ACCOUNT_HEADING}
         </button>
-      </div>
+      </nav>
     </section>
   );
 }
+
+/** The way back from every chosen screen, dressed as the secondary control it is. */
+const BACK =
+  "w-full rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text";
+
+/** One line under the wordmark, so a first visitor knows what the button does. */
+const TAGLINE =
+  "Heads-up Texas Hold'em. Invite a rival, play a match, take the coin.";
 
 /**
  * The client shows the refusal and stops. Retrying on the player's behalf would
  * spend the ten failed joins a minute `ADR-0022` budgets them.
  */
-function refusalMessage(error: ProtocolError): string {
+function refusalMessage(error: ProtocolError, askedForACode: boolean): string {
   switch (error) {
     case "UNKNOWN_ROOM":
-      return "No duel room has that code.";
+      // A remembered room the server no longer holds is not a code the
+      // player got wrong — say what happened, not what to retype.
+      return askedForACode
+        ? "No duel room has that code."
+        : "The duel room you were in has closed.";
     case "ROOM_FULL":
       return "That duel room already has a rival in it.";
     default:
