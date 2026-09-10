@@ -77,7 +77,7 @@ export function NameSurface(props: {
   return (
     <section
       aria-label="your display name"
-      className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
+      className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 text-center"
     >
       {displayName !== null && <p className="text-small">{displayName}</p>}
       {profile.displayName === null && profile.displayNameRemoved && (

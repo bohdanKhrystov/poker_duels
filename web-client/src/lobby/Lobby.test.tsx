@@ -2158,7 +2158,7 @@ describe("the lobby", () => {
 
     const profileState: ProfileStripState = {
       kind: "profile",
-      profile: aProfile(),
+      profile: aProfile({ hasPassword: true }),
       duels: [],
     };
 

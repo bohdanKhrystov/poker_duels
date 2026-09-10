@@ -89,7 +89,7 @@ export function RecoveryEmailForm(props: {
   return (
     <section
       aria-label="attach a recovery address"
-      className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
+      className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 text-center"
     >
       <p className="text-small">{ATTACH_WHY}</p>
       {outcome !== null && (

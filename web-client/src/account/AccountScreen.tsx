@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import type { ProfileStripState } from "../profile/profile-strip";
 import type { SignUpOutcome } from "./sign-up";
 import type { SignOutOutcome } from "./sign-out";
@@ -142,52 +142,94 @@ export function AccountScreen(props: {
   const showNameForm =
     profile !== null && profile.kind === "profile" && setName !== undefined;
 
+  const recoveryOpen =
+    showAttach && profile !== null && profile.kind === "profile"
+      ? profile.profile.hasPassword
+      : false;
+
   return (
     <section
       aria-label="account"
-      className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-7 text-center"
+      className="mx-auto flex w-full max-w-[380px] flex-col gap-6 text-center"
     >
-      <h2 className="text-small">{ACCOUNT_HEADING}</h2>
+      <h2 className="text-title font-bold">{ACCOUNT_HEADING}</h2>
+
       {showNameForm &&
       profile !== null &&
       profile.kind === "profile" &&
       setName !== undefined ? (
-        <NameSurface profile={profile.profile} setName={setName} />
+        <Block heading="Your name">
+          <NameSurface profile={profile.profile} setName={setName} />
+        </Block>
       ) : null}
-      {deviceLine !== null ? <p className="text-small">{deviceLine}</p> : null}
+
+      {anonymous || showPasswordRoute ? (
+        <Block heading="Your password">
+          {showPasswordRoute ? (
+            <p className="text-small text-text-muted">{PASSWORD_ROUTE_LIVE}</p>
+          ) : null}
+          {anonymous ? (
+            <>
+              <p className="text-small text-text-muted">{ANONYMOUS_STATE}</p>
+              <p className="text-small text-text-muted">{ANONYMOUS_COST}</p>
+              <p className="text-small text-text-muted">{ANONYMOUS_WAY_OUT}</p>
+            </>
+          ) : null}
+          {showSignUp && signUp !== undefined && <SignUpForm signUp={signUp} />}
+        </Block>
+      ) : null}
+
       {recoveryText !== null ? (
-        <p className="text-small">{recoveryText}</p>
+        <Block heading="Recovery">
+          <p className="text-small text-text-muted">{recoveryText}</p>
+          {/* Attaching an address takes the current password, so the form is
+              offered only to a profile that has one; an anonymous profile is
+              told to set a password first, in the block above. */}
+          {recoveryOpen && attachRecoveryEmail !== undefined && (
+            <RecoveryEmailForm attach={attachRecoveryEmail} />
+          )}
+        </Block>
       ) : null}
-      {showPasswordRoute ? (
-        <p className="text-small">{PASSWORD_ROUTE_LIVE}</p>
-      ) : null}
-      {anonymous ? (
-        <>
-          <p className="text-small">{ANONYMOUS_STATE}</p>
-          <p className="text-small">{ANONYMOUS_COST}</p>
-          <p className="text-small">{ANONYMOUS_WAY_OUT}</p>
-        </>
-      ) : null}
-      {showSignUp && signUp !== undefined && <SignUpForm signUp={signUp} />}
-      {showAttach && attachRecoveryEmail !== undefined && (
-        <RecoveryEmailForm attach={attachRecoveryEmail} />
-      )}
-      {showSignInDoor && (
-        <button
-          type="button"
-          className="rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
-          onClick={onSignIn}
-        >
-          {SIGN_IN_HEADING}
-        </button>
-      )}
-      {signOut !== undefined && (
-        <SignOutControl
-          signedIn={signedIn}
-          signOutHandsANewProfile={signOutHandsANewProfile}
-          signOut={signOut}
-        />
-      )}
+
+      <Block heading="Signing in">
+        {deviceLine !== null ? (
+          <p className="text-small text-text-muted">{deviceLine}</p>
+        ) : null}
+        {showSignInDoor && (
+          <button
+            type="button"
+            className="w-full rounded-medium border border-hairline px-5 py-4 leading-tight font-medium text-text"
+            onClick={onSignIn}
+          >
+            {SIGN_IN_HEADING}
+          </button>
+        )}
+        {signOut !== undefined && (
+          <SignOutControl
+            signedIn={signedIn}
+            signOutHandsANewProfile={signOutHandsANewProfile}
+            signOut={signOut}
+          />
+        )}
+      </Block>
+    </section>
+  );
+}
+
+/** One titled block of the account screen: a small caption above a surface. */
+function Block(props: {
+  readonly heading: string;
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <section
+      aria-label={props.heading}
+      className="flex w-full flex-col items-center gap-4 rounded-medium border border-hairline bg-surface px-5 py-5"
+    >
+      <p className="text-micro font-medium tracking-caps text-text-muted uppercase">
+        {props.heading}
+      </p>
+      {props.children}
     </section>
   );
 }
